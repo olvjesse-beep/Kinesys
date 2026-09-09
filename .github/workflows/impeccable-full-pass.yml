@@ -18,6 +18,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Normalize one-off runner literal
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/impeccable_full_pass.py')
+          text = path.read_text(encoding='utf-8')
+          old = "text += r'''\\n\\n/* KineSysAccessibilityHardening_v1221"
+          new = "text += '''\\n\\n/* KineSysAccessibilityHardening_v1221"
+          if old not in text:
+              raise SystemExit('Runner literal marker not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Apply Impeccable harden colorize adapt typeset optimize polish
         run: python scripts/impeccable_full_pass.py
 
