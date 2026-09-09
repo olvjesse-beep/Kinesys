@@ -1397,8 +1397,8 @@
 
     <!-- MODAL: NOVO/EDITAR AGENDAMENTO -->
     <div class="modal-overlay" id="modal_agendamento">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_agendamento')">✕</button>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_agendamento_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_agendamento')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="modal_agendamento_titulo">Novo agendamento</h2>
             <input type="hidden" id="ag_id">
             <div class="input-group">
@@ -1521,9 +1521,9 @@
 
     <!-- MODAL: DETALHE DO AGENDAMENTO -->
     <div class="modal-overlay" id="modal_detalhe_agendamento">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_detalhe_agendamento')">✕</button>
-            <h2>Detalhe do Agendamento</h2>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_detalhe_agendamento_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_detalhe_agendamento')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_detalhe_agendamento_titulo">Detalhe do Agendamento</h2>
             <div id="detalhe_agendamento_corpo"></div>
             <div class="actions">
                 <button type="button" class="btn-secondary" onclick="fecharModal('modal_detalhe_agendamento')">Fechar</button>
@@ -1534,9 +1534,9 @@
 
     <!-- MODAL: AUDITORIA DE STATUS DA AGENDA — SOMENTE ADMINISTRADORES -->
     <div class="modal-overlay" id="modal_historico_status_agenda">
-        <div class="modal-box agenda-audit-modal">
-            <button class="modal-fechar" onclick="fecharModal('modal_historico_status_agenda')">✕</button>
-            <h2>Histórico de alterações de status</h2>
+        <div class="modal-box agenda-audit-modal" role="dialog" aria-modal="true" aria-labelledby="modal_historico_status_agenda_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_historico_status_agenda')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_historico_status_agenda_titulo">Histórico de alterações de status</h2>
             <p class="agenda-audit-note"><strong>Auditoria administrativa.</strong> Registra quem alterou, quando alterou e a mudança realizada. Este painel é exibido somente para perfis de Administrador.</p>
             <div id="agenda_historico_status_lista" class="agenda-audit-list"><div class="agenda-audit-empty">Carregando histórico…</div></div>
             <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_historico_status_agenda')">Fechar</button></div>
@@ -1545,8 +1545,8 @@
 
     <!-- MODAL: PROCEDIMENTO -->
     <div class="modal-overlay" id="modal_procedimento">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_procedimento')">✕</button>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_procedimento_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_procedimento')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="modal_procedimento_titulo">Novo Procedimento</h2>
             <input type="hidden" id="proc_id">
             <div class="input-group">
@@ -1577,9 +1577,9 @@
 
     <!-- MODAL: HORÁRIO DE ATENDIMENTO -->
     <div class="modal-overlay" id="modal_horario">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_horario')">✕</button>
-            <h2>Nova Janela de Atendimento</h2>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_horario_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_horario')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_horario_titulo">Nova Janela de Atendimento</h2>
             <input type="hidden" id="hor_id">
             <div class="input-group">
                 <label for="hor_profissional_select">Profissional</label>
@@ -1617,9 +1617,9 @@
 
     <!-- MODAL: BLOQUEIO -->
     <div class="modal-overlay" id="modal_bloqueio">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_bloqueio')">✕</button>
-            <h2>Nova ausência / bloqueio</h2>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_bloqueio_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_bloqueio')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_bloqueio_titulo">Nova ausência / bloqueio</h2>
             <input type="hidden" id="bloq_id">
             <div class="input-group">
                 <label for="bloq_profissional_select">Aplicar a</label>
@@ -1653,9 +1653,9 @@
 
     <!-- MODAL: LISTA DE ESPERA -->
     <div class="modal-overlay" id="modal_lista_espera">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_lista_espera')">✕</button>
-            <h2>Adicionar à Lista de Espera</h2>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_lista_espera_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_lista_espera')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_lista_espera_titulo">Adicionar à Lista de Espera</h2>
             <div class="input-group">
                 <label for="esp_paciente_select">Paciente (já cadastrado no sistema)</label>
                 <select id="esp_paciente_select"><option value="">-- Selecione --</option></select>
@@ -1737,8 +1737,8 @@
 
     <!-- MODAL: NOVO PLANO / PACOTE -->
     <div class="modal-overlay" id="modal_fin_plano">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_fin_plano')">✕</button>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="fin_plano_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_plano')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="fin_plano_titulo">Novo plano de atendimento</h2>
             <input type="hidden" id="fin_plano_operacao">
             <p id="fin_plano_contexto" class="field-help" hidden></p>
@@ -1765,9 +1765,9 @@
 
     <!-- MODAL: PAGAMENTO -->
     <div class="modal-overlay" id="modal_fin_pagamento">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_fin_pagamento')">✕</button>
-            <h2>Lançar pagamento</h2>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_fin_pagamento_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_pagamento')" type="button" aria-label="Fechar diálogo">✕</button>
+            <h2 id="modal_fin_pagamento_titulo">Lançar pagamento</h2>
             <input type="hidden" id="fin_pag_operacao">
             <div class="input-group"><label for="fin_pag_plano">Plano / cobrança</label><select id="fin_pag_plano" onchange="atualizarResumoPagamentoFinanceiro()"><option value="">-- Selecione --</option></select></div>
             <div class="grid-2"><div class="input-group"><label for="fin_pag_valor">Valor recebido agora</label><input id="fin_pag_valor" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoFinanceiro()"></div><div class="input-group"><label for="fin_pag_data">Data do pagamento</label><input id="fin_pag_data" type="date"></div></div>
@@ -1785,8 +1785,8 @@
 
     <!-- MODAL: DESPESA FINANCEIRA (ADMINISTRADORES) -->
     <div class="modal-overlay" id="modal_fin_despesa">
-        <div class="modal-box">
-            <button class="modal-fechar" onclick="fecharModal('modal_fin_despesa')">✕</button>
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="fin_desp_titulo">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_despesa')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="fin_desp_titulo">Registrar gasto</h2>
             <input type="hidden" id="fin_desp_edit_id">
             <input type="hidden" id="fin_desp_operacao">
