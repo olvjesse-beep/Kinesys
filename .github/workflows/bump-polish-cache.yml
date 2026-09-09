@@ -1,0 +1,35 @@
+name: One-time bump polish cache
+
+on:
+  push:
+    paths:
+      - '.github/workflows/bump-polish-cache.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump polish stylesheet version
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          old = 'design_polish.css?v=20260909-clean-r1'
+          new = 'design_polish.css?v=20260909-clean-r2'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one {old}, found {text.count(old)}')
+          p.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Bump final visual polish cache version"
+          git push
