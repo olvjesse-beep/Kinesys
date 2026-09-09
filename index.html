@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>KineSys — Gestão Clínica</title>
 
 
@@ -38,10 +38,10 @@
     <!-- CABEÇALHO COM MENU DROPDOWN (controle via JS) -->
     <header>
         <div class="header-left">
-            <div class="header-brand" onclick="navegarPara('tela_home')">
+            <a class="header-brand" href="#tela_home" onclick="navegarPara('tela_home'); return false;" aria-label="Ir para o início do KineSys">
                 <h1>KINE<span>SYS</span></h1>
-                <p>Plataforma de Triagem Biomecânica</p>
-            </div>
+                <p>Gestão clínica e apoio à decisão</p>
+            </a>
             <div class="header-welcome" id="header_welcome" hidden>
                 Bem-vindo(a), <span id="lbl_usuario_logado"></span>
             </div>
@@ -1816,33 +1816,33 @@
 
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cirurgias-1.18.0.js?v=20260902-r1"></script>
-    <script src="database/medicamentos.js"></script>
-    <script src="database/ocupacoes_esportes.js"></script>
-    <script src="database/irradiacao_clinica.js"></script>
-    <script src="database/mapeamento_clinico.js"></script>
-    <script src="database/condicoes_mobilidade_v23.js"></script>
-    <script src="database/diferenciais_neurais.js"></script>
-    <script src="script-1.18.0.js?v=20260908-hma111-flexao-joelho-r1"></script>
-    <script src="clinical_engine-1.17.0.js"></script>
-    <script src="evaluation_workspace-1.17.0.js"></script>
-    <script src="proms_escalas.js"></script>
-    <script src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
-    <script src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
-    <script src="pendencias_financeiras-1.19.0.js?v=20260901-r2"></script>
-    <script src="descontos_financeiros-1.20.0.js?v=20260901-r1"></script>
-    <script src="balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1"></script>
-    <script src="analise_admin-1.19.0.js?v=20260901-r2"></script>
-    <script src="financeiro_workspace-1.20.1.js?v=20260901-r1"></script>
-    <script src="financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1"></script>
-    <script src="mensagens_config.js"></script>
-    <script src="agenda-1.20.0.js?v=20260901-r1"></script>
-    <script src="prontuario_export.js"></script>
-    <script src="design_system-1.20.1.js?v=20260901-r1"></script>
-    <script src="ui_refinement.js"></script>
-    <script src="home_detalhes-1.18.5.js"></script>
-    <script src="data_governance.js?v=1.17.0-evaluation"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="cirurgias-1.18.0.js?v=20260902-r1"></script>
+    <script defer src="database/medicamentos.js"></script>
+    <script defer src="database/ocupacoes_esportes.js"></script>
+    <script defer src="database/irradiacao_clinica.js"></script>
+    <script defer src="database/mapeamento_clinico.js"></script>
+    <script defer src="database/condicoes_mobilidade_v23.js"></script>
+    <script defer src="database/diferenciais_neurais.js"></script>
+    <script defer src="script-1.18.0.js?v=20260908-hma111-flexao-joelho-r1"></script>
+    <script defer src="clinical_engine-1.17.0.js"></script>
+    <script defer src="evaluation_workspace-1.17.0.js"></script>
+    <script defer src="proms_escalas.js"></script>
+    <script defer src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="pendencias_financeiras-1.19.0.js?v=20260901-r2"></script>
+    <script defer src="descontos_financeiros-1.20.0.js?v=20260901-r1"></script>
+    <script defer src="balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="analise_admin-1.19.0.js?v=20260901-r2"></script>
+    <script defer src="financeiro_workspace-1.20.1.js?v=20260901-r1"></script>
+    <script defer src="financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="mensagens_config.js"></script>
+    <script defer src="agenda-1.20.0.js?v=20260901-r1"></script>
+    <script defer src="prontuario_export.js"></script>
+    <script defer src="design_system-1.20.1.js?v=20260901-r1"></script>
+    <script defer src="ui_refinement.js"></script>
+    <script defer src="home_detalhes-1.18.5.js"></script>
+    <script defer src="data_governance.js?v=1.17.0-evaluation"></script>
 
     <div id="engine_info_modal" class="engine-info-modal" hidden onclick="if(event.target===this) fecharInfoMotorClinico()">
         <div class="engine-info-card" role="dialog" aria-modal="true" aria-labelledby="engine_info_title">
@@ -1851,10 +1851,10 @@
             <div class="actions"><button type="button" class="btn-primary" onclick="fecharInfoMotorClinico()">Entendi</button></div>
         </div>
     </div>
-    <script src="login_access-1.18.0.js"></script>
-    <script src="evaluation_context_panels-1.18.3.js"></script>
-    <script src="financeiro_agendamento-1.21.0.js?v=20260904-integracao-r1"></script>
-    <script src="avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1"></script>
+    <script defer src="login_access-1.18.0.js"></script>
+    <script defer src="evaluation_context_panels-1.18.3.js"></script>
+    <script defer src="financeiro_agendamento-1.21.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1"></script>
 </body>
 </html>
 

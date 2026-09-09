@@ -48,6 +48,7 @@ body.ks-design-ready>.container{
 }
 #ks_sidebar .header-brand{
   display:grid;
+  text-decoration:none;
   grid-template-columns:4px minmax(0,1fr);
   column-gap:11px;
   align-items:center;

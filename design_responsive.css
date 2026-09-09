@@ -235,3 +235,32 @@
             }
         }
 
+
+
+/* ==========================================================================
+   KineSys touch adaptation — coarse pointer
+   A área clicável chega a 44px em dispositivos de toque sem aumentar a densidade desktop.
+   ========================================================================== */
+@media (pointer:coarse){
+  body.ks-design-ready .btn-primary,
+  body.ks-design-ready .btn-secondary,
+  body.ks-design-ready .btn-nav,
+  body.ks-design-ready .btn-danger,
+  body.ks-design-ready .btn-compact,
+  body.ks-design-ready .btn-link-compacto{min-height:44px}
+
+  body.ks-design-ready .ks-patient-clear,
+  body.ks-design-ready .ks-eval-dialog-close,
+  body.ks-design-ready .radar-painel-fechar,
+  body.ks-design-ready .agenda-semana-nav > button{
+    min-width:44px;
+    min-height:44px;
+  }
+
+  body.ks-design-ready .checkbox-pill span,
+  body.ks-design-ready .agenda-dia-pill{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+  }
+}

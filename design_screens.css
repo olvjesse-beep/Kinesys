@@ -24,9 +24,9 @@ body.ks-design-ready h3{color:var(--kds-text);font-weight:700}
 body.ks-design-ready .input-group{margin-bottom:14px}
 body.ks-design-ready .input-group label{font-size:var(--kds-font-metadata);line-height:1.3;font-weight:650;color:#476067;margin-bottom:6px;letter-spacing:0}
 .field-help, .helper-text, .clinical-note{font-size:var(--kds-font-metadata)!important;line-height:1.5!important;color:var(--kds-muted)!important}
-.ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-weight:760!important;color:#748A8E!important}
+.ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-weight:760!important;color:var(--kds-text-subtle)!important}
 body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outline-offset:2px}
-.ks-empty, .finance-empty, .ana-empty{background:#FAFCFB!important;border-color:#D8E5E1!important;color:#708286!important}
+.ks-empty, .finance-empty, .ana-empty{background:#FAFCFB!important;border-color:#D8E5E1!important;color:var(--kds-text-subtle)!important}
 .ks-home-hero{padding:5px 1px 14px;align-items:center}
 .ks-home-hero h2{letter-spacing:-.4px;font-weight:720}
 .ks-home-hero p{text-transform:none!important;color:var(--kds-muted)}
@@ -119,7 +119,13 @@ body.ks-design-ready[data-tela="tela_login"] .login-card{max-width:430px;padding
   .ks-home-stats{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){
-  *, *::before, *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  html:focus-within{scroll-behavior:auto!important}
+  .radar-launcher.novo-alerta{animation:none!important}
+  body.ks-design-ready #ks_sidebar,
+  .ks-nav-backdrop,
+  .modal-overlay,
+  .ks-dialog-overlay,
+  .ks-eval-dialog-backdrop{transition:none!important}
 }
 /* Etapa 14 — Prontuário / exportação: remove microtipografia e estilos inline do modal do app. */
 .ks-prontuario-export-modal{max-width:620px}

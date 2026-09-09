@@ -224,7 +224,7 @@
 }
 
 .ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"])::placeholder,textarea::placeholder){
-  color:#8B989B;
+  color:var(--kds-placeholder);
   opacity:1;
 }
 
@@ -311,3 +311,29 @@
 /* Shared compact chip modifier — reused by Avaliação and Agenda. */
 .compact-chips{gap:7px!important}
 .compact-chips .checkbox-pill span{padding:6px 10px!important;font-size:var(--kds-font-metadata)!important;border-radius:9px!important}
+
+
+/* ==========================================================================
+   KineSys accessibility hardening — focusable choice controls
+   Mantém o input nativo no fluxo de teclado e usa o span apenas como superfície.
+   ========================================================================== */
+.checkbox-pill, .agenda-dia-pill{position:relative}
+.checkbox-pill input[type="checkbox"],
+.checkbox-pill input[type="radio"],
+.agenda-dia-pill input[type="checkbox"],
+.agenda-dia-pill input[type="radio"]{
+  position:absolute!important;
+  inline-size:1px!important;
+  block-size:1px!important;
+  margin:0!important;
+  padding:0!important;
+  opacity:0!important;
+  overflow:hidden!important;
+  clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+}
+.checkbox-pill input:focus-visible + span,
+.agenda-dia-pill input:focus-visible + span{
+  outline:3px solid rgba(42,167,157,.24);
+  outline-offset:2px;
+}

@@ -1,11 +1,11 @@
 /* KineSys · revisão de experiência da avaliação · 1.22.0 */
 
 #tela_avaliacao {
-    --eval-ink: #153f46;
-    --eval-muted: #60777b;
-    --eval-line: #dbe7e4;
-    --eval-soft: #f5f9f8;
-    --eval-accent: #159f91;
+    --eval-ink: var(--kds-text);
+    --eval-muted: var(--kds-muted);
+    --eval-line: var(--kds-line);
+    --eval-soft: var(--kds-surface-soft);
+    --eval-accent: var(--kds-accent);
 }
 
 #tela_avaliacao .clinical-progress-wrap {
@@ -29,13 +29,13 @@
     margin: 0 0 14px;
     padding: 0 4px;
     color: var(--eval-muted);
-    font-size: 13px;
+    font-size: var(--kds-font-label);
 }
 
 .ks-eval-step-context strong {
     flex: 0 0 auto;
     color: var(--eval-ink);
-    font-size: 13px;
+    font-size: var(--kds-font-label);
 }
 
 .ks-eval-step-context span {
@@ -53,7 +53,7 @@
 }
 
 #tela_avaliacao .ks-eval-patient-loader .precadastro-cabecalho h2 {
-    font-size: 18px;
+    font-size: var(--kds-font-heading-sm);
 }
 
 #tela_avaliacao .ks-eval-patient-loader .eyebrow,
@@ -95,7 +95,7 @@
 }
 
 .ks-eval-choice-trigger.has-data {
-    background: #f2fbf9;
+    background: var(--kds-accent-soft);
     border-color: #a9dcd5;
 }
 
@@ -106,13 +106,13 @@
 }
 
 .ks-eval-choice-trigger strong {
-    font-size: 14px;
+    font-size: var(--kds-font-ui);
 }
 
 .ks-eval-choice-trigger small {
     overflow: hidden;
     color: var(--eval-muted);
-    font-size: 12px;
+    font-size: var(--kds-font-metadata);
     font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -121,7 +121,7 @@
 .ks-eval-choice-action {
     flex: 0 0 auto;
     color: var(--eval-accent);
-    font-size: 13px;
+    font-size: var(--kds-font-label);
     font-weight: 750;
 }
 
@@ -145,7 +145,7 @@
     max-height: min(720px, calc(100vh - 44px));
     overflow: auto;
     border-radius: 18px;
-    background: #fff;
+    background: var(--kds-surface);
     box-shadow: 0 24px 72px rgba(5, 28, 33, .30);
 }
 
@@ -165,14 +165,14 @@
 .ks-eval-dialog-card header h2 {
     margin: 2px 0 0;
     color: var(--eval-ink);
-    font-size: 22px;
+    font-size: var(--kds-font-heading-lg);
 }
 
 .ks-eval-dialog-card > p {
     margin: 0;
     padding: 16px 22px 2px;
     color: var(--eval-muted);
-    font-size: 14px;
+    font-size: var(--kds-font-ui);
 }
 
 .ks-eval-dialog-close {
@@ -213,7 +213,7 @@
     position: sticky;
     bottom: 0;
     border-top: 1px solid var(--eval-line);
-    background: #fff;
+    background: var(--kds-surface);
 }
 
 body.ks-eval-modal-open {
@@ -241,7 +241,7 @@ body.ks-eval-modal-open {
     box-sizing: border-box;
     border: 1px solid var(--eval-line);
     border-radius: 12px;
-    background: #fff;
+    background: var(--kds-surface);
 }
 
 #tela_avaliacao .ks-pain-head {
@@ -256,13 +256,13 @@ body.ks-eval-modal-open {
 
 #tela_avaliacao .ks-pain-head span {
     color: var(--eval-ink);
-    font-size: 13px;
+    font-size: var(--kds-font-label);
     font-weight: 700;
 }
 
 #tela_avaliacao .ks-pain-head strong {
     color: var(--eval-accent);
-    font-size: 20px;
+    font-size: var(--kds-font-heading-md);
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
@@ -288,7 +288,7 @@ body.ks-eval-modal-open {
     height: 19px;
     border: 3px solid var(--eval-ink);
     border-radius: 50%;
-    background: #fff;
+    background: var(--kds-surface);
     box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
     cursor: pointer;
 }
@@ -298,7 +298,7 @@ body.ks-eval-modal-open {
     height: 13px;
     border: 3px solid var(--eval-ink);
     border-radius: 50%;
-    background: #fff;
+    background: var(--kds-surface);
     box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
     cursor: pointer;
 }
@@ -310,7 +310,7 @@ body.ks-eval-modal-open {
     display: flex;
     justify-content: space-between;
     color: var(--eval-muted);
-    font-size: 11px;
+    font-size: var(--kds-font-metadata);
     font-variant-numeric: tabular-nums;
 }
 
@@ -346,7 +346,7 @@ body.ks-eval-modal-open {
     border-color: #cfe1dd;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 700px) {
     .ks-eval-step-context {
         display: grid;
         gap: 3px;

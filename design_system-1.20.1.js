@@ -623,3 +623,152 @@
     const poll=setInterval(()=>{const role=document.getElementById('ks_sidebar_role');if(role&&((typeof usuarioLogado!=='undefined')?usuarioLogado:null)&&typeof window.rotuloPerfil==='function')role.textContent=window.rotuloPerfil(((typeof usuarioLogado!=='undefined')?usuarioLogado:null).tipo);escutarSeletoresPaciente();atualizarGruposNav();},1200);
     window.addEventListener('beforeunload',()=>clearInterval(poll));
 })();
+
+
+/* KineSysAccessibilityHardening_v1221
+ * Acessibilidade transversal sem alterar IDs, funções clínicas ou contratos de dados.
+ */
+(function KineSysAccessibilityHardening_v1221(){
+  'use strict';
+
+  const focusableSelector = [
+    'a[href]', 'button:not([disabled])', 'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])', 'textarea:not([disabled])', '[tabindex]:not([tabindex="-1"])'
+  ].join(',');
+  const modalReturnFocus = new WeakMap();
+  let activeLegacyModal = null;
+
+  function bindLabels(root=document){
+    root.querySelectorAll('.input-group label:not([for])').forEach(label => {
+      if (label.querySelector('input,select,textarea')) return;
+      const group = label.closest('.input-group');
+      if (!group) return;
+      const control = group.querySelector('input:not([type="hidden"]),select,textarea');
+      if (control && control.id) label.htmlFor = control.id;
+    });
+  }
+
+  function normalizeLegacyDialogs(root=document){
+    root.querySelectorAll('.modal-overlay').forEach((overlay, index) => {
+      const box = overlay.querySelector(':scope > .modal-box');
+      if (!box) return;
+      box.setAttribute('role','dialog');
+      box.setAttribute('aria-modal','true');
+      const title = box.querySelector('h1,h2,h3');
+      if (title) {
+        if (!title.id) title.id = (overlay.id || 'ks_modal_' + index) + '_titulo';
+        box.setAttribute('aria-labelledby', title.id);
+      }
+      const close = box.querySelector('.modal-fechar');
+      if (close) {
+        close.type = 'button';
+        if (!close.hasAttribute('aria-label')) {
+          close.setAttribute('aria-label', title ? 'Fechar ' + title.textContent.trim() : 'Fechar diálogo');
+        }
+      }
+    });
+  }
+
+  function modalIsVisible(overlay){
+    if (!overlay || overlay.hidden) return false;
+    const style = getComputedStyle(overlay);
+    return style.display !== 'none' && style.visibility !== 'hidden' && overlay.getClientRects().length > 0;
+  }
+
+  function syncLegacyModalFocus(){
+    const visible = Array.from(document.querySelectorAll('.modal-overlay')).filter(modalIsVisible);
+    const current = visible.length ? visible[visible.length - 1] : null;
+    if (current === activeLegacyModal) return;
+
+    if (activeLegacyModal && !current) {
+      const returnTo = modalReturnFocus.get(activeLegacyModal);
+      activeLegacyModal.dataset.ksA11yOpen = '0';
+      activeLegacyModal = null;
+      if (returnTo && returnTo.isConnected && typeof returnTo.focus === 'function') {
+        requestAnimationFrame(() => returnTo.focus({preventScroll:true}));
+      }
+      return;
+    }
+
+    if (current) {
+      activeLegacyModal = current;
+      if (current.dataset.ksA11yOpen !== '1') {
+        modalReturnFocus.set(current, document.activeElement);
+        current.dataset.ksA11yOpen = '1';
+        const box = current.querySelector(':scope > .modal-box');
+        const first = box && box.querySelector(focusableSelector);
+        if (first) requestAnimationFrame(() => first.focus({preventScroll:true}));
+        else if (box) { box.tabIndex = -1; requestAnimationFrame(() => box.focus({preventScroll:true})); }
+      }
+    }
+  }
+
+  function installRouteAnnouncements(){
+    if (!document.getElementById('ks_route_status')) {
+      const live = document.createElement('div');
+      live.id = 'ks_route_status';
+      live.className = 'kds-visually-hidden';
+      live.setAttribute('role','status');
+      live.setAttribute('aria-live','polite');
+      live.setAttribute('aria-atomic','true');
+      document.body.appendChild(live);
+    }
+
+    const original = window.navegarPara;
+    if (typeof original !== 'function' || original.__ksA11yWrapped) return;
+    const wrapped = function(idTela, ...args){
+      const result = original.call(this, idTela, ...args);
+      if (idTela !== 'tela_login') {
+        requestAnimationFrame(() => {
+          const target = document.getElementById(idTela);
+          if (!target || !target.classList.contains('ativa')) return;
+          const heading = target.querySelector('h1,h2');
+          const live = document.getElementById('ks_route_status');
+          const label = heading ? heading.textContent.trim() : 'Tela atualizada';
+          if (live) live.textContent = label;
+          if (heading) {
+            heading.setAttribute('tabindex','-1');
+            heading.focus({preventScroll:true});
+          }
+        });
+      }
+      return result;
+    };
+    wrapped.__ksA11yWrapped = true;
+    wrapped.__original = original;
+    window.navegarPara = wrapped;
+  }
+
+  document.addEventListener('keydown', event => {
+    if (!activeLegacyModal || !modalIsVisible(activeLegacyModal)) return;
+    const box = activeLegacyModal.querySelector(':scope > .modal-box');
+    if (!box) return;
+    if (event.key === 'Escape') {
+      const close = box.querySelector('.modal-fechar');
+      if (close) { event.preventDefault(); close.click(); }
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const items = Array.from(box.querySelectorAll(focusableSelector)).filter(el => el.getClientRects().length > 0);
+    if (!items.length) { event.preventDefault(); box.focus(); return; }
+    const first = items[0], last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+
+  function init(){
+    bindLabels();
+    normalizeLegacyDialogs();
+    installRouteAnnouncements();
+    syncLegacyModalFocus();
+    const observer = new MutationObserver(() => {
+      bindLabels();
+      normalizeLegacyDialogs();
+      syncLegacyModalFocus();
+    });
+    observer.observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+})();
