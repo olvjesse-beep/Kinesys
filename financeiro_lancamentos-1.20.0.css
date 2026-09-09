@@ -7,7 +7,7 @@
 #tela_financeiro .finance-ledger-summary{display:grid;gap:10px;background:#fff;border:1px solid var(--ledger-border);border-radius:13px;padding:12px}
 #tela_financeiro .finance-ledger-summary h3{margin:0;padding:4px 4px 10px;color:#24494c;font-size:15px;border-bottom:1px solid var(--ledger-border)}
 #tela_financeiro .finance-ledger-summary>div{background:#f5f8f7;border:0;border-radius:10px;padding:18px;box-shadow:none}
-#tela_financeiro .finance-ledger-summary span{display:block;color:#687b7d;font-size:12px;font-weight:700;margin-bottom:7px}
+#tela_financeiro .finance-ledger-summary span{display:block;color:#687b7d;font-size:var(--kds-font-metadata);font-weight:700;margin-bottom:7px}
 #tela_financeiro .finance-ledger-summary strong{font-size:22px;font-variant-numeric:tabular-nums;color:#173f42}
 #tela_financeiro .finance-ledger-summary .entrada strong{color:var(--ledger-green)}
 #tela_financeiro .finance-ledger-summary .saida strong,#tela_financeiro .finance-ledger-summary .negativo strong{color:var(--ledger-red)}
@@ -17,10 +17,10 @@
 #tela_financeiro .finance-ledger-search{position:relative}
 #tela_financeiro .finance-ledger-suggestions{position:absolute;z-index:35;left:0;right:0;top:100%;margin-top:5px;max-height:290px;overflow:auto;border:1px solid var(--ledger-border);border-radius:11px;background:#fff;box-shadow:0 12px 30px rgba(18,56,59,.16)}
 #tela_financeiro .finance-ledger-suggestions[hidden]{display:none!important}
-#tela_financeiro .finance-ledger-suggestion-title{padding:8px 12px;background:#f4f8f7;color:#627779;font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em}
+#tela_financeiro .finance-ledger-suggestion-title{padding:8px 12px;background:#f4f8f7;color:#627779;font-size:var(--kds-font-metadata);font-weight:850;text-transform:uppercase;letter-spacing:.06em}
 #tela_financeiro .finance-ledger-suggestions button{display:grid;width:100%;gap:3px;padding:10px 12px;text-align:left;border:0;border-bottom:1px solid #edf2f1;border-radius:0;background:#fff;color:#244346}
 #tela_financeiro .finance-ledger-suggestions button:hover,#tela_financeiro .finance-ledger-suggestions button:focus{background:#edf7f5;outline:none}
-#tela_financeiro .finance-ledger-suggestions button span{font-size:11px;color:#6b7e80}
+#tela_financeiro .finance-ledger-suggestions button span{font-size:var(--kds-font-metadata);color:#6b7e80}
 #tela_financeiro .finance-ledger-filters{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr)) auto;gap:7px;margin-bottom:10px}
 #tela_financeiro .finance-ledger-filter{border:1px solid var(--ledger-border);background:#eef2f2;color:#506769;border-radius:6px;min-height:42px;padding:8px 12px;font-weight:750}
 #tela_financeiro .finance-ledger-filter.active{background:#22ad89;border-color:#22ad89;color:#fff}
@@ -28,17 +28,17 @@
 #tela_financeiro .finance-ledger-list{margin-top:12px;border:1px solid var(--ledger-border);border-radius:14px;background:#fff;overflow:hidden}
 #tela_financeiro .finance-ledger-list-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--ledger-border)}
 #tela_financeiro .finance-ledger-list-head strong{color:#173f42}
-#tela_financeiro .finance-ledger-list-head span{font-size:12px;color:#687b7d}
-#tela_financeiro .finance-ledger-columns{display:grid;grid-template-columns:72px minmax(220px,1fr) 90px 130px;gap:12px;padding:11px 16px;background:var(--ledger-bg);border-bottom:1px solid var(--ledger-border);color:#596f71;font-size:12px;font-weight:800}
+#tela_financeiro .finance-ledger-list-head span{font-size:var(--kds-font-metadata);color:#687b7d}
+#tela_financeiro .finance-ledger-columns{display:grid;grid-template-columns:72px minmax(220px,1fr) 90px 130px;gap:12px;padding:11px 16px;background:var(--ledger-bg);border-bottom:1px solid var(--ledger-border);color:#596f71;font-size:var(--kds-font-metadata);font-weight:800}
 #tela_financeiro .finance-ledger-columns span:last-child{text-align:right}
 #tela_financeiro .finance-ledger-row{display:grid;grid-template-columns:72px minmax(220px,1fr) 90px 130px;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid #edf2f1}
 #tela_financeiro .finance-ledger-row:last-child{border-bottom:0}
-#tela_financeiro .finance-ledger-row time{color:#607477;font-size:12px;font-weight:750}
+#tela_financeiro .finance-ledger-row time{color:#607477;font-size:var(--kds-font-metadata);font-weight:750}
 #tela_financeiro .finance-ledger-copy{display:grid;gap:3px;min-width:0}
 #tela_financeiro .finance-ledger-copy strong,#tela_financeiro .finance-ledger-copy span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #tela_financeiro .finance-ledger-copy strong{color:#244346;font-size:14px}
-#tela_financeiro .finance-ledger-copy span{color:#718285;font-size:12px}
-#tela_financeiro .finance-ledger-kind{justify-self:start;padding:4px 8px;border-radius:999px;background:#edf5f3;color:#426866;font-size:11px;font-weight:800}
+#tela_financeiro .finance-ledger-copy span{color:#718285;font-size:var(--kds-font-metadata)}
+#tela_financeiro .finance-ledger-kind{justify-self:start;padding:4px 8px;border-radius:999px;background:#edf5f3;color:#426866;font-size:var(--kds-font-metadata);font-weight:800}
 #tela_financeiro .finance-ledger-row.saida .finance-ledger-kind,#tela_financeiro .finance-ledger-row.estorno .finance-ledger-kind{background:#faeeee;color:#94505a}
 #tela_financeiro .finance-ledger-value{text-align:right;color:var(--ledger-green);font-variant-numeric:tabular-nums;font-size:14px}
 #tela_financeiro .finance-ledger-row.saida .finance-ledger-value,#tela_financeiro .finance-ledger-row.estorno .finance-ledger-value{color:var(--ledger-red)}

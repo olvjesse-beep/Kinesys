@@ -51,7 +51,7 @@ body.ks-evaluation-panel-open{overflow:hidden}
  .ks-investigation-action span{font-size:13px!important}
  #tela_avaliacao .region-strip{padding:12px!important}
  #tela_avaliacao .ks-region-strip-label strong{font-size:14px!important}
- #tela_avaliacao .region-strip>.btn-secondary{padding:9px;font-size:12px}
+ #tela_avaliacao .region-strip>.btn-secondary{padding:9px;font-size:var(--kds-font-metadata)}
  #tela_avaliacao #ks-laudo-texto{font-size:16px;min-height:400px}
  .ks-evaluation-dialog-body{padding:15px}
 }

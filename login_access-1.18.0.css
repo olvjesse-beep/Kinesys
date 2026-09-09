@@ -4,7 +4,7 @@
 .ks-access-shell{display:grid;grid-template-columns:1fr 1.05fr;background:#fff;border:1px solid #dce6e3;border-radius:24px;overflow:hidden;box-shadow:0 20px 70px #123d4410}
 .ks-access-intro{display:flex;flex-direction:column;align-items:flex-start;padding:48px 40px;background:#143b42;color:#ecf7f4;text-align:left}
 .ks-access-brand{font-size:29px;font-weight:800;letter-spacing:1px;margin-bottom:64px}.ks-access-brand span{color:#91d2be}
-.ks-access-eyebrow{font-size:11px;letter-spacing:1.4px;font-weight:700;color:#5b8077}.ks-access-intro .ks-access-eyebrow{color:#a7d6c8}
+.ks-access-eyebrow{font-size:var(--kds-font-metadata);letter-spacing:1.4px;font-weight:700;color:#5b8077}.ks-access-intro .ks-access-eyebrow{color:#a7d6c8}
 #tela_login .ks-access-intro h1{font-size:34px;line-height:1.2;color:#fff;margin:18px 0;font-weight:650;letter-spacing:-.8px}
 #tela_login .ks-access-intro p{font-size:16px;line-height:1.7;color:#c5ded8;margin:0}
 .ks-access-note{margin-top:auto;padding-top:60px;color:#b8d5cf;font-size:13px;line-height:1.65;max-width:330px}
@@ -12,17 +12,17 @@
 .ks-access-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f2f6f5;border:1px solid #e0e9e6;padding:5px;border-radius:13px;margin-bottom:28px}
 .ks-access-tabs button{border:1px solid transparent;background:transparent;color:#5d7473;text-align:left;padding:12px;border-radius:9px;cursor:pointer;min-height:67px}
 .ks-access-tabs button[aria-selected=true]{background:#fff;border-color:#b5d1c9;box-shadow:0 2px 5px #18413b0d;color:#164d49}
-.ks-access-tabs strong{display:block;font-size:15px}.ks-access-tabs span{display:block;font-size:11px;line-height:1.4;margin-top:4px}
+.ks-access-tabs strong{display:block;font-size:15px}.ks-access-tabs span{display:block;font-size:var(--kds-font-metadata);line-height:1.4;margin-top:4px}
 #tela_login h2{font-size:25px;color:#183f45;letter-spacing:-.5px;margin:0 0 8px}
 #tela_login .ks-access-panel p{font-size:14px;line-height:1.6;color:#607575;margin:0 0 23px}
 #tela_login .input-group{margin:0 0 18px}#tela_login label{display:block;font-size:13px;font-weight:600;margin:0 0 7px;color:#314f54}
 #tela_login input,#tela_login select{width:100%;height:46px;font-size:15px;border:1px solid #ceddd8;border-radius:9px;background:#fff;padding:10px 12px;color:#24474b;box-sizing:border-box;margin:0}
-.ks-access-password{display:flex;align-items:center;position:relative}.ks-access-password input{padding-right:78px!important}.ks-access-password button{position:absolute;right:5px;border:0;background:transparent;color:#286c62;font-size:12px;font-weight:600;padding:10px;cursor:pointer}
+.ks-access-password{display:flex;align-items:center;position:relative}.ks-access-password input{padding-right:78px!important}.ks-access-password button{position:absolute;right:5px;border:0;background:transparent;color:#286c62;font-size:var(--kds-font-metadata);font-weight:600;padding:10px;cursor:pointer}
 #tela_login form>.btn-primary{width:100%;min-height:46px;margin-top:2px;font-size:14px}
-.ks-access-help{display:flex;justify-content:space-between;gap:15px;margin-top:18px}.ks-access-help button,.ks-access-back{border:0;background:none;color:#276c63;padding:6px 0;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.ks-access-back{margin-top:20px}
-#tela_login .ks-access-footer{font-size:11px;line-height:1.6;color:#758782;border-top:1px solid #e7eeeb;margin:28px 0 0;padding-top:18px}
+.ks-access-help{display:flex;justify-content:space-between;gap:15px;margin-top:18px}.ks-access-help button,.ks-access-back{border:0;background:none;color:#276c63;padding:6px 0;font-size:var(--kds-font-metadata);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.ks-access-back{margin-top:20px}
+#tela_login .ks-access-footer{font-size:var(--kds-font-metadata);line-height:1.6;color:#758782;border-top:1px solid #e7eeeb;margin:28px 0 0;padding-top:18px}
 #tela_login .ks-login-feedback{margin-top:18px;padding:12px;border-radius:9px;line-height:1.6}
-#tela_login button:focus-visible,#tela_login input:focus-visible,#tela_login select:focus-visible{outline:3px solid #5dac98;outline-offset:3px}#tela_login button:disabled{opacity:.55;cursor:wait}#login_caps{font-size:12px;color:#9a6100}
+#tela_login button:focus-visible,#tela_login input:focus-visible,#tela_login select:focus-visible{outline:3px solid #5dac98;outline-offset:3px}#tela_login button:disabled{opacity:.55;cursor:wait}#login_caps{font-size:var(--kds-font-metadata);color:#9a6100}
 @media(max-width:760px){#tela_login{margin:16px auto!important}.ks-access-shell{grid-template-columns:1fr;border-radius:18px}.ks-access-intro{padding:25px}.ks-access-brand{font-size:24px;margin-bottom:12px}.ks-access-intro .ks-access-eyebrow,.ks-access-intro h1,.ks-access-intro>p,.ks-access-note{display:none!important}.ks-access-panel{padding:26px 22px}.ks-access-tabs{margin-bottom:24px}#tela_login input,#tela_login select{font-size:16px}}
 @media(max-width:360px){.ks-access-panel{padding:22px 15px}.ks-access-help{flex-direction:column;gap:2px}}
 .ks-fisio-painel-lista{display:grid;gap:10px;margin-top:14px}.ks-fisio-painel-item{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #dce8e6;border-radius:12px;background:#f8fbfb}.ks-fisio-painel-item strong{display:inline-block;min-width:48px;color:#0f5960}.ks-fisio-painel-item span{font-weight:700;margin-right:10px}.ks-fisio-painel-item small{display:block;color:#687b7d;margin-top:3px}.ks-fisio-painel-vazio{padding:18px;border-radius:12px;background:#f5f8f8;color:#607476}

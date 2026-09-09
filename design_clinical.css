@@ -85,7 +85,7 @@
     display:block;
     margin:0 0 6px;
     color:var(--hma-accent);
-    font-size:11px;
+    font-size:var(--kds-font-metadata);
     line-height:1.2;
     font-weight:800;
     letter-spacing:.105em;
@@ -132,7 +132,7 @@
 }
 #tela_avaliacao .hma-principal label small{
     color:#829194;
-    font-size:11px;
+    font-size:var(--kds-font-metadata);
     font-weight:650;
     letter-spacing:.04em;
     text-transform:uppercase;
@@ -215,7 +215,7 @@
     display:block;
     margin:0 0 11px;
     color:#9ADDD2!important;
-    font-size:11px;
+    font-size:var(--kds-font-metadata);
     line-height:1.2;
     font-weight:820;
     letter-spacing:.105em;
@@ -241,7 +241,7 @@
     display:block;
     margin:0 0 9px;
     color:#9ADDD2!important;
-    font-size:11.5px;
+    font-size:var(--kds-font-metadata);
     line-height:1.25;
     font-weight:820;
     letter-spacing:.075em;
@@ -304,7 +304,7 @@
     display:inline;
     margin:0;
     color:#C5DCDA;
-    font-size:12.25px;
+    font-size:var(--kds-font-metadata);
     line-height:1.5;
     font-weight:430;
 }
@@ -344,7 +344,7 @@
     padding-top:11px;
     border-top:1px solid rgba(199,227,223,.14);
     color:#AFCBC7;
-    font-size:11px;
+    font-size:var(--kds-font-metadata);
     line-height:1.45;
     font-weight:450;
 }
@@ -353,7 +353,7 @@
     margin:auto 0 0;
     padding-top:15px;
     color:#AFCBC7;
-    font-size:11.5px;
+    font-size:var(--kds-font-metadata);
     line-height:1.48;
     font-weight:450;
 }
@@ -379,7 +379,7 @@
 @media(max-width:620px){
     #tela_avaliacao .hma-card{padding:17px!important;border-radius:12px}
     #tela_avaliacao .hma-card>.hma-card-header h2{font-size:19px}
-    #tela_avaliacao .hma-card>.hma-card-header p{font-size:12px}
+    #tela_avaliacao .hma-card>.hma-card-header p{font-size:var(--kds-font-metadata)}
     #tela_avaliacao #paciente_hma{min-height:170px;font-size:14px;padding:13px 14px}
     #tela_avaliacao #ks20_hma_insights>div>div>strong:first-child{font-size:13.5px}
 }
@@ -706,7 +706,7 @@ body.ks-design-ready details.clinical-disclosure{box-shadow:none}#tela_avaliacao
 .ks-data-row{display:grid;grid-template-columns:minmax(250px,2fr) minmax(90px,1fr) 80px 90px minmax(130px,1fr);align-items:center;gap:10px;padding:9px 11px;border-top:1px solid var(--kds-line);font-size:var(--kds-font-label)}
 .ks-data-row:first-child{border-top:0}.ks-data-head{background:var(--kds-surface-soft);font-weight:800;color:var(--kds-muted)}
 .ks-data-row strong{font-size:var(--kds-font-label);color:var(--kds-text)}
-.ks-data-badge{display:inline-flex;justify-self:start;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
+.ks-data-badge{display:inline-flex;justify-self:start;padding:3px 7px;border-radius:999px;font-size:var(--kds-font-metadata);font-weight:800;white-space:nowrap}
 .ks-data-badge.clinical{background:#fff1e8;color:#9c4b25}.ks-data-badge.temporary{background:#eef5f4;color:#4c6b68}
 .ks-data-empty{padding:16px;color:var(--kds-muted);font-size:var(--kds-font-label);text-align:center}
 .ks-data-cleanup{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding-top:13px;border-top:1px solid var(--kds-line)}
@@ -993,13 +993,13 @@ body.ks-design-ready details.clinical-disclosure{box-shadow:none}#tela_avaliacao
         min-width:0!important;
         padding:7px 7px!important;
         gap:6px!important;
-        font-size:12px!important;
+        font-size:var(--kds-font-metadata)!important;
     }
     #tela_avaliacao .clinical-progress .step-number{
         width:27px!important;
         height:27px!important;
         flex-basis:27px!important;
-        font-size:12px!important;
+        font-size:var(--kds-font-metadata)!important;
     }
 }
 
