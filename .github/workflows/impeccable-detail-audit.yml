@@ -13,18 +13,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Map CSS intensity sources
+      - name: Measure findings after quieter pass 1
         shell: bash
         run: |
-          set -euo pipefail
-          files=(design_base.css design_components.css design_responsive.css design_foundation.css design_features.css design_screens.css design_typography.css design_navigation.css design_agenda.css design_clinical.css design_utilities.css avaliacao_experiencia-1.22.0.css)
-          echo '=== TEXT TRANSFORM UPPERCASE ==='
-          grep -n -H -C 2 -E 'text-transform:[[:space:]]*uppercase' "${files[@]}" || true
-          echo '=== WIDE TRACKING ==='
-          grep -n -H -C 2 -E 'letter-spacing:[[:space:]]*(0\.(0[6-9]|1[0-9])em|[1-9][0-9]*px|\.?[89]px|1px)' "${files[@]}" || true
-          echo '=== SIDE ACCENTS / INSET STRIPES ==='
-          grep -n -H -C 2 -E 'border-(left|right|top|bottom):[[:space:]]*[2-9]px|inset[^;]*[2-9]px' "${files[@]}" || true
-          echo '=== WIDE SHADOWS ==='
-          grep -n -H -C 2 -E 'box-shadow:[^;]*(20px|24px|28px|30px|36px|44px|54px|70px|72px)' "${files[@]}" || true
-          echo '=== EYEBROW SELECTORS ==='
-          grep -n -H -C 2 -E '(eyebrow|kicker)' "${files[@]}" || true
+          set -uo pipefail
+          chmod +x .agents/skills/impeccable/scripts/impeccable || true
+          set +e
+          .agents/skills/impeccable/scripts/impeccable detect --json \
+            index.html \
+            design_tokens.css \
+            design_components.css \
+            design_responsive.css \
+            design_screens.css \
+            avaliacao_experiencia-1.22.0.css \
+            > /tmp/impeccable.json 2>/tmp/impeccable.err
+          code=$?
+          set -e
+          echo "DETECTOR_EXIT=$code"
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          data = json.loads(Path('/tmp/impeccable.json').read_text(encoding='utf-8') or '[]')
+          severities = Counter((item.get('severity') or 'unknown') for item in data)
+          categories = Counter((item.get('antipattern') or item.get('name') or 'unknown') for item in data)
+          print(f'FINDING_COUNT={len(data)}')
+          for key, value in sorted(severities.items()):
+              print(f'SEVERITY_{key.upper()}={value}')
+          print('CATEGORIES_BEGIN')
+          for key, value in categories.most_common():
+              print(f'{key}={value}')
+          print('CATEGORIES_END')
+          PY
+          if [ -s /tmp/impeccable.err ]; then cat /tmp/impeccable.err; fi
+          exit 0
