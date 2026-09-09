@@ -1,0 +1,62 @@
+name: Impeccable full quality pass
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/impeccable_full_pass.py
+      - .github/workflows/impeccable-full-pass.yml
+
+permissions:
+  contents: write
+
+jobs:
+  full-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply Impeccable harden colorize adapt typeset optimize polish
+        run: python scripts/impeccable_full_pass.py
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
+
+      - name: Run Impeccable detector
+        shell: bash
+        run: |
+          set -uo pipefail
+          chmod +x .agents/skills/impeccable/scripts/impeccable || true
+          set +e
+          .agents/skills/impeccable/scripts/impeccable detect --json index.html design_tokens.css design_components.css design_responsive.css design_screens.css avaliacao_experiencia-1.22.0.css > /tmp/impeccable-detect.json 2>&1
+          code=$?
+          set -e
+          cat /tmp/impeccable-detect.json
+          echo "Impeccable detector exit code: $code"
+
+      - name: Remove one-off runner files
+        shell: bash
+        run: |
+          rm -f scripts/impeccable_full_pass.py
+          rm -f .github/workflows/impeccable-full-pass.yml
+
+      - name: Commit completed quality pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Complete Impeccable harden colorize adapt typeset optimize polish"
+          git push
