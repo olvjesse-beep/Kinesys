@@ -1,0 +1,61 @@
+name: Audit residual form accessibility
+
+on:
+  push:
+    paths:
+      - '.github/workflows/audit-form-accessibility.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install HTML parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Audit accessible names and button types
+        run: |
+          python - <<'PY'
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          soup = BeautifulSoup(html, 'html.parser')
+          labels_for = {label.get('for') for label in soup.find_all('label') if label.get('for')}
+
+          missing_names = []
+          missing_ids = []
+          for control in soup.find_all(['input','select','textarea']):
+              if control.name == 'input' and control.get('type','text').lower() == 'hidden':
+                  continue
+              if control.has_attr('disabled'):
+                  continue
+              control_id = control.get('id')
+              wrapped = control.find_parent('label') is not None
+              named = bool(
+                  control.get('aria-label') or control.get('aria-labelledby') or
+                  wrapped or (control_id and control_id in labels_for)
+              )
+              if not control_id and not wrapped and not control.get('aria-label') and not control.get('aria-labelledby'):
+                  missing_ids.append(str(control)[:180])
+              elif not named:
+                  missing_names.append(control_id or str(control)[:120])
+
+          buttons_without_type = []
+          for form in soup.find_all('form'):
+              for button in form.find_all('button'):
+                  if not button.get('type'):
+                      buttons_without_type.append(button.get('id') or button.get_text(' ', strip=True)[:80])
+
+          print('MISSING_ACCESSIBLE_NAMES_COUNT=', len(missing_names))
+          for item in missing_names:
+              print('MISSING_NAME:', item)
+          print('UNNAMED_CONTROLS_WITHOUT_ID_COUNT=', len(missing_ids))
+          for item in missing_ids:
+              print('NO_ID:', item)
+          print('FORM_BUTTONS_WITHOUT_TYPE_COUNT=', len(buttons_without_type))
+          for item in buttons_without_type:
+              print('BUTTON_NO_TYPE:', item)
+          PY
