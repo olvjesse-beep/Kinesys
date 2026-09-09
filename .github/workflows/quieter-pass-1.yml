@@ -1,0 +1,275 @@
+name: KineSys quieter visual pass 1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/quieter-pass-1.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  quieter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply quieter visual pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          # 1) Remove only the nine redundant kicker/eyebrow labels already mapped by audit.
+          index = Path('index.html')
+          html = index.read_text(encoding='utf-8')
+          removals = [
+              '<span class="ks-access-eyebrow">SUA CLÍNICA. SEU ACESSO.</span>',
+              '<span class="ks-access-eyebrow">RECUPERAÇÃO DE ACESSO</span>',
+              '<span class="ks-access-eyebrow">AJUDA COM A CONTA</span>',
+              '<span class="eyebrow">PAINEL OPERACIONAL</span>',
+              '<span class="eyebrow">PAINEL CLÍNICO</span>',
+              '<span class="eyebrow">PACIENTES</span>',
+              '<span class="eyebrow">KINESYS LOCAL</span>',
+              '<span class="ks-eyebrow">DISPONIBILIDADE EM 2 NÍVEIS</span>',
+          ]
+          expected = {
+              removals[0]: 1,
+              removals[1]: 2,
+              removals[2]: 1,
+              removals[3]: 1,
+              removals[4]: 1,
+              removals[5]: 1,
+              removals[6]: 1,
+              removals[7]: 1,
+          }
+          total = 0
+          for needle, count in expected.items():
+              actual = html.count(needle)
+              if actual != count:
+                  raise SystemExit(f'Guard failed for {needle!r}: expected {count}, found {actual}')
+              html = html.replace(needle, '')
+              total += actual
+          if total != 9:
+              raise SystemExit(f'Expected 9 kicker removals, got {total}')
+          index.write_text(html, encoding='utf-8')
+
+          def append_once(path_name, marker, css):
+              path = Path(path_name)
+              text = path.read_text(encoding='utf-8')
+              if marker in text:
+                  raise SystemExit(f'Marker already exists in {path_name}: {marker}')
+              if not text.endswith('\n'):
+                  text += '\n'
+              path.write_text(text + '\n' + css.strip() + '\n', encoding='utf-8')
+
+          # 2) Global typographic quieting: remaining eyebrow roles stay usable, but stop shouting.
+          append_once('design_typography.css', 'QUIETER PASS 1 — TYPOGRAPHY', r'''
+          /* QUIETER PASS 1 — TYPOGRAPHY
+             Sentence case and normal tracking reduce visual noise without changing semantic roles. */
+          .ks-eyebrow,
+          .eyebrow,
+          .ks-section-eyebrow{
+            letter-spacing:0!important;
+            text-transform:none!important;
+            font-weight:650!important;
+          }
+          ''')
+
+          # 3) Cross-screen surfaces: structurally flat, hierarchically elevated.
+          append_once('design_screens.css', 'QUIETER PASS 1 — SURFACES', r'''
+          /* QUIETER PASS 1 — SURFACES
+             Ordinary structural surfaces stay flat; overlays keep only the shared floating shadow. */
+          .ks-patient-context{box-shadow:none}
+
+          body.ks-design-ready .modal-box h2{
+            text-transform:none;
+            letter-spacing:0;
+          }
+          .ks-dialog,
+          body.ks-design-ready .modal-box,
+          body.ks-design-ready[data-tela="tela_login"] .login-card{
+            box-shadow:var(--kds-shadow-float)!important;
+          }
+
+          body.ks-design-ready .ks-prontuario-resumo{
+            background:var(--kds-surface)!important;
+            color:var(--kds-text)!important;
+            border:1px solid var(--kds-line)!important;
+            border-radius:var(--kds-radius-md)!important;
+            box-shadow:none!important;
+          }
+          body.ks-design-ready .ks-prontuario-resumo .ks-patient-initial.lg{
+            background:var(--kds-accent-soft)!important;
+            color:var(--kds-accent)!important;
+          }
+          body.ks-design-ready .ks-prontuario-resumo .ks-eyebrow,
+          body.ks-design-ready .ks-prontuario-resumo p,
+          body.ks-design-ready .ks-prontuario-metrics span{
+            color:var(--kds-muted)!important;
+          }
+          body.ks-design-ready .ks-prontuario-resumo h2,
+          body.ks-design-ready .ks-prontuario-metrics strong{
+            color:var(--kds-text)!important;
+          }
+          body.ks-design-ready .ks-prontuario-actions .btn-primary{
+            background:var(--kds-accent)!important;
+            border-color:var(--kds-accent)!important;
+            color:var(--kds-surface)!important;
+          }
+          body.ks-design-ready .ks-prontuario-actions .btn-secondary,
+          body.ks-design-ready .ks-prontuario-actions .btn-nav{
+            background:var(--kds-surface-soft)!important;
+            border-color:var(--kds-line)!important;
+            color:var(--kds-text-secondary)!important;
+          }
+          body.ks-design-ready .ks-prontuario-actions .ks-patient-delete{
+            background:transparent!important;
+            border-color:var(--kds-line)!important;
+            color:var(--kds-danger)!important;
+          }
+          body.ks-design-ready .ks-prontuario-actions .ks-patient-delete:hover{
+            background:var(--kds-surface-soft)!important;
+            border-color:var(--kds-danger)!important;
+            color:var(--kds-danger)!important;
+          }
+          ''')
+
+          # 4) Dense analytical screens: use spacing and hierarchy instead of uppercase + shadow.
+          append_once('design_features.css', 'QUIETER PASS 1 — ANALYTICS', r'''
+          /* QUIETER PASS 1 — ANALYTICS */
+          .ks-home-detail-summary span,
+          .ks-home-pro-group,
+          .finance-analysis-kpi span,
+          .ana-table-head,
+          .ks-msg-template-group{
+            text-transform:none;
+            letter-spacing:0;
+            font-weight:650;
+          }
+          .finance-analysis-kpi,
+          .ana-list-row{
+            border-radius:var(--kds-radius-md);
+            box-shadow:none;
+          }
+          .ana-toggle.active{
+            background:var(--kds-accent);
+            box-shadow:none;
+          }
+          ''')
+
+          # 5) Agenda: preserve status by tint and border color, remove decorative stripes.
+          append_once('design_agenda.css', 'QUIETER PASS 1 — AGENDA', r'''
+          /* QUIETER PASS 1 — AGENDA */
+          #tela_agenda .agenda-dia-cabecalho .dia-semana,
+          #tela_agenda .ks-horario-regra strong,
+          #tela_agenda .ks-week-headers{
+            text-transform:none;
+            letter-spacing:0;
+          }
+          #tela_agenda .agenda-dia-cabecalho.hoje{
+            box-shadow:none;
+            border-bottom:1px solid var(--kds-accent);
+          }
+          #tela_agenda .agenda-dia-cabecalho.feriado,
+          #tela_agenda .agenda-dia-cabecalho.feriado.hoje{
+            box-shadow:none;
+            border-bottom:1px solid var(--kds-danger);
+          }
+          #tela_agenda .agenda-compromisso{
+            border-left-width:1px;
+          }
+          ''')
+
+          # 6) Clinical Engine: keep safety semantics, quiet only decorative framing.
+          append_once('design_clinical.css', 'QUIETER PASS 1 — CLINICAL', r'''
+          /* QUIETER PASS 1 — CLINICAL
+             Safety colors remain; redundant stripes, tracking and structural shadows recede. */
+          #tela_avaliacao .hma-kicker,
+          #tela_avaliacao .cluster-hypothesis .label,
+          #tela_avaliacao .kinesys-integration-panel .integration-head span,
+          #tela_avaliacao .ks-region-mode,
+          #tela_avaliacao .ks-specific-name>small,
+          #tela_avaliacao .ks-alert-row small,
+          #tela_avaliacao .teste-botoes button{
+            text-transform:none;
+            letter-spacing:0;
+          }
+          #tela_avaliacao .clinical-progress-wrap,
+          #tela_avaliacao .cluster-region-card{
+            box-shadow:none;
+          }
+          #tela_avaliacao .kinesys-integration-panel{
+            border-left-width:1px;
+            box-shadow:none;
+          }
+          #tela_avaliacao .analise-irradiacao-compacta,
+          #tela_avaliacao .ks-route-findings,
+          #tela_avaliacao .ks-alert-row,
+          #tela_avaliacao .alerta-card{
+            border-left-width:1px;
+          }
+          ''')
+
+          # 7) Shared semantic rows: retain severity color, reduce the stripe itself.
+          append_once('design_utilities.css', 'QUIETER PASS 1 — SEMANTIC ROWS', r'''
+          /* QUIETER PASS 1 — SEMANTIC ROWS */
+          body.ks-design-ready .kds-u-bl-4px-solid-2aa79d,
+          body.ks-design-ready .kds-u-bl-5px-solid-b42318,
+          body.ks-design-ready .kds-u-bl-5px-solid-b89a5a,
+          body.ks-design-ready .kds-u-bl-4px-solid-verde-cirurgico,
+          body.ks-design-ready .ks-alert-inline--critical,
+          body.ks-design-ready .ks-alert-inline--medium,
+          body.ks-design-ready .ks-pending-row--high,
+          body.ks-design-ready .ks-pending-row--medium,
+          body.ks-design-ready .ks-pending-row--low{
+            border-left-width:1px;
+          }
+          body.ks-design-ready .ks-alert-inline__meta{
+            text-transform:none;
+            letter-spacing:0;
+          }
+          ''')
+
+          # 8) Evaluation workspace: sticky actions remain sticky but stop looking like a floating glass card.
+          append_once('avaliacao_experiencia-1.22.0.css', 'QUIETER PASS 1 — EVALUATION WORKSPACE', r'''
+          /* QUIETER PASS 1 — EVALUATION WORKSPACE */
+          .ks-eval-dialog-backdrop{
+            background:rgba(13,38,43,.46);
+            backdrop-filter:none;
+          }
+          .ks-eval-dialog-card{
+            border-radius:var(--kds-radius-lg);
+            box-shadow:var(--kds-shadow-float);
+          }
+          #tela_avaliacao .clinical-actions,
+          #tela_avaliacao .cluster-focus-actions,
+          #tela_avaliacao .ks-eval-synthesis > .card:last-child .actions{
+            border-radius:var(--kds-radius-md);
+            box-shadow:none;
+            backdrop-filter:none;
+          }
+          @media (max-width:700px){
+            .ks-eval-dialog-card{border-radius:var(--kds-radius-lg) var(--kds-radius-lg) 0 0}
+          }
+          ''')
+
+          # 9) One non-semantic purple renewal badge is folded back into the KDS accent family.
+          base = Path('design_base.css')
+          base_text = base.read_text(encoding='utf-8')
+          old = '.finance-pending-badge.renovar{background:#F2EFF9;color:#69548B}'
+          new = '.finance-pending-badge.renovar{background:var(--kds-accent-soft);color:var(--kds-accent-hover)}'
+          if base_text.count(old) != 1:
+              raise SystemExit(f'Purple renewal badge guard failed: found {base_text.count(old)}')
+          base.write_text(base_text.replace(old, new), encoding='utf-8')
+
+          print('Applied quieter pass 1 without changing IDs, JS logic or data contracts.')
+          PY
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html design_typography.css design_screens.css design_features.css design_agenda.css design_clinical.css design_utilities.css avaliacao_experiencia-1.22.0.css design_base.css
+          git diff --cached --stat
+          git commit -m "Quiet KineSys visual hierarchy pass 1"
+          git push
