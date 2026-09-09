@@ -140,3 +140,7 @@ body.ks-design-ready[data-tela="tela_login"] .login-card{max-width:430px;padding
   .ks-prontuario-export-option{min-height:0}
 }
 
+
+
+/* Group labels for multi-control/informational input groups. */
+body.ks-design-ready .input-group > .kds-group-label{display:block;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);font-weight:650;color:var(--kds-text-secondary);margin-bottom:6px;letter-spacing:0}

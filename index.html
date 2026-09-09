@@ -436,8 +436,8 @@
                     </div>
 
                     <div class="input-group fatores-piora-compactos">
-                        <label>Fatores de piora</label>
-                        <div class="checkbox-group compact-chips">
+                        <span class="kds-group-label" id="fatores_piora_label">Fatores de piora</span>
+                        <div class="checkbox-group compact-chips" role="group" aria-labelledby="fatores_piora_label">
                             <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="movimento"><span>Movimento</span></label>
                             <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="repouso"><span>Repouso</span></label>
                             <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="carga"><span>Carga</span></label>
@@ -456,7 +456,7 @@
                     <details class="clinical-disclosure">
                         <summary><span>Antecedentes, cirurgias e medicamentos</span><small>Comorbidades e informações farmacológicas relevantes</small></summary>
                         <div class="disclosure-body">
-                            <div class="input-group"><label>Marcadores e comorbidades</label><div class="checkbox-group compact-chips">
+                            <div class="input-group"><span class="kds-group-label" id="marcadores_comorbidades_label">Marcadores e comorbidades</span><div class="checkbox-group compact-chips" role="group" aria-labelledby="marcadores_comorbidades_label">
                                 <label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label>
                                 <label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Etilismo</span></label>
                                 <label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>HAS</span></label>
@@ -763,7 +763,7 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Nova Escala Visual Analógica da Dor (EVA)</label>
+                    <label for="eva_slider_evo">Nova Escala Visual Analógica da Dor (EVA)</label>
                     <div class="eva-container">
                         <input type="range" min="0" max="10" value="0" class="eva-slider" id="eva_slider_evo">
                         <div class="eva-display">
@@ -881,7 +881,7 @@
                         <label class="checkbox-pill"><input type="checkbox" id="rel_inc_objetivos" checked><span>Objetivos / plano</span></label>
                     </div>
                     <div class="input-group">
-                        <label>Resumo para orientar o documento <span class="ks-optional">opcional</span></label>
+                        <label for="rel_rascunho_rapido">Resumo para orientar o documento <span class="ks-optional">opcional</span></label>
                         <textarea id="rel_rascunho_rapido" rows="5" placeholder="Se quiser, acrescente o que precisa ser enfatizado. Se deixar em branco, o KineSys usará apenas os dados registrados no prontuário."></textarea>
                     </div>
 
@@ -1434,7 +1434,7 @@
                 <div id="ag_horario_extra_bloco" class="agenda-extra-time" hidden>
                     <div class="grid-2">
                         <div class="input-group kds-u-m-0"><label for="ag_horario_extra_inicio">Início extraordinário</label><input type="time" id="ag_horario_extra_inicio" step="300" oninput="atualizarResumoHorarioExtraordinario(); atualizarResumoRecorrencia()"></div>
-                        <div class="input-group kds-u-m-0"><label>Regra de segurança</label><div class="field-help">O término é calculado pela duração do procedimento. Bloqueios e conflitos continuam valendo.</div></div>
+                        <div class="input-group kds-u-m-0"><span class="kds-group-label">Regra de segurança</span><div class="field-help">O término é calculado pela duração do procedimento. Bloqueios e conflitos continuam valendo.</div></div>
                     </div>
                     <div id="ag_horario_extra_resumo" class="agenda-extra-resumo"></div>
                 </div>
@@ -1501,7 +1501,7 @@
                 <small class="field-help">Use Pré-agendado para segurar o horário antes da renovação do pacote. Se um pacote for escolhido, somente as sessões que couberem nele serão vinculadas; o excedente vira Pré-agendado automaticamente.</small>
             </div>
             <div class="input-group agenda-finance-link">
-                <label>Plano ou atendimento unitário <span class="optional-label">(opcional)</span></label>
+                <label for="ag_plano_select">Plano ou atendimento unitário <span class="optional-label">(opcional)</span></label>
                 <select id="ag_plano_select" onchange="atualizarResumoPacoteAgendamento(); atualizarResumoRecorrencia()"><option value="">Selecione um paciente para ver os pacotes</option></select>
                 <small id="ag_plano_status" class="field-help">Selecione o paciente para carregar automaticamente os planos/pacotes ativos.</small>
                 <div id="ag_plano_resumo" class="agenda-package-summary" hidden></div><button type="button" class="btn-secondary" onclick="abrirCriarAtendimento('agenda')">+ Criar atendimento unitário</button>
@@ -1564,8 +1564,8 @@
                 </div>
             </div>
             <div class="input-group">
-                <label>Quem realiza este procedimento</label>
-                <div class="toggle-pill" id="proc_profissionais_toggle"></div>
+                <span class="kds-group-label" id="proc_profissionais_label">Quem realiza este procedimento</span>
+                <div class="toggle-pill" id="proc_profissionais_toggle" role="group" aria-labelledby="proc_profissionais_label"></div>
                 <p class="field-help">Deixe todos desmarcados para liberar o procedimento a qualquer profissional.</p>
             </div>
             <div class="actions">
@@ -1671,8 +1671,8 @@
                 </div>
             </div>
             <div class="input-group kds-u-mb-8px">
-                <label>Janela de preferência (opcional)</label>
-                <div class="grid-2">
+                <span class="kds-group-label" id="esp_janela_label">Janela de preferência (opcional)</span>
+                <div class="grid-2" role="group" aria-labelledby="esp_janela_label">
                     <div class="input-group kds-u-mb-0">
                         <label class="kds-u-fs-meta" for="esp_data_inicio">De</label>
                         <input type="date" id="esp_data_inicio" onchange="atualizarJanelaListaEspera('inicio')">
@@ -1685,8 +1685,8 @@
                 <small class="kds-u-mt-6px kds-u-text-muted kds-u-fs-meta kds-u-lh-1p35 kds-u-d-block">Para uma data única, deixe “De” e “Até” no mesmo dia. Sem datas, a preferência vale continuamente.</small>
             </div>
             <div class="input-group">
-                <label>Dias da semana preferidos <span class="kds-u-fw-500 kds-u-text-muted">(opcional)</span></label>
-                <div class="checkbox-group compact-chips" id="esp_dias_semana">
+                <span class="kds-group-label" id="esp_dias_semana_label">Dias da semana preferidos <span class="kds-u-fw-500 kds-u-text-muted">(opcional)</span></span>
+                <div class="checkbox-group compact-chips" id="esp_dias_semana" role="group" aria-labelledby="esp_dias_semana_label">
                     <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="1"><span>Seg</span></label>
                     <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="2"><span>Ter</span></label>
                     <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="3"><span>Qua</span></label>
@@ -1756,7 +1756,7 @@
                 <div class="input-group"><label for="fin_plano_valor_final">Valor final</label><input id="fin_plano_valor_final" readonly><small id="fin_plano_desconto_pct" class="field-help">0% de desconto</small></div>
             </div>
             <div id="fin_plano_desconto_resumo" class="finance-discount-form-summary">Desconto total: <b>R$ 0,00</b></div>
-            <div class="input-group"><label>Formas de pagamento previstas</label><div id="fin_plano_forma" class="finance-payment-methods" role="group" aria-label="Formas de pagamento previstas"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Você pode combinar mais de uma forma.</small></div>
+            <div class="input-group"><span class="kds-group-label" id="fin_plano_forma_label">Formas de pagamento previstas</span><div id="fin_plano_forma" class="finance-payment-methods" role="group" aria-labelledby="fin_plano_forma_label"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Você pode combinar mais de uma forma.</small></div>
             <div class="input-group"><label for="fin_plano_parcelas">Parcelas combinadas</label><input id="fin_plano_parcelas" type="number" min="1" value="1"><small class="field-help">Informativo: vencimentos ainda não são controlados individualmente.</small></div>
             <div class="input-group"><label for="fin_plano_observacoes">Observação</label><textarea id="fin_plano_observacoes" rows="3" placeholder="Condições combinadas, validade, observações administrativas..."></textarea></div>
             <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_plano')">Cancelar</button><button type="button" class="btn-primary" id="fin_plano_salvar_btn" onclick="salvarPlanoFinanceiro()">Salvar plano</button></div>
