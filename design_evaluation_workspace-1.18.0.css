@@ -3,7 +3,7 @@ body.ks-evaluation-panel-open{overflow:hidden}
 #ks_dialog .ks-dialog-actions{flex-wrap:wrap}
 #ks_dialog .ks-dialog-actions>button[hidden]{display:none!important}
 #ks_dialog #ks_dialog_alternative{background:#fff!important;border-color:#d8a6a1!important;color:#a62b21!important}
-@media(max-width:540px){#ks_dialog .ks-dialog-actions>button{flex:1 0 100%;min-height:44px}}
+@media(max-width:560px){#ks_dialog .ks-dialog-actions>button{flex:1 0 100%;min-height:44px}}
 #tela_avaliacao [hidden]{display:none!important}
 #tela_avaliacao .subtela{overflow-anchor:none}
 #tela_avaliacao .subtela:focus{outline:none}

@@ -36,7 +36,7 @@
 #tela_financeiro .finance-split-value{display:block;width:100px;margin:5px 0 0;padding:7px 8px;border:1px solid var(--fin-line);border-radius:8px}
 #tela_financeiro .finance-split-value[hidden]{display:none!important}
 #tela_financeiro .finance-coverage-summary{border-radius:11px;border:1px solid #ead9aa;background:#fffaf0;padding:11px;margin-bottom:12px}
-@media(max-width:1050px){#tela_financeiro .finance-stats{grid-template-columns:repeat(3,1fr)}#tela_financeiro .finance-columns{grid-template-columns:1fr}}
+@media(max-width:1100px){#tela_financeiro .finance-stats{grid-template-columns:repeat(3,1fr)}#tela_financeiro .finance-columns{grid-template-columns:1fr}}
 @media(max-width:700px){#tela_financeiro .finance-stats{grid-template-columns:repeat(2,1fr)}#tela_financeiro .finance-patient-context{display:grid}#tela_financeiro .finance-patient-actions{justify-content:flex-start}}
 #tela_financeiro .finance-patient-search{position:relative}
 #tela_financeiro .finance-patient-suggestions{position:absolute;z-index:30;left:0;right:0;top:100%;margin-top:5px;max-height:300px;overflow:auto;border:1px solid var(--fin-line);border-radius:11px;background:#fff;box-shadow:0 12px 30px rgba(18,56,59,.16)}

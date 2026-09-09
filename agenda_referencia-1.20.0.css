@@ -24,4 +24,4 @@
 #tela_agenda .agenda-compromisso{border-radius:5px;box-shadow:none}
 #tela_agenda .agenda-agora-linha{border-top-color:#d8394f!important}
 @media(max-width:900px){#tela_agenda .agenda-toolbar-semanal{grid-template-columns:1fr}#tela_agenda .agenda-toolbar-filtros{justify-content:flex-start}}
-@media(max-width:600px){#tela_agenda .agenda-visoes{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros .input-group{min-width:0}#tela_agenda .ks-new-appointment{grid-column:1/-1}}
+@media(max-width:620px){#tela_agenda .agenda-visoes{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros .input-group{min-width:0}#tela_agenda .ks-new-appointment{grid-column:1/-1}}
