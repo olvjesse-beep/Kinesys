@@ -386,3 +386,23 @@ body.ks-eval-modal-open {
         bottom: 6px;
     }
 }
+
+/* QUIETER PASS 1 — EVALUATION WORKSPACE */
+.ks-eval-dialog-backdrop{
+  background:rgba(13,38,43,.46);
+  backdrop-filter:none;
+}
+.ks-eval-dialog-card{
+  border-radius:var(--kds-radius-lg);
+  box-shadow:var(--kds-shadow-float);
+}
+#tela_avaliacao .clinical-actions,
+#tela_avaliacao .cluster-focus-actions,
+#tela_avaliacao .ks-eval-synthesis > .card:last-child .actions{
+  border-radius:var(--kds-radius-md);
+  box-shadow:none;
+  backdrop-filter:none;
+}
+@media (max-width:700px){
+  .ks-eval-dialog-card{border-radius:var(--kds-radius-lg) var(--kds-radius-lg) 0 0}
+}

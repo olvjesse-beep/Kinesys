@@ -74,7 +74,7 @@
             <div class="ks-access-shell">
                 <aside class="ks-access-intro">
                     <div class="ks-access-brand">KINE<span>SYS</span></div>
-                    <span class="ks-access-eyebrow">SUA CLÍNICA. SEU ACESSO.</span>
+
                     <h1>Cuidado e gestão,<br>cada um no seu espaço.</h1>
                     <p>Escolha como deseja entrar. Você verá somente os recursos autorizados para o perfil selecionado.</p>
                     <div class="ks-access-note">Possui mais de uma função? Use a mesma conta e senha. Para mudar de perfil, saia e entre novamente.</div>
@@ -98,17 +98,17 @@
                         </div>
                     </div>
                     <div id="login_acesso_recuperar" hidden>
-                        <span class="ks-access-eyebrow">RECUPERAÇÃO DE ACESSO</span><h2>Esqueceu sua senha?</h2><p>Informe o e-mail cadastrado. Se a conta existir, enviaremos um link para definir uma nova senha.</p>
+                        <h2>Esqueceu sua senha?</h2><p>Informe o e-mail cadastrado. Se a conta existir, enviaremos um link para definir uma nova senha.</p>
                         <form id="login_recovery_form"><div class="input-group"><label for="login_recovery_email">E-mail da sua conta</label><input type="email" id="login_recovery_email" autocomplete="email" required maxlength="254"></div><button class="btn-primary" id="login_recovery_submit" type="submit">Enviar link de recuperação</button></form>
                         <button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
                     </div>
                     <div id="login_acesso_nova_senha" hidden>
-                        <span class="ks-access-eyebrow">RECUPERAÇÃO DE ACESSO</span><h2>Defina sua nova senha</h2><p>Esta senha será usada nos seus perfis de gestão e profissional. Utilize pelo menos 12 caracteres.</p>
+                        <h2>Defina sua nova senha</h2><p>Esta senha será usada nos seus perfis de gestão e profissional. Utilize pelo menos 12 caracteres.</p>
                         <form id="login_reset_form"><div class="input-group"><label for="login_nova_senha">Nova senha</label><div class="ks-access-password"><input type="password" id="login_nova_senha" autocomplete="new-password" minlength="12" required><button type="button" data-toggle-password="login_nova_senha" aria-label="Mostrar nova senha" aria-pressed="false">Mostrar</button></div></div><div class="input-group"><label for="login_confirmar_senha">Confirme a nova senha</label><input type="password" id="login_confirmar_senha" autocomplete="new-password" minlength="12" required></div><button class="btn-primary" id="login_reset_submit" type="submit">Salvar nova senha</button></form>
                         <button class="ks-access-back" type="button" id="login_cancelar_recovery">Cancelar e voltar ao login</button>
                     </div>
                     <div id="login_acesso_conta" hidden>
-                        <span class="ks-access-eyebrow">AJUDA COM A CONTA</span><h2>Não lembra qual e-mail usou?</h2>
+                        <h2>Não lembra qual e-mail usou?</h2>
                         <p>Peça ao administrador da clínica para conferir seu cadastro na equipe e o e-mail vinculado ao seu perfil.</p>
                         <p>Se você é o único administrador, procure o responsável técnico pelo KineSys na clínica para verificar sua identidade e recuperar o acesso com segurança.</p>
                         <p>Por segurança, não exibimos e-mails cadastrados nesta tela. Nunca envie sua senha a terceiros.</p><button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
@@ -164,21 +164,21 @@
         </section>
 <!-- DETALHES DA HOME — v1.11.2 -->
         <section id="tela_home_atendimentos" class="tela ks-home-detail-screen">
-            <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL OPERACIONAL</span><h2>Atendimentos realizados hoje</h2><p id="home_det_atend_subtitulo">Somente atendimentos efetivamente concluídos na data atual.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="ks-home-detail-hero"><div><h2>Atendimentos realizados hoje</h2><p id="home_det_atend_subtitulo">Somente atendimentos efetivamente concluídos na data atual.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
             <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_atend_busca">Buscar</label><input id="home_det_atend_busca" type="search" placeholder="Paciente ou profissional" oninput="renderizarAtendimentosHojeDetalhes()"></div><div class="input-group" id="home_det_atend_prof_wrap"><label for="home_det_atend_prof">Profissional</label><select id="home_det_atend_prof" onchange="renderizarAtendimentosHojeDetalhes()"><option value="">Todos os profissionais</option></select></div><button type="button" class="btn-secondary" onclick="carregarAtendimentosHojeDetalhes(true)">Atualizar</button></div>
             <div id="home_det_atend_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_atend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando atendimentos de hoje…</div></div>
         </section>
 
         <section id="tela_home_pendencias" class="tela ks-home-detail-screen">
-            <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL CLÍNICO</span><h2>Pendências clínicas</h2><p>Selecione uma pendência para abrir o paciente diretamente no ponto do prontuário que precisa de atenção.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="ks-home-detail-hero"><div><h2>Pendências clínicas</h2><p>Selecione uma pendência para abrir o paciente diretamente no ponto do prontuário que precisa de atenção.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
             <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_pend_busca">Buscar paciente ou pendência</label><input id="home_det_pend_busca" type="search" placeholder="Nome, pendência..." oninput="renderizarPendenciasClinicasDetalhes()"></div><div class="input-group"><label for="home_det_pend_nivel">Prioridade</label><select id="home_det_pend_nivel" onchange="renderizarPendenciasClinicasDetalhes()"><option value="">Todas</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Acompanhamento</option></select></div><button type="button" class="btn-secondary" onclick="carregarPendenciasClinicasDetalhes(true)">Atualizar</button></div>
             <div id="home_det_pend_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_pend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pendências…</div></div>
         </section>
 
         <section id="tela_home_recentes" class="tela ks-home-detail-screen">
-            <div class="ks-home-detail-hero"><div><span class="eyebrow">PACIENTES</span><h2>Pacientes recentes</h2><p>Últimos cadastros da clínica, em ordem do mais recente para o mais antigo.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="ks-home-detail-hero"><div><h2>Pacientes recentes</h2><p>Últimos cadastros da clínica, em ordem do mais recente para o mais antigo.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
             <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_recent_busca">Buscar paciente</label><input id="home_det_recent_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPacientesRecentesDetalhes()"></div><button type="button" class="btn-secondary" onclick="carregarPacientesRecentesDetalhes(true)">Atualizar</button></div>
             <div id="home_det_recent_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_recent_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pacientes recentes…</div></div>
@@ -623,7 +623,7 @@
             <div class="card midia-hero-card">
                 <div class="midia-hero-head">
                     <div>
-                        <span class="eyebrow">KINESYS LOCAL</span>
+
                         <h2>Fotos e documentos do prontuário</h2>
                         <p>Originais ficam organizados neste computador. O Supabase recebe somente os metadados de vínculo com o paciente.</p>
                     </div>
@@ -978,7 +978,7 @@
             <div id="agenda_horarios" class="subtela">
                 <div class="ks-agenda-horarios-intro">
                     <div>
-                        <span class="ks-eyebrow">DISPONIBILIDADE EM 2 NÍVEIS</span>
+
                         <h2>Horários da clínica e dos profissionais</h2>
                         <p>A clínica define quando o estabelecimento está aberto. Cada profissional pode ter uma jornada própria dentro desse horário.</p>
                     </div>

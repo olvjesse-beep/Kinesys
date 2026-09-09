@@ -1080,3 +1080,30 @@ body.ks-design-ready details.clinical-disclosure{box-shadow:none}#tela_avaliacao
         gap:14px!important;
     }
 }
+
+/* QUIETER PASS 1 — CLINICAL
+   Safety colors remain; redundant stripes, tracking and structural shadows recede. */
+#tela_avaliacao .hma-kicker,
+#tela_avaliacao .cluster-hypothesis .label,
+#tela_avaliacao .kinesys-integration-panel .integration-head span,
+#tela_avaliacao .ks-region-mode,
+#tela_avaliacao .ks-specific-name>small,
+#tela_avaliacao .ks-alert-row small,
+#tela_avaliacao .teste-botoes button{
+  text-transform:none;
+  letter-spacing:0;
+}
+#tela_avaliacao .clinical-progress-wrap,
+#tela_avaliacao .cluster-region-card{
+  box-shadow:none;
+}
+#tela_avaliacao .kinesys-integration-panel{
+  border-left-width:1px;
+  box-shadow:none;
+}
+#tela_avaliacao .analise-irradiacao-compacta,
+#tela_avaliacao .ks-route-findings,
+#tela_avaliacao .ks-alert-row,
+#tela_avaliacao .alerta-card{
+  border-left-width:1px;
+}

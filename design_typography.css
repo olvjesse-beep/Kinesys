@@ -276,3 +276,13 @@ body.ks-design-ready[data-tela="tela_login"] #btn_login_entrar{min-height:46px!i
 /* Em larguras intermediárias, preservar leitura em vez de comprimir 3 cards. */
 
 
+
+/* QUIETER PASS 1 — TYPOGRAPHY
+   Sentence case and normal tracking reduce visual noise without changing semantic roles. */
+.ks-eyebrow,
+.eyebrow,
+.ks-section-eyebrow{
+  letter-spacing:0!important;
+  text-transform:none!important;
+  font-weight:650!important;
+}

@@ -852,3 +852,23 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   }
 }
 
+
+/* QUIETER PASS 1 — AGENDA */
+#tela_agenda .agenda-dia-cabecalho .dia-semana,
+#tela_agenda .ks-horario-regra strong,
+#tela_agenda .ks-week-headers{
+  text-transform:none;
+  letter-spacing:0;
+}
+#tela_agenda .agenda-dia-cabecalho.hoje{
+  box-shadow:none;
+  border-bottom:1px solid var(--kds-accent);
+}
+#tela_agenda .agenda-dia-cabecalho.feriado,
+#tela_agenda .agenda-dia-cabecalho.feriado.hoje{
+  box-shadow:none;
+  border-bottom:1px solid var(--kds-danger);
+}
+#tela_agenda .agenda-compromisso{
+  border-left-width:1px;
+}

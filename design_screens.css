@@ -144,3 +144,59 @@ body.ks-design-ready[data-tela="tela_login"] .login-card{max-width:430px;padding
 
 /* Group labels for multi-control/informational input groups. */
 body.ks-design-ready .input-group > .kds-group-label{display:block;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);font-weight:650;color:var(--kds-text-secondary);margin-bottom:6px;letter-spacing:0}
+
+/* QUIETER PASS 1 — SURFACES
+   Ordinary structural surfaces stay flat; overlays keep only the shared floating shadow. */
+.ks-patient-context{box-shadow:none}
+
+body.ks-design-ready .modal-box h2{
+  text-transform:none;
+  letter-spacing:0;
+}
+.ks-dialog,
+body.ks-design-ready .modal-box,
+body.ks-design-ready[data-tela="tela_login"] .login-card{
+  box-shadow:var(--kds-shadow-float)!important;
+}
+
+body.ks-design-ready .ks-prontuario-resumo{
+  background:var(--kds-surface)!important;
+  color:var(--kds-text)!important;
+  border:1px solid var(--kds-line)!important;
+  border-radius:var(--kds-radius-md)!important;
+  box-shadow:none!important;
+}
+body.ks-design-ready .ks-prontuario-resumo .ks-patient-initial.lg{
+  background:var(--kds-accent-soft)!important;
+  color:var(--kds-accent)!important;
+}
+body.ks-design-ready .ks-prontuario-resumo .ks-eyebrow,
+body.ks-design-ready .ks-prontuario-resumo p,
+body.ks-design-ready .ks-prontuario-metrics span{
+  color:var(--kds-muted)!important;
+}
+body.ks-design-ready .ks-prontuario-resumo h2,
+body.ks-design-ready .ks-prontuario-metrics strong{
+  color:var(--kds-text)!important;
+}
+body.ks-design-ready .ks-prontuario-actions .btn-primary{
+  background:var(--kds-accent)!important;
+  border-color:var(--kds-accent)!important;
+  color:var(--kds-surface)!important;
+}
+body.ks-design-ready .ks-prontuario-actions .btn-secondary,
+body.ks-design-ready .ks-prontuario-actions .btn-nav{
+  background:var(--kds-surface-soft)!important;
+  border-color:var(--kds-line)!important;
+  color:var(--kds-text-secondary)!important;
+}
+body.ks-design-ready .ks-prontuario-actions .ks-patient-delete{
+  background:transparent!important;
+  border-color:var(--kds-line)!important;
+  color:var(--kds-danger)!important;
+}
+body.ks-design-ready .ks-prontuario-actions .ks-patient-delete:hover{
+  background:var(--kds-surface-soft)!important;
+  border-color:var(--kds-danger)!important;
+  color:var(--kds-danger)!important;
+}

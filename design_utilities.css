@@ -207,3 +207,20 @@ body.ks-design-ready .ks-status-success{color:#2D7D61}
 body.ks-design-ready .ks-status-error{color:#B42318}
 body.ks-design-ready .ks-status-muted{color:var(--kds-text-subtle)}
 body.ks-design-ready .kds-u-mt-neg-10px.kds-u-mt-neg-10px{margin-top:-10px}
+
+/* QUIETER PASS 1 — SEMANTIC ROWS */
+body.ks-design-ready .kds-u-bl-4px-solid-2aa79d,
+body.ks-design-ready .kds-u-bl-5px-solid-b42318,
+body.ks-design-ready .kds-u-bl-5px-solid-b89a5a,
+body.ks-design-ready .kds-u-bl-4px-solid-verde-cirurgico,
+body.ks-design-ready .ks-alert-inline--critical,
+body.ks-design-ready .ks-alert-inline--medium,
+body.ks-design-ready .ks-pending-row--high,
+body.ks-design-ready .ks-pending-row--medium,
+body.ks-design-ready .ks-pending-row--low{
+  border-left-width:1px;
+}
+body.ks-design-ready .ks-alert-inline__meta{
+  text-transform:none;
+  letter-spacing:0;
+}
