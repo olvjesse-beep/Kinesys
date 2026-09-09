@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-09",
+  "title": "Design System: KineSys",
+  "extensions": {
+    "colorMeta": {
+      "background-clinical": {
+        "role": "neutral",
+        "displayName": "Neutro Clínico — Fundo",
+        "canonical": "#F4F7F6",
+        "tonalRamp": ["oklch(15% 0.003 174.5)", "oklch(28% 0.003 174.5)", "oklch(40% 0.003 174.5)", "oklch(52% 0.003 174.5)", "oklch(64% 0.003 174.5)", "oklch(76% 0.003 174.5)", "oklch(88% 0.003 174.5)", "oklch(95% 0.003 174.5)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Neutro Clínico — Superfície",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(28% 0 0)", "oklch(40% 0 0)", "oklch(52% 0 0)", "oklch(64% 0 0)", "oklch(76% 0 0)", "oklch(88% 0 0)", "oklch(95% 0 0)"]
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Neutro Clínico — Suave",
+        "canonical": "#F8FAF9",
+        "tonalRamp": ["oklch(15% 0.002 165.1)", "oklch(28% 0.002 165.1)", "oklch(40% 0.002 165.1)", "oklch(52% 0.002 165.1)", "oklch(64% 0.002 165.1)", "oklch(76% 0.002 165.1)", "oklch(88% 0.002 165.1)", "oklch(95% 0.002 165.1)"]
+      },
+      "petroleum-clinical": {
+        "role": "neutral",
+        "displayName": "Petróleo Clínico",
+        "canonical": "#173B45",
+        "tonalRamp": ["oklch(15% 0.045 218.7)", "oklch(28% 0.045 218.7)", "oklch(40% 0.045 218.7)", "oklch(52% 0.045 218.7)", "oklch(64% 0.045 218.7)", "oklch(76% 0.045 218.7)", "oklch(88% 0.045 218.7)", "oklch(95% 0.045 218.7)"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Texto Secundário",
+        "canonical": "#345158",
+        "tonalRamp": ["oklch(15% 0.036 214.5)", "oklch(28% 0.036 214.5)", "oklch(40% 0.036 214.5)", "oklch(52% 0.036 214.5)", "oklch(64% 0.036 214.5)", "oklch(76% 0.036 214.5)", "oklch(88% 0.036 214.5)", "oklch(95% 0.036 214.5)"]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Cinza Clínico",
+        "canonical": "#667A7F",
+        "tonalRamp": ["oklch(15% 0.025 214.5)", "oklch(28% 0.025 214.5)", "oklch(40% 0.025 214.5)", "oklch(52% 0.025 214.5)", "oklch(64% 0.025 214.5)", "oklch(76% 0.025 214.5)", "oklch(88% 0.025 214.5)", "oklch(95% 0.025 214.5)"]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Linha Clínica",
+        "canonical": "#D9E4E1",
+        "tonalRamp": ["oklch(15% 0.012 178)", "oklch(28% 0.012 178)", "oklch(40% 0.012 178)", "oklch(52% 0.012 178)", "oklch(64% 0.012 178)", "oklch(76% 0.012 178)", "oklch(88% 0.012 178)", "oklch(95% 0.012 178)"]
+      },
+      "precision-teal": {
+        "role": "primary",
+        "displayName": "Teal de Precisão",
+        "canonical": "#1E756F",
+        "tonalRamp": ["oklch(15% 0.080 188.1)", "oklch(28% 0.080 188.1)", "oklch(40% 0.080 188.1)", "oklch(52% 0.080 188.1)", "oklch(64% 0.080 188.1)", "oklch(76% 0.080 188.1)", "oklch(88% 0.080 188.1)", "oklch(95% 0.080 188.1)"]
+      },
+      "precision-teal-hover": {
+        "role": "primary",
+        "displayName": "Teal de Precisão — Hover",
+        "canonical": "#175F5A",
+        "tonalRamp": ["oklch(15% 0.069 188.1)", "oklch(28% 0.069 188.1)", "oklch(40% 0.069 188.1)", "oklch(52% 0.069 188.1)", "oklch(64% 0.069 188.1)", "oklch(76% 0.069 188.1)", "oklch(88% 0.069 188.1)", "oklch(95% 0.069 188.1)"]
+      },
+      "precision-teal-soft": {
+        "role": "primary",
+        "displayName": "Teal Suave",
+        "canonical": "#EAF5F2",
+        "tonalRamp": ["oklch(15% 0.012 178)", "oklch(28% 0.012 178)", "oklch(40% 0.012 178)", "oklch(52% 0.012 178)", "oklch(64% 0.012 178)", "oklch(76% 0.012 178)", "oklch(88% 0.012 178)", "oklch(95% 0.012 178)"]
+      },
+      "danger": {
+        "role": "danger",
+        "displayName": "Vermelho de Risco",
+        "canonical": "#A53B33",
+        "tonalRamp": ["oklch(15% 0.142 27.6)", "oklch(28% 0.142 27.6)", "oklch(40% 0.142 27.6)", "oklch(52% 0.142 27.6)", "oklch(64% 0.142 27.6)", "oklch(76% 0.142 27.6)", "oklch(88% 0.142 27.6)", "oklch(95% 0.142 27.6)"]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Verde de Confirmação",
+        "canonical": "#2F735A",
+        "tonalRamp": ["oklch(15% 0.080 166.2)", "oklch(28% 0.080 166.2)", "oklch(40% 0.080 166.2)", "oklch(52% 0.080 166.2)", "oklch(64% 0.080 166.2)", "oklch(76% 0.080 166.2)", "oklch(88% 0.080 166.2)", "oklch(95% 0.080 166.2)"]
+      },
+      "technology-teal": {
+        "role": "accent",
+        "displayName": "Teal Tecnológico",
+        "canonical": "#2AA79D",
+        "tonalRamp": ["oklch(15% 0.106 186.9)", "oklch(28% 0.106 186.9)", "oklch(40% 0.106 186.9)", "oklch(52% 0.106 186.9)", "oklch(64% 0.106 186.9)", "oklch(76% 0.106 186.9)", "oklch(88% 0.106 186.9)", "oklch(95% 0.106 186.9)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {"displayName": "Display", "purpose": "Título principal de página no desktop."},
+      "headline": {"displayName": "Headline", "purpose": "Regiões, drawers, modais e hierarquia local elevada."},
+      "title": {"displayName": "Title", "purpose": "Seções e cabeçalhos intermediários."},
+      "body": {"displayName": "Body", "purpose": "Texto-base para leitura clínica prolongada."},
+      "label": {"displayName": "Label", "purpose": "Rótulos, tabs, ações compactas e cabeçalhos de tabela."}
+    },
+    "shadows": [
+      {"name": "float", "value": "0 12px 30px rgba(20,51,58,.07)", "purpose": "Menus e camadas flutuantes leves."},
+      {"name": "soft", "value": "0 1px 2px rgba(20,51,58,.035), 0 7px 20px rgba(20,51,58,.035)", "purpose": "Destaque discreto de controles ou estados selecionados."},
+      {"name": "panel", "value": "0 14px 36px rgba(24,54,61,.08)", "purpose": "Painéis que precisam se separar claramente do plano de conteúdo."},
+      {"name": "sidebar", "value": "6px 0 24px rgba(15,40,47,.08)", "purpose": "Separação lateral discreta da navegação fixa."}
+    ],
+    "motion": [
+      {"name": "state-fast", "value": ".15s ease", "purpose": "Transições de background, borda, cor, sombra e opacidade de botões e campos."},
+      {"name": "navigation-fast", "value": ".16s ease", "purpose": "Hover e active state da navegação lateral."},
+      {"name": "drawer", "value": ".2s ease", "purpose": "Entrada e saída do drawer móvel."},
+      {"name": "radar-pulse", "value": ".65s ease-out", "purpose": "Pulso curto para novo alerta do Radar clínico."}
+    ],
+    "breakpoints": [
+      {"name": "bp-1280", "value": "1280px"},
+      {"name": "bp-1180", "value": "1180px"},
+      {"name": "bp-1100", "value": "1100px"},
+      {"name": "bp-980", "value": "980px"},
+      {"name": "bp-900", "value": "900px"},
+      {"name": "bp-820", "value": "820px"},
+      {"name": "bp-760", "value": "760px"},
+      {"name": "bp-700", "value": "700px"},
+      {"name": "bp-620", "value": "620px"},
+      {"name": "bp-560", "value": "560px"},
+      {"name": "bp-520", "value": "520px"},
+      {"name": "bp-430", "value": "430px"},
+      {"name": "min-701", "value": "701px"}
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal do fluxo; teal de precisão, sem ornamentação desnecessária.",
+      "html": "<button class=\"ds-btn-primary\">Salvar</button>",
+      "css": ".ds-btn-primary{min-height:42px;padding:9px 14px;border:1px solid var(--kds-accent);border-radius:var(--kds-radius-sm);background:var(--kds-accent);color:#fff;font-family:inherit;font-size:var(--kds-font-ui);font-weight:680;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}.ds-btn-primary:hover{background:var(--kds-accent-hover);border-color:var(--kds-accent-hover);box-shadow:0 5px 14px rgba(30,117,111,.12)}.ds-btn-primary:focus-visible{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}.ds-btn-primary:disabled{opacity:.52;cursor:not-allowed;box-shadow:none}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação secundária de baixa competição visual.",
+      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary{min-height:42px;padding:9px 14px;border:1px solid #D3DFDC;border-radius:var(--kds-radius-sm);background:#fff;color:#3A555B;font-family:inherit;font-size:var(--kds-font-ui);font-weight:680;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease}.ds-btn-secondary:hover{background:#F6F9F8;border-color:#ADC8C3;color:#245D58}.ds-btn-secondary:focus-visible{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "description": "Ação destrutiva deliberadamente discreta até o momento de uso.",
+      "html": "<button class=\"ds-btn-danger\">Excluir</button>",
+      "css": ".ds-btn-danger{min-height:42px;padding:9px 14px;border:1px solid #E7C7C4;border-radius:var(--kds-radius-sm);background:#fff;color:var(--kds-danger);font-family:inherit;font-size:var(--kds-font-ui);font-weight:680;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease}.ds-btn-danger:hover{background:#FFF3F2;border-color:#DFA8A3;color:#8F3029}.ds-btn-danger:focus-visible{outline:3px solid rgba(165,59,51,.22);outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Campo clínico padrão com altura confortável e foco teal visível.",
+      "html": "<input class=\"ds-field\" type=\"text\" placeholder=\"Nome do paciente\">",
+      "css": ".ds-field{width:100%;min-height:45px;padding:10px 12px;border:1px solid #D4E0DD;border-radius:var(--kds-radius-sm);background:var(--kds-surface);color:#243F45;font-family:inherit;font-size:var(--kds-font-field);line-height:var(--kds-leading-text);transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}.ds-field::placeholder{color:#8B989B}.ds-field:focus{outline:none;border-color:#72AFA8;box-shadow:0 0 0 3px rgba(42,167,157,.10)}.ds-field:focus-visible{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}.ds-field:disabled{border-color:var(--kds-line);background:var(--kds-surface-muted);color:var(--kds-faint);opacity:.82}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superfície estrutural plana para agrupamento de conteúdo clínico ou administrativo.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card-head\"><h2>Avaliação</h2><p>Dados clínicos principais</p></div><div>Conteúdo do card</div></section>",
+      "css": ".ds-card{background:var(--kds-surface);border:1px solid #E1E9E6;border-radius:12px;padding:20px 22px;color:var(--kds-text);box-shadow:none}.ds-card-head{margin-bottom:14px}.ds-card-head h2{margin:0;color:var(--kds-text);font-size:var(--kds-font-content);line-height:var(--kds-leading-ui);font-weight:700;letter-spacing:-.12px}.ds-card-head p{margin:4px 0 0;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "description": "Item ativo da sidebar petróleo com sinal teal interno.",
+      "html": "<nav class=\"ds-nav-shell\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Avaliação</a></nav>",
+      "css": ".ds-nav-shell{padding:10px;background:linear-gradient(180deg,#153840 0%,#173B45 58%,#123038 100%);border-radius:12px}.ds-nav-item{display:flex;align-items:center;min-height:44px;padding:10px;border-radius:8px;color:#C0D0D2;font-family:inherit;font-size:var(--kds-font-nav);font-weight:600;text-decoration:none;transition:background .16s ease,color .16s ease,box-shadow .16s ease}.ds-nav-item:hover{background:rgba(127,208,200,.075);color:#fff}.ds-nav-item:focus-visible{outline:2px solid #7FD0C8;outline-offset:-2px;background:rgba(127,208,200,.09);color:#fff}.ds-nav-active{background:rgba(42,167,157,.13);color:#fff;box-shadow:inset 2px 0 0 #78C9C1}"
+    },
+    {
+      "name": "Checkbox Pill",
+      "kind": "chip",
+      "description": "Seleção compacta recorrente em fluxos clínicos.",
+      "html": "<label class=\"ds-pill\"><input type=\"checkbox\" checked><span>Selecionado</span></label>",
+      "css": ".ds-pill{display:inline-flex;align-items:center;cursor:pointer}.ds-pill input{position:absolute;opacity:0;pointer-events:none}.ds-pill span{padding:10px 18px;border:1px solid var(--kds-line-neutral);border-radius:30px;background:var(--kds-surface);color:var(--kds-text-subtle);font-family:inherit;font-size:var(--kds-font-ui);font-weight:500;transition:background .2s ease,color .2s ease,border-color .2s ease}.ds-pill input:checked+span{background:var(--kds-text);color:var(--kds-surface);border-color:var(--kds-text)}.ds-pill input:focus-visible+span{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Clínica de Precisão",
+    "overview": "O KineSys deve parecer uma ferramenta clínica construída para decisão profissional repetida ao longo do dia: precisa, estável e organizada, sem aparência genérica de dashboard administrativo. A linguagem visual combina uma base clínica sóbria com tecnologia discreta, usando petróleo para estrutura e leitura e teal para ação, foco e estados relevantes.\n\nA personalidade é clínica, moderna e tecnológica. A interface aceita densidade quando ela melhora o trabalho clínico, mas nunca em troca de legibilidade. Ornamentação deve ser subordinada à função; a sensação de sofisticação vem de hierarquia, alinhamento, ritmo, estados claros e consistência entre módulos.",
+    "keyCharacteristics": [
+      "Petróleo + teal como identidade estrutural e interativa.",
+      "Densidade clínica deliberada, sem microtipografia.",
+      "Sidebar escura fixa no desktop e topbar sticky para orientação persistente.",
+      "Superfícies de conteúdo predominantemente planas; elevação reservada a camadas que realmente sobem no fluxo.",
+      "Componentes precisos, discretos e funcionais, com estados de foco claramente visíveis.",
+      "Responsividade por reflow, stacking e redistribuição antes de qualquer compressão tipográfica."
+    ],
+    "rules": [
+      {"name": "The Clinical Signal Rule", "body": "Teal comunica ação, foco, seleção ou tecnologia; petróleo comunica estrutura e leitura. Evitar usar teal como grande área decorativa quando não há significado funcional.", "section": "colors"},
+      {"name": "The Official Scale Rule", "body": "Código novo usa os papéis semânticos `--kds-font-*`; não criar tamanhos locais para resolver um problema de layout.", "section": "typography"},
+      {"name": "The Legibility Before Density Rule", "body": "Legibilidade clínica vence densidade: primeiro reorganizar, quebrar, empilhar ou redistribuir o layout; reduzir tipografia somente dentro das escalas oficiais já definidas.", "section": "layout"},
+      {"name": "The Structurally Flat Rule", "body": "Estruturalmente plano, hierarquicamente elevado. Cards permanecem planos; sombras aparecem quando um elemento realmente ocupa uma camada superior ou precisa comunicar elevação funcional.", "section": "elevation"}
+    ],
+    "dos": [
+      "Do preserve o vocabulário `--kds-*` existente e use tokens semânticos em novas interfaces.",
+      "Do preserve a legibilidade clínica: faça reflow do layout antes de comprimir tipografia e mantenha texto operacional dentro da escala oficial.",
+      "Do mantenha cards de conteúdo padrão planos e use elevação somente quando um elemento realmente estiver acima do fluxo do documento.",
+      "Do mantenha ações primárias em teal, estrutura e leitura em petróleo e estados destrutivos discretos, porém inequívocos.",
+      "Do preserve a exceção compacta da Agenda em `42px / 14px` apenas onde o contrato existente do módulo se aplica.",
+      "Do preserve estados de foco visíveis e tipografia de `16px` para campos em mobile."
+    ],
+    "donts": [
+      "Don't introduza tamanhos locais de fonte, cores, raios, sombras ou breakpoints arbitrários quando um token KDS ou contrato de módulo já cobre a necessidade.",
+      "Don't adicione sombras decorativas a cards comuns nem transforme a interface em um dashboard de cartões flutuantes.",
+      "Don't reduza texto clínico para resolver pressão responsiva; altere composição, quebra, stacking ou largura primeiro.",
+      "Don't use teal vivo como grande área decorativa; ele é principalmente um sinal de ação, estado e foco.",
+      "Don't neutralize alertas clínicos ou red flags de forma que enfraqueça a comunicação de risco.",
+      "Don't altere IDs HTML, semântica clínica, comportamento do Supabase ou lógica de workflow como efeito colateral de trabalho visual."
+    ]
+  }
+}
