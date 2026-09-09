@@ -25,12 +25,23 @@ jobs:
           soup = BeautifulSoup(html, 'html.parser')
           labels_for = {label.get('for') for label in soup.find_all('label') if label.get('for')}
 
+          def hidden_from_accessibility(node):
+              current = node
+              while current is not None and getattr(current, 'attrs', None) is not None:
+                  if current.has_attr('hidden') or current.get('aria-hidden') == 'true':
+                      return True
+                  style = (current.get('style') or '').replace(' ', '').lower()
+                  if 'display:none' in style or 'visibility:hidden' in style:
+                      return True
+                  current = current.parent
+              return False
+
           missing_names = []
           missing_ids = []
           for control in soup.find_all(['input','select','textarea']):
               if control.name == 'input' and control.get('type','text').lower() == 'hidden':
                   continue
-              if control.has_attr('disabled'):
+              if control.has_attr('disabled') or hidden_from_accessibility(control):
                   continue
               control_id = control.get('id')
               wrapped = control.find_parent('label') is not None
@@ -58,4 +69,7 @@ jobs:
           print('FORM_BUTTONS_WITHOUT_TYPE_COUNT=', len(buttons_without_type))
           for item in buttons_without_type:
               print('BUTTON_NO_TYPE:', item)
+
+          if missing_names or missing_ids or buttons_without_type:
+              raise SystemExit('Residual form accessibility issues remain')
           PY
