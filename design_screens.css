@@ -22,7 +22,7 @@ body.ks-design-ready .tela{max-width:var(--kds-content-width);padding-top:20px}
 .ks-patient-clear{width:34px;height:34px}
 body.ks-design-ready h3{color:var(--kds-text);font-weight:700}
 body.ks-design-ready .input-group{margin-bottom:14px}
-body.ks-design-ready .input-group label{font-size:var(--kds-font-metadata);line-height:1.3;font-weight:650;color:#476067;margin-bottom:6px;letter-spacing:0}
+body.ks-design-ready .input-group label{font-size:var(--kds-font-metadata);line-height:1.3;font-weight:650;color:var(--kds-text-secondary);margin-bottom:6px;letter-spacing:0}
 .field-help, .helper-text, .clinical-note{font-size:var(--kds-font-metadata)!important;line-height:1.5!important;color:var(--kds-muted)!important}
 .ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-weight:760!important;color:var(--kds-text-subtle)!important}
 body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outline-offset:2px}
@@ -34,7 +34,7 @@ body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outl
 .ks-home-stats>div{padding:14px 15px;border-radius:12px;box-shadow:none;background:#fff}
 .ks-home-stats span{font-weight:620;color:var(--kds-muted)}
 .ks-home-stats strong{font-weight:720;margin-top:4px}
-.ks-home-stat-arrow{font-size:var(--kds-font-clinical)!important;color:#7E9290!important}
+.ks-home-stat-arrow{font-size:var(--kds-font-clinical)!important;color:var(--kds-muted)!important}
 .ks-home-columns{gap:12px}
 .ks-home-crm{border-radius:12px;box-shadow:none}
 .ks-home-crm>summary{padding:12px 14px}
@@ -45,7 +45,7 @@ body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outl
 .ks-prontuario-resumo{padding:16px 18px!important;border-radius:13px!important;box-shadow:0 9px 24px rgba(17,53,61,.10)!important}
 .ks-prontuario-resumo h2{font-weight:700!important}
 .ks-prontuario-actions{gap:7px!important}
-.ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]{margin-left:auto!important;background:transparent!important;color:#C27A73!important;border-color:transparent!important;font-weight:600!important}
+.ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]{margin-left:auto!important;background:transparent!important;color:var(--kds-danger)!important;border-color:transparent!important;font-weight:600!important}
 .ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]:hover{background:#FFF3F2!important;color:#9B3932!important;border-color:#F0D4D1!important}
 #tela_evolucao{max-width:1220px}
 #tela_evolucao .ks-evo-main{padding:21px 23px!important;box-shadow:none!important}
