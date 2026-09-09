@@ -13,17 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Map high-impact visual matches
+      - name: Map CSS intensity sources
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== KICKERS ==='
-          grep -n -C 2 -E 'SUA CLÍNICA\. SEU ACESSO\.|RECUPERAÇÃO DE ACESSO|AJUDA COM A CONTA|PAINEL OPERACIONAL|PAINEL CLÍNICO|PACIENTES|KINESYS LOCAL|DISPONIBILIDADE EM 2 NÍVEIS' index.html || true
-          echo '=== UPPERCASE / TRACKING ==='
-          grep -n -C 1 -E 'text-transform:[[:space:]]*uppercase|letter-spacing:[[:space:]]*0\.(0[6-9]|1[0-9])em' index.html || true
-          echo '=== SIDE ACCENTS ==='
-          grep -n -C 2 -E 'border-left:[[:space:]]*[34]px|border-top:[[:space:]]*4px|inset[^"]*3px|box-shadow:[^;]*3px' index.html || true
-          echo '=== SHADOWS ==='
-          grep -n -C 1 -E 'box-shadow:[^;]*(20px|30px)|box-shadow:[^;]*#173[Bb]45' index.html || true
-          echo '=== TARGET CONTAINERS ==='
-          grep -n -C 2 -E 'patient-strip|hma-live-suggestions|agenda-grade-scroll|finance-ledger-summary' index.html || true
+          files=(design_base.css design_components.css design_responsive.css design_foundation.css design_features.css design_screens.css design_typography.css design_navigation.css design_agenda.css design_clinical.css design_utilities.css avaliacao_experiencia-1.22.0.css)
+          echo '=== TEXT TRANSFORM UPPERCASE ==='
+          grep -n -H -C 2 -E 'text-transform:[[:space:]]*uppercase' "${files[@]}" || true
+          echo '=== WIDE TRACKING ==='
+          grep -n -H -C 2 -E 'letter-spacing:[[:space:]]*(0\.(0[6-9]|1[0-9])em|[1-9][0-9]*px|\.?[89]px|1px)' "${files[@]}" || true
+          echo '=== SIDE ACCENTS / INSET STRIPES ==='
+          grep -n -H -C 2 -E 'border-(left|right|top|bottom):[[:space:]]*[2-9]px|inset[^;]*[2-9]px' "${files[@]}" || true
+          echo '=== WIDE SHADOWS ==='
+          grep -n -H -C 2 -E 'box-shadow:[^;]*(20px|24px|28px|30px|36px|44px|54px|70px|72px)' "${files[@]}" || true
+          echo '=== EYEBROW SELECTORS ==='
+          grep -n -H -C 2 -E '(eyebrow|kicker)' "${files[@]}" || true
