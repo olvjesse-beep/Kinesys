@@ -305,3 +305,80 @@ body.ks-design-ready .ks-prontuario-actions .ks-patient-delete:hover{
   #tela_evolucao .ks-evo-section{padding-top:14px!important}
   #tela_evolucao .ks-collapse-toggle{min-height:45px}
 }
+/* REPORT WORKSPACE HIERARCHY — clinical document refinement */
+#tela_relatorio .ks-report-config,
+#tela_relatorio .ks-report-editor{
+  border:1px solid var(--kds-line)!important;
+  border-radius:var(--kds-radius-md)!important;
+  background:var(--kds-surface)!important;
+  box-shadow:none!important;
+}
+#tela_relatorio .ks-report-config{padding:20px 21px!important}
+#tela_relatorio .ks-report-editor{padding:20px 22px!important}
+#tela_relatorio .ks-report-config #campos_comparecimento,
+#tela_relatorio .ks-report-config #bloco_ia{
+  margin:14px 0 0!important;
+  padding:14px 0 0!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#tela_relatorio .ks-report-advanced{
+  margin:0 0 14px!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line-soft)!important;
+  border-bottom:1px solid var(--kds-line-soft)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+#tela_relatorio .ks-report-advanced>summary{
+  padding:10px 0!important;
+  color:var(--kds-text-secondary)!important;
+  font-size:var(--kds-font-ui)!important;
+  font-weight:680!important;
+}
+#tela_relatorio .ks-report-advanced-body{
+  padding:4px 0 12px!important;
+  border-top:0!important;
+}
+#tela_relatorio .ks-report-placeholder{
+  min-height:430px!important;
+  padding:38px 28px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:var(--kds-muted)!important;
+}
+#tela_relatorio .ks-report-placeholder h3{
+  margin:6px 0 5px!important;
+  font-size:var(--kds-font-region-name)!important;
+  line-height:var(--kds-leading-ui)!important;
+}
+#tela_relatorio .ks-report-placeholder p{
+  max-width:44ch!important;
+  margin:0!important;
+  font-size:var(--kds-font-label)!important;
+  line-height:var(--kds-leading-text)!important;
+}
+#tela_relatorio #btn_gerar_ia{
+  background:var(--kds-accent)!important;
+  border-color:var(--kds-accent)!important;
+  box-shadow:none!important;
+}
+#tela_relatorio #btn_gerar_ia:hover{
+  background:var(--kds-accent-hover)!important;
+  border-color:var(--kds-accent-hover)!important;
+}
+#tela_relatorio .ks-report-tech{opacity:1!important}
+#tela_relatorio .ks-report-official textarea{
+  border-color:var(--kds-line)!important;
+  background:var(--kds-surface)!important;
+  box-shadow:none!important;
+}
+@media(max-width:820px){
+  #tela_relatorio .ks-report-config,
+  #tela_relatorio .ks-report-editor{padding:18px!important}
+  #tela_relatorio .ks-report-placeholder{min-height:260px!important;padding:28px 12px!important}
+}
