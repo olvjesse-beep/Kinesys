@@ -1,0 +1,386 @@
+/* ==========================================================================
+   KineSys Design System — Navegação | Etapa 7
+   Fonte de verdade para Sidebar, Topbar e shell responsivo.
+   Objetivo: eliminar larguras, alturas, espaçamentos e estados concorrentes
+   sem alterar a lógica funcional da navegação.
+   ========================================================================== */
+
+/* SHELL */
+body.ks-design-ready #ks_sidebar{
+  position:fixed;
+  inset:0 auto 0 0;
+  z-index:3000;
+  width:var(--kds-sidebar-width);
+  height:100dvh;
+  min-height:0;
+  max-height:100dvh;
+  padding:var(--kds-sidebar-padding-top) var(--kds-sidebar-padding-x) max(14px,env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:var(--kds-sidebar-gap);
+  overflow:hidden;
+  background:linear-gradient(180deg,#153840 0%,#173B45 58%,#123038 100%);
+  border:0;
+  border-right:1px solid rgba(255,255,255,.08);
+  box-shadow:6px 0 24px rgba(15,40,47,.08);
+}
+body.ks-design-ready>.container{
+  width:auto;
+  max-width:none;
+  min-height:100vh;
+  margin:0 0 0 var(--kds-sidebar-width);
+  padding-left:var(--kds-shell-gutter);
+  padding-right:var(--kds-shell-gutter);
+  padding-bottom:64px;
+}
+
+/* IDENTIDADE */
+#ks_sidebar .header-left{
+  flex:0 0 auto;
+  min-height:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  flex-wrap:nowrap;
+}
+#ks_sidebar .header-brand{
+  display:grid;
+  grid-template-columns:4px minmax(0,1fr);
+  column-gap:11px;
+  align-items:center;
+  padding:1px 3px 7px;
+  cursor:pointer;
+}
+#ks_sidebar .header-brand::before{
+  content:"";
+  grid-row:1/3;
+  width:3px;
+  height:39px;
+  border-radius:8px;
+  background:linear-gradient(#D4B66F,#7FD0C8);
+  box-shadow:0 0 16px rgba(184,154,90,.18);
+}
+#ks_sidebar .header-brand h1{
+  margin:0;
+  color:#fff;
+  font-size:var(--kds-font-heading-lg);
+  line-height:1.1;
+  letter-spacing:2.1px;
+  font-weight:800;
+}
+#ks_sidebar .header-brand h1 span{color:#7FD0C8}
+#ks_sidebar .header-brand p{
+  margin:4px 0 0;
+  max-width:165px;
+  color:#99B4B7;
+  /* Prioridade temporária contra a regra tipográfica global de <p>; Etapa 11 remove. */
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-text);
+  letter-spacing:1.05px;
+  text-transform:uppercase;
+}
+#ks_sidebar .header-welcome{
+  padding:11px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:9px;
+  background:rgba(255,255,255,.035);
+  color:#D5E3E4;
+}
+#ks_sidebar .header-welcome strong{
+  overflow:hidden;
+  color:#fff;
+  font-size:var(--kds-font-nav);
+  line-height:var(--kds-leading-ui);
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#ks_sidebar .header-welcome small{font-size:var(--kds-font-metadata);color:#93BDB9}
+#ks_sidebar .ks-user-kicker{
+  color:#809DA0;
+  font-size:var(--kds-font-metadata);
+  letter-spacing:1.5px;
+  font-weight:800;
+}
+
+/* LISTA DE NAVEGAÇÃO */
+#ks_sidebar .header-right{
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#ks_sidebar .menu-dropdown{
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  position:static;
+  overflow:hidden;
+}
+#ks_sidebar .btn-menu{display:none}
+#ks_sidebar .dropdown-content,
+#ks_sidebar .dropdown-content.show{
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  height:auto;
+  max-height:none;
+  margin:0;
+  padding:0 0 max(10px,env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  position:static;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  list-style:none;
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+#ks_sidebar .dropdown-content li{width:100%;flex:0 0 auto;margin:0;padding:0}
+#ks_sidebar .ks-nav-label{
+  padding:14px 10px 4px;
+  color:#698A8E;
+  /* Prioridade temporária: .ks-nav-label é um <li> e a base tipográfica ainda tem regra prioritária. */
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-compact);
+  letter-spacing:1.1px;
+  font-weight:760;
+}
+#ks_sidebar .ks-nav-label:first-child{padding-top:2px}
+#ks_sidebar .dropdown-content a{
+  width:100%;
+  min-height:var(--kds-nav-item-height);
+  padding:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:0;
+  border-radius:var(--kds-nav-item-radius);
+  background:transparent;
+  color:#C0D0D2;
+  font-size:var(--kds-font-nav);
+  line-height:var(--kds-leading-ui);
+  font-weight:600;
+  letter-spacing:0;
+  text-decoration:none;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+#ks_sidebar .dropdown-content a:hover{background:rgba(127,208,200,.075);color:#fff}
+#ks_sidebar .dropdown-content a:focus-visible{
+  outline:2px solid #7FD0C8;
+  outline-offset:-2px;
+  background:rgba(127,208,200,.09);
+  color:#fff;
+}
+#ks_sidebar .dropdown-content li.ks-active a{
+  background:rgba(42,167,157,.13);
+  color:#fff;
+  box-shadow:inset 2px 0 0 #78C9C1;
+}
+#ks_sidebar .ks-nav-icon{
+  width:var(--kds-nav-icon-size);
+  height:var(--kds-nav-icon-size);
+  flex:0 0 var(--kds-nav-icon-size);
+  display:grid;
+  place-items:center;
+  color:#78BEB7;
+}
+#ks_sidebar .ks-nav-icon .ks-icon{width:100%;height:100%;display:block}
+#ks_sidebar .ks-nav-logout{
+  flex:0 0 auto;
+  margin-top:7px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+#ks_sidebar .ks-nav-logout a{color:#D8AAA5;border:0;margin:0}
+#ks_sidebar .ks-nav-logout a:hover{background:rgba(181,76,67,.11);color:#F2C0BB}
+
+/* TOPBAR */
+.ks-topbar{
+  position:sticky;
+  top:0;
+  z-index:1200;
+  min-height:var(--kds-topbar-min-height);
+  margin-left:calc(-1 * var(--kds-shell-gutter));
+  margin-right:calc(-1 * var(--kds-shell-gutter));
+  padding:15px var(--kds-shell-gutter) 13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  background:rgba(244,247,246,.965);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid #DDE7E4;
+}
+.ks-page-heading{min-width:0}
+.ks-page-heading>span#ks_page_kicker{display:none}
+.ks-page-heading h1{
+  margin:0;
+  color:var(--kds-petrol-deep);
+  font-size:var(--kds-font-title);
+  line-height:1.12;
+  letter-spacing:-.6px;
+  font-weight:720;
+}
+.ks-page-heading p{
+  margin:5px 0 0;
+  color:var(--kds-muted);
+  /* Prioridade temporária contra a regra tipográfica global de <p>. */
+  font-size:var(--kds-font-nav);
+  line-height:var(--kds-leading-text);
+}
+.ks-topbar-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.ks-version{
+  padding:5px 9px;
+  border:1px solid var(--kds-line-strong);
+  border-radius:var(--kds-radius-pill);
+  background:rgba(255,255,255,.8);
+  color:#91A0A3;
+  font-size:var(--kds-font-metadata);
+  letter-spacing:.8px;
+  font-weight:800;
+}
+.ks-mobile-menu{
+  display:none;
+  width:var(--kds-button-height);
+  height:var(--kds-button-height);
+  place-items:center;
+  padding:0;
+  border:1px solid var(--kds-line-strong);
+  border-radius:var(--kds-radius-sm);
+  background:#fff;
+  color:var(--kds-petrol-deep);
+  cursor:pointer;
+}
+.ks-mobile-menu:hover{background:var(--kds-accent-soft);border-color:#BDD8D3}
+.ks-mobile-menu:focus-visible{outline:3px solid rgba(42,167,157,.20);outline-offset:2px}
+
+/* Backdrop do drawer móvel */
+.ks-nav-backdrop{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:2890;
+  margin:0;
+  padding:0;
+  border:0;
+  background:rgba(10,30,36,.46);
+  backdrop-filter:blur(2px);
+  cursor:pointer;
+}
+
+/* LOGIN — shell não aparece */
+body.ks-design-ready[data-tela="tela_login"] #ks_sidebar,
+body.ks-design-ready[data-tela="tela_login"] #ks_topbar{display:none}
+body.ks-design-ready[data-tela="tela_login"]>.container{margin-left:0}
+
+/* NOTEBOOK */
+/* Contexto do paciente acompanha o shell/topbar. */
+.ks-patient-context{top:var(--kds-topbar-min-height)!important}
+
+@media(max-width:1180px){
+  body.ks-design-ready #ks_sidebar{width:var(--kds-sidebar-notebook-width)}
+  body.ks-design-ready>.container{
+    margin-left:var(--kds-sidebar-notebook-width);
+    padding-left:var(--kds-shell-gutter-notebook);
+    padding-right:var(--kds-shell-gutter-notebook);
+  }
+  .ks-topbar{
+    margin-left:calc(-1 * var(--kds-shell-gutter-notebook));
+    margin-right:calc(-1 * var(--kds-shell-gutter-notebook));
+    padding-left:var(--kds-shell-gutter-notebook);
+    padding-right:var(--kds-shell-gutter-notebook);
+  }
+  .ks-page-heading h1{font-size:var(--kds-font-title-notebook)}
+}
+@media(max-width:980px){
+  .ks-page-heading h1{font-size:var(--kds-font-title-mobile)}
+}
+
+/* DRAWER MÓVEL */
+@media(max-width:820px){
+  body.ks-design-ready.ks-nav-open{overflow:hidden}
+  body.ks-design-ready #ks_sidebar{
+    width:min(var(--kds-sidebar-mobile-width),88vw);
+    transform:translateX(-102%);
+    transition:transform .2s ease;
+    box-shadow:20px 0 55px rgba(10,30,36,.25);
+  }
+  body.ks-design-ready.ks-nav-open #ks_sidebar{transform:none}
+  body.ks-design-ready.ks-nav-open .ks-nav-backdrop{display:block}
+  body.ks-design-ready>.container{
+    width:auto;
+    max-width:none;
+    margin-left:0;
+    padding-left:17px;
+    padding-right:17px;
+  }
+  .ks-topbar{
+    min-height:var(--kds-topbar-mobile-height);
+    margin-left:-17px;
+    margin-right:-17px;
+    padding:12px 17px;
+  }
+  .ks-mobile-menu{display:grid}
+  .ks-page-heading>span#ks_page_kicker{
+    display:block;
+    margin-bottom:2px;
+    color:#7F9699;
+    font-size:var(--kds-font-metadata);
+    letter-spacing:1.1px;
+    font-weight:800;
+  }
+  .ks-page-heading h1{font-size:var(--kds-font-title-mobile-lg)}
+  .ks-page-heading p{display:block}
+  .ks-patient-context{top:var(--kds-topbar-mobile-height)!important}
+}
+
+@media(max-width:700px){
+  body.ks-design-ready>.container{
+    width:100%;
+    max-width:100vw;
+    padding-left:var(--kds-shell-gutter-mobile);
+    padding-right:var(--kds-shell-gutter-mobile);
+  }
+  .ks-topbar{
+    max-width:100vw;
+    margin-left:calc(-1 * var(--kds-shell-gutter-mobile));
+    margin-right:calc(-1 * var(--kds-shell-gutter-mobile));
+    padding-left:var(--kds-shell-gutter-mobile);
+    padding-right:var(--kds-shell-gutter-mobile);
+  }
+}
+@media(max-width:560px){.ks-version{display:none}}
+
+/* Janelas baixas: compactação controlada da navegação, sem microtipografia. */
+@media(max-height:700px){
+  body.ks-design-ready #ks_sidebar{padding-top:14px;gap:10px}
+  #ks_sidebar .header-left{gap:9px}
+  #ks_sidebar .header-brand{padding-bottom:4px}
+  #ks_sidebar .header-brand p{display:none}
+  #ks_sidebar .header-welcome{padding:8px 10px}
+  #ks_sidebar .dropdown-content a{min-height:38px;padding-top:7px;padding-bottom:7px}
+  #ks_sidebar .ks-nav-label{padding-top:8px;padding-bottom:3px}
+}
+@media(max-height:560px){
+  #ks_sidebar .header-welcome{display:none}
+  #ks_sidebar .header-brand h1{font-size:var(--kds-font-heading-sm)}
+  #ks_sidebar .dropdown-content a{min-height:36px;padding-top:6px;padding-bottom:6px;font-size:var(--kds-font-metadata)}
+}
+

@@ -1,0 +1,209 @@
+/* ==========================================================================
+   KineSys Design System — Utilitários | Etapa 12
+   Substitui propriedades visuais antes gravadas inline no HTML/JS.
+   Utilitários são carregados após os módulos para permitir exceções explícitas
+   sem prioridade forçada. Estados e geometria dinâmica permanecem sob responsabilidade JS.
+   ========================================================================== */
+
+body.ks-design-ready .kds-u-accent-petrol.kds-u-accent-petrol{accent-color:#315F5A}
+body.ks-design-ready .kds-u-ai-start.kds-u-ai-start{align-items:flex-start}
+body.ks-design-ready .kds-u-bg-danger-soft.kds-u-bg-danger-soft{background:#FFF6F4}
+body.ks-design-ready .kds-u-bg-disabled.kds-u-bg-disabled{background-color:#EDF2F7}
+body.ks-design-ready .kds-u-bg-linear-gradient135deg-2aa79d-173b45.kds-u-bg-linear-gradient135deg-2aa79d-173b45{background:linear-gradient(135deg, #2AA79D, #173B45)}
+body.ks-design-ready .kds-u-bg-soft-green.kds-u-bg-soft-green{background:#F8FAF9}
+body.ks-design-ready .kds-u-bg-soft-mint.kds-u-bg-soft-mint{background:#F9FBFA}
+body.ks-design-ready .kds-u-bg-soft-panel.kds-u-bg-soft-panel{background:#F8FBFA}
+body.ks-design-ready .kds-u-bg-soft-slate.kds-u-bg-soft-slate{background:#F8FAFC}
+body.ks-design-ready .kds-u-bg-warning-soft.kds-u-bg-warning-soft{background:#FFF8E8}
+body.ks-design-ready .kds-u-bl-4px-solid-2aa79d.kds-u-bl-4px-solid-2aa79d{border-left:4px solid #2AA79D}
+body.ks-design-ready .kds-u-bl-5px-solid-b42318.kds-u-bl-5px-solid-b42318{border-left:5px solid #B42318}
+body.ks-design-ready .kds-u-bl-5px-solid-b89a5a.kds-u-bl-5px-solid-b89a5a{border-left:5px solid #B89A5A}
+body.ks-design-ready .kds-u-border-1px-solid-cinza-borda.kds-u-border-1px-solid-cinza-borda{border:1px solid var(--kds-line-neutral)}
+body.ks-design-ready .kds-u-border-1px-solid-dde8e4.kds-u-border-1px-solid-dde8e4{border:1px solid #DDE8E4}
+body.ks-design-ready .kds-u-border-1px-solid-e8c66a.kds-u-border-1px-solid-e8c66a{border:1px solid #E8C66A}
+body.ks-design-ready .kds-u-border-1px-solid-e9b8af.kds-u-border-1px-solid-e9b8af{border:1px solid #E9B8AF}
+body.ks-design-ready .kds-u-border-1px-solid-ks-line-soft-dce6e3.kds-u-border-1px-solid-ks-line-soft-dce6e3{border:1px solid var(--kds-line-subtle,#DCE6E3)}
+body.ks-design-ready .kds-u-br-10px.kds-u-br-10px{border-radius:10px}
+body.ks-design-ready .kds-u-br-8px.kds-u-br-8px{border-radius:8px}
+body.ks-design-ready .kds-u-br-9px.kds-u-br-9px{border-radius:9px}
+body.ks-design-ready .kds-u-cursor-not-allowed.kds-u-cursor-not-allowed{cursor:not-allowed}
+body.ks-design-ready .kds-u-cursor-pointer.kds-u-cursor-pointer{cursor:pointer}
+body.ks-design-ready .kds-u-flex-0-0-auto.kds-u-flex-0-0-auto{flex:0 0 auto}
+body.ks-design-ready .kds-u-font-serif.kds-u-font-serif{font-family:'Times New Roman', Times, serif}
+body.ks-design-ready .kds-u-fs-content.kds-u-fs-content{font-size:var(--kds-font-content)}
+body.ks-design-ready .kds-u-fs-label.kds-u-fs-label{font-size:var(--kds-font-label)}
+body.ks-design-ready .kds-u-fs-meta.kds-u-fs-meta{font-size:var(--kds-font-metadata)}
+body.ks-design-ready .kds-u-fs-title.kds-u-fs-title{font-size:var(--kds-font-title)}
+body.ks-design-ready .kds-u-fs-ui.kds-u-fs-ui{font-size:var(--kds-font-ui)}
+body.ks-design-ready .kds-u-fs-body.kds-u-fs-body{font-size:var(--kds-font-body)}
+body.ks-design-ready .kds-u-fw-400.kds-u-fw-400{font-weight:400}
+body.ks-design-ready .kds-u-fw-500.kds-u-fw-500{font-weight:500}
+body.ks-design-ready .kds-u-fw-600.kds-u-fw-600{font-weight:600}
+body.ks-design-ready .kds-u-fw-800.kds-u-fw-800{font-weight:800}
+body.ks-design-ready .kds-u-fw-bold.kds-u-fw-bold{font-weight:bold}
+body.ks-design-ready .kds-u-gap-10px.kds-u-gap-10px{gap:10px}
+body.ks-design-ready .kds-u-gc-1-1.kds-u-gc-1-1{grid-column:1 / -1}
+body.ks-design-ready .kds-u-gtc-repeat3-1fr.kds-u-gtc-repeat3-1fr{grid-template-columns:repeat(3, 1fr)}
+body.ks-design-ready .kds-u-h-17px.kds-u-h-17px{height:17px}
+body.ks-design-ready .kds-u-h-60px.kds-u-h-60px{height:60px}
+body.ks-design-ready .kds-u-h-70px.kds-u-h-70px{height:70px}
+body.ks-design-ready .kds-u-jc-between.kds-u-jc-between{justify-content:space-between}
+body.ks-design-ready .kds-u-jc-center.kds-u-jc-center{justify-content:center}
+body.ks-design-ready .kds-u-jc-start.kds-u-jc-start{justify-content:flex-start}
+body.ks-design-ready .kds-u-lh-1p35.kds-u-lh-1p35{line-height:1.35}
+body.ks-design-ready .kds-u-lh-1p4.kds-u-lh-1p4{line-height:1.4}
+body.ks-design-ready .kds-u-lh-1p6.kds-u-lh-1p6{line-height:1.6}
+body.ks-design-ready .kds-u-m-0.kds-u-m-0{margin:0}
+body.ks-design-ready .kds-u-m-0-0-12px.kds-u-m-0-0-12px{margin:0 0 12px}
+body.ks-design-ready .kds-u-m-0-0-14px.kds-u-m-0-0-14px{margin:0 0 14px}
+body.ks-design-ready .kds-u-m-10px-0-18px.kds-u-m-10px-0-18px{margin:10px 0 18px}
+body.ks-design-ready .kds-u-m-12px-0-0.kds-u-m-12px-0-0{margin:12px 0 0}
+body.ks-design-ready .kds-u-m-5px-0-12px.kds-u-m-5px-0-12px{margin:-5px 0 12px}
+body.ks-design-ready .kds-u-m-5px-0-8px.kds-u-m-5px-0-8px{margin:5px 0 8px}
+body.ks-design-ready .kds-u-maxw-330px.kds-u-maxw-330px{max-width:330px}
+body.ks-design-ready .kds-u-mb-0.kds-u-mb-0{margin-bottom:0}
+body.ks-design-ready .kds-u-mb-12px.kds-u-mb-12px{margin-bottom:12px}
+body.ks-design-ready .kds-u-mb-15px.kds-u-mb-15px{margin-bottom:15px}
+body.ks-design-ready .kds-u-mb-16px.kds-u-mb-16px{margin-bottom:16px}
+body.ks-design-ready .kds-u-mb-18px.kds-u-mb-18px{margin-bottom:18px}
+body.ks-design-ready .kds-u-mb-25px.kds-u-mb-25px{margin-bottom:25px}
+body.ks-design-ready .kds-u-mb-6px.kds-u-mb-6px{margin-bottom:6px}
+body.ks-design-ready .kds-u-mb-7px.kds-u-mb-7px{margin-bottom:7px}
+body.ks-design-ready .kds-u-mb-8px.kds-u-mb-8px{margin-bottom:8px}
+body.ks-design-ready .kds-u-minh-240px.kds-u-minh-240px{min-height:240px}
+body.ks-design-ready .kds-u-mt-10px.kds-u-mt-10px{margin-top:10px}
+body.ks-design-ready .kds-u-mt-12px.kds-u-mt-12px{margin-top:12px}
+body.ks-design-ready .kds-u-mt-15px.kds-u-mt-15px{margin-top:15px}
+body.ks-design-ready .kds-u-mt-1px.kds-u-mt-1px{margin-top:1px}
+body.ks-design-ready .kds-u-mt-20px.kds-u-mt-20px{margin-top:20px}
+body.ks-design-ready .kds-u-mt-2px.kds-u-mt-2px{margin-top:-2px}
+body.ks-design-ready .kds-u-mt-30px.kds-u-mt-30px{margin-top:30px}
+body.ks-design-ready .kds-u-mt-3px.kds-u-mt-3px{margin-top:3px}
+body.ks-design-ready .kds-u-mt-5px.kds-u-mt-5px{margin-top:5px}
+body.ks-design-ready .kds-u-mt-6px.kds-u-mt-6px{margin-top:6px}
+body.ks-design-ready .kds-u-mt-8px.kds-u-mt-8px{margin-top:8px}
+body.ks-design-ready .kds-u-ov-visible.kds-u-ov-visible{overflow:visible}
+body.ks-design-ready .kds-u-p-10px.kds-u-p-10px{padding:10px}
+body.ks-design-ready .kds-u-p-10px-18px.kds-u-p-10px-18px{padding:10px 18px}
+body.ks-design-ready .kds-u-p-11px-12px.kds-u-p-11px-12px{padding:11px 12px}
+body.ks-design-ready .kds-u-p-12px-14px.kds-u-p-12px-14px{padding:12px 14px}
+body.ks-design-ready .kds-u-p-15px.kds-u-p-15px{padding:15px}
+body.ks-design-ready .kds-u-p-20px.kds-u-p-20px{padding:20px}
+body.ks-design-ready .kds-u-p-7px-12px.kds-u-p-7px-12px{padding:7px 12px}
+body.ks-design-ready .kds-u-pos-relative.kds-u-pos-relative{position:relative}
+body.ks-design-ready .kds-u-ta-center.kds-u-ta-center{text-align:center}
+body.ks-design-ready .kds-u-ta-left.kds-u-ta-left{text-align:left}
+body.ks-design-ready .kds-u-text-green.kds-u-text-green{color:var(--kds-brand-teal)}
+body.ks-design-ready .kds-u-text-muted.kds-u-text-muted{color:var(--kds-text-subtle)}
+body.ks-design-ready .kds-u-text-petrol.kds-u-text-petrol{color:var(--kds-text)}
+body.ks-design-ready .kds-u-text-petrol-alt.kds-u-text-petrol-alt{color:var(--kds-petrol-deep,#315F5A)}
+body.ks-design-ready .kds-u-w-100pct.kds-u-w-100pct{width:100%}
+body.ks-design-ready .kds-u-w-17px.kds-u-w-17px{width:17px}
+body.ks-design-ready .kds-u-wrap-wrap.kds-u-wrap-wrap{flex-wrap:wrap}
+body.ks-design-ready .kds-u-z-10.kds-u-z-10{z-index:10}
+body.ks-design-ready .kds-u-z-100.kds-u-z-100{z-index:100}
+body.ks-design-ready .kds-u-z-97.kds-u-z-97{z-index:97}
+body.ks-design-ready .kds-u-z-98.kds-u-z-98{z-index:98}
+body.ks-design-ready .kds-u-z-99.kds-u-z-99{z-index:99}
+
+/* Utilitários adicionais exigidos por HTML dinâmico migrado na Etapa 12. */
+body.ks-design-ready .kds-u-ai-center.kds-u-ai-center{align-items:center}
+body.ks-design-ready .kds-u-ai-start-2.kds-u-ai-start-2{align-items:start}
+body.ks-design-ready .kds-u-bb-1px-solid-edf1ef.kds-u-bb-1px-solid-edf1ef{border-bottom:1px solid #EDF1EF}
+body.ks-design-ready .kds-u-bg-mint-surface.kds-u-bg-mint-surface{background:#FBFDFC}
+body.ks-design-ready .kds-u-bg-neutral-soft.kds-u-bg-neutral-soft{background:#F3F5F5}
+body.ks-design-ready .kds-u-bg-success-soft.kds-u-bg-success-soft{background:#EDF7F3}
+body.ks-design-ready .kds-u-bl-4px-solid-verde-cirurgico.kds-u-bl-4px-solid-verde-cirurgico{border-left:4px solid var(--kds-brand-teal)}
+body.ks-design-ready .kds-u-border-1px-solid-e4ece9.kds-u-border-1px-solid-e4ece9{border:1px solid #E4ECE9}
+body.ks-design-ready .kds-u-br-4px.kds-u-br-4px{border-radius:4px}
+body.ks-design-ready .kds-u-br-999px.kds-u-br-999px{border-radius:999px}
+body.ks-design-ready .kds-u-fs-heading-sm.kds-u-fs-heading-sm{font-size:var(--kds-font-heading-sm)}
+body.ks-design-ready .kds-u-fw-700.kds-u-fw-700{font-weight:700}
+body.ks-design-ready .kds-u-fw-750.kds-u-fw-750{font-weight:750}
+body.ks-design-ready .kds-u-gap-12px.kds-u-gap-12px{gap:12px}
+body.ks-design-ready .kds-u-gap-5px.kds-u-gap-5px{gap:5px}
+body.ks-design-ready .kds-u-gap-6px.kds-u-gap-6px{gap:6px}
+body.ks-design-ready .kds-u-gtc-34px-125px-1fr.kds-u-gtc-34px-125px-1fr{grid-template-columns:34px 125px 1fr}
+body.ks-design-ready .kds-u-m-6px-0-0.kds-u-m-6px-0-0{margin:6px 0 0}
+body.ks-design-ready .kds-u-m-8px-0-0-18px.kds-u-m-8px-0-0-18px{margin:8px 0 0 18px}
+body.ks-design-ready .kds-u-minw-0.kds-u-minw-0{min-width:0}
+body.ks-design-ready .kds-u-mt-2px-2.kds-u-mt-2px-2{margin-top:2px}
+body.ks-design-ready .kds-u-mt-4px.kds-u-mt-4px{margin-top:4px}
+body.ks-design-ready .kds-u-mt-7px.kds-u-mt-7px{margin-top:7px}
+body.ks-design-ready .kds-u-opacity-0p6.kds-u-opacity-0p6{opacity:0.6}
+body.ks-design-ready .kds-u-opacity-p7.kds-u-opacity-p7{opacity:.7}
+body.ks-design-ready .kds-u-opacity-p8.kds-u-opacity-p8{opacity:.8}
+body.ks-design-ready .kds-u-p-10px-0.kds-u-p-10px-0{padding:10px 0}
+body.ks-design-ready .kds-u-p-10px-12px.kds-u-p-10px-12px{padding:10px 12px}
+body.ks-design-ready .kds-u-p-24px-10px.kds-u-p-24px-10px{padding:24px 10px}
+body.ks-design-ready .kds-u-p-3px-7px.kds-u-p-3px-7px{padding:3px 7px}
+body.ks-design-ready .kds-u-p-6px-10px.kds-u-p-6px-10px{padding:6px 10px}
+body.ks-design-ready .kds-u-p-8px-16px.kds-u-p-8px-16px{padding:8px 16px}
+body.ks-design-ready .kds-u-text-lock.kds-u-text-lock{color:#7B8581}
+body.ks-design-ready .kds-u-text-muted-dark.kds-u-text-muted-dark{color:#56666B}
+body.ks-design-ready .kds-u-text-neutral-text.kds-u-text-neutral-text{color:#6B7779}
+body.ks-design-ready .kds-u-text-primary.kds-u-text-primary{color:var(--kds-text-neutral)}
+body.ks-design-ready .kds-u-text-slate-text.kds-u-text-slate-text{color:#718096}
+body.ks-design-ready .kds-u-text-success-dark.kds-u-text-success-dark{color:#2D7D61}
+body.ks-design-ready .kds-u-text-success-text.kds-u-text-success-text{color:#276B58}
+body.ks-design-ready .kds-u-ws-nowrap.kds-u-ws-nowrap{white-space:nowrap}
+body.ks-design-ready .kds-u-ws-pre-wrap.kds-u-ws-pre-wrap{white-space:pre-wrap}
+body.ks-design-ready .kds-u-bb-1px-solid-e2e8f0.kds-u-bb-1px-solid-e2e8f0{border-bottom:1px solid #E2E8F0}
+body.ks-design-ready .kds-u-bg-e67e22.kds-u-bg-e67e22{background:#E67E22}
+body.ks-design-ready .kds-u-bg-fffbeb.kds-u-bg-fffbeb{background:#FFFBEB}
+body.ks-design-ready .kds-u-border-1px-solid-f1c40f.kds-u-border-1px-solid-f1c40f{border:1px solid #F1C40F}
+body.ks-design-ready .kds-u-br-6px.kds-u-br-6px{border-radius:6px}
+body.ks-design-ready .kds-u-d-block.kds-u-d-block{display:block}
+body.ks-design-ready .kds-u-d-flex.kds-u-d-flex{display:flex}
+body.ks-design-ready .kds-u-d-grid.kds-u-d-grid{display:grid}
+body.ks-design-ready .kds-u-d-inline-flex.kds-u-d-inline-flex{display:inline-flex}
+body.ks-design-ready .kds-u-gap-8px.kds-u-gap-8px{gap:8px}
+body.ks-design-ready .kds-u-m-3px-0-12px.kds-u-m-3px-0-12px{margin:-3px 0 12px}
+body.ks-design-ready .kds-u-m-4px-0-10px.kds-u-m-4px-0-10px{margin:-4px 0 10px}
+body.ks-design-ready .kds-u-p-10px-14px.kds-u-p-10px-14px{padding:10px 14px}
+body.ks-design-ready .kds-u-p-6px-12px.kds-u-p-6px-12px{padding:6px 12px}
+body.ks-design-ready .kds-u-text-003b46.kds-u-text-003b46{color:#003B46}
+body.ks-design-ready .kds-u-text-416b7a.kds-u-text-416b7a{color:#416B7A}
+body.ks-design-ready .kds-u-text-7a5b00.kds-u-text-7a5b00{color:#7A5B00}
+body.ks-design-ready .kds-u-text-d35400.kds-u-text-d35400{color:#D35400}
+body.ks-design-ready .kds-u-text-rgba-255-255-255-0p7.kds-u-text-rgba-255-255-255-0p7{color:rgba(255,255,255,0.7)}
+body.ks-design-ready .kds-u-text-white.kds-u-text-white{color:white}
+body.ks-design-ready .kds-u-transition-0p2s.kds-u-transition-0p2s{transition:0.2s}
+
+/* Estados semânticos migrados do JavaScript — Etapa 12 */
+body.ks-design-ready .ks-login-feedback.has-message{padding:9px 11px}
+body.ks-design-ready .ks-login-feedback--erro{border-radius:8px;color:#B42318;background:#FFF1F0;border:1px solid #F3C7C3}
+body.ks-design-ready .ks-login-feedback--sucesso{border-radius:8px;color:#237A4A;background:#EFFAF3;border:1px solid #C9E8D4}
+body.ks-design-ready .ks-login-feedback--aviso{border-radius:8px;color:#8A6400;background:#FFF8E6;border:1px solid #ECD99D}
+body.ks-design-ready .ks-login-feedback--info{border-radius:8px;color:#53666C;background:#F5F8F8;border:1px solid #DDE6E7}
+body.ks-design-ready .kds-eva-level-0{color:#2ECC71}
+body.ks-design-ready .kds-eva-level-1{color:#82E0AA}
+body.ks-design-ready .kds-eva-level-2{color:#F1C40F}
+body.ks-design-ready .kds-eva-level-3{color:#E67E22}
+body.ks-design-ready .kds-eva-level-4{color:#E74C3C}
+body.ks-design-ready .kds-eva-level-5{color:#C0392B}
+body.ks-design-ready .kds-u-hover-soft.kds-u-hover-soft:hover{background-color:#F4F7F9}
+body.ks-design-ready .kds-u-hover-warm.kds-u-hover-warm:hover{background-color:#FFF5EB}
+body.ks-design-ready .kds-scroll-contained{overflow-y:auto;overscroll-behavior:contain}
+body.ks-design-ready .ks-alert-inline{border-radius:6px;padding:10px 14px;margin-bottom:10px}
+body.ks-design-ready .ks-alert-inline--critical{border-left:4px solid #E74C3C;background:#FFF5F5}
+body.ks-design-ready .ks-alert-inline--medium{border-left:4px solid #F39C12;background:#FFFBEB}
+body.ks-design-ready .ks-alert-inline__meta{font-size:var(--kds-font-metadata);font-weight:700;text-transform:uppercase}
+body.ks-design-ready .ks-alert-inline--critical .ks-alert-inline__meta{color:#C0392B}
+body.ks-design-ready .ks-alert-inline--medium .ks-alert-inline__meta{color:#B7791F}
+body.ks-design-ready .ks-alert-summary-card--critical{border-color:#E74C3C}
+body.ks-design-ready .ks-alert-summary-card--clinical{border-color:#D97706}
+body.ks-design-ready .ks-map-route-row{padding:6px 0}
+body.ks-design-ready .ks-map-route-row.is-divided{border-top:1px solid #E6EFED}
+body.ks-design-ready .ks-pending-row{padding:9px 12px;margin-bottom:8px;background:#FAFBFA;border-radius:6px}
+body.ks-design-ready .ks-pending-row--high{border-left:4px solid #B42318}
+body.ks-design-ready .ks-pending-row--medium{border-left:4px solid #B7791F}
+body.ks-design-ready .ks-pending-row--low{border-left:4px solid #46736B}
+body.ks-design-ready button.ks-pending-row{display:block;width:100%;text-align:left;border-top:0;border-right:0;border-bottom:0;cursor:pointer;color:inherit}
+body.ks-design-ready .ks-media-doc-icon{font-weight:900;color:var(--kds-text)}
+body.ks-design-ready .ks-media-doc-icon--pdf{font-size:22px}
+body.ks-design-ready .ks-media-doc-icon--generic{font-size:34px}
+body.ks-design-ready .ks-status-success{color:#2D7D61}
+body.ks-design-ready .ks-status-error{color:#B42318}
+body.ks-design-ready .ks-status-muted{color:var(--kds-text-subtle)}
+body.ks-design-ready .kds-u-mt-neg-10px.kds-u-mt-neg-10px{margin-top:-10px}

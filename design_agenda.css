@@ -1,0 +1,765 @@
+/*
+ * KineSys Design System — Agenda | Etapa 8
+ * Única fonte visual do módulo Agenda.
+ *
+ * Contrato:
+ * - mantém a Agenda densa, mas sem microtipografia;
+ * - toolbar e editor semanal usam a exceção compacta oficial (42px / 14px);
+ * - nenhuma regra de negócio, status, pacote ou Supabase é definida aqui;
+ * - dimensões dinâmicas da grade recebem apenas contagens via JS.
+ */
+
+/* ========================================================================== 
+   1. Shell e navegação interna
+   ========================================================================== */
+body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
+  width:100%;
+  max-width:1700px;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+#tela_agenda,
+#agenda_painel,
+#tela_agenda .agenda-card-semanal,
+#tela_agenda .agenda-toolbar-semanal,
+#tela_agenda .agenda-toolbar-filtros,
+#tela_agenda .agenda-grade-scroll,
+#tela_agenda .agenda-semana-grade{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#tela_agenda .ks-agenda-controls{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:var(--kds-space-3);
+  margin-bottom:10px;
+  position:relative;
+}
+
+#tela_agenda .ks-segmented{
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:3px;
+  border:1px solid var(--kds-line-soft);
+  border-radius:var(--kds-radius-sm);
+  background:var(--kds-surface-muted);
+}
+
+#tela_agenda .ks-segmented button{
+  min-height:34px;
+  padding:6px 11px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  font-weight:800;
+  cursor:pointer;
+}
+
+#tela_agenda .ks-segmented button:hover{color:var(--kds-accent)}
+#tela_agenda .ks-segmented button.active{
+  background:var(--kds-surface);
+  color:var(--kds-text);
+  box-shadow:var(--kds-shadow-soft);
+}
+#tela_agenda .ks-segmented button:focus-visible{
+  outline:3px solid rgba(30,117,111,.18);
+  outline-offset:2px;
+}
+
+#tela_agenda .ks-agenda-config-wrap{position:relative}
+#tela_agenda .ks-agenda-config-menu{
+  position:absolute;
+  right:0;
+  top:46px;
+  z-index:1000;
+  width:220px;
+  max-width:calc(100vw - 24px);
+  padding:6px;
+  border:1px solid var(--kds-line);
+  border-radius:10px;
+  background:var(--kds-surface);
+  box-shadow:var(--kds-shadow-float);
+  box-sizing:border-box;
+}
+#tela_agenda .ks-agenda-config-menu[hidden]{display:none}
+#tela_agenda .ks-agenda-config-menu button{
+  display:block;
+  width:100%;
+  min-height:38px;
+  padding:9px 10px;
+  border:0;
+  border-radius:7px;
+  background:var(--kds-surface);
+  color:var(--kds-text-secondary);
+  text-align:left;
+  font-size:var(--kds-font-label);
+  font-weight:700;
+  cursor:pointer;
+}
+#tela_agenda .ks-agenda-config-menu button:hover{background:var(--kds-accent-soft);color:var(--kds-accent)}
+#tela_agenda .ks-agenda-config-menu button:focus-visible{outline:2px solid var(--kds-accent);outline-offset:-2px}
+
+/* ========================================================================== 
+   2. Toolbar semanal
+   ========================================================================== */
+#tela_agenda .agenda-card-semanal{
+  padding:16px;
+  overflow:hidden;
+}
+
+#tela_agenda .agenda-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  gap:14px;
+  margin-bottom:12px;
+}
+
+#tela_agenda .agenda-toolbar-semanal{
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:8px;
+}
+
+#tela_agenda .agenda-semana-nav{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:300px;
+}
+
+#tela_agenda .agenda-semana-nav>button{
+  display:inline-grid;
+  place-items:center;
+  min-width:38px;
+  height:38px;
+  padding:0 10px;
+  border:1px solid var(--kds-line);
+  border-radius:7px;
+  background:var(--kds-surface);
+  color:var(--kds-text);
+  font-size:var(--kds-font-metadata);
+  font-weight:800;
+  cursor:pointer;
+}
+#tela_agenda .agenda-semana-nav>button:hover{border-color:var(--kds-accent);color:var(--kds-accent);background:var(--kds-accent-soft)}
+#tela_agenda .agenda-semana-nav>button:focus-visible{outline:3px solid rgba(30,117,111,.18);outline-offset:2px}
+#tela_agenda .agenda-semana-nav .btn-hoje-agenda{width:auto;padding-inline:12px}
+
+#tela_agenda .agenda-semana-rotulo{
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-compact);
+  font-weight:800;
+  letter-spacing:1.2px;
+}
+#tela_agenda .agenda-semana-titulo{
+  color:var(--kds-text);
+  font-size:var(--kds-font-body);
+  line-height:var(--kds-leading-ui);
+  font-weight:800;
+  white-space:nowrap;
+}
+
+#tela_agenda .agenda-toolbar-filtros{
+  display:grid;
+  grid-template-columns:minmax(140px,160px) minmax(240px,320px) max-content max-content;
+  align-items:start;
+  justify-content:end;
+  gap:10px;
+  min-width:0;
+}
+
+#tela_agenda .agenda-toolbar-filtros>.input-group{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin:0;
+}
+#tela_agenda .agenda-toolbar-filtros .input-group label{
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-ui);
+}
+#tela_agenda .agenda-profissional-filtro{min-width:0;width:100%;max-width:320px}
+#tela_agenda #agenda_filtro_profissional{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  box-sizing:border-box;
+}
+#tela_agenda .agenda-profissional-filtro select:disabled{opacity:.82;cursor:not-allowed}
+#tela_agenda .agenda-escopo-acesso{
+  display:block;
+  min-width:0;
+  max-width:100%;
+  min-height:16px;
+  margin-top:4px;
+  overflow:hidden;
+  color:var(--kds-muted);
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-ui);
+  font-weight:600;
+}
+
+/* Exceção compacta oficial da Agenda. */
+#tela_agenda .agenda-toolbar-filtros :where(input:not([type="checkbox"]):not([type="radio"]),select),
+#tela_agenda .ks-week-row :where(input:not([type="checkbox"]):not([type="radio"])){
+  min-height:var(--kds-control-height-compact);
+  height:var(--kds-control-height-compact);
+  padding-top:8px;
+  padding-bottom:8px;
+  font-size:var(--kds-font-ui);
+}
+
+#tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
+#tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{
+  min-height:var(--kds-control-height-compact);
+  height:var(--kds-control-height-compact);
+  align-self:start;
+  margin:25px 0 0;
+  white-space:nowrap;
+}
+
+/* ========================================================================== 
+   3. Feedback e estados vazios
+   ========================================================================== */
+#tela_agenda .agenda-feedback,
+.agenda-modal-feedback{
+  min-height:0;
+  margin:3px 0 7px;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-text);
+}
+#tela_agenda #agenda_feedback.info{display:none}
+.agenda-modal-feedback{min-height:20px;margin-top:2px;margin-bottom:8px}
+#tela_agenda .agenda-feedback.erro,.agenda-modal-feedback.erro{color:var(--kds-danger);font-weight:700}
+#tela_agenda .agenda-feedback.sucesso,.agenda-modal-feedback.sucesso{color:var(--kds-success);font-weight:700}
+#tela_agenda .agenda-feedback.info,.agenda-modal-feedback.info{color:var(--kds-text-secondary);font-weight:600}
+
+#tela_agenda .agenda-vazio{
+  padding:32px 20px;
+  border:1px dashed var(--kds-line);
+  border-radius:var(--kds-radius-md);
+  background:var(--kds-surface-soft);
+  color:var(--kds-muted);
+  text-align:center;
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-text);
+}
+#tela_agenda .agenda-grade-aviso{
+  grid-column:1/-1;
+  padding:26px;
+  color:var(--kds-muted);
+  text-align:center;
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-text);
+}
+
+/* ========================================================================== 
+   4. Grade semanal
+   ========================================================================== */
+#tela_agenda .agenda-grade-scroll{
+  width:100%;
+  max-height:var(--kds-agenda-max-height);
+  overflow-x:hidden;
+  overflow-y:auto;
+  border:1px solid var(--kds-line);
+  border-radius:var(--kds-radius-md);
+  background:var(--kds-surface);
+}
+
+#tela_agenda .agenda-semana-grade{
+  --kds-agenda-runtime-day-count:6;
+  --kds-agenda-runtime-slot-count:24;
+  display:grid;
+  position:relative;
+  width:100%;
+  min-width:0;
+  grid-template-columns:var(--kds-agenda-hour-axis-width) repeat(var(--kds-agenda-runtime-day-count),minmax(0,1fr));
+  grid-template-rows:var(--kds-agenda-header-height) repeat(var(--kds-agenda-runtime-slot-count),var(--kds-agenda-slot-height));
+  font-size:var(--kds-font-metadata);
+}
+
+#tela_agenda .agenda-semana-grade .agenda-canto,
+#tela_agenda .agenda-semana-grade .agenda-dia-cabecalho{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:var(--kds-surface-soft);
+  border-bottom:1px solid var(--kds-line);
+}
+#tela_agenda .agenda-semana-grade .agenda-canto{left:0;z-index:7}
+
+#tela_agenda .agenda-dia-cabecalho,
+#tela_agenda .agenda-celula,
+#tela_agenda .agenda-hora-eixo,
+#tela_agenda .agenda-canto{
+  min-width:0;
+  box-sizing:border-box;
+}
+
+#tela_agenda .agenda-dia-cabecalho{
+  min-height:var(--kds-agenda-header-height);
+  padding:7px 3px;
+  overflow:hidden;
+  border-left:1px solid var(--kds-line-soft);
+  text-align:center;
+}
+#tela_agenda .agenda-dia-cabecalho .dia-semana,
+#tela_agenda .agenda-dia-cabecalho .dia-data{
+  display:block;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:clip;
+}
+#tela_agenda .agenda-dia-cabecalho .dia-semana{
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-compact);
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.25px;
+}
+#tela_agenda .agenda-dia-cabecalho .dia-data{
+  margin-top:2px;
+  color:var(--kds-text);
+  font-size:var(--kds-font-body);
+  line-height:var(--kds-leading-compact);
+  font-weight:850;
+}
+#tela_agenda .agenda-dia-cabecalho.hoje{background:#EAF8F5;box-shadow:inset 0 -3px 0 var(--kds-accent)}
+#tela_agenda .agenda-dia-cabecalho.feriado{background:#F8F2F1;box-shadow:inset 0 -3px 0 #A45A50}
+#tela_agenda .agenda-dia-cabecalho.feriado.hoje{background:#F5EFEC;box-shadow:inset 0 -3px 0 #A45A50}
+#tela_agenda .agenda-feriado-tag{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:3px;
+  padding:1px 5px;
+  border-radius:var(--kds-radius-pill);
+  background:#A45A50;
+  color:#fff;
+  font-size:var(--kds-font-metadata);
+  line-height:1.4;
+  font-weight:900;
+  letter-spacing:.04em;
+}
+
+#tela_agenda .agenda-hora-eixo{
+  position:sticky;
+  left:0;
+  z-index:4;
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-start;
+  padding:4px 6px 0 0;
+  border-top:1px solid var(--kds-line-soft);
+  border-right:1px solid var(--kds-line);
+  background:#FAFBFB;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-tight);
+  font-weight:700;
+}
+
+#tela_agenda .agenda-celula{
+  position:relative;
+  min-height:var(--kds-agenda-slot-height);
+  overflow:hidden;
+  border-top:1px solid var(--kds-line-soft);
+  border-left:1px solid var(--kds-line-soft);
+  background:#FBFCFC;
+}
+#tela_agenda .agenda-celula.meia-hora{border-top-style:dashed;border-top-color:#F0F4F3}
+#tela_agenda .agenda-celula.fora-atendimento{background:#F7F8F8}
+#tela_agenda .agenda-celula.atendimento{background:#fff;cursor:pointer}
+#tela_agenda .agenda-celula.atendimento:hover{background:#F1FAF7;box-shadow:inset 0 0 0 1px #9BCFC7}
+#tela_agenda .agenda-celula.bloqueado{background:#596164;color:#fff;cursor:default}
+#tela_agenda .agenda-celula.bloqueado .agenda-bloqueio-texto{padding:5px 6px;color:#fff;font-size:var(--kds-font-metadata);line-height:1.2;font-weight:800}
+#tela_agenda .agenda-celula.feriado{background:#6A6261;color:#fff}
+#tela_agenda .agenda-celula.feriado.meia-hora{border-top-color:rgba(255,255,255,.12)}
+#tela_agenda .agenda-celula.feriado .agenda-feriado-texto{color:#fff;white-space:normal}
+#tela_agenda .agenda-celula.agendado{padding:1px;background:transparent;cursor:pointer}
+
+/* ========================================================================== 
+   5. Compromissos e status
+   ========================================================================== */
+#tela_agenda .agenda-compromisso{
+  display:flex;
+  align-items:center;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:20px;
+  padding:2px 5px;
+  overflow:hidden;
+  border:1px solid #78AAA4;
+  border-left:3px solid #247D73;
+  border-radius:var(--kds-agenda-card-radius);
+  background:#DDEFEA;
+  color:var(--kds-text);
+  box-shadow:none;
+  box-sizing:border-box;
+}
+#tela_agenda .agenda-compromisso.status-pre_agendado{background:#EFF3F5;border-color:#AEBCC1;border-left-color:#7D9198}
+#tela_agenda .agenda-compromisso.status-agendado{background:#EAF3F8;border-color:#79A8BD;border-left-color:#397E9E}
+#tela_agenda .agenda-compromisso.status-confirmado{background:#DCEDEA;border-color:#4F8F87;border-left-color:#247D73}
+#tela_agenda .agenda-compromisso.status-em_recepcao{background:#FFF6DB;border-color:#D6B85C;border-left-color:#C5901D}
+#tela_agenda .agenda-compromisso.status-atendido,
+#tela_agenda .agenda-compromisso.status-concluido{opacity:.72;background:#EAF5EE;border-color:#78A98B;border-left-color:#4A8B69}
+#tela_agenda .agenda-compromisso.status-falta_justificada,
+#tela_agenda .agenda-compromisso.status-faltou{background:#FFF2E3;border-color:#D78B35;border-left-color:#D06D00}
+#tela_agenda .agenda-compromisso.status-falta_nao_justificada{background:#FFF0EF;border-color:#D98A84;border-left-color:#B84239}
+
+#tela_agenda .agenda-compromisso .paciente{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  width:100%;
+  min-width:0;
+  overflow:visible;
+  color:#214A4E;
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-ui);
+  font-weight:820;
+  white-space:nowrap;
+}
+#tela_agenda .agenda-compromisso .agenda-paciente-nome{
+  min-width:0;
+  flex:1;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.agenda-pagamento-icone,.agenda-cobranca-icone{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:14px;
+  height:14px;
+  border-radius:var(--kds-radius-pill);
+  font-size:var(--kds-font-metadata);
+  font-weight:900;
+  line-height:1;
+}
+.agenda-pagamento-icone{background:#DDF2E8;color:#196B52;border:1px solid #8BC8B2}
+.agenda-cobranca-icone{background:#FFF0E8;color:#A6491D;border:1px solid #E7A47E}
+.agenda-pagamento-detalhe{display:flex;align-items:center;gap:6px;margin:8px 0;padding:7px 9px;border-radius:8px;font-size:var(--kds-font-metadata)}
+.agenda-pagamento-detalhe.pago{background:#EEF8F4;color:#285E4F;border:1px solid #C9E5D9}
+.agenda-pagamento-detalhe.pendente{background:#FFF7EE;color:#85451F;border:1px solid #F0D0B9}
+.agenda-pagamento-detalhe.neutro{background:#F5F7F7;color:#5D6E72;border:1px solid #E2E8E8}
+
+/* Badges de status usados no detalhe/auditoria da Agenda. */
+.badge-pre_agendado{background:#EFF3F5;color:#61767E}
+.badge-agendado{background:#EAF3F8;color:#2C6B89}
+.badge-confirmado{background:#E6FBF9;color:#067A75}
+.badge-em_recepcao{background:#FFF6DB;color:#8B650B}
+.badge-atendido,.badge-concluido{background:#EAF5EE;color:#356B50}
+.badge-falta_justificada,.badge-faltou{background:#FFF3E0;color:#A45D0B}
+.badge-falta_nao_justificada{background:#FFF0EF;color:#A6372F}
+.badge-cancelado{background:#F1F3F4;color:#636E72}
+.badge-lembrete-ok{background:#EAF7EE;color:#227A4A}
+
+/* ========================================================================== 
+   6. Editor de horários da clínica/profissional
+   ========================================================================== */
+#tela_agenda .ks-agenda-horarios-intro{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:24px;
+  margin:0 0 14px;
+  padding:4px 2px;
+}
+#tela_agenda .ks-agenda-horarios-intro h2{margin:3px 0 4px;color:var(--kds-text);font-size:var(--kds-font-heading-lg)}
+#tela_agenda .ks-agenda-horarios-intro p{margin:0;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+#tela_agenda .ks-horario-regra{
+  max-width:430px;
+  padding:11px 14px;
+  border:1px solid var(--kds-line);
+  border-radius:10px;
+  background:var(--kds-surface-soft);
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+#tela_agenda .ks-horario-regra strong{font-size:var(--kds-font-metadata);text-transform:uppercase;letter-spacing:.55px;color:var(--kds-accent)}
+#tela_agenda .ks-horario-regra span{font-size:var(--kds-font-label);color:var(--kds-text-secondary);line-height:var(--kds-leading-ui)}
+
+#tela_agenda .ks-week-schedule-card{padding:0;overflow:hidden}
+#tela_agenda .ks-schedule-level-card{margin-bottom:14px}
+#tela_agenda .ks-week-schedule-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:22px;
+  padding:22px 24px 16px;
+  border-bottom:1px solid var(--kds-line-soft);
+  background:linear-gradient(135deg,#FBFDFC,#F1F8F6);
+}
+#tela_agenda .ks-professional-schedule-card .ks-week-schedule-head{background:linear-gradient(135deg,#FBFCFD,#F4F7F8)}
+#tela_agenda .ks-week-schedule-head h2{margin:2px 0 4px;color:var(--kds-text);font-size:var(--kds-font-region-name)}
+#tela_agenda .ks-week-schedule-head p{margin:0;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+#tela_agenda .ks-schedule-level{
+  display:inline-flex;
+  padding:4px 7px;
+  border-radius:var(--kds-radius-pill);
+  background:var(--kds-accent-soft);
+  color:var(--kds-accent);
+  font-size:var(--kds-font-metadata);
+  font-weight:900;
+  letter-spacing:.7px;
+}
+#tela_agenda .ks-week-schedule-actions{display:flex;gap:9px;align-items:end}
+#tela_agenda .ks-week-schedule-actions .input-group{margin:0;min-width:240px}
+#tela_agenda .ks-week-schedule-actions .btn-primary{height:var(--kds-control-height-compact);white-space:nowrap}
+#tela_agenda #agenda_grade_feedback{padding:0 24px}
+#tela_agenda .ks-week-schedule-table{padding:12px 24px 20px}
+#tela_agenda .ks-week-schedule-table:empty{display:none}
+
+#tela_agenda .ks-week-headers,
+#tela_agenda .ks-week-row{
+  display:grid;
+  grid-template-columns:138px minmax(120px,1fr) 18px minmax(120px,1fr) 34px minmax(120px,1fr) 18px minmax(120px,1fr);
+  gap:8px;
+  align-items:center;
+}
+#tela_agenda .ks-week-headers{
+  padding:2px 0 7px;
+  color:var(--kds-faint);
+  font-size:var(--kds-font-metadata);
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.55px;
+}
+#tela_agenda .ks-week-headers span:nth-child(2){grid-column:2/5}
+#tela_agenda .ks-week-headers span:nth-child(3){grid-column:6/9}
+#tela_agenda .ks-week-row{padding:9px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_agenda .ks-week-row:last-child{border-bottom:0}
+#tela_agenda .ks-week-day{color:var(--kds-text);font-size:var(--kds-font-label);font-weight:820}
+#tela_agenda .ks-week-sep{color:var(--kds-faint);font-size:var(--kds-font-metadata);text-align:center}
+#tela_agenda .ks-week-break{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:800;text-align:center}
+#tela_agenda .ks-professional-inherit-note{margin:12px 24px 0;padding:9px 11px;border:1px solid var(--kds-line-soft);border-radius:8px;background:#F6F8F8;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+#tela_agenda .ks-week-schedule-legacy{margin:0 24px 20px;border-top:1px solid var(--kds-line-soft)}
+#tela_agenda .ks-week-schedule-legacy>summary{padding:12px 0;cursor:pointer;color:var(--kds-muted);font-size:var(--kds-font-label);font-weight:750}
+#tela_agenda .ks-week-schedule-legacy .lista-config{padding-bottom:10px}
+#tela_agenda .ks-schedule-records{margin-top:4px;padding:0 20px}
+#tela_agenda .ks-schedule-records>summary{padding:14px 0}
+#tela_agenda .ks-schedule-records .lista-config{padding-bottom:14px}
+
+/* ========================================================================== 
+   7. Modal de agendamento, recorrência, pacote e horário extraordinário
+   ========================================================================== */
+#modal_agendamento .modal-box{
+  width:min(620px,calc(100vw - 32px));
+  max-width:620px;
+  padding:24px;
+  overflow-x:hidden;
+  box-sizing:border-box;
+}
+#modal_agendamento .grid-2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+#modal_agendamento .grid-2>*{min-width:0}
+#modal_agendamento .input-group{min-width:0;margin-bottom:14px}
+#modal_agendamento input,#modal_agendamento select,#modal_agendamento textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+#modal_agendamento .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+#modal_agendamento .actions button{min-width:0;white-space:normal}
+#ag_profissional_select:not(:disabled){background-color:#fff;cursor:pointer}
+#btn_salvar_agendamento[disabled]{opacity:.62;cursor:wait}
+
+.agenda-finance-link{padding:11px 12px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
+.agenda-finance-link label{color:var(--kds-text);font-weight:800}
+.agenda-finance-link .optional-label{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:600}
+.agenda-package-summary{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--kds-accent-soft);color:#17675F;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);font-weight:650}
+
+.agenda-recurrencia{margin:4px 0 14px;padding:12px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
+.agenda-recurrencia>label{color:var(--kds-text);font-weight:800}
+.agenda-recurrencia-grid,.agenda-recurrencia-fim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;margin-top:10px}
+.agenda-recurrencia-grid>*{min-width:0}
+.agenda-recurrencia-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.agenda-dia-pill{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:42px;
+  min-height:38px;
+  padding:0 10px;
+  border:1px solid #CFE0DC;
+  border-radius:var(--kds-radius-pill);
+  background:#fff;
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  font-weight:750;
+  cursor:pointer;
+  user-select:none;
+}
+.agenda-dia-pill input{position:absolute;opacity:0;pointer-events:none}
+.agenda-dia-pill:has(input:checked){border-color:var(--kds-accent);background:var(--kds-accent-soft);color:var(--kds-accent)}
+.agenda-dia-pill:has(input:focus-visible){outline:3px solid rgba(30,117,111,.18);outline-offset:2px}
+.agenda-recorrencia-custom{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.agenda-recorrencia-custom .input-group{flex:1;margin:0}
+.agenda-recorrencia-datas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.agenda-recorrencia-chip{display:inline-flex;gap:6px;align-items:center;padding:5px 8px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-pill);background:#fff;color:var(--kds-text-secondary);font-size:var(--kds-font-metadata)}
+.agenda-recorrencia-chip button{border:0;background:transparent;padding:0;line-height:1;cursor:pointer;color:var(--kds-danger)}
+.agenda-recorrencia-resumo{margin-top:9px;padding:8px 10px;border-radius:8px;background:#F1F7F6;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+.agenda-recorrencia-atalho{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.agenda-recorrencia-atalho button{padding:6px 9px;font-size:var(--kds-font-metadata)}
+
+.agenda-extra-toggle{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid var(--kds-line);border-radius:9px;background:var(--kds-surface-soft);cursor:pointer;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+.agenda-extra-toggle input{width:auto;margin-top:2px}
+.agenda-extra-toggle strong{color:var(--kds-text)}
+.agenda-extra-time{margin-top:9px;padding:11px 12px;border:1px solid #E2CFA5;border-radius:9px;background:#FFFDF8}
+.agenda-extra-time .grid-2{align-items:end}
+.agenda-extra-resumo{margin-top:5px;color:#7A6031;font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+.agenda-extra-icone{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:5px;border-radius:var(--kds-radius-pill);background:#FFF3D8;color:#8B5F12;font-size:var(--kds-font-metadata);font-weight:900;vertical-align:middle}
+.agenda-extra-badge{margin-left:5px;border:1px solid #E8D2A0;background:#FFF3D8;color:#805A16}
+
+.agenda-plano-vinculo{margin-top:12px;padding:10px;border:1px solid var(--kds-line);border-radius:8px;background:var(--kds-surface-soft)}
+.agenda-plano-vinculo label{display:block;margin-bottom:5px;color:var(--kds-text-secondary);font-size:var(--kds-font-label);font-weight:800}
+.agenda-plano-vinculo>div{display:flex;gap:6px}
+.agenda-plano-vinculo select{flex:1;min-width:0}
+.agenda-plano-vinculo button{border:1px solid var(--kds-line);background:#fff;color:var(--kds-accent);border-radius:6px;padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
+.agenda-plano-vinculo small{display:block;margin-top:5px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+
+/* ========================================================================== 
+   8. Edição de status e auditoria
+   ========================================================================== */
+.agenda-status-editor{margin:16px 0;padding:14px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
+.agenda-status-editor>label,.agenda-status-observacao label{display:block;margin-bottom:6px;color:var(--kds-text);font-size:var(--kds-font-label);font-weight:800}
+.agenda-status-editor select,.agenda-status-observacao textarea{width:100%;min-width:0}
+.agenda-status-observacao{margin-top:10px}
+.agenda-status-observacao label span{color:var(--kds-muted);font-weight:600}
+.agenda-status-observacao textarea{resize:vertical}
+.agenda-status-impacto{margin-top:9px;padding:8px 10px;border-radius:7px;background:var(--kds-surface-muted);color:var(--kds-muted);font-size:var(--kds-font-label);font-weight:650;line-height:var(--kds-leading-ui)}
+.agenda-status-impacto.consome{background:#FFF1EE;color:#9B3D34}
+.agenda-status-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+.agenda-audit-btn[hidden]{display:none!important}
+.agenda-audit-inline-btn{margin-left:auto}
+.agenda-audit-note{margin:0 0 12px;padding:10px 12px;border:1px solid var(--kds-line);border-radius:9px;background:var(--kds-surface-soft);color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+.agenda-audit-note strong{color:var(--kds-accent)}
+.agenda-audit-list{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto;padding-right:3px}
+.agenda-audit-item{padding:11px 12px;border:1px solid var(--kds-line-soft);border-radius:10px;background:#fff}
+.agenda-audit-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.agenda-audit-head strong{color:var(--kds-text);font-size:var(--kds-font-label)}
+.agenda-audit-head time{color:var(--kds-faint);font-size:var(--kds-font-metadata);white-space:nowrap}
+.agenda-audit-meta,.agenda-audit-actor,.agenda-audit-obs{margin-top:5px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+.agenda-audit-actor strong,.agenda-audit-obs strong{color:var(--kds-accent)}
+.agenda-audit-change{display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap}
+.agenda-audit-change b{color:var(--kds-faint)}
+.agenda-audit-empty{padding:24px;border:1px dashed var(--kds-line);border-radius:10px;background:var(--kds-surface-soft);color:var(--kds-muted);text-align:center;font-size:var(--kds-font-label)}
+.agenda-audit-empty.erro{color:var(--kds-danger);background:#FFF8F7;border-color:#E8C9C5}
+.agenda-audit-modal{width:min(780px,94vw)}
+
+/* ========================================================================== 
+   9. Responsividade do módulo
+   ========================================================================== */
+@media(max-width:1280px){
+  #tela_agenda .agenda-toolbar-semanal{flex-direction:column;align-items:stretch}
+  #tela_agenda .agenda-semana-nav{width:100%;min-width:0}
+  #tela_agenda .agenda-toolbar-filtros{width:100%;grid-template-columns:minmax(140px,160px) minmax(240px,1fr) max-content max-content;justify-content:stretch}
+  #tela_agenda .agenda-profissional-filtro{max-width:none}
+}
+
+@media(max-width:1100px){
+  #tela_agenda .agenda-semana-nav{flex-wrap:wrap}
+  #tela_agenda .agenda-toolbar-filtros{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)}
+  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
+  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{width:100%;margin-top:0;align-self:stretch}
+  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn{grid-column:1}
+  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{grid-column:2}
+  #tela_agenda .agenda-dia-cabecalho .dia-data{font-size:var(--kds-font-label)}
+  #tela_agenda .agenda-hora-eixo{padding-right:4px}
+
+  #tela_agenda .ks-agenda-horarios-intro{align-items:stretch;flex-direction:column}
+  #tela_agenda .ks-horario-regra{max-width:none}
+  #tela_agenda .ks-week-schedule-head{align-items:stretch;flex-direction:column}
+  #tela_agenda .ks-week-schedule-actions{align-items:end}
+  #tela_agenda .ks-week-row,#tela_agenda .ks-week-headers{grid-template-columns:115px 1fr 16px 1fr}
+  #tela_agenda .ks-week-row .ks-week-break{display:none}
+  #tela_agenda .ks-week-row input:nth-of-type(3){grid-column:2}
+  #tela_agenda .ks-week-row input:nth-of-type(4){grid-column:4}
+  #tela_agenda .ks-week-headers span:nth-child(3){display:none}
+}
+
+@media(max-width:820px){
+  #tela_agenda .agenda-toolbar-filtros :where(input:not([type="checkbox"]):not([type="radio"]),select),
+  #tela_agenda .ks-week-row :where(input:not([type="checkbox"]):not([type="radio"])){font-size:var(--kds-font-body)}
+}
+
+@media(max-width:760px){
+  #tela_agenda .agenda-toolbar-filtros{grid-template-columns:1fr 1fr}
+  #tela_agenda .agenda-toolbar-filtros .ks-new-appointment{grid-column:1/-1;width:100%}
+  #tela_agenda .agenda-dia-cabecalho .dia-semana,
+  #tela_agenda .agenda-dia-cabecalho .dia-data,
+  #tela_agenda .agenda-hora-eixo{font-size:var(--kds-font-metadata)}
+
+  #modal_agendamento .grid-2{grid-template-columns:1fr}
+  #modal_agendamento .actions{display:grid;grid-template-columns:1fr}
+  #modal_agendamento .actions button{width:100%}
+
+  #tela_agenda .ks-week-schedule-actions{flex-direction:column;align-items:stretch}
+  #tela_agenda .ks-week-schedule-actions .input-group{min-width:0}
+  #tela_agenda .ks-week-row{grid-template-columns:1fr 1fr 16px 1fr}
+  #tela_agenda .ks-week-day{grid-column:1/-1;margin-top:5px}
+  #tela_agenda .ks-week-headers{display:none}
+}
+
+@media(max-width:620px){
+  .agenda-recurrencia-grid,.agenda-recurrencia-fim{grid-template-columns:1fr}
+  .agenda-recorrencia-custom{align-items:stretch;flex-direction:column}
+}
+
+@media(max-width:560px){
+  #tela_agenda .ks-agenda-controls{align-items:flex-start;flex-wrap:wrap}
+  #tela_agenda .agenda-toolbar-filtros{grid-template-columns:minmax(0,1fr)}
+  #tela_agenda .agenda-toolbar-filtros>*{grid-column:1;width:100%;max-width:none}
+  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
+  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{margin-top:0}
+  #tela_agenda .agenda-escopo-acesso{white-space:normal}
+
+  #tela_agenda .ks-agenda-config-menu{
+    position:fixed;
+    left:8px;
+    right:8px;
+    top:auto;
+    bottom:8px;
+    width:auto;
+    max-height:70dvh;
+    overflow-y:auto;
+  }
+}
+
+@media(max-width:520px){
+  #modal_agendamento .modal-box{width:calc(100vw - 16px);padding:18px 14px}
+  #tela_agenda .agenda-card-semanal{padding:8px}
+  #tela_agenda .agenda-semana-nav{gap:5px}
+  #tela_agenda .agenda-semana-titulo{white-space:normal}
+  #tela_agenda .agenda-compromisso{padding:1px 2px;border-left-width:2px}
+}
+
+/* Refinamento de superfície: a Agenda usa uma única área de trabalho. */
+#tela_agenda .agenda-card-semanal{padding:0;border:0;background:transparent;box-shadow:none}
+#tela_agenda .agenda-toolbar{gap:10px;margin-bottom:10px}
+#tela_agenda .agenda-toolbar-semanal{padding:0 0 10px;margin-bottom:0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_agenda .agenda-toolbar-filtros{padding:12px 0 14px;margin:0;border-bottom:1px solid var(--kds-line-soft);background:transparent}
+#tela_agenda .agenda-grade-scroll{margin-top:12px;border:1px solid var(--kds-line-soft);border-radius:10px;box-shadow:none}
+#tela_agenda .ks-segmented{background:transparent;border-color:transparent;padding:0}
+#tela_agenda .ks-segmented button.active{box-shadow:none;border:1px solid var(--kds-line-soft)}

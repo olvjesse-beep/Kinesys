@@ -1,0 +1,92 @@
+{
+  "version": "1.0",
+  "purpose": "Visual contract before CSS/design-system consolidation; reference only; not loaded by runtime.",
+  "baseline": {
+    "engine": "2.3.2",
+    "important_count": 1198,
+    "root_count": 6
+  },
+  "typography": {
+    "body_px": 16,
+    "paragraph_px": 15,
+    "label_px": 13.5,
+    "field_px": 15.5,
+    "helper_min_px": 12.5,
+    "page_title_px": 31,
+    "card_title_px": 18,
+    "section_title_px": [
+      20,
+      22
+    ]
+  },
+  "controls": {
+    "field_min_height_px": 45,
+    "button_min_height_px": 42,
+    "standard_radius_px": [
+      8,
+      9
+    ]
+  },
+  "shell": {
+    "sidebar_px": 244,
+    "sidebar_notebook_px": 226,
+    "topbar_min_height_px": 90
+  },
+  "agenda": {
+    "patient_name_min_px": 12.5,
+    "time_px": 12,
+    "day_date_px": 16,
+    "cell_min_height_px": 35,
+    "toolbar_control_height_px": 42
+  },
+  "assessment": {
+    "section_title_px": 22,
+    "chip_px": 13.5,
+    "test_px": 14,
+    "hma_min_height_px": 128
+  },
+  "assessment_regions_axes": {
+    "toolbar_title_px": 20,
+    "region_chip_px": 17,
+    "region_chip_min_height_px": 44,
+    "region_title_px": 21,
+    "axis_section_title_px": 18,
+    "axis_title_px": 18,
+    "axis_description_px": 14.5,
+    "finding_title_px": 16.5,
+    "finding_px": 15,
+    "axis_button_px": 14.5,
+    "axis_button_min_height_px": 42,
+    "axis_card_min_height_px": 112
+  },
+  "colors": {
+    "bg": "#F4F7F6",
+    "surface": "#FFFFFF",
+    "surface_soft": "#F8FAF9",
+    "text": "#173B45",
+    "text_secondary": "#345158",
+    "muted": "#667A7F",
+    "line": "#D9E4E1",
+    "accent": "#1E756F",
+    "accent_hover": "#175F5A",
+    "danger": "#A53B33",
+    "warning": "#8A661E",
+    "success": "#2F735A"
+  },
+  "radii_reference_px": {
+    "sm": 8,
+    "md": 11,
+    "lg": 14,
+    "pill": 999
+  },
+  "non_negotiables": [
+    "petrol+teal identity",
+    "dark desktop sidebar",
+    "sticky topbar",
+    "patient context bar",
+    "clinical professional tone",
+    "large regions/axes typography",
+    "agenda patient name >=12.5px",
+    "mobile reflow before font shrink"
+  ]
+}

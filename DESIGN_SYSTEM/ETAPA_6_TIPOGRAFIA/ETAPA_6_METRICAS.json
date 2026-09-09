@@ -1,0 +1,36 @@
+{
+  "etapa": 6,
+  "componente": "tipografia_global",
+  "fonte_de_verdade": "design_typography.css",
+  "tokens": "design_tokens.css",
+  "runtime_font_size_literal_px_etapa5": 812,
+  "runtime_font_size_literal_px_etapa6": 0,
+  "runtime_font_size_literal_le_12_etapa5": 451,
+  "runtime_font_size_literal_le_12_etapa6": 0,
+  "runtime_font_size_distintos_etapa5": 37,
+  "runtime_font_size_distintos_etapa6": 0,
+  "script_js_font_size_literal_px_etapa6": 0,
+  "proms_documento_independente_font_size_min_px": 12.5,
+  "important_runtime_etapa5": 1144,
+  "important_runtime_etapa6": 1144,
+  "design_freeze": {
+    "body": "16px",
+    "field": "15.5px",
+    "label": "13.5px",
+    "page_title": "31px",
+    "sidebar_nav": "14.5px",
+    "avaliacao_regiao": "17px",
+    "avaliacao_regiao_selecionada": "21px",
+    "avaliacao_eixo": "18px",
+    "avaliacao_achado": "15px"
+  },
+  "validacao": {
+    "js_runtime": 22,
+    "css_files": 6,
+    "css_parse_errors": 0,
+    "duplicate_ids": 0,
+    "local_refs": 28,
+    "missing_local_refs": 0,
+    "undefined_kds_vars": 0
+  }
+}

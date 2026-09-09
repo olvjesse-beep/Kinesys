@@ -1,0 +1,18 @@
+{
+  "stage": "2",
+  "goal": "Consolidate runtime custom-property definitions into one source of truth without intentionally changing the Etapa 1 visual contract.",
+  "runtime_root_before": 6,
+  "runtime_root_after": 1,
+  "canonical_prefix": "--kds-*",
+  "source_of_truth": "design_tokens.css",
+  "modern_families_removed_from_usage": [
+    "--ksx-*",
+    "--kst-*",
+    "--ks-ui-*"
+  ],
+  "legacy_aliases_preserved": [
+    "original Portuguese tokens",
+    "--ks-*"
+  ],
+  "visual_contract": "DESIGN_SYSTEM/ETAPA_1_FREEZE/DESIGN_FREEZE_COMPONENTS.json"
+}

@@ -1,0 +1,39 @@
+{
+  "etapa": 3,
+  "componente": "card",
+  "important_antes": 1198,
+  "important_depois": 1189,
+  "roots_runtime": 1,
+  "card_desktop": {
+    "padding": "22px 24px",
+    "radius": "14px",
+    "margin_bottom": "14px",
+    "shadow": "--kds-shadow-soft"
+  },
+  "card_tablet": {
+    "max_width": "820px",
+    "padding": "19px 18px"
+  },
+  "card_mobile": {
+    "max_width": "620px",
+    "padding": "17px",
+    "radius": "12px"
+  },
+  "header": {
+    "title_font": "18px",
+    "description_font": "13.5px",
+    "gap": "12px",
+    "margin_bottom": "15px"
+  },
+  "variants": [
+    "card--nested",
+    "card--flat"
+  ],
+  "validation": {
+    "js": true,
+    "css": true,
+    "duplicate_ids": 0,
+    "missing_refs": 0,
+    "freeze_static": true
+  }
+}

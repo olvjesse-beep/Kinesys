@@ -1,0 +1,47 @@
+KineSys Clinical v1.11.2 — Validação final Etapa 15
+Data: 2026-08-29
+
+RESULTADOS
+- JavaScript de produção: 22/22 sintaxe OK
+- CSS externos: 12/12 parse OK
+- Stylesheets no <head>: 12/12, ordem oficial OK
+- Blocos <style> no HTML: 0
+- Atributos style no HTML: 31, todos exclusivamente display:none (estado funcional)
+- Inline visual estático: 0
+- IDs no HTML: 497
+- IDs duplicados: 0
+- Referências locais: 34
+- Referências locais ausentes: 0
+- :root efetivo: 1 (design_tokens.css)
+- Tokens KDS usados: 95
+- Tokens KDS definidos/runtime: 95
+- Tokens KDS indefinidos: 0
+- Aliases visuais legados referenciados: 0
+- Conflitos intermodulares de mesma propriedade / mesmo seletor / mesmo contexto: 0
+- Breakpoints máximos oficiais: 1280, 1180, 1100, 980, 900, 820, 760, 700, 620, 560, 520, 430 px
+- min-width oficial complementar: 701 px
+- !important ativos: 785 (dívida de compatibilidade documentada; não removidos quando alteravam a cascata)
+
+COMPARAÇÃO COM ETAPA 14
+- 21/22 JS de produção permanecem byte a byte equivalentes.
+- agenda.js é o único JS alterado.
+- A alteração de agenda.js é exclusivamente a renomeação das propriedades CSS dinâmicas:
+  --ks-agenda-day-count  -> --kds-agenda-runtime-day-count
+  --ks-agenda-slot-count -> --kds-agenda-runtime-slot-count
+- Normalizando apenas esses dois nomes, agenda.js é byte a byte equivalente à Etapa 14.
+
+DESIGN FREEZE
+- corpo: 16 px
+- campo: 15,5 px
+- input/select: 45 px
+- label: 13,5 px
+- navegação: 14,5 px
+- título: 31 px
+- Regiões: 17 px
+- Região selecionada: 21 px
+- Eixos: 18 px
+- Achados: 15 px
+- Agenda compacta: 14 px / 42 px
+
+PARECER
+APROVADO para produção do Design System.

@@ -1,0 +1,388 @@
+/* KineSys · revisão de experiência da avaliação · 1.22.0 */
+
+#tela_avaliacao {
+    --eval-ink: #153f46;
+    --eval-muted: #60777b;
+    --eval-line: #dbe7e4;
+    --eval-soft: #f5f9f8;
+    --eval-accent: #159f91;
+}
+
+#tela_avaliacao .clinical-progress-wrap {
+    margin-bottom: 10px;
+}
+
+#tela_avaliacao .clinical-progress .step {
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+#tela_avaliacao .clinical-progress .step:focus-visible {
+    outline: 3px solid rgba(21, 159, 145, .28);
+    outline-offset: 4px;
+}
+
+.ks-eval-step-context {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 0 4px;
+    color: var(--eval-muted);
+    font-size: 13px;
+}
+
+.ks-eval-step-context strong {
+    flex: 0 0 auto;
+    color: var(--eval-ink);
+    font-size: 13px;
+}
+
+.ks-eval-step-context span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#tela_avaliacao .ks-eval-patient-loader {
+    padding: 16px 20px;
+}
+
+#tela_avaliacao .ks-eval-patient-loader .precadastro-cabecalho {
+    margin-bottom: 10px;
+}
+
+#tela_avaliacao .ks-eval-patient-loader .precadastro-cabecalho h2 {
+    font-size: 18px;
+}
+
+#tela_avaliacao .ks-eval-patient-loader .eyebrow,
+#tela_avaliacao .ks-eval-patient-loader .precadastro-status {
+    display: none;
+}
+
+#tela_avaliacao .clinical-primary-card {
+    margin-top: 14px;
+}
+
+#tela_avaliacao .fatores-piora-compactos {
+    margin: 0;
+}
+
+.ks-eval-choice-trigger {
+    width: 100%;
+    min-height: 96px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 15px;
+    border: 1px solid var(--eval-line);
+    border-radius: 12px;
+    background: var(--eval-soft);
+    color: var(--eval-ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.ks-eval-choice-trigger:hover,
+.ks-eval-choice-trigger:focus-visible {
+    border-color: var(--eval-accent);
+    box-shadow: 0 0 0 3px rgba(21, 159, 145, .10);
+    outline: none;
+}
+
+.ks-eval-choice-trigger.has-data {
+    background: #f2fbf9;
+    border-color: #a9dcd5;
+}
+
+.ks-eval-choice-trigger > span:first-child {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.ks-eval-choice-trigger strong {
+    font-size: 14px;
+}
+
+.ks-eval-choice-trigger small {
+    overflow: hidden;
+    color: var(--eval-muted);
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ks-eval-choice-action {
+    flex: 0 0 auto;
+    color: var(--eval-accent);
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.ks-eval-dialog-backdrop[hidden] {
+    display: none !important;
+}
+
+.ks-eval-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: rgba(13, 38, 43, .66);
+    backdrop-filter: blur(3px);
+}
+
+.ks-eval-dialog-card {
+    width: min(620px, 100%);
+    max-height: min(720px, calc(100vh - 44px));
+    overflow: auto;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 72px rgba(5, 28, 33, .30);
+}
+
+.ks-eval-dialog-card header,
+.ks-eval-dialog-card footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+}
+
+.ks-eval-dialog-card header {
+    border-bottom: 1px solid var(--eval-line);
+}
+
+.ks-eval-dialog-card header h2 {
+    margin: 2px 0 0;
+    color: var(--eval-ink);
+    font-size: 22px;
+}
+
+.ks-eval-dialog-card > p {
+    margin: 0;
+    padding: 16px 22px 2px;
+    color: var(--eval-muted);
+    font-size: 14px;
+}
+
+.ks-eval-dialog-close {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: var(--eval-soft);
+    color: var(--eval-ink);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ks-eval-dialog-options {
+    padding: 18px 22px 22px;
+}
+
+.ks-eval-dialog-options .clinical-mechanism-only {
+    margin: 0;
+}
+
+.ks-eval-dialog-options .checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.ks-eval-dialog-options .checkbox-pill {
+    min-height: 46px;
+    margin: 0;
+}
+
+.ks-eval-dialog-card footer {
+    justify-content: flex-end;
+    position: sticky;
+    bottom: 0;
+    border-top: 1px solid var(--eval-line);
+    background: #fff;
+}
+
+body.ks-eval-modal-open {
+    overflow: hidden;
+}
+
+/* Termômetro: um único componente compacto, proporcional e previsível. */
+#tela_avaliacao .clinical-primary-card .clinical-section-heading {
+    display: block;
+}
+
+#tela_avaliacao .ks-eval-mechanism-pain-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, 360px);
+    align-items: stretch;
+    gap: 12px;
+    margin: 2px 0 12px;
+}
+
+#tela_avaliacao .eva-compacto.ks-pain-thermometer {
+    width: 100%;
+    max-width: 360px;
+    min-width: 0;
+    padding: 14px 16px 13px;
+    box-sizing: border-box;
+    border: 1px solid var(--eval-line);
+    border-radius: 12px;
+    background: #fff;
+}
+
+#tela_avaliacao .ks-pain-head {
+    width: 100%;
+    min-height: 24px;
+    margin: 0 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#tela_avaliacao .ks-pain-head span {
+    color: var(--eval-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#tela_avaliacao .ks-pain-head strong {
+    color: var(--eval-accent);
+    font-size: 20px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+#tela_avaliacao #eva_slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 7px;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    outline: none;
+    background: linear-gradient(90deg, #43b97f 0%, #a8cf62 25%, #f0ce4b 50%, #ee8b3e 75%, #dc4d47 100%);
+}
+
+#tela_avaliacao #eva_slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 19px;
+    height: 19px;
+    border: 3px solid var(--eval-ink);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
+    cursor: pointer;
+}
+
+#tela_avaliacao #eva_slider::-moz-range-thumb {
+    width: 13px;
+    height: 13px;
+    border: 3px solid var(--eval-ink);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
+    cursor: pointer;
+}
+
+#tela_avaliacao .ks-pain-scale {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    color: var(--eval-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+#tela_avaliacao .clinical-actions,
+#tela_avaliacao .cluster-focus-actions,
+#tela_avaliacao .ks-eval-synthesis > .card:last-child .actions {
+    position: sticky;
+    bottom: 10px;
+    z-index: 40;
+    padding: 12px;
+    border: 1px solid var(--eval-line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 10px 28px rgba(22, 63, 70, .10);
+    backdrop-filter: blur(8px);
+}
+
+#tela_avaliacao .ks-eval-synthesis:not(.ativa) {
+    display: none !important;
+}
+
+#tela_avaliacao .ks-eval-synthesis.ativa {
+    display: grid;
+    gap: 14px;
+}
+
+#tela_avaliacao .ks-eval-synthesis > .card {
+    margin: 0;
+}
+
+#tela_avaliacao .ks-eval-summary-card,
+#tela_avaliacao .ks-eval-report-card {
+    border-color: #cfe1dd;
+}
+
+@media (max-width: 720px) {
+    .ks-eval-step-context {
+        display: grid;
+        gap: 3px;
+    }
+
+    .ks-eval-step-context span {
+        white-space: normal;
+    }
+
+    .ks-eval-dialog-backdrop {
+        align-items: end;
+        padding: 0;
+    }
+
+    .ks-eval-dialog-card {
+        width: 100%;
+        max-height: 86vh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .ks-eval-dialog-options .checkbox-group {
+        grid-template-columns: 1fr;
+    }
+
+    #tela_avaliacao .ks-eval-mechanism-pain-row {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    #tela_avaliacao .eva-compacto.ks-pain-thermometer {
+        max-width: none;
+    }
+
+    #tela_avaliacao .clinical-actions,
+    #tela_avaliacao .cluster-focus-actions,
+    #tela_avaliacao .ks-eval-synthesis > .card:last-child .actions {
+        bottom: 6px;
+    }
+}

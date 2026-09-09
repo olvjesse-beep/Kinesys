@@ -1,0 +1,278 @@
+/* ========================================================================== 
+   KineSys Design System — Tipografia | Etapa 6
+   Fonte de verdade para escala tipográfica do produto.
+   Carregada por último durante a migração: neutraliza apenas a tipografia
+   legada que ainda será removida nas Etapas 10–12.
+   Não altera regras clínicas, banco, permissões ou cálculos.
+   ========================================================================== */
+/* BASE SEMÂNTICA — números locais foram substituídos por tokens --kds-font-*.
+   O menor papel operacional é metadata (12,5 px). */
+body.ks-design-ready{
+  font-size:var(--kds-font-body)!important;
+  line-height:var(--kds-leading-relaxed)!important;
+  letter-spacing:0;
+}
+body.ks-design-ready p, body.ks-design-ready li{
+  font-size:var(--kds-font-content)!important;
+  line-height:var(--kds-leading-relaxed)!important;
+}
+body.ks-design-ready td{
+  font-size:var(--kds-font-nav)!important;
+  line-height:var(--kds-leading-relaxed)!important;
+}
+body.ks-design-ready th{
+  font-size:var(--kds-font-label)!important;
+  line-height:var(--kds-leading-text)!important;
+}
+body.ks-design-ready label{
+  font-size:var(--kds-font-label)!important;
+  line-height:var(--kds-leading-ui)!important;
+}
+body.ks-design-ready small, body.ks-design-ready .field-help, body.ks-design-ready .helper-text, body.ks-design-ready .clinical-note{
+  font-size:var(--kds-font-metadata)!important;
+  line-height:var(--kds-leading-text)!important;
+}
+/* Botões do Design System são dimensionados em design_components.css.
+   A regra abaixo preserva conforto de controles legados/customizados. */
+body.ks-design-ready button:not(.btn-primary):not(.btn-secondary):not(.btn-nav):not(.btn-danger):not(.btn-link-compacto){
+  font-size:var(--kds-font-ui)!important;
+  line-height:var(--kds-leading-compact)!important;
+}
+body.ks-design-ready .badge, body.ks-design-ready [class*="-badge"]{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-compact)!important}
+
+/* Navegação e títulos de página: design_navigation.css (Etapa 7). */
+
+/* Paciente ativo */
+.ks-patient-context{padding:11px 12px!important}
+.ks-patient-main strong{font-size:var(--kds-font-body)!important;line-height:var(--kds-leading-ui)!important}
+.ks-patient-main span#ks_patient_meta{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+.ks-patient-tabs button{font-size:var(--kds-font-label)!important;min-height:38px!important;padding:7px 11px!important}
+.ks-patient-change{font-size:var(--kds-font-label)!important;min-height:40px!important}
+
+/* Cards, títulos e textos auxiliares */
+body.ks-design-ready h3{font-size:var(--kds-font-body);line-height:var(--kds-leading-ui)}
+.ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-compact)!important;letter-spacing:1px!important}
+
+/* HOME */
+.ks-home-hero h2{font-size:var(--kds-font-kpi)!important;line-height:var(--kds-leading-tight)!important}
+.ks-home-hero p{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-text)!important}
+.ks-home-stats span{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+.ks-home-stats strong{font-size:var(--kds-font-kpi)!important;line-height:1.1!important}
+.ks-home-columns h3{font-size:var(--kds-font-heading-sm)!important}
+.ks-home-crm>summary{font-size:var(--kds-font-ui)!important;min-height:44px!important}
+#tela_home .tabela-pacientes thead th{font-size:var(--kds-font-label)!important}
+#tela_home .tabela-pacientes td{font-size:var(--kds-font-ui)!important}
+
+/* PACIENTES / PRONTUÁRIO */
+.ks-prontuario-search-card>.card-header h2{font-size:var(--kds-font-heading-sm)!important}
+.ks-patient-card-copy strong{font-size:var(--kds-font-field)!important;line-height:var(--kds-leading-ui)!important}
+.ks-patient-card-copy small, .ks-patient-card-copy em{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+.ks-patient-card-actions button{font-size:var(--kds-font-label)!important;min-height:38px!important;padding:7px 10px!important}
+.ks-prontuario-resumo h2{font-size:var(--kds-font-heading-lg)!important;line-height:var(--kds-leading-compact)!important}
+.ks-prontuario-resumo p{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-text)!important}
+.ks-prontuario-metrics span{font-size:var(--kds-font-metadata)!important}
+.ks-prontuario-metrics strong{font-size:var(--kds-font-content)!important}
+.ks-prontuario-actions .btn-primary, .ks-prontuario-actions .btn-secondary, .ks-prontuario-actions .btn-nav{font-size:var(--kds-font-label)!important;min-height:40px!important;padding:8px 11px!important}
+body.ks-design-ready .tabela-pacientes thead th{font-size:var(--kds-font-label)!important;padding:11px 12px!important}
+body.ks-design-ready .tabela-pacientes td{font-size:var(--kds-font-ui)!important;padding:11px 12px!important;line-height:var(--kds-leading-text)!important}
+
+/* AVALIAÇÃO — reduzir fadiga na tela mais longa do produto */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Motor clínico 2.3.2 — elimina microtexto de 9–11px */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ks-global-safety-copy strong{font-size:var(--kds-font-nav)!important}.ks-global-safety-copy span{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+
+.ks-tool-synthesis-link{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+
+/* EVOLUÇÃO */
+#tela_evolucao .evo-meta, #tela_evolucao .evo-helper{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+#tela_evolucao .evo-session-card, #tela_evolucao .evo-history-card{font-size:var(--kds-font-ui)!important}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ks-notificacoes-head strong{font-size:var(--kds-font-ui)!important}.ks-notificacoes-head button{font-size:var(--kds-font-metadata)!important}
+.ks-notificacao-item strong{font-size:var(--kds-font-label)!important}.ks-notificacao-item span{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}.ks-notificacao-item small{font-size:var(--kds-font-metadata)!important}
+.ks-notificacao-vazia{font-size:var(--kds-font-label)!important}
+
+/* FINANCEIRO — maior foco da correção: havia dezenas de textos de 8–10px */
+#tela_financeiro .finance-workspace-tab{font-size:var(--kds-font-label)!important;padding:9px 12px!important}
+#tela_financeiro .finance-workspace-count{font-size:var(--kds-font-metadata)!important}
+#tela_financeiro .finance-stats span{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-stats strong{font-size:var(--kds-font-heading-lg)!important}
+#tela_financeiro .finance-plan-head h3{font-size:var(--kds-font-body)!important}
+#tela_financeiro .finance-plan-head p{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-session-line, #tela_financeiro .finance-money-line, #tela_financeiro .finance-note{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-plan-actions button{font-size:var(--kds-font-metadata)!important;min-height:38px!important;padding:7px 10px!important}
+#tela_financeiro .finance-payment-row{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-payment-row strong{font-size:var(--kds-font-nav)!important}
+#tela_financeiro .finance-pending-stat span, #tela_financeiro .finance-pending-stat small{font-size:var(--kds-font-metadata)!important}
+#tela_financeiro .finance-pending-patient strong{font-size:var(--kds-font-nav)!important}
+#tela_financeiro .finance-pending-patient small, #tela_financeiro .finance-pending-detail{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-pending-actions button{font-size:var(--kds-font-metadata)!important;min-height:36px!important}
+#tela_financeiro .finance-analysis-note{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-relaxed)!important}
+#tela_financeiro [class*="finance-"] small{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro [class*="finance-"] .finance-pending-badge, #tela_financeiro [class*="finance-"] [class*="-badge"]{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-compact)!important;padding:4px 7px!important}
+#tela_financeiro .finance-discount-stat span, #tela_financeiro .finance-expense-admin-stat span, #tela_financeiro .finance-balance-metric span{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-ui)!important}
+#tela_financeiro .finance-discount-row, #tela_financeiro .finance-expense-row, #tela_financeiro .finance-balance-break-row{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-discount-row.header, #tela_financeiro .finance-expense-row.header{font-size:var(--kds-font-metadata)!important}
+#tela_financeiro .finance-discount-help, #tela_financeiro .finance-discount-admin-note, #tela_financeiro .finance-expense-admin-note, #tela_financeiro .finance-balance-note, #tela_financeiro .finance-balance-period{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_financeiro .finance-expense-break-card span{font-size:var(--kds-font-metadata)!important}.finance-expense-break-card small{font-size:var(--kds-font-metadata)!important}
+
+/* DOCUMENTOS, EQUIPE, CONFIGURAÇÕES, RELATÓRIOS */
+#tela_midias .midia-hero-head h2{font-size:var(--kds-font-region-name)!important}
+#tela_midias .midia-hero-head p{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-relaxed)!important}
+#tela_midias .midia-status{font-size:var(--kds-font-label)!important}
+.ks-team-hero h2{font-size:var(--kds-font-heading-lg)!important}.ks-team-hero p{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-text)!important}
+.ks-drawer-head h2{font-size:var(--kds-font-region-name)!important}
+.ks-team-form{font-size:var(--kds-font-content)!important}
+#tela_configuracoes .ks-msg-template-item strong{font-size:var(--kds-font-nav)!important}
+#tela_configuracoes .ks-msg-template-item small{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-text)!important}
+#tela_configuracoes .ks-msg-template-group{font-size:var(--kds-font-metadata)!important}
+#tela_configuracoes .ks-msg-var{font-size:var(--kds-font-metadata)!important}
+#tela_configuracoes .ks-msg-preview{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-relaxed)!important}
+#tela_relatorio{font-size:var(--kds-font-content)!important}
+
+/* Toasts, diálogos e login */
+.ks-toast strong{font-size:var(--kds-font-nav)!important}.ks-toast p{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-text)!important}
+.ks-dialog-copy h3{font-size:var(--kds-font-heading-sm)!important}.ks-dialog-copy div{font-size:var(--kds-font-label)!important;line-height:var(--kds-leading-relaxed)!important}
+body.ks-design-ready .modal-box h2{font-size:var(--kds-font-region-name)!important;line-height:var(--kds-leading-ui)!important}
+body.ks-design-ready .modal-box{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-text)!important}
+body.ks-design-ready[data-tela="tela_login"] .login-card{font-size:var(--kds-font-content)!important}
+body.ks-design-ready[data-tela="tela_login"] #btn_login_entrar{min-height:46px!important;font-size:var(--kds-font-content)!important}
+
+/* Radar: o painel também precisa ser legível durante uso prolongado */
+
+
+
+
+
+/* Responsividade: não reduzir tipografia de volta em telas menores. */
+
+@media(max-width:620px){
+  .ks-patient-main strong{font-size:var(--kds-font-content)!important}
+  .ks-patient-tabs button{font-size:var(--kds-font-label)!important}
+  
+}
+
+/* ================================================================
+   AVALIAÇÃO — REGIÕES E EIXOS DE EXAME | DESIGN FREEZE PRESERVADO
+   Corrige microtipografia residual do Motor Clínico 2.3.2.
+   ================================================================ */
+
+
+
+
+
+/* Regiões anatômicas: a regra antiga de 11px incidia diretamente no span. */
+
+
+
+
+
+/* Cabeçalho de cada região selecionada. */
+
+
+
+
+
+/* Direção / eixos do exame. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Eixos já escolhidos e achados sugeridos. */
+
+
+
+
+
+/* Biblioteca manual de direções. */
+
+
+
+
+
+/* Condições específicas também precisam acompanhar a escala do eixo. */
+
+
+
+
+
+
+
+
+/* Em larguras intermediárias, preservar leitura em vez de comprimir 3 cards. */
+
+

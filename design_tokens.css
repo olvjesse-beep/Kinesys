@@ -1,0 +1,133 @@
+/*
+ * KineSys Design System — Tokens v1
+ * Etapa 2 da consolidação visual.
+ *
+ * REGRA:
+ * - Código novo deve usar somente --kds-*.
+ * - Nomes antigos abaixo são aliases de compatibilidade e não devem ser usados em código novo.
+ * - Este é o ÚNICO :root carregado pelo runtime do KineSys.
+ */
+:root {
+  /* Identidade / superfícies — contrato visual Etapa 1 */
+  --kds-bg: #F4F7F6;
+  --kds-surface: #FFFFFF;
+  --kds-surface-soft: #F8FAF9;
+  --kds-surface-muted: #F1F5F4;
+  --kds-text: #173B45;
+  --kds-text-secondary: #345158;
+  --kds-muted: #667A7F;
+  --kds-faint: #87979A;
+  --kds-line: #D9E4E1;
+  --kds-line-soft: #E8EFED;
+  --kds-accent: #1E756F;
+  --kds-accent-hover: #175F5A;
+  --kds-accent-soft: #EAF5F2;
+  --kds-danger: #A53B33;
+  --kds-success: #2F735A;
+
+  /* Tipografia — escala oficial | Etapa 6
+     Regra: componentes novos usam papéis semânticos; não inventar tamanhos locais. */
+  --kds-font-family-ui: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  --kds-font-metadata: 12.5px;
+  --kds-font-label: 13.5px;
+  --kds-font-ui: 14px;
+  --kds-font-nav: 14.5px;
+  --kds-font-content: 15px;
+  --kds-font-field: 15.5px;
+  --kds-font-body: 16px;
+  --kds-font-clinical: 17px;
+  --kds-font-heading-sm: 18px;
+  --kds-font-heading-md: 20px;
+  --kds-font-region-name: 21px;
+  --kds-font-heading-lg: 22px;
+  --kds-font-kpi: 27px;
+  --kds-font-title: 31px;
+
+  /* Responsividade sem voltar à microtipografia. */
+  --kds-font-title-notebook: 28px;
+  --kds-font-title-mobile-lg: 26px;
+  --kds-font-title-mobile: 24px;
+
+  /* Contrato clínico congelado da Avaliação. */
+  --kds-font-region: 17px;
+  --kds-font-axis: 18px;
+  --kds-font-finding: 15px;
+
+  /* Ritmo vertical tipográfico. */
+  --kds-leading-tight: 1.2;
+  --kds-leading-compact: 1.25;
+  --kds-leading-ui: 1.35;
+  --kds-leading-text: 1.5;
+  --kds-leading-relaxed: 1.55;
+
+  /* Forma / elevação */
+  --kds-radius-sm: 8px;
+  --kds-radius-md: 11px;
+  --kds-radius-lg: 14px;
+  --kds-radius-pill: 999px;
+  --kds-shadow-float: 0 12px 30px rgba(20,51,58,.07);
+  --kds-shadow-soft: 0 1px 2px rgba(20,51,58,.035), 0 7px 20px rgba(20,51,58,.035);
+  --kds-content-width: 1360px;
+
+  /* Escala de espaçamento aprovada para migração gradual */
+  --kds-space-3: 12px;
+
+  /* Breakpoints responsivos oficiais — Etapa 13
+     @media usa valores literais por compatibilidade de navegador.
+     Valores permitidos: 1280, 1180, 1100, 980, 900, 820, 760, 700,
+     620, 560, 520 e 430 px. */
+
+  /* Dimensões funcionais congeladas */
+  --kds-control-height: 45px;
+  --kds-control-height-compact: 42px;
+  --kds-button-height: 42px;
+  --kds-sidebar-width: 244px;
+  --kds-sidebar-notebook-width: 226px;
+  --kds-sidebar-mobile-width: 300px;
+  --kds-sidebar-padding-x: 15px;
+  --kds-sidebar-padding-top: 22px;
+  --kds-sidebar-gap: 17px;
+  --kds-nav-item-height: 44px;
+  --kds-nav-item-radius: 8px;
+  --kds-nav-icon-size: 19px;
+  --kds-topbar-min-height: 90px;
+  --kds-topbar-mobile-height: 80px;
+  --kds-shell-gutter: 30px;
+  --kds-shell-gutter-notebook: 23px;
+  --kds-shell-gutter-mobile: 12px;
+
+  /* Agenda — contrato visual do módulo | Etapa 8 */
+  --kds-agenda-hour-axis-width: 54px;
+  --kds-agenda-header-height: 52px;
+  --kds-agenda-slot-height: 32px;
+  --kds-agenda-max-height: 74vh;
+  --kds-agenda-card-radius: 5px;
+
+  /* Avaliação + Motor Clínico — contrato visual do módulo | Etapa 9 */
+  --kds-clinical-content-width: 1080px;
+  --kds-clinical-test-result-width: 180px;
+  --kds-clinical-route-card-min-height: 112px;
+  --kds-clinical-radar-width: 620px;
+  --kds-clinical-panel-gap: 14px;
+  --kds-clinical-region-padding-x: 22px;
+
+  /* Extensões semânticas de produção.
+     Estes tokens preservam valores visuais históricos ainda utilizados,
+     agora dentro do vocabulário oficial --kds-*. */
+  --kds-brand-teal: #2AA79D;
+  --kds-brand-emerald: #3D9B73;
+  --kds-bg-neutral: #F5F6F4;
+  --kds-line-neutral: #DCE2DF;
+  --kds-text-neutral: #26363B;
+  --kds-text-subtle: #718086;
+  --kds-bg-shell: #F3F6F5;
+  --kds-text-ink: #20353A;
+  --kds-muted-strong: #657A80;
+  --kds-petrol-deep: #123D47;
+  --kds-teal-strong: #249C92;
+  --kds-teal-soft: #E5F6F2;
+  --kds-line-strong: #D6E3DF;
+  --kds-line-subtle: #E8F0ED;
+  --kds-shadow-panel: 0 14px 36px rgba(24,54,61,.08);
+  --kds-muted-refined: #687C81;
+}

@@ -1,0 +1,237 @@
+/* ==========================================================================
+   KineSys Design System — Responsividade Global | Etapa 13
+   Autoridade para regras responsivas transversais ao sistema.
+
+   CONTRATO DE BREAKPOINTS (valores literais por compatibilidade):
+   1280 — desktop amplo / redução inicial
+   1180 — desktop compacto / shell
+   1100 — workspaces complexos
+    980 — tablet horizontal
+    900 — transição de painéis densos
+    820 — tablet / drawer móvel
+    760 — formulários compactos
+    700 — telefone amplo
+    620 — telefone / uma coluna
+    560 — telefone compacto
+    520 — telefone pequeno
+    430 — telefone estreito
+
+   Regras específicas de cada módulo permanecem em seu arquivo oficial;
+   este arquivo contém salvaguardas globais e o workspace do prontuário.
+   ========================================================================== */
+
+/* Migrado de #ks-responsive-audit-v1112 */
+/* ==================================================================
+           AUDITORIA RESPONSIVA GLOBAL — v1.11.2
+           Objetivo: nenhuma ação essencial pode ficar fora da tela ou
+           inacessível por recorte, min-width ou overflow indevido.
+           ================================================================== */
+        @media screen {
+            html, body{ max-width:100%; }
+            body.ks-design-ready{ overflow-x:hidden!important; }
+
+            /* Shell e superfícies nunca podem crescer além da viewport. */
+            body.ks-design-ready > .container, body.ks-design-ready .tela, body.ks-design-ready .card, body.ks-design-ready .subtela, body.ks-design-ready .input-group, body.ks-design-ready .grid-2, body.ks-design-ready .grid-3, body.ks-design-ready .actions, body.ks-design-ready .card-header{
+                min-width:0!important;
+                box-sizing:border-box!important;
+            }
+            body.ks-design-ready > .container{ width:auto!important; }
+            body.ks-design-ready .tela{ width:100%!important; }
+            body.ks-design-ready .grid-2 > *, body.ks-design-ready .grid-3 > *, body.ks-design-ready [class*="-grid"] > *{ min-width:0!important; }
+
+            /* Mídia e textos longos não podem forçar largura. Campos são tratados no Design System. */
+            body.ks-design-ready img, body.ks-design-ready video, body.ks-design-ready canvas{ max-width:100%; }
+            body.ks-design-ready p, body.ks-design-ready small, body.ks-design-ready label, body.ks-design-ready td, body.ks-design-ready th, body.ks-design-ready button, body.ks-design-ready a{ overflow-wrap:anywhere; }
+
+            /* Sidebar/backdrop consolidados em design_navigation.css (Etapa 7). */
+
+            /* Tabelas legadas: em telas menores, rolagem fica dentro da
+               própria tabela em vez de cortar colunas fora da margem. */
+            body.ks-design-ready .tabela-pacientes{
+                max-width:100%!important;
+                box-sizing:border-box!important;
+            }
+
+            /* Modais genéricos nunca podem ultrapassar a viewport. */
+            body.ks-design-ready .modal-overlay, .ks-dialog-overlay, .engine-info-modal{ box-sizing:border-box!important; }
+            body.ks-design-ready .modal-box, .ks-dialog, .engine-info-card{
+                max-width:min(620px, calc(100vw - 24px))!important;
+                max-height:calc(100dvh - 24px)!important;
+                box-sizing:border-box!important;
+                overflow-x:hidden!important;
+                overflow-y:auto!important;
+                overscroll-behavior:contain;
+            }
+            body.ks-design-ready .modal-box .grid-2 > *, body.ks-design-ready .modal-box .grid-3 > *{ min-width:0!important; }
+
+            /* Cabeçalhos e grupos de ação podem quebrar linha sem recorte. */
+            body.ks-design-ready .actions{ flex-wrap:wrap; }
+            body.ks-design-ready .actions button{ min-width:0; max-width:100%; }
+
+            /* Barra financeira: o conjunto não aumenta a largura da página. */
+            .finance-workspace-tabs{
+                min-width:0!important;
+                max-width:100%!important;
+                overflow-x:auto;
+                overscroll-behavior-x:contain;
+                scrollbar-width:thin;
+            }
+            .finance-workspace-tab{ flex:0 0 auto; }
+
+            /* Progresso da avaliação: não força a página para os lados. */
+            
+            
+
+            /* Painéis de notificações e menus flutuantes respeitam margem. */
+            .ks-notificacoes-painel{
+                max-width:calc(100vw - 24px)!important;
+                box-sizing:border-box!important;
+            }
+        }
+
+        /* Tablets e celulares */
+        @media screen and (max-width:820px) {
+
+            body.ks-design-ready .grid-3{ grid-template-columns:minmax(0,1fr)!important; }
+
+            /* Tabelas podem ser roladas horizontalmente, sem cortar ações. */
+            body.ks-design-ready .tabela-pacientes{
+                display:block!important;
+                width:100%!important;
+                overflow-x:auto!important;
+                overflow-y:hidden!important;
+                -webkit-overflow-scrolling:touch;
+                white-space:nowrap;
+            }
+            body.ks-design-ready .tabela-pacientes th, body.ks-design-ready .tabela-pacientes td{ white-space:nowrap; }
+
+            .ks-team-hero{ flex-wrap:wrap; align-items:flex-start!important; }
+            .ks-team-hero > div{ min-width:0; flex:1 1 260px; }
+            .ks-team-hero #ks_new_team{ flex:0 0 auto; }
+        }
+
+        /* Telefones e janelas estreitas */
+        @media screen and (max-width:700px) {
+            body.ks-design-ready .tela, body.ks-design-ready .subtela, body.ks-design-ready .card{ width:100%!important; max-width:100%!important; }
+
+            /* Regra global: formulários legados de 2/3 colunas viram 1 coluna. */
+            
+
+            .finance-workspace-tabs{
+                width:100%!important;
+                display:flex!important;
+                flex-wrap:wrap!important;
+                overflow:visible!important;
+            }
+            .finance-workspace-tab{
+                flex:1 1 130px!important;
+                min-width:0!important;
+                white-space:normal!important;
+                justify-content:center!important;
+                text-align:center;
+            }
+
+            
+            
+            
+            
+            
+
+            .midia-capture-box, .midia-capture-actions, .midia-import-type{ min-width:0!important; max-width:100%!important; width:100%!important; }
+
+            body.ks-design-ready .modal-overlay{ padding:8px!important; align-items:center!important; }
+            body.ks-design-ready .modal-box{
+                width:100%!important;
+                max-width:calc(100vw - 16px)!important;
+                max-height:calc(100dvh - 16px)!important;
+                padding:18px 14px!important;
+                border-radius:12px!important;
+            }
+            body.ks-design-ready .modal-box .grid-2, body.ks-design-ready .modal-box .grid-3{ grid-template-columns:1fr!important; }
+            body.ks-design-ready .modal-box .actions{
+                display:grid!important;
+                grid-template-columns:1fr!important;
+                width:100%!important;
+            }
+            body.ks-design-ready .modal-box .actions button{ width:100%!important; }
+
+            .ks-dialog-overlay{ padding:8px!important; }
+            .ks-dialog{
+                width:100%!important;
+                max-width:calc(100vw - 16px)!important;
+                grid-template-columns:32px minmax(0,1fr)!important;
+                padding:16px!important;
+            }
+            .ks-dialog-actions{ display:grid!important; grid-template-columns:1fr!important; }
+            .ks-dialog-actions button{ width:100%!important; }
+        }
+
+        @media screen and (max-width:520px) {
+            body.ks-design-ready .actions{
+                display:grid!important;
+                grid-template-columns:1fr!important;
+                width:100%!important;
+            }
+            body.ks-design-ready .actions button{ width:100%!important; }
+
+            .ks-team-hero{ flex-direction:column!important; align-items:stretch!important; }
+            .ks-team-hero #ks_new_team{ width:100%!important; }
+            .midia-gallery{ grid-template-columns:1fr!important; }
+            .ks-notificacoes-painel{
+                position:fixed!important;
+                left:8px!important;
+                right:8px!important;
+                top:72px!important;
+                width:auto!important;
+                max-height:calc(100dvh - 84px)!important;
+            }
+            
+        }
+
+/* Migrado de #ks-patient-workspace-fix-v1112 */
+/* Correção do workspace do prontuário: os botões de ação nunca podem
+           esmagar a identificação do paciente. As ações ocupam uma linha própria. */
+        @media screen and (min-width:701px){
+            body.ks-design-ready .ks-prontuario-resumo{
+                grid-template-columns:minmax(280px,1fr) auto!important;
+                grid-template-rows:auto auto!important;
+                gap:14px 22px!important;
+                align-items:center!important;
+                min-height:0!important;
+            }
+            body.ks-design-ready .ks-prontuario-summary-main{
+                min-width:280px!important;
+                width:auto!important;
+            }
+            body.ks-design-ready .ks-prontuario-actions{
+                grid-column:1 / -1!important;
+                grid-row:2!important;
+                width:100%!important;
+                justify-content:flex-start!important;
+                align-items:center!important;
+                flex-wrap:wrap!important;
+            }
+        }
+        body.ks-design-ready .ks-prontuario-resumo h2{
+            overflow-wrap:normal!important;
+            word-break:normal!important;
+            hyphens:none!important;
+            white-space:normal!important;
+            min-width:0!important;
+        }
+        body.ks-design-ready .ks-prontuario-resumo p{
+            overflow-wrap:break-word!important;
+            word-break:normal!important;
+        }
+        @media screen and (max-width:700px){
+            body.ks-design-ready .ks-prontuario-resumo{
+                grid-template-columns:minmax(0,1fr)!important;
+                grid-template-rows:auto!important;
+                min-height:0!important;
+            }
+            body.ks-design-ready .ks-prontuario-summary-main, body.ks-design-ready .ks-prontuario-metrics, body.ks-design-ready .ks-prontuario-actions{
+                grid-column:1!important;
+                min-width:0!important;
+            }
+        }
+

@@ -1,0 +1,52 @@
+/* Home operacional: lista de 24h e pendências sob demanda. */
+#tela_home .ks-home-stats{grid-template-columns:minmax(0,320px)}
+#tela_home .ks-home-columns{grid-template-columns:minmax(0,4fr) minmax(0,1fr);align-items:start}
+#tela_home .ks-home-columns.ks-home-no-pending{grid-template-columns:minmax(0,1fr)}
+#tela_home [hidden]{display:none!important}
+#home_det_atend_prof_wrap[hidden]{display:none!important}
+#tela_home .ks-home-activity{padding:20px}
+.ks-home-activity .card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ks-home-activity .card-header h2{margin:0}
+.ks-home-activity .card-header p{margin:6px 0 0;color:#52686d;font-size:14px}
+.ks-home-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ks-home-activity-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid #e2e9e7}
+.ks-home-activity-row>div{min-width:0;display:grid;gap:5px}
+.ks-home-activity-row strong{font-size:16px;color:#173e46;overflow-wrap:anywhere}
+.ks-home-activity-row span{font-size:14px;color:#52686d;line-height:1.5}
+.ks-home-activity-row button{flex-shrink:0;min-height:44px}
+.ks-home-time-note{font-size:14px!important;line-height:1.55;color:#52686d;background:#f4f7f6;border-radius:8px;padding:10px 12px;margin:0 0 8px}
+body.ks-home-pending-open{overflow:hidden}
+#tela_home .ks-home-pending-trigger{display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;min-width:0;padding:20px 14px;border:1px solid #d8e3e0;border-radius:12px;background:white;color:#173e46;text-align:left;cursor:pointer;white-space:normal}
+.ks-home-pending-trigger strong{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.ks-home-pending-trigger>span{font-size:14px;line-height:1.5;color:#52686d}
+.ks-home-pending-trigger:hover{background:#f5f9f7;border-color:#91b6a9}
+#home_pending_total{background:#eef4f2;border:1px solid #d4e4de;color:#315b51;padding:5px 8px;border-radius:20px;font-size:13px;line-height:1.4}
+.ks-home-pending-trigger:focus-visible,#ks-home-pending-dialog button:focus-visible,.ks-home-activity button:focus-visible{outline:3px solid #368977;outline-offset:2px}
+#ks-home-pending-dialog{position:fixed;inset:0;margin:auto;width:min(700px,calc(100vw - 28px));max-height:84dvh;border:1px solid #d8e3e0;border-radius:16px;padding:0;box-shadow:0 24px 70px #07262b45;background:#fff;color:#173e46;overflow:hidden}
+#ks-home-pending-dialog:not([open]){display:none!important}
+#ks-home-pending-dialog[open]{display:flex;flex-direction:column}
+#ks-home-pending-dialog::backdrop{background:#0d282b85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ks-home-pending-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#f5faf8;flex-shrink:0}
+.ks-home-pending-head h2{margin:0;font-size:21px}
+.ks-home-pending-head button{width:44px;height:44px;flex-shrink:0;border:1px solid #cfdfd9;border-radius:9px;background:white;color:#173e46;font-size:26px;cursor:pointer}
+.ks-home-pending-body{padding:0 20px 20px;border-top:1px solid #e2e9e7;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.ks-home-pending-body>p{font-size:14px;line-height:1.55;color:#52686d;margin:14px 0}
+.ks-home-pending-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 0;background:transparent;border:0;border-bottom:1px solid #e2e9e7;border-radius:0;text-align:left;color:#173e46;cursor:pointer}
+.ks-home-pending-item>span:first-child{display:grid;gap:5px;min-width:0}
+.ks-home-pending-item strong{font-size:16px;overflow-wrap:anywhere}
+.ks-home-pending-item span span{font-size:14px;color:#52686d;line-height:1.5;overflow-wrap:anywhere}
+.ks-home-pending-item:hover{background:#f5f9f7}
+#lista_pendencias_clinicas>.btn-secondary{margin-top:14px;min-height:44px}
+@media(max-width:600px){
+ #tela_home .ks-home-stats{grid-template-columns:1fr}
+ #tela_home .ks-home-activity{padding:16px}
+ .ks-home-activity .card-header{align-items:flex-start}
+ .ks-home-activity-row{gap:10px;flex-wrap:wrap}
+ .ks-home-activity-row>div{flex:1 1 180px}
+ .ks-home-pending-body{padding:0 14px 16px}
+}
+@media(max-width:800px){
+ #tela_home .ks-home-columns{grid-template-columns:minmax(0,1fr)}
+ #tela_home .ks-home-pending-trigger{padding:16px;gap:6px}
+ #ks-home-pending-dialog{max-height:86dvh}
+}

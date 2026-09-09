@@ -1,0 +1,34 @@
+{
+  "etapa": 5,
+  "componente": "input-select-textarea",
+  "important_antes": 1175,
+  "important_depois": 1144,
+  "important_reduzidos": 31,
+  "bases_globais_concorrentes_antes": 6,
+  "bases_globais_concorrentes_depois": 1,
+  "roots_runtime": 1,
+  "campo_padrao": {
+    "font_size": "15.5px",
+    "min_height": "45px",
+    "radius": "8px",
+    "padding": "10px 12px"
+  },
+  "agenda_compacta": {
+    "font_size": "14px",
+    "min_height": "42px"
+  },
+  "textarea": {
+    "min_height": "120px",
+    "hma_min_height": "128px"
+  },
+  "validation": {
+    "js_active_files_checked": 15,
+    "js_syntax": true,
+    "css": true,
+    "duplicate_ids": 0,
+    "html_local_refs_checked": 28,
+    "missing_refs": 0,
+    "regioes_eixos_freeze_preserved": true,
+    "historical_audit_baseline_failures": 2
+  }
+}

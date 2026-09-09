@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KineSys — Gestão Clínica</title>
+
+
+
+
+    <!-- KineSys Design System — ordem oficial de produção -->
+    <link rel="stylesheet" href="design_tokens.css">
+    <link rel="stylesheet" href="design_base.css">
+    <link rel="stylesheet" href="design_responsive.css">
+    <link rel="stylesheet" href="design_foundation.css">
+    <link rel="stylesheet" href="design_features.css">
+    <link rel="stylesheet" href="financeiro_workspace-1.20.1.css?v=20260901-r1">
+    <link rel="stylesheet" href="financeiro_lancamentos-1.20.0.css?v=20260901-r2">
+    <link rel="stylesheet" href="agenda_referencia-1.20.0.css?v=20260901-r1">
+    <link rel="stylesheet" href="design_components.css">
+    <link rel="stylesheet" href="design_screens.css">
+    <link rel="stylesheet" href="design_typography.css">
+    <link rel="stylesheet" href="design_navigation.css">
+    <link rel="stylesheet" href="design_agenda.css">
+    <link rel="stylesheet" href="design_clinical.css?v=1.19.0-hma-layout-r14">
+    <link rel="stylesheet" href="design_clinical_direction-1.17.0.css">
+    <link rel="stylesheet" href="design_utilities.css">
+    <link rel="stylesheet" href="design_evaluation_workspace-1.18.0.css">
+    <link rel="stylesheet" href="login_access-1.18.0.css">
+    <link rel="stylesheet" href="design_patient_selection-1.18.1.css">
+    <link rel="stylesheet" href="design_home_activity-1.18.5.css">
+    <link rel="stylesheet" href="design_evaluation_context-1.18.3.css">
+<style id="agenda-individual-estilos">
+        .agenda-visoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid #e3eceb}
+        .agenda-visoes button[aria-pressed="true"]{background:#164d50;color:#fff;border-color:#164d50}
+        #agenda_agora_relogio{margin-left:auto;color:#9c2938;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+        .agenda-agora-linha{height:0;border-top:2px solid #d13b4d;align-self:start;position:relative;z-index:4;pointer-events:none;min-width:0}
+        .agenda-agora-linha::before{content:'';position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:#d13b4d}
+        .agenda-agora-linha span{position:absolute;right:3px;top:-19px;border-radius:4px;background:#fff;color:#a52336;padding:1px 4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 0 0 1px #f0b7be}
+        #tela_agenda [hidden],#modal_agendamento .agenda-finance-link[hidden],#modal_agendamento button[hidden],#modal_detalhe_agendamento button[hidden],.agenda-agora-linha[hidden]{display:none!important}
+        @media(max-width:600px){#agenda_agora_relogio{width:100%;margin-left:0}.agenda-visoes{gap:8px;padding:12px}.agenda-visoes button{flex:1}}
+    </style>
+    <link rel="stylesheet" href="financeiro_agendamento-1.21.0.css?v=20260901-r1">
+    <link rel="stylesheet" href="avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1">
+</head>
+<body>
+
+    <!-- CABEÇALHO COM MENU DROPDOWN (controle via JS) -->
+    <header>
+        <div class="header-left">
+            <div class="header-brand" onclick="navegarPara('tela_home')">
+                <h1>KINE<span>SYS</span></h1>
+                <p>Plataforma de Triagem Biomecânica</p>
+            </div>
+            <div class="header-welcome" id="header_welcome" hidden>
+                Bem-vindo(a), <span id="lbl_usuario_logado"></span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="menu-dropdown" id="menuDropdown">
+                <button class="btn-menu" id="menuToggle">☰ Menu</button>
+                <ul class="dropdown-content" id="dropdownContent">
+                    <li data-tela-menu="tela_home"><a onclick="navegarPara('tela_home'); fecharMenu();">🏠 Início</a></li>
+                    <li data-tela-menu="tela_cadastro"><a onclick="navegarPara('tela_cadastro'); fecharMenu();">👤 Novo paciente</a></li>
+                    <li data-tela-menu="tela_avaliacao"><a onclick="navegarPara('tela_avaliacao'); fecharMenu();">🩺 Avaliação</a></li>
+                    <li data-tela-menu="tela_buscar"><a onclick="navegarPara('tela_buscar'); fecharMenu();">📂 Prontuários</a></li>
+                    <li id="menu_midias" data-tela-menu="tela_midias"><a onclick="abrirMidiasPaciente(); fecharMenu();">📷 Fotos e documentos</a></li>
+                    <li data-tela-menu="tela_evolucao"><a onclick="navegarPara('tela_evolucao'); fecharMenu();">📈 Evolução</a></li>
+                    <li data-tela-menu="tela_relatorio"><a onclick="navegarPara('tela_relatorio'); fecharMenu();">📄 Relatório</a></li>
+                    <li id="menu_agenda" data-tela-menu="tela_agenda" style="display:none;"><a onclick="navegarPara('tela_agenda'); fecharMenu();">🗓️ Agenda</a></li>
+                    <li id="menu_financeiro" data-tela-menu="tela_financeiro" style="display:none;"><a onclick="navegarPara('tela_financeiro'); fecharMenu();">💳 Financeiro</a></li>
+                    <li id="menu_equipe" data-tela-menu="tela_equipe" style="display:none;"><a onclick="navegarPara('tela_equipe'); fecharMenu();">👥 Funcionários e acessos</a></li>
+                    <li id="menu_configuracoes" data-tela-menu="tela_configuracoes" style="display:none;"><a onclick="navegarPara('tela_configuracoes'); abrirConfiguracoesMensagens(); fecharMenu();">🛠️ Configurações</a></li>
+                    <li><a onclick="fazerLogout(); fecharMenu();">🚪 Sair</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- TELA DE LOGIN -->
+        <section id="tela_login" class="tela ativa">
+            <div class="ks-access-shell">
+                <aside class="ks-access-intro">
+                    <div class="ks-access-brand">KINE<span>SYS</span></div>
+                    <span class="ks-access-eyebrow">SUA CLÍNICA. SEU ACESSO.</span>
+                    <h1>Cuidado e gestão,<br>cada um no seu espaço.</h1>
+                    <p>Escolha como deseja entrar. Você verá somente os recursos autorizados para o perfil selecionado.</p>
+                    <div class="ks-access-note">Possui mais de uma função? Use a mesma conta e senha. Para mudar de perfil, saia e entre novamente.</div>
+                </aside>
+                <div class="ks-access-panel">
+                    <div id="login_acesso_normal">
+                        <div class="ks-access-tabs" role="tablist" aria-label="Área de acesso">
+                            <button type="button" role="tab" id="login_tab_gestao" aria-selected="true" aria-controls="login_form_panel" data-access-area="gestao"><strong>Gestão</strong><span>Administrador e secretaria</span></button>
+                            <button type="button" role="tab" id="login_tab_profissional" aria-selected="false" aria-controls="login_form_panel" data-access-area="profissional" tabindex="-1"><strong>Profissional</strong><span>Fisioterapeuta</span></button>
+                        </div>
+                        <div role="tabpanel" id="login_form_panel" aria-labelledby="login_tab_gestao">
+                            <h2 id="login_acesso_titulo">Acesso da gestão</h2><p id="login_acesso_descricao">Entre para organizar a rotina da clínica.</p>
+                            <form id="login_form">
+                                <div class="input-group"><label for="login_funcao">Entrar como</label><select id="login_funcao" required><option value="MASTER">Administrador(a)</option><option value="SECRETARIA">Secretaria</option></select></div>
+                                <div class="input-group"><label for="login_email">E-mail da sua conta</label><input type="email" id="login_email" autocomplete="username" inputmode="email" required placeholder="voce@exemplo.com" maxlength="254"></div>
+                                <div class="input-group"><label for="login_senha">Senha</label><div class="ks-access-password"><input type="password" id="login_senha" autocomplete="current-password" required placeholder="Digite sua senha"><button type="button" data-toggle-password="login_senha" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div><small id="login_caps" hidden>Caps Lock está ativado.</small></div>
+                                <div class="input-group" id="login_perfil_group" style="display:none"><label for="login_perfil">Selecione seu vínculo</label><select id="login_perfil"><option value="">Selecione o vínculo</option></select></div>
+                                <button id="btn_login_entrar" type="submit" class="btn-primary">Entrar na gestão</button>
+                            </form>
+                            <div class="ks-access-help"><button id="btn_login_redefinir" type="button">Esqueci minha senha</button><button id="btn_login_conta" type="button">Esqueci minha conta</button></div>
+                        </div>
+                    </div>
+                    <div id="login_acesso_recuperar" hidden>
+                        <span class="ks-access-eyebrow">RECUPERAÇÃO DE ACESSO</span><h2>Esqueceu sua senha?</h2><p>Informe o e-mail cadastrado. Se a conta existir, enviaremos um link para definir uma nova senha.</p>
+                        <form id="login_recovery_form"><div class="input-group"><label for="login_recovery_email">E-mail da sua conta</label><input type="email" id="login_recovery_email" autocomplete="email" required maxlength="254"></div><button class="btn-primary" id="login_recovery_submit" type="submit">Enviar link de recuperação</button></form>
+                        <button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
+                    </div>
+                    <div id="login_acesso_nova_senha" hidden>
+                        <span class="ks-access-eyebrow">RECUPERAÇÃO DE ACESSO</span><h2>Defina sua nova senha</h2><p>Esta senha será usada nos seus perfis de gestão e profissional. Utilize pelo menos 12 caracteres.</p>
+                        <form id="login_reset_form"><div class="input-group"><label for="login_nova_senha">Nova senha</label><div class="ks-access-password"><input type="password" id="login_nova_senha" autocomplete="new-password" minlength="12" required><button type="button" data-toggle-password="login_nova_senha" aria-label="Mostrar nova senha" aria-pressed="false">Mostrar</button></div></div><div class="input-group"><label for="login_confirmar_senha">Confirme a nova senha</label><input type="password" id="login_confirmar_senha" autocomplete="new-password" minlength="12" required></div><button class="btn-primary" id="login_reset_submit" type="submit">Salvar nova senha</button></form>
+                        <button class="ks-access-back" type="button" id="login_cancelar_recovery">Cancelar e voltar ao login</button>
+                    </div>
+                    <div id="login_acesso_conta" hidden>
+                        <span class="ks-access-eyebrow">AJUDA COM A CONTA</span><h2>Não lembra qual e-mail usou?</h2>
+                        <p>Peça ao administrador da clínica para conferir seu cadastro na equipe e o e-mail vinculado ao seu perfil.</p>
+                        <p>Se você é o único administrador, procure o responsável técnico pelo KineSys na clínica para verificar sua identidade e recuperar o acesso com segurança.</p>
+                        <p>Por segurança, não exibimos e-mails cadastrados nesta tela. Nunca envie sua senha a terceiros.</p><button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
+                    </div>
+                    <div id="login_feedback" role="status" aria-live="polite" class="ks-login-feedback" style="display:none"></div>
+                    <p class="ks-access-footer">Acesso exclusivo à equipe autorizada. Não compartilhe sua senha.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA HOME -->
+        <section id="tela_home" class="tela">
+            <div class="card ks-fisio-painel" id="card_painel_fisioterapeuta" hidden>
+                <div class="card-header"><div><span class="eyebrow">PAINEL DO ATENDIMENTO</span><h2 id="painel_fisio_titulo">Minha agenda de hoje</h2></div><button type="button" class="btn-secondary" onclick="carregarPainelFisioterapeuta()">Atualizar</button></div>
+                <div id="painel_fisio_resumo" class="kds-u-text-muted kds-u-fs-meta">Carregando sua rotina…</div>
+                <div id="painel_fisio_lista" class="ks-fisio-painel-lista"></div>
+            </div>
+<div class="card">
+                <div class="card-header">
+                    <h2>Atendimentos Recentes</h2>
+                </div>
+                <div id="lista_pacientes_recentes">
+                    <p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center kds-u-p-20px">Nenhum prontuário salvo recentemente.</p>
+                </div>
+            </div>
+            <div class="card" id="card_pendencias_clinicas">
+                <div class="card-header"><h2>📌 Pendências Clínicas</h2></div>
+                <p class="kds-u-fs-meta kds-u-text-muted kds-u-mt-neg-10px">Lembretes automáticos baseados no prontuário. Não substituem decisão clínica.</p>
+                <div id="lista_pendencias_clinicas"><p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Carregando pendências...</p></div>
+            </div>
+
+            <!-- NOVO: CARD CRM E RELACIONAMENTO -->
+            <div class="card" id="card_crm">
+                <div class="card-header">
+                    <h2>📱 CRM e Relacionamento</h2>
+                </div>
+                <div class="input-group kds-u-mb-15px">
+                    <label>Selecionar Paciente para CRM</label>
+                    <select id="crm_paciente_select" onchange="carregarPacienteCRM()">
+                        <option value="">-- Selecione um paciente --</option>
+                    </select>
+                </div>
+                <div id="crm_paciente_info" class="kds-u-mb-15px" style="display:none;">
+                    <p><strong>Paciente:</strong> <span id="crm_nome"></span></p>
+                    <p><strong>Telefone:</strong> <span id="crm_telefone"></span></p>
+                </div>
+                <div class="dashboard-grid kds-u-gtc-repeat3-1fr kds-u-gap-10px">
+                    <button class="btn-primary kds-u-fs-meta kds-u-p-10px" onclick="enviarWhatsApp('checkin')">📲 Check-in (24h)</button>
+                    <button class="btn-primary kds-u-fs-meta kds-u-p-10px" onclick="enviarWhatsApp('exercicios')">🏋️ Lembrete Exercícios (3 dias)</button>
+                    <button class="btn-primary kds-u-fs-meta kds-u-p-10px" onclick="enviarWhatsApp('sessao')">📅 Lembrete Sessão (Pré-24h)</button>
+                </div>
+            </div>
+        </section>
+<!-- DETALHES DA HOME — v1.11.2 -->
+        <section id="tela_home_atendimentos" class="tela ks-home-detail-screen">
+            <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL OPERACIONAL</span><h2>Atendimentos realizados hoje</h2><p id="home_det_atend_subtitulo">Somente atendimentos efetivamente concluídos na data atual.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar</label><input id="home_det_atend_busca" type="search" placeholder="Paciente ou profissional" oninput="renderizarAtendimentosHojeDetalhes()"></div><div class="input-group" id="home_det_atend_prof_wrap"><label>Profissional</label><select id="home_det_atend_prof" onchange="renderizarAtendimentosHojeDetalhes()"><option value="">Todos os profissionais</option></select></div><button type="button" class="btn-secondary" onclick="carregarAtendimentosHojeDetalhes(true)">Atualizar</button></div>
+            <div id="home_det_atend_resumo" class="ks-home-detail-summary"></div>
+            <div id="home_det_atend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando atendimentos de hoje…</div></div>
+        </section>
+
+        <section id="tela_home_pendencias" class="tela ks-home-detail-screen">
+            <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL CLÍNICO</span><h2>Pendências clínicas</h2><p>Selecione uma pendência para abrir o paciente diretamente no ponto do prontuário que precisa de atenção.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar paciente ou pendência</label><input id="home_det_pend_busca" type="search" placeholder="Nome, pendência..." oninput="renderizarPendenciasClinicasDetalhes()"></div><div class="input-group"><label>Prioridade</label><select id="home_det_pend_nivel" onchange="renderizarPendenciasClinicasDetalhes()"><option value="">Todas</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Acompanhamento</option></select></div><button type="button" class="btn-secondary" onclick="carregarPendenciasClinicasDetalhes(true)">Atualizar</button></div>
+            <div id="home_det_pend_resumo" class="ks-home-detail-summary"></div>
+            <div id="home_det_pend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pendências…</div></div>
+        </section>
+
+        <section id="tela_home_recentes" class="tela ks-home-detail-screen">
+            <div class="ks-home-detail-hero"><div><span class="eyebrow">PACIENTES</span><h2>Pacientes recentes</h2><p>Últimos cadastros da clínica, em ordem do mais recente para o mais antigo.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar paciente</label><input id="home_det_recent_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPacientesRecentesDetalhes()"></div><button type="button" class="btn-secondary" onclick="carregarPacientesRecentesDetalhes(true)">Atualizar</button></div>
+            <div id="home_det_recent_resumo" class="ks-home-detail-summary"></div>
+            <div id="home_det_recent_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pacientes recentes…</div></div>
+        </section>
+
+        <!-- TELA CADASTRO -->
+        <section id="tela_cadastro" class="tela">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="titulo_tela_cadastro">Cadastro Geral do Paciente</h2>
+                </div>
+                <input type="hidden" id="cad_id_edicao" value="">
+
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="cad_nome" placeholder="Digite o nome completo">
+                    </div>
+                    <div class="input-group">
+                        <label>CPF</label>
+                        <input type="text" id="cad_cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" aria-describedby="cad_cpf_erro">
+                        <small id="cad_cpf_erro" class="field-error" role="alert"></small>
+                    </div>
+
+                    <div class="grid-2 kds-u-gap-10px kds-u-mb-0">
+                        <div class="input-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" id="cad_nascimento" onchange="calcularIdadeCadastro()">
+                        </div>
+                        <div class="input-group">
+                            <label>Idade</label>
+                            <input type="text" id="cad_idade" placeholder="Calculado" readonly class="kds-u-bg-disabled kds-u-cursor-not-allowed kds-u-fw-bold kds-u-text-petrol">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Sexo</label>
+                        <select id="cad_sexo">
+                            <option value="">-- Selecione --</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Estado Civil</label>
+                        <select id="cad_estado_civil">
+                            <option value="">-- Selecione --</option>
+                            <option value="Solteiro(a)">Solteiro(a)</option>
+                            <option value="Casado(a)">Casado(a)</option>
+                            <option value="Divorciado(a)">Divorciado(a)</option>
+                            <option value="Viúvo(a)">Viúvo(a)</option>
+                            <option value="União Estável">União Estável</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Telefone / WhatsApp do paciente</label>
+                        <input type="text" id="cad_telefone" placeholder="(00) 00000-0000" inputmode="tel" maxlength="15" aria-describedby="cad_telefone_erro">
+                        <small id="cad_telefone_erro" class="field-error" role="alert"></small>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Profissão / Ocupação</label>
+                        <input type="text" id="cad_profissao" placeholder="Ex: Dentista, Pedreiro...">
+                    </div>
+
+                    <div class="input-group cadastro-dependente-toggle kds-u-gc-1-1">
+                        <label class="cad-dependente-check">
+                            <input type="checkbox" id="cad_dependente" onchange="alternarCamposResponsavel()">
+                            <span><strong>Paciente menor de idade ou dependente</strong><small>Use esta opção quando os contatos e mensagens precisarem ser direcionados ao responsável.</small></span>
+                        </label>
+                    </div>
+
+                    <div id="cad_responsavel_bloco" class="cad-responsavel-card kds-u-gc-1-1" style="display:none;">
+                        <div class="cad-responsavel-head">
+                            <div><strong>Responsável pelo paciente</strong><small>Este contato será priorizado nos lembretes e mensagens do KineSys.</small></div>
+                            <span class="cad-responsavel-badge">Contato preferencial</span>
+                        </div>
+                        <div class="grid-3">
+                            <div class="input-group">
+                                <label>Nome do responsável *</label>
+                                <input type="text" id="cad_responsavel_nome" placeholder="Nome completo do responsável" aria-describedby="cad_responsavel_nome_erro">
+                                <small id="cad_responsavel_nome_erro" class="field-error" role="alert"></small>
+                            </div>
+                            <div class="input-group">
+                                <label>Vínculo / parentesco</label>
+                                <select id="cad_responsavel_parentesco">
+                                    <option value="">-- Selecione --</option>
+                                    <option value="Mãe">Mãe</option>
+                                    <option value="Pai">Pai</option>
+                                    <option value="Responsável legal">Responsável legal</option>
+                                    <option value="Cônjuge">Cônjuge</option>
+                                    <option value="Filho(a)">Filho(a)</option>
+                                    <option value="Irmão(ã)">Irmão(ã)</option>
+                                    <option value="Cuidador(a)">Cuidador(a)</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Telefone / WhatsApp do responsável *</label>
+                                <input type="text" id="cad_responsavel_telefone" placeholder="(00) 00000-0000" inputmode="tel" maxlength="15" aria-describedby="cad_responsavel_telefone_erro">
+                                <small id="cad_responsavel_telefone_erro" class="field-error" role="alert"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>CEP</label>
+                        <input type="text" id="cad_cep" placeholder="00000-000" inputmode="numeric" maxlength="9" autocomplete="postal-code" aria-describedby="cad_cep_erro">
+                        <small id="cad_cep_erro" class="field-error" role="alert"></small>
+                        <small id="cad_cep_status" class="field-status" aria-live="polite"></small>
+                        <button type="button" class="btn-secondary kds-u-mt-8px kds-u-p-7px-12px kds-u-fs-meta" onclick="buscarCEPPeloBotao()">↻ Buscar endereço pelo CEP</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Endereço Completo</label>
+                    <input type="text" id="cad_endereco" placeholder="O endereço será preenchido pelo CEP; complete número e complemento">
+                </div>
+
+                <div class="actions">
+                    <button type="button" id="btn_salvar_cadastro" class="btn-secondary" onclick="salvarCadastroSomente()">Salvar Apenas Cadastro</button>
+                    <button type="button" id="btn_salvar_iniciar_avaliacao" class="btn-primary" onclick="salvarEIniciarAvaliacao()">Salvar e Ir para Avaliação ➔</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA AVALIAÇÃO -->
+        <section id="tela_avaliacao" class="tela">
+            <div class="card precadastro-compacto">
+                    <div class="precadastro-cabecalho">
+                        <div>
+                            <h2>Carregar paciente</h2>
+                        </div>
+                        <button id="btn_filtro_precadastro" class="btn-link-compacto" type="button" onclick="alternarFiltroPreCadastro()" hidden aria-hidden="true" tabindex="-1">Somente recentes</button>
+                    </div>
+                    <div class="grid-pre-cadastro">
+                        <div class="input-group kds-u-mb-0 paciente-busca">
+                            <label id="lbl_filtro_precadastro" for="busca_paciente_precadastro">Buscar paciente pelo nome</label>
+                            <input id="busca_paciente_precadastro" type="search" placeholder="Digite o nome do paciente…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="resultados_busca_precadastro" aria-expanded="false" aria-describedby="status_busca_precadastro" data-no-autosave oninput="filtrarPacientesPreCadastro()" onfocus="filtrarPacientesPreCadastro()" onkeydown="navegarBuscaPacientesPreCadastro(event)">
+                            <select id="select_paciente_precadastro" class="paciente-busca-native" hidden aria-hidden="true" tabindex="-1" onchange="carregarPacientePreCadastradoNaAvaliacao()">
+                                <option value="">-- Selecione para carregar os dados --</option>
+                            </select>
+                            <div id="resultados_busca_precadastro" class="paciente-busca-resultados" role="listbox" aria-label="Pacientes encontrados" hidden></div>
+                            <small id="status_busca_precadastro" class="paciente-busca-status" aria-live="polite">Digite o nome para buscar em todos os pacientes cadastrados.</small>
+                        </div>
+                        <div class="precadastro-status">Nome, idade e profissão são preenchidos automaticamente.</div>
+                    </div>
+                </div>
+
+            <div class="clinical-progress-wrap" aria-label="Etapas da avaliação">
+                <div class="clinical-progress" role="tablist">
+                    <button type="button" class="step active" id="step_indicador_1" role="tab" aria-controls="subtela_triagem" aria-selected="true" onclick="navegarAvaliacaoEtapaKineSys('subtela_triagem')"><span class="step-number">1</span><span>Anamnese</span></button>
+                    <button type="button" class="step" id="step_indicador_2" role="tab" aria-controls="subtela_mapeamento" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_mapeamento')"><span class="step-number">2</span><span>Exame clínico</span></button>
+                    <button type="button" class="step" id="step_indicador_3" role="tab" aria-controls="subtela_diagnostico" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_diagnostico')"><span class="step-number">3</span><span>Síntese</span></button>
+                </div>
+            </div>
+
+    <!-- RADAR KINESYS — indicador inline; nunca sobrepõe o conteúdo clínico -->
+    <div id="radar_flutuante_container" class="radar-dock" aria-live="polite" aria-label="Radar KineSys">
+        <button type="button" id="radar_launcher" class="radar-launcher" aria-expanded="false" aria-controls="radar_painel" title="Abrir Radar KineSys">
+            <span class="radar-launcher-glyph" aria-hidden="true"></span>
+            <span class="radar-launcher-label">Radar KineSys</span>
+            <span id="radar_badge" class="radar-badge" aria-label="0 alertas">0</span>
+        </button>
+        <aside id="radar_painel" class="radar-painel" aria-hidden="true" aria-label="Alertas do Radar KineSys">
+            <div class="radar-painel-header">
+                <div><span class="eyebrow">RADAR KINESYS</span><strong>Alertas clínicos em contexto</strong></div>
+                <button type="button" id="radar_fechar" class="radar-painel-fechar" aria-label="Fechar Radar KineSys">×</button>
+            </div>
+            <div id="radar_painel_resumo" class="radar-painel-resumo">Nenhum alerta ativo.</div>
+            <div id="radar_alertas_lista" class="radar-lista"></div>
+        </aside>
+    </div>
+
+            <div class="avaliacao-draft-toolbar">
+                <span>Rascunho automático neste dispositivo</span>
+                <button type="button" id="btn_descartar_rascunho_avaliacao" class="btn-secondary avaliacao-draft-discard" onclick="descartarRascunhoAvaliacaoKineSys()">Descartar rascunho</button>
+            </div>
+
+            <div id="subtela_triagem" class="subtela ativa clinical-focus-ui" role="tabpanel" aria-labelledby="step_indicador_1">
+                <div class="clinical-primary-shell kds-u-pos-relative kds-u-z-10 kds-u-ov-visible">
+                    <div class="clinical-topbar">
+                        <div class="clinical-section-heading clinical-section-heading--plain">
+                            <div>
+                                <h2>Avaliação clínica</h2>
+                            </div>
+                        </div>
+                        <div class="input-group clinical-datetime-card kds-u-m-0">
+                            <label for="avaliacao_realizado_em">Data e hora *</label>
+                            <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="Este horário inicia a janela fixa de 24 h para eventuais correções. O horário de salvamento é registrado separadamente.">
+                            <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">Este horário inicia a janela fixa de 24 h para eventuais correções. O horário em que o registro for salvo é carimbado separadamente.</small>
+                        </div>
+                    </div>
+                    <div id="avaliacao_registros_paciente" class="kds-u-m-0-0-14px kds-u-p-12px-14px kds-u-border-1px-solid-dde8e4 kds-u-br-10px kds-u-bg-soft-panel" style="display:none;"></div>
+                    <div class="patient-strip patient-strip-cards">
+                        <div class="input-group patient-plain-field"><label>Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
+                        <div class="input-group patient-plain-field patient-age"><label>Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label>Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label>Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
+                    </div>
+
+                    <!-- Campos antigos de trajeto mantidos ocultos somente por compatibilidade técnica.
+                         O trajeto clínico passa a ser interpretado a partir da própria HMA. -->
+                    <div class="hma-legacy-trajectory" hidden aria-hidden="true">
+                        <input type="text" id="paciente_origem_irradiacao" tabindex="-1">
+                        <input type="text" id="paciente_irradiacao" tabindex="-1">
+                        <div id="analise_irradiacao_clinica" class="analise-irradiacao-compacta"></div>
+                    </div>
+
+                    <!-- Compatibilidade com registros antigos: o Motor 2.5 não usa "tipo de dor" como entrada de priorização. -->
+                    <select id="paciente_tipo_dor" hidden aria-hidden="true" tabindex="-1"><option value="">Não informado</option><option value="mecanica">Mecânica</option><option value="inflamatoria">Inflamatória</option><option value="neuropatica">Neuropática</option><option value="mista">Mista / não bem definida</option></select>
+                </div>
+
+                <div class="hma-cards-layout" aria-label="História clínica e Radar KineSys">
+                    <section class="card hma-card hma-entry-card" aria-labelledby="hma_card_titulo">
+                        <div class="card-header hma-card-header">
+                            <div class="hma-heading-copy">
+                                <span class="hma-kicker">História clínica</span>
+                                <h2 id="hma_card_titulo">História da Moléstia Atual <span class="hma-title-acronym">(HMA)</span></h2>
+                                <p>Registre o relato livre do paciente; o Radar organiza os achados sem substituir o exame.</p>
+                            </div>
+                        </div>
+                        <div class="input-group hma-principal">
+                            <label for="paciente_hma"><span>Relato clínico</span><small>Texto livre</small></label>
+                            <textarea id="paciente_hma" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
+                            <div id="sugestoes_hma_tempo_real" class="hma-live-suggestions" aria-live="polite" hidden></div>
+                        </div>
+
+                    </section>
+
+                    <section class="card hma-card hma-radar-card" aria-labelledby="hma_radar_card_titulo">
+                        <div class="card-header hma-card-header">
+                            <div class="hma-heading-copy">
+                                <span class="hma-kicker">Apoio à decisão</span>
+                                <h2 id="hma_radar_card_titulo"><span class="hma-title-main">Radar KineSys</span> <span class="hma-title-separator">—</span> <span class="hma-title-secondary">Sínteses e sugestões</span></h2>
+                                <p>Leitura estruturada da HMA para destacar hipóteses, diferenciais e pontos a confirmar.</p>
+                            </div>
+                        </div>
+                        <section id="ks20_hma_radar" class="hma-live-suggestions hma-radar-panel" aria-live="polite" hidden>
+                            <strong>Radar clínico da HMA</strong>
+                            <div id="ks20_hma_insights"></div>
+                            <small>Revise e confirme os achados durante o exame. O radar não estabelece diagnóstico.</small>
+                        </section>
+                        <p class="hma-radar-helper">As sínteses são atualizadas a partir da HMA e devem ser confirmadas durante o exame físico.</p>
+                    </section>
+                </div>
+
+                <div class="hma-below-controls" aria-label="Mecanismo de início e fatores de piora">
+                    <div class="input-group clinical-mechanism-only">
+                        <label for="paciente_mecanismo_lesao">Mecanismo / início</label>
+                        <select id="paciente_mecanismo_lesao"><option value="">Não informado</option><option value="trauma_agudo">Trauma agudo</option><option value="esforco_repetitivo">Esforço repetitivo / sobrecarga</option><option value="insidioso">Insidioso, sem trauma claro</option><option value="pos_cirurgico">Pós-cirúrgico / pós-imobilização</option></select>
+                    </div>
+
+                    <div class="input-group fatores-piora-compactos">
+                        <label>Fatores de piora</label>
+                        <div class="checkbox-group compact-chips">
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="movimento"><span>Movimento</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="repouso"><span>Repouso</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="carga"><span>Carga</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="periodo_noturno"><span>Noturno</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="posicao_sentada"><span>Sentado</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="posicao_em_pe"><span>Em pé</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card clinical-secondary-card">
+                    <div class="clinical-section-heading compact-heading">
+                        <div><h2>Antecedentes e fatores modificadores</h2></div>
+                    </div>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Antecedentes, cirurgias e medicamentos</span><small>Comorbidades e informações farmacológicas relevantes</small></summary>
+                        <div class="disclosure-body">
+                            <div class="input-group"><label>Marcadores e comorbidades</label><div class="checkbox-group compact-chips">
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Etilismo</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>HAS</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_diabetico"><span>DM</span></label>
+                                <input type="checkbox" id="chk_corticoide" style="display:none;" aria-hidden="true">
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_sistemico"><span>Corticoide sistêmico</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_infiltracao"><span>Infiltração recente</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_aine_recente"><span>AINE recente</span></label>
+                                <label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia / trauma</span></label>
+                            </div></div>
+                            <div id="bloco_cirurgias"><div class="input-group kds-u-pos-relative kds-u-z-98"><label>Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div></div>
+                            <div class="input-group kds-u-pos-relative kds-u-z-97"><label>Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Exposição ocupacional</span><small>Detalhar somente quando houver relação potencial com o quadro</small></summary>
+                        <div class="disclosure-body">
+                            <p class="helper-text">A profissão gera contexto; o Radar considera apenas exposições confirmadas.</p>
+                            <div class="checkbox-group compact-chips" id="grupo_exposicoes_ocupacionais">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="sentado_prolongado"><span>Sedestação prolongada</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="em_pe_prolongado"><span>Ortostatismo prolongado</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="flexao_rotacao_carga"><span>Flexão/rotação com carga</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="acima_cabeca"><span>Acima da cabeça</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="repeticao_maos"><span>Repetição mãos/punhos</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="vibracao"><span>Vibração</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="manejo_pacientes"><span>Manejo de pacientes</span></label>
+                            </div><div id="sugestao_exposicoes_ocupacionais" class="helper-text"></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Carga esportiva</span><small>Frequência, dose e exposição predominante</small></summary>
+                        <div class="disclosure-body">
+                            <div class="grid-2 compact-grid"><div class="input-group"><label>Frequência semanal</label><input type="number" id="esporte_frequencia" min="0" max="14" placeholder="sessões/semana"></div><div class="input-group"><label>Duração média</label><input type="number" id="esporte_duracao" min="0" placeholder="min/sessão"></div><div class="input-group"><label>Nível</label><select id="esporte_nivel"><option value="">Não informado</option><option value="recreacional">Recreacional</option><option value="competitivo">Competitivo</option><option value="alto_rendimento">Alto rendimento</option></select></div><div class="input-group"><label>Mudança recente de carga</label><select id="esporte_mudanca_carga"><option value="">Não informado</option><option value="nao">Sem aumento relevante</option><option value="leve">Aumento leve</option><option value="moderado">Aumento moderado</option><option value="acentuado">Aumento acentuado</option></select></div></div>
+                            <div class="checkbox-group compact-chips" id="grupo_exposicoes_esportivas">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="impacto"><span>Impacto</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="forca_alta"><span>Força alta</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="overhead"><span>Overhead</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="rotacao"><span>Rotação/pivô</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="endurance"><span>Endurance</span></label>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Fatores psicossociais</span><small>Yellow Flags — triagem breve contextual</small></summary>
+                        <div class="disclosure-body">
+                            <p class="helper-text">Não substitui instrumento psicométrico validado.</p>
+                            <div class="checkbox-group compact-chips" id="grupo_yellow_flags">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="medo_movimento"><span>Medo de movimento/relesão</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="catastrofizacao"><span>Catastrofização</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="baixa_autoeficacia"><span>Baixa autoeficácia</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="evitacao"><span>Evitação</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="sono_ruim"><span>Sono ruim</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="estresse"><span>Estresse elevado</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="afastamento"><span>Barreiras de retorno</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="expectativa_negativa"><span>Expectativa negativa</span></label>
+                            </div>
+                            <div class="input-group"><label>Observação contextual (opcional)</label><textarea id="yellow_flags_observacao" placeholder="Contexto relevante..."></textarea></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure fonte-disclosure">
+                        <summary><span>Fonte dos dados</span><small id="fonte_dados_resumo">Relato do paciente</small></summary>
+                        <div class="disclosure-body"><div class="input-group"><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
+                    </details>
+
+                    <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para Exame direcionado ➔</button></div>
+                </div>
+            </div>
+
+            <div id="subtela_mapeamento" class="subtela cluster-focus-ui" role="tabpanel" aria-labelledby="step_indicador_2">
+                <div class="cluster-focus-toolbar">
+                    <div>
+                        <div class="eyebrow">DIREÇÃO CLÍNICA</div>
+                        <strong>Escolha o foco da investigação</strong>
+                    </div>
+                    <button type="button" class="cluster-info-link" onclick="abrirInfoMotorClinico()" title="Sobre o motor clínico">ⓘ Sobre o motor</button>
+                </div>
+                <div class="region-strip">
+                    <div class="ks-region-strip-label"><strong>Regiões relevantes</strong><span>Selecione uma ou mais áreas para organizar o exame.</span></div>
+                    <button type="button" class="btn-secondary" onclick="abrirRegioesAvaliacaoKineSys(this)">Selecionar regiões</button>
+                    <div id="ks-regions-selected" aria-label="Regiões selecionadas"></div>
+                    <div class="checkbox-group region-chips" id="grupo_regioes_mapeamento" hidden></div>
+                </div>
+                <div id="painel_integracao_multirregional" class="kinesys-integration-panel" style="display:none;"></div>
+                <div id="container_clusters_regioes"></div>
+                <div class="cluster-focus-actions">
+                    <button class="btn-secondary" onclick="irParaSubtela('subtela_triagem')">◀ Voltar à Anamnese</button>
+                    <button class="btn-primary" onclick="avancarParaDiagnostico()">Ver resumo e laudo ➔</button>
+                </div>
+            </div>
+
+            <div id="subtela_diagnostico" class="subtela" role="tabpanel" aria-labelledby="step_indicador_3">
+                <div class="card" id="card_alertas_consolidados">
+                    <div class="card-header">
+                        <h2>Segurança e alertas</h2>
+                    </div>
+                    <p class="kds-u-fs-meta kds-u-text-muted kds-u-mt-neg-10px">Reúne as pistas de segurança que precisam ser revisadas antes do resumo. Alertas não são diagnósticos: indicam uma decisão clínica a registrar.</p>
+                    <div id="container_alertas_consolidados"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Resumo da direção clínica</h2>
+                    </div>
+                    <div id="container_sintese_diagnostica"></div>
+                </div>
+
+
+                <div class="card" id="ks-laudo-card">
+                    <div class="card-header"><h2>Laudo clínico-funcional</h2></div>
+                    <p id="ks-laudo-status" role="status"></p>
+                    <label for="ks-laudo-texto">Texto para revisão e conclusão do fisioterapeuta</label>
+                    <textarea id="ks-laudo-texto" rows="16" spellcheck="true"></textarea>
+                    <label class="ks-laudo-review"><input type="checkbox" id="ks-laudo-revisado"> Revisei o conteúdo e registrei minha conclusão clínica.</label>
+                    <div class="ks-laudo-actions">
+                        <button type="button" class="btn-secondary" id="ks-laudo-atualizar">Atualizar base da avaliação</button>
+                        <button type="button" class="btn-secondary" id="ks-laudo-copiar">Copiar texto</button>
+                        <button type="button" class="btn-primary" onclick="salvarAvaliacaoAtual(false)">Salvar rascunho</button>
+                    </div>
+                </div>
+                <div class="card" id="card_restricoes_posop">
+                    <div class="card-header"><h2>Restrições pós-operatórias atuais</h2></div>
+                    <p class="clinical-note">Use este bloco quando houver cirurgia/procedimento recente. As restrições ficam persistentes nas evoluções até serem atualizadas em nova avaliação/reavaliação.</p>
+                    <label class="checkbox-pill kds-u-mb-12px"><input type="checkbox" id="posop_ativo" onchange="atualizarVisibilidadeRestricoesPosOp()"><span>Paciente em fase pós-operatória com restrições ativas</span></label>
+                    <div id="posop_campos" style="display:none">
+                        <div class="grid-2">
+                            <div class="input-group"><label>Procedimento / cirurgia</label><input type="text" id="posop_procedimento" placeholder="Ex.: osteossíntese bimaleolar com placa e parafusos"></div>
+                            <div class="input-group"><label>Data da cirurgia</label><input type="date" id="posop_data_cirurgia"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label>Status de carga</label><select id="posop_carga"><option value="">Não informado</option><option value="sem_carga">Sem carga</option><option value="toque">Toque / contato apenas</option><option value="parcial">Carga parcial</option><option value="conforme_tolerado">Carga conforme tolerado</option><option value="total">Carga total</option></select></div>
+                            <div class="input-group"><label>Órtese / imobilização</label><input type="text" id="posop_ortese" placeholder="Ex.: bota imobilizadora até retorno médico"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label>Limite / restrição de ADM</label><textarea id="posop_adm" rows="2" placeholder="Ex.: não ultrapassar 90° de flexão; evitar dorsiflexão forçada."></textarea></div>
+                            <div class="input-group"><label>Movimentos / atividades proibidas</label><textarea id="posop_proibicoes" rows="2" placeholder="Ex.: sem corrida, saltos ou apoio unipodal sem liberação."></textarea></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label>Orientações específicas do cirurgião</label><textarea id="posop_orientacoes" rows="2"></textarea></div>
+                            <div class="input-group"><label>Próximo retorno médico</label><input type="date" id="posop_retorno_medico"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label>Protocolo do cirurgião disponível?</label><select id="posop_protocolo"><option value="nao_informado">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+                            <div class="input-group"><label>Observações de segurança / progressão</label><textarea id="posop_obs" rows="2"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="actions kds-u-jc-between">
+                        <button class="btn-secondary" onclick="irParaSubtela('subtela_mapeamento')">◀ Voltar ao Exame direcionado</button>
+                        <button class="btn-primary" onclick="salvarAvaliacaoAtual(true)">Finalizar e salvar avaliação</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA BUSCAR / PRONTUÁRIOS -->
+        <section id="tela_buscar" class="tela">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Pacientes cadastrados</h2>
+                </div>
+                <div class="input-group">
+                    <label>Buscar paciente</label>
+                    <input type="text" id="input_busca_paciente" placeholder="Digite o nome ou CPF do paciente..." oninput="filtrarPacientesSalvos()">
+                </div>
+</div>
+        </section>
+
+        <!-- TELA FOTOS E DOCUMENTOS / KINESYS LOCAL -->
+        <section id="tela_midias" class="tela">
+            <div class="card midia-hero-card">
+                <div class="midia-hero-head">
+                    <div>
+                        <span class="eyebrow">KINESYS LOCAL</span>
+                        <h2>Fotos e documentos do prontuário</h2>
+                        <p>Originais ficam organizados neste computador. O Supabase recebe somente os metadados de vínculo com o paciente.</p>
+                    </div>
+                    <div id="midia_status_local" class="midia-status offline"><span class="midia-dot"></span> Serviço local não detectado</div>
+                </div>
+                <div id="midia_perfil_aviso" class="midia-role-note" style="display:none;"></div>
+                <div class="grid-2 midia-top-grid">
+                    <div class="input-group">
+                        <label>Paciente *</label>
+                        <select id="midia_paciente_select" onchange="carregarMidiasPacienteSelecionado()">
+                            <option value="">-- Selecione um paciente --</option>
+                        </select>
+                    </div>
+                    <div class="midia-capture-box">
+                        <div class="midia-capture-actions">
+                            <button class="btn-primary" type="button" id="btn_captura_iphone" onclick="iniciarCapturaComIPhone()">Capturar com iPhone</button>
+                            <button class="btn-secondary" type="button" id="btn_importar_documento_pc" onclick="abrirSeletorImportacaoComputador()">Importar do computador</button>
+                            <select id="midia_import_tipo" class="midia-import-type" aria-label="Tipo do documento importado">
+                                <option value="documento">Documento</option>
+                                <option value="exame">Exame / laudo</option>
+                                <option value="termo">Termo / autorização</option>
+                                <option value="identificacao">Identificação / CPF / RG</option>
+                                <option value="guia">Guia / pedido</option>
+                                <option value="outro_admin">Outro documento</option>
+                            </select>
+                            <input id="midia_import_input" type="file" multiple hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp,.doc,.docx,.xls,.xlsx,.txt,.rtf" onchange="importarDocumentosComputador(this)">
+                        </div>
+                        <div id="midia_capture_status" class="midia-capture-status">Selecione um paciente para iniciar.</div>
+                    </div>
+                </div>
+                <div class="midia-local-info" id="midia_local_info" style="display:none;">
+                    <div><span>iPhone</span><strong id="midia_iphone_url">—</strong></div>
+                    <div><span>Código de pareamento</span><strong id="midia_pair_code">—</strong></div>
+                    <div><span>Originais</span><strong id="midia_data_root">—</strong></div>
+                    <div><span>Backup</span><strong id="midia_backup_resumo">Não configurado</strong></div>
+                </div>
+                <div class="midia-helper">No iPhone, abra o endereço acima uma única vez e adicione à Tela de Início como <strong>KineSys Câmera</strong>. Para usar a impressora/multifuncional, digitalize para PDF ou imagem no Windows e clique em <strong>Importar do computador</strong>.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2 id="midia_galeria_titulo">Galeria clínica e documental</h2></div>
+                <div class="midia-filterbar">
+                    <select id="midia_filtro_tipo" onchange="renderizarGaleriaMidias()">
+                        <option value="">Todos os registros</option>
+                        <option value="avaliacao">Avaliação</option>
+                        <option value="evolucao">Evolução</option>
+                        <option value="postura">Postura</option>
+                        <option value="ferida">Ferida / cicatriz</option>
+                        <option value="edema">Edema</option>
+                        <option value="exame">Exame / laudo</option>
+                        <option value="termo">Termo / autorização</option>
+                        <option value="identificacao">Identificação / CPF / RG</option>
+                        <option value="guia">Guia / pedido</option>
+                        <option value="documento">Documento</option>
+                        <option value="outro_admin">Outro documento</option>
+                        <option value="outro">Outro registro clínico</option>
+                    </select>
+                    <button class="btn-secondary" type="button" onclick="atualizarGaleriaMidias(true)">Atualizar</button>
+                    <button class="btn-secondary" type="button" id="midia_btn_comparar" onclick="alternarComparacaoMidias()">Comparar duas fotos</button>
+                </div>
+                <div id="midia_compare_panel" class="midia-compare-panel" style="display:none;">
+                    <div id="midia_compare_a" class="midia-compare-slot">Selecione uma foto como <strong>Inicial</strong>.</div>
+                    <div class="midia-compare-arrow">⇄</div>
+                    <div id="midia_compare_b" class="midia-compare-slot">Selecione uma foto como <strong>Atual</strong>.</div>
+                </div>
+                <div id="midia_galeria" class="midia-gallery">
+                    <p class="midia-empty">Selecione um paciente para visualizar os registros.</p>
+                </div>
+            </div>
+
+            <details class="card midia-settings-card">
+                <summary>⚙️ Armazenamento e backup local</summary>
+                <div class="midia-settings-body">
+                    <p>O original é salvo automaticamente dentro de <code>C:\KineSys\Dados\Pacientes\&lt;paciente_id&gt;</code>: fotografias clínicas em <code>Fotos\AAAA\MM</code> e termos/identificação/documentos em <code>Documentos\AAAA\MM</code>. Você pode definir uma segunda pasta para cópia automática de segurança.</p>
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Pasta de backup (opcional)</label>
+                            <input type="text" id="midia_backup_path" placeholder="Ex.: E:\KineSys_Backup">
+                        </div>
+                        <div class="midia-settings-action">
+                            <button class="btn-secondary" type="button" onclick="salvarConfiguracaoBackupLocal()">Salvar configuração</button>
+                            <button class="btn-secondary" type="button" onclick="executarBackupLocal()">Executar backup pendente</button>
+                        </div>
+                    </div>
+                    <p class="helper-text">As imagens originais não são enviadas ao Supabase nesta versão. A tabela <code>arquivos_paciente</code> guarda apenas metadados e o caminho relativo local.</p>
+                </div>
+            </details>
+        </section>
+
+        <!-- TELA EVOLUÇÃO -->
+        <section id="tela_evolucao" class="tela">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Registro de Evolução Clínica</h2>
+                </div>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Selecionar Paciente *</label>
+                        <select id="evo_paciente_select" onchange="carregarHistoricoEvolucao()">
+                            <option value="">-- Selecione um paciente --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Data e hora do atendimento *</label>
+                        <input type="datetime-local" id="evo_realizado_em">
+                        <input type="date" id="evo_data" style="display:none" aria-hidden="true" tabindex="-1">
+                        <small class="kds-u-text-muted kds-u-fs-meta">O horário de salvamento é registrado separadamente. A edição fica disponível por até 24 h da realização.</small>
+                    </div>
+                </div>
+
+                <div id="resumo_paciente_evolucao" class="resumo-paciente" style="display:none;"></div>
+                <div id="banner_restricoes_posop" class="kds-u-mt-12px kds-u-p-12px-14px kds-u-bg-warning-soft kds-u-border-1px-solid-e8c66a kds-u-bl-5px-solid-b89a5a kds-u-br-8px" style="display:none;"></div>
+                <div id="bloco_excecao_sem_avaliacao" class="kds-u-mt-12px kds-u-p-12px-14px kds-u-bg-danger-soft kds-u-border-1px-solid-e9b8af kds-u-bl-5px-solid-b42318 kds-u-br-8px" style="display:none;">
+                    <strong>Paciente sem avaliação clínica finalizada</strong>
+                    <p class="kds-u-fs-meta kds-u-m-5px-0-8px kds-u-text-muted">A evolução só deve ser registrada como exceção quando houver motivo clínico/operacional justificável.</p>
+                    <label class="checkbox-pill"><input type="checkbox" id="evo_excecao_sem_avaliacao"><span>Registrar atendimento excepcional mesmo sem avaliação finalizada</span></label>
+                    <div class="input-group kds-u-mt-8px"><label>Justificativa obrigatória da exceção</label><textarea id="evo_justificativa_excecao" rows="2" placeholder="Ex: atendimento avulso/urgência; avaliação completa programada para próxima sessão."></textarea></div>
+                </div>
+                <div class="actions kds-u-jc-start kds-u-m-12px-0-0">
+                    <button class="btn-secondary" type="button" onclick="duplicarUltimaEvolucao()">⧉ Duplicar última sessão</button>
+                </div>
+
+                <div class="card card--nested kds-u-mt-15px">
+                    <div class="card-header"><h2 class="kds-u-fs-content">Estado clínico de hoje</h2></div>
+                    <div class="evo-status-grid">
+                        <label class="checkbox-pill"><input type="radio" name="evo_estado" value="melhor"><span>↗ Melhor</span></label>
+                        <label class="checkbox-pill"><input type="radio" name="evo_estado" value="igual" checked><span>→ Igual</span></label>
+                        <label class="checkbox-pill"><input type="radio" name="evo_estado" value="pior"><span>↘ Pior</span></label>
+                    </div>
+                    <div class="checkbox-group kds-u-mt-12px">
+                        <label class="checkbox-pill"><input type="checkbox" id="evo_nova_intercorrencia"><span>Nova intercorrência</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" id="evo_mudanca_medicacao"><span>Mudança de medicação</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" id="evo_novo_exame"><span>Novo exame / laudo</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" id="evo_novo_alerta"><span>Novo sinal de alerta</span></label>
+                    </div>
+                    <div class="input-group kds-u-mt-10px"><label>O que mudou desde a última sessão?</label><textarea id="evo_mudancas" rows="2" placeholder="Registre apenas mudanças relevantes, inclusive sinais novos."></textarea></div>
+                </div>
+
+                <div class="input-group">
+                    <label>Nova Escala Visual Analógica da Dor (EVA)</label>
+                    <div class="eva-container">
+                        <input type="range" min="0" max="10" value="0" class="eva-slider" id="eva_slider_evo">
+                        <div class="eva-display">
+                            <div class="eva-numero" id="eva_valor_evo">Nível 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card--nested">
+                    <div class="card-header"><h2 class="kds-u-fs-content">Resposta à carga / sessão</h2></div>
+                    <div class="evo-mini-grid">
+                        <div class="input-group"><label>Dor durante carga (0–10)</label><input type="number" id="evo_dor_durante" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label>Dor 24 h após sessão anterior (0–10)</label><input type="number" id="evo_dor_24h" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label>RPE da sessão (0–10)</label><input type="number" id="evo_rpe" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label>Duração da sessão (min)</label><input type="number" id="evo_duracao" min="0" step="5"></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="input-group"><label>Resposta tardia / tolerância</label><select id="evo_resposta_24h"><option value="">Não informado</option><option value="retornou_basal">Retornou ao basal em até 24 h</option><option value="leve_piora">Piora leve e transitória</option><option value="piora_persistente">Piora persistente &gt;24 h</option><option value="melhorou">Melhorou após a sessão</option></select></div>
+                        <div class="input-group"><label>Edema / irritabilidade após carga</label><select id="evo_edema"><option value="">Não informado</option><option value="sem_aumento">Sem aumento</option><option value="aumento_leve">Aumento leve</option><option value="aumento_importante">Aumento importante</option></select></div>
+                    </div>
+                </div>
+
+                <div class="input-group kds-u-mt-20px">
+                    <label>Relato do Paciente e Conduta Terapêutica</label>
+                    <textarea id="evo_relato" placeholder="Descreva resposta clínica, intervenção realizada, dosagem relevante e decisão de progressão/regressão."></textarea>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-primary" id="btn_salvar_evolucao" onclick="salvarEvolucaoSessao()">Registrar Evolução ➔</button>
+                    <button class="btn-secondary" id="btn_cancelar_edicao_evolucao" type="button" style="display:none" onclick="cancelarEdicaoEvolucao()">Cancelar edição</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Histórico de Evoluções do Paciente</h2>
+                </div>
+                <div id="linha_tempo_evolucoes">
+                    <p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente acima para carregar o histórico.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h2>🕒 Linha do Tempo Clínica Completa</h2></div>
+                <div id="linha_tempo_clinica_completa"><p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar cadastro, avaliações, evoluções e documentos.</p></div>
+            </div>
+        </section>
+
+        <!-- TELA RELATÓRIO - GERADOR DE DOCUMENTOS PREMIUM -->
+        <section id="tela_relatorio" class="tela">
+            <div class="card">
+
+                <div class="input-group">
+                    <label>Selecionar Paciente</label>
+                    <select id="rel_paciente_select" onchange="onPacienteRelatorioChange()">
+                        <option value="">-- Selecione um paciente --</option>
+                    </select>
+                </div>
+
+                <div id="resumo_paciente_relatorio" class="resumo-paciente" style="display:none;"></div>
+
+                <div class="input-group kds-u-mt-20px">
+                    <label>Tipo de Documento</label>
+                    <select id="rel_tipo_documento" onchange="onTipoDocumentoChange()">
+                        <option value="comparecimento">Declaração de comparecimento</option>
+                        <option value="relatorio">Relatório fisioterapêutico</option>
+                        <option value="encaminhamento">Relatório de encaminhamento</option>
+                    </select>
+                </div>
+
+                <!-- ======== COMPARECIMENTO: modelo fixo, SEM IA ======== -->
+                <div id="campos_comparecimento" class="kds-u-mt-15px kds-u-p-15px kds-u-bg-soft-mint kds-u-br-8px kds-u-bl-4px-solid-2aa79d" style="display:none;">
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Data do Atendimento</label>
+                            <input type="date" id="rel_comp_data">
+                        </div>
+                        <div class="input-group">
+                            <label>Hora de Entrada *</label>
+                            <input type="time" id="rel_comp_entrada">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Hora de Saída *</label>
+                            <input type="time" id="rel_comp_saida">
+                        </div>
+                        <div class="input-group">
+                            <label>Duração calculada</label>
+                            <input type="text" id="rel_comp_duracao" readonly placeholder="Calculada automaticamente">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label class="checkbox-pill"><input type="checkbox" id="rel_incluir_cid" onchange="document.getElementById('rel_comp_cid_wrap').style.display=this.checked?'block':'none'"><span>Incluir CID na declaração</span></label>
+                        <div id="rel_comp_cid_wrap" class="kds-u-mt-8px" style="display:none;"><input type="text" id="rel_comp_cid" placeholder="Ex: M54.5"></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="checkbox-pill"><input type="checkbox" id="rel_incluir_diagnostico" onchange="document.getElementById('rel_comp_diag_wrap').style.display=this.checked?'block':'none'"><span>Incluir informação clínica na declaração</span></label>
+                        <div id="rel_comp_diag_wrap" class="kds-u-mt-8px" style="display:none;"><textarea id="rel_comp_diagnostico" rows="2" placeholder="Síntese documental da última avaliação — edite se necessário."></textarea></div>
+                    </div>
+                    <div class="actions kds-u-mt-10px">
+                        <button class="btn-primary" onclick="montarDocumentoComparecimento()">👁️ Visualizar / Imprimir Declaração</button>
+                    </div>
+                </div>
+
+                <!-- ======== RELATÓRIO FISIOTERAPÊUTICO: rascunho curto + IA ======== -->
+                <div id="bloco_ia" class="kds-u-mt-15px kds-u-p-15px kds-u-bg-soft-mint kds-u-br-8px kds-u-bl-4px-solid-2aa79d" style="display:none;">
+                    <div class="ai-options-grid">
+                        <div class="input-group" id="rel_objetivo_group"><label>Objetivo do relatório</label><select id="rel_objetivo"><option value="geral">Relatório fisioterapêutico geral</option><option value="evolucao">Relatório de evolução</option><option value="avaliacao_medica">Solicitação de avaliação médica/especialista</option><option value="alta">Relatório de alta fisioterapêutica</option><option value="empresa">Relatório para empresa/convênio</option><option value="academia">Relatório para academia / Profissional de Educação Física</option></select></div>
+                        <div class="input-group"><label>Extensão</label><select id="rel_extensao"><option value="curto">Curto e objetivo</option><option value="medio" selected>Médio</option><option value="detalhado">Detalhado</option></select></div>
+                        <div class="input-group"><label>Evoluções a considerar</label><select id="rel_evolucoes_qtd"><option value="0">Nenhuma</option><option value="3" selected>Últimas 3</option><option value="5">Últimas 5</option><option value="999">Todas</option></select></div>
+                    </div>
+                    <div class="checkbox-group kds-u-mb-12px">
+                        <label class="checkbox-pill"><input type="checkbox" id="rel_inc_medidas" checked><span>Medidas objetivas</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" id="rel_inc_outcomes" checked><span>Escalas / PSFS</span></label>
+                        <label class="checkbox-pill"><input type="checkbox" id="rel_inc_objetivos" checked><span>Objetivos / plano</span></label>
+                    </div>
+                    <div class="input-group">
+                        <label>Resumo para orientar o documento <span class="ks-optional">opcional</span></label>
+                        <textarea id="rel_rascunho_rapido" rows="5" placeholder="Se quiser, acrescente o que precisa ser enfatizado. Se deixar em branco, o KineSys usará apenas os dados registrados no prontuário."></textarea>
+                    </div>
+
+                    <div class="actions kds-u-mt-10px kds-u-gap-10px kds-u-wrap-wrap">
+                        <button class="btn-primary kds-u-bg-linear-gradient135deg-2aa79d-173b45" id="btn_gerar_ia" onclick="gerarDocumentoComIA()">
+                            <span id="btn_gerar_ia_texto">Gerar relatório</span>
+                        </button>
+                        <button class="btn-secondary ks-report-tech" type="button" onclick="testarConexaoGemini()">Testar conexão</button>
+                    </div>
+                    <div id="status_gemini" class="kds-u-mt-10px kds-u-fs-meta kds-u-text-muted" style="display:none;"></div>
+
+                    <div id="bloco_relatorio_oficial" class="input-group kds-u-mt-20px" style="display:none;">
+                        <label id="rel_documento_oficial_label">Relatório fisioterapêutico <span class="kds-u-fw-400 kds-u-text-muted kds-u-fs-meta">— revise e edite antes de imprimir</span></label>
+                        <textarea id="rel_documento_oficial" rows="16" class="kds-u-font-serif kds-u-fs-ui kds-u-lh-1p6"></textarea>
+                        <div class="actions kds-u-mt-10px kds-u-gap-10px kds-u-wrap-wrap">
+                            <button class="btn-secondary" type="button" onclick="validarRelatorioIA()">Validar conteúdo</button>
+                            <button class="btn-primary" onclick="montarDocumentoIAParaImpressao()">Montar para impressão</button>
+                        </div>
+                        <div id="painel_validacao_ia" class="kds-u-mt-12px kds-u-p-12px-14px kds-u-br-8px kds-u-bg-soft-slate kds-u-border-1px-solid-cinza-borda" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="preview_relatorio_container" class="kds-u-mt-30px" style="display:none;">
+                <div id="documento_impressao" class="documento-timbrado"></div>
+                <div class="actions kds-u-mt-20px kds-u-jc-center">
+                    <button class="btn-primary" onclick="imprimirDocumento()">🖨️ Imprimir / Exportar PDF</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA AGENDA (v1.0) -->
+        <section id="tela_agenda" class="tela">
+<!-- SUBTELA: AGENDA SEMANAL -->
+            <div id="agenda_painel" class="subtela ativa">
+                <div class="card agenda-card-semanal">
+                    <div class="agenda-visoes" role="group" aria-label="Escolher agenda">
+                        <button type="button" id="agenda_visao_clinica" class="btn-secondary" aria-pressed="true" onclick="selecionarVisaoAgenda('clinica')">Agenda da clínica</button>
+                        <button type="button" id="agenda_visao_profissional" class="btn-secondary" aria-pressed="false" onclick="selecionarVisaoAgenda('profissional')">Agenda por profissional</button>
+                        <button type="button" class="btn-secondary" id="agenda_agora_relogio" aria-live="off" title="Ir para o horário atual de Brasília" onclick="irParaHorarioAtualAgenda()"></button>
+                    </div>
+                    <div class="agenda-toolbar agenda-toolbar-semanal">
+                        <div class="agenda-semana-nav">
+                            <button type="button" onclick="mudarSemanaAgenda(-1)" title="Semana anterior">◀</button>
+                            <button type="button" class="btn-hoje-agenda" onclick="irParaHojeAgenda()">Hoje</button>
+                            <button type="button" onclick="mudarSemanaAgenda(1)" title="Próxima semana">▶</button>
+                            <div>
+                                <div class="agenda-semana-rotulo">SEMANA</div>
+                                <div class="agenda-semana-titulo" id="agenda_dia_titulo">—</div>
+                            </div>
+                            <div class="agenda-periodo-segmentado" role="group" aria-label="Período da agenda">
+                                <button type="button" data-agenda-periodo="semana" class="active" aria-pressed="true" onclick="selecionarPeriodoAgenda('semana')">Semana</button>
+                                <button type="button" data-agenda-periodo="dia" aria-pressed="false" onclick="selecionarPeriodoAgenda('dia')">Dia</button>
+                            </div>
+                        </div>
+                        <div class="agenda-toolbar-filtros">
+                            <div class="input-group">
+                                <label>Ir para data</label>
+                                <input type="date" id="agenda_data_input" onchange="irParaDataAgenda(this.value)">
+                            </div>
+                            <div class="input-group agenda-profissional-filtro">
+                                <label>Agenda</label>
+                                <select id="agenda_filtro_profissional" onchange="atualizarIndicadorEscopoAgenda(); renderizarPainelAgenda()">
+                                    <option value="">Toda a clínica</option>
+                                </select>
+                                <small id="agenda_escopo_acesso" class="agenda-escopo-acesso">—</small>
+                            </div>
+                            <button type="button" id="agenda_btn_historico_status" class="btn-secondary agenda-audit-btn" hidden onclick="abrirHistoricoStatusAgenda()" title="Auditoria de alterações de status — somente administradores">Histórico de status</button>
+                            <button type="button" class="btn-primary ks-new-appointment" onclick="abrirModalAgendamento()">Novo agendamento</button>
+                        </div>
+                    </div>
+
+                    <div id="agenda_feedback" class="agenda-feedback" role="status" aria-live="polite"></div>
+                    <div class="agenda-grade-scroll">
+                        <div id="agenda_semana_grade" class="agenda-semana-grade">
+                            <div class="agenda-vazio">Carregando agenda semanal…</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBTELA: PROCEDIMENTOS -->
+            <div id="agenda_procedimentos" class="subtela">
+                <div class="card">
+                    <div class="card-header"><h2>Procedimentos disponíveis</h2><button class="btn-primary kds-u-p-10px-18px" onclick="abrirModalProcedimento()">➕ Novo Procedimento</button></div>
+                    <div class="lista-config" id="lista_procedimentos">
+                        <div class="agenda-vazio">Nenhum procedimento cadastrado ainda.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBTELA: HORÁRIOS DE ATENDIMENTO -->
+            <div id="agenda_horarios" class="subtela">
+                <div class="ks-agenda-horarios-intro">
+                    <div>
+                        <span class="ks-eyebrow">DISPONIBILIDADE EM 2 NÍVEIS</span>
+                        <h2>Horários da clínica e dos profissionais</h2>
+                        <p>A clínica define quando o estabelecimento está aberto. Cada profissional pode ter uma jornada própria dentro desse horário.</p>
+                    </div>
+                    <div class="ks-horario-regra"><strong>Regra da agenda</strong><span>Disponível = clínica aberta + profissional disponível − ausências/bloqueios.</span></div>
+                </div>
+
+                <div class="card ks-week-schedule-card ks-schedule-level-card">
+                    <div class="ks-week-schedule-head">
+                        <div>
+                            <span class="ks-schedule-level">NÍVEL 1 · CLÍNICA</span>
+                            <h2>Horário de funcionamento da clínica</h2>
+                            <p>Cadastre o expediente geral. Ex.: segunda, 08:00–12:00 e 14:00–19:00.</p>
+                        </div>
+                        <div class="ks-week-schedule-actions">
+                            <button type="button" class="btn-primary" id="btn_salvar_grade_semanal" onclick="salvarGradeClinica()">Salvar horário da clínica</button>
+                        </div>
+                    </div>
+                    <div id="agenda_grade_feedback" class="agenda-feedback" role="status" aria-live="polite"></div>
+                    <div class="ks-week-schedule-table" id="agenda_grade_semanal_editor">
+                        <div class="agenda-vazio">Carregando horário da clínica…</div>
+                    </div>
+                </div>
+
+                <div class="card ks-week-schedule-card ks-schedule-level-card ks-professional-schedule-card">
+                    <div class="ks-week-schedule-head">
+                        <div>
+                            <span class="ks-schedule-level">NÍVEL 2 · PROFISSIONAL</span>
+                            <h2>Horário de cada profissional</h2>
+                            <p>Defina a jornada recorrente de cada profissional. Sem uma grade própria, ele herda o horário da clínica.</p>
+                        </div>
+                        <div class="ks-week-schedule-actions">
+                            <div class="input-group">
+                                <label>Profissional</label>
+                                <select id="agenda_grade_profissional" onchange="carregarEditorGradeSemanal()"><option value="">-- Selecione um profissional --</option></select>
+                            </div>
+                            <button type="button" class="btn-primary" id="btn_salvar_grade_profissional" onclick="salvarGradeProfissional()">Salvar horário profissional</button>
+                        </div>
+                    </div>
+                    <div id="agenda_grade_profissional_status" class="ks-professional-inherit-note">Selecione um profissional para configurar a jornada individual.</div>
+                    <div id="agenda_grade_profissional_feedback" class="agenda-feedback" role="status" aria-live="polite"></div>
+                    <div id="agenda_profissional_sem_selecao" class="agenda-vazio">Selecione um profissional acima. A ausência de grade individual significa que ele segue o horário geral da clínica.</div>
+                    <div class="ks-week-schedule-table" id="agenda_grade_profissional_editor"></div>
+                </div>
+
+                <details class="card ks-week-schedule-legacy ks-schedule-records">
+                    <summary>Ver todos os registros de horário salvos</summary>
+                    <div class="lista-config" id="lista_horarios"></div>
+                </details>
+            </div>
+
+            <!-- SUBTELA: BLOQUEIOS / FOLGAS -->
+            <div id="agenda_bloqueios" class="subtela">
+                <div class="card">
+                    <div class="card-header"><div><span class="ks-eyebrow">EXCEÇÕES DA AGENDA</span><h2>Ausências e bloqueios</h2><p class="field-help">Escolha “Toda a clínica” para feriados/fechamentos ou selecione um profissional para férias, folga, curso, almoço ou outra ausência individual.</p></div><button class="btn-primary kds-u-p-10px-18px" onclick="abrirModalBloqueio()">➕ Nova ausência / bloqueio</button></div>
+                    <div class="lista-config" id="lista_bloqueios">
+                        <div class="agenda-vazio">Nenhuma ausência ou bloqueio cadastrado.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBTELA: LISTA DE ESPERA -->
+            <div id="agenda_lista_espera" class="subtela">
+                <div class="card">
+                    <div class="card-header"><h2>Lista de espera</h2><button class="btn-primary kds-u-p-10px-18px" onclick="abrirModalListaEspera()">➕ Adicionar Paciente</button></div>
+                    <p class="field-help kds-u-mb-15px">Quando um horário compatível é liberado (por cancelamento), o painel do dia mostra um aviso 🔔 no horário livre para oferecer a vaga ao próximo da fila.</p>
+                    <div class="lista-config" id="lista_lista_espera">
+                        <div class="agenda-vazio">Ninguém na lista de espera no momento.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        
+
+        <!-- TELA PLANOS E PAGAMENTOS v1.10.4 -->
+        <section id="tela_financeiro" class="tela">
+            <div class="finance-workspace-tabs" role="tablist" aria-label="Áreas do Financeiro">
+                <button type="button" id="financeiro_tab_lancamentos" class="finance-workspace-tab" role="tab" aria-selected="false" aria-controls="financeiro_painel_lancamentos" onclick="KineSysFinanceiroLancamentos.abrir()" hidden>Caixa</button>
+                <button type="button" id="financeiro_tab_paciente" class="finance-workspace-tab active" role="tab" aria-selected="true" aria-controls="financeiro_painel_paciente" onclick="alternarAbaFinanceiro('paciente')">Pacientes</button>
+                <button type="button" id="financeiro_tab_pendencias" class="finance-workspace-tab" role="tab" aria-selected="false" aria-controls="financeiro_painel_pendencias" onclick="alternarAbaFinanceiro('pendencias')">Pendências <span id="financeiro_pendencias_count" class="finance-workspace-count">0</span></button>
+                <button type="button" id="financeiro_tab_gastos" class="finance-workspace-tab" role="tab" aria-selected="false" aria-controls="financeiro_painel_gastos" onclick="alternarAbaFinanceiro('gastos')" hidden>Despesas</button>
+                <button type="button" id="financeiro_tab_balanco" class="finance-workspace-tab" role="tab" aria-selected="false" aria-controls="financeiro_painel_balanco" onclick="alternarAbaFinanceiro('balanco')" hidden>Relatórios</button>
+                <button type="button" id="financeiro_tab_descontos" class="finance-workspace-tab" role="tab" aria-selected="false" aria-controls="financeiro_painel_descontos" onclick="alternarAbaFinanceiro('descontos')" hidden>Descontos</button>
+                <button type="button" id="financeiro_tab_analise" class="finance-workspace-tab finance-workspace-tab-secondary" role="tab" aria-selected="false" aria-controls="financeiro_painel_analise" onclick="alternarAbaFinanceiro('analise')" hidden>Indicadores</button>
+            </div>
+            <div id="financeiro_painel_lancamentos" hidden>
+                <div class="finance-ledger-head">
+                    <div><h2>Livro-caixa</h2><p>Todos os valores recebidos e pagos, organizados por dia.</p></div>
+                    <div class="finance-ledger-actions"><button type="button" class="btn-secondary" onclick="KineSysFinanceiroLancamentos.novaSaida()">Registrar despesa</button><button type="button" class="btn-primary" onclick="KineSysFinanceiroLancamentos.novaEntrada()">Registrar recebimento</button></div>
+                </div>
+                <div class="finance-ledger-toolbar">
+                    <div class="finance-ledger-month-nav"><button type="button" title="Mês anterior" onclick="KineSysFinanceiroLancamentos.mesAnterior(-1)">‹</button><button type="button" title="Próximo mês" onclick="KineSysFinanceiroLancamentos.mesAnterior(1)">›</button></div>
+                    <div class="input-group kds-u-m-0"><label for="fin_lan_mes">Mês</label><input type="month" id="fin_lan_mes" onchange="KineSysFinanceiroLancamentos.carregar(true)"></div>
+                    <div class="input-group kds-u-m-0 finance-ledger-search"><label for="fin_lan_busca">Buscar lançamento ou paciente</label><input type="search" id="fin_lan_busca" placeholder="Nome, CPF, telefone, despesa ou forma"><div id="fin_lan_paciente_sugestoes" class="finance-ledger-suggestions" hidden></div></div>
+                    <button type="button" class="btn-secondary" onclick="KineSysFinanceiroLancamentos.carregar(true)">Atualizar</button>
+                </div>
+                <div id="fin_lan_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div class="finance-ledger-layout">
+                    <div class="finance-ledger-main">
+                        <div class="finance-ledger-filters" role="tablist" aria-label="Tipo de lançamento">
+                            <button type="button" class="finance-ledger-filter active" data-fin-lan-tipo="entrada" onclick="KineSysFinanceiroLancamentos.filtrar('entrada')">Entradas</button>
+                            <button type="button" class="finance-ledger-filter" data-fin-lan-tipo="saida" onclick="KineSysFinanceiroLancamentos.filtrar('saida')">Saídas</button>
+                            <button type="button" class="finance-ledger-filter" data-fin-lan-tipo="todos" onclick="KineSysFinanceiroLancamentos.filtrar('todos')">Extrato</button>
+                        </div>
+                        <div class="finance-ledger-list"><div class="finance-ledger-list-head"><strong>Lançamentos do período</strong><span id="fin_lan_contagem">0 lançamentos</span></div><div class="finance-ledger-columns"><span>Data</span><span>Descrição</span><span>Status</span><span>Valor</span></div><div id="fin_lan_lista"><div class="finance-ledger-empty"><strong>Abra esta aba para carregar o caixa.</strong></div></div></div>
+                    </div>
+                    <aside class="finance-ledger-summary" aria-label="Totais do mês">
+                        <h3>Totais do mês</h3>
+                        <div class="entrada"><span>Recebidas</span><strong id="fin_lan_entradas">R$ 0,00</strong></div>
+                        <div class="saida"><span>Pagas</span><strong id="fin_lan_saidas">R$ 0,00</strong></div>
+                        <div id="fin_lan_resultado_card"><span>Saldo geral</span><strong id="fin_lan_resultado">R$ 0,00</strong></div>
+                    </aside>
+                </div>
+            </div>
+            <div id="financeiro_painel_paciente">
+            <div id="financeiro_conteudo">
+                <div class="finance-patient-workspace">
+                    <div class="finance-patient-context"><div><span>Conta do paciente</span><strong id="financeiro_paciente_contexto_nome">Busque um paciente para começar</strong></div><div class="finance-patient-actions"><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalNovoPlano()" hidden>Criar plano</button><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirCriarAtendimento()" hidden>Atendimento unitário</button><button type="button" class="btn-primary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalPagamento()" hidden>Registrar recebimento</button><button type="button" id="financeiro_fechar_paciente" class="btn-secondary" onclick="KineSysFinanceiro.fecharPaciente()" hidden>Fechar</button></div></div>
+                    <div class="finance-patient-fields">
+                        <div class="input-group kds-u-m-0 finance-patient-search"><label for="financeiro_paciente_busca">Localizar paciente</label><input id="financeiro_paciente_busca" type="search" placeholder="Nome, CPF, telefone ou número" autocomplete="off" aria-controls="financeiro_paciente_sugestoes"><div id="financeiro_paciente_sugestoes" class="finance-patient-suggestions" hidden></div></div>
+                        <select id="financeiro_paciente_select" class="finance-patient-native-select" onchange="carregarFinanceiroPaciente()" aria-hidden="true" tabindex="-1"><option value="">-- Selecione um paciente --</option></select>
+                    </div>
+                </div>
+                <div id="financeiro_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div class="finance-stats">
+                    <div><span>Sessões usadas</span><strong id="fin_stat_sessoes">0</strong></div>
+                    <div><span>Sessões disponíveis</span><strong id="fin_stat_restantes">0</strong></div>
+                    <div><span>Recebido líquido</span><strong id="fin_stat_pago">R$ 0,00</strong></div>
+                    <div><span>Saldo a receber</span><strong id="fin_stat_saldo">R$ 0,00</strong></div>
+                    <div><span>Crédito disponível</span><strong id="fin_stat_credito">R$ 0,00</strong></div>
+                </div>
+                <div id="financeiro_credito_aviso" class="finance-credit-alert" hidden></div>
+                <div class="finance-columns">
+                    <div class="card"><div class="card-header"><h2>Planos e atendimentos unitários</h2></div><div id="financeiro_planos_lista"><div class="finance-empty">Selecione um paciente.</div></div></div>
+                    <div class="card"><div class="card-header"><h2>Pagamentos lançados</h2></div><div id="financeiro_pagamentos_lista"><div class="finance-empty">Selecione um paciente.</div></div></div>
+                </div>
+            </div>
+            </div>
+            <div id="financeiro_painel_pendencias" hidden>
+                <div class="card finance-pending-toolbar">
+                    <div class="input-group"><label>Buscar paciente</label><input id="financeiro_pendencias_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPendenciasFinanceiras()"></div>
+                    <button type="button" class="btn-secondary" onclick="carregarPendenciasFinanceiras(true)">Atualizar lista</button>
+                </div>
+                <div class="finance-pending-stats">
+                    <div class="finance-pending-stat"><span>Pacientes ativos</span><strong id="fin_pen_stat_ativos">0</strong><small>plano ou horário futuro</small></div>
+                    <div class="finance-pending-stat"><span>A cobrar</span><strong id="fin_pen_stat_cobrar">0</strong><small>saldo financeiro pendente</small></div>
+                    <div class="finance-pending-stat"><span>Clínica deve atender</span><strong id="fin_pen_stat_atender">0</strong><small>sessões já pagas</small></div>
+                    <div class="finance-pending-stat"><span>Aguardam renovação</span><strong id="fin_pen_stat_renovar">0</strong><small>pré-agendados sem pacote</small></div>
+                    <div class="finance-pending-stat"><span>Sem próximo horário</span><strong id="fin_pen_stat_semhorario">0</strong><small>tratamento ativo</small></div>
+                </div>
+                <div class="finance-pending-filters" role="group" aria-label="Filtrar pendências">
+                    <button type="button" class="finance-pending-filter active" data-fin-pen-filter="todos" onclick="filtrarPendenciasFinanceiras('todos')">Todos</button>
+                    <button type="button" class="finance-pending-filter" data-fin-pen-filter="cobrar" onclick="filtrarPendenciasFinanceiras('cobrar')">A cobrar</button>
+                    <button type="button" class="finance-pending-filter" data-fin-pen-filter="atender" onclick="filtrarPendenciasFinanceiras('atender')">Atendimento devido</button>
+                    <button type="button" class="finance-pending-filter" data-fin-pen-filter="renovar" onclick="filtrarPendenciasFinanceiras('renovar')">Aguardando renovação</button>
+                    <button type="button" class="finance-pending-filter" data-fin-pen-filter="sem_horario" onclick="filtrarPendenciasFinanceiras('sem_horario')">Sem próximo horário</button>
+                    <button type="button" class="finance-pending-filter" data-fin-pen-filter="em_dia" onclick="filtrarPendenciasFinanceiras('em_dia')">Ativos em dia</button>
+                </div>
+                <div class="finance-pending-note"><strong>Leitura da lista:</strong> “A cobrar” mostra dinheiro ainda devido pelo paciente; “Clínica deve atender” mostra sessões que já estão financeiramente cobertas e ainda precisam ser realizadas. Um paciente pode aparecer nas duas situações ao mesmo tempo quando há pagamento parcial.</div>
+                <div id="financeiro_pendencias_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div id="financeiro_pendencias_lista" class="finance-pending-list"><div class="finance-empty">Abra esta aba para carregar as pendências.</div></div>
+            </div>
+            <div id="financeiro_painel_descontos" hidden>
+                <details class="finance-help"><summary>Como os descontos são calculados</summary><p>O período considera a criação do plano ou cobrança. Registros antigos sem origem identificável permanecem como “Histórico não classificado”.</p></details>
+                <div class="card finance-discount-toolbar">
+                    <div class="input-group"><label>De</label><input type="date" id="fin_desc_data_inicio"></div>
+                    <div class="input-group"><label>Até</label><input type="date" id="fin_desc_data_fim"></div>
+                    <div class="finance-discount-actions"><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(7)">7 dias</button><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(30)">30 dias</button><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(90)">90 dias</button><button type="button" class="btn-primary" onclick="carregarRelatorioDescontos(true)">Aplicar período</button></div>
+                </div>
+                <div class="finance-discount-stats">
+                    <div class="finance-discount-stat"><span>Total concedido</span><strong id="fin_desc_total">R$ 0,00</strong></div>
+                    <div class="finance-discount-stat pacote"><span>Desconto por pacote</span><strong id="fin_desc_pacote">R$ 0,00</strong></div>
+                    <div class="finance-discount-stat cortesia"><span>Desconto por cortesia</span><strong id="fin_desc_cortesia">R$ 0,00</strong></div>
+                    <div class="finance-discount-stat"><span>Histórico não classificado</span><strong id="fin_desc_legacy">R$ 0,00</strong></div>
+                </div>
+                <div id="fin_desc_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div id="fin_desc_lista" class="finance-discount-list"><div class="finance-empty">Selecione um período para analisar os descontos.</div></div>
+            </div>
+            <div id="financeiro_painel_gastos" hidden>
+                <details class="finance-help"><summary>Como organizar as despesas</summary><p>Cada saída recebe uma categoria e um tipo de gasto para permitir a análise mensal sem perder os detalhes do lançamento.</p></details>
+                <div class="card finance-expense-toolbar">
+                    <div class="input-group"><label>Mês</label><input type="month" id="fin_gastos_mes" onchange="carregarLancamentosGastos(true)"></div>
+                    <div class="input-group"><label>Categoria</label><select id="fin_gastos_categoria_filtro" onchange="renderizarLancamentosGastos()"><option value="">Todas as categorias</option><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
+                    <div class="input-group"><label>Buscar</label><input id="fin_gastos_busca" type="search" placeholder="Descrição, tipo, forma de pagamento..." oninput="renderizarLancamentosGastos()"></div>
+                    <button type="button" class="btn-primary" onclick="abrirModalDespesaFinanceira()">+ Novo gasto</button>
+                </div>
+                <div class="finance-expense-admin-stats">
+                    <div class="finance-expense-admin-stat total"><span>Total gasto no filtro</span><strong id="fin_gastos_total">R$ 0,00</strong></div>
+                    <div class="finance-expense-admin-stat"><span>Lançamentos</span><strong id="fin_gastos_qtd">0</strong></div>
+                    <div class="finance-expense-admin-stat"><span>Maior categoria</span><strong id="fin_gastos_maior_categoria" class="kds-u-fs-content">—</strong></div>
+                </div>
+                <div id="fin_gastos_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div id="fin_gastos_resumo_categorias" class="finance-expense-breakdown"></div>
+                <div id="fin_gastos_lista" class="finance-expense-admin-list"><div class="finance-balance-empty">Abra esta aba para carregar os gastos.</div></div>
+            </div>
+            <div id="financeiro_painel_balanco" hidden>
+                <div class="finance-report-head"><div><h2>Relatórios financeiros</h2><p>Resultado mensal da clínica.</p></div><button type="button" class="btn-secondary" onclick="KineSysFinanceiro.abrirIndicadores()">Ver indicadores anuais</button></div>
+                <details class="finance-help"><summary>Como o período é calculado</summary><p>A competência vai do primeiro ao último dia do mês. Recebimentos usam a data do pagamento, despesas usam a data da saída e descontos usam a criação do plano ou cobrança.</p></details>
+                <div class="card finance-balance-toolbar">
+                    <div class="input-group"><label>Mês analisado</label><input type="month" id="fin_bal_mes" onchange="carregarBalancoFinanceiroMensal(true)"></div>
+                    <div id="fin_bal_periodo" class="finance-balance-period">—</div>
+                    <button type="button" class="btn-secondary" onclick="carregarBalancoFinanceiroMensal(true)">Atualizar</button>
+                    <button type="button" class="btn-primary" onclick="abrirModalDespesaFinanceira()">+ Registrar despesa</button>
+                </div>
+                <div class="finance-balance-stats">
+                    <div class="finance-balance-stat receita"><span>Recebido no mês</span><strong id="fin_bal_receita">R$ 0,00</strong></div>
+                    <div class="finance-balance-stat despesa"><span>Despesas do mês</span><strong id="fin_bal_despesas">R$ 0,00</strong></div>
+                    <div class="finance-balance-stat resultado" id="fin_bal_resultado_card"><span>Resultado do mês</span><strong id="fin_bal_resultado">R$ 0,00</strong></div>
+                    <div class="finance-balance-stat"><span>Descontos concedidos</span><strong id="fin_bal_descontos">R$ 0,00</strong></div>
+                </div>
+                <div class="finance-balance-metrics">
+                    <div class="finance-balance-metric"><span>Pagamentos recebidos</span><strong id="fin_bal_qtd_pagamentos">0</strong></div>
+                    <div class="finance-balance-metric"><span>Ticket médio recebido</span><strong id="fin_bal_ticket">R$ 0,00</strong></div>
+                    <div class="finance-balance-metric"><span>Planos iniciados</span><strong id="fin_bal_planos">0</strong></div>
+                    <div class="finance-balance-metric"><span>Atendimentos realizados</span><strong id="fin_bal_atendidos">0</strong></div>
+                    <div class="finance-balance-metric"><span>Faltas não justificadas</span><strong id="fin_bal_faltas">0</strong></div>
+                    <div class="finance-balance-metric"><span>Despesas lançadas</span><strong id="fin_bal_qtd_despesas">0</strong></div>
+                </div>
+                <div id="fin_bal_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div class="finance-balance-grid">
+                    <div class="card finance-balance-card">
+                        <div class="card-header"><h2>Composição financeira do mês</h2></div>
+                        <div id="fin_bal_composicao"><div class="finance-balance-empty">Carregando composição…</div></div>
+                    </div>
+                    <div class="card finance-balance-card">
+                        <div class="card-header"><h2>Despesas por categoria</h2></div>
+                        <div id="fin_bal_categorias"><div class="finance-balance-empty">Nenhuma despesa registrada.</div></div>
+                    </div>
+                </div>
+                <div class="card finance-balance-card kds-u-mt-12px">
+                    <div class="card-header"><div><h2>Gastos registrados no mês</h2><p class="field-help">A exclusão fica restrita aos administradores e recalcula o balanço imediatamente.</p></div><button type="button" class="btn-secondary" onclick="abrirModalDespesaFinanceira()">+ Nova despesa</button></div>
+                    <div id="fin_bal_despesas_lista"><div class="finance-balance-empty">Nenhuma despesa registrada neste mês.</div></div>
+                </div>
+            </div>
+
+            <div id="financeiro_painel_analise" hidden>
+                <div class="finance-report-head"><div><h2>Indicadores anuais</h2><p>Crescimento, atendimentos e qualidade operacional.</p></div><button type="button" class="btn-secondary" onclick="alternarAbaFinanceiro('balanco')">Voltar ao resultado mensal</button></div>
+                <details class="finance-help"><summary>Como os indicadores são calculados</summary><p>Aniversariantes usam o mês atual. Os demais indicadores usam o ano selecionado.</p></details>
+                <div class="card finance-analysis-toolbar">
+                    <div class="input-group"><label>Ano analisado</label><input type="number" id="fin_ana_ano" min="2020" max="2099" onchange="carregarAnaliseAdmin(true)"></div>
+                    <div class="input-group"><label>Filtro da análise</label><select id="fin_ana_visao" onchange="renderizarAnaliseAdminVisao()"><option value="faturamento">Faturamento e lucratividade do ano vigente</option><option value="aniversariantes">Aniversariantes do mês</option><option value="atendimentos">Atendimentos realizados no ano vigente</option><option value="novos_pacientes">Novos pacientes selecionados</option><option value="crescimento">Crescimento da clínica</option><option value="qualidade">Qualidade operacional</option></select></div>
+                    <div class="input-group"><label>Buscar paciente</label><input id="fin_ana_busca" type="search" placeholder="Nome, telefone, responsável..." oninput="renderizarAnaliseAdminVisao()"></div>
+                    <button type="button" class="btn-secondary" onclick="carregarAnaliseAdmin(true)">Atualizar</button>
+                </div>
+                <div id="fin_ana_periodo" class="finance-analysis-period">Ano vigente: —</div>
+                <div id="fin_ana_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+                <div id="fin_ana_kpis" class="finance-analysis-kpis"></div>
+                <div class="finance-analysis-grid">
+                    <div class="card finance-analysis-card"><div class="card-header"><div><h2 id="fin_ana_chart1_titulo">Panorama</h2><p id="fin_ana_chart1_sub">Leitura principal do filtro selecionado</p></div></div><div id="fin_ana_chart1" class="finance-analysis-chart"><div class="ana-empty">Carregando gráfico…</div></div></div>
+                    <div class="card finance-analysis-card"><div class="card-header"><div><h2 id="fin_ana_chart2_titulo">Detalhe complementar</h2><p id="fin_ana_chart2_sub">Apoio para decisões mensais</p></div></div><div id="fin_ana_chart2" class="finance-analysis-chart"><div class="ana-empty">Carregando gráfico…</div></div></div>
+                </div>
+                <div class="card finance-analysis-card kds-u-minh-240px"><div class="card-header"><div><h2 id="fin_ana_lista_titulo">Detalhamento</h2><p id="fin_ana_lista_sub">Lista estratégica baseada no filtro selecionado</p></div></div><div id="fin_ana_lista" class="ana-list"><div class="ana-empty">Abra a aba para carregar os indicadores.</div></div></div>
+            </div>
+        </section>
+
+        <!-- TELA CONFIGURAÇÕES — ADMINISTRADORES -->
+        
+        <section id="tela_configuracoes" class="tela">
+<div class="card">
+                <div class="card-header"><div><h2>💬 Mensagens padrão</h2><p class="field-help">Edite os textos usados pelos botões de WhatsApp. A versão salva vale para toda a equipe.</p></div></div>
+                <div id="cfg_msg_status" class="ks-msg-status">Carregando configurações da clínica…</div>
+                <div class="ks-msg-config-layout">
+                    <div>
+                        <div id="cfg_msg_lista" class="ks-msg-template-list"></div>
+                        <div class="ks-config-note"><strong>Como funciona:</strong> os funcionários não alteram estes textos. Eles apenas usam a versão definida pelo administrador no momento do envio.</div>
+                    </div>
+                    <div class="ks-msg-editor">
+                        <div class="input-group"><label>Nome interno da mensagem</label><input id="cfg_msg_titulo" type="text" maxlength="120"></div>
+                        <div id="cfg_msg_descricao" class="field-help kds-u-m-5px-0-12px"></div>
+                        <div class="input-group"><label>Texto padrão</label><textarea id="cfg_msg_texto" maxlength="4000" oninput="atualizarPreviewMensagemConfiguracao()"></textarea></div>
+                        <label class="kds-u-fs-meta kds-u-fw-800 kds-u-text-petrol kds-u-mt-5px kds-u-d-block">Variáveis automáticas — clique para inserir</label>
+                        <div id="cfg_msg_variaveis" class="ks-msg-vars"></div>
+                        <label class="kds-u-fs-meta kds-u-fw-800 kds-u-text-petrol kds-u-mb-6px kds-u-d-block">Pré-visualização</label>
+                        <div id="cfg_msg_preview" class="ks-msg-preview"></div>
+                        <div id="cfg_msg_meta" class="ks-msg-meta"></div>
+                        <div class="ks-msg-toolbar">
+                            <button type="button" class="btn-secondary" onclick="restaurarMensagemPadraoAtual()">Restaurar padrão</button>
+                            <div><button type="button" class="btn-primary" id="cfg_msg_salvar" onclick="salvarMensagemConfiguracaoAtual()">Salvar para toda a equipe</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card ks-data-governance-card">
+                <div class="card-header">
+                    <div>
+                        <h2>🛡️ Dados clínicos e backup</h2>
+                        <p class="field-help">O Supabase é a fonte principal. Esta área mostra qualquer cópia que ainda exista neste navegador e permite migrá-la com validação, sem apagar nada automaticamente.</p>
+                    </div>
+                </div>
+                <div class="ks-data-governance-summary" id="ks_dados_summary">Verificando armazenamento local…</div>
+                <div class="ks-data-actions">
+                    <button type="button" class="btn-secondary" id="ks_dados_backup_btn" onclick="exportarBackupDadosKineSys()">⬇️ Exportar backup local</button>
+                    <button type="button" class="btn-secondary" id="ks_dados_importar_btn" onclick="document.getElementById('ks_dados_importar_input').click()">⬆️ Restaurar backup</button>
+                    <input type="file" id="ks_dados_importar_input" accept="application/json,.json" hidden onchange="importarBackupDadosKineSys(event)">
+                    <button type="button" class="btn-primary" id="ks_dados_migrar_btn" onclick="migrarDadosClinicosKineSys()">☁️ Migrar para o Supabase</button>
+                </div>
+                <div id="ks_dados_progress" class="ks-data-progress" hidden><div id="ks_dados_progress_label">Preparando…</div><div class="ks-data-progress-track"><span id="ks_dados_progress_bar"></span></div></div>
+                <div id="ks_dados_feedback" class="ks-data-feedback" role="status" aria-live="polite"></div>
+                <div class="ks-data-inventory-title"><strong>Inventário local</strong><span id="ks_dados_migration_status">Ainda não há uma migração validada neste navegador.</span></div>
+                <div id="ks_dados_inventory" class="ks-data-inventory"><div class="ks-data-empty">Verificando…</div></div>
+                <div class="ks-data-cleanup">
+                    <div><strong>Limpar cópia clínica deste navegador</strong><p class="field-help">Disponível somente depois de uma migração validada, com backup automático antes da remoção. Rascunhos e filas operacionais não serão apagados.</p></div>
+                    <button type="button" class="btn-secondary" id="ks_dados_limpar_btn" disabled onclick="limparCopiaClinicaLocalKineSys()">Remover cópia clínica local</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA EQUIPE -->
+        <section id="tela_equipe" class="tela">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2>Funcionários e acessos</h2>
+                        <p class="field-help">Cadastre aqui administradores, secretárias e profissionais. Pacientes são cadastrados separadamente em “Novo paciente” e nunca aparecem nesta lista.</p>
+                    </div>
+                </div>
+                <input type="hidden" id="eq_edit_id" value="">
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="eq_nome" placeholder="Digite o nome do profissional">
+                    </div>
+                    <div class="input-group">
+                        <label>E-mail de Acesso *</label>
+                        <input type="email" id="eq_email" placeholder="usuario@clinica.com">
+                        <small class="kds-u-text-muted">O mesmo e-mail/CPF pode ser usado em funções diferentes, como Administrador e Fisioterapeuta.</small>
+                    </div>
+                    <div class="input-group" id="grp_eq_senha">
+                        <label>Senha de acesso *</label>
+                        <input type="password" id="eq_senha" placeholder="Mínimo de 8 caracteres" minlength="8" autocomplete="new-password">
+                        <small class="kds-u-text-muted">Defina a senha inicial do profissional. Ela é enviada com segurança ao Supabase Auth e não é armazenada pelo KineSys.</small>
+                    </div>
+                    <div class="input-group" id="grp_eq_confirmar_senha">
+                        <label>Confirmar senha *</label>
+                        <input type="password" id="eq_confirmar_senha" placeholder="Digite novamente" minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label>CPF</label>
+                        <input type="text" id="eq_cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" aria-describedby="eq_cpf_erro">
+                        <small id="eq_cpf_erro" class="field-error" role="alert"></small>
+                    </div>
+                    <div class="input-group">
+                        <label>Profissão / Registro profissional</label>
+                        <select id="eq_tipo_registro" onchange="alternarCampoRegistroProfissional(); sugerirNivelAcessoPorRegistro()">
+                            <option value="CREFITO">Fisioterapeuta — CREFITO</option>
+                            <option value="CRM">Médico — CRM</option>
+                            <option value="CREF">Profissional de Educação Física — CREF</option>
+                            <option value="CRO">Odontologia — CRO</option>
+                            <option value="CRP">Psicologia — CRP</option>
+                            <option value="SECRETARIA">Secretaria / Recepção</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Nível de acesso *</label>
+                        <select id="eq_nivel_acesso" onchange="atualizarAjudaNivelAcesso()">
+                            <option value="FISIOTERAPEUTA">Fisioterapeuta — acesso clínico</option>
+                            <option value="SECRETARIA">Secretaria — acesso administrativo</option>
+                            <option value="MASTER">Administrador — acesso total</option>
+                            <option value="MEDICO">Médico — acesso consultivo</option>
+                            <option value="EDUCADOR_FISICO">Educação Física — acesso consultivo</option>
+                        </select>
+                        <small id="eq_nivel_acesso_ajuda" class="kds-u-text-muted">Acesso clínico à avaliação, evolução, documentos clínicos e agenda.</small>
+                    </div>
+                    <div class="input-group" id="grp_eq_regional">
+                        <label id="lbl_eq_regional">Regional do CREFITO</label>
+                        <input type="text" id="eq_regional" placeholder="Ex: 4">
+                    </div>
+                    <div class="input-group" id="grp_eq_num_registro">
+                        <label>Número do Registro Profissional</label>
+                        <input type="text" id="eq_num_registro" placeholder="Ex: 312345-F">
+                        <small class="kds-u-text-muted">Exemplo: Regional 4 + 312345-F → CREFITO-4 312345-F</small>
+                    </div>
+                    <div class="input-group">
+                        <label>Idade</label>
+                        <input type="number" id="eq_idade" placeholder="Ex: 30">
+                    </div>
+                    <div class="input-group">
+                        <label>Endereço Completo</label>
+                        <input type="text" id="eq_endereco" placeholder="Rua, Número, Bairro">
+                    </div>
+                    <div class="input-group kds-u-gc-1-1">
+                        <label class="kds-u-mb-7px">Atendimento assistencial na Agenda</label>
+                        <label for="eq_aparece_na_agenda" class="kds-u-ai-start kds-u-gap-10px kds-u-p-11px-12px kds-u-border-1px-solid-ks-line-soft-dce6e3 kds-u-br-9px kds-u-bg-soft-green kds-u-cursor-pointer kds-u-fw-600 kds-u-text-petrol-alt kds-u-d-flex">
+                            <input type="checkbox" id="eq_aparece_na_agenda" class="kds-u-w-17px kds-u-h-17px kds-u-mt-1px kds-u-accent-petrol kds-u-flex-0-0-auto">
+                            <span>
+                                <strong class="kds-u-fs-meta kds-u-d-block">Pode aparecer como profissional na Agenda</strong>
+                                <small class="kds-u-mt-3px kds-u-text-muted kds-u-fw-500 kds-u-lh-1p4 kds-u-d-block">Fisioterapeutas ativos já possuem agenda própria automaticamente. Use esta opção para incluir outros perfis que também realizam atendimentos, como administradores. Desativar o usuário remove seu acesso.</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn-primary" id="eq_btn_salvar" type="button" onclick="cadastrarNovoFuncionario()">Cadastrar funcionário</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="tabela-pacientes">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Perfil</th>
+                            <th>Registro</th>
+                            <th>Na Agenda</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista_equipe_corpo">
+                        <tr><td colspan="6" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL: NOVO/EDITAR AGENDAMENTO -->
+    <div class="modal-overlay" id="modal_agendamento">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_agendamento')">✕</button>
+            <h2 id="modal_agendamento_titulo">Novo agendamento</h2>
+            <input type="hidden" id="ag_id">
+            <div class="input-group">
+                <label>Paciente (já cadastrado no sistema)</label>
+                <select id="ag_paciente_select" onchange="popularPlanosNoAgendamento(this.value, document.getElementById('ag_procedimento_select').value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione --</option></select>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Profissional responsável *</label>
+                    <select id="ag_profissional_select" required onchange="atualizarHorariosDisponiveisModal()"><option value="">-- Selecione o profissional --</option></select>
+                    <small class="field-help">A agenda e os horários disponíveis serão calculados para o profissional escolhido.</small>
+                </div>
+                <div class="input-group">
+                    <label>Procedimento</label>
+                    <select id="ag_procedimento_select" onchange="popularPlanosNoAgendamento(document.getElementById('ag_paciente_select').value, this.value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione --</option></select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Data</label>
+                    <input type="date" id="ag_data_input" onchange="atualizarHorariosDisponiveisModal(); atualizarResumoRecorrencia()">
+                </div>
+                <div class="input-group">
+                    <label>Horário disponível</label>
+                    <select id="ag_horario_select"><option value="">-- Escolha data/profissional/procedimento --</option></select>
+                </div>
+            </div>
+            <div class="input-group kds-u-mt-2px">
+                <label class="agenda-extra-toggle" for="ag_horario_extra_toggle">
+                    <input type="checkbox" id="ag_horario_extra_toggle" onchange="aoAlternarHorarioExtraordinario()">
+                    <span><strong>Agendar fora do horário padrão</strong><br><small>Use para encaixes fora do dia ou horário habitual do profissional. O KineSys pedirá confirmação antes de salvar e avisará o profissional responsável.</small></span>
+                </label>
+                <div id="ag_horario_extra_bloco" class="agenda-extra-time" hidden>
+                    <div class="grid-2">
+                        <div class="input-group kds-u-m-0"><label>Início extraordinário</label><input type="time" id="ag_horario_extra_inicio" step="300" oninput="atualizarResumoHorarioExtraordinario(); atualizarResumoRecorrencia()"></div>
+                        <div class="input-group kds-u-m-0"><label>Regra de segurança</label><div class="field-help">O término é calculado pela duração do procedimento. Bloqueios e conflitos continuam valendo.</div></div>
+                    </div>
+                    <div id="ag_horario_extra_resumo" class="agenda-extra-resumo"></div>
+                </div>
+            </div>
+            <div class="agenda-recurrencia" id="ag_recorrencia_bloco">
+                <label for="ag_recorrencia_tipo">Repetir agendamento <span class="optional-label">(opcional)</span></label>
+                <div class="agenda-recurrencia-grid">
+                    <div class="input-group kds-u-m-0">
+                        <select id="ag_recorrencia_tipo" onchange="atualizarInterfaceRecorrencia()">
+                            <option value="nenhuma">Não repetir</option>
+                            <option value="cada_7_dias">A cada 7 dias</option>
+                            <option value="dias_semana">Dias fixos da semana</option>
+                            <option value="datas_especificas">Datas específicas</option>
+                        </select>
+                    </div>
+                    <div id="ag_recorrencia_fim_tipo_grupo" class="input-group kds-u-m-0" hidden>
+                        <select id="ag_recorrencia_fim_tipo" onchange="atualizarInterfaceRecorrencia()">
+                            <option value="quantidade">Encerrar após quantidade de sessões</option>
+                            <option value="data">Encerrar em uma data</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="ag_recorrencia_dias_grupo" hidden>
+                    <small class="field-help">Escolha os dias que o paciente costuma atender.</small>
+                    <div class="agenda-recurrencia-dias">
+                        <label class="agenda-dia-pill"><input type="checkbox" value="1" onchange="atualizarResumoRecorrencia()">Seg</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="2" onchange="atualizarResumoRecorrencia()">Ter</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="3" onchange="atualizarResumoRecorrencia()">Qua</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="4" onchange="atualizarResumoRecorrencia()">Qui</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="5" onchange="atualizarResumoRecorrencia()">Sex</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="6" onchange="atualizarResumoRecorrencia()">Sáb</label>
+                        <label class="agenda-dia-pill"><input type="checkbox" value="0" onchange="atualizarResumoRecorrencia()">Dom</label>
+                    </div>
+                </div>
+                <div id="ag_recorrencia_fim_grupo" class="agenda-recurrencia-fim" hidden>
+                    <div id="ag_recorrencia_quantidade_grupo" class="input-group kds-u-m-0">
+                        <label>Total de agendamentos</label>
+                        <input type="number" id="ag_recorrencia_quantidade" min="2" max="60" value="10" oninput="atualizarResumoRecorrencia()">
+                        <div class="agenda-recorrencia-atalho"><button type="button" class="btn-secondary" onclick="usarSaldoPacoteNaRecorrencia()">Usar saldo do pacote</button></div>
+                    </div>
+                    <div id="ag_recorrencia_data_limite_grupo" class="input-group kds-u-m-0" hidden>
+                        <label>Repetir até</label>
+                        <input type="date" id="ag_recorrencia_data_limite" onchange="atualizarResumoRecorrencia()">
+                    </div>
+                </div>
+                <div id="ag_recorrencia_custom_grupo" hidden>
+                    <div class="agenda-recorrencia-custom">
+                        <div class="input-group">
+                            <label>Adicionar outra data</label>
+                            <input type="date" id="ag_recorrencia_data_custom">
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="adicionarDataEspecificaRecorrencia()">Adicionar data</button>
+                    </div>
+                    <div id="ag_recorrencia_datas_lista" class="agenda-recorrencia-datas"></div>
+                </div>
+                <div id="ag_recorrencia_resumo" class="agenda-recorrencia-resumo" hidden></div>
+            </div>
+            <div class="input-group agenda-finance-link">
+                <label for="ag_status_inicial">Status inicial</label>
+                <select id="ag_status_inicial" onchange="atualizarResumoRecorrencia()">
+                    <option value="agendado">Agendado</option>
+                    <option value="pre_agendado">Pré-agendado · reserva de horário sem cobertura confirmada</option>
+                </select>
+                <small class="field-help">Use Pré-agendado para segurar o horário antes da renovação do pacote. Se um pacote for escolhido, somente as sessões que couberem nele serão vinculadas; o excedente vira Pré-agendado automaticamente.</small>
+            </div>
+            <div class="input-group agenda-finance-link">
+                <label>Plano ou atendimento unitário <span class="optional-label">(opcional)</span></label>
+                <select id="ag_plano_select" onchange="atualizarResumoPacoteAgendamento(); atualizarResumoRecorrencia()"><option value="">Selecione um paciente para ver os pacotes</option></select>
+                <small id="ag_plano_status" class="field-help">Selecione o paciente para carregar automaticamente os planos/pacotes ativos.</small>
+                <div id="ag_plano_resumo" class="agenda-package-summary" hidden></div><button type="button" class="btn-secondary" onclick="abrirCriarAtendimento('agenda')">+ Criar atendimento unitário</button>
+            </div>
+            <div class="input-group">
+                <label>Observações (opcional)</label>
+                <textarea id="ag_observacoes" class="kds-u-h-70px"></textarea>
+            </div>
+            <div id="ag_feedback" class="agenda-modal-feedback" role="status" aria-live="polite"></div>
+            <div class="actions">
+                <button type="button" class="btn-secondary" onclick="fecharModal('modal_agendamento')">Cancelar</button>
+                <button type="button" class="btn-secondary" onclick="fecharModal('modal_agendamento'); abrirModalListaEspera();">🔔 Sem vaga? Lista de Espera</button>
+                <button type="button" id="btn_salvar_agendamento" class="btn-primary" onclick="salvarAgendamento()">Confirmar Agendamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETALHE DO AGENDAMENTO -->
+    <div class="modal-overlay" id="modal_detalhe_agendamento">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_detalhe_agendamento')">✕</button>
+            <h2>Detalhe do Agendamento</h2>
+            <div id="detalhe_agendamento_corpo"></div>
+            <div class="actions">
+                <button type="button" class="btn-secondary" onclick="fecharModal('modal_detalhe_agendamento')">Fechar</button>
+                <button type="button" class="btn-primary" onclick="enviarLembreteAgendamentoAtual()">📲 Enviar Lembrete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUDITORIA DE STATUS DA AGENDA — SOMENTE ADMINISTRADORES -->
+    <div class="modal-overlay" id="modal_historico_status_agenda">
+        <div class="modal-box agenda-audit-modal">
+            <button class="modal-fechar" onclick="fecharModal('modal_historico_status_agenda')">✕</button>
+            <h2>Histórico de alterações de status</h2>
+            <p class="agenda-audit-note"><strong>Auditoria administrativa.</strong> Registra quem alterou, quando alterou e a mudança realizada. Este painel é exibido somente para perfis de Administrador.</p>
+            <div id="agenda_historico_status_lista" class="agenda-audit-list"><div class="agenda-audit-empty">Carregando histórico…</div></div>
+            <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_historico_status_agenda')">Fechar</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: PROCEDIMENTO -->
+    <div class="modal-overlay" id="modal_procedimento">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_procedimento')">✕</button>
+            <h2 id="modal_procedimento_titulo">Novo Procedimento</h2>
+            <input type="hidden" id="proc_id">
+            <div class="input-group">
+                <label>Nome do procedimento</label>
+                <input type="text" id="proc_nome" placeholder="Ex.: Sessão de Fisioterapia, Avaliação Inicial...">
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Duração (minutos)</label>
+                    <input type="number" id="proc_duracao" min="5" step="5" placeholder="Ex.: 50">
+                </div>
+                <div class="input-group">
+                    <label>Valor (opcional)</label>
+                    <input type="number" id="proc_valor" min="0" step="0.01" placeholder="R$">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Quem realiza este procedimento</label>
+                <div class="toggle-pill" id="proc_profissionais_toggle"></div>
+                <p class="field-help">Deixe todos desmarcados para liberar o procedimento a qualquer profissional.</p>
+            </div>
+            <div class="actions">
+                <button class="btn-secondary" onclick="fecharModal('modal_procedimento')">Cancelar</button>
+                <button class="btn-primary" onclick="salvarProcedimento()">Salvar Procedimento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HORÁRIO DE ATENDIMENTO -->
+    <div class="modal-overlay" id="modal_horario">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_horario')">✕</button>
+            <h2>Nova Janela de Atendimento</h2>
+            <input type="hidden" id="hor_id">
+            <div class="input-group">
+                <label>Profissional</label>
+                <select id="hor_profissional_select"><option value="">Geral da clínica (todos os profissionais)</option></select>
+            </div>
+            <div class="input-group">
+                <label>Dia da semana</label>
+                <select id="hor_dia_semana">
+                    <option value="1">Segunda-feira</option>
+                    <option value="2">Terça-feira</option>
+                    <option value="3">Quarta-feira</option>
+                    <option value="4">Quinta-feira</option>
+                    <option value="5">Sexta-feira</option>
+                    <option value="6">Sábado</option>
+                    <option value="0">Domingo</option>
+                </select>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Início</label>
+                    <input type="time" id="hor_inicio">
+                </div>
+                <div class="input-group">
+                    <label>Fim</label>
+                    <input type="time" id="hor_fim">
+                </div>
+            </div>
+            <p class="field-help">Para "8h às 12h e 14h às 19h", cadastre duas janelas separadas no mesmo dia.</p>
+            <div class="actions">
+                <button class="btn-secondary" onclick="fecharModal('modal_horario')">Cancelar</button>
+                <button class="btn-primary" onclick="salvarHorario()">Salvar Janela</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: BLOQUEIO -->
+    <div class="modal-overlay" id="modal_bloqueio">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_bloqueio')">✕</button>
+            <h2>Nova ausência / bloqueio</h2>
+            <input type="hidden" id="bloq_id">
+            <div class="input-group">
+                <label>Aplicar a</label>
+                <select id="bloq_profissional_select"><option value="">Toda a clínica</option></select>
+                <p class="field-help">Selecione um profissional para registrar uma ausência individual. Deixe “Toda a clínica” para feriados ou fechamento geral.</p>
+            </div>
+            <div class="input-group">
+                <label>Data</label>
+                <input type="date" id="bloq_data">
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Início (opcional — vazio = dia todo)</label>
+                    <input type="time" id="bloq_inicio">
+                </div>
+                <div class="input-group">
+                    <label>Fim (opcional)</label>
+                    <input type="time" id="bloq_fim">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Motivo</label>
+                <input type="text" id="bloq_motivo" placeholder="Ex.: Feriado, folga, férias, congresso, consulta...">
+            </div>
+            <div class="actions">
+                <button class="btn-secondary" onclick="fecharModal('modal_bloqueio')">Cancelar</button>
+                <button class="btn-primary" onclick="salvarBloqueio()">Salvar ausência / bloqueio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LISTA DE ESPERA -->
+    <div class="modal-overlay" id="modal_lista_espera">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_lista_espera')">✕</button>
+            <h2>Adicionar à Lista de Espera</h2>
+            <div class="input-group">
+                <label>Paciente (já cadastrado no sistema)</label>
+                <select id="esp_paciente_select"><option value="">-- Selecione --</option></select>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Profissional (opcional)</label>
+                    <select id="esp_profissional_select"><option value="">Qualquer profissional</option></select>
+                </div>
+                <div class="input-group">
+                    <label>Procedimento (opcional)</label>
+                    <select id="esp_procedimento_select"><option value="">Qualquer procedimento</option></select>
+                </div>
+            </div>
+            <div class="input-group kds-u-mb-8px">
+                <label>Janela de preferência (opcional)</label>
+                <div class="grid-2">
+                    <div class="input-group kds-u-mb-0">
+                        <label class="kds-u-fs-meta">De</label>
+                        <input type="date" id="esp_data_inicio" onchange="atualizarJanelaListaEspera('inicio')">
+                    </div>
+                    <div class="input-group kds-u-mb-0">
+                        <label class="kds-u-fs-meta">Até</label>
+                        <input type="date" id="esp_data_fim" onchange="atualizarJanelaListaEspera('fim')">
+                    </div>
+                </div>
+                <small class="kds-u-mt-6px kds-u-text-muted kds-u-fs-meta kds-u-lh-1p35 kds-u-d-block">Para uma data única, deixe “De” e “Até” no mesmo dia. Sem datas, a preferência vale continuamente.</small>
+            </div>
+            <div class="input-group">
+                <label>Dias da semana preferidos <span class="kds-u-fw-500 kds-u-text-muted">(opcional)</span></label>
+                <div class="checkbox-group compact-chips" id="esp_dias_semana">
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="1"><span>Seg</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="2"><span>Ter</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="3"><span>Qua</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="4"><span>Qui</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="5"><span>Sex</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="6"><span>Sáb</span></label>
+                    <label class="checkbox-pill"><input type="checkbox" class="esp_dia_semana" value="0"><span>Dom</span></label>
+                </div>
+                <small class="kds-u-mt-6px kds-u-text-muted kds-u-fs-meta kds-u-lh-1p35 kds-u-d-block">Nenhum marcado = qualquer dia dentro da janela. Ex.: marque Seg, Qua e Sex para aceitar somente esses dias.</small>
+            </div>
+            <div class="input-group">
+                <label>Período preferido</label>
+                <select id="esp_periodo">
+                    <option value="qualquer">Qualquer horário</option>
+                    <option value="manha">Manhã</option>
+                    <option value="tarde">Tarde</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Observações (opcional)</label>
+                <textarea id="esp_observacoes" class="kds-u-h-60px"></textarea>
+            </div>
+            <div class="actions">
+                <button class="btn-secondary" onclick="fecharModal('modal_lista_espera')">Cancelar</button>
+                <button class="btn-primary" onclick="salvarListaEspera()">Adicionar à Fila</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cobrança de uma sessão, com pagamento e presença independentes. -->
+    <div class="modal-overlay" id="modal_atendimento_unitario" style="z-index:11000">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="unitario_titulo">
+            <button type="button" class="modal-fechar" onclick="fecharAtendimentoUnitario()" aria-label="Fechar atendimento unitário">✕</button>
+            <h2 id="unitario_titulo">Criar atendimento unitário</h2>
+            <p><strong id="unitario_paciente"></strong> · 1 sessão</p>
+            <p id="unitario_contexto" class="field-help"></p>
+            <div class="input-group"><label for="unitario_procedimento">Procedimento</label><select id="unitario_procedimento" onchange="atualizarValorAtendimentoUnitario()"><option value="">-- Selecione --</option></select></div>
+            <div class="grid-2">
+                <div class="input-group"><label for="unitario_valor">Valor do atendimento (R$)</label><input id="unitario_valor" inputmode="decimal" placeholder="0,00"></div>
+                <div class="input-group"><label for="unitario_cortesia">Desconto por cortesia (R$)</label><input id="unitario_cortesia" inputmode="decimal" value="0"></div>
+            </div>
+            <div class="input-group"><label for="unitario_forma">Forma de pagamento prevista</label><select id="unitario_forma"><option>PIX</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Outro</option></select><small>O recebimento deve ser lançado em “Pagamentos”. Criar o atendimento não significa que ele está pago ou realizado.</small></div>
+            <div class="input-group"><label for="unitario_observacoes">Observação (opcional)</label><textarea id="unitario_observacoes" rows="2"></textarea></div>
+            <div id="unitario_feedback" class="finance-feedback" role="status" aria-live="polite"></div>
+            <div class="actions"><button type="button" class="btn-secondary" onclick="fecharAtendimentoUnitario()">Cancelar</button><button type="button" class="btn-primary" id="unitario_salvar" onclick="salvarAtendimentoUnitario()">Criar atendimento</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVO PLANO / PACOTE -->
+    <div class="modal-overlay" id="modal_fin_plano">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_plano')">✕</button>
+            <h2 id="fin_plano_titulo">Novo plano de atendimento</h2>
+            <input type="hidden" id="fin_plano_operacao">
+            <p id="fin_plano_contexto" class="field-help" hidden></p>
+            <div class="input-group"><label>Nome do plano</label><input id="fin_plano_nome" placeholder="Ex.: Pacote de fisioterapia — 10 sessões"></div>
+            <div class="grid-2">
+                <div class="input-group"><label>Procedimento</label><select id="fin_plano_procedimento" onchange="aoSelecionarProcedimentoPlano()"><option value="">Sem procedimento específico</option></select></div>
+                <div class="input-group"><label>Sessões contratadas</label><input id="fin_plano_sessoes" type="number" min="1" value="10"></div>
+            </div>
+            <div class="grid-2">
+                <div class="input-group"><label>Valor de tabela do pacote</label><input id="fin_plano_valor_tabela" inputmode="decimal" placeholder="0,00" oninput="calcularValorFinalPlano()"></div>
+                <div class="input-group"><label>Desconto pelo pacote (R$)</label><input id="fin_plano_desconto_pacote" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando o preço menor existir por adesão ao pacote/plano.</small></div>
+            </div>
+            <div class="grid-2">
+                <div class="input-group"><label>Desconto por cortesia (R$)</label><input id="fin_plano_desconto_cortesia" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando a redução foi uma decisão especial para este paciente.</small></div>
+                <div class="input-group"><label>Valor final</label><input id="fin_plano_valor_final" readonly><small id="fin_plano_desconto_pct" class="field-help">0% de desconto</small></div>
+            </div>
+            <div id="fin_plano_desconto_resumo" class="finance-discount-form-summary">Desconto total: <b>R$ 0,00</b></div>
+            <div class="input-group"><label>Formas de pagamento previstas</label><div id="fin_plano_forma" class="finance-payment-methods" role="group" aria-label="Formas de pagamento previstas"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Você pode combinar mais de uma forma.</small></div>
+            <div class="input-group"><label>Parcelas combinadas</label><input id="fin_plano_parcelas" type="number" min="1" value="1"><small class="field-help">Informativo: vencimentos ainda não são controlados individualmente.</small></div>
+            <div class="input-group"><label>Observação</label><textarea id="fin_plano_observacoes" rows="3" placeholder="Condições combinadas, validade, observações administrativas..."></textarea></div>
+            <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_plano')">Cancelar</button><button type="button" class="btn-primary" id="fin_plano_salvar_btn" onclick="salvarPlanoFinanceiro()">Salvar plano</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: PAGAMENTO -->
+    <div class="modal-overlay" id="modal_fin_pagamento">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_pagamento')">✕</button>
+            <h2>Lançar pagamento</h2>
+            <input type="hidden" id="fin_pag_operacao">
+            <div class="input-group"><label>Plano / cobrança</label><select id="fin_pag_plano" onchange="atualizarResumoPagamentoFinanceiro()"><option value="">-- Selecione --</option></select></div>
+            <div class="grid-2"><div class="input-group"><label>Valor recebido agora</label><input id="fin_pag_valor" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoFinanceiro()"></div><div class="input-group"><label>Data do pagamento</label><input id="fin_pag_data" type="date"></div></div>
+            <div id="fin_pag_credito_box" class="finance-credit-box" hidden>
+                <div class="finance-credit-box-head"><span>Crédito já pago pelo paciente</span><strong id="fin_pag_credito_disponivel">R$ 0,00</strong></div>
+                <label class="finance-credit-toggle"><input type="checkbox" id="fin_pag_usar_credito" onchange="atualizarResumoPagamentoFinanceiro()"> Usar crédito disponível neste procedimento</label>
+                <input type="hidden" id="fin_pag_credito_valor" value="0">
+                <div id="fin_pag_resumo_calculo" class="finance-payment-summary"></div>
+            </div>
+            <div class="input-group"><label>Forma de pagamento</label><div id="fin_pag_forma" class="finance-payment-methods" role="group" aria-label="Formas usadas neste pagamento"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Marque uma ou mais opções. Quando houver divisão, informe o valor recebido em cada uma.</small><small id="fin_pag_forma_divisao" class="field-help" hidden>A soma das formas deve ser igual ao valor recebido agora.</small></div>
+            <div class="input-group"><label>Observação</label><textarea id="fin_pag_observacoes" rows="3" placeholder="Ex.: 1ª parcela; desconto ajustado; comprovante recebido..."></textarea></div>
+            <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_pagamento')">Cancelar</button><button type="button" class="btn-primary" onclick="salvarPagamentoFinanceiro()">Registrar pagamento</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: DESPESA FINANCEIRA (ADMINISTRADORES) -->
+    <div class="modal-overlay" id="modal_fin_despesa">
+        <div class="modal-box">
+            <button class="modal-fechar" onclick="fecharModal('modal_fin_despesa')">✕</button>
+            <h2 id="fin_desp_titulo">Registrar gasto</h2>
+            <input type="hidden" id="fin_desp_edit_id">
+            <input type="hidden" id="fin_desp_operacao">
+            <div class="input-group"><label>Descrição *</label><input id="fin_desp_descricao" placeholder="Ex.: aluguel da clínica, materiais, manutenção..."></div>
+            <div class="grid-2">
+                <div class="input-group"><label>Categoria gerencial *</label><select id="fin_desp_categoria" onchange="atualizarTiposDespesaFinanceira()"><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
+                <div class="input-group"><label>Valor *</label><input id="fin_desp_valor" inputmode="decimal" placeholder="0,00"></div>
+            </div>
+            <div class="input-group"><label>Tipo do gasto</label><select id="fin_desp_subcategoria"></select><div class="finance-expense-modal-hint">A categoria é usada no balanço gerencial; o tipo mantém o detalhe do gasto, como Água, Energia elétrica, Pró-labore, Simples Nacional, Insumos ou Manutenção de equipamentos.</div></div>
+            <div class="grid-2">
+                <div class="input-group"><label>Data da despesa *</label><input id="fin_desp_data" type="date"></div>
+                <div class="input-group"><label>Forma de pagamento</label><select id="fin_desp_forma"><option value="">Não informada</option><option>PIX</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></div>
+            </div>
+            <div class="input-group"><label>Observação</label><textarea id="fin_desp_observacoes" rows="3" placeholder="Fornecedor, referência, comprovante, detalhes administrativos..."></textarea></div>
+            <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_despesa')">Cancelar</button><button type="button" class="btn-primary" id="fin_desp_salvar_btn" onclick="salvarDespesaFinanceira()">Registrar gasto</button></div>
+        </div>
+    </div>
+
+    <div id="autosave_status" class="autosave-status" style="display:none;">Rascunho não salvo</div>
+
+
+
+    <!-- Design System: componentes base consolidados -->
+<!-- Design System Etapa 10: telas, tipografia e módulos dedicados após os estilos inline legados -->
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="core/api/supabase-client.js"></script>
+    <script src="core/auth/permissions.js"></script>
+    <script src="core/auth/session-helpers.js"></script>
+    <script src="core/shared/text.js"></script>
+    <script src="core/shared/brazilian-identifiers.js"></script>
+    <script src="core/shared/async-action.js"></script>
+    <script src="core/navigation/dropdown-menu.js"></script>
+    <script src="modules/patients/responsible-contact.js"></script>
+    <script src="modules/patients/record-normalizer.js"></script>
+    <script src="modules/patients/record-reconciliation.js"></script>
+    <script src="modules/patients/patient-reader.js"></script>
+    <script src="modules/patients/local-storage.js"></script>
+    <script src="modules/agenda/status-policy.js"></script>
+    <script src="modules/agenda/access-policy.js"></script>
+    <script src="modules/agenda/notification-queue.js"></script>
+    <script src="modules/agenda/errors.js"></script>
+    <script src="modules/agenda/pending-sync-store.js"></script>
+    <script src="modules/agenda/repository.js"></script>
+    <script src="modules/agenda/calendar-time.js"></script>
+    <script src="modules/agenda/recurrence.js"></script>
+    <script src="modules/agenda/holidays.js"></script>
+    <script src="modules/agenda/availability-utils.js"></script>
+    <script src="cirurgias-1.18.0.js?v=20260902-r1"></script>
+    <script src="database/medicamentos.js"></script>
+    <script src="database/ocupacoes_esportes.js"></script>
+    <script src="database/irradiacao_clinica.js"></script>
+    <script src="database/mapeamento_clinico.js"></script>
+    <script src="database/condicoes_mobilidade_v23.js"></script>
+    <script src="database/diferenciais_neurais.js"></script>
+    <script src="script-1.18.0.js?v=20260908-hma111-flexao-joelho-r1"></script>
+    <script src="clinical_engine-1.17.0.js"></script>
+    <script src="evaluation_workspace-1.17.0.js"></script>
+    <script src="proms_escalas.js"></script>
+    <script src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script src="pendencias_financeiras-1.19.0.js?v=20260901-r2"></script>
+    <script src="descontos_financeiros-1.20.0.js?v=20260901-r1"></script>
+    <script src="balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script src="analise_admin-1.19.0.js?v=20260901-r2"></script>
+    <script src="financeiro_workspace-1.20.1.js?v=20260901-r1"></script>
+    <script src="financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1"></script>
+    <script src="mensagens_config.js"></script>
+    <script src="agenda-1.20.0.js?v=20260901-r1"></script>
+    <script src="prontuario_export.js"></script>
+    <script src="design_system-1.20.1.js?v=20260901-r1"></script>
+    <script src="ui_refinement.js"></script>
+    <script src="home_detalhes-1.18.5.js"></script>
+    <script src="data_governance.js?v=1.17.0-evaluation"></script>
+
+    <div id="engine_info_modal" class="engine-info-modal" hidden onclick="if(event.target===this) fecharInfoMotorClinico()">
+        <div class="engine-info-card" role="dialog" aria-modal="true" aria-labelledby="engine_info_title">
+            <h3 id="engine_info_title">Sobre o motor clínico</h3>
+            <p>O KineSys atua como <strong>navegador clínico</strong>: organiza achados, eixos de investigação e possíveis ferramentas, mas não decide o diagnóstico. No Motor 2.5, a direção clínica assistida permanece sob decisão do fisioterapeuta; condições específicas ficam em biblioteca pesquisável e são abertas progressivamente. A segurança clínica é independente da região selecionada.</p>
+            <div class="actions"><button type="button" class="btn-primary" onclick="fecharInfoMotorClinico()">Entendi</button></div>
+        </div>
+    </div>
+    <script src="login_access-1.18.0.js"></script>
+    <script src="evaluation_context_panels-1.18.3.js"></script>
+    <script src="financeiro_agendamento-1.21.0.js?v=20260904-integracao-r1"></script>
+    <script src="avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1"></script>
+</body>
+</html>
+

@@ -1,0 +1,313 @@
+/* ========================================================================== 
+   KineSys Design System — Componentes base | Etapa 3
+   Componente consolidado: Card
+   Fonte de verdade para superfície, borda, raio, padding e cabeçalho.
+   Módulos podem complementar o card por classes específicas, sem redefinir
+   novamente o componente global.
+   ========================================================================== */
+
+/* CARD — estado visual congelado na Etapa 1 */
+.card, body.ks-design-ready .card{
+  box-sizing:border-box;
+  min-width:0;
+  background:var(--kds-surface);
+  border:1px solid #E1E9E6;
+  border-radius:12px;
+  padding:20px 22px;
+  margin-bottom:12px;
+  box-shadow:none;
+}
+
+.card-header, body.ks-design-ready .card-header{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  padding-bottom:4px;
+  margin-bottom:14px;
+  border-bottom:0;
+}
+
+.card-header > *{min-width:0}
+
+.card-header h2, body.ks-design-ready .card-header h2{
+  margin:0;
+  color:var(--kds-text);
+  font-size:var(--kds-font-content);
+  line-height:var(--kds-leading-ui);
+  font-weight:700;
+  letter-spacing:-.12px;
+  text-transform:none;
+}
+
+.card-header p, body.ks-design-ready .card-header p{
+  margin:4px 0 0;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-text);
+}
+
+/* Variante explícita para card dentro de outro card.
+   Substitui o seletor implícito legado `.card .card`. */
+.card--nested{
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+}
+
+/* Variante sem elevação para superfícies que já pertencem a um agrupamento. */
+.card--flat{box-shadow:none}
+
+/* Responsividade do componente: reduz espaço antes de reduzir legibilidade. */
+@media(max-width:820px){
+  .card, body.ks-design-ready .card{padding:18px}
+}
+
+@media(max-width:620px){
+  .card, body.ks-design-ready .card{
+    padding:16px;
+    border-radius:10px;
+  }
+}
+
+@media(max-width:520px){
+  .card-header, body.ks-design-ready .card-header{align-items:flex-start}
+}
+
+
+/* ========================================================================== 
+   BOTÕES — Design System | Etapa 4
+   Fonte de verdade para ações primárias, secundárias, navegação, destrutivas
+   e links compactos. Módulos podem ajustar layout/contexto, mas não devem
+   redefinir a linguagem visual global destes componentes.
+   ========================================================================== */
+
+.btn-primary, .btn-secondary, .btn-nav, .btn-danger{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:var(--kds-button-height);
+  padding:9px 14px;
+  border:1px solid transparent;
+  border-radius:var(--kds-radius-sm);
+  font-family:inherit;
+  font-size:var(--kds-font-ui);
+  font-weight:680;
+  line-height:var(--kds-leading-compact);
+  letter-spacing:0;
+  text-transform:none;
+  text-decoration:none;
+  white-space:normal;
+  cursor:pointer;
+  user-select:none;
+  transform:none;
+  box-shadow:none;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease;
+}
+
+.btn-primary{
+  background:var(--kds-accent);
+  border-color:var(--kds-accent);
+  color:#fff;
+}
+.btn-primary:hover{
+  background:var(--kds-accent-hover);
+  border-color:var(--kds-accent-hover);
+  box-shadow:0 5px 14px rgba(30,117,111,.12);
+}
+
+.btn-secondary, .btn-nav{
+  background:#fff;
+  border-color:#D3DFDC;
+  color:#3A555B;
+}
+.btn-secondary:hover, .btn-nav:hover{
+  background:#F6F9F8;
+  border-color:#ADC8C3;
+  color:#245D58;
+}
+
+/* Destrutivo intencionalmente discreto: comunica risco sem competir com a ação primária. */
+.btn-danger{
+  background:#fff;
+  border-color:#E7C7C4;
+  color:var(--kds-danger);
+}
+.btn-danger:hover{
+  background:#FFF3F2;
+  border-color:#DFA8A3;
+  color:#8F3029;
+}
+
+/* Variante compacta para ações auxiliares dentro de linhas/cards. */
+.btn-compact{
+  min-height:34px;
+  padding:6px 10px;
+  border-radius:7px;
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-tight);
+}
+
+/* Ação textual curta: não recebe aparência de botão preenchido. */
+.btn-link-compacto{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:5px 0;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--kds-accent-hover);
+  font-family:inherit;
+  font-size:var(--kds-font-label);
+  font-weight:700;
+  line-height:var(--kds-leading-compact);
+  text-decoration:none;
+  cursor:pointer;
+  transition:background-color .15s ease,color .15s ease;
+}
+.btn-link-compacto:hover{color:var(--kds-accent);background:rgba(30,117,111,.055)}
+
+.btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-nav:focus-visible, .btn-danger:focus-visible, .btn-link-compacto:focus-visible{
+  outline:3px solid rgba(42,167,157,.22);
+  outline-offset:2px;
+}
+.btn-danger:focus-visible{outline-color:rgba(165,59,51,.22)}
+
+.btn-primary:disabled, .btn-secondary:disabled, .btn-nav:disabled, .btn-danger:disabled, .btn-link-compacto:disabled, .btn-primary[aria-disabled="true"], .btn-secondary[aria-disabled="true"], .btn-nav[aria-disabled="true"], .btn-danger[aria-disabled="true"], .btn-link-compacto[aria-disabled="true"]{
+  opacity:.52;
+  cursor:not-allowed;
+  box-shadow:none;
+  pointer-events:none;
+}
+
+
+
+.ks-design-ready :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+){
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:var(--kds-control-height);
+  padding:10px 12px;
+  border:1px solid #D4E0DD;
+  border-radius:var(--kds-radius-sm);
+  background:var(--kds-surface);
+  color:#243F45;
+  font-family:inherit;
+  font-size:var(--kds-font-field);
+  font-weight:400;
+  line-height:var(--kds-leading-text);
+  box-shadow:none;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,color .15s ease;
+}
+
+.ks-design-ready :where(select){padding-right:36px}
+
+.ks-design-ready :where(textarea){
+  min-height:120px;
+  height:auto;
+  line-height:var(--kds-leading-relaxed);
+  resize:vertical;
+}
+
+.ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"])::placeholder,textarea::placeholder){
+  color:#8B989B;
+  opacity:1;
+}
+
+.ks-design-ready :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+):focus{
+  outline:none;
+  border-color:#72AFA8;
+  background:var(--kds-surface);
+  box-shadow:0 0 0 3px rgba(42,167,157,.10);
+}
+
+.ks-design-ready :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+):focus-visible{
+  outline:3px solid rgba(42,167,157,.22);
+  outline-offset:2px;
+}
+
+.ks-design-ready :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+):disabled{
+  border-color:var(--kds-line);
+  background:var(--kds-surface-muted);
+  color:var(--kds-faint);
+  cursor:not-allowed;
+  opacity:.82;
+}
+
+.ks-design-ready :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"])[readonly],
+  textarea[readonly]
+){
+  border-color:var(--kds-line);
+  background:var(--kds-surface-soft);
+  color:var(--kds-text-secondary);
+  cursor:default;
+}
+
+.ks-design-ready .input-group.has-error :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+), .ks-design-ready :where(input,select,textarea)[aria-invalid="true"]{
+  border-color:#D64545;
+  background:#FFF7F7;
+  box-shadow:0 0 0 3px rgba(214,69,69,.10);
+}
+
+.ks-design-ready .input-group.has-success :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,
+  textarea
+){
+  border-color:#36A269;
+  background:#FBFFFC;
+}
+
+
+
+
+/* Textarea clínico principal: maior por função, sem criar outro sistema de campo. */
+
+
+/* Em telas móveis, 16 px evita zoom automático em navegadores móveis. */
+@media(max-width:820px){
+  .ks-design-ready :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+    select,
+    textarea
+  ){font-size:var(--kds-font-body)}
+
+  
+}
+
+
+
+/* Shared compact chip modifier — reused by Avaliação and Agenda. */
+.compact-chips{gap:7px!important}
+.compact-chips .checkbox-pill span{padding:6px 10px!important;font-size:var(--kds-font-metadata)!important;border-radius:9px!important}
