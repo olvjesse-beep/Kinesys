@@ -1,0 +1,42 @@
+name: Impeccable detailed visual audit
+
+on:
+  push:
+    paths:
+      - '.github/workflows/impeccable-detail-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detailed detector output
+        shell: bash
+        run: |
+          set -uo pipefail
+          chmod +x .agents/skills/impeccable/scripts/impeccable || true
+          set +e
+          .agents/skills/impeccable/scripts/impeccable detect --json \
+            index.html \
+            design_tokens.css \
+            design_components.css \
+            design_responsive.css \
+            design_screens.css \
+            avaliacao_experiencia-1.22.0.css \
+            > /tmp/impeccable.json 2>/tmp/impeccable.err
+          code=$?
+          set -e
+          echo "DETECTOR_EXIT=$code"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('/tmp/impeccable.json').read_text(encoding='utf-8') or '[]')
+          print('FINDING_COUNT=', len(data))
+          for i,f in enumerate(data,1):
+              print(f'FINDING_{i:03d}=' + json.dumps(f, ensure_ascii=False, separators=(',',':')))
+          PY
+          if [ -s /tmp/impeccable.err ]; then cat /tmp/impeccable.err; fi
+          exit 0
