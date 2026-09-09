@@ -199,3 +199,111 @@
     flex-direction:column!important;
   }
 }
+
+/* Descontos — alinhamento e legibilidade */
+#tela_financeiro .finance-discount-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(170px,190px) minmax(170px,190px) minmax(0,1fr)!important;
+  align-items:end!important;
+  column-gap:12px!important;
+  row-gap:12px!important;
+}
+#tela_financeiro .finance-discount-toolbar>.input-group{
+  min-width:0!important;
+  margin:0!important;
+  align-self:end!important;
+}
+#tela_financeiro .finance-discount-toolbar>.input-group>input{
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+}
+#tela_financeiro .finance-discount-actions{
+  display:flex!important;
+  align-items:center!important;
+  align-self:end!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+  margin:0!important;
+  padding:0!important;
+}
+#tela_financeiro .finance-discount-actions>button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+  margin:0!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  white-space:nowrap!important;
+}
+
+#tela_financeiro #fin_desc_lista{
+  overflow-x:auto!important;
+}
+#tela_financeiro .finance-discount-row{
+  display:grid!important;
+  grid-template-columns:96px minmax(230px,1.15fr) minmax(260px,1.35fr) 110px 150px 110px!important;
+  column-gap:16px!important;
+  align-items:center!important;
+}
+#tela_financeiro .finance-discount-row>span{
+  min-width:0!important;
+  line-height:1.4!important;
+  overflow-wrap:anywhere;
+}
+#tela_financeiro .finance-discount-row>span:nth-child(2){
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  gap:3px!important;
+}
+#tela_financeiro .finance-discount-row>span:nth-child(2)>b{
+  display:block!important;
+  line-height:1.35!important;
+}
+#tela_financeiro .finance-discount-row>span:nth-child(2)>small{
+  display:block!important;
+  margin:0!important;
+  color:var(--kds-muted)!important;
+  font-size:var(--kds-font-metadata)!important;
+  line-height:1.35!important;
+}
+#tela_financeiro .finance-discount-row>span:nth-child(n+4){
+  text-align:right!important;
+  white-space:nowrap;
+}
+#tela_financeiro .finance-discount-row.header>span:nth-child(n+4){
+  text-align:right!important;
+}
+#tela_financeiro .finance-discount-legacy{
+  display:block!important;
+  margin-top:3px!important;
+  line-height:1.35!important;
+}
+
+@media(max-width:1100px){
+  #tela_financeiro #fin_desc_lista{overflow-x:auto!important;}
+  #tela_financeiro .finance-discount-row{min-width:980px;}
+}
+@media(max-width:700px){
+  #tela_financeiro .finance-discount-toolbar{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #tela_financeiro .finance-discount-actions{
+    grid-column:1/-1!important;
+  }
+  #tela_financeiro .finance-discount-actions>button{
+    flex:1 1 auto!important;
+  }
+}
+@media(max-width:430px){
+  #tela_financeiro .finance-discount-toolbar{
+    grid-template-columns:1fr!important;
+  }
+  #tela_financeiro .finance-discount-actions{
+    grid-column:auto!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+}
