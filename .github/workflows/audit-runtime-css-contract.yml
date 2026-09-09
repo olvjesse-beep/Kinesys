@@ -1,0 +1,58 @@
+name: Audit runtime CSS contract
+
+on:
+  push:
+    paths:
+      - '.github/workflows/audit-runtime-css-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit runtime CSS typography and breakpoints
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          hrefs = re.findall(r'<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"', html, re.I)
+          files = []
+          for href in hrefs:
+              path = href.split('?',1)[0]
+              p = Path(path)
+              if p.exists() and p.suffix.lower() == '.css':
+                  files.append(p)
+
+          allowed_bp = {1280,1180,1100,980,900,820,760,700,620,560,520,430}
+          micro = []
+          breakpoints = []
+
+          for p in files:
+              text = p.read_text(encoding='utf-8')
+              # Remove comments to reduce false positives from documentation.
+              clean = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+              for m in re.finditer(r'font-size\s*:\s*([0-9]*\.?[0-9]+)px', clean, re.I):
+                  value = float(m.group(1))
+                  if value < 12.5:
+                      line = clean.count('\n',0,m.start()) + 1
+                      snippet = clean[max(0,m.start()-90):m.end()+90].replace('\n',' ')
+                      micro.append((str(p), line, value, snippet))
+              for m in re.finditer(r'@media[^\{]*\((?:max|min)-width\s*:\s*([0-9]+)px\)', clean, re.I):
+                  value = int(m.group(1))
+                  if value not in allowed_bp and not (value == 701 and 'min-width' in m.group(0)):
+                      line = clean.count('\n',0,m.start()) + 1
+                      breakpoints.append((str(p), line, value, m.group(0).strip()))
+
+          print('RUNTIME_CSS_FILES=', len(files))
+          print('MICROTYPE_UNDER_12_5_COUNT=', len(micro))
+          for item in micro:
+              print('MICROTYPE:', item)
+          print('NONCONTRACT_BREAKPOINT_COUNT=', len(breakpoints))
+          for item in breakpoints:
+              print('BREAKPOINT:', item)
+          PY
