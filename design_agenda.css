@@ -763,3 +763,92 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-grade-scroll{margin-top:12px;border:1px solid var(--kds-line-soft);border-radius:10px;box-shadow:none}
 #tela_agenda .ks-segmented{background:transparent;border-color:transparent;padding:0}
 #tela_agenda .ks-segmented button.active{box-shadow:none;border:1px solid var(--kds-line-soft)}
+
+/* ========================================================================== 
+   KineSys Agenda — visões individuais e marcador de agora
+   - integrado ao Design System; sem microtipografia ou cores locais;
+   - marcador temporal usa teal funcional, não a semântica de risco clínico.
+   ========================================================================== */
+#tela_agenda .agenda-visoes{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:14px 18px;
+  border-bottom:1px solid var(--kds-line-soft);
+}
+
+#tela_agenda .agenda-visoes button[aria-pressed="true"]{
+  background:var(--kds-petrol-deep);
+  color:var(--kds-surface);
+  border-color:var(--kds-petrol-deep);
+}
+
+#tela_agenda #agenda_agora_relogio{
+  margin-left:auto;
+  color:var(--kds-accent);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+
+#tela_agenda .agenda-agora-linha{
+  height:0;
+  border-top:2px solid var(--kds-accent);
+  align-self:start;
+  position:relative;
+  z-index:4;
+  pointer-events:none;
+  min-width:0;
+}
+
+#tela_agenda .agenda-agora-linha::before{
+  content:"";
+  position:absolute;
+  left:-4px;
+  top:-5px;
+  width:8px;
+  height:8px;
+  border-radius:var(--kds-radius-pill);
+  background:var(--kds-accent);
+}
+
+#tela_agenda .agenda-agora-linha span{
+  position:absolute;
+  right:3px;
+  top:-21px;
+  padding:2px 5px;
+  border:1px solid var(--kds-line-strong);
+  border-radius:var(--kds-agenda-card-radius);
+  background:var(--kds-surface);
+  color:var(--kds-accent);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  line-height:var(--kds-leading-compact);
+  white-space:nowrap;
+}
+
+#tela_agenda [hidden],
+#modal_agendamento .agenda-finance-link[hidden],
+#modal_agendamento button[hidden],
+#modal_detalhe_agendamento button[hidden],
+.agenda-agora-linha[hidden]{
+  display:none!important;
+}
+
+@media(max-width:620px){
+  #tela_agenda #agenda_agora_relogio{
+    width:100%;
+    margin-left:0;
+  }
+
+  #tela_agenda .agenda-visoes{
+    gap:8px;
+    padding:12px;
+  }
+
+  #tela_agenda .agenda-visoes button{
+    flex:1;
+  }
+}
+

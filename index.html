@@ -30,17 +30,7 @@
     <link rel="stylesheet" href="design_patient_selection-1.18.1.css">
     <link rel="stylesheet" href="design_home_activity-1.18.5.css">
     <link rel="stylesheet" href="design_evaluation_context-1.18.3.css">
-<style id="agenda-individual-estilos">
-        .agenda-visoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid #e3eceb}
-        .agenda-visoes button[aria-pressed="true"]{background:#164d50;color:#fff;border-color:#164d50}
-        #agenda_agora_relogio{margin-left:auto;color:#9c2938;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-        .agenda-agora-linha{height:0;border-top:2px solid #d13b4d;align-self:start;position:relative;z-index:4;pointer-events:none;min-width:0}
-        .agenda-agora-linha::before{content:'';position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:#d13b4d}
-        .agenda-agora-linha span{position:absolute;right:3px;top:-19px;border-radius:4px;background:#fff;color:#a52336;padding:1px 4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 0 0 1px #f0b7be}
-        #tela_agenda [hidden],#modal_agendamento .agenda-finance-link[hidden],#modal_agendamento button[hidden],#modal_detalhe_agendamento button[hidden],.agenda-agora-linha[hidden]{display:none!important}
-        @media(max-width:600px){#agenda_agora_relogio{width:100%;margin-left:0}.agenda-visoes{gap:8px;padding:12px}.agenda-visoes button{flex:1}}
-    </style>
-    <link rel="stylesheet" href="financeiro_agendamento-1.21.0.css?v=20260901-r1">
+<link rel="stylesheet" href="financeiro_agendamento-1.21.0.css?v=20260901-r1">
     <link rel="stylesheet" href="avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1">
 </head>
 <body>
@@ -61,18 +51,18 @@
             <div class="menu-dropdown" id="menuDropdown">
                 <button class="btn-menu" id="menuToggle">☰ Menu</button>
                 <ul class="dropdown-content" id="dropdownContent">
-                    <li data-tela-menu="tela_home"><a onclick="navegarPara('tela_home'); fecharMenu();">🏠 Início</a></li>
-                    <li data-tela-menu="tela_cadastro"><a onclick="navegarPara('tela_cadastro'); fecharMenu();">👤 Novo paciente</a></li>
-                    <li data-tela-menu="tela_avaliacao"><a onclick="navegarPara('tela_avaliacao'); fecharMenu();">🩺 Avaliação</a></li>
-                    <li data-tela-menu="tela_buscar"><a onclick="navegarPara('tela_buscar'); fecharMenu();">📂 Prontuários</a></li>
-                    <li id="menu_midias" data-tela-menu="tela_midias"><a onclick="abrirMidiasPaciente(); fecharMenu();">📷 Fotos e documentos</a></li>
-                    <li data-tela-menu="tela_evolucao"><a onclick="navegarPara('tela_evolucao'); fecharMenu();">📈 Evolução</a></li>
-                    <li data-tela-menu="tela_relatorio"><a onclick="navegarPara('tela_relatorio'); fecharMenu();">📄 Relatório</a></li>
-                    <li id="menu_agenda" data-tela-menu="tela_agenda" style="display:none;"><a onclick="navegarPara('tela_agenda'); fecharMenu();">🗓️ Agenda</a></li>
-                    <li id="menu_financeiro" data-tela-menu="tela_financeiro" style="display:none;"><a onclick="navegarPara('tela_financeiro'); fecharMenu();">💳 Financeiro</a></li>
-                    <li id="menu_equipe" data-tela-menu="tela_equipe" style="display:none;"><a onclick="navegarPara('tela_equipe'); fecharMenu();">👥 Funcionários e acessos</a></li>
-                    <li id="menu_configuracoes" data-tela-menu="tela_configuracoes" style="display:none;"><a onclick="navegarPara('tela_configuracoes'); abrirConfiguracoesMensagens(); fecharMenu();">🛠️ Configurações</a></li>
-                    <li><a onclick="fazerLogout(); fecharMenu();">🚪 Sair</a></li>
+                    <li data-tela-menu="tela_home"><a href="#tela_home" onclick="navegarPara('tela_home'); fecharMenu(); return false;">🏠 Início</a></li>
+                    <li data-tela-menu="tela_cadastro"><a href="#tela_cadastro" onclick="navegarPara('tela_cadastro'); fecharMenu(); return false;">👤 Novo paciente</a></li>
+                    <li data-tela-menu="tela_avaliacao"><a href="#tela_avaliacao" onclick="navegarPara('tela_avaliacao'); fecharMenu(); return false;">🩺 Avaliação</a></li>
+                    <li data-tela-menu="tela_buscar"><a href="#tela_buscar" onclick="navegarPara('tela_buscar'); fecharMenu(); return false;">📂 Prontuários</a></li>
+                    <li id="menu_midias" data-tela-menu="tela_midias"><a href="#tela_midias" onclick="abrirMidiasPaciente(); fecharMenu(); return false;">📷 Fotos e documentos</a></li>
+                    <li data-tela-menu="tela_evolucao"><a href="#tela_evolucao" onclick="navegarPara('tela_evolucao'); fecharMenu(); return false;">📈 Evolução</a></li>
+                    <li data-tela-menu="tela_relatorio"><a href="#tela_relatorio" onclick="navegarPara('tela_relatorio'); fecharMenu(); return false;">📄 Relatório</a></li>
+                    <li id="menu_agenda" data-tela-menu="tela_agenda" style="display:none;"><a href="#tela_agenda" onclick="navegarPara('tela_agenda'); fecharMenu(); return false;">🗓️ Agenda</a></li>
+                    <li id="menu_financeiro" data-tela-menu="tela_financeiro" style="display:none;"><a href="#tela_financeiro" onclick="navegarPara('tela_financeiro'); fecharMenu(); return false;">💳 Financeiro</a></li>
+                    <li id="menu_equipe" data-tela-menu="tela_equipe" style="display:none;"><a href="#tela_equipe" onclick="navegarPara('tela_equipe'); fecharMenu(); return false;">👥 Funcionários e acessos</a></li>
+                    <li id="menu_configuracoes" data-tela-menu="tela_configuracoes" style="display:none;"><a href="#tela_configuracoes" onclick="navegarPara('tela_configuracoes'); abrirConfiguracoesMensagens(); fecharMenu(); return false;">🛠️ Configurações</a></li>
+                    <li><a href="#logout" onclick="fazerLogout(); fecharMenu(); return false;">🚪 Sair</a></li>
                 </ul>
             </div>
         </div>
