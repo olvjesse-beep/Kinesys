@@ -45,6 +45,32 @@ jobs:
           PY
 
           python .github/scripts/quieter_pass_3.py
+          python - <<'PY'
+          from pathlib import Path
+          targets = [
+              'design_base.css',
+              'design_tokens.css',
+              'design_typography.css',
+              'design_features.css',
+              'design_navigation.css',
+              'design_agenda.css',
+              'agenda_referencia-1.20.0.css',
+              'design_clinical.css',
+              'design_clinical_direction-1.17.0.css',
+              'design_utilities.css',
+              'financeiro_workspace-1.20.1.css',
+              'financeiro_lancamentos-1.20.0.css',
+              'login_access-1.18.0.css',
+              'design_evaluation_workspace-1.18.0.css',
+              'design_home_activity-1.18.5.css',
+              'design_evaluation_context-1.18.3.css',
+          ]
+          for name in targets:
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              cleaned = '\n'.join(line.rstrip() for line in text.split('\n'))
+              p.write_text(cleaned, encoding='utf-8')
+          PY
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
