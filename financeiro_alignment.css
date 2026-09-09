@@ -1,0 +1,201 @@
+/* KineSys Financeiro — alinhamento de campos, linhas e ações
+ * Correção visual somente; preserva IDs, dados e regras financeiras.
+ */
+
+#tela_financeiro{
+  --fin-control-height:var(--kds-control-height);
+}
+
+/* Toolbars com campos + ações: todos os controles terminam na mesma linha-base. */
+#tela_financeiro :is(
+  .finance-pending-toolbar,
+  .finance-ledger-toolbar,
+  .finance-balance-toolbar,
+  .finance-analysis-toolbar
+){
+  align-items:end!important;
+  column-gap:12px!important;
+  row-gap:12px!important;
+}
+
+#tela_financeiro :is(
+  .finance-pending-toolbar,
+  .finance-ledger-toolbar,
+  .finance-balance-toolbar,
+  .finance-analysis-toolbar
+) > .input-group{
+  min-width:0!important;
+  margin:0!important;
+  align-self:end!important;
+}
+
+#tela_financeiro :is(
+  .finance-pending-toolbar,
+  .finance-ledger-toolbar,
+  .finance-balance-toolbar,
+  .finance-analysis-toolbar
+) > .input-group > :is(input,select){
+  min-height:var(--fin-control-height)!important;
+  height:var(--fin-control-height)!important;
+}
+
+#tela_financeiro :is(
+  .finance-pending-toolbar,
+  .finance-ledger-toolbar,
+  .finance-balance-toolbar,
+  .finance-analysis-toolbar
+) > :is(.btn-primary,.btn-secondary,.btn-nav){
+  min-height:var(--fin-control-height)!important;
+  height:var(--fin-control-height)!important;
+  align-self:end!important;
+  margin:0!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  white-space:nowrap;
+}
+
+/* Pendências — busca domina a linha; atualizar acompanha exatamente o input. */
+#tela_financeiro .finance-pending-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+}
+
+/* Livro-caixa — setas, mês, busca e atualizar usam a mesma altura. */
+#tela_financeiro .finance-ledger-toolbar{
+  grid-template-columns:auto minmax(160px,190px) minmax(280px,1fr) auto!important;
+}
+#tela_financeiro .finance-ledger-month-nav{
+  align-self:end!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+}
+#tela_financeiro .finance-ledger-month-nav button{
+  width:var(--fin-control-height)!important;
+  min-width:var(--fin-control-height)!important;
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+}
+
+/* Balanço — período participa da linha de controles, sem deslocar botões. */
+#tela_financeiro .finance-balance-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(180px,230px) minmax(180px,1fr) auto auto!important;
+}
+#tela_financeiro .finance-balance-period{
+  min-height:var(--fin-control-height)!important;
+  align-self:end!important;
+  display:flex!important;
+  align-items:center!important;
+  margin:0!important;
+}
+
+/* Análise — os três filtros compartilham a mesma base do botão Atualizar. */
+#tela_financeiro .finance-analysis-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(150px,.55fr) minmax(260px,1.2fr) minmax(220px,1fr) auto!important;
+}
+
+/* Cabeçalhos e barras de ação: evita botões flutuando em alturas diferentes. */
+#tela_financeiro :is(
+  .finance-ledger-head,
+  .finance-report-head,
+  .finance-patient-context
+){
+  align-items:center!important;
+}
+
+#tela_financeiro :is(
+  .finance-ledger-actions,
+  .finance-patient-actions,
+  .finance-plan-actions,
+  .ks-action-bar
+){
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+}
+
+/* No Financeiro, a regra global de empurrar o primário para a direita criava linhas quebradas. */
+#tela_financeiro .ks-action-bar > .ks-primary-action{
+  margin-left:0!important;
+}
+
+#tela_financeiro :is(
+  .finance-ledger-actions,
+  .finance-patient-actions,
+  .finance-plan-actions,
+  .ks-action-bar
+) :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger){
+  align-self:center!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+}
+
+/* Botões isolados em cabeçalhos mantêm centro óptico do título. */
+#tela_financeiro .finance-report-head > button,
+#tela_financeiro .finance-ledger-head .finance-ledger-actions{
+  align-self:center!important;
+}
+
+@media(max-width:1100px){
+  #tela_financeiro .finance-ledger-toolbar{
+    grid-template-columns:auto minmax(150px,190px) minmax(220px,1fr) auto!important;
+  }
+  #tela_financeiro .finance-balance-toolbar{
+    grid-template-columns:minmax(170px,220px) minmax(160px,1fr) auto!important;
+  }
+  #tela_financeiro .finance-balance-toolbar > .btn-primary{
+    grid-column:1/-1;
+    justify-self:start;
+    width:auto;
+  }
+  #tela_financeiro .finance-analysis-toolbar{
+    grid-template-columns:minmax(150px,.55fr) minmax(240px,1fr) auto!important;
+  }
+  #tela_financeiro .finance-analysis-toolbar > .input-group:nth-of-type(3){
+    grid-column:1/3;
+  }
+}
+
+@media(max-width:700px){
+  #tela_financeiro :is(
+    .finance-pending-toolbar,
+    .finance-balance-toolbar,
+    .finance-analysis-toolbar
+  ){
+    grid-template-columns:1fr!important;
+  }
+  #tela_financeiro .finance-ledger-toolbar{
+    grid-template-columns:auto minmax(0,1fr)!important;
+  }
+  #tela_financeiro .finance-ledger-toolbar > .finance-ledger-search{
+    grid-column:1/-1!important;
+  }
+  #tela_financeiro .finance-ledger-toolbar > .btn-secondary{
+    grid-column:1/-1!important;
+    width:100%!important;
+  }
+  #tela_financeiro .finance-balance-toolbar > .btn-primary,
+  #tela_financeiro .finance-analysis-toolbar > .input-group:nth-of-type(3){
+    grid-column:auto!important;
+    width:100%!important;
+  }
+  #tela_financeiro :is(
+    .finance-pending-toolbar,
+    .finance-balance-toolbar,
+    .finance-analysis-toolbar
+  ) > :is(.btn-primary,.btn-secondary,.btn-nav){
+    width:100%!important;
+  }
+  #tela_financeiro .finance-report-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+}
