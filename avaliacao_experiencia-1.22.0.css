@@ -14,11 +14,11 @@
 
 #tela_avaliacao .clinical-progress .step {
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: var(--kds-radius-sm);
 }
 
 #tela_avaliacao .clinical-progress .step:focus-visible {
-    outline: 3px solid rgba(21, 159, 145, .28);
+    outline: 3px solid var(--kds-focus-ring);
     outline-offset: 4px;
 }
 
@@ -79,7 +79,7 @@
     gap: 16px;
     padding: 13px 15px;
     border: 1px solid var(--eval-line);
-    border-radius: 12px;
+    border-radius: var(--kds-radius-md);
     background: var(--eval-soft);
     color: var(--eval-ink);
     text-align: left;
@@ -90,13 +90,13 @@
 .ks-eval-choice-trigger:hover,
 .ks-eval-choice-trigger:focus-visible {
     border-color: var(--eval-accent);
-    box-shadow: 0 0 0 3px rgba(21, 159, 145, .10);
+    box-shadow: 0 0 0 3px var(--kds-focus-halo);
     outline: none;
 }
 
 .ks-eval-choice-trigger.has-data {
     background: var(--kds-accent-soft);
-    border-color: #a9dcd5;
+    border-color: var(--kds-line-strong);
 }
 
 .ks-eval-choice-trigger > span:first-child {
@@ -136,17 +136,17 @@
     display: grid;
     place-items: center;
     padding: 22px;
-    background: rgba(13, 38, 43, .66);
-    backdrop-filter: blur(3px);
+    background: var(--kds-overlay-backdrop);
+    backdrop-filter: none;
 }
 
 .ks-eval-dialog-card {
     width: min(620px, 100%);
     max-height: min(720px, calc(100vh - 44px));
     overflow: auto;
-    border-radius: 18px;
+    border-radius: var(--kds-radius-lg);
     background: var(--kds-surface);
-    box-shadow: 0 24px 72px rgba(5, 28, 33, .30);
+    box-shadow: var(--kds-shadow-float);
 }
 
 .ks-eval-dialog-card header,
@@ -184,7 +184,7 @@
     border-radius: 50%;
     background: var(--eval-soft);
     color: var(--eval-ink);
-    font-size: 24px;
+    font-size: var(--kds-font-title-mobile);
     line-height: 1;
     cursor: pointer;
 }
@@ -240,7 +240,7 @@ body.ks-eval-modal-open {
     padding: 14px 16px 13px;
     box-sizing: border-box;
     border: 1px solid var(--eval-line);
-    border-radius: 12px;
+    border-radius: var(--kds-radius-md);
     background: var(--kds-surface);
 }
 
@@ -278,7 +278,7 @@ body.ks-eval-modal-open {
     border: 0;
     border-radius: 999px;
     outline: none;
-    background: linear-gradient(90deg, #43b97f 0%, #a8cf62 25%, #f0ce4b 50%, #ee8b3e 75%, #dc4d47 100%);
+    background: linear-gradient(90deg, var(--kds-eva-low) 0%, var(--kds-eva-mild) 25%, var(--kds-eva-moderate) 50%, var(--kds-eva-high) 75%, var(--kds-eva-severe) 100%);
 }
 
 #tela_avaliacao #eva_slider::-webkit-slider-thumb {
@@ -289,7 +289,7 @@ body.ks-eval-modal-open {
     border: 3px solid var(--eval-ink);
     border-radius: 50%;
     background: var(--kds-surface);
-    box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
+    box-shadow: var(--kds-shadow-control);
     cursor: pointer;
 }
 
@@ -299,7 +299,7 @@ body.ks-eval-modal-open {
     border: 3px solid var(--eval-ink);
     border-radius: 50%;
     background: var(--kds-surface);
-    box-shadow: 0 1px 4px rgba(9, 42, 48, .22);
+    box-shadow: var(--kds-shadow-control);
     cursor: pointer;
 }
 
@@ -322,10 +322,10 @@ body.ks-eval-modal-open {
     z-index: 40;
     padding: 12px;
     border: 1px solid var(--eval-line);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .96);
-    box-shadow: 0 10px 28px rgba(22, 63, 70, .10);
-    backdrop-filter: blur(8px);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface);
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 #tela_avaliacao .ks-eval-synthesis:not(.ativa) {
@@ -343,7 +343,7 @@ body.ks-eval-modal-open {
 
 #tela_avaliacao .ks-eval-summary-card,
 #tela_avaliacao .ks-eval-report-card {
-    border-color: #cfe1dd;
+    border-color: var(--kds-line-strong);
 }
 
 @media (max-width: 700px) {
@@ -364,7 +364,7 @@ body.ks-eval-modal-open {
     .ks-eval-dialog-card {
         width: 100%;
         max-height: 86vh;
-        border-radius: 18px 18px 0 0;
+        border-radius: var(--kds-radius-lg) var(--kds-radius-lg) 0 0;
     }
 
     .ks-eval-dialog-options .checkbox-group {
@@ -385,24 +385,4 @@ body.ks-eval-modal-open {
     #tela_avaliacao .ks-eval-synthesis > .card:last-child .actions {
         bottom: 6px;
     }
-}
-
-/* QUIETER PASS 1 — EVALUATION WORKSPACE */
-.ks-eval-dialog-backdrop{
-  background:rgba(13,38,43,.46);
-  backdrop-filter:none;
-}
-.ks-eval-dialog-card{
-  border-radius:var(--kds-radius-lg);
-  box-shadow:var(--kds-shadow-float);
-}
-#tela_avaliacao .clinical-actions,
-#tela_avaliacao .cluster-focus-actions,
-#tela_avaliacao .ks-eval-synthesis > .card:last-child .actions{
-  border-radius:var(--kds-radius-md);
-  box-shadow:none;
-  backdrop-filter:none;
-}
-@media (max-width:700px){
-  .ks-eval-dialog-card{border-radius:var(--kds-radius-lg) var(--kds-radius-lg) 0 0}
 }

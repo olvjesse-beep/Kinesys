@@ -8,45 +8,45 @@
 html{background:var(--kds-bg);text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
 body.ks-design-ready{background:var(--kds-bg);color:var(--kds-text);font-family:var(--kds-font-family-ui);font-kerning:normal;font-variant-numeric:tabular-nums}
 body.ks-design-ready button, body.ks-design-ready input, body.ks-design-ready select, body.ks-design-ready textarea{font-family:inherit}
-body.ks-design-ready ::selection{background:#CFEAE5;color:#123F42}
+body.ks-design-ready ::selection{background:var(--kds-accent-soft);color:var(--kds-text)}
 body.ks-design-ready .tela{max-width:var(--kds-content-width);padding-top:20px}
-.ks-patient-context{margin-top:13px;margin-bottom:2px;border-radius:12px;border-color:var(--kds-line);box-shadow:var(--kds-shadow-soft);gap:12px}
+.ks-patient-context{margin-top:13px;margin-bottom:2px;border-radius:var(--kds-radius-md);border-color:var(--kds-line);box-shadow:none;gap:12px}
 .ks-patient-main{flex:0 1 320px;min-width:210px}
-.ks-patient-avatar, .ks-patient-initial{border-radius:9px}
+.ks-patient-avatar, .ks-patient-initial{border-radius:var(--kds-radius-sm)}
 .ks-patient-main strong{font-weight:700}
 .ks-patient-main span#ks_patient_meta{color:var(--kds-muted)}
-.ks-patient-tabs{gap:2px;padding:2px;border-radius:9px;background:#F6F9F8}
-.ks-patient-tabs button{font-weight:650;border-radius:7px}
-.ks-patient-tabs button:hover, .ks-patient-tabs button.active{background:#E8F4F1;color:#176E67}
+.ks-patient-tabs{gap:2px;padding:2px;border-radius:var(--kds-radius-sm);background:var(--kds-surface-soft)}
+.ks-patient-tabs button{font-weight:650;border-radius:var(--kds-radius-sm)}
+.ks-patient-tabs button:hover, .ks-patient-tabs button.active{background:var(--kds-accent-soft);color:var(--kds-accent-hover)}
 .ks-patient-change{padding:7px 10px;border-radius:8px}
 .ks-patient-clear{width:34px;height:34px}
 body.ks-design-ready h3{color:var(--kds-text);font-weight:700}
 body.ks-design-ready .input-group{margin-bottom:14px}
 body.ks-design-ready .input-group label{font-size:var(--kds-font-metadata);line-height:1.3;font-weight:650;color:var(--kds-text-secondary);margin-bottom:6px;letter-spacing:0}
 .field-help, .helper-text, .clinical-note{font-size:var(--kds-font-metadata)!important;line-height:1.5!important;color:var(--kds-muted)!important}
-.ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-weight:760!important;color:var(--kds-text-subtle)!important}
+.ks-eyebrow, .eyebrow, .ks-section-eyebrow{font-weight:650!important;color:var(--kds-text-subtle)!important}
 body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outline-offset:2px}
 .ks-empty, .finance-empty, .ana-empty{background:#FAFCFB!important;border-color:#D8E5E1!important;color:var(--kds-text-subtle)!important}
 .ks-home-hero{padding:5px 1px 14px;align-items:center}
 .ks-home-hero h2{letter-spacing:-.4px;font-weight:720}
 .ks-home-hero p{text-transform:none!important;color:var(--kds-muted)}
 .ks-home-stats{gap:9px;margin-bottom:14px}
-.ks-home-stats>div{padding:14px 15px;border-radius:12px;box-shadow:none;background:#fff}
+.ks-home-stats>div{padding:14px 15px;border-radius:var(--kds-radius-md);box-shadow:none;background:var(--kds-surface)}
 .ks-home-stats span{font-weight:620;color:var(--kds-muted)}
 .ks-home-stats strong{font-weight:720;margin-top:4px}
 .ks-home-stat-arrow{font-size:var(--kds-font-clinical)!important;color:var(--kds-muted)!important}
 .ks-home-columns{gap:12px}
-.ks-home-crm{border-radius:12px;box-shadow:none}
+.ks-home-crm{border-radius:var(--kds-radius-md);box-shadow:none}
 .ks-home-crm>summary{padding:12px 14px}
 .ks-prontuario-cards{gap:8px}
-.ks-patient-card{border-radius:12px!important;box-shadow:none!important;border-color:#DCE6E3!important}
-.ks-patient-card:hover{border-color:#B9D1CC!important;background:#FEFFFF}
+.ks-patient-card{border-radius:var(--kds-radius-md)!important;box-shadow:none!important;border-color:var(--kds-line)!important}
+.ks-patient-card:hover{border-color:var(--kds-line-strong)!important;background:var(--kds-surface-soft)}
 .ks-patient-card-copy strong{font-weight:700}
-.ks-prontuario-resumo{padding:16px 18px!important;border-radius:13px!important;box-shadow:0 9px 24px rgba(17,53,61,.10)!important}
+.ks-prontuario-resumo{padding:16px 18px!important;border-radius:var(--kds-radius-md)!important;box-shadow:none!important;background:var(--kds-surface)!important;color:var(--kds-text)!important;border:1px solid var(--kds-line)!important}
 .ks-prontuario-resumo h2{font-weight:700!important}
 .ks-prontuario-actions{gap:7px!important}
 .ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]{margin-left:auto!important;background:transparent!important;color:var(--kds-danger)!important;border-color:transparent!important;font-weight:600!important}
-.ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]:hover{background:#FFF3F2!important;color:#9B3932!important;border-color:#F0D4D1!important}
+.ks-prontuario-actions .btn-nav[onclick*="excluirPaciente"]:hover{background:var(--kds-danger-soft)!important;color:var(--kds-danger)!important;border-color:var(--kds-danger-line)!important}
 #tela_evolucao{max-width:1220px}
 #tela_evolucao .ks-evo-main{padding:21px 23px!important;box-shadow:none!important}
 #tela_evolucao .evo-session-card, #tela_evolucao .evo-history-card{border-radius:11px;box-shadow:none}
@@ -54,14 +54,14 @@ body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outl
 #tela_financeiro .finance-select-card{padding:14px 15px!important;box-shadow:none!important}
 #tela_financeiro .finance-workspace-tabs{margin-bottom:10px}
 #tela_financeiro .finance-stats{gap:8px;margin:8px 0 12px}
-#tela_financeiro .finance-stats>div{padding:12px 13px;border-radius:10px;box-shadow:none}
+#tela_financeiro .finance-stats>div{padding:12px 13px;border-radius:var(--kds-radius-sm);box-shadow:none}
 #tela_financeiro .finance-stats span{letter-spacing:.35px}
 #tela_financeiro .finance-columns{gap:12px}
-#tela_financeiro .finance-plan-card{padding:12px 13px;border-radius:10px}
+#tela_financeiro .finance-plan-card{padding:12px 13px;border-radius:var(--kds-radius-sm)}
 #tela_financeiro .finance-plan-head h3{font-weight:700}
 #tela_financeiro .finance-session-line, #tela_financeiro .finance-money-line{font-size:var(--kds-font-metadata);gap:10px}
 #tela_financeiro .finance-note{font-size:var(--kds-font-metadata)}
-#tela_financeiro .finance-plan-actions button{border-radius:7px}
+#tela_financeiro .finance-plan-actions button{border-radius:var(--kds-radius-sm)}
 #tela_financeiro .finance-payment-row{padding:10px 0}
 #tela_midias{max-width:1240px}
 #tela_midias .midia-hero-card{box-shadow:none}
@@ -72,22 +72,22 @@ body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outl
 .ks-team-hero h2{line-height:1.2;font-weight:710}
 .ks-team-hero p{color:var(--kds-muted)}
 .ks-team-list{box-shadow:none!important}
-.ks-drawer{box-shadow:-16px 0 44px rgba(18,48,55,.15)!important}
+.ks-drawer{box-shadow:var(--kds-shadow-float)!important}
 .ks-drawer-head{padding-top:18px!important}
 .ks-drawer-head h2{line-height:1.25}
 #tela_configuracoes>.card{margin-top:0}
-#tela_configuracoes .ks-msg-template-item{border-radius:10px;box-shadow:none;padding:11px 12px}
-#tela_configuracoes .ks-msg-editor{border-radius:12px;padding:15px}
-body.ks-design-ready .tabela-pacientes{border-radius:10px;border-color:var(--kds-line);box-shadow:none}
+#tela_configuracoes .ks-msg-template-item{border-radius:var(--kds-radius-sm);box-shadow:none;padding:11px 12px}
+#tela_configuracoes .ks-msg-editor{border-radius:var(--kds-radius-md);padding:15px}
+body.ks-design-ready .tabela-pacientes{border-radius:var(--kds-radius-sm);border-color:var(--kds-line);box-shadow:none}
 body.ks-design-ready .tabela-pacientes thead th{font-weight:700;color:#61757A;background:#F5F8F7}
 body.ks-design-ready .tabela-pacientes td{color:#334C52}
 body.ks-design-ready .tabela-pacientes tbody tr:hover td{background:#FBFDFC}
 .ks-toast{border-radius:11px;box-shadow:var(--kds-shadow-float)}
-.ks-dialog{border-radius:14px;box-shadow:0 26px 70px rgba(13,35,41,.24)}
+.ks-dialog{border-radius:var(--kds-radius-lg);box-shadow:var(--kds-shadow-float)}
 .ks-dialog-copy h3{line-height:1.25}
-body.ks-design-ready .modal-box{border-radius:14px;box-shadow:0 26px 70px rgba(13,35,41,.22)}
+body.ks-design-ready .modal-box{border-radius:var(--kds-radius-lg);box-shadow:var(--kds-shadow-float)}
 body.ks-design-ready .modal-box h2{font-weight:710}
-body.ks-design-ready[data-tela="tela_login"] .login-card{max-width:430px;padding:31px!important;border-radius:15px!important;box-shadow:0 20px 54px rgba(20,50,57,.09)!important}
+body.ks-design-ready[data-tela="tela_login"] .login-card{max-width:430px;padding:31px!important;border-radius:var(--kds-radius-lg)!important;box-shadow:var(--kds-shadow-float)!important}
 @media (max-width:1180px){
   .ks-patient-main{flex-basis:260px}
 }

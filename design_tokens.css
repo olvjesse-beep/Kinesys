@@ -24,7 +24,24 @@
   --kds-accent-hover: #175F5A;
   --kds-accent-soft: #EAF5F2;
   --kds-danger: #A53B33;
+  --kds-danger-soft: #FFF7F7;
+  --kds-danger-line: #E7C7C4;
+  --kds-danger-line-strong: #DFA8A3;
   --kds-success: #2F735A;
+  --kds-success-soft: #FBFFFC;
+  --kds-focus-line: #72AFA8;
+  --kds-focus-ring: rgba(42,167,157,.22);
+  --kds-focus-halo: rgba(42,167,157,.10);
+  --kds-overlay-backdrop: rgba(13,38,43,.46);
+  --kds-shadow-control: 0 1px 4px rgba(9,42,48,.16);
+
+  /* EVA — escala clínica contínua. Os cinco pontos preservam o gradiente
+     funcional de intensidade da dor sem criar uma paleta decorativa. */
+  --kds-eva-low: #43B97F;
+  --kds-eva-mild: #A8CF62;
+  --kds-eva-moderate: #F0CE4B;
+  --kds-eva-high: #EE8B3E;
+  --kds-eva-severe: #DC4D47;
 
   /* Tipografia — escala oficial | Etapa 6
      Regra: componentes novos usam papéis semânticos; não inventar tamanhos locais. */

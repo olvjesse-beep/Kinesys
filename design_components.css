@@ -11,8 +11,8 @@
   box-sizing:border-box;
   min-width:0;
   background:var(--kds-surface);
-  border:1px solid #E1E9E6;
-  border-radius:12px;
+  border:1px solid var(--kds-line);
+  border-radius:var(--kds-radius-md);
   padding:20px 22px;
   margin-bottom:12px;
   box-shadow:none;
@@ -70,7 +70,7 @@
 @media(max-width:620px){
   .card, body.ks-design-ready .card{
     padding:16px;
-    border-radius:10px;
+    border-radius:var(--kds-radius-sm);
   }
 }
 
@@ -114,42 +114,42 @@
 .btn-primary{
   background:var(--kds-accent);
   border-color:var(--kds-accent);
-  color:#fff;
+  color:var(--kds-surface);
 }
 .btn-primary:hover{
   background:var(--kds-accent-hover);
   border-color:var(--kds-accent-hover);
-  box-shadow:0 5px 14px rgba(30,117,111,.12);
+  box-shadow:none;
 }
 
 .btn-secondary, .btn-nav{
-  background:#fff;
-  border-color:#D3DFDC;
-  color:#3A555B;
+  background:var(--kds-surface);
+  border-color:var(--kds-line);
+  color:var(--kds-text-secondary);
 }
 .btn-secondary:hover, .btn-nav:hover{
-  background:#F6F9F8;
-  border-color:#ADC8C3;
-  color:#245D58;
+  background:var(--kds-surface-soft);
+  border-color:var(--kds-line-strong);
+  color:var(--kds-accent-hover);
 }
 
 /* Destrutivo intencionalmente discreto: comunica risco sem competir com a ação primária. */
 .btn-danger{
-  background:#fff;
-  border-color:#E7C7C4;
+  background:var(--kds-surface);
+  border-color:var(--kds-danger-line);
   color:var(--kds-danger);
 }
 .btn-danger:hover{
-  background:#FFF3F2;
-  border-color:#DFA8A3;
-  color:#8F3029;
+  background:var(--kds-danger-soft);
+  border-color:var(--kds-danger-line-strong);
+  color:var(--kds-danger);
 }
 
 /* Variante compacta para ações auxiliares dentro de linhas/cards. */
 .btn-compact{
   min-height:34px;
   padding:6px 10px;
-  border-radius:7px;
+  border-radius:var(--kds-radius-sm);
   font-size:var(--kds-font-label);
   line-height:var(--kds-leading-tight);
 }
@@ -163,7 +163,7 @@
   min-height:32px;
   padding:5px 0;
   border:0;
-  border-radius:6px;
+  border-radius:var(--kds-radius-sm);
   background:transparent;
   color:var(--kds-accent-hover);
   font-family:inherit;
@@ -202,10 +202,10 @@
   max-width:100%;
   min-height:var(--kds-control-height);
   padding:10px 12px;
-  border:1px solid #D4E0DD;
+  border:1px solid var(--kds-line-strong);
   border-radius:var(--kds-radius-sm);
   background:var(--kds-surface);
-  color:#243F45;
+  color:var(--kds-text-ink);
   font-family:inherit;
   font-size:var(--kds-font-field);
   font-weight:400;
@@ -234,9 +234,9 @@
   textarea
 ):focus{
   outline:none;
-  border-color:#72AFA8;
+  border-color:var(--kds-focus-line);
   background:var(--kds-surface);
-  box-shadow:0 0 0 3px rgba(42,167,157,.10);
+  box-shadow:0 0 0 3px var(--kds-focus-halo);
 }
 
 .ks-design-ready :where(
@@ -275,9 +275,9 @@
   select,
   textarea
 ), .ks-design-ready :where(input,select,textarea)[aria-invalid="true"]{
-  border-color:#D64545;
-  background:#FFF7F7;
-  box-shadow:0 0 0 3px rgba(214,69,69,.10);
+  border-color:var(--kds-danger);
+  background:var(--kds-danger-soft);
+  box-shadow:none;
 }
 
 .ks-design-ready .input-group.has-success :where(
@@ -285,8 +285,8 @@
   select,
   textarea
 ){
-  border-color:#36A269;
-  background:#FBFFFC;
+  border-color:var(--kds-success);
+  background:var(--kds-success-soft);
 }
 
 
