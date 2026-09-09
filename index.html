@@ -511,7 +511,7 @@
 
                     <details class="clinical-disclosure fonte-disclosure">
                         <summary><span>Fonte dos dados</span><small id="fonte_dados_resumo">Relato do paciente</small></summary>
-                        <div class="disclosure-body"><div class="input-group"><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
+                        <div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
                     </details>
 
                     <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para Exame direcionado ➔</button></div>
@@ -666,6 +666,7 @@
             <div class="card">
                 <div class="card-header"><h2 id="midia_galeria_titulo">Galeria clínica e documental</h2></div>
                 <div class="midia-filterbar">
+                    <label for="midia_filtro_tipo" class="clinical-visually-hidden">Filtrar galeria por tipo de registro</label>
                     <select id="midia_filtro_tipo" onchange="renderizarGaleriaMidias()">
                         <option value="">Todos os registros</option>
                         <option value="avaliacao">Avaliação</option>
@@ -857,11 +858,11 @@
                     </div>
                     <div class="input-group">
                         <label class="checkbox-pill"><input type="checkbox" id="rel_incluir_cid" onchange="document.getElementById('rel_comp_cid_wrap').style.display=this.checked?'block':'none'"><span>Incluir CID na declaração</span></label>
-                        <div id="rel_comp_cid_wrap" class="kds-u-mt-8px" style="display:none;"><input type="text" id="rel_comp_cid" placeholder="Ex: M54.5"></div>
+                        <div id="rel_comp_cid_wrap" class="kds-u-mt-8px" style="display:none;"><label for="rel_comp_cid" class="clinical-visually-hidden">CID a incluir na declaração</label><input type="text" id="rel_comp_cid" placeholder="Ex: M54.5"></div>
                     </div>
                     <div class="input-group">
                         <label class="checkbox-pill"><input type="checkbox" id="rel_incluir_diagnostico" onchange="document.getElementById('rel_comp_diag_wrap').style.display=this.checked?'block':'none'"><span>Incluir informação clínica na declaração</span></label>
-                        <div id="rel_comp_diag_wrap" class="kds-u-mt-8px" style="display:none;"><textarea id="rel_comp_diagnostico" rows="2" placeholder="Síntese documental da última avaliação — edite se necessário."></textarea></div>
+                        <div id="rel_comp_diag_wrap" class="kds-u-mt-8px" style="display:none;"><label for="rel_comp_diagnostico" class="clinical-visually-hidden">Informação clínica a incluir na declaração</label><textarea id="rel_comp_diagnostico" rows="2" placeholder="Síntese documental da última avaliação — edite se necessário."></textarea></div>
                     </div>
                     <div class="actions kds-u-mt-10px">
                         <button class="btn-primary" onclick="montarDocumentoComparecimento()">👁️ Visualizar / Imprimir Declaração</button>
@@ -894,7 +895,7 @@
                     <div id="status_gemini" class="kds-u-mt-10px kds-u-fs-meta kds-u-text-muted" style="display:none;"></div>
 
                     <div id="bloco_relatorio_oficial" class="input-group kds-u-mt-20px" style="display:none;">
-                        <label id="rel_documento_oficial_label">Relatório fisioterapêutico <span class="kds-u-fw-400 kds-u-text-muted kds-u-fs-meta">— revise e edite antes de imprimir</span></label>
+                        <label id="rel_documento_oficial_label" for="rel_documento_oficial">Relatório fisioterapêutico <span class="kds-u-fw-400 kds-u-text-muted kds-u-fs-meta">— revise e edite antes de imprimir</span></label>
                         <textarea id="rel_documento_oficial" rows="16" class="kds-u-font-serif kds-u-fs-ui kds-u-lh-1p6"></textarea>
                         <div class="actions kds-u-mt-10px kds-u-gap-10px kds-u-wrap-wrap">
                             <button class="btn-secondary" type="button" onclick="validarRelatorioIA()">Validar conteúdo</button>
@@ -1451,6 +1452,7 @@
                         </select>
                     </div>
                     <div id="ag_recorrencia_fim_tipo_grupo" class="input-group kds-u-m-0" hidden>
+                        <label for="ag_recorrencia_fim_tipo" class="clinical-visually-hidden">Como encerrar a recorrência</label>
                         <select id="ag_recorrencia_fim_tipo" onchange="atualizarInterfaceRecorrencia()">
                             <option value="quantidade">Encerrar após quantidade de sessões</option>
                             <option value="data">Encerrar em uma data</option>
