@@ -1,0 +1,65 @@
+name: Fix residual accessible control names
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-residual-control-names.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add accessible names to remaining user-facing controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          html = path.read_text(encoding='utf-8')
+          replacements = {
+              '<div class="disclosure-body"><div class="input-group"><select id="origem_informacao_clinica"':
+                  '<div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica"',
+              '<div class="midia-filterbar">\n                    <select id="midia_filtro_tipo"':
+                  '<div class="midia-filterbar">\n                    <label for="midia_filtro_tipo" class="clinical-visually-hidden">Filtrar galeria por tipo de registro</label>\n                    <select id="midia_filtro_tipo"',
+              '<div id="rel_comp_cid_wrap" class="kds-u-mt-8px" style="display:none;"><input type="text" id="rel_comp_cid"':
+                  '<div id="rel_comp_cid_wrap" class="kds-u-mt-8px" style="display:none;"><label for="rel_comp_cid" class="clinical-visually-hidden">CID a incluir na declaração</label><input type="text" id="rel_comp_cid"',
+              '<div id="rel_comp_diag_wrap" class="kds-u-mt-8px" style="display:none;"><textarea id="rel_comp_diagnostico"':
+                  '<div id="rel_comp_diag_wrap" class="kds-u-mt-8px" style="display:none;"><label for="rel_comp_diagnostico" class="clinical-visually-hidden">Informação clínica a incluir na declaração</label><textarea id="rel_comp_diagnostico"',
+              '<label id="rel_documento_oficial_label">Relatório fisioterapêutico':
+                  '<label id="rel_documento_oficial_label" for="rel_documento_oficial">Relatório fisioterapêutico',
+              '<div id="ag_recorrencia_fim_tipo_grupo" class="input-group kds-u-m-0" hidden>\n                        <select id="ag_recorrencia_fim_tipo"':
+                  '<div id="ag_recorrencia_fim_tipo_grupo" class="input-group kds-u-m-0" hidden>\n                        <label for="ag_recorrencia_fim_tipo" class="clinical-visually-hidden">Como encerrar a recorrência</label>\n                        <select id="ag_recorrencia_fim_tipo"'
+          }
+          for old, new in replacements.items():
+              if html.count(old) != 1:
+                  raise SystemExit(f'Expected one occurrence, found {html.count(old)}: {old[:90]}')
+              html = html.replace(old, new, 1)
+          path.write_text(html, encoding='utf-8')
+          print(f'Applied {len(replacements)} accessible-name fixes')
+          PY
+      - name: Validate target associations
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          ids = [
+              'origem_informacao_clinica', 'midia_filtro_tipo', 'rel_comp_cid',
+              'rel_comp_diagnostico', 'rel_documento_oficial', 'ag_recorrencia_fim_tipo'
+          ]
+          missing = [item for item in ids if f'for="{item}"' not in html]
+          if missing:
+              raise SystemExit('Missing label associations: ' + ', '.join(missing))
+          print('Residual accessible names validated')
+          PY
+      - name: Remove one-off workflow and commit
+        run: |
+          git rm .github/workflows/fix-residual-control-names.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Name remaining user-facing form controls'
+          git push
