@@ -120,8 +120,8 @@ function renderizarRelatorioDescontos(aviso='') {
         const legacy=d.naoClassificado>0.009?`<small class="finance-discount-legacy"> + ${moedaBR(d.naoClassificado)} não classificado</small>`:'';
         const paciente=String(p.__paciente_nome||'Paciente').trim();
         const autor=String(p.criado_por||'').trim();
-        const criadoPor=autor&&autor.toLocaleLowerCase('pt-BR')!==paciente.toLocaleLowerCase('pt-BR')?`<small>Criado por: ${escapeHTML(autor)}</small>`:'';
-        return `<div class="finance-discount-row"><span>${escapeHTML(formatarDataDesconto(p.criado_em))}</span><span><b>${escapeHTML(paciente)}</b>${criadoPor}</span><span>${escapeHTML(p.nome||'Plano de atendimento')}</span><span>${escapeHTML(moedaBR(d.pacote))}</span><span>${escapeHTML(moedaBR(d.cortesia))}${legacy}</span><span><b>${escapeHTML(moedaBR(d.total))}</b></span></div>`;
+        const criadoPor=autor&&autor.toLocaleLowerCase('pt-BR')!==paciente.toLocaleLowerCase('pt-BR')?`<br><small class="finance-discount-patient-author">Criado por: ${escapeHTML(autor)}</small>`:'';
+        return `<div class="finance-discount-row"><span>${escapeHTML(formatarDataDesconto(p.criado_em))}</span><span class="finance-discount-patient"><b class="finance-discount-patient-name">${escapeHTML(paciente)}</b>${criadoPor}</span><span>${escapeHTML(p.nome||'Plano de atendimento')}</span><span>${escapeHTML(moedaBR(d.pacote))}</span><span>${escapeHTML(moedaBR(d.cortesia))}${legacy}</span><span><b>${escapeHTML(moedaBR(d.total))}</b></span></div>`;
     }).join('');
 }
 

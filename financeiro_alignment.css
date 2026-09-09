@@ -307,3 +307,9 @@
     grid-template-columns:1fr 1fr!important;
   }
 }
+
+
+/* Descontos v2 — separacao estrutural paciente/autor */
+#tela_financeiro .finance-discount-patient{display:block!important;min-width:0!important;}
+#tela_financeiro .finance-discount-patient-name{display:block!important;line-height:1.35!important;}
+#tela_financeiro .finance-discount-patient-author{display:block!important;margin-top:4px!important;color:var(--kds-muted)!important;line-height:1.35!important;}
