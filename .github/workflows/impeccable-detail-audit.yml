@@ -13,30 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Detailed detector output
+      - name: Map high-impact visual matches
         shell: bash
         run: |
-          set -uo pipefail
-          chmod +x .agents/skills/impeccable/scripts/impeccable || true
-          set +e
-          .agents/skills/impeccable/scripts/impeccable detect --json \
-            index.html \
-            design_tokens.css \
-            design_components.css \
-            design_responsive.css \
-            design_screens.css \
-            avaliacao_experiencia-1.22.0.css \
-            > /tmp/impeccable.json 2>/tmp/impeccable.err
-          code=$?
-          set -e
-          echo "DETECTOR_EXIT=$code"
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          data=json.loads(Path('/tmp/impeccable.json').read_text(encoding='utf-8') or '[]')
-          print('FINDING_COUNT=', len(data))
-          for i,f in enumerate(data,1):
-              print(f'FINDING_{i:03d}=' + json.dumps(f, ensure_ascii=False, separators=(',',':')))
-          PY
-          if [ -s /tmp/impeccable.err ]; then cat /tmp/impeccable.err; fi
-          exit 0
+          set -euo pipefail
+          echo '=== KICKERS ==='
+          grep -n -C 2 -E 'SUA CLÍNICA\. SEU ACESSO\.|RECUPERAÇÃO DE ACESSO|AJUDA COM A CONTA|PAINEL OPERACIONAL|PAINEL CLÍNICO|PACIENTES|KINESYS LOCAL|DISPONIBILIDADE EM 2 NÍVEIS' index.html || true
+          echo '=== UPPERCASE / TRACKING ==='
+          grep -n -C 1 -E 'text-transform:[[:space:]]*uppercase|letter-spacing:[[:space:]]*0\.(0[6-9]|1[0-9])em' index.html || true
+          echo '=== SIDE ACCENTS ==='
+          grep -n -C 2 -E 'border-left:[[:space:]]*[34]px|border-top:[[:space:]]*4px|inset[^"]*3px|box-shadow:[^;]*3px' index.html || true
+          echo '=== SHADOWS ==='
+          grep -n -C 1 -E 'box-shadow:[^;]*(20px|30px)|box-shadow:[^;]*#173[Bb]45' index.html || true
+          echo '=== TARGET CONTAINERS ==='
+          grep -n -C 2 -E 'patient-strip|hma-live-suggestions|agenda-grade-scroll|finance-ledger-summary' index.html || true
