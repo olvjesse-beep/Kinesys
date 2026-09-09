@@ -1,66 +1,96 @@
 /* Home operacional: lista de 24h e pendências sob demanda. */
-#tela_home .ks-home-overview{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:14px;align-items:stretch;margin-bottom:18px}
-#tela_home .ks-home-overview>div,#tela_home .ks-home-overview>button{box-sizing:border-box;min-width:0;min-height:236px;margin:0;padding:18px;border:1px solid #d8e3e0;border-radius:12px;background:#fff;box-shadow:none}
-#tela_home .ks-home-registration{display:flex;flex-direction:column;align-items:flex-start;gap:12px;cursor:pointer;color:#173e46}
-.ks-home-registration>strong{font-size:16px;line-height:1.4}
-#ks_home_recent_count{font-size:30px;font-weight:700;line-height:1.2}
-.ks-home-registration>small{margin-top:auto;font-size:14px;color:#52686d}
-.ks-home-registration:hover{border-color:#91b6a9!important;background:#f5f9f7!important}
-.ks-home-registration:focus-visible,.ks-home-expand:focus-visible{outline:3px solid #368977;outline-offset:2px}
-#tela_home .ks-home-overview .ks-home-activity{display:flex;flex-direction:column;gap:8px}
+#tela_home{max-width:1180px}
+
+/* Saudação é contexto operacional; o título principal já vive na topbar. */
+#tela_home .ks-home-hero{align-items:center;gap:18px;padding:2px 0 14px;margin-bottom:2px;border-bottom:1px solid var(--kds-line-soft)}
+#tela_home .ks-home-hero h2{font-size:var(--kds-font-heading-lg);line-height:var(--kds-leading-compact);font-weight:720;letter-spacing:-.2px;margin:2px 0 1px}
+#tela_home .ks-home-hero p{font-size:var(--kds-font-label);line-height:var(--kds-leading-text);text-transform:none}
+#tela_home .ks-home-primary{align-self:center;white-space:nowrap}
+
+/* Resumo da Home: compacto, legível e sem tratamento de hero-card. */
+#tela_home .ks-home-overview{display:grid;grid-auto-flow:row;grid-template-columns:minmax(0,.82fr) minmax(0,.92fr) minmax(0,1.26fr);gap:12px;align-items:stretch;margin:14px 0}
+#tela_home .ks-home-overview>div,#tela_home .ks-home-overview>button{box-sizing:border-box;min-width:0;min-height:198px;margin:0;padding:16px 17px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);background:var(--kds-surface);box-shadow:none}
+#tela_home .ks-home-registration{display:flex;flex-direction:column;align-items:flex-start;gap:8px;cursor:pointer;color:var(--kds-petrol-deep)}
+.ks-home-registration>strong{font-size:var(--kds-font-body);line-height:var(--kds-leading-ui)}
+#ks_home_recent_count{font-size:var(--kds-font-kpi);font-weight:720;line-height:var(--kds-leading-tight);margin-top:2px;color:var(--kds-petrol-deep)}
+.ks-home-registration>small{margin-top:auto;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);color:var(--kds-muted)}
+.ks-home-registration:hover{border-color:#A6CBC6!important;background:var(--kds-surface-soft)!important}
+.ks-home-registration:focus-visible,.ks-home-expand:focus-visible{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}
+
+/* Atendimentos: preserva contexto útil sem transformar a lista em um painel pesado. */
+#tela_home .ks-home-overview .ks-home-activity{display:flex;flex-direction:column;gap:6px;padding:16px 17px}
 #tela_home .ks-home-overview .card-header{margin:0;padding:0;border:0}
-#tela_home .ks-home-overview .card-header h2{font-size:16px;line-height:1.4}
-#tela_home .ks-home-overview .card-header p{margin:4px 0 0;font-size:13px}
-.ks-home-preview-person{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:7px 0;border-top:1px solid #e2e9e7}
-.ks-home-preview-person strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:#173e46}
-.ks-home-preview-person span{font-size:13px;color:#52686d;white-space:nowrap}
-#tela_home .ks-home-expand{margin-top:auto;min-height:44px;padding:8px 0;border:0;background:transparent;color:#246c60;text-align:left;font-size:14px;font-weight:600;cursor:pointer}
+#tela_home .ks-home-overview .card-header h2{font-size:var(--kds-font-body);line-height:var(--kds-leading-ui)}
+#tela_home .ks-home-overview .card-header p{margin:3px 0 0;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);color:var(--kds-muted)}
+.ks-home-preview-person{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:6px 0;border-top:1px solid var(--kds-line-soft)}
+.ks-home-preview-person strong{font-size:var(--kds-font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:var(--kds-petrol-deep)}
+.ks-home-preview-person span{font-size:var(--kds-font-label);color:var(--kds-muted);white-space:nowrap}
+#tela_home .ks-home-expand{margin-top:auto;min-height:36px;padding:5px 0;border:0;background:transparent;color:var(--kds-accent);text-align:left;font-size:var(--kds-font-label);font-weight:680;cursor:pointer}
 #tela_home .ks-home-overview #home_pending_total{margin-top:auto}
 #tela_home [hidden]{display:none!important}
 #home_det_atend_prof_wrap[hidden]{display:none!important}
-#tela_home .ks-home-activity{padding:20px}
+
+/* Detalhamento completo mantém área de toque confortável e leitura de conteúdo. */
+#tela_home .ks-home-activity{padding:18px}
 .ks-home-activity .card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .ks-home-activity .card-header h2{margin:0}
-.ks-home-activity .card-header p{margin:6px 0 0;color:#52686d;font-size:14px}
+.ks-home-activity .card-header p{margin:5px 0 0;color:var(--kds-muted);font-size:var(--kds-font-ui)}
 .ks-home-header-actions{display:flex;gap:8px;flex-wrap:wrap}
-.ks-home-activity-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid #e2e9e7}
-.ks-home-activity-row>div{min-width:0;display:grid;gap:5px}
-.ks-home-activity-row strong{font-size:16px;color:#173e46;overflow-wrap:anywhere}
-.ks-home-activity-row span{font-size:14px;color:#52686d;line-height:1.5}
+.ks-home-activity-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--kds-line-soft)}
+.ks-home-activity-row>div{min-width:0;display:grid;gap:4px}
+.ks-home-activity-row strong{font-size:var(--kds-font-body);color:var(--kds-petrol-deep);overflow-wrap:anywhere}
+.ks-home-activity-row span{font-size:var(--kds-font-ui);color:var(--kds-muted);line-height:var(--kds-leading-text)}
 .ks-home-activity-row button{flex-shrink:0;min-height:44px}
-.ks-home-time-note{font-size:14px!important;line-height:1.55;color:#52686d;background:#f4f7f6;border-radius:8px;padding:10px 12px;margin:0 0 8px}
+.ks-home-time-note{font-size:var(--kds-font-ui)!important;line-height:var(--kds-leading-text);color:var(--kds-muted);background:var(--kds-surface-muted);border-radius:var(--kds-radius-sm);padding:10px 12px;margin:0 0 8px}
+
 body.ks-home-pending-open{overflow:hidden}
-#tela_home .ks-home-pending-trigger{display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;min-width:0;padding:20px 14px;border:1px solid #d8e3e0;border-radius:12px;background:white;color:#173e46;text-align:left;cursor:pointer;white-space:normal}
-.ks-home-pending-trigger strong{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
-.ks-home-pending-trigger>span{font-size:14px;line-height:1.5;color:#52686d}
-.ks-home-pending-trigger:hover{background:#f5f9f7;border-color:#91b6a9}
-#home_pending_total{background:#eef4f2;border:1px solid #d4e4de;color:#315b51;padding:5px 8px;border-radius:20px;font-size:13px;line-height:1.4}
-.ks-home-pending-trigger:focus-visible,#ks-home-pending-dialog button:focus-visible,.ks-home-activity button:focus-visible{outline:3px solid #368977;outline-offset:2px}
+#tela_home .ks-home-pending-trigger{display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;min-width:0;padding:16px 17px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);background:var(--kds-surface);color:var(--kds-petrol-deep);text-align:left;cursor:pointer;white-space:normal}
+.ks-home-pending-trigger strong{font-size:var(--kds-font-body);line-height:var(--kds-leading-ui);overflow-wrap:anywhere}
+.ks-home-pending-trigger>span{font-size:var(--kds-font-label);line-height:var(--kds-leading-text);color:var(--kds-muted)}
+.ks-home-pending-trigger:hover{background:var(--kds-surface-soft);border-color:#A6CBC6}
+#home_pending_total{background:transparent;border:0;color:var(--kds-text-secondary);padding:0;border-radius:0;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);font-weight:700}
+.ks-home-pending-trigger:focus-visible,#ks-home-pending-dialog button:focus-visible,.ks-home-activity button:focus-visible{outline:3px solid rgba(42,167,157,.22);outline-offset:2px}
+
+/* CRM é fluxo secundário: aparece depois da visão operacional e não compete com ela. */
+#tela_home .ks-home-crm{margin-top:8px;border:0;border-top:1px solid var(--kds-line);border-radius:0;background:transparent;overflow:visible}
+#tela_home .ks-home-crm>summary{padding:14px 2px;color:var(--kds-text-secondary);font-size:var(--kds-font-label);font-weight:720}
+#tela_home .ks-home-crm>summary:after{color:var(--kds-muted)}
+#tela_home .ks-home-crm-card{background:var(--kds-surface);border:1px solid var(--kds-line)!important;border-radius:var(--kds-radius-md)!important;padding:18px!important}
+
 #tela_home .ks-home-modal{position:fixed;inset:0;margin:auto;width:min(700px,calc(100vw - 28px));max-height:84dvh;border:0;border-radius:var(--kds-radius-lg);padding:0;box-shadow:var(--kds-shadow-float);background:var(--kds-surface);color:var(--kds-text);overflow:hidden}
 #tela_home .ks-home-modal:not([open]){display:none!important}
 #tela_home .ks-home-modal[open]{display:flex;flex-direction:column}
 #tela_home .ks-home-modal::backdrop{background:var(--kds-overlay-backdrop);backdrop-filter:none;-webkit-backdrop-filter:none}
-.ks-home-pending-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#f5faf8;flex-shrink:0}
-.ks-home-pending-head h2{margin:0;font-size:21px}
-.ks-home-pending-head button{width:44px;height:44px;flex-shrink:0;border:1px solid #cfdfd9;border-radius:9px;background:white;color:#173e46;font-size:26px;cursor:pointer}
-.ks-home-pending-body{padding:0 20px 20px;border-top:1px solid #e2e9e7;overflow-y:auto;min-height:0;overscroll-behavior:contain}
-.ks-home-pending-body>p{font-size:14px;line-height:1.55;color:#52686d;margin:14px 0}
-.ks-home-pending-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 0;background:transparent;border:0;border-bottom:1px solid #e2e9e7;border-radius:0;text-align:left;color:#173e46;cursor:pointer}
+.ks-home-pending-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:var(--kds-surface-soft);flex-shrink:0}
+.ks-home-pending-head h2{margin:0;font-size:var(--kds-font-region-name)}
+.ks-home-pending-head button{width:44px;height:44px;flex-shrink:0;border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);background:var(--kds-surface);color:var(--kds-petrol-deep);font-size:26px;cursor:pointer}
+.ks-home-pending-body{padding:0 20px 20px;border-top:1px solid var(--kds-line-soft);overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.ks-home-pending-body>p{font-size:var(--kds-font-ui);line-height:var(--kds-leading-text);color:var(--kds-muted);margin:14px 0}
+.ks-home-pending-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 0;background:transparent;border:0;border-bottom:1px solid var(--kds-line-soft);border-radius:0;text-align:left;color:var(--kds-petrol-deep);cursor:pointer}
 .ks-home-pending-item>span:first-child{display:grid;gap:5px;min-width:0}
-.ks-home-pending-item strong{font-size:16px;overflow-wrap:anywhere}
-.ks-home-pending-item span span{font-size:14px;color:#52686d;line-height:1.5;overflow-wrap:anywhere}
-.ks-home-pending-item:hover{background:#f5f9f7}
+.ks-home-pending-item strong{font-size:var(--kds-font-body);overflow-wrap:anywhere}
+.ks-home-pending-item span span{font-size:var(--kds-font-ui);color:var(--kds-muted);line-height:var(--kds-leading-text);overflow-wrap:anywhere}
+.ks-home-pending-item:hover{background:var(--kds-surface-soft)}
 #lista_pendencias_clinicas>.btn-secondary{margin-top:14px;min-height:44px}
+
+@media(max-width:980px){
+ #tela_home .ks-home-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tela_home .ks-home-overview .ks-home-activity{grid-column:1/-1;min-height:0}
+}
+@media(max-width:820px){
+ #tela_home .ks-home-hero{align-items:flex-start}
+ #tela_home .ks-home-overview{grid-template-columns:minmax(0,1fr);margin-top:12px}
+ #tela_home .ks-home-overview>div,#tela_home .ks-home-overview>button{min-height:0;padding:16px}
+ #tela_home .ks-home-overview .ks-home-activity{grid-column:auto;padding:16px}
+ #tela_home .ks-home-pending-trigger{padding:16px;gap:6px}
+ #tela_home .ks-home-modal{max-height:86dvh}
+}
 @media(max-width:620px){
+ #tela_home .ks-home-hero{display:grid;gap:10px;padding-bottom:12px}
+ #tela_home .ks-home-primary{width:100%}
  #tela_home .ks-home-activity{padding:16px}
  .ks-home-activity .card-header{align-items:flex-start}
  .ks-home-activity-row{gap:10px;flex-wrap:wrap}
  .ks-home-activity-row>div{flex:1 1 180px}
  .ks-home-pending-body{padding:0 14px 16px}
-}
-@media(max-width:820px){
- #tela_home .ks-home-overview{grid-auto-flow:row;grid-template-columns:minmax(0,1fr)}
- #tela_home .ks-home-overview>div,#tela_home .ks-home-overview>button{min-height:0;padding:16px}
- #tela_home .ks-home-pending-trigger{padding:16px;gap:6px}
- #tela_home .ks-home-modal{max-height:86dvh}
 }
