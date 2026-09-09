@@ -1,0 +1,80 @@
+name: Fix cleanup collateral
+
+on:
+  push:
+    branches:
+      - cleanup/remover-referencias-404
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-index:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: cleanup/remover-referencias-404
+
+      - name: Restore collateral changes and validate cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = {
+              'id="ks-laudo_atualizar"': 'id="ks-laudo-atualizar"',
+              'class="agenda-recurrencia-datas"': 'class="agenda-recorrencia-datas"',
+          }
+
+          for wrong, correct in replacements.items():
+              count = text.count(wrong)
+              if count != 1:
+                  raise SystemExit(f'Esperava 1 ocorrência de {wrong!r}, encontrei {count}.')
+              text = text.replace(wrong, correct, 1)
+
+          dead_paths = [
+              'core/api/supabase-client.js',
+              'core/auth/permissions.js',
+              'core/auth/session-helpers.js',
+              'core/shared/text.js',
+              'core/shared/brazilian-identifiers.js',
+              'core/shared/async-action.js',
+              'core/navigation/dropdown-menu.js',
+              'modules/patients/responsible-contact.js',
+              'modules/patients/record-normalizer.js',
+              'modules/patients/record-reconciliation.js',
+              'modules/patients/patient-reader.js',
+              'modules/patients/local-storage.js',
+              'modules/agenda/status-policy.js',
+              'modules/agenda/access-policy.js',
+              'modules/agenda/notification-queue.js',
+              'modules/agenda/errors.js',
+              'modules/agenda/pending-sync-store.js',
+              'modules/agenda/repository.js',
+              'modules/agenda/calendar-time.js',
+              'modules/agenda/recurrence.js',
+              'modules/agenda/holidays.js',
+              'modules/agenda/availability-utils.js',
+          ]
+
+          remaining = [item for item in dead_paths if item in text]
+          if remaining:
+              raise SystemExit('Referências 404 ainda presentes: ' + ', '.join(remaining))
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --check
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Corrige alterações colaterais da limpeza de referências 404"
+          git push origin HEAD:cleanup/remover-referencias-404
