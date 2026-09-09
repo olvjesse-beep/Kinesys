@@ -1,0 +1,39 @@
+name: One-time link final design polish
+
+on:
+  push:
+    paths:
+      - '.github/workflows/link-design-polish.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Link final stylesheet after every module stylesheet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          link = '    <link rel="stylesheet" href="design_polish.css?v=20260909-clean-r1">'
+          if link in text:
+              raise SystemExit('design_polish.css already linked')
+          anchor = '<link rel="stylesheet" href="avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1">'
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one final CSS anchor, found {text.count(anchor)}')
+          text = text.replace(anchor, anchor + '\n' + link)
+          p.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --exit-code >/dev/null && { echo 'No changes produced'; exit 1; } || true
+          git commit -m "Load final visual polish after all module CSS"
+          git push
