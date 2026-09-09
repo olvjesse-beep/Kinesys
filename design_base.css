@@ -209,7 +209,7 @@
             max-width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            box-shadow: 0 8px 30px rgba(23,59,69,0.12);
+            box-shadow: 0 8px 24px rgba(0,0,0,.10);
             overflow: hidden;
         }
         .documento-timbrado .timbrado-fundo{
