@@ -21,113 +21,20 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import base64
           import re
 
           index_path = Path('index.html')
           agenda_path = Path('design_agenda.css')
           workflow_path = Path('.github/workflows/fix-p1-impeccable.yml')
-
           index = index_path.read_text(encoding='utf-8')
           agenda = agenda_path.read_text(encoding='utf-8')
 
-          # P1.1 — Agenda: remove the local inline style block from index.html.
-          inline_pattern = re.compile(
-              r'\n?\s*<style id="agenda-individual-estilos">.*?</style>\s*\n?',
-              re.S,
-          )
+          inline_pattern = re.compile(r'\n?\s*<style id="agenda-individual-estilos">.*?</style>\s*\n?', re.S)
           index, removed = inline_pattern.subn('\n', index, count=1)
 
           agenda_marker = 'KineSys Agenda — visões individuais e marcador de agora'
-          agenda_block = r'''
-
-/* ========================================================================== 
-   KineSys Agenda — visões individuais e marcador de agora
-   - integrado ao Design System; sem microtipografia ou cores locais;
-   - marcador temporal usa teal funcional, não a semântica de risco clínico.
-   ========================================================================== */
-#tela_agenda .agenda-visoes{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-  padding:14px 18px;
-  border-bottom:1px solid var(--kds-line-soft);
-}
-
-#tela_agenda .agenda-visoes button[aria-pressed="true"]{
-  background:var(--kds-petrol-deep);
-  color:var(--kds-surface);
-  border-color:var(--kds-petrol-deep);
-}
-
-#tela_agenda #agenda_agora_relogio{
-  margin-left:auto;
-  color:var(--kds-accent);
-  font-size:var(--kds-font-metadata);
-  font-weight:700;
-  font-variant-numeric:tabular-nums;
-}
-
-#tela_agenda .agenda-agora-linha{
-  height:0;
-  border-top:2px solid var(--kds-accent);
-  align-self:start;
-  position:relative;
-  z-index:4;
-  pointer-events:none;
-  min-width:0;
-}
-
-#tela_agenda .agenda-agora-linha::before{
-  content:"";
-  position:absolute;
-  left:-4px;
-  top:-5px;
-  width:8px;
-  height:8px;
-  border-radius:var(--kds-radius-pill);
-  background:var(--kds-accent);
-}
-
-#tela_agenda .agenda-agora-linha span{
-  position:absolute;
-  right:3px;
-  top:-21px;
-  padding:2px 5px;
-  border:1px solid var(--kds-line-strong);
-  border-radius:var(--kds-agenda-card-radius);
-  background:var(--kds-surface);
-  color:var(--kds-accent);
-  font-size:var(--kds-font-metadata);
-  font-weight:700;
-  line-height:var(--kds-leading-compact);
-  white-space:nowrap;
-}
-
-#tela_agenda [hidden],
-#modal_agendamento .agenda-finance-link[hidden],
-#modal_agendamento button[hidden],
-#modal_detalhe_agendamento button[hidden],
-.agenda-agora-linha[hidden]{
-  display:none!important;
-}
-
-@media(max-width:620px){
-  #tela_agenda #agenda_agora_relogio{
-    width:100%;
-    margin-left:0;
-  }
-
-  #tela_agenda .agenda-visoes{
-    gap:8px;
-    padding:12px;
-  }
-
-  #tela_agenda .agenda-visoes button{
-    flex:1;
-  }
-}
-'''
+          agenda_block = base64.b64decode('CgovKiA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAKICAgS2luZVN5cyBBZ2VuZGEg4oCUIHZpc8O1ZXMgaW5kaXZpZHVhaXMgZSBtYXJjYWRvciBkZSBhZ29yYQogICAtIGludGVncmFkbyBhbyBEZXNpZ24gU3lzdGVtOyBzZW0gbWljcm90aXBvZ3JhZmlhIG91IGNvcmVzIGxvY2FpczsKICAgLSBtYXJjYWRvciB0ZW1wb3JhbCB1c2EgdGVhbCBmdW5jaW9uYWwsIG7Do28gYSBzZW3Dom50aWNhIGRlIHJpc2NvIGNsw61uaWNvLgogICA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAqLwojdGVsYV9hZ2VuZGEgLmFnZW5kYS12aXNvZXN7CiAgZGlzcGxheTpmbGV4OwogIGFsaWduLWl0ZW1zOmNlbnRlcjsKICBnYXA6MTBweDsKICBmbGV4LXdyYXA6d3JhcDsKICBwYWRkaW5nOjE0cHggMThweDsKICBib3JkZXItYm90dG9tOjFweCBzb2xpZCB2YXIoLS1rZHMtbGluZS1zb2Z0KTsKfQoKI3RlbGFfYWdlbmRhIC5hZ2VuZGEtdmlzb2VzIGJ1dHRvblthcmlhLXByZXNzZWQ9InRydWUiXXsKICBiYWNrZ3JvdW5kOnZhcigtLWtkcy1wZXRyb2wtZGVlcCk7CiAgY29sb3I6dmFyKC0ta2RzLXN1cmZhY2UpOwogIGJvcmRlci1jb2xvcjp2YXIoLS1rZHMtcGV0cm9sLWRlZXApOwp9CgojdGVsYV9hZ2VuZGEgI2FnZW5kYV9hZ29yYV9yZWxvZ2lvewogIG1hcmdpbi1sZWZ0OmF1dG87CiAgY29sb3I6dmFyKC0ta2RzLWFjY2VudCk7CiAgZm9udC1zaXplOnZhcigtLWtkcy1mb250LW1ldGFkYXRhKTsKICBmb250LXdlaWdodDo3MDA7CiAgZm9udC12YXJpYW50LW51bWVyaWM6dGFidWxhci1udW1zOwp9CgojdGVsYV9hZ2VuZGEgLmFnZW5kYS1hZ29yYS1saW5oYXsKICBoZWlnaHQ6MDsKICBib3JkZXItdG9wOjJweCBzb2xpZCB2YXIoLS1rZHMtYWNjZW50KTsKICBhbGlnbi1zZWxmOnN0YXJ0OwogIHBvc2l0aW9uOnJlbGF0aXZlOwogIHotaW5kZXg6NDsKICBwb2ludGVyLWV2ZW50czpub25lOwogIG1pbi13aWR0aDowOwp9CgojdGVsYV9hZ2VuZGEgLmFnZW5kYS1hZ29yYS1saW5oYTo6YmVmb3JlewogIGNvbnRlbnQ6IiI7CiAgcG9zaXRpb246YWJzb2x1dGU7CiAgbGVmdDotNHB4OwogIHRvcDotNXB4OwogIHdpZHRoOjhweDsKICBoZWlnaHQ6OHB4OwogIGJvcmRlci1yYWRpdXM6dmFyKC0ta2RzLXJhZGl1cy1waWxsKTsKICBiYWNrZ3JvdW5kOnZhcigtLWtkcy1hY2NlbnQpOwp9CgojdGVsYV9hZ2VuZGEgLmFnZW5kYS1hZ29yYS1saW5oYSBzcGFuewogIHBvc2l0aW9uOmFic29sdXRlOwogIHJpZ2h0OjNweDsKICB0b3A6LTIxcHg7CiAgcGFkZGluZzoycHggNXB4OwogIGJvcmRlcjoxcHggc29saWQgdmFyKC0ta2RzLWxpbmUtc3Ryb25nKTsKICBib3JkZXItcmFkaXVzOnZhcigtLWtkcy1hZ2VuZGEtY2FyZC1yYWRpdXMpOwogIGJhY2tncm91bmQ6dmFyKC0ta2RzLXN1cmZhY2UpOwogIGNvbG9yOnZhcigtLWtkcy1hY2NlbnQpOwogIGZvbnQtc2l6ZTp2YXIoLS1rZHMtZm9udC1tZXRhZGF0YSk7CiAgZm9udC13ZWlnaHQ6NzAwOwogIGxpbmUtaGVpZ2h0OnZhcigtLWtkcy1sZWFkaW5nLWNvbXBhY3QpOwogIHdoaXRlLXNwYWNlOm5vd3JhcDsKfQoKI3RlbGFfYWdlbmRhIFtoaWRkZW5dLAojbW9kYWxfYWdlbmRhbWVudG8gLmFnZW5kYS1maW5hbmNlLWxpbmtbaGlkZGVuXSwKI21vZGFsX2FnZW5kYW1lbnRvIGJ1dHRvbltoaWRkZW5dLAojbW9kYWxfZGV0YWxoZV9hZ2VuZGFtZW50byBidXR0b25baGlkZGVuXSwKLmFnZW5kYS1hZ29yYS1saW5oYVtoaWRkZW5dewogIGRpc3BsYXk6bm9uZSFpbXBvcnRhbnQ7Cn0KCkBtZWRpYShtYXgtd2lkdGg6NjIwcHgpewogICN0ZWxhX2FnZW5kYSAjYWdlbmRhX2Fnb3JhX3JlbG9naW97CiAgICB3aWR0aDoxMDAlOwogICAgbWFyZ2luLWxlZnQ6MDsKICB9CgogICN0ZWxhX2FnZW5kYSAuYWdlbmRhLXZpc29lc3sKICAgIGdhcDo4cHg7CiAgICBwYWRkaW5nOjEycHg7CiAgfQoKICAjdGVsYV9hZ2VuZGEgLmFnZW5kYS12aXNvZXMgYnV0dG9uewogICAgZmxleDoxOwogIH0KfQo=').decode('utf-8')
 
           if agenda_marker not in agenda:
               if removed != 1:
@@ -136,8 +43,6 @@ jobs:
           elif removed not in (0, 1):
               raise RuntimeError(f'Unexpected inline agenda style removal count: {removed}')
 
-          # P1.2 — Sidebar: preserve the existing <a> structure and JS calls,
-          # but make every primary navigation item a native keyboard-focusable link.
           replacements = {
               '<a onclick="navegarPara(\'tela_home\'); fecharMenu();">': '<a href="#tela_home" onclick="navegarPara(\'tela_home\'); fecharMenu(); return false;">',
               '<a onclick="navegarPara(\'tela_cadastro\'); fecharMenu();">': '<a href="#tela_cadastro" onclick="navegarPara(\'tela_cadastro\'); fecharMenu(); return false;">',
@@ -159,11 +64,10 @@ jobs:
               if old_count == 1:
                   index = index.replace(old, new, 1)
               elif old_count == 0 and new_count == 1:
-                  pass  # Idempotent re-run.
+                  pass
               else:
                   raise RuntimeError(f'Navigation patch invariant failed: old={old_count}, new={new_count}, snippet={old}')
 
-          # Guardrails requested by the Design System critique.
           if '<style id="agenda-individual-estilos">' in index:
               raise RuntimeError('Inline Agenda style block still present after migration.')
           if 'font-size:11px' in agenda_block or 'font-size:13px' in agenda_block:
@@ -174,8 +78,6 @@ jobs:
 
           index_path.write_text(index, encoding='utf-8')
           agenda_path.write_text(agenda, encoding='utf-8')
-
-          # One-off workflow: remove itself after applying the patch.
           workflow_path.unlink(missing_ok=True)
 
       - name: Commit P1 fixes
