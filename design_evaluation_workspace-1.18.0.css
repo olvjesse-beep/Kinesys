@@ -7,37 +7,45 @@ body.ks-evaluation-panel-open{overflow:hidden}
 #tela_avaliacao [hidden]{display:none!important}
 #tela_avaliacao .subtela{overflow-anchor:none}
 #tela_avaliacao .subtela:focus{outline:none}
-#tela_avaliacao .region-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px!important}
+
+/* Fluxo clínico: stepper integrado à página, não um card concorrente. */
+#tela_avaliacao .clinical-progress-wrap{margin:0 0 10px;padding:8px 4px 10px;border:0;border-bottom:1px solid var(--kds-line);border-radius:0;background:transparent;box-shadow:none}
+#tela_avaliacao .clinical-progress{justify-content:flex-start;overflow-x:auto;padding:0 2px;scrollbar-width:thin}
+#tela_avaliacao .clinical-progress .step{flex:0 0 auto}
+
+/* Regiões fazem parte do exame; a faixa funciona como navegação contextual. */
+#tela_avaliacao .region-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 2px 12px!important;border:0!important;border-bottom:1px solid var(--kds-line)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
 #tela_avaliacao .ks-region-strip-label{flex:1;margin:0!important}
 #tela_avaliacao .ks-region-strip-label span{display:none}
 #ks-regions-selected{display:flex;gap:8px;overflow-x:auto;max-width:100%;flex:1 0 100%;padding:2px 0 5px;scrollbar-width:thin}
-.ks-region-chip{display:flex;flex:none;align-items:center;border:1px solid #d8e5e2;border-radius:999px;background:white;overflow:hidden}
-.ks-region-chip.active{border-color:#40877c;background:#edf7f4}
-.ks-region-chip button{border:0;background:transparent;color:#285b58;min-height:40px;padding:7px 12px;font-size:13px;white-space:nowrap;cursor:pointer}
-.ks-region-chip button:last-child{padding-left:6px;font-size:19px}
-#tela_avaliacao #subtela_mapeamento .ks-safety-dock{margin:18px 0!important}
+.ks-region-chip{display:flex;flex:none;align-items:center;border:1px solid var(--kds-line);border-radius:var(--kds-radius-pill);background:var(--kds-surface);overflow:hidden}
+.ks-region-chip.active{border-color:#7FB5AC;background:var(--kds-accent-soft)}
+.ks-region-chip button{border:0;background:transparent;color:var(--kds-text-secondary);min-height:40px;padding:7px 12px;font-size:var(--kds-font-label);white-space:nowrap;cursor:pointer}
+.ks-region-chip button:last-child{padding-left:6px;font-size:var(--kds-font-heading-sm)}
+#tela_avaliacao #subtela_mapeamento .ks-safety-dock{margin:16px 0!important}
 #tela_avaliacao #subtela_mapeamento .ks-safety-action{display:block;padding:0;border:0;background:transparent}
-#tela_avaliacao #subtela_mapeamento .ks-safety-toggle{width:auto;min-height:42px;font-size:14px!important}
+#tela_avaliacao #subtela_mapeamento .ks-safety-toggle{width:auto;min-height:42px;font-size:var(--kds-font-nav)!important}
+
 .ks-evaluation-dialog{width:min(660px,calc(100vw - 28px));max-height:84dvh;padding:0;border:0;border-radius:var(--kds-radius-lg);box-shadow:var(--kds-shadow-float);color:var(--kds-text);background:var(--kds-surface)}
 .ks-evaluation-dialog::backdrop{background:var(--kds-overlay-backdrop);backdrop-filter:none}
-.ks-evaluation-dialog>header{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;background:#f3fbf9;color:#24484e;box-shadow:none;border-bottom:1px solid #e0ece8}
-.ks-evaluation-dialog h2{margin:0;font-size:21px;color:#24484e}
+.ks-evaluation-dialog>header{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;background:var(--kds-surface-soft);color:var(--kds-text);box-shadow:none;border-bottom:1px solid var(--kds-line)}
+.ks-evaluation-dialog h2{margin:0;font-size:var(--kds-font-region-name);color:var(--kds-text)}
 .ks-evaluation-dialog-body{padding:18px 20px;overflow:auto;max-height:calc(84dvh - 90px);overscroll-behavior:contain}
 .ks-evaluation-dialog .ks-safety-panel{margin:0;padding:0;border:0}
-.ks-evaluation-dialog .ks-global-safety-row{display:grid;gap:12px;padding:14px 0;border-bottom:1px solid #dce9e5}
+.ks-evaluation-dialog .ks-global-safety-row{display:grid;gap:12px;padding:14px 0;border-bottom:1px solid var(--kds-line-soft)}
 .ks-evaluation-dialog .ks-global-safety-copy{display:grid;gap:6px}
 .ks-evaluation-dialog .ks-global-safety-controls{display:grid;gap:8px}
 .ks-region-picker-list{display:grid;gap:6px;margin-top:12px}
-.ks-region-picker-list label{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #dce9e5;border-radius:10px;cursor:pointer}
+.ks-region-picker-list label{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);cursor:pointer}
 .ks-region-picker-list label[hidden]{display:none}
 .ks-region-picker-list input{width:18px;height:18px;flex:none}
-#tela_avaliacao #ks-laudo-texto{width:100%;min-height:340px;margin:10px 0 14px;padding:16px;font-size:15px;line-height:1.65;resize:vertical}
-.ks-laudo-review{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5}
+#tela_avaliacao #ks-laudo-texto{width:100%;min-height:340px;margin:10px 0 14px;padding:16px;font-size:var(--kds-font-content);line-height:1.65;resize:vertical}
+.ks-laudo-review{display:flex;align-items:center;gap:10px;font-size:var(--kds-font-ui);line-height:var(--kds-leading-text)}
 .ks-laudo-review input{width:18px;height:18px;flex:none}
 .ks-laudo-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-#ks-laudo-status{color:#587371;line-height:1.5}
-.ks-evaluation-overview{margin:0 0 14px;border:1px solid #dce9e5;border-radius:12px;padding:12px;color:#456b66}
-.ks-evaluation-overview>summary{cursor:pointer;font-size:14px;font-weight:600}
+#ks-laudo-status{color:var(--kds-muted);line-height:var(--kds-leading-text)}
+.ks-evaluation-overview{margin:0 0 14px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);padding:12px;color:var(--kds-text-secondary)}
+.ks-evaluation-overview>summary{cursor:pointer;font-size:var(--kds-font-ui);font-weight:600}
 .ks-evaluation-overview>.ks-direction-panel{margin-top:12px!important}
 .ks-investigation-list{min-height:0;flex:1}
 .ks-investigation-item:not(.expanded) .ks-investigation-item-info p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -48,9 +56,10 @@ body.ks-evaluation-panel-open{overflow:hidden}
  .ks-investigation-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .ks-investigation-action{min-height:46px;padding:9px}
  .ks-investigation-action small,.ks-investigation-action b,.ks-investigation-actions-head p{display:none}
- .ks-investigation-action span{font-size:13px!important}
- #tela_avaliacao .region-strip{padding:12px!important}
- #tela_avaliacao .ks-region-strip-label strong{font-size:14px!important}
+ .ks-investigation-action span{font-size:var(--kds-font-label)!important}
+ #tela_avaliacao .clinical-progress-wrap{padding-left:0;padding-right:0}
+ #tela_avaliacao .region-strip{padding:10px 0 12px!important}
+ #tela_avaliacao .ks-region-strip-label strong{font-size:var(--kds-font-ui)!important}
  #tela_avaliacao .region-strip>.btn-secondary{padding:9px;font-size:var(--kds-font-metadata)}
  #tela_avaliacao #ks-laudo-texto{font-size:16px;min-height:400px}
  .ks-evaluation-dialog-body{padding:15px}
