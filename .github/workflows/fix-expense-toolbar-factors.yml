@@ -1,0 +1,107 @@
+name: One-time expense toolbar and factors label fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-expense-toolbar-factors.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Financeiro expense alignment and evaluation label cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          css_path = Path('financeiro_alignment.css')
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* Despesas — alinhamento de filtros e ação */'
+          if marker not in css:
+              css += r'''
+
+/* Despesas — alinhamento de filtros e ação */
+#tela_financeiro .finance-expense-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(180px,210px) minmax(220px,250px) minmax(320px,1fr) auto!important;
+  align-items:end!important;
+  column-gap:12px!important;
+  row-gap:12px!important;
+}
+#tela_financeiro .finance-expense-toolbar>.input-group{
+  min-width:0!important;
+  margin:0!important;
+  align-self:end!important;
+}
+#tela_financeiro .finance-expense-toolbar>.input-group>:is(input,select){
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+}
+#tela_financeiro .finance-expense-toolbar>.btn-primary{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:end!important;
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+  margin:0!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  white-space:nowrap!important;
+}
+@media(max-width:980px){
+  #tela_financeiro .finance-expense-toolbar{
+    grid-template-columns:minmax(170px,210px) minmax(210px,250px) minmax(260px,1fr)!important;
+  }
+  #tela_financeiro .finance-expense-toolbar>.btn-primary{
+    grid-column:1/-1!important;
+    justify-self:start!important;
+  }
+}
+@media(max-width:700px){
+  #tela_financeiro .finance-expense-toolbar{
+    grid-template-columns:1fr!important;
+  }
+  #tela_financeiro .finance-expense-toolbar>.btn-primary{
+    grid-column:auto!important;
+    width:100%!important;
+  }
+}
+'''
+          css_path.write_text(css.rstrip() + '\n', encoding='utf-8')
+
+          index_path = Path('index.html')
+          html = index_path.read_text(encoding='utf-8')
+
+          old = '''                    <div class="input-group fatores-piora-compactos">
+                        <span class="kds-group-label" id="fatores_piora_label">Fatores de piora</span>
+                        <div class="checkbox-group compact-chips" role="group" aria-labelledby="fatores_piora_label">'''
+          new = '''                    <div class="input-group fatores-piora-compactos">
+                        <div class="checkbox-group compact-chips" role="group" aria-label="Fatores de piora">'''
+          if html.count(old) != 1:
+              raise SystemExit(f'Expected one external Fatores de piora label block; found {html.count(old)}')
+          html = html.replace(old, new)
+
+          old_ver = 'financeiro_alignment.css?v=20260909-align-r3'
+          new_ver = 'financeiro_alignment.css?v=20260909-align-r4'
+          if html.count(old_ver) != 1:
+              raise SystemExit(f'Expected one {old_ver}; found {html.count(old_ver)}')
+          html = html.replace(old_ver, new_ver)
+          index_path.write_text(html, encoding='utf-8')
+
+          out = css_path.read_text(encoding='utf-8')
+          if out.count('{') != out.count('}'):
+              raise SystemExit('CSS brace balance failed')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add financeiro_alignment.css index.html
+          git commit -m "Align expense toolbar and remove duplicate factors label"
+          git push
