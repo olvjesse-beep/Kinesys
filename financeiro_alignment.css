@@ -313,3 +313,49 @@
 #tela_financeiro .finance-discount-patient{display:block!important;min-width:0!important;}
 #tela_financeiro .finance-discount-patient-name{display:block!important;line-height:1.35!important;}
 #tela_financeiro .finance-discount-patient-author{display:block!important;margin-top:4px!important;color:var(--kds-muted)!important;line-height:1.35!important;}
+
+/* Despesas — alinhamento de filtros e ação */
+#tela_financeiro .finance-expense-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(180px,210px) minmax(220px,250px) minmax(320px,1fr) auto!important;
+  align-items:end!important;
+  column-gap:12px!important;
+  row-gap:12px!important;
+}
+#tela_financeiro .finance-expense-toolbar>.input-group{
+  min-width:0!important;
+  margin:0!important;
+  align-self:end!important;
+}
+#tela_financeiro .finance-expense-toolbar>.input-group>:is(input,select){
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+}
+#tela_financeiro .finance-expense-toolbar>.btn-primary{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:end!important;
+  height:var(--fin-control-height)!important;
+  min-height:var(--fin-control-height)!important;
+  margin:0!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  white-space:nowrap!important;
+}
+@media(max-width:980px){
+  #tela_financeiro .finance-expense-toolbar{
+    grid-template-columns:minmax(170px,210px) minmax(210px,250px) minmax(260px,1fr)!important;
+  }
+  #tela_financeiro .finance-expense-toolbar>.btn-primary{
+    grid-column:1/-1!important;
+    justify-self:start!important;
+  }
+}
+@media(max-width:700px){
+  #tela_financeiro .finance-expense-toolbar{grid-template-columns:1fr!important;}
+  #tela_financeiro .finance-expense-toolbar>.btn-primary{
+    grid-column:auto!important;
+    width:100%!important;
+  }
+}
