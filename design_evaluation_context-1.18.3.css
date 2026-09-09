@@ -7,10 +7,10 @@ body.ks-context-modal-open{overflow:hidden}
 #tela_avaliacao .ks-context-button:hover{background:#f3f9f6;border-color:#76a99a}
 #tela_avaliacao .ks-context-button.has-data{border-color:#91b9ac;background:#f7fbf9}
 #tela_avaliacao .ks-context-button:focus-visible,#tela_avaliacao .ks-context-dialog button:focus-visible{outline:3px solid #368977;outline-offset:2px}
-#tela_avaliacao .ks-context-dialog{position:fixed;inset:0;margin:auto;width:min(680px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:84dvh;padding:0;border:1px solid #d3e3de;border-radius:16px;background:#fff;color:#234a50;box-shadow:0 24px 80px #082d3b50;overflow:hidden}
+#tela_avaliacao .ks-context-dialog{position:fixed;inset:0;margin:auto;width:min(680px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:84dvh;padding:0;border:0;border-radius:var(--kds-radius-lg);background:var(--kds-surface);color:var(--kds-text);box-shadow:var(--kds-shadow-float);overflow:hidden}
 #tela_avaliacao .ks-context-dialog:not([open]){display:none!important}
 #tela_avaliacao .ks-context-dialog[open]{display:flex!important;flex-direction:column}
-#tela_avaliacao .ks-context-dialog::backdrop{background:rgba(10,32,38,.48);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#tela_avaliacao .ks-context-dialog::backdrop{background:var(--kds-overlay-backdrop);backdrop-filter:none;-webkit-backdrop-filter:none}
 #tela_avaliacao .ks-context-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #e0eae6;background:#f5faf8;flex-shrink:0}
 #tela_avaliacao .ks-context-dialog-head h2{font-size:20px!important;line-height:1.35!important;margin:0;overflow-wrap:anywhere}
 #tela_avaliacao .ks-context-close{flex:0 0 44px;width:44px;height:44px;border:1px solid #c8dcd3;border-radius:9px;background:#fff;color:#234a50;font-size:26px!important;padding:0;cursor:pointer}

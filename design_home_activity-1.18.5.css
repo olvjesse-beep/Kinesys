@@ -36,10 +36,10 @@ body.ks-home-pending-open{overflow:hidden}
 .ks-home-pending-trigger:hover{background:#f5f9f7;border-color:#91b6a9}
 #home_pending_total{background:#eef4f2;border:1px solid #d4e4de;color:#315b51;padding:5px 8px;border-radius:20px;font-size:13px;line-height:1.4}
 .ks-home-pending-trigger:focus-visible,#ks-home-pending-dialog button:focus-visible,.ks-home-activity button:focus-visible{outline:3px solid #368977;outline-offset:2px}
-#tela_home .ks-home-modal{position:fixed;inset:0;margin:auto;width:min(700px,calc(100vw - 28px));max-height:84dvh;border:1px solid #d8e3e0;border-radius:16px;padding:0;box-shadow:0 24px 70px #07262b45;background:#fff;color:#173e46;overflow:hidden}
+#tela_home .ks-home-modal{position:fixed;inset:0;margin:auto;width:min(700px,calc(100vw - 28px));max-height:84dvh;border:0;border-radius:var(--kds-radius-lg);padding:0;box-shadow:var(--kds-shadow-float);background:var(--kds-surface);color:var(--kds-text);overflow:hidden}
 #tela_home .ks-home-modal:not([open]){display:none!important}
 #tela_home .ks-home-modal[open]{display:flex;flex-direction:column}
-#tela_home .ks-home-modal::backdrop{background:#0d282b85;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#tela_home .ks-home-modal::backdrop{background:var(--kds-overlay-backdrop);backdrop-filter:none;-webkit-backdrop-filter:none}
 .ks-home-pending-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#f5faf8;flex-shrink:0}
 .ks-home-pending-head h2{margin:0;font-size:21px}
 .ks-home-pending-head button{width:44px;height:44px;flex-shrink:0;border:1px solid #cfdfd9;border-radius:9px;background:white;color:#173e46;font-size:26px;cursor:pointer}

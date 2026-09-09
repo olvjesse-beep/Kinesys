@@ -18,8 +18,8 @@ body.ks-evaluation-panel-open{overflow:hidden}
 #tela_avaliacao #subtela_mapeamento .ks-safety-dock{margin:18px 0!important}
 #tela_avaliacao #subtela_mapeamento .ks-safety-action{display:block;padding:0;border:0;background:transparent}
 #tela_avaliacao #subtela_mapeamento .ks-safety-toggle{width:auto;min-height:42px;font-size:14px!important}
-.ks-evaluation-dialog{width:min(660px,calc(100vw - 28px));max-height:84dvh;padding:0;border:1px solid #cfe4df;border-radius:18px;box-shadow:0 24px 70px #07262b45;color:#24484e;background:#fff}
-.ks-evaluation-dialog::backdrop{background:#0d282b85;backdrop-filter:blur(5px)}
+.ks-evaluation-dialog{width:min(660px,calc(100vw - 28px));max-height:84dvh;padding:0;border:0;border-radius:var(--kds-radius-lg);box-shadow:var(--kds-shadow-float);color:var(--kds-text);background:var(--kds-surface)}
+.ks-evaluation-dialog::backdrop{background:var(--kds-overlay-backdrop);backdrop-filter:none}
 .ks-evaluation-dialog>header{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;background:#f3fbf9;color:#24484e;box-shadow:none;border-bottom:1px solid #e0ece8}
 .ks-evaluation-dialog h2{margin:0;font-size:21px;color:#24484e}
 .ks-evaluation-dialog-body{padding:18px 20px;overflow:auto;max-height:calc(84dvh - 90px);overscroll-behavior:contain}

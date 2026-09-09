@@ -15,7 +15,7 @@ body.ks-design-ready .kds-u-bg-soft-mint.kds-u-bg-soft-mint{background:#F9FBFA}
 body.ks-design-ready .kds-u-bg-soft-panel.kds-u-bg-soft-panel{background:#F8FBFA}
 body.ks-design-ready .kds-u-bg-soft-slate.kds-u-bg-soft-slate{background:#F8FAFC}
 body.ks-design-ready .kds-u-bg-warning-soft.kds-u-bg-warning-soft{background:#FFF8E8}
-body.ks-design-ready .kds-u-bl-4px-solid-2aa79d.kds-u-bl-4px-solid-2aa79d{border-left:4px solid #2AA79D}
+body.ks-design-ready .kds-u-bl-4px-solid-2aa79d.kds-u-bl-4px-solid-2aa79d{border-left:1px solid #2AA79D}
 body.ks-design-ready .kds-u-bl-5px-solid-b42318.kds-u-bl-5px-solid-b42318{border-left:5px solid #B42318}
 body.ks-design-ready .kds-u-bl-5px-solid-b89a5a.kds-u-bl-5px-solid-b89a5a{border-left:5px solid #B89A5A}
 body.ks-design-ready .kds-u-border-1px-solid-cinza-borda.kds-u-border-1px-solid-cinza-borda{border:1px solid var(--kds-line-neutral)}
@@ -113,7 +113,7 @@ body.ks-design-ready .kds-u-bb-1px-solid-edf1ef.kds-u-bb-1px-solid-edf1ef{border
 body.ks-design-ready .kds-u-bg-mint-surface.kds-u-bg-mint-surface{background:#FBFDFC}
 body.ks-design-ready .kds-u-bg-neutral-soft.kds-u-bg-neutral-soft{background:#F3F5F5}
 body.ks-design-ready .kds-u-bg-success-soft.kds-u-bg-success-soft{background:#EDF7F3}
-body.ks-design-ready .kds-u-bl-4px-solid-verde-cirurgico.kds-u-bl-4px-solid-verde-cirurgico{border-left:4px solid var(--kds-brand-teal)}
+body.ks-design-ready .kds-u-bl-4px-solid-verde-cirurgico.kds-u-bl-4px-solid-verde-cirurgico{border-left:1px solid var(--kds-brand-teal)}
 body.ks-design-ready .kds-u-border-1px-solid-e4ece9.kds-u-border-1px-solid-e4ece9{border:1px solid #E4ECE9}
 body.ks-design-ready .kds-u-br-4px.kds-u-br-4px{border-radius:4px}
 body.ks-design-ready .kds-u-br-999px.kds-u-br-999px{border-radius:999px}
@@ -186,9 +186,9 @@ body.ks-design-ready .kds-u-hover-soft.kds-u-hover-soft:hover{background-color:#
 body.ks-design-ready .kds-u-hover-warm.kds-u-hover-warm:hover{background-color:#FFF5EB}
 body.ks-design-ready .kds-scroll-contained{overflow-y:auto;overscroll-behavior:contain}
 body.ks-design-ready .ks-alert-inline{border-radius:6px;padding:10px 14px;margin-bottom:10px}
-body.ks-design-ready .ks-alert-inline--critical{border-left:4px solid #E74C3C;background:#FFF5F5}
-body.ks-design-ready .ks-alert-inline--medium{border-left:4px solid #F39C12;background:#FFFBEB}
-body.ks-design-ready .ks-alert-inline__meta{font-size:var(--kds-font-metadata);font-weight:700;text-transform:uppercase}
+body.ks-design-ready .ks-alert-inline--critical{border-left:1px solid #E74C3C;background:#FFF5F5}
+body.ks-design-ready .ks-alert-inline--medium{border-left:1px solid #F39C12;background:#FFFBEB}
+body.ks-design-ready .ks-alert-inline__meta{font-size:var(--kds-font-metadata);font-weight:700;text-transform:none}
 body.ks-design-ready .ks-alert-inline--critical .ks-alert-inline__meta{color:#C0392B}
 body.ks-design-ready .ks-alert-inline--medium .ks-alert-inline__meta{color:#B7791F}
 body.ks-design-ready .ks-alert-summary-card--critical{border-color:#E74C3C}
@@ -196,9 +196,9 @@ body.ks-design-ready .ks-alert-summary-card--clinical{border-color:#D97706}
 body.ks-design-ready .ks-map-route-row{padding:6px 0}
 body.ks-design-ready .ks-map-route-row.is-divided{border-top:1px solid #E6EFED}
 body.ks-design-ready .ks-pending-row{padding:9px 12px;margin-bottom:8px;background:#FAFBFA;border-radius:6px}
-body.ks-design-ready .ks-pending-row--high{border-left:4px solid #B42318}
-body.ks-design-ready .ks-pending-row--medium{border-left:4px solid #B7791F}
-body.ks-design-ready .ks-pending-row--low{border-left:4px solid #46736B}
+body.ks-design-ready .ks-pending-row--high{border-left:1px solid #B42318}
+body.ks-design-ready .ks-pending-row--medium{border-left:1px solid #B7791F}
+body.ks-design-ready .ks-pending-row--low{border-left:1px solid #46736B}
 body.ks-design-ready button.ks-pending-row{display:block;width:100%;text-align:left;border-top:0;border-right:0;border-bottom:0;cursor:pointer;color:inherit}
 body.ks-design-ready .ks-media-doc-icon{font-weight:900;color:var(--kds-text)}
 body.ks-design-ready .ks-media-doc-icon--pdf{font-size:22px}

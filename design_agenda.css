@@ -9,7 +9,7 @@
  * - dimensões dinâmicas da grade recebem apenas contagens via JS.
  */
 
-/* ========================================================================== 
+/* ==========================================================================
    1. Shell e navegação interna
    ========================================================================== */
 body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
@@ -106,7 +106,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .ks-agenda-config-menu button:hover{background:var(--kds-accent-soft);color:var(--kds-accent)}
 #tela_agenda .ks-agenda-config-menu button:focus-visible{outline:2px solid var(--kds-accent);outline-offset:-2px}
 
-/* ========================================================================== 
+/* ==========================================================================
    2. Toolbar semanal
    ========================================================================== */
 #tela_agenda .agenda-card-semanal{
@@ -159,7 +159,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   font-size:var(--kds-font-metadata);
   line-height:var(--kds-leading-compact);
   font-weight:800;
-  letter-spacing:1.2px;
+  letter-spacing:0;
 }
 #tela_agenda .agenda-semana-titulo{
   color:var(--kds-text);
@@ -234,7 +234,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   white-space:nowrap;
 }
 
-/* ========================================================================== 
+/* ==========================================================================
    3. Feedback e estados vazios
    ========================================================================== */
 #tela_agenda .agenda-feedback,
@@ -270,7 +270,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   line-height:var(--kds-leading-text);
 }
 
-/* ========================================================================== 
+/* ==========================================================================
    4. Grade semanal
    ========================================================================== */
 #tela_agenda .agenda-grade-scroll{
@@ -357,7 +357,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   font-size:var(--kds-font-metadata);
   line-height:1.4;
   font-weight:900;
-  letter-spacing:.04em;
+  letter-spacing:0;
 }
 
 #tela_agenda .agenda-hora-eixo{
@@ -396,7 +396,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-celula.feriado .agenda-feriado-texto{color:#fff;white-space:normal}
 #tela_agenda .agenda-celula.agendado{padding:1px;background:transparent;cursor:pointer}
 
-/* ========================================================================== 
+/* ==========================================================================
    5. Compromissos e status
    ========================================================================== */
 #tela_agenda .agenda-compromisso{
@@ -477,7 +477,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .badge-cancelado{background:#F1F3F4;color:#636E72}
 .badge-lembrete-ok{background:#EAF7EE;color:#227A4A}
 
-/* ========================================================================== 
+/* ==========================================================================
    6. Editor de horários da clínica/profissional
    ========================================================================== */
 #tela_agenda .ks-agenda-horarios-intro{
@@ -500,7 +500,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   flex-direction:column;
   gap:2px;
 }
-#tela_agenda .ks-horario-regra strong{font-size:var(--kds-font-metadata);text-transform:uppercase;letter-spacing:.55px;color:var(--kds-accent)}
+#tela_agenda .ks-horario-regra strong{font-size:var(--kds-font-metadata);text-transform:none;letter-spacing:.55px;color:var(--kds-accent)}
 #tela_agenda .ks-horario-regra span{font-size:var(--kds-font-label);color:var(--kds-text-secondary);line-height:var(--kds-leading-ui)}
 
 #tela_agenda .ks-week-schedule-card{padding:0;overflow:hidden}
@@ -546,7 +546,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   color:var(--kds-faint);
   font-size:var(--kds-font-metadata);
   font-weight:850;
-  text-transform:uppercase;
+  text-transform:none;
   letter-spacing:.55px;
 }
 #tela_agenda .ks-week-headers span:nth-child(2){grid-column:2/5}
@@ -564,7 +564,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .ks-schedule-records>summary{padding:14px 0}
 #tela_agenda .ks-schedule-records .lista-config{padding-bottom:14px}
 
-/* ========================================================================== 
+/* ==========================================================================
    7. Modal de agendamento, recorrência, pacote e horário extraordinário
    ========================================================================== */
 #modal_agendamento .modal-box{
@@ -638,7 +638,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .agenda-plano-vinculo button{border:1px solid var(--kds-line);background:#fff;color:var(--kds-accent);border-radius:6px;padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
 .agenda-plano-vinculo small{display:block;margin-top:5px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
 
-/* ========================================================================== 
+/* ==========================================================================
    8. Edição de status e auditoria
    ========================================================================== */
 .agenda-status-editor{margin:16px 0;padding:14px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
@@ -668,7 +668,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .agenda-audit-empty.erro{color:var(--kds-danger);background:#FFF8F7;border-color:#E8C9C5}
 .agenda-audit-modal{width:min(780px,94vw)}
 
-/* ========================================================================== 
+/* ==========================================================================
    9. Responsividade do módulo
    ========================================================================== */
 @media(max-width:1280px){
@@ -760,11 +760,11 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-toolbar{gap:10px;margin-bottom:10px}
 #tela_agenda .agenda-toolbar-semanal{padding:0 0 10px;margin-bottom:0;border-bottom:1px solid var(--kds-line-soft)}
 #tela_agenda .agenda-toolbar-filtros{padding:12px 0 14px;margin:0;border-bottom:1px solid var(--kds-line-soft);background:transparent}
-#tela_agenda .agenda-grade-scroll{margin-top:12px;border:1px solid var(--kds-line-soft);border-radius:10px;box-shadow:none}
+#tela_agenda .agenda-grade-scroll{margin-top:12px;border:0;border-radius:0;box-shadow:none}
 #tela_agenda .ks-segmented{background:transparent;border-color:transparent;padding:0}
 #tela_agenda .ks-segmented button.active{box-shadow:none;border:1px solid var(--kds-line-soft)}
 
-/* ========================================================================== 
+/* ==========================================================================
    KineSys Agenda — visões individuais e marcador de agora
    - integrado ao Design System; sem microtipografia ou cores locais;
    - marcador temporal usa teal funcional, não a semântica de risco clínico.

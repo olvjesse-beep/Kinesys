@@ -15,9 +15,9 @@
 #tela_financeiro .finance-ledger-month-nav{display:flex;gap:5px;align-items:center}
 #tela_financeiro .finance-ledger-month-nav button{width:38px;min-height:38px;border:1px solid var(--ledger-border);border-radius:8px;background:#fff;color:#244d50;font-size:18px}
 #tela_financeiro .finance-ledger-search{position:relative}
-#tela_financeiro .finance-ledger-suggestions{position:absolute;z-index:35;left:0;right:0;top:100%;margin-top:5px;max-height:290px;overflow:auto;border:1px solid var(--ledger-border);border-radius:11px;background:#fff;box-shadow:0 12px 30px rgba(18,56,59,.16)}
+#tela_financeiro .finance-ledger-suggestions{position:absolute;z-index:35;left:0;right:0;top:100%;margin-top:5px;max-height:290px;overflow:auto;border:1px solid var(--ledger-border);border-radius:11px;background:#fff;box-shadow:none}
 #tela_financeiro .finance-ledger-suggestions[hidden]{display:none!important}
-#tela_financeiro .finance-ledger-suggestion-title{padding:8px 12px;background:#f4f8f7;color:#627779;font-size:var(--kds-font-metadata);font-weight:850;text-transform:uppercase;letter-spacing:.06em}
+#tela_financeiro .finance-ledger-suggestion-title{padding:8px 12px;background:#f4f8f7;color:#627779;font-size:var(--kds-font-metadata);font-weight:850;text-transform:none;letter-spacing:0}
 #tela_financeiro .finance-ledger-suggestions button{display:grid;width:100%;gap:3px;padding:10px 12px;text-align:left;border:0;border-bottom:1px solid #edf2f1;border-radius:0;background:#fff;color:#244346}
 #tela_financeiro .finance-ledger-suggestions button:hover,#tela_financeiro .finance-ledger-suggestions button:focus{background:#edf7f5;outline:none}
 #tela_financeiro .finance-ledger-suggestions button span{font-size:var(--kds-font-metadata);color:#6b7e80}

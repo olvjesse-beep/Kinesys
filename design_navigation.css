@@ -69,7 +69,7 @@ body.ks-design-ready>.container{
   color:#fff;
   font-size:var(--kds-font-heading-lg);
   line-height:1.1;
-  letter-spacing:2.1px;
+  letter-spacing:0;
   font-weight:800;
 }
 #ks_sidebar .header-brand h1 span{color:#7FD0C8}
@@ -80,8 +80,8 @@ body.ks-design-ready>.container{
   /* Prioridade temporária contra a regra tipográfica global de <p>; Etapa 11 remove. */
   font-size:var(--kds-font-metadata);
   line-height:var(--kds-leading-text);
-  letter-spacing:1.05px;
-  text-transform:uppercase;
+  letter-spacing:0;
+  text-transform:none;
 }
 #ks_sidebar .header-welcome{
   padding:11px 12px;
@@ -105,7 +105,7 @@ body.ks-design-ready>.container{
 #ks_sidebar .ks-user-kicker{
   color:#809DA0;
   font-size:var(--kds-font-metadata);
-  letter-spacing:1.5px;
+  letter-spacing:0;
   font-weight:800;
 }
 
@@ -159,7 +159,7 @@ body.ks-design-ready>.container{
   /* Prioridade temporária: .ks-nav-label é um <li> e a base tipográfica ainda tem regra prioritária. */
   font-size:var(--kds-font-metadata);
   line-height:var(--kds-leading-compact);
-  letter-spacing:1.1px;
+  letter-spacing:0;
   font-weight:760;
 }
 #ks_sidebar .ks-nav-label:first-child{padding-top:2px}
@@ -344,7 +344,7 @@ body.ks-design-ready[data-tela="tela_login"]>.container{margin-left:0}
     margin-bottom:2px;
     color:#7F9699;
     font-size:var(--kds-font-metadata);
-    letter-spacing:1.1px;
+    letter-spacing:0;
     font-weight:800;
   }
   .ks-page-heading h1{font-size:var(--kds-font-title-mobile-lg)}

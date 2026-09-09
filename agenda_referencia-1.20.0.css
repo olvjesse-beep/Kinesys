@@ -6,7 +6,7 @@
 #tela_agenda .agenda-toolbar-semanal{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(360px,1.2fr);gap:14px;align-items:end;padding:14px 16px;background:#fff;border-bottom:1px solid #e5eceb}
 #tela_agenda .agenda-semana-nav{align-self:center}
 #tela_agenda .agenda-semana-nav button{border-radius:7px;min-width:38px;min-height:38px}
-#tela_agenda .agenda-semana-rotulo{font-size:var(--kds-font-metadata);letter-spacing:.08em;color:#748587;font-weight:800}
+#tela_agenda .agenda-semana-rotulo{font-size:var(--kds-font-metadata);letter-spacing:0;color:#748587;font-weight:800}
 #tela_agenda .agenda-semana-titulo{color:#24494c;font-size:18px;font-weight:750}
 #tela_agenda .agenda-periodo-segmentado{display:flex;gap:3px;margin-left:auto;padding:3px;border-radius:8px;background:#eef3f2}
 #tela_agenda .agenda-periodo-segmentado button{min-height:34px;padding:6px 11px;border:0;border-radius:6px;background:transparent;color:#5c7173;font-weight:750}

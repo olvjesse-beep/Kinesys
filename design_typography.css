@@ -1,4 +1,4 @@
-/* ========================================================================== 
+/* ==========================================================================
    KineSys Design System — Tipografia | Etapa 6
    Fonte de verdade para escala tipográfica do produto.
    Carregada por último durante a migração: neutraliza apenas a tipografia
@@ -214,7 +214,7 @@ body.ks-design-ready[data-tela="tela_login"] #btn_login_entrar{min-height:46px!i
 @media(max-width:620px){
   .ks-patient-main strong{font-size:var(--kds-font-content)!important}
   .ks-patient-tabs button{font-size:var(--kds-font-label)!important}
-  
+
 }
 
 /* ================================================================
@@ -285,4 +285,34 @@ body.ks-design-ready[data-tela="tela_login"] #btn_login_entrar{min-height:46px!i
   letter-spacing:0!important;
   text-transform:none!important;
   font-weight:650!important;
+}
+
+
+/* QUIETER PASS 3 — DESCRIPTIVE WEIGHT
+   Descriptive metadata recedes; values, headings and safety signals remain stronger. */
+body.ks-design-ready .input-group > label,
+body.ks-design-ready .finance-stats span,
+body.ks-design-ready .finance-pending-stat span,
+body.ks-design-ready .finance-discount-stat span,
+body.ks-design-ready .finance-expense-admin-stat span,
+body.ks-design-ready .finance-balance-stat span,
+body.ks-design-ready .finance-balance-metric span,
+body.ks-design-ready .midia-local-info span,
+body.ks-design-ready .ks-form-section-title,
+body.ks-design-ready .ks-home-detail-summary span,
+body.ks-design-ready .ks-home-pro-group,
+body.ks-design-ready .finance-analysis-kpi span,
+body.ks-design-ready .ana-table-head,
+body.ks-design-ready .ks-msg-template-group,
+body.ks-design-ready #tela_financeiro .finance-ledger-suggestion-title,
+body.ks-design-ready #tela_agenda .ks-horario-regra strong,
+body.ks-design-ready #tela_agenda .ks-week-headers,
+body.ks-design-ready #tela_avaliacao .hma-kicker,
+body.ks-design-ready #tela_avaliacao .cluster-hypothesis .label,
+body.ks-design-ready #tela_avaliacao .kinesys-integration-panel .integration-head span,
+body.ks-design-ready #tela_avaliacao .ks-region-mode,
+body.ks-design-ready #tela_avaliacao .ks-specific-name > small{
+  font-weight:650!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
 }
