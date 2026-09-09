@@ -24,66 +24,61 @@ jobs:
           css = css_path.read_text(encoding='utf-8')
           marker = '/* Despesas — alinhamento de filtros e ação */'
           if marker not in css:
-              css += r'''
-
-/* Despesas — alinhamento de filtros e ação */
-#tela_financeiro .finance-expense-toolbar{
-  display:grid!important;
-  grid-template-columns:minmax(180px,210px) minmax(220px,250px) minmax(320px,1fr) auto!important;
-  align-items:end!important;
-  column-gap:12px!important;
-  row-gap:12px!important;
-}
-#tela_financeiro .finance-expense-toolbar>.input-group{
-  min-width:0!important;
-  margin:0!important;
-  align-self:end!important;
-}
-#tela_financeiro .finance-expense-toolbar>.input-group>:is(input,select){
-  height:var(--fin-control-height)!important;
-  min-height:var(--fin-control-height)!important;
-}
-#tela_financeiro .finance-expense-toolbar>.btn-primary{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  align-self:end!important;
-  height:var(--fin-control-height)!important;
-  min-height:var(--fin-control-height)!important;
-  margin:0!important;
-  padding-top:0!important;
-  padding-bottom:0!important;
-  white-space:nowrap!important;
-}
-@media(max-width:980px){
-  #tela_financeiro .finance-expense-toolbar{
-    grid-template-columns:minmax(170px,210px) minmax(210px,250px) minmax(260px,1fr)!important;
-  }
-  #tela_financeiro .finance-expense-toolbar>.btn-primary{
-    grid-column:1/-1!important;
-    justify-self:start!important;
-  }
-}
-@media(max-width:700px){
-  #tela_financeiro .finance-expense-toolbar{
-    grid-template-columns:1fr!important;
-  }
-  #tela_financeiro .finance-expense-toolbar>.btn-primary{
-    grid-column:auto!important;
-    width:100%!important;
-  }
-}
-'''
-          css_path.write_text(css.rstrip() + '\n', encoding='utf-8')
+              lines = [
+                  '',
+                  marker,
+                  '#tela_financeiro .finance-expense-toolbar{',
+                  '  display:grid!important;',
+                  '  grid-template-columns:minmax(180px,210px) minmax(220px,250px) minmax(320px,1fr) auto!important;',
+                  '  align-items:end!important;',
+                  '  column-gap:12px!important;',
+                  '  row-gap:12px!important;',
+                  '}',
+                  '#tela_financeiro .finance-expense-toolbar>.input-group{',
+                  '  min-width:0!important;',
+                  '  margin:0!important;',
+                  '  align-self:end!important;',
+                  '}',
+                  '#tela_financeiro .finance-expense-toolbar>.input-group>:is(input,select){',
+                  '  height:var(--fin-control-height)!important;',
+                  '  min-height:var(--fin-control-height)!important;',
+                  '}',
+                  '#tela_financeiro .finance-expense-toolbar>.btn-primary{',
+                  '  display:inline-flex!important;',
+                  '  align-items:center!important;',
+                  '  justify-content:center!important;',
+                  '  align-self:end!important;',
+                  '  height:var(--fin-control-height)!important;',
+                  '  min-height:var(--fin-control-height)!important;',
+                  '  margin:0!important;',
+                  '  padding-top:0!important;',
+                  '  padding-bottom:0!important;',
+                  '  white-space:nowrap!important;',
+                  '}',
+                  '@media(max-width:980px){',
+                  '  #tela_financeiro .finance-expense-toolbar{',
+                  '    grid-template-columns:minmax(170px,210px) minmax(210px,250px) minmax(260px,1fr)!important;',
+                  '  }',
+                  '  #tela_financeiro .finance-expense-toolbar>.btn-primary{',
+                  '    grid-column:1/-1!important;',
+                  '    justify-self:start!important;',
+                  '  }',
+                  '}',
+                  '@media(max-width:700px){',
+                  '  #tela_financeiro .finance-expense-toolbar{grid-template-columns:1fr!important;}',
+                  '  #tela_financeiro .finance-expense-toolbar>.btn-primary{',
+                  '    grid-column:auto!important;',
+                  '    width:100%!important;',
+                  '  }',
+                  '}',
+              ]
+              css = css.rstrip() + '\n' + '\n'.join(lines) + '\n'
+          css_path.write_text(css, encoding='utf-8')
 
           index_path = Path('index.html')
           html = index_path.read_text(encoding='utf-8')
-
-          old = '''                    <div class="input-group fatores-piora-compactos">
-                        <span class="kds-group-label" id="fatores_piora_label">Fatores de piora</span>
-                        <div class="checkbox-group compact-chips" role="group" aria-labelledby="fatores_piora_label">'''
-          new = '''                    <div class="input-group fatores-piora-compactos">
-                        <div class="checkbox-group compact-chips" role="group" aria-label="Fatores de piora">'''
+          old = '                    <div class="input-group fatores-piora-compactos">\n                        <span class="kds-group-label" id="fatores_piora_label">Fatores de piora</span>\n                        <div class="checkbox-group compact-chips" role="group" aria-labelledby="fatores_piora_label">'
+          new = '                    <div class="input-group fatores-piora-compactos">\n                        <div class="checkbox-group compact-chips" role="group" aria-label="Fatores de piora">'
           if html.count(old) != 1:
               raise SystemExit(f'Expected one external Fatores de piora label block; found {html.count(old)}')
           html = html.replace(old, new)
