@@ -1,11 +1,76 @@
 /* A visibilidade do prontuário deve prevalecer sobre as grades responsivas. */
 #ks_prontuario_resumo[hidden], #ks_patient_context[hidden] { display: none !important; }
-#ks_prontuario_resumo { position: relative; padding-right: 64px !important; }
-#ks_prontuario_resumo .ks-prontuario-close {
-    position: absolute; top: 10px; right: 10px; width: 40px; height: 40px;
-    display: grid; place-items: center; padding: 0; border-radius: 9px;
-    border: 1px solid rgba(255,255,255,.5); background: #244f59;
-    color: #fff; font-size: 28px; line-height: 1; cursor: pointer;
+
+/* Prontuários funciona como diretório clínico: busca, lista e paciente ativo têm papéis distintos. */
+#tela_buscar .ks-prontuario-search-card {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
-#ks_prontuario_resumo .ks-prontuario-close:hover { background: #366773; }
-#ks_prontuario_resumo .ks-prontuario-close:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+#tela_buscar .ks-search-field { margin-bottom: 12px !important; }
+#tela_buscar .ks-search-field input {
+    min-height: 48px;
+    padding-inline: 14px;
+    border-radius: var(--kds-radius-md);
+}
+#tela_buscar .ks-prontuario-cards { gap: 6px; }
+#tela_buscar .ks-patient-card { padding: 9px 11px; }
+
+/* O prontuário ativo apresenta contexto primeiro e ações em uma faixa própria. */
+#ks_prontuario_resumo {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px 18px;
+    padding-right: 62px !important;
+}
+#ks_prontuario_resumo .ks-prontuario-summary-main { min-width: 0; }
+#ks_prontuario_resumo .ks-prontuario-metrics {
+    align-self: center;
+    gap: 16px;
+}
+#ks_prontuario_resumo .ks-prontuario-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-top: 12px;
+    border-top: 1px solid var(--kds-line-soft);
+}
+#ks_prontuario_resumo .ks-prontuario-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    background: var(--kds-surface);
+    color: var(--kds-muted);
+    font-size: var(--kds-font-heading-md);
+    line-height: 1;
+    cursor: pointer;
+}
+#ks_prontuario_resumo .ks-prontuario-close:hover {
+    background: var(--kds-surface-soft);
+    border-color: var(--kds-line-strong);
+    color: var(--kds-text);
+}
+#ks_prontuario_resumo .ks-prontuario-close:focus-visible {
+    outline: 3px solid var(--kds-focus-ring);
+    outline-offset: 2px;
+}
+
+@media(max-width:820px){
+    #ks_prontuario_resumo { grid-template-columns: 1fr; gap: 12px; }
+    #ks_prontuario_resumo .ks-prontuario-metrics { grid-column: 1; flex-wrap: wrap; }
+    #ks_prontuario_resumo .ks-prontuario-actions { grid-column: 1; }
+}
+
+@media(max-width:620px){
+    #tela_buscar .ks-search-field input { min-height: var(--kds-control-height); }
+    #tela_buscar .ks-patient-card { padding: 9px; }
+    #ks_prontuario_resumo { padding-right: 54px !important; }
+    #ks_prontuario_resumo .ks-prontuario-metrics { gap: 10px 14px; }
+}
