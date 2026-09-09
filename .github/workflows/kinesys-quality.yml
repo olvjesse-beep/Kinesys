@@ -63,7 +63,6 @@ jobs:
           from html.parser import HTMLParser
           from pathlib import Path
           from urllib.parse import urlsplit
-          import re
 
           html_path = Path('index.html')
           html = html_path.read_text(encoding='utf-8')
@@ -197,8 +196,7 @@ jobs:
           if scripts_without_nonblocking:
               failures.append('Scripts without defer/type=module: ' + ', '.join(scripts_without_nonblocking))
 
-          summary = Path('/tmp/html-summary.md')
-          summary.write_text(
+          Path('/tmp/html-summary.md').write_text(
               '### HTML and accessibility\n'
               f'- IDs: **{len(parser.ids)}**; duplicates: **{len(duplicates)}**.\n'
               f'- Inline `<style>` blocks: **{parser.style_blocks}**.\n'
@@ -267,15 +265,28 @@ jobs:
 
           index_html = Path('index.html').read_text(encoding='utf-8')
           used_kds.update(re.findall(r'var\(\s*(--kds-[a-z0-9-]+)', index_html, re.I))
+
           token_text = Path('design_tokens.css').read_text(encoding='utf-8')
-          defined_kds = set(re.findall(r'(--kds-[a-z0-9-]+)\s*:', token_text, re.I))
+          static_defined_kds = set(re.findall(r'(--kds-[a-z0-9-]+)\s*:', token_text, re.I))
+
+          runtime_defined_kds = set()
+          for js_path in Path('.').rglob('*.js'):
+              if '.git' in js_path.parts:
+                  continue
+              js_text = js_path.read_text(encoding='utf-8', errors='ignore')
+              runtime_defined_kds.update(
+                  re.findall(r"setProperty\(\s*['\"](--kds-[a-z0-9-]+)['\"]", js_text, re.I)
+              )
+
+          defined_kds = static_defined_kds | runtime_defined_kds
           undefined_kds = sorted(used_kds - defined_kds)
 
           print(f'RUNTIME_CSS_FILES={len(css_files)}')
           print(f'MICROTYPE_UNDER_12_5_COUNT={len(microtype)}')
           print(f'NONCONTRACT_BREAKPOINT_COUNT={len(noncontract_breakpoints)}')
           print(f'KDS_TOKEN_USED_COUNT={len(used_kds)}')
-          print(f'KDS_TOKEN_DEFINED_COUNT={len(defined_kds)}')
+          print(f'KDS_TOKEN_STATIC_DEFINED_COUNT={len(static_defined_kds)}')
+          print(f'KDS_TOKEN_RUNTIME_DEFINED_COUNT={len(runtime_defined_kds)}')
           print(f'KDS_TOKEN_UNDEFINED_COUNT={len(undefined_kds)}')
 
           Path('/tmp/css-summary.md').write_text(
@@ -283,6 +294,7 @@ jobs:
               f'- Runtime CSS files checked: **{len(css_files)}**.\n'
               f'- Font sizes below 12.5px: **{len(microtype)}**.\n'
               f'- Breakpoints outside the official contract: **{len(noncontract_breakpoints)}**.\n'
+              f'- Static KDS tokens: **{len(static_defined_kds)}**; runtime-injected KDS tokens: **{len(runtime_defined_kds)}**.\n'
               f'- Undefined `--kds-*` tokens used at runtime: **{len(undefined_kds)}**.\n',
               encoding='utf-8'
           )
