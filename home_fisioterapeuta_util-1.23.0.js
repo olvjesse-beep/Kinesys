@@ -10,7 +10,8 @@
     const STATUS_AUSENCIA = new Set(['falta_justificada','falta_nao_justificada','faltou']);
 
     function perfilFisioterapeuta(){
-        const tipo=String(window.usuarioLogado?.tipo || '').toUpperCase();
+        const u=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
+        const tipo=String(u?.tipo || '').toUpperCase();
         return tipo==='FISIOTERAPEUTA' || tipo==='PROFISSIONAL';
     }
 
@@ -240,34 +241,34 @@
         if(!resumo||!lista) return;
         lista.replaceChildren();
         resumo.textContent='Organizando seus atendimentos e registros clínicos…';
-        if(!window._supabase){
+        if(typeof _supabase==='undefined' || !_supabase){
             resumo.textContent='Não foi possível acessar sua agenda agora.';
             return;
         }
 
-        const perfilInicial=window.usuarioLogado;
+        const perfilInicial=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
         try {
             if(typeof window.carregarProfissionaisAgenda!=='function' || !await window.carregarProfissionaisAgenda()) throw new Error('Equipe indisponível');
         } catch(_) {
-            if(window.usuarioLogado===perfilInicial) resumo.textContent='Não foi possível verificar seu vínculo com a agenda. Tente novamente.';
+            if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)===perfilInicial) resumo.textContent='Não foi possível verificar seu vínculo com a agenda. Tente novamente.';
             return;
         }
-        if(window.usuarioLogado!==perfilInicial) return;
+        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return;
 
         const profissionalId=typeof window.profissionalAgendaRestritoAtualId==='function'
             ? window.profissionalAgendaRestritoAtualId()
-            : String(window.usuarioLogado?.id||'');
+            : String(perfilInicial?.id||'');
         if(!profissionalId){
             resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';
             return;
         }
 
         const hoje=dataLocalISO();
-        let consulta=await window._supabase.from('agendamentos')
+        let consulta=await _supabase.from('agendamentos')
             .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,pacientes(id,nome),procedimentos(nome,duracao_minutos)')
             .eq('data',hoje).eq('profissional_id',profissionalId).neq('status','cancelado').order('hora_inicio');
         if(consulta.error && /procedimentos|hora_fim|relationship|schema cache/i.test(String(consulta.error.message||''))){
-            consulta=await window._supabase.from('agendamentos')
+            consulta=await _supabase.from('agendamentos')
                 .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,pacientes(id,nome)')
                 .eq('data',hoje).eq('profissional_id',profissionalId).neq('status','cancelado').order('hora_inicio');
         }
