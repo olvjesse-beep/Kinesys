@@ -13,56 +13,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trace final detector source candidates
+      - name: Diagnose final finding candidates without committing
         shell: bash
         run: |
           set -euo pipefail
+          chmod +x .agents/skills/impeccable/scripts/impeccable || true
           python - <<'PY'
-          from html.parser import HTMLParser
+          import json
+          import subprocess
+          from collections import Counter
           from pathlib import Path
-          from urllib.parse import urlsplit
-          import re
 
-          class Links(HTMLParser):
-              def __init__(self):
-                  super().__init__(); self.hrefs=[]
-              def handle_starttag(self, tag, attrs):
-                  if tag.lower() != 'link': return
-                  d={str(k).lower():('' if v is None else str(v)) for k,v in attrs}
-                  if 'stylesheet' in d.get('rel','').lower() and d.get('href'): self.hrefs.append(d['href'])
+          cmd = [
+              '.agents/skills/impeccable/scripts/impeccable','detect','--json',
+              'index.html','design_tokens.css','design_components.css',
+              'design_responsive.css','design_screens.css','avaliacao_experiencia-1.22.0.css'
+          ]
 
-          parser=Links(); parser.feed(Path('index.html').read_text(encoding='utf-8'))
-          files=[]
-          for href in parser.hrefs:
-              u=urlsplit(href)
-              if u.scheme or u.netloc: continue
-              p=Path(u.path.lstrip('/'))
-              if p.exists() and p.suffix.lower()=='.css': files.append(p)
+          def detect(label):
+              proc = subprocess.run(cmd, text=True, capture_output=True)
+              try:
+                  data = json.loads(proc.stdout or '[]')
+              except Exception:
+                  data = []
+              kinds = Counter((x.get('antipattern') or x.get('name') or 'unknown') for x in data)
+              print(f'{label}: total={len(data)} tight-leading={kinds.get("tight-leading",0)} dark-glow={kinds.get("dark-glow",0)}')
 
-          print('RUNTIME_CSS', len(files))
-          patterns={
-              'RGB_19373E': re.compile(r'(?:rgba?\(\s*25\s*,\s*55\s*,\s*62\b|#19373e\b)', re.I),
-              'LINE_12': re.compile(r'line-height\s*:\s*1\.2(?:0)?\s*[;}]', re.I),
-              'TRACKING_06PLUS': re.compile(r'letter-spacing\s*:\s*\.?0?(?:6|7|8|9)em\b|letter-spacing\s*:\s*\.(?:06|07|08|09)em\b', re.I),
-          }
-          for label, pat in patterns.items():
-              print('===', label, '===')
-              for p in files:
-                  text=p.read_text(encoding='utf-8', errors='ignore')
-                  for m in pat.finditer(text):
-                      line=text.count('\n',0,m.start())+1
-                      start=max(0,text.rfind('{',0,m.start()))
-                      end=text.find('}',m.start())
-                      if end < 0: end=min(len(text),m.start()+320)
-                      snippet=' '.join(text[start:end+1].split())
-                      print(f'{p}:{line} :: {snippet[:700]}')
+          def test(label, path, old, new):
+              p=Path(path); original=p.read_text(encoding='utf-8')
+              count=original.count(old)
+              print(f'PATCH {label}: occurrences={count}')
+              if count != 1:
+                  return
+              p.write_text(original.replace(old,new), encoding='utf-8')
+              try:
+                  detect(label)
+              finally:
+                  p.write_text(original, encoding='utf-8')
 
-          print('=== ALL COLORED SHADOWS USING 25/55/62 ===')
-          for p in files:
-              text=p.read_text(encoding='utf-8', errors='ignore')
-              for m in re.finditer(r'box-shadow\s*:[^;}]*rgba\(\s*25\s*,\s*55\s*,\s*62\s*,[^;)]+\)', text, re.I):
-                  line=text.count('\n',0,m.start())+1
-                  start=max(0,text.rfind('{',0,m.start())); end=text.find('}',m.start())
-                  snippet=' '.join(text[start:(end+1 if end>=0 else m.end()+120)].split())
-                  print(f'{p}:{line} :: {snippet[:700]}')
+          detect('BASELINE')
+
+          line_tests = [
+              ('LINE_TEAM_H2','design_screens.css','.ks-team-hero h2{line-height:1.2;font-weight:710}','.ks-team-hero h2{line-height:1.35;font-weight:710}'),
+              ('LINE_HMA_KICKER','design_clinical.css','font-size:var(--kds-font-metadata);\n    line-height:1.2;\n    font-weight:800;','font-size:var(--kds-font-metadata);\n    line-height:1.35;\n    font-weight:800;'),
+              ('LINE_DATETIME_LABEL','design_clinical.css','font-size:var(--kds-font-label);\n    line-height:1.2;\n    font-weight:720;','font-size:var(--kds-font-label);\n    line-height:1.35;\n    font-weight:720;'),
+              ('LINE_LOGIN_H1','login_access-1.18.0.css','#tela_login .ks-access-intro h1{font-size:34px;line-height:1.2;color:#fff;margin:18px 0;font-weight:650;letter-spacing:-.8px}','#tela_login .ks-access-intro h1{font-size:34px;line-height:1.35;color:#fff;margin:18px 0;font-weight:650;letter-spacing:-.8px}'),
+              ('LINE_HOME_COUNT','design_home_activity-1.18.5.css','#ks_home_recent_count{font-size:30px;font-weight:700;line-height:1.2}','#ks_home_recent_count{font-size:30px;font-weight:700;line-height:1.35}'),
+          ]
+          for args in line_tests: test(*args)
+
+          shadow_tests = [
+              ('SHADOW_PATIENT_CONTEXT_BASE','design_base.css','box-shadow:0 8px 24px rgba(25,55,62,.06)','box-shadow:none'),
+              ('SHADOW_REPORT_SURFACE','design_base.css','box-shadow:0 5px 18px rgba(25,55,62,.035)','box-shadow:none'),
+              ('SHADOW_FINANCE_ACTIVE','design_base.css','box-shadow:0 1px 5px rgba(25,55,62,.08)','box-shadow:none'),
+              ('SHADOW_PATIENT_CONTEXT_REFINED','design_base.css','box-shadow:0 10px 26px rgba(25,55,62,.07)','box-shadow:none'),
+              ('SHADOW_PAIN_THERMOMETER','design_clinical.css','box-shadow:0 5px 14px rgba(25,55,62,.045)','box-shadow:none'),
+          ]
+          for args in shadow_tests: test(*args)
           PY
