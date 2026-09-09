@@ -643,7 +643,8 @@
       if (label.querySelector('input,select,textarea')) return;
       const group = label.closest('.input-group');
       if (!group) return;
-      const control = group.querySelector('input:not([type="hidden"]),select,textarea');
+      const controls = Array.from(group.querySelectorAll('input:not([type="hidden"]),select,textarea'));
+      const control = controls.find(node => !node.closest('.checkbox-group,[role="group"],.finance-payment-methods,.toggle-pill'));
       if (control && control.id) label.htmlFor = control.id;
     });
   }
@@ -761,10 +762,16 @@
     normalizeLegacyDialogs();
     installRouteAnnouncements();
     syncLegacyModalFocus();
-    const observer = new MutationObserver(() => {
-      bindLabels();
-      normalizeLegacyDialogs();
-      syncLegacyModalFocus();
+    const observer = new MutationObserver(mutations => {
+      const childChanged = mutations.some(mutation => mutation.type === 'childList');
+      const modalStateChanged = mutations.some(mutation =>
+        mutation.type === 'attributes' && mutation.target.classList && mutation.target.classList.contains('modal-overlay')
+      );
+      if (childChanged) {
+        bindLabels();
+        normalizeLegacyDialogs();
+      }
+      if (childChanged || modalStateChanged) syncLegacyModalFocus();
     });
     observer.observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['class','style','hidden']});
   }
