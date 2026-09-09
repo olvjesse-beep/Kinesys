@@ -1,0 +1,192 @@
+name: Fix KineSys P1 critique findings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fix-p1-impeccable.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix-p1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply P1 fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          index_path = Path('index.html')
+          agenda_path = Path('design_agenda.css')
+          workflow_path = Path('.github/workflows/fix-p1-impeccable.yml')
+
+          index = index_path.read_text(encoding='utf-8')
+          agenda = agenda_path.read_text(encoding='utf-8')
+
+          # P1.1 — Agenda: remove the local inline style block from index.html.
+          inline_pattern = re.compile(
+              r'\n?\s*<style id="agenda-individual-estilos">.*?</style>\s*\n?',
+              re.S,
+          )
+          index, removed = inline_pattern.subn('\n', index, count=1)
+
+          agenda_marker = 'KineSys Agenda — visões individuais e marcador de agora'
+          agenda_block = r'''
+
+/* ========================================================================== 
+   KineSys Agenda — visões individuais e marcador de agora
+   - integrado ao Design System; sem microtipografia ou cores locais;
+   - marcador temporal usa teal funcional, não a semântica de risco clínico.
+   ========================================================================== */
+#tela_agenda .agenda-visoes{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:14px 18px;
+  border-bottom:1px solid var(--kds-line-soft);
+}
+
+#tela_agenda .agenda-visoes button[aria-pressed="true"]{
+  background:var(--kds-petrol-deep);
+  color:var(--kds-surface);
+  border-color:var(--kds-petrol-deep);
+}
+
+#tela_agenda #agenda_agora_relogio{
+  margin-left:auto;
+  color:var(--kds-accent);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+
+#tela_agenda .agenda-agora-linha{
+  height:0;
+  border-top:2px solid var(--kds-accent);
+  align-self:start;
+  position:relative;
+  z-index:4;
+  pointer-events:none;
+  min-width:0;
+}
+
+#tela_agenda .agenda-agora-linha::before{
+  content:"";
+  position:absolute;
+  left:-4px;
+  top:-5px;
+  width:8px;
+  height:8px;
+  border-radius:var(--kds-radius-pill);
+  background:var(--kds-accent);
+}
+
+#tela_agenda .agenda-agora-linha span{
+  position:absolute;
+  right:3px;
+  top:-21px;
+  padding:2px 5px;
+  border:1px solid var(--kds-line-strong);
+  border-radius:var(--kds-agenda-card-radius);
+  background:var(--kds-surface);
+  color:var(--kds-accent);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  line-height:var(--kds-leading-compact);
+  white-space:nowrap;
+}
+
+#tela_agenda [hidden],
+#modal_agendamento .agenda-finance-link[hidden],
+#modal_agendamento button[hidden],
+#modal_detalhe_agendamento button[hidden],
+.agenda-agora-linha[hidden]{
+  display:none!important;
+}
+
+@media(max-width:620px){
+  #tela_agenda #agenda_agora_relogio{
+    width:100%;
+    margin-left:0;
+  }
+
+  #tela_agenda .agenda-visoes{
+    gap:8px;
+    padding:12px;
+  }
+
+  #tela_agenda .agenda-visoes button{
+    flex:1;
+  }
+}
+'''
+
+          if agenda_marker not in agenda:
+              if removed != 1:
+                  raise RuntimeError('Expected agenda inline style block was not found, and migrated block is absent.')
+              agenda = agenda.rstrip() + agenda_block + '\n'
+          elif removed not in (0, 1):
+              raise RuntimeError(f'Unexpected inline agenda style removal count: {removed}')
+
+          # P1.2 — Sidebar: preserve the existing <a> structure and JS calls,
+          # but make every primary navigation item a native keyboard-focusable link.
+          replacements = {
+              '<a onclick="navegarPara(\'tela_home\'); fecharMenu();">': '<a href="#tela_home" onclick="navegarPara(\'tela_home\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_cadastro\'); fecharMenu();">': '<a href="#tela_cadastro" onclick="navegarPara(\'tela_cadastro\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_avaliacao\'); fecharMenu();">': '<a href="#tela_avaliacao" onclick="navegarPara(\'tela_avaliacao\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_buscar\'); fecharMenu();">': '<a href="#tela_buscar" onclick="navegarPara(\'tela_buscar\'); fecharMenu(); return false;">',
+              '<a onclick="abrirMidiasPaciente(); fecharMenu();">': '<a href="#tela_midias" onclick="abrirMidiasPaciente(); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_evolucao\'); fecharMenu();">': '<a href="#tela_evolucao" onclick="navegarPara(\'tela_evolucao\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_relatorio\'); fecharMenu();">': '<a href="#tela_relatorio" onclick="navegarPara(\'tela_relatorio\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_agenda\'); fecharMenu();">': '<a href="#tela_agenda" onclick="navegarPara(\'tela_agenda\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_financeiro\'); fecharMenu();">': '<a href="#tela_financeiro" onclick="navegarPara(\'tela_financeiro\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_equipe\'); fecharMenu();">': '<a href="#tela_equipe" onclick="navegarPara(\'tela_equipe\'); fecharMenu(); return false;">',
+              '<a onclick="navegarPara(\'tela_configuracoes\'); abrirConfiguracoesMensagens(); fecharMenu();">': '<a href="#tela_configuracoes" onclick="navegarPara(\'tela_configuracoes\'); abrirConfiguracoesMensagens(); fecharMenu(); return false;">',
+              '<a onclick="fazerLogout(); fecharMenu();">': '<a href="#logout" onclick="fazerLogout(); fecharMenu(); return false;">',
+          }
+
+          for old, new in replacements.items():
+              old_count = index.count(old)
+              new_count = index.count(new)
+              if old_count == 1:
+                  index = index.replace(old, new, 1)
+              elif old_count == 0 and new_count == 1:
+                  pass  # Idempotent re-run.
+              else:
+                  raise RuntimeError(f'Navigation patch invariant failed: old={old_count}, new={new_count}, snippet={old}')
+
+          # Guardrails requested by the Design System critique.
+          if '<style id="agenda-individual-estilos">' in index:
+              raise RuntimeError('Inline Agenda style block still present after migration.')
+          if 'font-size:11px' in agenda_block or 'font-size:13px' in agenda_block:
+              raise RuntimeError('Microtypography leaked into migrated Agenda CSS.')
+          for target in ('tela_home','tela_cadastro','tela_avaliacao','tela_buscar','tela_midias','tela_evolucao','tela_relatorio','tela_agenda','tela_financeiro','tela_equipe','tela_configuracoes'):
+              if f'href="#{target}"' not in index:
+                  raise RuntimeError(f'Missing native navigation href for {target}.')
+
+          index_path.write_text(index, encoding='utf-8')
+          agenda_path.write_text(agenda, encoding='utf-8')
+
+          # One-off workflow: remove itself after applying the patch.
+          workflow_path.unlink(missing_ok=True)
+
+      - name: Commit P1 fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html design_agenda.css .github/workflows/fix-p1-impeccable.yml
+          if git diff --cached --quiet; then
+            echo "No P1 changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix P1 Agenda drift and sidebar keyboard access"
+          git push
