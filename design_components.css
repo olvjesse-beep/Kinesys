@@ -322,6 +322,7 @@
 .checkbox-pill input[type="radio"],
 .agenda-dia-pill input[type="checkbox"],
 .agenda-dia-pill input[type="radio"]{
+  display:block!important;
   position:absolute!important;
   inline-size:1px!important;
   block-size:1px!important;
