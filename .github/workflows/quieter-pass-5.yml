@@ -1,0 +1,90 @@
+name: KineSys perceptual visual quietness pass
+
+on:
+  push:
+    paths:
+      - '.github/workflows/quieter-pass-5.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  quieter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove ambient decoration and flatten persistent chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('design_base.css')
+          text = p.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  '''body{\n            background:\n                radial-gradient(circle at 8% 0%, rgba(42,167,157,.055), transparent 28%),\n                radial-gradient(circle at 94% 8%, rgba(184,154,90,.055), transparent 24%),\n                #F5F6F4;''',
+                  '''body{\n            background:var(--kds-bg-shell);''',
+                  'ambient body gradients'
+              ),
+              (
+                  '''background: linear-gradient(120deg, rgba(255,255,255,.25), transparent 45%);''',
+                  '''background:none;''',
+                  'body decorative veil'
+              ),
+              (
+                  '''body.ks-design-ready{font-size:var(--kds-font-content);line-height:1.55;background:\n                radial-gradient(circle at 78% 5%,rgba(67,184,173,.065),transparent 24%),var(--kds-bg-shell)}''',
+                  '''body.ks-design-ready{font-size:var(--kds-font-content);line-height:1.55;background:var(--kds-bg-shell)}''',
+                  'runtime shell glow'
+              ),
+              (
+                  '''box-shadow:0 8px 24px rgba(25,55,62,.06)''',
+                  '''box-shadow:none''',
+                  'patient context base shadow'
+              ),
+              (
+                  '''.ks-patient-context{padding:11px 13px;border-radius:13px;border-color:#CFE0DC;box-shadow:0 10px 26px rgba(25,55,62,.07)}''',
+                  '''.ks-patient-context{padding:11px 13px;border-radius:var(--kds-radius-md);border-color:var(--kds-line);box-shadow:none}''',
+                  'patient context persistent chrome'
+              ),
+              (
+                  '''.ks-home-hero:before, .finance-hero:before{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:2%;top:-62px;background:radial-gradient(circle,rgba(67,184,173,.15),rgba(67,184,173,0));pointer-events:none}''',
+                  '''.ks-home-hero:before, .finance-hero:before{content:none;display:none}''',
+                  'hero decorative glow'
+              ),
+              (
+                  '''.ks-home-stats>div, .finance-stats>div{border-color:#D2E1DD;background:linear-gradient(180deg,#fff,#FBFDFC)}''',
+                  '''.ks-home-stats>div, .finance-stats>div{border-color:var(--kds-line);background:var(--kds-surface)}''',
+                  'KPI gloss'
+              ),
+              (
+                  '''.ks-prontuario-resumo{background:linear-gradient(135deg,#173B45,#20505A);border-radius:13px;padding:18px 20px;color:#fff;margin-bottom:12px;display:grid;grid-template-columns:minmax(0,1.2fr) auto auto;gap:20px;align-items:center;box-shadow:var(--kds-shadow-panel)}''',
+                  '''.ks-prontuario-resumo{background:var(--kds-petrol-deep);border-radius:var(--kds-radius-md);padding:18px 20px;color:#fff;margin-bottom:12px;display:grid;grid-template-columns:minmax(0,1.2fr) auto auto;gap:20px;align-items:center;box-shadow:none}''',
+                  'patient summary hero treatment'
+              ),
+              (
+                  '''.ks-report-workspace{gap:20px}.ks-report-config, .ks-report-editor{border-radius:14px}.ks-report-config{padding:22px 23px}.ks-report-editor{padding:22px 24px;background:linear-gradient(180deg,#fff,#FBFCFC)}''',
+                  '''.ks-report-workspace{gap:20px}.ks-report-config, .ks-report-editor{border-radius:var(--kds-radius-md)}.ks-report-config{padding:22px 23px}.ks-report-editor{padding:22px 24px;background:var(--kds-surface)}''',
+                  'report workspace gloss'
+              ),
+          ]
+
+          for old, new, label in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 occurrence, found {count}')
+              text = text.replace(old, new)
+
+          p.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design_base.css
+          git diff --cached --stat
+          git diff --cached --exit-code >/dev/null && { echo 'No changes produced'; exit 1; } || true
+          git commit -m "Quiet KineSys ambient visual treatment"
+          git push
