@@ -1,0 +1,145 @@
+name: One-time Evolution visual refinement
+
+on:
+  push:
+    paths:
+      - '.github/workflows/refine-evolution-visual.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refine Evolution clinical hierarchy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('design_screens.css')
+          text = p.read_text(encoding='utf-8')
+          marker = '/* EVOLUTION CLINICAL HIERARCHY — workspace refinement */'
+          if marker in text:
+              raise SystemExit('Evolution refinement already present')
+
+          block = r'''
+
+/* EVOLUTION CLINICAL HIERARCHY — workspace refinement */
+#tela_evolucao .ks-evo-main{
+  border-color:var(--kds-line)!important;
+  border-radius:var(--kds-radius-md)!important;
+  background:var(--kds-surface)!important;
+  box-shadow:none!important;
+}
+#tela_evolucao .ks-evo-main>.card-header{
+  margin-bottom:16px!important;
+  padding-bottom:12px!important;
+  border-bottom:1px solid var(--kds-line-soft)!important;
+}
+#tela_evolucao .ks-evo-main>.card-header h2{
+  font-size:var(--kds-font-clinical)!important;
+  line-height:var(--kds-leading-ui)!important;
+}
+#tela_evolucao .ks-evo-section{
+  margin:16px 0 0!important;
+  padding:16px 0 2px!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#tela_evolucao .ks-evo-section>.card-header{
+  margin:0 0 10px!important;
+  padding:0!important;
+  border:0!important;
+}
+#tela_evolucao .ks-evo-section>.card-header h2{
+  font-size:var(--kds-font-content)!important;
+  line-height:var(--kds-leading-ui)!important;
+  font-weight:700!important;
+  color:var(--kds-text)!important;
+}
+#tela_evolucao .ks-evo-compact-details{
+  margin:10px 0!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line-soft)!important;
+  border-bottom:1px solid var(--kds-line-soft)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+#tela_evolucao .ks-evo-compact-details>summary{
+  padding:10px 0!important;
+  color:var(--kds-text-secondary)!important;
+  font-size:var(--kds-font-ui)!important;
+  font-weight:680!important;
+}
+#tela_evolucao .ks-evo-compact-body{
+  padding:4px 0 12px!important;
+  border-top:0!important;
+}
+#tela_evolucao .ks-evo-load-details>.ks-evo-compact-body>.card{
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+#tela_evolucao .ks-collapsible-card{
+  margin:14px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#tela_evolucao .ks-collapsible-card>.card-header{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+#tela_evolucao .ks-collapse-toggle{
+  min-height:48px;
+  padding:12px 2px!important;
+  background:transparent!important;
+  color:var(--kds-text)!important;
+  font-size:var(--kds-font-nav)!important;
+  font-weight:700!important;
+}
+#tela_evolucao .ks-collapse-toggle:hover{
+  color:var(--kds-accent)!important;
+}
+#tela_evolucao .ks-collapsible-card.ks-expanded>.card-header~*{
+  padding-left:2px!important;
+  padding-right:2px!important;
+}
+#tela_evolucao .ks-collapsible-card.ks-expanded>:last-child{
+  padding-bottom:14px!important;
+}
+#tela_evolucao .eva-container{
+  border:1px solid var(--kds-line-soft);
+  background:var(--kds-surface-soft)!important;
+  box-shadow:none!important;
+}
+@media(max-width:620px){
+  #tela_evolucao .ks-evo-main{padding:18px!important}
+  #tela_evolucao .ks-evo-section{padding-top:14px!important}
+  #tela_evolucao .ks-collapse-toggle{min-height:45px}
+}
+'''
+          p.write_text(text.rstrip() + block + '\n', encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design_screens.css
+          git diff --cached --exit-code >/dev/null && { echo 'No changes produced'; exit 1; } || true
+          git commit -m "Refine Evolution clinical hierarchy"
+          git push
