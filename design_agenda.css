@@ -512,20 +512,20 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   gap:22px;
   padding:22px 24px 16px;
   border-bottom:1px solid var(--kds-line-soft);
-  background:linear-gradient(135deg,#FBFDFC,#F1F8F6);
+  background:var(--kds-surface-soft);
 }
-#tela_agenda .ks-professional-schedule-card .ks-week-schedule-head{background:linear-gradient(135deg,#FBFCFD,#F4F7F8)}
+#tela_agenda .ks-professional-schedule-card .ks-week-schedule-head{background:var(--kds-surface-soft)}
 #tela_agenda .ks-week-schedule-head h2{margin:2px 0 4px;color:var(--kds-text);font-size:var(--kds-font-region-name)}
 #tela_agenda .ks-week-schedule-head p{margin:0;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
 #tela_agenda .ks-schedule-level{
   display:inline-flex;
-  padding:4px 7px;
-  border-radius:var(--kds-radius-pill);
-  background:var(--kds-accent-soft);
+  padding:0;
+  border-radius:0;
+  background:transparent;
   color:var(--kds-accent);
   font-size:var(--kds-font-metadata);
-  font-weight:900;
-  letter-spacing:.7px;
+  font-weight:800;
+  letter-spacing:0;
 }
 #tela_agenda .ks-week-schedule-actions{display:flex;gap:9px;align-items:end}
 #tela_agenda .ks-week-schedule-actions .input-group{margin:0;min-width:240px}
