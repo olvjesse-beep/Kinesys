@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Measure findings after quieter pass 1
+      - name: Map remaining findings
         shell: bash
         run: |
           set -uo pipefail
@@ -36,15 +36,16 @@ jobs:
           from pathlib import Path
 
           data = json.loads(Path('/tmp/impeccable.json').read_text(encoding='utf-8') or '[]')
-          severities = Counter((item.get('severity') or 'unknown') for item in data)
           categories = Counter((item.get('antipattern') or item.get('name') or 'unknown') for item in data)
           print(f'FINDING_COUNT={len(data)}')
-          for key, value in sorted(severities.items()):
-              print(f'SEVERITY_{key.upper()}={value}')
           print('CATEGORIES_BEGIN')
           for key, value in categories.most_common():
               print(f'{key}={value}')
           print('CATEGORIES_END')
+          print('FINDINGS_BEGIN')
+          for i, item in enumerate(data, 1):
+              print(f'{i:03d}=' + json.dumps(item, ensure_ascii=False, separators=(',',':')))
+          print('FINDINGS_END')
           PY
           if [ -s /tmp/impeccable.err ]; then cat /tmp/impeccable.err; fi
           exit 0
