@@ -1,0 +1,132 @@
+name: Fix static modal semantics
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-static-modal-semantics.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Harden legacy modal markup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          starts = list(re.finditer(r'<div class="modal-overlay" id="([^"]+)"[^>]*>', text))
+          if not starts:
+              raise SystemExit('No modal overlays found')
+
+          pieces = []
+          cursor = 0
+          changed = 0
+
+          def ensure_attr(tag, name, value):
+              if re.search(rf'\b{name}=', tag):
+                  return tag
+              return tag[:-1] + f' {name}="{value}">'
+
+          for i, start in enumerate(starts):
+              seg_start = start.start()
+              seg_end = starts[i + 1].start() if i + 1 < len(starts) else len(text)
+              pieces.append(text[cursor:seg_start])
+              segment = text[seg_start:seg_end]
+              modal_id = start.group(1)
+
+              box = re.search(r'<div class="modal-box(?: [^"]*)?"[^>]*>', segment)
+              if not box:
+                  pieces.append(segment)
+                  cursor = seg_end
+                  continue
+
+              h2 = re.search(r'<h2([^>]*)>', segment[box.end():])
+              title_id = None
+              if h2:
+                  h2_abs_start = box.end() + h2.start()
+                  h2_abs_end = box.end() + h2.end()
+                  h2_tag = segment[h2_abs_start:h2_abs_end]
+                  id_match = re.search(r'\bid="([^"]+)"', h2_tag)
+                  if id_match:
+                      title_id = id_match.group(1)
+                  else:
+                      title_id = f'{modal_id}_titulo'
+                      new_h2 = ensure_attr(h2_tag, 'id', title_id)
+                      segment = segment[:h2_abs_start] + new_h2 + segment[h2_abs_end:]
+                      changed += 1
+                      box = re.search(r'<div class="modal-box(?: [^"]*)?"[^>]*>', segment)
+
+              box_tag = box.group(0)
+              new_box = ensure_attr(box_tag, 'role', 'dialog')
+              new_box = ensure_attr(new_box, 'aria-modal', 'true')
+              if title_id:
+                  new_box = ensure_attr(new_box, 'aria-labelledby', title_id)
+              if new_box != box_tag:
+                  segment = segment[:box.start()] + new_box + segment[box.end():]
+                  changed += 1
+
+              close = re.search(r'<button([^>]*\bclass="[^"]*modal-fechar[^"]*"[^>]*)>', segment)
+              if close:
+                  close_tag = close.group(0)
+                  new_close = ensure_attr(close_tag, 'type', 'button')
+                  new_close = ensure_attr(new_close, 'aria-label', 'Fechar diálogo')
+                  if new_close != close_tag:
+                      segment = segment[:close.start()] + new_close + segment[close.end():]
+                      changed += 1
+
+              pieces.append(segment)
+              cursor = seg_end
+
+          pieces.append(text[cursor:])
+          updated = ''.join(pieces)
+          if changed == 0:
+              raise SystemExit('No modal semantics required changes')
+          path.write_text(updated, encoding='utf-8')
+          print(f'Applied {changed} modal accessibility updates')
+          PY
+      - name: Validate modal semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          text = Path('index.html').read_text(encoding='utf-8')
+          starts = list(re.finditer(r'<div class="modal-overlay" id="([^"]+)"[^>]*>', text))
+          failures = []
+          for i, start in enumerate(starts):
+              end = starts[i + 1].start() if i + 1 < len(starts) else len(text)
+              segment = text[start.start():end]
+              box = re.search(r'<div class="modal-box(?: [^"]*)?"[^>]*>', segment)
+              if not box:
+                  continue
+              tag = box.group(0)
+              for required in ('role="dialog"', 'aria-modal="true"', 'aria-labelledby='):
+                  if required not in tag:
+                      failures.append(f'{start.group(1)} missing {required}')
+              label = re.search(r'aria-labelledby="([^"]+)"', tag)
+              if label and f'id="{label.group(1)}"' not in segment:
+                  failures.append(f'{start.group(1)} title target missing')
+              close = re.search(r'<button[^>]*\bclass="[^"]*modal-fechar[^"]*"[^>]*>', segment)
+              if close:
+                  close_tag = close.group(0)
+                  if 'type="button"' not in close_tag or 'aria-label=' not in close_tag:
+                      failures.append(f'{start.group(1)} close button incomplete')
+          if failures:
+              raise SystemExit('\n'.join(failures))
+          print(f'Validated {len(starts)} modal overlays')
+          PY
+      - name: Remove one-off workflow and commit
+        run: |
+          git rm .github/workflows/fix-static-modal-semantics.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Harden legacy modal accessibility semantics'
+          git push
