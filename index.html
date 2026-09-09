@@ -146,7 +146,7 @@
                     <h2>📱 CRM e Relacionamento</h2>
                 </div>
                 <div class="input-group kds-u-mb-15px">
-                    <label>Selecionar Paciente para CRM</label>
+                    <label for="crm_paciente_select">Selecionar Paciente para CRM</label>
                     <select id="crm_paciente_select" onchange="carregarPacienteCRM()">
                         <option value="">-- Selecione um paciente --</option>
                     </select>
@@ -165,21 +165,21 @@
 <!-- DETALHES DA HOME — v1.11.2 -->
         <section id="tela_home_atendimentos" class="tela ks-home-detail-screen">
             <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL OPERACIONAL</span><h2>Atendimentos realizados hoje</h2><p id="home_det_atend_subtitulo">Somente atendimentos efetivamente concluídos na data atual.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
-            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar</label><input id="home_det_atend_busca" type="search" placeholder="Paciente ou profissional" oninput="renderizarAtendimentosHojeDetalhes()"></div><div class="input-group" id="home_det_atend_prof_wrap"><label>Profissional</label><select id="home_det_atend_prof" onchange="renderizarAtendimentosHojeDetalhes()"><option value="">Todos os profissionais</option></select></div><button type="button" class="btn-secondary" onclick="carregarAtendimentosHojeDetalhes(true)">Atualizar</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_atend_busca">Buscar</label><input id="home_det_atend_busca" type="search" placeholder="Paciente ou profissional" oninput="renderizarAtendimentosHojeDetalhes()"></div><div class="input-group" id="home_det_atend_prof_wrap"><label for="home_det_atend_prof">Profissional</label><select id="home_det_atend_prof" onchange="renderizarAtendimentosHojeDetalhes()"><option value="">Todos os profissionais</option></select></div><button type="button" class="btn-secondary" onclick="carregarAtendimentosHojeDetalhes(true)">Atualizar</button></div>
             <div id="home_det_atend_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_atend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando atendimentos de hoje…</div></div>
         </section>
 
         <section id="tela_home_pendencias" class="tela ks-home-detail-screen">
             <div class="ks-home-detail-hero"><div><span class="eyebrow">PAINEL CLÍNICO</span><h2>Pendências clínicas</h2><p>Selecione uma pendência para abrir o paciente diretamente no ponto do prontuário que precisa de atenção.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
-            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar paciente ou pendência</label><input id="home_det_pend_busca" type="search" placeholder="Nome, pendência..." oninput="renderizarPendenciasClinicasDetalhes()"></div><div class="input-group"><label>Prioridade</label><select id="home_det_pend_nivel" onchange="renderizarPendenciasClinicasDetalhes()"><option value="">Todas</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Acompanhamento</option></select></div><button type="button" class="btn-secondary" onclick="carregarPendenciasClinicasDetalhes(true)">Atualizar</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_pend_busca">Buscar paciente ou pendência</label><input id="home_det_pend_busca" type="search" placeholder="Nome, pendência..." oninput="renderizarPendenciasClinicasDetalhes()"></div><div class="input-group"><label for="home_det_pend_nivel">Prioridade</label><select id="home_det_pend_nivel" onchange="renderizarPendenciasClinicasDetalhes()"><option value="">Todas</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Acompanhamento</option></select></div><button type="button" class="btn-secondary" onclick="carregarPendenciasClinicasDetalhes(true)">Atualizar</button></div>
             <div id="home_det_pend_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_pend_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pendências…</div></div>
         </section>
 
         <section id="tela_home_recentes" class="tela ks-home-detail-screen">
             <div class="ks-home-detail-hero"><div><span class="eyebrow">PACIENTES</span><h2>Pacientes recentes</h2><p>Últimos cadastros da clínica, em ordem do mais recente para o mais antigo.</p></div><button type="button" class="btn-secondary" onclick="navegarPara('tela_home')">← Voltar ao início</button></div>
-            <div class="card ks-home-detail-toolbar"><div class="input-group"><label>Buscar paciente</label><input id="home_det_recent_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPacientesRecentesDetalhes()"></div><button type="button" class="btn-secondary" onclick="carregarPacientesRecentesDetalhes(true)">Atualizar</button></div>
+            <div class="card ks-home-detail-toolbar"><div class="input-group"><label for="home_det_recent_busca">Buscar paciente</label><input id="home_det_recent_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPacientesRecentesDetalhes()"></div><button type="button" class="btn-secondary" onclick="carregarPacientesRecentesDetalhes(true)">Atualizar</button></div>
             <div id="home_det_recent_resumo" class="ks-home-detail-summary"></div>
             <div id="home_det_recent_lista" class="ks-home-detail-list"><div class="ks-home-empty">Carregando pacientes recentes…</div></div>
         </section>
@@ -194,28 +194,28 @@
 
                 <div class="grid-2">
                     <div class="input-group">
-                        <label>Nome Completo *</label>
+                        <label for="cad_nome">Nome Completo *</label>
                         <input type="text" id="cad_nome" placeholder="Digite o nome completo">
                     </div>
                     <div class="input-group">
-                        <label>CPF</label>
+                        <label for="cad_cpf">CPF</label>
                         <input type="text" id="cad_cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" aria-describedby="cad_cpf_erro">
                         <small id="cad_cpf_erro" class="field-error" role="alert"></small>
                     </div>
 
                     <div class="grid-2 kds-u-gap-10px kds-u-mb-0">
                         <div class="input-group">
-                            <label>Data de Nascimento</label>
+                            <label for="cad_nascimento">Data de Nascimento</label>
                             <input type="date" id="cad_nascimento" onchange="calcularIdadeCadastro()">
                         </div>
                         <div class="input-group">
-                            <label>Idade</label>
+                            <label for="cad_idade">Idade</label>
                             <input type="text" id="cad_idade" placeholder="Calculado" readonly class="kds-u-bg-disabled kds-u-cursor-not-allowed kds-u-fw-bold kds-u-text-petrol">
                         </div>
                     </div>
 
                     <div class="input-group">
-                        <label>Sexo</label>
+                        <label for="cad_sexo">Sexo</label>
                         <select id="cad_sexo">
                             <option value="">-- Selecione --</option>
                             <option value="Masculino">Masculino</option>
@@ -225,7 +225,7 @@
                     </div>
 
                     <div class="input-group">
-                        <label>Estado Civil</label>
+                        <label for="cad_estado_civil">Estado Civil</label>
                         <select id="cad_estado_civil">
                             <option value="">-- Selecione --</option>
                             <option value="Solteiro(a)">Solteiro(a)</option>
@@ -237,13 +237,13 @@
                     </div>
 
                     <div class="input-group">
-                        <label>Telefone / WhatsApp do paciente</label>
+                        <label for="cad_telefone">Telefone / WhatsApp do paciente</label>
                         <input type="text" id="cad_telefone" placeholder="(00) 00000-0000" inputmode="tel" maxlength="15" aria-describedby="cad_telefone_erro">
                         <small id="cad_telefone_erro" class="field-error" role="alert"></small>
                     </div>
 
                     <div class="input-group">
-                        <label>Profissão / Ocupação</label>
+                        <label for="cad_profissao">Profissão / Ocupação</label>
                         <input type="text" id="cad_profissao" placeholder="Ex: Dentista, Pedreiro...">
                     </div>
 
@@ -261,12 +261,12 @@
                         </div>
                         <div class="grid-3">
                             <div class="input-group">
-                                <label>Nome do responsável *</label>
+                                <label for="cad_responsavel_nome">Nome do responsável *</label>
                                 <input type="text" id="cad_responsavel_nome" placeholder="Nome completo do responsável" aria-describedby="cad_responsavel_nome_erro">
                                 <small id="cad_responsavel_nome_erro" class="field-error" role="alert"></small>
                             </div>
                             <div class="input-group">
-                                <label>Vínculo / parentesco</label>
+                                <label for="cad_responsavel_parentesco">Vínculo / parentesco</label>
                                 <select id="cad_responsavel_parentesco">
                                     <option value="">-- Selecione --</option>
                                     <option value="Mãe">Mãe</option>
@@ -280,7 +280,7 @@
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>Telefone / WhatsApp do responsável *</label>
+                                <label for="cad_responsavel_telefone">Telefone / WhatsApp do responsável *</label>
                                 <input type="text" id="cad_responsavel_telefone" placeholder="(00) 00000-0000" inputmode="tel" maxlength="15" aria-describedby="cad_responsavel_telefone_erro">
                                 <small id="cad_responsavel_telefone_erro" class="field-error" role="alert"></small>
                             </div>
@@ -288,7 +288,7 @@
                     </div>
 
                     <div class="input-group">
-                        <label>CEP</label>
+                        <label for="cad_cep">CEP</label>
                         <input type="text" id="cad_cep" placeholder="00000-000" inputmode="numeric" maxlength="9" autocomplete="postal-code" aria-describedby="cad_cep_erro">
                         <small id="cad_cep_erro" class="field-error" role="alert"></small>
                         <small id="cad_cep_status" class="field-status" aria-live="polite"></small>
@@ -297,7 +297,7 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Endereço Completo</label>
+                    <label for="cad_endereco">Endereço Completo</label>
                     <input type="text" id="cad_endereco" placeholder="O endereço será preenchido pelo CEP; complete número e complemento">
                 </div>
 
@@ -377,10 +377,10 @@
                     </div>
                     <div id="avaliacao_registros_paciente" class="kds-u-m-0-0-14px kds-u-p-12px-14px kds-u-border-1px-solid-dde8e4 kds-u-br-10px kds-u-bg-soft-panel" style="display:none;"></div>
                     <div class="patient-strip patient-strip-cards">
-                        <div class="input-group patient-plain-field"><label>Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
-                        <div class="input-group patient-plain-field patient-age"><label>Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
-                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label>Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
-                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label>Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
+                        <div class="input-group patient-plain-field"><label for="paciente_nome">Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
+                        <div class="input-group patient-plain-field patient-age"><label for="paciente_idade">Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label for="paciente_ocupacao">Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label for="paciente_esporte">Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
                     </div>
 
                     <!-- Campos antigos de trajeto mantidos ocultos somente por compatibilidade técnica.
@@ -467,8 +467,8 @@
                                 <label class="checkbox-pill"><input type="checkbox" id="chk_aine_recente"><span>AINE recente</span></label>
                                 <label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia / trauma</span></label>
                             </div></div>
-                            <div id="bloco_cirurgias"><div class="input-group kds-u-pos-relative kds-u-z-98"><label>Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div></div>
-                            <div class="input-group kds-u-pos-relative kds-u-z-97"><label>Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div>
+                            <div id="bloco_cirurgias"><div class="input-group kds-u-pos-relative kds-u-z-98"><label for="input_cirurgia">Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div></div>
+                            <div class="input-group kds-u-pos-relative kds-u-z-97"><label for="input_medicamento">Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div>
                         </div>
                     </details>
 
@@ -491,7 +491,7 @@
                     <details class="clinical-disclosure">
                         <summary><span>Carga esportiva</span><small>Frequência, dose e exposição predominante</small></summary>
                         <div class="disclosure-body">
-                            <div class="grid-2 compact-grid"><div class="input-group"><label>Frequência semanal</label><input type="number" id="esporte_frequencia" min="0" max="14" placeholder="sessões/semana"></div><div class="input-group"><label>Duração média</label><input type="number" id="esporte_duracao" min="0" placeholder="min/sessão"></div><div class="input-group"><label>Nível</label><select id="esporte_nivel"><option value="">Não informado</option><option value="recreacional">Recreacional</option><option value="competitivo">Competitivo</option><option value="alto_rendimento">Alto rendimento</option></select></div><div class="input-group"><label>Mudança recente de carga</label><select id="esporte_mudanca_carga"><option value="">Não informado</option><option value="nao">Sem aumento relevante</option><option value="leve">Aumento leve</option><option value="moderado">Aumento moderado</option><option value="acentuado">Aumento acentuado</option></select></div></div>
+                            <div class="grid-2 compact-grid"><div class="input-group"><label for="esporte_frequencia">Frequência semanal</label><input type="number" id="esporte_frequencia" min="0" max="14" placeholder="sessões/semana"></div><div class="input-group"><label for="esporte_duracao">Duração média</label><input type="number" id="esporte_duracao" min="0" placeholder="min/sessão"></div><div class="input-group"><label for="esporte_nivel">Nível</label><select id="esporte_nivel"><option value="">Não informado</option><option value="recreacional">Recreacional</option><option value="competitivo">Competitivo</option><option value="alto_rendimento">Alto rendimento</option></select></div><div class="input-group"><label for="esporte_mudanca_carga">Mudança recente de carga</label><select id="esporte_mudanca_carga"><option value="">Não informado</option><option value="nao">Sem aumento relevante</option><option value="leve">Aumento leve</option><option value="moderado">Aumento moderado</option><option value="acentuado">Aumento acentuado</option></select></div></div>
                             <div class="checkbox-group compact-chips" id="grupo_exposicoes_esportivas">
                                 <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="impacto"><span>Impacto</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="forca_alta"><span>Força alta</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="overhead"><span>Overhead</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="rotacao"><span>Rotação/pivô</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="endurance"><span>Endurance</span></label>
                             </div>
@@ -505,7 +505,7 @@
                             <div class="checkbox-group compact-chips" id="grupo_yellow_flags">
                                 <label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="medo_movimento"><span>Medo de movimento/relesão</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="catastrofizacao"><span>Catastrofização</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="baixa_autoeficacia"><span>Baixa autoeficácia</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="evitacao"><span>Evitação</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="sono_ruim"><span>Sono ruim</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="estresse"><span>Estresse elevado</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="afastamento"><span>Barreiras de retorno</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="expectativa_negativa"><span>Expectativa negativa</span></label>
                             </div>
-                            <div class="input-group"><label>Observação contextual (opcional)</label><textarea id="yellow_flags_observacao" placeholder="Contexto relevante..."></textarea></div>
+                            <div class="input-group"><label for="yellow_flags_observacao">Observação contextual (opcional)</label><textarea id="yellow_flags_observacao" placeholder="Contexto relevante..."></textarea></div>
                         </div>
                     </details>
 
@@ -574,24 +574,24 @@
                     <label class="checkbox-pill kds-u-mb-12px"><input type="checkbox" id="posop_ativo" onchange="atualizarVisibilidadeRestricoesPosOp()"><span>Paciente em fase pós-operatória com restrições ativas</span></label>
                     <div id="posop_campos" style="display:none">
                         <div class="grid-2">
-                            <div class="input-group"><label>Procedimento / cirurgia</label><input type="text" id="posop_procedimento" placeholder="Ex.: osteossíntese bimaleolar com placa e parafusos"></div>
-                            <div class="input-group"><label>Data da cirurgia</label><input type="date" id="posop_data_cirurgia"></div>
+                            <div class="input-group"><label for="posop_procedimento">Procedimento / cirurgia</label><input type="text" id="posop_procedimento" placeholder="Ex.: osteossíntese bimaleolar com placa e parafusos"></div>
+                            <div class="input-group"><label for="posop_data_cirurgia">Data da cirurgia</label><input type="date" id="posop_data_cirurgia"></div>
                         </div>
                         <div class="grid-2">
-                            <div class="input-group"><label>Status de carga</label><select id="posop_carga"><option value="">Não informado</option><option value="sem_carga">Sem carga</option><option value="toque">Toque / contato apenas</option><option value="parcial">Carga parcial</option><option value="conforme_tolerado">Carga conforme tolerado</option><option value="total">Carga total</option></select></div>
-                            <div class="input-group"><label>Órtese / imobilização</label><input type="text" id="posop_ortese" placeholder="Ex.: bota imobilizadora até retorno médico"></div>
+                            <div class="input-group"><label for="posop_carga">Status de carga</label><select id="posop_carga"><option value="">Não informado</option><option value="sem_carga">Sem carga</option><option value="toque">Toque / contato apenas</option><option value="parcial">Carga parcial</option><option value="conforme_tolerado">Carga conforme tolerado</option><option value="total">Carga total</option></select></div>
+                            <div class="input-group"><label for="posop_ortese">Órtese / imobilização</label><input type="text" id="posop_ortese" placeholder="Ex.: bota imobilizadora até retorno médico"></div>
                         </div>
                         <div class="grid-2">
-                            <div class="input-group"><label>Limite / restrição de ADM</label><textarea id="posop_adm" rows="2" placeholder="Ex.: não ultrapassar 90° de flexão; evitar dorsiflexão forçada."></textarea></div>
-                            <div class="input-group"><label>Movimentos / atividades proibidas</label><textarea id="posop_proibicoes" rows="2" placeholder="Ex.: sem corrida, saltos ou apoio unipodal sem liberação."></textarea></div>
+                            <div class="input-group"><label for="posop_adm">Limite / restrição de ADM</label><textarea id="posop_adm" rows="2" placeholder="Ex.: não ultrapassar 90° de flexão; evitar dorsiflexão forçada."></textarea></div>
+                            <div class="input-group"><label for="posop_proibicoes">Movimentos / atividades proibidas</label><textarea id="posop_proibicoes" rows="2" placeholder="Ex.: sem corrida, saltos ou apoio unipodal sem liberação."></textarea></div>
                         </div>
                         <div class="grid-2">
-                            <div class="input-group"><label>Orientações específicas do cirurgião</label><textarea id="posop_orientacoes" rows="2"></textarea></div>
-                            <div class="input-group"><label>Próximo retorno médico</label><input type="date" id="posop_retorno_medico"></div>
+                            <div class="input-group"><label for="posop_orientacoes">Orientações específicas do cirurgião</label><textarea id="posop_orientacoes" rows="2"></textarea></div>
+                            <div class="input-group"><label for="posop_retorno_medico">Próximo retorno médico</label><input type="date" id="posop_retorno_medico"></div>
                         </div>
                         <div class="grid-2">
-                            <div class="input-group"><label>Protocolo do cirurgião disponível?</label><select id="posop_protocolo"><option value="nao_informado">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-                            <div class="input-group"><label>Observações de segurança / progressão</label><textarea id="posop_obs" rows="2"></textarea></div>
+                            <div class="input-group"><label for="posop_protocolo">Protocolo do cirurgião disponível?</label><select id="posop_protocolo"><option value="nao_informado">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+                            <div class="input-group"><label for="posop_obs">Observações de segurança / progressão</label><textarea id="posop_obs" rows="2"></textarea></div>
                         </div>
                     </div>
                 </div>
@@ -612,7 +612,7 @@
                     <h2>Pacientes cadastrados</h2>
                 </div>
                 <div class="input-group">
-                    <label>Buscar paciente</label>
+                    <label for="input_busca_paciente">Buscar paciente</label>
                     <input type="text" id="input_busca_paciente" placeholder="Digite o nome ou CPF do paciente..." oninput="filtrarPacientesSalvos()">
                 </div>
 </div>
@@ -632,7 +632,7 @@
                 <div id="midia_perfil_aviso" class="midia-role-note" style="display:none;"></div>
                 <div class="grid-2 midia-top-grid">
                     <div class="input-group">
-                        <label>Paciente *</label>
+                        <label for="midia_paciente_select">Paciente *</label>
                         <select id="midia_paciente_select" onchange="carregarMidiasPacienteSelecionado()">
                             <option value="">-- Selecione um paciente --</option>
                         </select>
@@ -700,7 +700,7 @@
                     <p>O original é salvo automaticamente dentro de <code>C:\KineSys\Dados\Pacientes\&lt;paciente_id&gt;</code>: fotografias clínicas em <code>Fotos\AAAA\MM</code> e termos/identificação/documentos em <code>Documentos\AAAA\MM</code>. Você pode definir uma segunda pasta para cópia automática de segurança.</p>
                     <div class="grid-2">
                         <div class="input-group">
-                            <label>Pasta de backup (opcional)</label>
+                            <label for="midia_backup_path">Pasta de backup (opcional)</label>
                             <input type="text" id="midia_backup_path" placeholder="Ex.: E:\KineSys_Backup">
                         </div>
                         <div class="midia-settings-action">
@@ -721,13 +721,13 @@
                 </div>
                 <div class="grid-2">
                     <div class="input-group">
-                        <label>Selecionar Paciente *</label>
+                        <label for="evo_paciente_select">Selecionar Paciente *</label>
                         <select id="evo_paciente_select" onchange="carregarHistoricoEvolucao()">
                             <option value="">-- Selecione um paciente --</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Data e hora do atendimento *</label>
+                        <label for="evo_realizado_em">Data e hora do atendimento *</label>
                         <input type="datetime-local" id="evo_realizado_em">
                         <input type="date" id="evo_data" style="display:none" aria-hidden="true" tabindex="-1">
                         <small class="kds-u-text-muted kds-u-fs-meta">O horário de salvamento é registrado separadamente. A edição fica disponível por até 24 h da realização.</small>
@@ -740,7 +740,7 @@
                     <strong>Paciente sem avaliação clínica finalizada</strong>
                     <p class="kds-u-fs-meta kds-u-m-5px-0-8px kds-u-text-muted">A evolução só deve ser registrada como exceção quando houver motivo clínico/operacional justificável.</p>
                     <label class="checkbox-pill"><input type="checkbox" id="evo_excecao_sem_avaliacao"><span>Registrar atendimento excepcional mesmo sem avaliação finalizada</span></label>
-                    <div class="input-group kds-u-mt-8px"><label>Justificativa obrigatória da exceção</label><textarea id="evo_justificativa_excecao" rows="2" placeholder="Ex: atendimento avulso/urgência; avaliação completa programada para próxima sessão."></textarea></div>
+                    <div class="input-group kds-u-mt-8px"><label for="evo_justificativa_excecao">Justificativa obrigatória da exceção</label><textarea id="evo_justificativa_excecao" rows="2" placeholder="Ex: atendimento avulso/urgência; avaliação completa programada para próxima sessão."></textarea></div>
                 </div>
                 <div class="actions kds-u-jc-start kds-u-m-12px-0-0">
                     <button class="btn-secondary" type="button" onclick="duplicarUltimaEvolucao()">⧉ Duplicar última sessão</button>
@@ -759,7 +759,7 @@
                         <label class="checkbox-pill"><input type="checkbox" id="evo_novo_exame"><span>Novo exame / laudo</span></label>
                         <label class="checkbox-pill"><input type="checkbox" id="evo_novo_alerta"><span>Novo sinal de alerta</span></label>
                     </div>
-                    <div class="input-group kds-u-mt-10px"><label>O que mudou desde a última sessão?</label><textarea id="evo_mudancas" rows="2" placeholder="Registre apenas mudanças relevantes, inclusive sinais novos."></textarea></div>
+                    <div class="input-group kds-u-mt-10px"><label for="evo_mudancas">O que mudou desde a última sessão?</label><textarea id="evo_mudancas" rows="2" placeholder="Registre apenas mudanças relevantes, inclusive sinais novos."></textarea></div>
                 </div>
 
                 <div class="input-group">
@@ -775,19 +775,19 @@
                 <div class="card card--nested">
                     <div class="card-header"><h2 class="kds-u-fs-content">Resposta à carga / sessão</h2></div>
                     <div class="evo-mini-grid">
-                        <div class="input-group"><label>Dor durante carga (0–10)</label><input type="number" id="evo_dor_durante" min="0" max="10" step="1"></div>
-                        <div class="input-group"><label>Dor 24 h após sessão anterior (0–10)</label><input type="number" id="evo_dor_24h" min="0" max="10" step="1"></div>
-                        <div class="input-group"><label>RPE da sessão (0–10)</label><input type="number" id="evo_rpe" min="0" max="10" step="1"></div>
-                        <div class="input-group"><label>Duração da sessão (min)</label><input type="number" id="evo_duracao" min="0" step="5"></div>
+                        <div class="input-group"><label for="evo_dor_durante">Dor durante carga (0–10)</label><input type="number" id="evo_dor_durante" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label for="evo_dor_24h">Dor 24 h após sessão anterior (0–10)</label><input type="number" id="evo_dor_24h" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label for="evo_rpe">RPE da sessão (0–10)</label><input type="number" id="evo_rpe" min="0" max="10" step="1"></div>
+                        <div class="input-group"><label for="evo_duracao">Duração da sessão (min)</label><input type="number" id="evo_duracao" min="0" step="5"></div>
                     </div>
                     <div class="grid-2">
-                        <div class="input-group"><label>Resposta tardia / tolerância</label><select id="evo_resposta_24h"><option value="">Não informado</option><option value="retornou_basal">Retornou ao basal em até 24 h</option><option value="leve_piora">Piora leve e transitória</option><option value="piora_persistente">Piora persistente &gt;24 h</option><option value="melhorou">Melhorou após a sessão</option></select></div>
-                        <div class="input-group"><label>Edema / irritabilidade após carga</label><select id="evo_edema"><option value="">Não informado</option><option value="sem_aumento">Sem aumento</option><option value="aumento_leve">Aumento leve</option><option value="aumento_importante">Aumento importante</option></select></div>
+                        <div class="input-group"><label for="evo_resposta_24h">Resposta tardia / tolerância</label><select id="evo_resposta_24h"><option value="">Não informado</option><option value="retornou_basal">Retornou ao basal em até 24 h</option><option value="leve_piora">Piora leve e transitória</option><option value="piora_persistente">Piora persistente &gt;24 h</option><option value="melhorou">Melhorou após a sessão</option></select></div>
+                        <div class="input-group"><label for="evo_edema">Edema / irritabilidade após carga</label><select id="evo_edema"><option value="">Não informado</option><option value="sem_aumento">Sem aumento</option><option value="aumento_leve">Aumento leve</option><option value="aumento_importante">Aumento importante</option></select></div>
                     </div>
                 </div>
 
                 <div class="input-group kds-u-mt-20px">
-                    <label>Relato do Paciente e Conduta Terapêutica</label>
+                    <label for="evo_relato">Relato do Paciente e Conduta Terapêutica</label>
                     <textarea id="evo_relato" placeholder="Descreva resposta clínica, intervenção realizada, dosagem relevante e decisão de progressão/regressão."></textarea>
                 </div>
 
@@ -816,7 +816,7 @@
             <div class="card">
 
                 <div class="input-group">
-                    <label>Selecionar Paciente</label>
+                    <label for="rel_paciente_select">Selecionar Paciente</label>
                     <select id="rel_paciente_select" onchange="onPacienteRelatorioChange()">
                         <option value="">-- Selecione um paciente --</option>
                     </select>
@@ -825,7 +825,7 @@
                 <div id="resumo_paciente_relatorio" class="resumo-paciente" style="display:none;"></div>
 
                 <div class="input-group kds-u-mt-20px">
-                    <label>Tipo de Documento</label>
+                    <label for="rel_tipo_documento">Tipo de Documento</label>
                     <select id="rel_tipo_documento" onchange="onTipoDocumentoChange()">
                         <option value="comparecimento">Declaração de comparecimento</option>
                         <option value="relatorio">Relatório fisioterapêutico</option>
@@ -837,21 +837,21 @@
                 <div id="campos_comparecimento" class="kds-u-mt-15px kds-u-p-15px kds-u-bg-soft-mint kds-u-br-8px kds-u-bl-4px-solid-2aa79d" style="display:none;">
                     <div class="grid-2">
                         <div class="input-group">
-                            <label>Data do Atendimento</label>
+                            <label for="rel_comp_data">Data do Atendimento</label>
                             <input type="date" id="rel_comp_data">
                         </div>
                         <div class="input-group">
-                            <label>Hora de Entrada *</label>
+                            <label for="rel_comp_entrada">Hora de Entrada *</label>
                             <input type="time" id="rel_comp_entrada">
                         </div>
                     </div>
                     <div class="grid-2">
                         <div class="input-group">
-                            <label>Hora de Saída *</label>
+                            <label for="rel_comp_saida">Hora de Saída *</label>
                             <input type="time" id="rel_comp_saida">
                         </div>
                         <div class="input-group">
-                            <label>Duração calculada</label>
+                            <label for="rel_comp_duracao">Duração calculada</label>
                             <input type="text" id="rel_comp_duracao" readonly placeholder="Calculada automaticamente">
                         </div>
                     </div>
@@ -871,9 +871,9 @@
                 <!-- ======== RELATÓRIO FISIOTERAPÊUTICO: rascunho curto + IA ======== -->
                 <div id="bloco_ia" class="kds-u-mt-15px kds-u-p-15px kds-u-bg-soft-mint kds-u-br-8px kds-u-bl-4px-solid-2aa79d" style="display:none;">
                     <div class="ai-options-grid">
-                        <div class="input-group" id="rel_objetivo_group"><label>Objetivo do relatório</label><select id="rel_objetivo"><option value="geral">Relatório fisioterapêutico geral</option><option value="evolucao">Relatório de evolução</option><option value="avaliacao_medica">Solicitação de avaliação médica/especialista</option><option value="alta">Relatório de alta fisioterapêutica</option><option value="empresa">Relatório para empresa/convênio</option><option value="academia">Relatório para academia / Profissional de Educação Física</option></select></div>
-                        <div class="input-group"><label>Extensão</label><select id="rel_extensao"><option value="curto">Curto e objetivo</option><option value="medio" selected>Médio</option><option value="detalhado">Detalhado</option></select></div>
-                        <div class="input-group"><label>Evoluções a considerar</label><select id="rel_evolucoes_qtd"><option value="0">Nenhuma</option><option value="3" selected>Últimas 3</option><option value="5">Últimas 5</option><option value="999">Todas</option></select></div>
+                        <div class="input-group" id="rel_objetivo_group"><label for="rel_objetivo">Objetivo do relatório</label><select id="rel_objetivo"><option value="geral">Relatório fisioterapêutico geral</option><option value="evolucao">Relatório de evolução</option><option value="avaliacao_medica">Solicitação de avaliação médica/especialista</option><option value="alta">Relatório de alta fisioterapêutica</option><option value="empresa">Relatório para empresa/convênio</option><option value="academia">Relatório para academia / Profissional de Educação Física</option></select></div>
+                        <div class="input-group"><label for="rel_extensao">Extensão</label><select id="rel_extensao"><option value="curto">Curto e objetivo</option><option value="medio" selected>Médio</option><option value="detalhado">Detalhado</option></select></div>
+                        <div class="input-group"><label for="rel_evolucoes_qtd">Evoluções a considerar</label><select id="rel_evolucoes_qtd"><option value="0">Nenhuma</option><option value="3" selected>Últimas 3</option><option value="5">Últimas 5</option><option value="999">Todas</option></select></div>
                     </div>
                     <div class="checkbox-group kds-u-mb-12px">
                         <label class="checkbox-pill"><input type="checkbox" id="rel_inc_medidas" checked><span>Medidas objetivas</span></label>
@@ -939,11 +939,11 @@
                         </div>
                         <div class="agenda-toolbar-filtros">
                             <div class="input-group">
-                                <label>Ir para data</label>
+                                <label for="agenda_data_input">Ir para data</label>
                                 <input type="date" id="agenda_data_input" onchange="irParaDataAgenda(this.value)">
                             </div>
                             <div class="input-group agenda-profissional-filtro">
-                                <label>Agenda</label>
+                                <label for="agenda_filtro_profissional">Agenda</label>
                                 <select id="agenda_filtro_profissional" onchange="atualizarIndicadorEscopoAgenda(); renderizarPainelAgenda()">
                                     <option value="">Toda a clínica</option>
                                 </select>
@@ -1010,7 +1010,7 @@
                         </div>
                         <div class="ks-week-schedule-actions">
                             <div class="input-group">
-                                <label>Profissional</label>
+                                <label for="agenda_grade_profissional">Profissional</label>
                                 <select id="agenda_grade_profissional" onchange="carregarEditorGradeSemanal()"><option value="">-- Selecione um profissional --</option></select>
                             </div>
                             <button type="button" class="btn-primary" id="btn_salvar_grade_profissional" onclick="salvarGradeProfissional()">Salvar horário profissional</button>
@@ -1119,7 +1119,7 @@
             </div>
             <div id="financeiro_painel_pendencias" hidden>
                 <div class="card finance-pending-toolbar">
-                    <div class="input-group"><label>Buscar paciente</label><input id="financeiro_pendencias_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPendenciasFinanceiras()"></div>
+                    <div class="input-group"><label for="financeiro_pendencias_busca">Buscar paciente</label><input id="financeiro_pendencias_busca" type="search" placeholder="Nome, telefone ou CPF" oninput="renderizarPendenciasFinanceiras()"></div>
                     <button type="button" class="btn-secondary" onclick="carregarPendenciasFinanceiras(true)">Atualizar lista</button>
                 </div>
                 <div class="finance-pending-stats">
@@ -1144,8 +1144,8 @@
             <div id="financeiro_painel_descontos" hidden>
                 <details class="finance-help"><summary>Como os descontos são calculados</summary><p>O período considera a criação do plano ou cobrança. Registros antigos sem origem identificável permanecem como “Histórico não classificado”.</p></details>
                 <div class="card finance-discount-toolbar">
-                    <div class="input-group"><label>De</label><input type="date" id="fin_desc_data_inicio"></div>
-                    <div class="input-group"><label>Até</label><input type="date" id="fin_desc_data_fim"></div>
+                    <div class="input-group"><label for="fin_desc_data_inicio">De</label><input type="date" id="fin_desc_data_inicio"></div>
+                    <div class="input-group"><label for="fin_desc_data_fim">Até</label><input type="date" id="fin_desc_data_fim"></div>
                     <div class="finance-discount-actions"><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(7)">7 dias</button><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(30)">30 dias</button><button type="button" class="btn-secondary" onclick="definirPeriodoDescontos(90)">90 dias</button><button type="button" class="btn-primary" onclick="carregarRelatorioDescontos(true)">Aplicar período</button></div>
                 </div>
                 <div class="finance-discount-stats">
@@ -1160,9 +1160,9 @@
             <div id="financeiro_painel_gastos" hidden>
                 <details class="finance-help"><summary>Como organizar as despesas</summary><p>Cada saída recebe uma categoria e um tipo de gasto para permitir a análise mensal sem perder os detalhes do lançamento.</p></details>
                 <div class="card finance-expense-toolbar">
-                    <div class="input-group"><label>Mês</label><input type="month" id="fin_gastos_mes" onchange="carregarLancamentosGastos(true)"></div>
-                    <div class="input-group"><label>Categoria</label><select id="fin_gastos_categoria_filtro" onchange="renderizarLancamentosGastos()"><option value="">Todas as categorias</option><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
-                    <div class="input-group"><label>Buscar</label><input id="fin_gastos_busca" type="search" placeholder="Descrição, tipo, forma de pagamento..." oninput="renderizarLancamentosGastos()"></div>
+                    <div class="input-group"><label for="fin_gastos_mes">Mês</label><input type="month" id="fin_gastos_mes" onchange="carregarLancamentosGastos(true)"></div>
+                    <div class="input-group"><label for="fin_gastos_categoria_filtro">Categoria</label><select id="fin_gastos_categoria_filtro" onchange="renderizarLancamentosGastos()"><option value="">Todas as categorias</option><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
+                    <div class="input-group"><label for="fin_gastos_busca">Buscar</label><input id="fin_gastos_busca" type="search" placeholder="Descrição, tipo, forma de pagamento..." oninput="renderizarLancamentosGastos()"></div>
                     <button type="button" class="btn-primary" onclick="abrirModalDespesaFinanceira()">+ Novo gasto</button>
                 </div>
                 <div class="finance-expense-admin-stats">
@@ -1178,7 +1178,7 @@
                 <div class="finance-report-head"><div><h2>Relatórios financeiros</h2><p>Resultado mensal da clínica.</p></div><button type="button" class="btn-secondary" onclick="KineSysFinanceiro.abrirIndicadores()">Ver indicadores anuais</button></div>
                 <details class="finance-help"><summary>Como o período é calculado</summary><p>A competência vai do primeiro ao último dia do mês. Recebimentos usam a data do pagamento, despesas usam a data da saída e descontos usam a criação do plano ou cobrança.</p></details>
                 <div class="card finance-balance-toolbar">
-                    <div class="input-group"><label>Mês analisado</label><input type="month" id="fin_bal_mes" onchange="carregarBalancoFinanceiroMensal(true)"></div>
+                    <div class="input-group"><label for="fin_bal_mes">Mês analisado</label><input type="month" id="fin_bal_mes" onchange="carregarBalancoFinanceiroMensal(true)"></div>
                     <div id="fin_bal_periodo" class="finance-balance-period">—</div>
                     <button type="button" class="btn-secondary" onclick="carregarBalancoFinanceiroMensal(true)">Atualizar</button>
                     <button type="button" class="btn-primary" onclick="abrirModalDespesaFinanceira()">+ Registrar despesa</button>
@@ -1218,9 +1218,9 @@
                 <div class="finance-report-head"><div><h2>Indicadores anuais</h2><p>Crescimento, atendimentos e qualidade operacional.</p></div><button type="button" class="btn-secondary" onclick="alternarAbaFinanceiro('balanco')">Voltar ao resultado mensal</button></div>
                 <details class="finance-help"><summary>Como os indicadores são calculados</summary><p>Aniversariantes usam o mês atual. Os demais indicadores usam o ano selecionado.</p></details>
                 <div class="card finance-analysis-toolbar">
-                    <div class="input-group"><label>Ano analisado</label><input type="number" id="fin_ana_ano" min="2020" max="2099" onchange="carregarAnaliseAdmin(true)"></div>
-                    <div class="input-group"><label>Filtro da análise</label><select id="fin_ana_visao" onchange="renderizarAnaliseAdminVisao()"><option value="faturamento">Faturamento e lucratividade do ano vigente</option><option value="aniversariantes">Aniversariantes do mês</option><option value="atendimentos">Atendimentos realizados no ano vigente</option><option value="novos_pacientes">Novos pacientes selecionados</option><option value="crescimento">Crescimento da clínica</option><option value="qualidade">Qualidade operacional</option></select></div>
-                    <div class="input-group"><label>Buscar paciente</label><input id="fin_ana_busca" type="search" placeholder="Nome, telefone, responsável..." oninput="renderizarAnaliseAdminVisao()"></div>
+                    <div class="input-group"><label for="fin_ana_ano">Ano analisado</label><input type="number" id="fin_ana_ano" min="2020" max="2099" onchange="carregarAnaliseAdmin(true)"></div>
+                    <div class="input-group"><label for="fin_ana_visao">Filtro da análise</label><select id="fin_ana_visao" onchange="renderizarAnaliseAdminVisao()"><option value="faturamento">Faturamento e lucratividade do ano vigente</option><option value="aniversariantes">Aniversariantes do mês</option><option value="atendimentos">Atendimentos realizados no ano vigente</option><option value="novos_pacientes">Novos pacientes selecionados</option><option value="crescimento">Crescimento da clínica</option><option value="qualidade">Qualidade operacional</option></select></div>
+                    <div class="input-group"><label for="fin_ana_busca">Buscar paciente</label><input id="fin_ana_busca" type="search" placeholder="Nome, telefone, responsável..." oninput="renderizarAnaliseAdminVisao()"></div>
                     <button type="button" class="btn-secondary" onclick="carregarAnaliseAdmin(true)">Atualizar</button>
                 </div>
                 <div id="fin_ana_periodo" class="finance-analysis-period">Ano vigente: —</div>
@@ -1246,9 +1246,9 @@
                         <div class="ks-config-note"><strong>Como funciona:</strong> os funcionários não alteram estes textos. Eles apenas usam a versão definida pelo administrador no momento do envio.</div>
                     </div>
                     <div class="ks-msg-editor">
-                        <div class="input-group"><label>Nome interno da mensagem</label><input id="cfg_msg_titulo" type="text" maxlength="120"></div>
+                        <div class="input-group"><label for="cfg_msg_titulo">Nome interno da mensagem</label><input id="cfg_msg_titulo" type="text" maxlength="120"></div>
                         <div id="cfg_msg_descricao" class="field-help kds-u-m-5px-0-12px"></div>
-                        <div class="input-group"><label>Texto padrão</label><textarea id="cfg_msg_texto" maxlength="4000" oninput="atualizarPreviewMensagemConfiguracao()"></textarea></div>
+                        <div class="input-group"><label for="cfg_msg_texto">Texto padrão</label><textarea id="cfg_msg_texto" maxlength="4000" oninput="atualizarPreviewMensagemConfiguracao()"></textarea></div>
                         <label class="kds-u-fs-meta kds-u-fw-800 kds-u-text-petrol kds-u-mt-5px kds-u-d-block">Variáveis automáticas — clique para inserir</label>
                         <div id="cfg_msg_variaveis" class="ks-msg-vars"></div>
                         <label class="kds-u-fs-meta kds-u-fw-800 kds-u-text-petrol kds-u-mb-6px kds-u-d-block">Pré-visualização</label>
@@ -1298,30 +1298,30 @@
                 <input type="hidden" id="eq_edit_id" value="">
                 <div class="grid-2">
                     <div class="input-group">
-                        <label>Nome Completo *</label>
+                        <label for="eq_nome">Nome Completo *</label>
                         <input type="text" id="eq_nome" placeholder="Digite o nome do profissional">
                     </div>
                     <div class="input-group">
-                        <label>E-mail de Acesso *</label>
+                        <label for="eq_email">E-mail de Acesso *</label>
                         <input type="email" id="eq_email" placeholder="usuario@clinica.com">
                         <small class="kds-u-text-muted">O mesmo e-mail/CPF pode ser usado em funções diferentes, como Administrador e Fisioterapeuta.</small>
                     </div>
                     <div class="input-group" id="grp_eq_senha">
-                        <label>Senha de acesso *</label>
+                        <label for="eq_senha">Senha de acesso *</label>
                         <input type="password" id="eq_senha" placeholder="Mínimo de 8 caracteres" minlength="8" autocomplete="new-password">
                         <small class="kds-u-text-muted">Defina a senha inicial do profissional. Ela é enviada com segurança ao Supabase Auth e não é armazenada pelo KineSys.</small>
                     </div>
                     <div class="input-group" id="grp_eq_confirmar_senha">
-                        <label>Confirmar senha *</label>
+                        <label for="eq_confirmar_senha">Confirmar senha *</label>
                         <input type="password" id="eq_confirmar_senha" placeholder="Digite novamente" minlength="8" autocomplete="new-password">
                     </div>
                     <div class="input-group">
-                        <label>CPF</label>
+                        <label for="eq_cpf">CPF</label>
                         <input type="text" id="eq_cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" aria-describedby="eq_cpf_erro">
                         <small id="eq_cpf_erro" class="field-error" role="alert"></small>
                     </div>
                     <div class="input-group">
-                        <label>Profissão / Registro profissional</label>
+                        <label for="eq_tipo_registro">Profissão / Registro profissional</label>
                         <select id="eq_tipo_registro" onchange="alternarCampoRegistroProfissional(); sugerirNivelAcessoPorRegistro()">
                             <option value="CREFITO">Fisioterapeuta — CREFITO</option>
                             <option value="CRM">Médico — CRM</option>
@@ -1332,7 +1332,7 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Nível de acesso *</label>
+                        <label for="eq_nivel_acesso">Nível de acesso *</label>
                         <select id="eq_nivel_acesso" onchange="atualizarAjudaNivelAcesso()">
                             <option value="FISIOTERAPEUTA">Fisioterapeuta — acesso clínico</option>
                             <option value="SECRETARIA">Secretaria — acesso administrativo</option>
@@ -1343,20 +1343,20 @@
                         <small id="eq_nivel_acesso_ajuda" class="kds-u-text-muted">Acesso clínico à avaliação, evolução, documentos clínicos e agenda.</small>
                     </div>
                     <div class="input-group" id="grp_eq_regional">
-                        <label id="lbl_eq_regional">Regional do CREFITO</label>
+                        <label id="lbl_eq_regional" for="eq_regional">Regional do CREFITO</label>
                         <input type="text" id="eq_regional" placeholder="Ex: 4">
                     </div>
                     <div class="input-group" id="grp_eq_num_registro">
-                        <label>Número do Registro Profissional</label>
+                        <label for="eq_num_registro">Número do Registro Profissional</label>
                         <input type="text" id="eq_num_registro" placeholder="Ex: 312345-F">
                         <small class="kds-u-text-muted">Exemplo: Regional 4 + 312345-F → CREFITO-4 312345-F</small>
                     </div>
                     <div class="input-group">
-                        <label>Idade</label>
+                        <label for="eq_idade">Idade</label>
                         <input type="number" id="eq_idade" placeholder="Ex: 30">
                     </div>
                     <div class="input-group">
-                        <label>Endereço Completo</label>
+                        <label for="eq_endereco">Endereço Completo</label>
                         <input type="text" id="eq_endereco" placeholder="Rua, Número, Bairro">
                     </div>
                     <div class="input-group kds-u-gc-1-1">
@@ -1402,27 +1402,27 @@
             <h2 id="modal_agendamento_titulo">Novo agendamento</h2>
             <input type="hidden" id="ag_id">
             <div class="input-group">
-                <label>Paciente (já cadastrado no sistema)</label>
+                <label for="ag_paciente_select">Paciente (já cadastrado no sistema)</label>
                 <select id="ag_paciente_select" onchange="popularPlanosNoAgendamento(this.value, document.getElementById('ag_procedimento_select').value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione --</option></select>
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Profissional responsável *</label>
+                    <label for="ag_profissional_select">Profissional responsável *</label>
                     <select id="ag_profissional_select" required onchange="atualizarHorariosDisponiveisModal()"><option value="">-- Selecione o profissional --</option></select>
                     <small class="field-help">A agenda e os horários disponíveis serão calculados para o profissional escolhido.</small>
                 </div>
                 <div class="input-group">
-                    <label>Procedimento</label>
+                    <label for="ag_procedimento_select">Procedimento</label>
                     <select id="ag_procedimento_select" onchange="popularPlanosNoAgendamento(document.getElementById('ag_paciente_select').value, this.value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione --</option></select>
                 </div>
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Data</label>
+                    <label for="ag_data_input">Data</label>
                     <input type="date" id="ag_data_input" onchange="atualizarHorariosDisponiveisModal(); atualizarResumoRecorrencia()">
                 </div>
                 <div class="input-group">
-                    <label>Horário disponível</label>
+                    <label for="ag_horario_select">Horário disponível</label>
                     <select id="ag_horario_select"><option value="">-- Escolha data/profissional/procedimento --</option></select>
                 </div>
             </div>
@@ -1433,7 +1433,7 @@
                 </label>
                 <div id="ag_horario_extra_bloco" class="agenda-extra-time" hidden>
                     <div class="grid-2">
-                        <div class="input-group kds-u-m-0"><label>Início extraordinário</label><input type="time" id="ag_horario_extra_inicio" step="300" oninput="atualizarResumoHorarioExtraordinario(); atualizarResumoRecorrencia()"></div>
+                        <div class="input-group kds-u-m-0"><label for="ag_horario_extra_inicio">Início extraordinário</label><input type="time" id="ag_horario_extra_inicio" step="300" oninput="atualizarResumoHorarioExtraordinario(); atualizarResumoRecorrencia()"></div>
                         <div class="input-group kds-u-m-0"><label>Regra de segurança</label><div class="field-help">O término é calculado pela duração do procedimento. Bloqueios e conflitos continuam valendo.</div></div>
                     </div>
                     <div id="ag_horario_extra_resumo" class="agenda-extra-resumo"></div>
@@ -1471,19 +1471,19 @@
                 </div>
                 <div id="ag_recorrencia_fim_grupo" class="agenda-recurrencia-fim" hidden>
                     <div id="ag_recorrencia_quantidade_grupo" class="input-group kds-u-m-0">
-                        <label>Total de agendamentos</label>
+                        <label for="ag_recorrencia_quantidade">Total de agendamentos</label>
                         <input type="number" id="ag_recorrencia_quantidade" min="2" max="60" value="10" oninput="atualizarResumoRecorrencia()">
                         <div class="agenda-recorrencia-atalho"><button type="button" class="btn-secondary" onclick="usarSaldoPacoteNaRecorrencia()">Usar saldo do pacote</button></div>
                     </div>
                     <div id="ag_recorrencia_data_limite_grupo" class="input-group kds-u-m-0" hidden>
-                        <label>Repetir até</label>
+                        <label for="ag_recorrencia_data_limite">Repetir até</label>
                         <input type="date" id="ag_recorrencia_data_limite" onchange="atualizarResumoRecorrencia()">
                     </div>
                 </div>
                 <div id="ag_recorrencia_custom_grupo" hidden>
                     <div class="agenda-recorrencia-custom">
                         <div class="input-group">
-                            <label>Adicionar outra data</label>
+                            <label for="ag_recorrencia_data_custom">Adicionar outra data</label>
                             <input type="date" id="ag_recorrencia_data_custom">
                         </div>
                         <button type="button" class="btn-secondary" onclick="adicionarDataEspecificaRecorrencia()">Adicionar data</button>
@@ -1507,7 +1507,7 @@
                 <div id="ag_plano_resumo" class="agenda-package-summary" hidden></div><button type="button" class="btn-secondary" onclick="abrirCriarAtendimento('agenda')">+ Criar atendimento unitário</button>
             </div>
             <div class="input-group">
-                <label>Observações (opcional)</label>
+                <label for="ag_observacoes">Observações (opcional)</label>
                 <textarea id="ag_observacoes" class="kds-u-h-70px"></textarea>
             </div>
             <div id="ag_feedback" class="agenda-modal-feedback" role="status" aria-live="polite"></div>
@@ -1550,16 +1550,16 @@
             <h2 id="modal_procedimento_titulo">Novo Procedimento</h2>
             <input type="hidden" id="proc_id">
             <div class="input-group">
-                <label>Nome do procedimento</label>
+                <label for="proc_nome">Nome do procedimento</label>
                 <input type="text" id="proc_nome" placeholder="Ex.: Sessão de Fisioterapia, Avaliação Inicial...">
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Duração (minutos)</label>
+                    <label for="proc_duracao">Duração (minutos)</label>
                     <input type="number" id="proc_duracao" min="5" step="5" placeholder="Ex.: 50">
                 </div>
                 <div class="input-group">
-                    <label>Valor (opcional)</label>
+                    <label for="proc_valor">Valor (opcional)</label>
                     <input type="number" id="proc_valor" min="0" step="0.01" placeholder="R$">
                 </div>
             </div>
@@ -1582,11 +1582,11 @@
             <h2>Nova Janela de Atendimento</h2>
             <input type="hidden" id="hor_id">
             <div class="input-group">
-                <label>Profissional</label>
+                <label for="hor_profissional_select">Profissional</label>
                 <select id="hor_profissional_select"><option value="">Geral da clínica (todos os profissionais)</option></select>
             </div>
             <div class="input-group">
-                <label>Dia da semana</label>
+                <label for="hor_dia_semana">Dia da semana</label>
                 <select id="hor_dia_semana">
                     <option value="1">Segunda-feira</option>
                     <option value="2">Terça-feira</option>
@@ -1599,11 +1599,11 @@
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Início</label>
+                    <label for="hor_inicio">Início</label>
                     <input type="time" id="hor_inicio">
                 </div>
                 <div class="input-group">
-                    <label>Fim</label>
+                    <label for="hor_fim">Fim</label>
                     <input type="time" id="hor_fim">
                 </div>
             </div>
@@ -1622,26 +1622,26 @@
             <h2>Nova ausência / bloqueio</h2>
             <input type="hidden" id="bloq_id">
             <div class="input-group">
-                <label>Aplicar a</label>
+                <label for="bloq_profissional_select">Aplicar a</label>
                 <select id="bloq_profissional_select"><option value="">Toda a clínica</option></select>
                 <p class="field-help">Selecione um profissional para registrar uma ausência individual. Deixe “Toda a clínica” para feriados ou fechamento geral.</p>
             </div>
             <div class="input-group">
-                <label>Data</label>
+                <label for="bloq_data">Data</label>
                 <input type="date" id="bloq_data">
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Início (opcional — vazio = dia todo)</label>
+                    <label for="bloq_inicio">Início (opcional — vazio = dia todo)</label>
                     <input type="time" id="bloq_inicio">
                 </div>
                 <div class="input-group">
-                    <label>Fim (opcional)</label>
+                    <label for="bloq_fim">Fim (opcional)</label>
                     <input type="time" id="bloq_fim">
                 </div>
             </div>
             <div class="input-group">
-                <label>Motivo</label>
+                <label for="bloq_motivo">Motivo</label>
                 <input type="text" id="bloq_motivo" placeholder="Ex.: Feriado, folga, férias, congresso, consulta...">
             </div>
             <div class="actions">
@@ -1657,16 +1657,16 @@
             <button class="modal-fechar" onclick="fecharModal('modal_lista_espera')">✕</button>
             <h2>Adicionar à Lista de Espera</h2>
             <div class="input-group">
-                <label>Paciente (já cadastrado no sistema)</label>
+                <label for="esp_paciente_select">Paciente (já cadastrado no sistema)</label>
                 <select id="esp_paciente_select"><option value="">-- Selecione --</option></select>
             </div>
             <div class="grid-2">
                 <div class="input-group">
-                    <label>Profissional (opcional)</label>
+                    <label for="esp_profissional_select">Profissional (opcional)</label>
                     <select id="esp_profissional_select"><option value="">Qualquer profissional</option></select>
                 </div>
                 <div class="input-group">
-                    <label>Procedimento (opcional)</label>
+                    <label for="esp_procedimento_select">Procedimento (opcional)</label>
                     <select id="esp_procedimento_select"><option value="">Qualquer procedimento</option></select>
                 </div>
             </div>
@@ -1674,11 +1674,11 @@
                 <label>Janela de preferência (opcional)</label>
                 <div class="grid-2">
                     <div class="input-group kds-u-mb-0">
-                        <label class="kds-u-fs-meta">De</label>
+                        <label class="kds-u-fs-meta" for="esp_data_inicio">De</label>
                         <input type="date" id="esp_data_inicio" onchange="atualizarJanelaListaEspera('inicio')">
                     </div>
                     <div class="input-group kds-u-mb-0">
-                        <label class="kds-u-fs-meta">Até</label>
+                        <label class="kds-u-fs-meta" for="esp_data_fim">Até</label>
                         <input type="date" id="esp_data_fim" onchange="atualizarJanelaListaEspera('fim')">
                     </div>
                 </div>
@@ -1698,7 +1698,7 @@
                 <small class="kds-u-mt-6px kds-u-text-muted kds-u-fs-meta kds-u-lh-1p35 kds-u-d-block">Nenhum marcado = qualquer dia dentro da janela. Ex.: marque Seg, Qua e Sex para aceitar somente esses dias.</small>
             </div>
             <div class="input-group">
-                <label>Período preferido</label>
+                <label for="esp_periodo">Período preferido</label>
                 <select id="esp_periodo">
                     <option value="qualquer">Qualquer horário</option>
                     <option value="manha">Manhã</option>
@@ -1706,7 +1706,7 @@
                 </select>
             </div>
             <div class="input-group">
-                <label>Observações (opcional)</label>
+                <label for="esp_observacoes">Observações (opcional)</label>
                 <textarea id="esp_observacoes" class="kds-u-h-60px"></textarea>
             </div>
             <div class="actions">
@@ -1742,23 +1742,23 @@
             <h2 id="fin_plano_titulo">Novo plano de atendimento</h2>
             <input type="hidden" id="fin_plano_operacao">
             <p id="fin_plano_contexto" class="field-help" hidden></p>
-            <div class="input-group"><label>Nome do plano</label><input id="fin_plano_nome" placeholder="Ex.: Pacote de fisioterapia — 10 sessões"></div>
+            <div class="input-group"><label for="fin_plano_nome">Nome do plano</label><input id="fin_plano_nome" placeholder="Ex.: Pacote de fisioterapia — 10 sessões"></div>
             <div class="grid-2">
-                <div class="input-group"><label>Procedimento</label><select id="fin_plano_procedimento" onchange="aoSelecionarProcedimentoPlano()"><option value="">Sem procedimento específico</option></select></div>
-                <div class="input-group"><label>Sessões contratadas</label><input id="fin_plano_sessoes" type="number" min="1" value="10"></div>
+                <div class="input-group"><label for="fin_plano_procedimento">Procedimento</label><select id="fin_plano_procedimento" onchange="aoSelecionarProcedimentoPlano()"><option value="">Sem procedimento específico</option></select></div>
+                <div class="input-group"><label for="fin_plano_sessoes">Sessões contratadas</label><input id="fin_plano_sessoes" type="number" min="1" value="10"></div>
             </div>
             <div class="grid-2">
-                <div class="input-group"><label>Valor de tabela do pacote</label><input id="fin_plano_valor_tabela" inputmode="decimal" placeholder="0,00" oninput="calcularValorFinalPlano()"></div>
-                <div class="input-group"><label>Desconto pelo pacote (R$)</label><input id="fin_plano_desconto_pacote" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando o preço menor existir por adesão ao pacote/plano.</small></div>
+                <div class="input-group"><label for="fin_plano_valor_tabela">Valor de tabela do pacote</label><input id="fin_plano_valor_tabela" inputmode="decimal" placeholder="0,00" oninput="calcularValorFinalPlano()"></div>
+                <div class="input-group"><label for="fin_plano_desconto_pacote">Desconto pelo pacote (R$)</label><input id="fin_plano_desconto_pacote" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando o preço menor existir por adesão ao pacote/plano.</small></div>
             </div>
             <div class="grid-2">
-                <div class="input-group"><label>Desconto por cortesia (R$)</label><input id="fin_plano_desconto_cortesia" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando a redução foi uma decisão especial para este paciente.</small></div>
-                <div class="input-group"><label>Valor final</label><input id="fin_plano_valor_final" readonly><small id="fin_plano_desconto_pct" class="field-help">0% de desconto</small></div>
+                <div class="input-group"><label for="fin_plano_desconto_cortesia">Desconto por cortesia (R$)</label><input id="fin_plano_desconto_cortesia" inputmode="decimal" value="0" oninput="calcularValorFinalPlano()"><small class="finance-discount-help">Use quando a redução foi uma decisão especial para este paciente.</small></div>
+                <div class="input-group"><label for="fin_plano_valor_final">Valor final</label><input id="fin_plano_valor_final" readonly><small id="fin_plano_desconto_pct" class="field-help">0% de desconto</small></div>
             </div>
             <div id="fin_plano_desconto_resumo" class="finance-discount-form-summary">Desconto total: <b>R$ 0,00</b></div>
             <div class="input-group"><label>Formas de pagamento previstas</label><div id="fin_plano_forma" class="finance-payment-methods" role="group" aria-label="Formas de pagamento previstas"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Você pode combinar mais de uma forma.</small></div>
-            <div class="input-group"><label>Parcelas combinadas</label><input id="fin_plano_parcelas" type="number" min="1" value="1"><small class="field-help">Informativo: vencimentos ainda não são controlados individualmente.</small></div>
-            <div class="input-group"><label>Observação</label><textarea id="fin_plano_observacoes" rows="3" placeholder="Condições combinadas, validade, observações administrativas..."></textarea></div>
+            <div class="input-group"><label for="fin_plano_parcelas">Parcelas combinadas</label><input id="fin_plano_parcelas" type="number" min="1" value="1"><small class="field-help">Informativo: vencimentos ainda não são controlados individualmente.</small></div>
+            <div class="input-group"><label for="fin_plano_observacoes">Observação</label><textarea id="fin_plano_observacoes" rows="3" placeholder="Condições combinadas, validade, observações administrativas..."></textarea></div>
             <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_plano')">Cancelar</button><button type="button" class="btn-primary" id="fin_plano_salvar_btn" onclick="salvarPlanoFinanceiro()">Salvar plano</button></div>
         </div>
     </div>
@@ -1769,8 +1769,8 @@
             <button class="modal-fechar" onclick="fecharModal('modal_fin_pagamento')">✕</button>
             <h2>Lançar pagamento</h2>
             <input type="hidden" id="fin_pag_operacao">
-            <div class="input-group"><label>Plano / cobrança</label><select id="fin_pag_plano" onchange="atualizarResumoPagamentoFinanceiro()"><option value="">-- Selecione --</option></select></div>
-            <div class="grid-2"><div class="input-group"><label>Valor recebido agora</label><input id="fin_pag_valor" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoFinanceiro()"></div><div class="input-group"><label>Data do pagamento</label><input id="fin_pag_data" type="date"></div></div>
+            <div class="input-group"><label for="fin_pag_plano">Plano / cobrança</label><select id="fin_pag_plano" onchange="atualizarResumoPagamentoFinanceiro()"><option value="">-- Selecione --</option></select></div>
+            <div class="grid-2"><div class="input-group"><label for="fin_pag_valor">Valor recebido agora</label><input id="fin_pag_valor" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoFinanceiro()"></div><div class="input-group"><label for="fin_pag_data">Data do pagamento</label><input id="fin_pag_data" type="date"></div></div>
             <div id="fin_pag_credito_box" class="finance-credit-box" hidden>
                 <div class="finance-credit-box-head"><span>Crédito já pago pelo paciente</span><strong id="fin_pag_credito_disponivel">R$ 0,00</strong></div>
                 <label class="finance-credit-toggle"><input type="checkbox" id="fin_pag_usar_credito" onchange="atualizarResumoPagamentoFinanceiro()"> Usar crédito disponível neste procedimento</label>
@@ -1778,7 +1778,7 @@
                 <div id="fin_pag_resumo_calculo" class="finance-payment-summary"></div>
             </div>
             <div class="input-group"><label>Forma de pagamento</label><div id="fin_pag_forma" class="finance-payment-methods" role="group" aria-label="Formas usadas neste pagamento"><label><input type="checkbox" value="PIX" checked><span>PIX</span></label><label><input type="checkbox" value="Dinheiro"><span>Dinheiro</span></label><label><input type="checkbox" value="Cartão de débito"><span>Débito</span></label><label><input type="checkbox" value="Cartão de crédito"><span>Crédito</span></label><label><input type="checkbox" value="Transferência"><span>Transferência</span></label><label><input type="checkbox" value="Outro"><span>Outro</span></label></div><small class="field-help">Marque uma ou mais opções. Quando houver divisão, informe o valor recebido em cada uma.</small><small id="fin_pag_forma_divisao" class="field-help" hidden>A soma das formas deve ser igual ao valor recebido agora.</small></div>
-            <div class="input-group"><label>Observação</label><textarea id="fin_pag_observacoes" rows="3" placeholder="Ex.: 1ª parcela; desconto ajustado; comprovante recebido..."></textarea></div>
+            <div class="input-group"><label for="fin_pag_observacoes">Observação</label><textarea id="fin_pag_observacoes" rows="3" placeholder="Ex.: 1ª parcela; desconto ajustado; comprovante recebido..."></textarea></div>
             <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_pagamento')">Cancelar</button><button type="button" class="btn-primary" onclick="salvarPagamentoFinanceiro()">Registrar pagamento</button></div>
         </div>
     </div>
@@ -1790,17 +1790,17 @@
             <h2 id="fin_desp_titulo">Registrar gasto</h2>
             <input type="hidden" id="fin_desp_edit_id">
             <input type="hidden" id="fin_desp_operacao">
-            <div class="input-group"><label>Descrição *</label><input id="fin_desp_descricao" placeholder="Ex.: aluguel da clínica, materiais, manutenção..."></div>
+            <div class="input-group"><label for="fin_desp_descricao">Descrição *</label><input id="fin_desp_descricao" placeholder="Ex.: aluguel da clínica, materiais, manutenção..."></div>
             <div class="grid-2">
-                <div class="input-group"><label>Categoria gerencial *</label><select id="fin_desp_categoria" onchange="atualizarTiposDespesaFinanceira()"><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
-                <div class="input-group"><label>Valor *</label><input id="fin_desp_valor" inputmode="decimal" placeholder="0,00"></div>
+                <div class="input-group"><label for="fin_desp_categoria">Categoria gerencial *</label><select id="fin_desp_categoria" onchange="atualizarTiposDespesaFinanceira()"><option>Contas fixas</option><option>Despesas variáveis</option><option>Manutenção</option><option>Investimento</option><option>Marketing</option><option>Multas</option><option>Outros</option></select></div>
+                <div class="input-group"><label for="fin_desp_valor">Valor *</label><input id="fin_desp_valor" inputmode="decimal" placeholder="0,00"></div>
             </div>
-            <div class="input-group"><label>Tipo do gasto</label><select id="fin_desp_subcategoria"></select><div class="finance-expense-modal-hint">A categoria é usada no balanço gerencial; o tipo mantém o detalhe do gasto, como Água, Energia elétrica, Pró-labore, Simples Nacional, Insumos ou Manutenção de equipamentos.</div></div>
+            <div class="input-group"><label for="fin_desp_subcategoria">Tipo do gasto</label><select id="fin_desp_subcategoria"></select><div class="finance-expense-modal-hint">A categoria é usada no balanço gerencial; o tipo mantém o detalhe do gasto, como Água, Energia elétrica, Pró-labore, Simples Nacional, Insumos ou Manutenção de equipamentos.</div></div>
             <div class="grid-2">
-                <div class="input-group"><label>Data da despesa *</label><input id="fin_desp_data" type="date"></div>
-                <div class="input-group"><label>Forma de pagamento</label><select id="fin_desp_forma"><option value="">Não informada</option><option>PIX</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></div>
+                <div class="input-group"><label for="fin_desp_data">Data da despesa *</label><input id="fin_desp_data" type="date"></div>
+                <div class="input-group"><label for="fin_desp_forma">Forma de pagamento</label><select id="fin_desp_forma"><option value="">Não informada</option><option>PIX</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></div>
             </div>
-            <div class="input-group"><label>Observação</label><textarea id="fin_desp_observacoes" rows="3" placeholder="Fornecedor, referência, comprovante, detalhes administrativos..."></textarea></div>
+            <div class="input-group"><label for="fin_desp_observacoes">Observação</label><textarea id="fin_desp_observacoes" rows="3" placeholder="Fornecedor, referência, comprovante, detalhes administrativos..."></textarea></div>
             <div class="actions"><button type="button" class="btn-secondary" onclick="fecharModal('modal_fin_despesa')">Cancelar</button><button type="button" class="btn-primary" id="fin_desp_salvar_btn" onclick="salvarDespesaFinanceira()">Registrar gasto</button></div>
         </div>
     </div>
