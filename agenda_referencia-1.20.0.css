@@ -1,27 +1,10 @@
-/* Agenda 1.20: hierarquia compacta inspirada no fluxo observado no Simples Agenda. */
-#tela_agenda .agenda-card-semanal{overflow:hidden;border:1px solid #dfe8e7;border-radius:14px;background:#fff;box-shadow:none}
-#tela_agenda .agenda-visoes{background:#f4f7f7;padding:8px 12px;border-bottom:1px solid #dfe8e7}
-#tela_agenda .agenda-visoes button{min-height:38px;border-radius:7px;border:1px solid #d8e4e3;background:#fff;color:#4e6769;font-weight:750}
-#tela_agenda .agenda-visoes button[aria-pressed="true"]{background:#22ad89!important;border-color:#22ad89!important;color:#fff!important}
-#tela_agenda .agenda-toolbar-semanal{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(360px,1.2fr);gap:14px;align-items:end;padding:14px 16px;background:#fff;border-bottom:1px solid #e5eceb}
-#tela_agenda .agenda-semana-nav{align-self:center}
-#tela_agenda .agenda-semana-nav button{border-radius:7px;min-width:38px;min-height:38px}
-#tela_agenda .agenda-semana-rotulo{font-size:var(--kds-font-metadata);letter-spacing:0;color:#748587;font-weight:800}
-#tela_agenda .agenda-semana-titulo{color:#24494c;font-size:18px;font-weight:750}
-#tela_agenda .agenda-periodo-segmentado{display:flex;gap:3px;margin-left:auto;padding:3px;border-radius:8px;background:#eef3f2}
-#tela_agenda .agenda-periodo-segmentado button{min-height:34px;padding:6px 11px;border:0;border-radius:6px;background:transparent;color:#5c7173;font-weight:750}
-#tela_agenda .agenda-periodo-segmentado button.active{background:#fff;color:#176268;box-shadow:0 1px 3px rgba(27,70,72,.12)}
-#tela_agenda .agenda-toolbar-filtros{display:flex;align-items:flex-end;justify-content:flex-end;gap:9px;flex-wrap:wrap}
-#tela_agenda .agenda-toolbar-filtros .input-group{margin:0;min-width:170px}
-#tela_agenda .agenda-toolbar-filtros label{font-size:var(--kds-font-metadata);color:#657b7d;font-weight:750}
-#tela_agenda .agenda-toolbar-filtros select{min-height:40px;border-color:#d8e4e3;border-radius:7px}
-#tela_agenda .ks-new-appointment{min-height:40px;border-radius:7px;background:#22ad89;border-color:#22ad89;box-shadow:none}
-#tela_agenda .agenda-feedback:not(:empty){margin:10px 14px}
-#tela_agenda .agenda-grade-scroll{background:#fff;border-top:0}
-#tela_agenda .agenda-dia-cabecalho{background:#f5f8f7;color:#24494c;border-color:#dde8e6}
-#tela_agenda .agenda-hora-eixo{background:#fbfcfc;color:#697d7f}
-#tela_agenda .agenda-celula{border-color:#e6eeee}
-#tela_agenda .agenda-compromisso{border-radius:5px;box-shadow:none}
-#tela_agenda .agenda-agora-linha{border-top-color:#d8394f!important}
-@media(max-width:900px){#tela_agenda .agenda-toolbar-semanal{grid-template-columns:1fr}#tela_agenda .agenda-toolbar-filtros{justify-content:flex-start}}
-@media(max-width:620px){#tela_agenda .agenda-visoes{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros{display:grid;grid-template-columns:1fr 1fr}#tela_agenda .agenda-toolbar-filtros .input-group{min-width:0}#tela_agenda .ks-new-appointment{grid-column:1/-1}}
+/* KineSys Agenda 1.20 — camada de compatibilidade.
+ *
+ * O layout, espaçamento, densidade, grade temporal e responsividade da Agenda
+ * pertencem exclusivamente a design_agenda.css.
+ *
+ * Este arquivo permanece registrado no bundle lazy para preservar o contrato
+ * histórico do Screen Loader, mas não redefine geometria nem cores. Isso evita
+ * que uma folha carregada depois do Design System reverta a Agenda para o
+ * layout antigo, largo e com quebra de toolbar.
+ */
