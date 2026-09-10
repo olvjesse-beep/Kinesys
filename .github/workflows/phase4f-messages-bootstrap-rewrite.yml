@@ -1,0 +1,43 @@
+name: Phase 4F Messages Bootstrap Rewrite
+
+on:
+  push:
+    branches: [performance/messages-on-demand-phase4f]
+    paths:
+      - '.github/workflows/phase4f-messages-bootstrap-rewrite.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/messages-on-demand-phase4f
+          fetch-depth: 0
+      - name: Apply Phase 4F rewrite
+        run: python .github/scripts/phase4f_messages_bootstrap.py
+      - name: Validate Phase 4F
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check mensagens_config.js
+          node --check tests/mensagens_config_bootstrap.contract.js
+          node tests/mensagens_config_bootstrap.contract.js
+          node tests/prontuario_export_lazy.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          git diff --check
+      - name: Commit permanent Phase 4F code
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mensagens_config.js index.html tests/mensagens_config_bootstrap.contract.js
+          git commit -m 'Defer messages configuration RPC until first use'
+          git push origin HEAD:performance/messages-on-demand-phase4f
