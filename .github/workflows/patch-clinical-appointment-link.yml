@@ -1,0 +1,163 @@
+name: One-time clinical appointment linkage patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-clinical-appointment-link.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch clinical record appointment context
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('script-1.18.0.js')
+          s=p.read_text(encoding='utf-8')
+
+          anchor="let evolucaoEdicaoId = null;"
+          helper=r'''let evolucaoEdicaoId = null;
+          let agendamentoClinicoContexto = null;
+          const KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY = 'kinesys_agendamento_clinico_contexto_v1';
+
+          function definirAgendamentoClinicoContexto(agendamentoId, pacienteId, modo = '') {
+              const id = String(agendamentoId || '').trim();
+              if (!id) { limparAgendamentoClinicoContexto(); return null; }
+              agendamentoClinicoContexto = {
+                  agendamentoId: id,
+                  pacienteId: String(pacienteId || '').trim(),
+                  modo: String(modo || '').trim().toLowerCase(),
+                  definidoEm: new Date().toISOString()
+              };
+              try { sessionStorage.setItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY, JSON.stringify(agendamentoClinicoContexto)); } catch (_) {}
+              return agendamentoClinicoContexto;
+          }
+
+          function obterAgendamentoClinicoContexto(pacienteId = '', modo = '') {
+              let contexto = agendamentoClinicoContexto;
+              if (!contexto) {
+                  try {
+                      const salvo = sessionStorage.getItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY);
+                      if (salvo) contexto = JSON.parse(salvo);
+                  } catch (_) {}
+              }
+              if (!contexto?.agendamentoId) return null;
+              const pacienteEsperado = String(pacienteId || '').trim();
+              const modoEsperado = String(modo || '').trim().toLowerCase();
+              if (pacienteEsperado && contexto.pacienteId && pacienteEsperado !== String(contexto.pacienteId)) return null;
+              if (modoEsperado && contexto.modo && modoEsperado !== String(contexto.modo)) return null;
+              agendamentoClinicoContexto = contexto;
+              return String(contexto.agendamentoId);
+          }
+
+          function limparAgendamentoClinicoContexto() {
+              agendamentoClinicoContexto = null;
+              try { sessionStorage.removeItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY); } catch (_) {}
+          }
+          window.definirAgendamentoClinicoContexto = definirAgendamentoClinicoContexto;
+          window.obterAgendamentoClinicoContexto = obterAgendamentoClinicoContexto;
+          window.limparAgendamentoClinicoContexto = limparAgendamentoClinicoContexto;'''
+          if s.count(anchor)!=1:
+              raise SystemExit(f'global anchor count={s.count(anchor)}')
+          s=s.replace(anchor,helper,1)
+
+          # Normalização cloud -> runtime.
+          for marker, line in [
+              ("avaliacoes: (p.avaliacoes || []).map(av => ({", "            agendamentoId: av.agendamentoId || av.agendamento_id || null,\n"),
+              ("evolucoes: (p.evolucoes || []).map(ev => ({", "            agendamentoId: ev.agendamentoId || ev.agendamento_id || null,\n")
+          ]:
+              if s.count(marker)!=1:
+                  raise SystemExit(f'normalizer marker {marker!r} count={s.count(marker)}')
+              s=s.replace(marker, marker+'\n'+line.rstrip('\n'),1)
+
+          # Persistência de avaliações.
+          av_loop="for (const av of (podeGravarClinica ? avaliacoes : [])) {"
+          av_start=s.find(av_loop)
+          if av_start<0: raise SystemExit('evaluation persistence loop not found')
+          av_end=s.find("for (const ev of",av_start)
+          if av_end<0: raise SystemExit('evolution persistence loop boundary not found')
+          av_block=s[av_start:av_end]
+          old="                    paciente_id: id,"
+          if av_block.count(old)!=1: raise SystemExit(f'evaluation paciente_id count={av_block.count(old)}')
+          av_block=av_block.replace(old,old+"\n                    agendamento_id: av.agendamentoId || av.agendamento_id || null,",1)
+          s=s[:av_start]+av_block+s[av_end:]
+
+          # Persistência de evoluções.
+          ev_start=s.find("for (const ev of",av_start)
+          if ev_start<0: raise SystemExit('evolution persistence loop not found')
+          ev_end=s.find("return true",ev_start)
+          if ev_end<0: ev_end=s.find("} catch",ev_start)
+          ev_block=s[ev_start:ev_end]
+          if ev_block.count(old)!=1: raise SystemExit(f'evolution paciente_id count={ev_block.count(old)}')
+          ev_block=ev_block.replace(old,old+"\n                    agendamento_id: ev.agendamentoId || ev.agendamento_id || null,",1)
+          s=s[:ev_start]+ev_block+s[ev_end:]
+
+          # Registro de evolução recebe o contexto do atendimento.
+          evo_id="        id:registroEmEdicao?.id||`ev_${Date.now()}_${Math.random().toString(36).slice(2,7)}` ,"
+          if evo_id not in s:
+              evo_id="        id:registroEmEdicao?.id||`ev_${Date.now()}_${Math.random().toString(36).slice(2,7)}` ,".replace('` ,','`,')
+          if s.count(evo_id)!=1:
+              raise SystemExit(f'evolution record id anchor count={s.count(evo_id)}')
+          s=s.replace(evo_id,evo_id+"\n        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto(pacienteId,'evolucao'),",1)
+
+          # Avaliação recebe o contexto do atendimento.
+          av_id="        id:registroEmEdicao?.id||`av_${Date.now()}_${Math.random().toString(36).slice(2,7)}` ,"
+          if av_id not in s:
+              av_id=av_id.replace('` ,','`,')
+          if s.count(av_id)!=1:
+              raise SystemExit(f'evaluation record id anchor count={s.count(av_id)}')
+          s=s.replace(av_id,av_id+"\n        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto('', 'avaliacao'),",1)
+
+          # Limpa contexto apenas depois de persistência bem-sucedida.
+          evo_success="    const sucesso=await salvarPacienteNaNuvem(pacienteAtual,{exigirRastreabilidadeClinica:true});if(!sucesso)return;"
+          if s.count(evo_success)!=1: raise SystemExit(f'evolution success anchor count={s.count(evo_success)}')
+          s=s.replace(evo_success,evo_success+"\n    if(registro.agendamentoId) limparAgendamentoClinicoContexto();",1)
+
+          av_success="    const sucesso=await salvarPacienteNaNuvem(pacienteObjeto,{exigirRastreabilidadeClinica:true});\n    if(!sucesso)return;"
+          if s.count(av_success)!=1: raise SystemExit(f'evaluation success anchor count={s.count(av_success)}')
+          s=s.replace(av_success,av_success+"\n    if(dadosAvaliacao.agendamentoId) limparAgendamentoClinicoContexto();",1)
+
+          p.write_text(s,encoding='utf-8')
+
+          # Painel passa o agendamento explícito ao abrir Avaliação/Evolução.
+          hp=Path('home_fisioterapeuta_util-1.24.0.js')
+          h=hp.read_text(encoding='utf-8')
+          old="async function abrirRegistroClinico(pacienteId,modo){"
+          new="async function abrirRegistroClinico(pacienteId,modo,agendamentoId){\n        if(typeof window.definirAgendamentoClinicoContexto==='function') window.definirAgendamentoClinicoContexto(String(agendamentoId||''),String(pacienteId||''),String(modo||''));"
+          if h.count(old)!=1: raise SystemExit(f'home abrirRegistro anchor count={h.count(old)}')
+          h=h.replace(old,new,1)
+          oldcall="()=>abrirRegistroClinico(agendamento.paciente_id,clinica.modo)"
+          newcall="()=>abrirRegistroClinico(agendamento.paciente_id,clinica.modo,agendamento.id)"
+          if h.count(oldcall)!=1: raise SystemExit(f'home action anchor count={h.count(oldcall)}')
+          h=h.replace(oldcall,newcall,1)
+          hp.write_text(h,encoding='utf-8')
+
+          # Cache bust dos dois assets alterados.
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8')
+          refs={
+              'script-1.18.0.js?v=20260908-hma111-flexao-joelho-r1':'script-1.18.0.js?v=20260910-agendamento-clinico-r1',
+              'home_fisioterapeuta_util-1.24.0.js?v=20260909-r1':'home_fisioterapeuta_util-1.24.0.js?v=20260910-r2'
+          }
+          for oldref,newref in refs.items():
+              if html.count(oldref)!=1: raise SystemExit(f'index ref {oldref} count={html.count(oldref)}')
+              html=html.replace(oldref,newref,1)
+          idx.write_text(html,encoding='utf-8')
+          PY
+          node --check script-1.18.0.js
+          node --check home_fisioterapeuta_util-1.24.0.js
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add script-1.18.0.js home_fisioterapeuta_util-1.24.0.js index.html
+          git commit -m "Link clinical records to agenda appointments"
+          git push
