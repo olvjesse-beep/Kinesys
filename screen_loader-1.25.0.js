@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.3-phase4c';
+    const VERSION='1.25.4-phase4d';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -18,6 +18,8 @@
             id:'avaliacao',
             fragment:'screens/tela_avaliacao.html?v=20260910-phase2c-r1',
             styles:Object.freeze([
+                'design_clinical.css?v=1.19.0-hma-layout-r14',
+                'design_clinical_direction-1.17.0.css',
                 'design_evaluation_workspace-1.18.0.css',
                 'design_evaluation_context-1.18.3.css',
                 'avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1',
@@ -86,6 +88,30 @@
             const pronta=Promise.resolve(existente);
             estilos.set(href,pronta);
             return pronta;
+        }
+        const reservado=Array.from(document.querySelectorAll('link[rel="stylesheet"][data-kinesys-lazy-href]')).find(link=>{
+            const reservadoSrc=link.dataset.kinesysLazyHref||'';
+            return reservadoSrc&&urlAbsoluta(reservadoSrc)===href;
+        });
+        if(reservado){
+            const promessa=new Promise((resolve,reject)=>{
+                const aoCarregar=()=>{
+                    reservado.removeEventListener('error',aoErro);
+                    resolve(reservado);
+                };
+                const aoErro=()=>{
+                    reservado.removeEventListener('load',aoCarregar);
+                    reservado.removeAttribute('href');
+                    reject(new Error('Falha ao carregar estilo: '+src));
+                };
+                reservado.addEventListener('load',aoCarregar,{once:true});
+                reservado.addEventListener('error',aoErro,{once:true});
+                reservado.dataset.kinesysLazy='1';
+                reservado.href=src;
+            });
+            estilos.set(href,promessa);
+            promessa.catch(()=>estilos.delete(href));
+            return promessa;
         }
         const promessa=new Promise((resolve,reject)=>{
             const link=document.createElement('link');

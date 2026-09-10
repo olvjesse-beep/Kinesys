@@ -23,6 +23,8 @@ const lazyScripts=[
 ];
 
 const lazyStyles=[
+  'design_clinical.css',
+  'design_clinical_direction-1.17.0.css',
   'design_evaluation_workspace-1.18.0.css',
   'design_evaluation_context-1.18.3.css',
   'avaliacao_experiencia-1.22.0.css',
@@ -79,11 +81,47 @@ for(const file of lazyScripts){
 
 for(const file of lazyStyles){
   const escaped=file.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');
-  const eager=new RegExp(`<link[^>]+href=["'][^"']*${escaped}[^"']*["']`,'i');
+  const eager=new RegExp(`<link[^>]+\shref=["'][^"']*${escaped}[^"']*["']`,'i');
   assert.ok(!eager.test(html),`${file} não pode voltar ao CSS inicial`);
   assert.ok(loader.includes(file),`${file} deve permanecer no bundle de estilos sob demanda`);
   assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
 }
+
+const phase4dClinicalStyles=['design_clinical.css','design_clinical_direction-1.17.0.css'];
+for(const file of phase4dClinicalStyles){
+  const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  assert.match(html,new RegExp(`<link[^>]+rel=["']stylesheet["'][^>]+data-kinesys-lazy-href=["'][^"']*${escaped}[^"']*["']`,'i'),`${file} deve manter placeholder na posição histórica do head`);
+}
+assert.ok(html.indexOf('data-kinesys-lazy-href="design_clinical.css')<html.indexOf('data-kinesys-lazy-href="design_clinical_direction-1.17.0.css'),'cascade clínico deve preservar design_clinical antes de clinical_direction');
+assert.ok(loader.indexOf('design_clinical.css')<loader.indexOf('design_clinical_direction-1.17.0.css'),'bundle deve preservar a ordem clínica das duas folhas');
+assert.match(loader,/data-kinesys-lazy-href/,'Screen Loader deve reconhecer placeholders CSS lazy');
+assert.match(loader,/reservado\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');
+assert.match(loader,/reservado\.removeAttribute\('href'\)/,'falha de rede deve liberar o placeholder para uma nova tentativa real');
+assert.match(loader,/removeEventListener\('load',aoCarregar\)/,'retry CSS não deve deixar listener de carga órfão após erro');
+const phase4dCssDeferredBytes=phase4dClinicalStyles.reduce((total,file)=>total+fs.statSync(file).size,0);
+assert.ok(phase4dCssDeferredBytes>=100000,`Fase 4D deve adiar pelo menos 100 KB brutos de CSS clínico; atual ${phase4dCssDeferredBytes} bytes`);
+const allowedClinicalBreakpoints=new Set([1280,1180,1100,980,900,820,760,700,620,560,520,430]);
+const tokenText=fs.readFileSync('design_tokens.css','utf8');
+const definedClinicalTokens=new Set(Array.from(tokenText.matchAll(/(--kds-[a-z0-9-]+)\s*:/gi),m=>m[1]));
+for(const jsFile of fs.readdirSync('.').filter(file=>file.endsWith('.js'))){
+  const source=fs.readFileSync(jsFile,'utf8');
+  for(const match of source.matchAll(/setProperty\(\s*['"](--kds-[a-z0-9-]+)['"]/gi))definedClinicalTokens.add(match[1]);
+}
+for(const file of phase4dClinicalStyles){
+  const original=fs.readFileSync(file,'utf8');
+  const css=original.replace(/\/\*[\s\S]*?\*\//g,'');
+  const microtype=Array.from(css.matchAll(/font-size\s*:\s*([0-9]*\.?[0-9]+)px/gi)).filter(m=>Number(m[1])<12.5);
+  assert.deepStrictEqual(microtype.map(m=>m[1]),[],`${file} não pode introduzir fonte abaixo de 12.5px ao ficar lazy`);
+  const badBreakpoints=Array.from(css.matchAll(/@media[^\{]*\((max|min)-width\s*:\s*([0-9]+)px\)/gi)).filter(m=>{
+    const kind=String(m[1]).toLowerCase(),value=Number(m[2]);
+    return !allowedClinicalBreakpoints.has(value)&&!(kind==='min'&&value===701);
+  });
+  assert.deepStrictEqual(badBreakpoints.map(m=>`${m[1]}:${m[2]}`),[],`${file} deve respeitar os breakpoints oficiais mesmo sob demanda`);
+  const used=new Set(Array.from(original.matchAll(/var\(\s*(--kds-[a-z0-9-]+)/gi),m=>m[1]));
+  const undefinedTokens=[...used].filter(token=>!definedClinicalTokens.has(token));
+  assert.deepStrictEqual(undefinedTokens,[],`${file} não pode usar token KDS indefinido`);
+}
+
 
 const workspace=fs.readFileSync('evaluation_workspace-1.17.0.js','utf8');
 const proms=fs.readFileSync('proms_escalas.js','utf8');
@@ -183,8 +221,8 @@ for(const file of eagerSharedScripts){
 assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
 assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
-assert.match(loader,/VERSION='1\.25\.3-phase4c'/,'Screen Loader deve identificar a Fase 4C');
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4c-r1/,'index deve invalidar o cache do Screen Loader na Fase 4C');
+assert.match(loader,/VERSION='1\.25\.4-phase4d'/,'Screen Loader deve identificar a Fase 4D');
+assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');
 
 const agendaModule=fs.readFileSync('agenda-1.20.0.js','utf8');
 const notificationCore=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
@@ -231,4 +269,4 @@ const integrationContext={
 assert.doesNotThrow(()=>vm.runInNewContext(financeAgendaIntegration,integrationContext,{timeout:1000}),'integração eager não pode exigir Agenda já carregada');
 
 const deferredRawBytes=145198+27284+2983;
-console.log(`Screen Loader contract Phase 4C: bases clínicas estáticas da Avaliação adiam ${evaluationDatabaseDeferredBytes} bytes brutos adicionais; Agenda continua lazy (${agendaLazyBytes} bytes) e núcleo de notificações eager (${coreBytes} bytes).`);
+console.log(`Screen Loader contract Phase 4D: CSS clínico da Avaliação adia ${phase4dCssDeferredBytes} bytes brutos adicionais preservando cascade; bases clínicas lazy somam ${evaluationDatabaseDeferredBytes} bytes; Agenda continua lazy (${agendaLazyBytes} bytes).`);
