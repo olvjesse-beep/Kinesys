@@ -30,7 +30,7 @@ jobs:
                   raise SystemExit(f'CSS insertion marker count={s.count(marker)}')
               s=s.replace(marker,marker+css)
           if 'clinical_reasoning_hma-3.0.0.js' not in s:
-              marker='    <script defer src="home_fisioterapeuta_util-1.24.0.js?v=20260909-r1"></script>\n'
+              marker='    <script defer src="home_fisioterapeuta_util-1.24.0.js?v=20260910-r3"></script>\n'
               if s.count(marker)!=1:
                   raise SystemExit(f'JS insertion marker count={s.count(marker)}')
               s=s.replace(marker,marker+js)
