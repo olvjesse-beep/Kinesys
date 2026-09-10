@@ -17,7 +17,10 @@ jobs:
           ref: fix/login-agenda-compact-home-4h
           fetch-depth: 0
       - name: Apply incremental changes
-        run: python .github/scripts/login_agenda_home4h_transform.py
+        shell: bash
+        run: |
+          python .github/scripts/login_agenda_home4h_transform.py
+          python .github/scripts/login_agenda_home4h_compat.py
       - name: Validate syntax and contracts
         shell: bash
         run: |
