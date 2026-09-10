@@ -270,7 +270,8 @@ async function restaurarMensagemPadraoAtual() {
 function inicializarConfiguracaoMensagens() {
     const area = document.getElementById('tela_configuracoes');
     if (area) area.dataset.adminOnly = '1';
-    carregarConfiguracoesMensagens(false).catch(()=>{});
+    // Phase 4F: não disputa rede no bootstrap. Cada envio e a tela administrativa
+    // carregam a configuração atual do Supabase no momento em que realmente precisam dela.
 }
 
 document.addEventListener('DOMContentLoaded', inicializarConfiguracaoMensagens);
