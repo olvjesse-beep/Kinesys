@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          log=.github/phase4b-validation.log
+          log=.github/phase4b-validation.txt
           : > "$log"
           status=0
           run_check() {
