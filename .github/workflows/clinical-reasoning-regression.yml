@@ -39,3 +39,5 @@ jobs:
 
       - name: Run realistic shoulder and elbow HMA corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
+
+# Permanent regression gate for Motor Clínico 3.1 shoulder/elbow changes.
