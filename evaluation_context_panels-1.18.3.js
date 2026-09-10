@@ -4,6 +4,8 @@
 (function(){
     'use strict';
     let aberto=null;
+    let sincronizacaoTimer=null;
+    let avaliacaoAtivaRef=null;
     const paineis=[];
     function fechar(retornarFoco=true){
         if(!aberto)return;
@@ -34,6 +36,18 @@
         item.body.scrollTop=0;
         document.body.classList.add('ks-context-modal-open');
         item.close.focus({preventScroll:true});atualizar(item);
+    }
+    function pararSincronizacaoContexto(){
+        if(sincronizacaoTimer){clearInterval(sincronizacaoTimer);sincronizacaoTimer=null;}
+    }
+    function sincronizarContextoSeAtivo(){
+        if(!avaliacaoAtivaRef?.classList.contains('ativa')||document.visibilityState!=='visible')return;
+        paineis.forEach(atualizar);
+    }
+    function iniciarSincronizacaoContexto(){
+        if(sincronizacaoTimer||!avaliacaoAtivaRef?.classList.contains('ativa')||document.visibilityState!=='visible')return;
+        sincronizarContextoSeAtivo();
+        sincronizacaoTimer=setInterval(sincronizarContextoSeAtivo,1000);
     }
     function iniciar(){
         const campo=document.getElementById('chk_tabagista');
@@ -87,10 +101,24 @@
             atualizar(item);
         });
         const triagem=document.getElementById('subtela_triagem'),avaliacao=document.getElementById('tela_avaliacao');
+        avaliacaoAtivaRef=avaliacao;
         const navegacao=new MutationObserver(()=>{if(aberto&&(!avaliacao.classList.contains('ativa')||!triagem.classList.contains('ativa')))fechar(false);});
         navegacao.observe(triagem,{attributes:true,attributeFilter:['class']});navegacao.observe(avaliacao,{attributes:true,attributeFilter:['class']});
-        // Restauração de rascunho preenche propriedades sem disparar eventos.
-        setInterval(()=>{if(document.visibilityState==='visible'&&avaliacao.classList.contains('ativa'))paineis.forEach(atualizar);},1000);
+
+        document.addEventListener('kinesys:tela-ativada',event=>{
+            if(event.detail?.id==='tela_avaliacao')iniciarSincronizacaoContexto();
+        });
+        document.addEventListener('kinesys:tela-desativada',event=>{
+            if(event.detail?.id==='tela_avaliacao'){
+                pararSincronizacaoContexto();
+                if(aberto)fechar(false);
+            }
+        });
+        document.addEventListener('visibilitychange',()=>{
+            if(document.visibilityState==='visible')iniciarSincronizacaoContexto();
+            else pararSincronizacaoContexto();
+        });
+        iniciarSincronizacaoContexto();
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar);else iniciar();
 })();
