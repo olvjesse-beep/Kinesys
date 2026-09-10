@@ -6,6 +6,7 @@ const login=fs.readFileSync('login_access-1.18.0.js','utf8');
 const script=fs.readFileSync('script-1.18.0.js','utf8');
 const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
 const agendaCss=fs.readFileSync('design_agenda.css','utf8');
+const agendaRefCss=fs.readFileSync('agenda_referencia-1.20.0.css','utf8');
 const home=fs.readFileSync('home_fisioterapeuta_util-1.24.0.js','utf8');
 const homeCss=fs.readFileSync('home_fisioterapeuta_util-1.24.0.css','utf8');
 const html=fs.readFileSync('index.html','utf8');
@@ -30,10 +31,14 @@ assert.match(agenda,/const passo = AGENDA_GRADE_PASSO_MIN;/,'Renderização deve
 assert.match(agenda,/passo=AGENDA_GRADE_PASSO_MIN/,'Marcador Agora deve usar a mesma escala temporal');
 assert.match(agenda,/restoHora===0\?'hora-cheia':\(restoHora===30\?'meia-hora':'subhora'\)/,'Grade deve manter hierarquia visual horária');
 assert.match(agendaCss,/Agenda compacta proporcional — 10 min = 1 unidade visual/,'CSS compacto deve estar presente');
-assert.match(agendaCss,/height:clamp\(340px,calc\(100dvh - 280px\),620px\)/,'Grade desktop deve se adaptar à altura disponível');
+assert.match(agendaCss,/AGENDA WORKSPACE COMPACT R2/,'Layout final compacto da Agenda deve existir');
+assert.match(agendaCss,/height:clamp\(440px,calc\(100dvh - 210px\),760px\)!important/,'Grade deve usar o restante do viewport');
+assert.doesNotMatch(agendaRefCss,/agenda-toolbar-semanal\s*\{[^}]*display\s*:\s*grid/i,'Folha de referência lazy não pode voltar a controlar a geometria da Agenda');
 assert.match(agendaCss,/grid-template-rows:var\(--kds-agenda-header-height\) repeat\(var\(--kds-agenda-runtime-slot-count\),minmax\(3px,1fr\)\)/,'Slots devem dividir a altura disponível');
 assert.match(agendaCss,/\.agenda-agora-linha\{[\s\S]*z-index:9/,'Linha Agora deve ficar destacada acima dos compromissos');
-assert.match(loader,/agenda-1\.20\.0\.js\?v=20260910-agenda-edit-r1&compact_time=20260910-r1/,'Agenda lazy deve invalidar cache');
+assert.match(loader,/agenda-1\.20\.0\.js\?v=20260910-agenda-edit-r1&compact_time=20260910-r2/,'Agenda lazy deve invalidar cache');
+assert.match(loader,/agenda_referencia-1\.20\.0\.css\?v=20260910-layout-shim-r1/,'Shim lazy deve invalidar o CSS legado em cache');
+assert.match(agenda,/agenda-geral-faixa/,'Visão da clínica deve preservar duração e separar profissionais simultâneos');
 assert.doesNotMatch(html,/<script[^>]+agenda-1\.20\.0\.js/i,'Agenda deve continuar lazy');
 
 // Meu dia clínico: somente janela seguinte de 4h, com estados e lacunas livres.
@@ -60,7 +65,7 @@ assert.match(homeCss,/is-rescheduled/,'Reagendamento deve ter estado visual pró
 
 // Cache dos arquivos alterados sem remover revisões anteriores.
 assert.match(html,/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1/);
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260910-r1&agenda_compact=20260910-r1/);
+assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260910-r1&agenda_compact=20260910-r2/);
 assert.match(html,/login_access-1\.18\.0\.js\?v=20260910-access-r1/);
 assert.match(html,/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1/);
 
