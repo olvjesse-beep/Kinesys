@@ -614,7 +614,9 @@ async function inicializarFinanceiro(preSelecionado = '') {
 async function popularPacientesFinanceiro(preSelecionado = '') {
     const sel = document.getElementById('financeiro_paciente_select');
     if (!sel) return;
-    const pacientes = await obterPacientesSalvos();
+    const pacientes = typeof obterPacientesBasicos === 'function'
+        ? await obterPacientesBasicos()
+        : await obterPacientesSalvos();
     sel.innerHTML = '<option value="">-- Selecione um paciente --</option>' + pacientes
         .slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
         .map(p=>`<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome)}${p.cpf ? ' · '+escapeHTML(p.cpf) : ''}</option>`).join('');
