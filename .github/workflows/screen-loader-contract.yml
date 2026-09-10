@@ -7,8 +7,12 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'agenda_notificacoes_core-1.20.1.js'
+      - 'financeiro_agendamento-1.21.0.js'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
+      - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   push:
     branches: [main]
@@ -16,8 +20,12 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'agenda_notificacoes_core-1.20.1.js'
+      - 'financeiro_agendamento-1.21.0.js'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
+      - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   workflow_dispatch:
 
@@ -35,5 +43,10 @@ jobs:
         run: |
           node --check screen_loader-1.25.0.js
           node --check script-1.18.0.js
+          node --check agenda-1.20.0.js
+          node --check agenda_notificacoes_core-1.20.1.js
+          node --check financeiro_agendamento-1.21.0.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
+      - name: Operational data and polling contract
+        run: node tests/operational_data_loading.contract.js
