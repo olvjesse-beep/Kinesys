@@ -202,6 +202,73 @@
     first?.classList.add('ks-fin-analysis-first');
   }
 
+  function createDisclosure(label,nodes,className){
+    if(!nodes.length) return null;
+    const detail=document.createElement('details');
+    detail.className=className;
+    const summary=document.createElement('summary');
+    summary.textContent=label;
+    const body=document.createElement('div');
+    body.className=`${className}-body`;
+    nodes.forEach(node=>body.appendChild(node));
+    detail.append(summary,body);
+    return detail;
+  }
+
+  function decorateClinicalPlan(){
+    const host=q('#ks30_exam_plan');
+    if(!host) return;
+
+    qa('.ks30-hypothesis',host).forEach(article=>{
+      if(article.dataset.ksUiDisclosure==='1') return;
+      article.dataset.ksUiDisclosure='1';
+      const paragraphs=qa(':scope > p',article);
+      const focus=paragraphs.find(p=>normalizeText(p.textContent).startsWith('o exame precisa esclarecer'))||paragraphs[paragraphs.length-1];
+      if(focus) focus.classList.add('ks30-hypothesis-focus');
+      const rationale=paragraphs.filter(p=>p!==focus);
+      const detail=createDisclosure('Ver raciocínio',rationale,'ks30-hypothesis-detail');
+      if(detail) article.appendChild(detail);
+    });
+
+    qa('.ks30-analysis',host).forEach(group=>{
+      if(group.dataset.ksUiDisclosure==='1') return;
+      group.dataset.ksUiDisclosure='1';
+      const tests=qa(':scope > .ks30-test',group);
+      if(tests.length<=3) return;
+      const extras=tests.slice(3);
+      const detail=createDisclosure(`Ver mais ${extras.length} ${extras.length===1?'item':'itens'}`,extras,'ks30-more-tests');
+      if(detail) group.appendChild(detail);
+    });
+
+    qa('.ks30-section',host).forEach(section=>{
+      if(section.dataset.ksUiSection==='1') return;
+      section.dataset.ksUiSection='1';
+      const title=normalizeText(q(':scope > .ks30-section-title strong',section)?.textContent);
+      if(title.startsWith('contexto que modifica')){
+        const lines=qa(':scope > .ks30-line',section);
+        const detail=createDisclosure(`Ver ${lines.length} ${lines.length===1?'modificador':'modificadores'}`,lines,'ks30-context-detail');
+        if(detail) section.appendChild(detail);
+      }
+      if(title.startsWith('antes de fechar a sintese')){
+        const lines=qa(':scope > .ks30-line',section);
+        const extras=lines.slice(2);
+        const detail=createDisclosure(`Ver mais ${extras.length} ${extras.length===1?'pendência':'pendências'}`,extras,'ks30-more-gaps');
+        if(detail) section.appendChild(detail);
+      }
+    });
+
+    const head=q('.ks30-exam-head',host);
+    if(head&&!q('.ks30-plan-overview',host)){
+      const overview=document.createElement('div');
+      overview.className='ks30-plan-overview';
+      const hypotheses=qa('.ks30-hypothesis',host).length;
+      const clusters=qa('.ks30-cluster',host).length;
+      const tests=qa('.ks30-test',host).length;
+      overview.innerHTML=`<span><strong>${hypotheses}</strong> hipóteses</span><span><strong>${clusters}</strong> clusters</span><span><strong>${tests}</strong> testes priorizados</span>`;
+      head.insertAdjacentElement('afterend',overview);
+    }
+  }
+
   const decorativeEmoji=/[📌📱📲🏋️📅🗓️💳👥🛠️🏠👤🩺📂📷📈📄🚪🔔]/g;
   function cleanEmojiIn(root=document){
     const targets=[];
@@ -237,6 +304,7 @@
     decorateActionBars();
     decorateHome();
     decorateFinanceTabs();
+    decorateClinicalPlan();
     refineSidebarLabels();
     cleanEmojiIn();
   }
@@ -262,6 +330,8 @@
       if(radar) new MutationObserver(syncRadarState).observe(radar,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','class']});
       const secondary=q('.clinical-secondary-card',evalScreen);
       if(secondary) new MutationObserver(()=>requestAnimationFrame(syncDisclosures)).observe(secondary,{subtree:true,childList:true});
+      const examPlan=q('#ks30_exam_plan',evalScreen);
+      if(examPlan) new MutationObserver(()=>requestAnimationFrame(decorateClinicalPlan)).observe(examPlan,{subtree:true,childList:true});
       window.setInterval(syncPatientContext,1500);
     }
 
@@ -272,7 +342,7 @@
           if(node.nodeType===1){ cleanEmojiIn(node); needsLayout=true; }
         });
       });
-      if(needsLayout) requestAnimationFrame(()=>{decorateActionBars();decorateHome();decorateFinanceTabs();refineSidebarLabels();});
+      if(needsLayout) requestAnimationFrame(()=>{decorateActionBars();decorateHome();decorateFinanceTabs();decorateClinicalPlan();refineSidebarLabels();});
     });
     observer.observe(document.body,{subtree:true,childList:true});
   }
