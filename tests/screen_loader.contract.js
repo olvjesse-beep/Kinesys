@@ -184,6 +184,7 @@ assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Ag
 assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
 assert.match(loader,/VERSION='1\.25\.3-phase4c'/,'Screen Loader deve identificar a Fase 4C');
+assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4c-r1/,'index deve invalidar o cache do Screen Loader na Fase 4C');
 
 const agendaModule=fs.readFileSync('agenda-1.20.0.js','utf8');
 const notificationCore=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
