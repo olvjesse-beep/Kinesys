@@ -1,0 +1,15 @@
+name: TEMP Audit Agenda Init
+on:
+  push:
+    branches:
+      - perf/phase-4b-agenda-lazy
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit agenda init
+        run: |
+          grep -nE 'DOMContentLoaded|function inicializarAgenda|async function inicializarAgenda|configurarSincronizacaoConfiavelAgenda|window\.inicializarAgenda' agenda-1.20.0.js || true
+          echo '--- script references ---'
+          grep -nE 'inicializarAgenda|renderizarPainelAgenda|iniciarNotificacoesAgenda|tela_agenda' script-1.18.0.js || true
