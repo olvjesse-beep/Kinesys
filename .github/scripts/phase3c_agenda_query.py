@@ -50,7 +50,7 @@ agenda.write_text(text, encoding='utf-8')
 test = Path('tests/operational_data_loading.contract.js')
 src = test.read_text(encoding='utf-8')
 marker = "console.log('Operational Data Loading contract Phase 3B: Agenda/Finance selectors are lightweight and background polling sleeps when hidden.');\n"
-extra = """const weekStart=agenda.indexOf('async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = \'\')');
+extra = """const weekStart=agenda.indexOf('async function carregarAgendamentosSemana');
 const weekEnd=agenda.indexOf('function renderizarGradeSemanal',weekStart);
 assert.ok(weekStart>=0&&weekEnd>weekStart,'Agenda week loader must exist');
 const weekChunk=agenda.slice(weekStart,weekEnd);
