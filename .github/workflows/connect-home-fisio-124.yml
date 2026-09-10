@@ -1,0 +1,40 @@
+name: One-time connect physiotherapist home v1.24
+
+on:
+  push:
+    paths:
+      - '.github/workflows/connect-home-fisio-124.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace physiotherapist home runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          replacements={
+            'home_fisioterapeuta_util-1.23.0.css?v=20260909-r1':'home_fisioterapeuta_util-1.24.0.css?v=20260909-r1',
+            'home_fisioterapeuta_util-1.23.0.js?v=20260909-r2':'home_fisioterapeuta_util-1.24.0.js?v=20260909-r1',
+          }
+          for old,new in replacements.items():
+              if s.count(old)!=1:
+                  raise SystemExit(f'Expected one runtime reference for {old}; found {s.count(old)}')
+              s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check home_fisioterapeuta_util-1.24.0.js
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Connect compact physiotherapist home v1.24"
+          git push
