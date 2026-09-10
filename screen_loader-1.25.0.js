@@ -1,13 +1,14 @@
 /* KineSys 1.25 — carregamento sob demanda e ciclo de vida das telas.
- * Fase 2A: preserva IDs, funções públicas, contratos e regras clínicas.
+ * Fase 2C: preserva IDs, funções públicas, contratos e regras clínicas.
  * Módulos são baixados apenas no primeiro acesso e permanecem em memória.
  */
 (function(){
     'use strict';
 
-    const VERSION='1.25.0-phase2b';
+    const VERSION='1.25.0-phase2c';
     const carregamentos=new Map();
     const estilos=new Map();
+    const fragmentos=new Map();
     const bundles=new Map();
     let revisaoNavegacao=0;
     let telaAtiva=document.querySelector('.tela.ativa')?.id||'';
@@ -15,6 +16,7 @@
     const BUNDLES=Object.freeze({
         tela_avaliacao:Object.freeze({
             id:'avaliacao',
+            fragment:'screens/tela_avaliacao.html?v=20260910-phase2c-r1',
             styles:Object.freeze([
                 'design_evaluation_workspace-1.18.0.css',
                 'design_evaluation_context-1.18.3.css',
@@ -91,6 +93,35 @@
         for(const src of lista)await carregarScript(src);
     }
 
+    function carregarFragmento(idTela,bundle){
+        if(!bundle?.fragment)return Promise.resolve(null);
+        const alvo=document.getElementById(idTela);
+        if(!alvo)return Promise.reject(new Error('Tela não encontrada para montagem: '+idTela));
+        if(alvo.dataset.kinesysFragmentState==='mounted')return Promise.resolve(alvo);
+        if(fragmentos.has(bundle.id))return fragmentos.get(bundle.id);
+
+        alvo.dataset.kinesysFragmentState='loading';
+        const promessa=(async()=>{
+            const resposta=await fetch(bundle.fragment,{credentials:'same-origin',cache:'default'});
+            if(!resposta.ok)throw new Error('Falha ao carregar tela '+idTela+' ('+resposta.status+')');
+            const html=await resposta.text();
+            if(!html.trim())throw new Error('Fragmento vazio para '+idTela);
+            if(/<script\b/i.test(html))throw new Error('Fragmento de tela não pode conter scripts: '+idTela);
+            if(html.includes('id="'+idTela+'"')||html.includes("id='"+idTela+"'"))throw new Error('Fragmento duplicou o ID da tela: '+idTela);
+            const template=document.createElement('template');
+            template.innerHTML=html;
+            alvo.replaceChildren(template.content.cloneNode(true));
+            alvo.dataset.kinesysFragmentState='mounted';
+            return alvo;
+        })().catch(error=>{
+            alvo.dataset.kinesysFragmentState='error';
+            fragmentos.delete(bundle.id);
+            throw error;
+        });
+        fragmentos.set(bundle.id,promessa);
+        return promessa;
+    }
+
     function bundleDaTela(idTela){return BUNDLES[idTela]||null;}
 
     function podeCarregarTela(idTela){
@@ -107,10 +138,12 @@
         if(bundles.get(bundle.id) instanceof Promise)return bundles.get(bundle.id);
 
         const promessa=(async()=>{
-            await Promise.all([
-                Promise.all(bundle.styles.map(carregarEstilo)),
-                carregarScriptsEmOrdem(bundle.scripts)
-            ]);
+            const estilosProntos=Promise.all(bundle.styles.map(carregarEstilo));
+            await carregarFragmento(idTela,bundle);
+            await Promise.all([estilosProntos,carregarScriptsEmOrdem(bundle.scripts)]);
+            if(bundle.fragment){
+                document.dispatchEvent(new CustomEvent('kinesys:tela-dom-pronta',{detail:{id:idTela,bundle:bundle.id,fragmento:bundle.fragment,versao:VERSION}}));
+            }
             bundle.afterLoad?.();
             bundles.set(bundle.id,'loaded');
             document.dispatchEvent(new CustomEvent('kinesys:tela-modulos-prontos',{detail:{id:idTela,bundle:bundle.id,versao:VERSION}}));
@@ -183,6 +216,7 @@
         version:VERSION,
         ensure:garantirTela,
         isLoaded(idTela){const bundle=bundleDaTela(idTela);return !bundle||bundles.get(bundle.id)==='loaded';},
+        isMounted(idTela){const bundle=bundleDaTela(idTela);return !bundle?.fragment||document.getElementById(idTela)?.dataset.kinesysFragmentState==='mounted';},
         current(){return document.querySelector('.tela.ativa')?.id||telaAtiva||'';}
     });
 })();

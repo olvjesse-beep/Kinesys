@@ -1,0 +1,292 @@
+            <div class="card precadastro-compacto">
+                    <div class="precadastro-cabecalho">
+                        <div>
+                            <h2>Carregar paciente</h2>
+                        </div>
+                        <button id="btn_filtro_precadastro" class="btn-link-compacto" type="button" onclick="alternarFiltroPreCadastro()" hidden aria-hidden="true" tabindex="-1">Somente recentes</button>
+                    </div>
+                    <div class="grid-pre-cadastro">
+                        <div class="input-group kds-u-mb-0 paciente-busca">
+                            <label id="lbl_filtro_precadastro" for="busca_paciente_precadastro">Buscar paciente pelo nome</label>
+                            <input id="busca_paciente_precadastro" type="search" placeholder="Digite o nome do paciente…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="resultados_busca_precadastro" aria-expanded="false" aria-describedby="status_busca_precadastro" data-no-autosave oninput="filtrarPacientesPreCadastro()" onfocus="filtrarPacientesPreCadastro()" onkeydown="navegarBuscaPacientesPreCadastro(event)">
+                            <select id="select_paciente_precadastro" class="paciente-busca-native" hidden aria-hidden="true" tabindex="-1" onchange="carregarPacientePreCadastradoNaAvaliacao()">
+                                <option value="">-- Selecione para carregar os dados --</option>
+                            </select>
+                            <div id="resultados_busca_precadastro" class="paciente-busca-resultados" role="listbox" aria-label="Pacientes encontrados" hidden></div>
+                            <small id="status_busca_precadastro" class="paciente-busca-status" aria-live="polite">Digite o nome para buscar em todos os pacientes cadastrados.</small>
+                        </div>
+                        <div class="precadastro-status">Nome, idade e profissão são preenchidos automaticamente.</div>
+                    </div>
+                </div>
+
+            <div class="clinical-progress-wrap" aria-label="Etapas da avaliação">
+                <div class="clinical-progress" role="tablist">
+                    <button type="button" class="step active" id="step_indicador_1" role="tab" aria-controls="subtela_triagem" aria-selected="true" onclick="navegarAvaliacaoEtapaKineSys('subtela_triagem')"><span class="step-number">1</span><span>Anamnese</span></button>
+                    <button type="button" class="step" id="step_indicador_2" role="tab" aria-controls="subtela_mapeamento" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_mapeamento')"><span class="step-number">2</span><span>Exame clínico</span></button>
+                    <button type="button" class="step" id="step_indicador_3" role="tab" aria-controls="subtela_diagnostico" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_diagnostico')"><span class="step-number">3</span><span>Síntese</span></button>
+                </div>
+            </div>
+
+    <!-- RADAR KINESYS — indicador inline; nunca sobrepõe o conteúdo clínico -->
+    <div id="radar_flutuante_container" class="radar-dock" aria-live="polite" aria-label="Radar KineSys">
+        <button type="button" id="radar_launcher" class="radar-launcher" aria-expanded="false" aria-controls="radar_painel" title="Abrir Radar KineSys">
+            <span class="radar-launcher-glyph" aria-hidden="true"></span>
+            <span class="radar-launcher-label">Radar KineSys</span>
+            <span id="radar_badge" class="radar-badge" aria-label="0 alertas">0</span>
+        </button>
+        <aside id="radar_painel" class="radar-painel" aria-hidden="true" aria-label="Alertas do Radar KineSys">
+            <div class="radar-painel-header">
+                <div><span class="eyebrow">RADAR KINESYS</span><strong>Alertas clínicos em contexto</strong></div>
+                <button type="button" id="radar_fechar" class="radar-painel-fechar" aria-label="Fechar Radar KineSys">×</button>
+            </div>
+            <div id="radar_painel_resumo" class="radar-painel-resumo">Nenhum alerta ativo.</div>
+            <div id="radar_alertas_lista" class="radar-lista"></div>
+        </aside>
+    </div>
+
+            <div class="avaliacao-draft-toolbar">
+                <span>Rascunho automático neste dispositivo</span>
+                <button type="button" id="btn_descartar_rascunho_avaliacao" class="btn-secondary avaliacao-draft-discard" onclick="descartarRascunhoAvaliacaoKineSys()">Descartar rascunho</button>
+            </div>
+
+            <div id="subtela_triagem" class="subtela ativa clinical-focus-ui" role="tabpanel" aria-labelledby="step_indicador_1">
+                <div class="clinical-primary-shell kds-u-pos-relative kds-u-z-10 kds-u-ov-visible">
+                    <div class="clinical-topbar">
+                        <div class="clinical-section-heading clinical-section-heading--plain">
+                            <div>
+                                <h2>Avaliação clínica</h2>
+                            </div>
+                        </div>
+                        <div class="input-group clinical-datetime-card kds-u-m-0">
+                            <label for="avaliacao_realizado_em">Data e hora *</label>
+                            <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="Este horário inicia a janela fixa de 24 h para eventuais correções. O horário de salvamento é registrado separadamente.">
+                            <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">Este horário inicia a janela fixa de 24 h para eventuais correções. O horário em que o registro for salvo é carimbado separadamente.</small>
+                        </div>
+                    </div>
+                    <div id="avaliacao_registros_paciente" class="kds-u-m-0-0-14px kds-u-p-12px-14px kds-u-border-1px-solid-dde8e4 kds-u-br-10px kds-u-bg-soft-panel" style="display:none;"></div>
+                    <div class="patient-strip patient-strip-cards">
+                        <div class="input-group patient-plain-field"><label for="paciente_nome">Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
+                        <div class="input-group patient-plain-field patient-age"><label for="paciente_idade">Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label for="paciente_ocupacao">Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
+                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label for="paciente_esporte">Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
+                    </div>
+
+                    <!-- Campos antigos de trajeto mantidos ocultos somente por compatibilidade técnica.
+                         O trajeto clínico passa a ser interpretado a partir da própria HMA. -->
+                    <div class="hma-legacy-trajectory" hidden aria-hidden="true">
+                        <input type="text" id="paciente_origem_irradiacao" tabindex="-1">
+                        <input type="text" id="paciente_irradiacao" tabindex="-1">
+                        <div id="analise_irradiacao_clinica" class="analise-irradiacao-compacta"></div>
+                    </div>
+
+                    <!-- Compatibilidade com registros antigos: o Motor 2.5 não usa "tipo de dor" como entrada de priorização. -->
+                    <select id="paciente_tipo_dor" hidden aria-hidden="true" tabindex="-1"><option value="">Não informado</option><option value="mecanica">Mecânica</option><option value="inflamatoria">Inflamatória</option><option value="neuropatica">Neuropática</option><option value="mista">Mista / não bem definida</option></select>
+                </div>
+
+                <div class="hma-cards-layout" aria-label="História clínica e Radar KineSys">
+                    <section class="card hma-card hma-entry-card" aria-labelledby="hma_card_titulo">
+                        <div class="card-header hma-card-header">
+                            <div class="hma-heading-copy">
+                                <span class="hma-kicker">História clínica</span>
+                                <h2 id="hma_card_titulo">História da Moléstia Atual <span class="hma-title-acronym">(HMA)</span></h2>
+                                <p>Registre o relato livre do paciente; o Radar organiza os achados sem substituir o exame.</p>
+                            </div>
+                        </div>
+                        <div class="input-group hma-principal">
+                            <label for="paciente_hma"><span>Relato clínico</span><small>Texto livre</small></label>
+                            <textarea id="paciente_hma" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
+                            <div id="sugestoes_hma_tempo_real" class="hma-live-suggestions" aria-live="polite" hidden></div>
+                        </div>
+
+                    </section>
+
+                    <section class="card hma-card hma-radar-card" aria-labelledby="hma_radar_card_titulo">
+                        <div class="card-header hma-card-header">
+                            <div class="hma-heading-copy">
+                                <span class="hma-kicker">Apoio à decisão</span>
+                                <h2 id="hma_radar_card_titulo"><span class="hma-title-main">Radar KineSys</span> <span class="hma-title-separator">—</span> <span class="hma-title-secondary">Sínteses e sugestões</span></h2>
+                                <p>Leitura estruturada da HMA para destacar hipóteses, diferenciais e pontos a confirmar.</p>
+                            </div>
+                        </div>
+                        <section id="ks20_hma_radar" class="hma-live-suggestions hma-radar-panel" aria-live="polite" hidden>
+                            <strong>Radar clínico da HMA</strong>
+                            <div id="ks20_hma_insights"></div>
+                            <small>Revise e confirme os achados durante o exame. O radar não estabelece diagnóstico.</small>
+                        </section>
+                        <p class="hma-radar-helper">As sínteses são atualizadas a partir da HMA e devem ser confirmadas durante o exame físico.</p>
+                    </section>
+                </div>
+
+                <div class="hma-below-controls" aria-label="Mecanismo de início e fatores de piora">
+                    <div class="input-group clinical-mechanism-only">
+                        <label for="paciente_mecanismo_lesao">Mecanismo / início</label>
+                        <select id="paciente_mecanismo_lesao"><option value="">Não informado</option><option value="trauma_agudo">Trauma agudo</option><option value="esforco_repetitivo">Esforço repetitivo / sobrecarga</option><option value="insidioso">Insidioso, sem trauma claro</option><option value="pos_cirurgico">Pós-cirúrgico / pós-imobilização</option></select>
+                    </div>
+
+                    <div class="input-group fatores-piora-compactos">
+                        <div class="checkbox-group compact-chips" role="group" aria-label="Fatores de piora">
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="movimento"><span>Movimento</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="repouso"><span>Repouso</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="carga"><span>Carga</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="periodo_noturno"><span>Noturno</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="posicao_sentada"><span>Sentado</span></label>
+                            <label class="checkbox-pill"><input type="checkbox" class="chk_fator_piora" value="posicao_em_pe"><span>Em pé</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card clinical-secondary-card">
+                    <div class="clinical-section-heading compact-heading">
+                        <div><h2>Antecedentes e fatores modificadores</h2></div>
+                    </div>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Antecedentes, cirurgias e medicamentos</span><small>Comorbidades e informações farmacológicas relevantes</small></summary>
+                        <div class="disclosure-body">
+                            <div class="input-group"><span class="kds-group-label" id="marcadores_comorbidades_label">Marcadores e comorbidades</span><div class="checkbox-group compact-chips" role="group" aria-labelledby="marcadores_comorbidades_label">
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Etilismo</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>HAS</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_diabetico"><span>DM</span></label>
+                                <input type="checkbox" id="chk_corticoide" style="display:none;" aria-hidden="true">
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_sistemico"><span>Corticoide sistêmico</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_infiltracao"><span>Infiltração recente</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" id="chk_aine_recente"><span>AINE recente</span></label>
+                                <label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia / trauma</span></label>
+                            </div></div>
+                            <div id="bloco_cirurgias"><div class="input-group kds-u-pos-relative kds-u-z-98"><label for="input_cirurgia">Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div></div>
+                            <div class="input-group kds-u-pos-relative kds-u-z-97"><label for="input_medicamento">Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Exposição ocupacional</span><small>Detalhar somente quando houver relação potencial com o quadro</small></summary>
+                        <div class="disclosure-body">
+                            <p class="helper-text">A profissão gera contexto; o Radar considera apenas exposições confirmadas.</p>
+                            <div class="checkbox-group compact-chips" id="grupo_exposicoes_ocupacionais">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="sentado_prolongado"><span>Sedestação prolongada</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="em_pe_prolongado"><span>Ortostatismo prolongado</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="flexao_rotacao_carga"><span>Flexão/rotação com carga</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="acima_cabeca"><span>Acima da cabeça</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="repeticao_maos"><span>Repetição mãos/punhos</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="vibracao"><span>Vibração</span></label>
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="manejo_pacientes"><span>Manejo de pacientes</span></label>
+                            </div><div id="sugestao_exposicoes_ocupacionais" class="helper-text"></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Carga esportiva</span><small>Frequência, dose e exposição predominante</small></summary>
+                        <div class="disclosure-body">
+                            <div class="grid-2 compact-grid"><div class="input-group"><label for="esporte_frequencia">Frequência semanal</label><input type="number" id="esporte_frequencia" min="0" max="14" placeholder="sessões/semana"></div><div class="input-group"><label for="esporte_duracao">Duração média</label><input type="number" id="esporte_duracao" min="0" placeholder="min/sessão"></div><div class="input-group"><label for="esporte_nivel">Nível</label><select id="esporte_nivel"><option value="">Não informado</option><option value="recreacional">Recreacional</option><option value="competitivo">Competitivo</option><option value="alto_rendimento">Alto rendimento</option></select></div><div class="input-group"><label for="esporte_mudanca_carga">Mudança recente de carga</label><select id="esporte_mudanca_carga"><option value="">Não informado</option><option value="nao">Sem aumento relevante</option><option value="leve">Aumento leve</option><option value="moderado">Aumento moderado</option><option value="acentuado">Aumento acentuado</option></select></div></div>
+                            <div class="checkbox-group compact-chips" id="grupo_exposicoes_esportivas">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="impacto"><span>Impacto</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="forca_alta"><span>Força alta</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="overhead"><span>Overhead</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="rotacao"><span>Rotação/pivô</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_esportiva" value="endurance"><span>Endurance</span></label>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
+                        <summary><span>Fatores psicossociais</span><small>Yellow Flags — triagem breve contextual</small></summary>
+                        <div class="disclosure-body">
+                            <p class="helper-text">Não substitui instrumento psicométrico validado.</p>
+                            <div class="checkbox-group compact-chips" id="grupo_yellow_flags">
+                                <label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="medo_movimento"><span>Medo de movimento/relesão</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="catastrofizacao"><span>Catastrofização</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="baixa_autoeficacia"><span>Baixa autoeficácia</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="evitacao"><span>Evitação</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="sono_ruim"><span>Sono ruim</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="estresse"><span>Estresse elevado</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="afastamento"><span>Barreiras de retorno</span></label><label class="checkbox-pill"><input type="checkbox" class="chk_yellow_flag" value="expectativa_negativa"><span>Expectativa negativa</span></label>
+                            </div>
+                            <div class="input-group"><label for="yellow_flags_observacao">Observação contextual (opcional)</label><textarea id="yellow_flags_observacao" placeholder="Contexto relevante..."></textarea></div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure fonte-disclosure">
+                        <summary><span>Fonte dos dados</span><small id="fonte_dados_resumo">Relato do paciente</small></summary>
+                        <div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
+                    </details>
+
+                    <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para Exame direcionado ➔</button></div>
+                </div>
+            </div>
+
+            <div id="subtela_mapeamento" class="subtela cluster-focus-ui" role="tabpanel" aria-labelledby="step_indicador_2">
+                <div class="cluster-focus-toolbar">
+                    <div>
+                        <div class="eyebrow">DIREÇÃO CLÍNICA</div>
+                        <strong>Escolha o foco da investigação</strong>
+                    </div>
+                    <button type="button" class="cluster-info-link" onclick="abrirInfoMotorClinico()" title="Sobre o motor clínico">ⓘ Sobre o motor</button>
+                </div>
+                <div class="region-strip">
+                    <div class="ks-region-strip-label"><strong>Regiões relevantes</strong><span>Selecione uma ou mais áreas para organizar o exame.</span></div>
+                    <button type="button" class="btn-secondary" onclick="abrirRegioesAvaliacaoKineSys(this)">Selecionar regiões</button>
+                    <div id="ks-regions-selected" aria-label="Regiões selecionadas"></div>
+                    <div class="checkbox-group region-chips" id="grupo_regioes_mapeamento" hidden></div>
+                </div>
+                <div id="painel_integracao_multirregional" class="kinesys-integration-panel" style="display:none;"></div>
+                <div id="container_clusters_regioes"></div>
+                <div class="cluster-focus-actions">
+                    <button class="btn-secondary" onclick="irParaSubtela('subtela_triagem')">◀ Voltar à Anamnese</button>
+                    <button class="btn-primary" onclick="avancarParaDiagnostico()">Ver resumo e laudo ➔</button>
+                </div>
+            </div>
+
+            <div id="subtela_diagnostico" class="subtela" role="tabpanel" aria-labelledby="step_indicador_3">
+                <div class="card" id="card_alertas_consolidados">
+                    <div class="card-header">
+                        <h2>Segurança e alertas</h2>
+                    </div>
+                    <p class="kds-u-fs-meta kds-u-text-muted kds-u-mt-neg-10px">Reúne as pistas de segurança que precisam ser revisadas antes do resumo. Alertas não são diagnósticos: indicam uma decisão clínica a registrar.</p>
+                    <div id="container_alertas_consolidados"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Resumo da direção clínica</h2>
+                    </div>
+                    <div id="container_sintese_diagnostica"></div>
+                </div>
+
+
+                <div class="card" id="ks-laudo-card">
+                    <div class="card-header"><h2>Laudo clínico-funcional</h2></div>
+                    <p id="ks-laudo-status" role="status"></p>
+                    <label for="ks-laudo-texto">Texto para revisão e conclusão do fisioterapeuta</label>
+                    <textarea id="ks-laudo-texto" rows="16" spellcheck="true"></textarea>
+                    <label class="ks-laudo-review"><input type="checkbox" id="ks-laudo-revisado"> Revisei o conteúdo e registrei minha conclusão clínica.</label>
+                    <div class="ks-laudo-actions">
+                        <button type="button" class="btn-secondary" id="ks-laudo-atualizar">Atualizar base da avaliação</button>
+                        <button type="button" class="btn-secondary" id="ks-laudo-copiar">Copiar texto</button>
+                        <button type="button" class="btn-primary" onclick="salvarAvaliacaoAtual(false)">Salvar rascunho</button>
+                    </div>
+                </div>
+                <div class="card" id="card_restricoes_posop">
+                    <div class="card-header"><h2>Restrições pós-operatórias atuais</h2></div>
+                    <p class="clinical-note">Use este bloco quando houver cirurgia/procedimento recente. As restrições ficam persistentes nas evoluções até serem atualizadas em nova avaliação/reavaliação.</p>
+                    <label class="checkbox-pill kds-u-mb-12px"><input type="checkbox" id="posop_ativo" onchange="atualizarVisibilidadeRestricoesPosOp()"><span>Paciente em fase pós-operatória com restrições ativas</span></label>
+                    <div id="posop_campos" style="display:none">
+                        <div class="grid-2">
+                            <div class="input-group"><label for="posop_procedimento">Procedimento / cirurgia</label><input type="text" id="posop_procedimento" placeholder="Ex.: osteossíntese bimaleolar com placa e parafusos"></div>
+                            <div class="input-group"><label for="posop_data_cirurgia">Data da cirurgia</label><input type="date" id="posop_data_cirurgia"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label for="posop_carga">Status de carga</label><select id="posop_carga"><option value="">Não informado</option><option value="sem_carga">Sem carga</option><option value="toque">Toque / contato apenas</option><option value="parcial">Carga parcial</option><option value="conforme_tolerado">Carga conforme tolerado</option><option value="total">Carga total</option></select></div>
+                            <div class="input-group"><label for="posop_ortese">Órtese / imobilização</label><input type="text" id="posop_ortese" placeholder="Ex.: bota imobilizadora até retorno médico"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label for="posop_adm">Limite / restrição de ADM</label><textarea id="posop_adm" rows="2" placeholder="Ex.: não ultrapassar 90° de flexão; evitar dorsiflexão forçada."></textarea></div>
+                            <div class="input-group"><label for="posop_proibicoes">Movimentos / atividades proibidas</label><textarea id="posop_proibicoes" rows="2" placeholder="Ex.: sem corrida, saltos ou apoio unipodal sem liberação."></textarea></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label for="posop_orientacoes">Orientações específicas do cirurgião</label><textarea id="posop_orientacoes" rows="2"></textarea></div>
+                            <div class="input-group"><label for="posop_retorno_medico">Próximo retorno médico</label><input type="date" id="posop_retorno_medico"></div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group"><label for="posop_protocolo">Protocolo do cirurgião disponível?</label><select id="posop_protocolo"><option value="nao_informado">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+                            <div class="input-group"><label for="posop_obs">Observações de segurança / progressão</label><textarea id="posop_obs" rows="2"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="actions kds-u-jc-between">
+                        <button class="btn-secondary" onclick="irParaSubtela('subtela_mapeamento')">◀ Voltar ao Exame direcionado</button>
+                        <button class="btn-primary" onclick="salvarAvaliacaoAtual(true)">Finalizar e salvar avaliação</button>
+                    </div>
+                </div>
+            </div>
