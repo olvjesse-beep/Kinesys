@@ -20,8 +20,35 @@ jobs:
         with:
           ref: perf/phase-4b-agenda-lazy
           fetch-depth: 0
+      - name: Correct transformer literal encoding
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/tmp_phase4b_agenda_lazy.py')
+          s=p.read_text(encoding='utf-8')
+          for old,new in [
+            ('${{fmt(s.valorPendente)}}','${fmt(s.valorPendente)}'),
+            ('${{cls}}','${cls}'),
+            ('${{esc(titulo)}}','${esc(titulo)}')
+          ]:
+            s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+          PY
       - name: Apply exact transformation
         run: python3 tools/tmp_phase4b_agenda_lazy.py
+      - name: Normalize generated contract header
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/agenda_lazy.contract.js')
+          if p.exists():
+              s=p.read_text(encoding='utf-8')
+              if s.startswith("\\'use strict\\';"):
+                  s="'use strict';"+s[len("\\'use strict\\';"):]
+              p.write_text(s,encoding='utf-8')
+          PY
       - name: Syntax and contracts
         shell: bash
         run: |
