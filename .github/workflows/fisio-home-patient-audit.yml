@@ -1,0 +1,29 @@
+name: Fisio Home Patient Audit
+
+on:
+  push:
+    branches:
+      - fix/fisio-home-patient-self-service
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit exact current paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== HOME LOAD ORDER ==='
+          grep -n -E 'home_fisioterapeuta_util|screen_loader|script-1\.18\.0' index.html || true
+          echo '=== HOME FISIO DEPENDENCIES ==='
+          grep -n -B 12 -A 45 -E 'carregarPainelFisioterapeutaUtil|carregarProfissionaisAgenda|profissionalAgendaRestritoAtualId|Prontuário|abrirRegistroClinico' home_fisioterapeuta_util-1.24.0.js || true
+          echo '=== PATIENT DELETE UI / FUNCTIONS ==='
+          grep -n -B 35 -A 110 -E 'excluirPacienteNuvemSeguro|async function excluirPaciente\(|kinesys_excluir_paciente_completo|exclus[aã]o direta|apagad|Supabase.*exclu|exclu.*Supabase' script-1.18.0.js || true
+          echo '=== PATIENT DELETE CALL SITES ==='
+          grep -n -B 10 -A 25 -E 'excluirPaciente\(|Excluir paciente|Excluir definitivamente|btn.*exclu' script-1.18.0.js index.html home_detalhes-1.18.5.js || true
+          echo '=== PATIENT TABLE WRITES / TENANT ==='
+          grep -n -B 4 -A 10 -E "from\(['\"]pacientes['\"]\)|clinica_id|kinesys_current_clinica_id|kinesys_excluir_paciente" script-1.18.0.js | tail -n 500 || true
