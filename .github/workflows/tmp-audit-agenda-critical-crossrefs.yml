@@ -1,0 +1,28 @@
+name: TEMP Audit Agenda Critical Crossrefs
+on:
+  push:
+    branches:
+      - perf/phase-4b-agenda-lazy
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show contexts for external Agenda dependencies
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          targets=['script-1.18.0.js','financeiro-1.19.0.js','financeiro_agendamento-1.21.0.js','home_detalhes-1.18.5.js','home_fisioterapeuta_util-1.24.0.js','data_governance.js']
+          names=['abrirOfertaListaEspera','carregarProfissionaisAgenda','atualizarPayloadAgendamentoPendenteSync','atualizarResumoRecorrencia','abrirModal','fecharModal','formatarDataAgendaBR','horaCurta','iconePagamentoAgendaHTML','lerAgendamentosPendentesSync','profissionalAgendaRestritoAtualId','renderizarPainelAgenda','sincronizarAgendamentosPendentes','sincronizarNotificacoesPendentesAgenda','situacaoPagamentoAgenda','usuarioEhAdministradorAgenda','mostrarFeedbackAgendaModal','agendaAgendamentosDoDiaCache','agendaAgendamentosSemanaCache','agendaEquipeCache','agendamentoDetalheAtualId']
+          for fn in targets:
+              p=pathlib.Path(fn)
+              if not p.exists(): continue
+              lines=p.read_text(encoding='utf-8',errors='ignore').splitlines()
+              print('\n###',fn)
+              for i,line in enumerate(lines):
+                  if any(re.search(r'\b'+re.escape(n)+r'\b',line) for n in names):
+                      a=max(0,i-2); b=min(len(lines),i+3)
+                      print(f'-- {i+1} --')
+                      for j in range(a,b): print(f'{j+1}: {lines[j]}')
+          PY
