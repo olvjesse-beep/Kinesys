@@ -1,0 +1,45 @@
+name: Phase 4G Messages Admin Lazy Rewrite
+
+on:
+  push:
+    branches: [performance/messages-admin-lazy-phase4g]
+    paths:
+      - '.github/workflows/phase4g-messages-admin-rewrite.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/messages-admin-lazy-phase4g
+          fetch-depth: 0
+      - name: Apply Phase 4G rewrite
+        run: python .github/scripts/phase4g_messages_admin_split.py
+      - name: Validate Phase 4G
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check mensagens_config.js
+          node --check mensagens_config_admin.js
+          node --check tests/mensagens_config_admin_lazy.contract.js
+          node tests/mensagens_config_admin_lazy.contract.js
+          node tests/mensagens_config_bootstrap.contract.js
+          node tests/prontuario_export_lazy.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          git diff --check
+      - name: Commit permanent Phase 4G code
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mensagens_config.js mensagens_config_admin.js index.html tests/mensagens_config_admin_lazy.contract.js
+          git commit -m 'Lazy-load messages administration module'
+          git push origin HEAD:performance/messages-admin-lazy-phase4g
