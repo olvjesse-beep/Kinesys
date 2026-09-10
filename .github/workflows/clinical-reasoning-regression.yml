@@ -8,6 +8,8 @@ on:
       - 'clinical_reasoning_shoulder-3.1.0.js'
       - 'clinical_reasoning_elbow-3.1.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
+      - 'tests/clinical_reasoning_shoulder_elbow.robustness.js'
+      - 'tests/clinical_reasoning_hma.integration.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   pull_request:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - 'clinical_reasoning_shoulder-3.1.0.js'
       - 'clinical_reasoning_elbow-3.1.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
+      - 'tests/clinical_reasoning_shoulder_elbow.robustness.js'
+      - 'tests/clinical_reasoning_hma.integration.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   workflow_dispatch:
 
@@ -33,11 +37,20 @@ jobs:
 
       - name: JavaScript syntax
         run: |
+          node --check clinical_reasoning_hma-3.0.0.js
           node --check clinical_reasoning_shoulder-3.1.0.js
           node --check clinical_reasoning_elbow-3.1.0.js
           node --check tests/clinical_reasoning_shoulder_elbow.regression.js
+          node --check tests/clinical_reasoning_shoulder_elbow.robustness.js
+          node --check tests/clinical_reasoning_hma.integration.js
 
-      - name: Run realistic shoulder and elbow HMA corpus
+      - name: Run established shoulder and elbow regression corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
 
-# Permanent regression gate for Motor Clínico 3.1 shoulder/elbow changes.
+      - name: Run shoulder and elbow robustness corpus
+        run: node tests/clinical_reasoning_shoulder_elbow.robustness.js
+
+      - name: Run HMA bridge integration corpus
+        run: node tests/clinical_reasoning_hma.integration.js
+
+# Permanent regression gate for Motor Clínico 3.x HMA/shoulder/elbow changes.

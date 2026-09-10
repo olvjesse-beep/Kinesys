@@ -11,7 +11,7 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.3-shoulder4';
+  const VERSION='3.1.4-shoulder5';
   const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const norm=(v='')=>normBase(v)
     .replace(/\bencima\b/g,'em cima')
@@ -296,16 +296,22 @@
 
   function pontuar(cond,texto,c){
     const t=norm(texto);
-    const hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
+    let hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
     let score=Math.min(9,hits.length*1.35);
     const idade=Number(c?.idade||document.getElementById('paciente_idade')?.value||0);
     const temOmbro=/ombro|braco|deltoid|escapul/.test(t);
-    const traumaMecanismo=/\b(?:cai|caiu|cair|queda|impacto|acidente|luxacao|deslocou|deslocamento)\b|\bpancad\w*/.test(t);
-    const traumaNegado=/(?:sem|nega|negou|nao houve).{0,18}(?:cair|queda|trauma|pancad|impacto)/.test(t);
+    const quedaVerbo=/\b(?:cai|caiu|cair)\b/.test(t)&&!/(?:braco|ombro).{0,14}nao cai\b/.test(t);
+    const traumaMecanismo=quedaVerbo||/\b(?:queda|impacto|acidente|luxacao|deslocou|deslocamento)\b|\bpancad\w*/.test(t);
+    const traumaNegado=/(?:sem|nega|negou|nao houve|nao teve).{0,24}(?:cair|queda|trauma|pancad|impacto)/.test(t);
     const trauma=traumaMecanismo&&!traumaNegado&&temOmbro;
     const incapacidadeAguda=/(?:nao consegue|nao levanta|deform|pendurado|perdeu.{0,20}forca|fraqueza.{0,20}repente)/.test(t);
-    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
-    const cervicalLigada=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t);
+    const neuroNegado=/(?:sem|nao tenho|nao tem|nao sinto|nao sente|nega|negou).{0,50}(?:formig|dormen|adormec|amortec|choque)/.test(t);
+    const neuroDistalRaw=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
+    const neuroDistal=neuroDistalRaw&&!neuroNegado;
+    const cervicalNegada=/(?:mexer|virar|movimentar|olhar).{0,35}(?:pescoco|nuca).{0,35}(?:nao muda|nao altera|nao piora|nao reproduz|sem efeito)|(?:pescoco|nuca).{0,45}(?:nao muda|nao altera|sem efeito)/.test(t);
+    const cervicalLigadaRaw=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t);
+    const cervicalLigada=cervicalLigadaRaw&&!cervicalNegada;
+    const origemCervicalPositiva=/(?:dor|sintoma).{0,20}(?:vem|sai|comeca).{0,25}(?:pescoco|nuca)|(?:vem|sai|comeca).{0,20}(?:do |da )?(?:pescoco|nuca)/.test(t);
     const elevacao=/(?:levantar|levanto|elev|ergu|acima da cabeca|no alto|prateleira|armario)/.test(t);
     const lateral=/(?:lateral|lado de fora|deltoid)/.test(t);
     const decubito=/(?:dormir|deitar|apoiar).{0,45}(?:ombro|braco)|(?:ombro|braco).{0,45}(?:dormir|deitar|apoiar)/.test(t);
@@ -313,13 +319,27 @@
     const cruzarBraco=/(?:mao|braco).{0,35}(?:ombro contrario|outro ombro)|(?:cruzar|abracar).{0,30}braco/.test(t);
     const passivoPreservado=/(?:passiv).{0,30}(?:preserv|livre|vai|consegue)|(?:alguem consegue|outra pessoa consegue|levanto com a outra mao).{0,45}(?:levantar|erguer|braco)/.test(t)&&!/(?:alguem|outra pessoa).{0,25}(?:tambem )?nao consegue/.test(t);
     const perdaAtivaPassiva=/(?:nao consigo|nao consegue).{0,40}(?:erguer|levantar)|(?:braco despenca|nao sustenta o braco)/.test(t)&&passivoPreservado;
+    const rigidezProgressiva=/(?:foi|vem|esta|ficou).{0,28}(?:ficando|trav|pres|rigid)|(?:trav|pres|rigid).{0,28}aos poucos/.test(t);
+    const passivoLimitado=/(?:outra pessoa|alguem).{0,70}(?:nao consegue|nao vai|nao mexe|nao gira)|(?:passiv).{0,35}(?:limit|pres|rigid)/.test(t);
+    const bicepsAnterior=/(?:dor|doi).{0,25}(?:frente|anterior).{0,35}ombro|ombro.{0,35}(?:frente|anterior)/.test(t);
+    const cargaBiceps=/(?:rosca|supin|palma.{0,24}(?:para|virada para) cima)/.test(t);
+    const calcariaImagem=/(?:raio x|radiograf|imagem).{0,45}(?:calcio|calcific)|(?:calcio|calcific).{0,45}(?:raio x|radiograf|imagem)/.test(t);
+    const calcariaSemDor=/(?:ombro).{0,45}(?:nao doi|sem dor)|(?:nao doi|sem dor).{0,45}(?:ombro)/.test(t);
+    const calcariaSemLimitacao=/(?:nao limita|movimento normal|mexe normal|sem limitacao|nao esta rigido)/.test(t);
+    const calcariaIncidental=calcariaImagem&&calcariaSemDor&&calcariaSemLimitacao;
 
+    if(cond.id==='ombro_pmr'&&idade>0&&idade<50)return{score:-10,hits:[],bloqueada:true};
+    if(cond.id==='ombro_calcaria'&&calcariaIncidental)return{score:-8,hits:[],bloqueada:true};
+    if(cond.id==='ombro_cervical_referida'&&neuroNegado&&cervicalNegada&&!origemCervicalPositiva)return{score:-6,hits:[],bloqueada:true};
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
-    if(cond.id==='ombro_capsulite'&&(c?.diabetico||/diabet|tireo/.test(t)))score+=1.3;
+    if(cond.id==='ombro_capsulite'){
+      if(c?.diabetico||/diabet|tireo/.test(t))score+=1.3;
+      if(rigidezProgressiva&&passivoLimitado)score+=4;
+    }
     if(cond.id==='ombro_trauma_maior'&&trauma)score+=incapacidadeAguda?4.2:2.8;
     if(cond.id==='ombro_cervical_referida'){
       if(neuroDistal)score+=3.1;
-      if(cervicalLigada)score+=2.2;
+      if(cervicalLigada||origemCervicalPositiva)score+=2.2;
     }
     if(cond.id==='ombro_manguito'&&temOmbro){
       if(elevacao&&lateral)score+=3.2;
@@ -330,8 +350,9 @@
       if(acSuperior)score+=2.9;
       if(cruzarBraco)score+=1.7;
     }
+    if(cond.id==='ombro_biceps'&&bicepsAnterior&&cargaBiceps)score+=3.4;
     if(cond.id==='ombro_ruptura_manguito'&&perdaAtivaPassiva)score+=4;
-    return {score:score+cond.ordem/1000,hits:hits.slice(0,5)};
+    return {score:score+cond.ordem/1000,hits:hits.slice(0,5),bloqueada:false};
   }
 
   function itemBancoPorCondicao(cond){
@@ -380,7 +401,7 @@
     const c=contexto(); const texto=textoContexto(c);
     const relatoDecubito=PADRAO_DECUBITO_OMBRO.test(norm(hmaTexto()));
     const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);
-    const fortes=avaliadas.filter(x=>x.hits.length||x.score>=2.5).slice(0,6);
+    const fortes=avaliadas.filter(x=>!x.bloqueada&&(x.hits.length||x.score>=2.5)).slice(0,6);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x,c));
 
     const existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='ombro');
