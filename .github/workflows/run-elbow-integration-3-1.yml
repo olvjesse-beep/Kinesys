@@ -1,0 +1,38 @@
+name: Run Motor 3.1 elbow integration
+on:
+  push:
+    paths:
+      - .github/workflows/run-elbow-integration-3-1.yml
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply integration patch
+        run: python .tmp_integrate_elbow_3_1.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check clinical_reasoning_hma-3.0.0.js
+          node --check clinical_reasoning_shoulder-3.1.0.js
+          node --check clinical_reasoning_elbow-3.1.0.js
+          node --check script-1.18.0.js
+      - name: Check diff integrity
+        run: git diff --check
+      - name: Run elbow clinical invariants
+        run: node .tmp_validate_elbow_3_1.js
+      - name: Check integration contracts
+        run: |
+          grep -q "enriquecerPlanoOmbroKineSys" clinical_reasoning_hma-3.0.0.js
+          grep -q "enriquecerPlanoCotoveloKineSys" clinical_reasoning_hma-3.0.0.js
+          grep -q "motores31" clinical_reasoning_shoulder-3.1.0.js
+          grep -q "clinical_reasoning_elbow-3.1.0.css" index.html
+          grep -q "clinical_reasoning_elbow-3.1.0.js" index.html
+      - name: Commit integrated elbow engine
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add clinical_reasoning_hma-3.0.0.js clinical_reasoning_shoulder-3.1.0.js index.html
+          git commit -m "Integrate Motor 3.1 elbow across HMA and shoulder" || exit 0
+          git push
