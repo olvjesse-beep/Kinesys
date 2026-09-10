@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.0-phase2c';
+    const VERSION='1.25.1-phase4a';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -42,6 +42,29 @@
                     window.atualizarMotorClinico3KineSys(true);
                 }
             }
+        }),
+        tela_financeiro:Object.freeze({
+            id:'financeiro',
+            styles:Object.freeze([
+                'financeiro_workspace-1.20.1.css?v=20260901-r1',
+                'financeiro_lancamentos-1.20.0.css?v=20260901-r2',
+                'financeiro_alignment.css?v=20260909-align-r4'
+            ]),
+            scripts:Object.freeze([
+                'pendencias_financeiras-1.19.0.js?v=20260901-r2',
+                'descontos_financeiros-1.20.0.js?v=20260909-r2',
+                'balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
+                'analise_admin-1.19.0.js?v=20260901-r2',
+                'financeiro_workspace-1.20.1.js?v=20260901-r1',
+                'financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1'
+            ])
+        }),
+        tela_agenda:Object.freeze({
+            id:'agenda',
+            styles:Object.freeze([
+                'agenda_referencia-1.20.0.css?v=20260901-r1'
+            ]),
+            scripts:Object.freeze([])
         })
     });
 
