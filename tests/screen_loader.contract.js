@@ -128,6 +128,41 @@ for(const file of financeLazyStyles)assertLazyAsset(file,'style');
 for(const file of agendaLazyScripts)assertLazyAsset(file,'script');
 for(const file of agendaLazyStyles)assertLazyAsset(file,'style');
 
+const evaluationDatabaseLazyScripts=[
+  'cirurgias-1.18.0.js',
+  'database/medicamentos.js',
+  'database/irradiacao_clinica.js',
+  'database/mapeamento_clinico.js',
+  'database/condicoes_mobilidade_v23.js',
+  'database/diferenciais_neurais.js'
+];
+for(const file of evaluationDatabaseLazyScripts)assertLazyAsset(file,'script');
+
+let evaluationDbPos=-1;
+for(const file of evaluationDatabaseLazyScripts){
+  const pos=loader.indexOf(file);
+  assert.ok(pos>evaluationDbPos,`${file} deve preservar a ordem clínica histórica no bundle da Avaliação`);
+  evaluationDbPos=pos;
+}
+assert.ok(loader.indexOf('database/mapeamento_clinico.js')<loader.indexOf('database/condicoes_mobilidade_v23.js'),'mapeamento clínico deve carregar antes da extensão de mobilidade');
+assert.ok(loader.indexOf('database/mapeamento_clinico.js')<loader.indexOf('database/diferenciais_neurais.js'),'mapeamento clínico deve carregar antes dos diferenciais neurais');
+assert.match(html,/<script[^>]+src=["'][^"']*database\/ocupacoes_esportes\.js[^"']*["']/i,'ocupações/esportes permanece eager nesta fase porque o núcleo principal ainda o valida no bootstrap');
+assert.doesNotMatch(loader,/scripts:Object\.freeze\(\[[\s\S]*?database\/ocupacoes_esportes\.js[\s\S]*?clinical_engine-1\.17\.0\.js/,'ocupações/esportes não deve ser carregado duas vezes no bundle da Avaliação');
+
+// Smoke test real das bases: scripts clássicos separados compartilham o mesmo lexical environment.
+const clinicalDbContext={console};
+vm.createContext(clinicalDbContext);
+for(const file of evaluationDatabaseLazyScripts){
+  vm.runInContext(fs.readFileSync(file,'utf8'),clinicalDbContext,{filename:file,timeout:1500});
+}
+assert.strictEqual(vm.runInContext('typeof dicionarioCirurgias',clinicalDbContext),'object','dicionário de cirurgias deve existir após carga tardia');
+assert.strictEqual(vm.runInContext('typeof dicionarioMedicamentos',clinicalDbContext),'object','dicionário de medicamentos deve existir após carga tardia');
+assert.strictEqual(vm.runInContext('typeof BANCO_IRRADIACAO_CLINICA',clinicalDbContext),'object','banco de irradiação deve existir após carga tardia');
+assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_CLINICO',clinicalDbContext),'object','banco de mapeamento deve existir após carga tardia');
+const evaluationDatabaseDeferredBytes=evaluationDatabaseLazyScripts.reduce((total,file)=>total+fs.statSync(file).size,0);
+assert.ok(evaluationDatabaseDeferredBytes>=275000,`Fase 4C deve adiar pelo menos 275 KB brutos; atual ${evaluationDatabaseDeferredBytes} bytes`);
+
+
 let financePos=-1;
 for(const file of financeLazyScripts){
   const pos=loader.indexOf(file);
@@ -148,7 +183,8 @@ for(const file of eagerSharedScripts){
 assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
 assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
-assert.match(loader,/VERSION='1\.25\.2-phase4b'/,'Screen Loader deve identificar a Fase 4B');
+assert.match(loader,/VERSION='1\.25\.3-phase4c'/,'Screen Loader deve identificar a Fase 4C');
+assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4c-r1/,'index deve invalidar o cache do Screen Loader na Fase 4C');
 
 const agendaModule=fs.readFileSync('agenda-1.20.0.js','utf8');
 const notificationCore=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
@@ -195,4 +231,4 @@ const integrationContext={
 assert.doesNotThrow(()=>vm.runInNewContext(financeAgendaIntegration,integrationContext,{timeout:1000}),'integração eager não pode exigir Agenda já carregada');
 
 const deferredRawBytes=145198+27284+2983;
-console.log(`Screen Loader contract Phase 4B: Financeiro mantém ${deferredRawBytes} bytes brutos adiados da 4A; Agenda completa agora é lazy (${agendaLazyBytes} bytes), preservando núcleo global de notificações eager (${coreBytes} bytes).`);
+console.log(`Screen Loader contract Phase 4C: bases clínicas estáticas da Avaliação adiam ${evaluationDatabaseDeferredBytes} bytes brutos adicionais; Agenda continua lazy (${agendaLazyBytes} bytes) e núcleo de notificações eager (${coreBytes} bytes).`);

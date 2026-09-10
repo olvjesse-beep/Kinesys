@@ -10,6 +10,13 @@ on:
       - 'agenda-1.20.0.js'
       - 'agenda_notificacoes_core-1.20.1.js'
       - 'financeiro_agendamento-1.21.0.js'
+      - 'cirurgias-1.18.0.js'
+      - 'database/medicamentos.js'
+      - 'database/ocupacoes_esportes.js'
+      - 'database/irradiacao_clinica.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
       - 'tests/operational_data_loading.contract.js'
@@ -23,6 +30,13 @@ on:
       - 'agenda-1.20.0.js'
       - 'agenda_notificacoes_core-1.20.1.js'
       - 'financeiro_agendamento-1.21.0.js'
+      - 'cirurgias-1.18.0.js'
+      - 'database/medicamentos.js'
+      - 'database/ocupacoes_esportes.js'
+      - 'database/irradiacao_clinica.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
       - 'tests/operational_data_loading.contract.js'
@@ -46,6 +60,13 @@ jobs:
           node --check agenda-1.20.0.js
           node --check agenda_notificacoes_core-1.20.1.js
           node --check financeiro_agendamento-1.21.0.js
+          node --check cirurgias-1.18.0.js
+          node --check database/medicamentos.js
+          node --check database/ocupacoes_esportes.js
+          node --check database/irradiacao_clinica.js
+          node --check database/mapeamento_clinico.js
+          node --check database/condicoes_mobilidade_v23.js
+          node --check database/diferenciais_neurais.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
       - name: Operational data and polling contract
