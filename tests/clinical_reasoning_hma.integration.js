@@ -139,8 +139,8 @@ const testes = [
     run() {
       const plano = gerar('Dor lateral no ombro ao elevar o braço e dor no cotovelo ao apertar a mão.');
       assert.strictEqual(window.KineSysMotorClinico3.version, '3.0.1-performance1');
-      assert.strictEqual(window.KineSysMotor31Ombro.version, '3.1.3-shoulder4');
-      assert.strictEqual(window.KineSysMotor31Cotovelo.version, '3.1.1-elbow2');
+      assert.strictEqual(window.KineSysMotor31Ombro.version, '3.1.4-shoulder5');
+      assert.strictEqual(window.KineSysMotor31Cotovelo.version, '3.1.2-elbow3');
       assert(plano.motores31?.ombro, 'registro motores31.ombro ausente');
       assert(plano.motores31?.cotovelo, 'registro motores31.cotovelo ausente');
     }
