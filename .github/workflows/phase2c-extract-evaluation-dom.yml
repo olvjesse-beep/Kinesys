@@ -36,15 +36,15 @@ jobs:
           git diff --check
           git diff --stat
 
-      - name: Commit permanent Phase 2C changes
+      - name: Commit permanent Phase 2C code changes
         shell: bash
         run: |
-          if git diff --quiet; then
-            echo 'No changes required.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html screens/tela_avaliacao.html screen_loader-1.25.0.js script-1.18.0.js tests/screen_loader.contract.js .github/workflows/screen-loader-contract.yml .github/workflows/kinesys-quality.yml
+          git add index.html screens/tela_avaliacao.html screen_loader-1.25.0.js script-1.18.0.js tests/screen_loader.contract.js
+          if git diff --cached --quiet; then
+            echo 'No staged code changes required.'
+            exit 0
+          fi
           git commit -m 'Externalize Evaluation DOM for Phase 2C'
           git push origin HEAD:performance/screen-dom-phase2c
