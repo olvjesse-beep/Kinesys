@@ -168,8 +168,12 @@
     qa('#tela_avaliacao .clinical-secondary-card details').forEach(syncDisclosure);
   }
 
+  const actionBarSelector='.actions,.clinical-actions,.cluster-focus-actions,.finance-patient-actions,.finance-plan-actions,.ks-msg-toolbar > div';
   function decorateActionBars(root=document){
-    qa('.actions,.clinical-actions,.cluster-focus-actions,.finance-patient-actions,.finance-plan-actions,.ks-msg-toolbar > div',root).forEach(bar=>{
+    const bars=[];
+    if(root?.nodeType===1&&root.matches?.(actionBarSelector)) bars.push(root);
+    if(root?.querySelectorAll) bars.push(...root.querySelectorAll(actionBarSelector));
+    Array.from(new Set(bars)).forEach(bar=>{
       bar.classList.add('ks-action-bar');
       const primaries=qa('.btn-primary',bar);
       primaries.forEach(btn=>btn.classList.remove('ks-primary-action'));
@@ -269,6 +273,15 @@
     }
   }
 
+  let clinicalPlanRaf=0;
+  function scheduleClinicalPlan(){
+    if(clinicalPlanRaf) return;
+    clinicalPlanRaf=requestAnimationFrame(()=>{
+      clinicalPlanRaf=0;
+      decorateClinicalPlan();
+    });
+  }
+
   const decorativeEmoji=/[📌📱📲🏋️📅🗓️💳👥🛠️🏠👤🩺📂📷📈📄🚪🔔]/g;
   function cleanEmojiIn(root=document){
     const targets=[];
@@ -296,6 +309,31 @@
     });
   }
 
+  function rootTouches(root,selector){
+    if(!root||root===document) return true;
+    return !!(root.matches?.(selector)||root.closest?.(selector)||root.querySelector?.(selector));
+  }
+
+  let layoutRaf=0;
+  const layoutRoots=new Set();
+  function scheduleLayoutFor(root){
+    const target=root?.nodeType===1?root:document.body;
+    if(target) layoutRoots.add(target);
+    if(layoutRaf) return;
+    layoutRaf=requestAnimationFrame(()=>{
+      layoutRaf=0;
+      const roots=Array.from(layoutRoots);
+      layoutRoots.clear();
+      roots.forEach(scope=>{
+        decorateActionBars(scope);
+        if(rootTouches(scope,'#tela_home')) decorateHome();
+        if(rootTouches(scope,'#tela_financeiro')) decorateFinanceTabs();
+        if(rootTouches(scope,'#ks30_exam_plan,#tela_avaliacao')) scheduleClinicalPlan();
+        if(rootTouches(scope,'#ks_sidebar')) refineSidebarLabels();
+      });
+    });
+  }
+
   function refresh(){
     syncPatientContext();
     syncStepper();
@@ -317,12 +355,27 @@
 
     const evalScreen=q('#tela_avaliacao');
     if(evalScreen){
-      evalScreen.addEventListener('input',()=>requestAnimationFrame(()=>{syncPatientContext();syncDisclosures();syncRadarState();}));
-      evalScreen.addEventListener('change',()=>requestAnimationFrame(()=>{
+      const patientContextIds=new Set(['select_paciente_precadastro','paciente_nome','paciente_idade','paciente_ocupacao','paciente_esporte']);
+      evalScreen.addEventListener('input',event=>{
+        const target=event.target;
+        const patientChanged=patientContextIds.has(target?.id);
+        const disclosureChanged=!!target?.closest?.('.clinical-secondary-card');
+        const hmaChanged=target?.id==='paciente_hma';
+        if(!patientChanged&&!disclosureChanged&&!hmaChanged) return;
+        requestAnimationFrame(()=>{
+          if(patientChanged) syncPatientContext();
+          if(disclosureChanged) syncDisclosures();
+          if(hmaChanged) syncRadarState();
+        });
+      });
+      evalScreen.addEventListener('change',event=>requestAnimationFrame(()=>{
+        const target=event.target;
         evalScreen.classList.remove('ks-eval-switching');
         const switchBtn=q('[data-ks-switch-patient]');
         if(switchBtn) switchBtn.textContent='Trocar paciente';
-        syncPatientContext();syncDisclosures();syncRadarState();syncStepper();
+        if(patientContextIds.has(target?.id)) syncPatientContext();
+        if(target?.closest?.('.clinical-secondary-card')) syncDisclosures();
+        syncStepper();
       }));
       const progress=q('.clinical-progress',evalScreen);
       if(progress) new MutationObserver(syncStepper).observe(progress,{subtree:true,attributes:true,attributeFilter:['class','aria-selected']});
@@ -331,18 +384,18 @@
       const secondary=q('.clinical-secondary-card',evalScreen);
       if(secondary) new MutationObserver(()=>requestAnimationFrame(syncDisclosures)).observe(secondary,{subtree:true,childList:true});
       const examPlan=q('#ks30_exam_plan',evalScreen);
-      if(examPlan) new MutationObserver(()=>requestAnimationFrame(decorateClinicalPlan)).observe(examPlan,{subtree:true,childList:true});
-      window.setInterval(syncPatientContext,1500);
+      if(examPlan) new MutationObserver(scheduleClinicalPlan).observe(examPlan,{subtree:true,childList:true});
+      window.setInterval(()=>{if(evalScreen.classList.contains('ativa'))syncPatientContext();},5000);
     }
 
     const observer=new MutationObserver(mutations=>{
-      let needsLayout=false;
       mutations.forEach(mutation=>{
         mutation.addedNodes.forEach(node=>{
-          if(node.nodeType===1){ cleanEmojiIn(node); needsLayout=true; }
+          if(node.nodeType!==1) return;
+          cleanEmojiIn(node);
+          scheduleLayoutFor(node.parentElement||node);
         });
       });
-      if(needsLayout) requestAnimationFrame(()=>{decorateActionBars();decorateHome();decorateFinanceTabs();decorateClinicalPlan();refineSidebarLabels();});
     });
     observer.observe(document.body,{subtree:true,childList:true});
   }
