@@ -1,0 +1,21 @@
+name: TEMP Audit Agenda Notifications
+
+on:
+  push:
+    branches:
+      - perf/phase-4b-agenda-lazy
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Agenda notification symbols
+        shell: bash
+        run: |
+          echo '=== notification matches ==='
+          grep -nEi 'notifica(c|ç|ções|cao|ção)|agendaNotific|AGENDA_NOTIFIC' agenda-1.20.0.js || true
+          echo '=== notification-related function declarations ==='
+          grep -nE '^(async )?function .*Notific|^function .*notific|^async function .*notific' agenda-1.20.0.js || true
+          echo '=== startup / shutdown references ==='
+          grep -nE 'iniciarNotificacoesAgenda|pararNotificacoesAgenda' script-1.18.0.js agenda-1.20.0.js || true
