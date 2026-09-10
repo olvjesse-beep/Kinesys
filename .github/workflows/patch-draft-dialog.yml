@@ -1,0 +1,51 @@
+name: One-time draft dialog cleanup
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-draft-dialog.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clean draft recovery dialog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          js = Path('script-1.18.0.js')
+          s = js.read_text(encoding='utf-8')
+          pattern = r"(titulo:'Rascunho de avaliação encontrado',\s*)mensagem:.*?(\s*confirmar:'Restaurar rascunho')"
+          replacement = r"\1mensagem:'Há uma avaliação não finalizada neste dispositivo.',\2"
+          s2, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'draft dialog message replacements={count}')
+          js.write_text(s2, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          anchor = '    <link rel="stylesheet" href="radar_clinico_focus-3.0.0.css?v=20260910-r1">\n'
+          line = '    <link rel="stylesheet" href="dialog_rascunho_focus-1.0.0.css?v=20260910-r1">\n'
+          if h.count(anchor) != 1:
+              raise SystemExit(f'index radar CSS anchor count={h.count(anchor)}')
+          if 'dialog_rascunho_focus-1.0.0.css' not in h:
+              h = h.replace(anchor, anchor + line, 1)
+          index.write_text(h, encoding='utf-8')
+          PY
+
+          node --check script-1.18.0.js
+          test -s dialog_rascunho_focus-1.0.0.css
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add script-1.18.0.js index.html
+          git commit -m "Clean draft recovery dialog" || exit 0
+          git push
