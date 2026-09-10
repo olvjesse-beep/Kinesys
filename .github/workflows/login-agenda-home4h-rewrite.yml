@@ -21,6 +21,7 @@ jobs:
         run: |
           python .github/scripts/login_agenda_home4h_transform.py
           python .github/scripts/login_agenda_home4h_compat.py
+          python .github/scripts/login_agenda_home4h_hardening.py
       - name: Validate syntax and contracts
         shell: bash
         run: |
