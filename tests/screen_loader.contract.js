@@ -96,6 +96,8 @@ assert.ok(html.indexOf('data-kinesys-lazy-href="design_clinical.css')<html.index
 assert.ok(loader.indexOf('design_clinical.css')<loader.indexOf('design_clinical_direction-1.17.0.css'),'bundle deve preservar a ordem clínica das duas folhas');
 assert.match(loader,/data-kinesys-lazy-href/,'Screen Loader deve reconhecer placeholders CSS lazy');
 assert.match(loader,/reservado\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');
+assert.match(loader,/reservado\.removeAttribute\('href'\)/,'falha de rede deve liberar o placeholder para uma nova tentativa real');
+assert.match(loader,/removeEventListener\('load',aoCarregar\)/,'retry CSS não deve deixar listener de carga órfão após erro');
 const phase4dCssDeferredBytes=phase4dClinicalStyles.reduce((total,file)=>total+fs.statSync(file).size,0);
 assert.ok(phase4dCssDeferredBytes>=100000,`Fase 4D deve adiar pelo menos 100 KB brutos de CSS clínico; atual ${phase4dCssDeferredBytes} bytes`);
 

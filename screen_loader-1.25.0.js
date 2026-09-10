@@ -95,8 +95,17 @@
         });
         if(reservado){
             const promessa=new Promise((resolve,reject)=>{
-                reservado.addEventListener('load',()=>resolve(reservado),{once:true});
-                reservado.addEventListener('error',()=>reject(new Error('Falha ao carregar estilo: '+src)),{once:true});
+                const aoCarregar=()=>{
+                    reservado.removeEventListener('error',aoErro);
+                    resolve(reservado);
+                };
+                const aoErro=()=>{
+                    reservado.removeEventListener('load',aoCarregar);
+                    reservado.removeAttribute('href');
+                    reject(new Error('Falha ao carregar estilo: '+src));
+                };
+                reservado.addEventListener('load',aoCarregar,{once:true});
+                reservado.addEventListener('error',aoErro,{once:true});
                 reservado.dataset.kinesysLazy='1';
                 reservado.href=src;
             });
