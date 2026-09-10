@@ -4552,7 +4552,7 @@ async function restaurarRascunhoKineSys() {
     try {
         escolha=await mostrarDialogoKineSys({
             titulo:'Rascunho de avaliação encontrado',
-            mensagem:'Há uma avaliação não finalizada neste dispositivo.\n\nRestaurar: retomar o preenchimento.\nDescartar rascunho: apagar somente este rascunho automático, sem possibilidade de desfazer. As avaliações salvas no prontuário não serão apagadas.\nCancelar: fechar esta janela e manter o rascunho.',
+            mensagem:'Há uma avaliação não finalizada neste dispositivo.',
             confirmar:'Restaurar rascunho',cancelar:'Cancelar',alternativa:'Descartar rascunho'
         });
     } finally {
