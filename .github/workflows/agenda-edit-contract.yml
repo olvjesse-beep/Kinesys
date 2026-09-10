@@ -1,0 +1,39 @@
+name: Agenda Edit Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agenda-1.20.0.js'
+      - 'index.html'
+      - 'screen_loader-1.25.0.js'
+      - 'financeiro_agendamento-1.21.0.js'
+      - 'tests/agenda_editar_atendimento.contract.js'
+      - '.github/workflows/agenda-edit-contract.yml'
+  pull_request:
+    paths:
+      - 'agenda-1.20.0.js'
+      - 'index.html'
+      - 'screen_loader-1.25.0.js'
+      - 'financeiro_agendamento-1.21.0.js'
+      - 'tests/agenda_editar_atendimento.contract.js'
+      - '.github/workflows/agenda-edit-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate existing appointment editing
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check agenda-1.20.0.js
+          node --check screen_loader-1.25.0.js
+          node --check tests/agenda_editar_atendimento.contract.js
+          node tests/agenda_editar_atendimento.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
