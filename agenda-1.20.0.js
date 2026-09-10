@@ -30,6 +30,12 @@ let agendaEdicaoAtendimentoId = null;
 let agendaExcecaoJornadaPromptadaChaveModal = '';
 const AGENDA_NOTIFICACOES_PENDENTES_KEY = 'kinesys_notificacoes_pendentes_v1';
 
+async function obterPacientesBasicosAgenda() {
+    if (typeof obterPacientesBasicos === 'function') return obterPacientesBasicos();
+    if (typeof obterPacientesSalvos === 'function') return obterPacientesSalvos();
+    return [];
+}
+
 // Status oficiais da Agenda. O status é um estado operacional/administrativo;
 // o consumo financeiro é definido explicitamente e não pelo nome do status.
 const AGENDA_STATUS_CONFIG = Object.freeze({
@@ -489,10 +495,12 @@ function iniciarNotificacoesAgenda() {
     agendaNotificacoesPrimeiraCarga = true;
     setTimeout(async () => {
         renderizarIndicadorNotificacoesAgenda();
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
         await sincronizarNotificacoesPendentesAgenda().catch(()=>false);
         await carregarNotificacoesAgenda({ avisar:true });
     }, 220);
     agendaNotificacoesTimer = setInterval(() => {
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
         sincronizarNotificacoesPendentesAgenda().catch(()=>false);
         carregarNotificacoesAgenda({ avisar:true }).catch(()=>[]);
     }, 60000);
@@ -833,6 +841,7 @@ function configurarSincronizacaoConfiavelAgenda() {
         });
     }
     agendaSyncTimer = setInterval(() => {
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
         if (lerAgendamentosPendentesSync().length) sincronizarAgendamentosPendentes({ silencioso: true }).catch(console.warn);
     }, 20000);
 }
@@ -2479,7 +2488,7 @@ async function abrirModalAgendamento(profissionalPre, dataPre, horaPre, opcoes =
             selProfissional.disabled = true;
         }
 
-        const pacientes = await obterPacientesSalvos();
+        const pacientes = await obterPacientesBasicosAgenda();
         const selPaciente = document.getElementById('ag_paciente_select');
         selPaciente.innerHTML = '<option value="">-- Selecione --</option>' +
             pacientes.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('');
@@ -3584,7 +3593,7 @@ function atualizarJanelaListaEspera(origem) {
 }
 
 async function preencherModalListaEspera() {
-    const pacientes = await obterPacientesSalvos();
+    const pacientes = await obterPacientesBasicosAgenda();
     const selPaciente = document.getElementById('esp_paciente_select');
     selPaciente.innerHTML = '<option value="">-- Selecione --</option>' +
         pacientes.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('');
