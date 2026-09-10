@@ -250,7 +250,7 @@
         const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contexto,hmaResultado)).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
         const modificadores=modificadoresContextuais(contexto);
         const exame=construirExame(hipoteses,hmaResultado,modificadores);
-        ultimoPlano={
+        let planoGerado={
             versao:VERSION,
             geradoEm:new Date().toISOString(),
             insuficiente:false,
@@ -260,6 +260,11 @@
             lacunas:uniq(arr(hmaResultado?.lacunas)),
             aviso:'Prioridade de investigação; não representa probabilidade diagnóstica nem substitui decisão profissional.'
         };
+        if(typeof window.enriquecerPlanoOmbroKineSys==='function'){
+            try { planoGerado=window.enriquecerPlanoOmbroKineSys(planoGerado)||planoGerado; }
+            catch(err){ console.warn('Motor 3.1 Ombro:',err); }
+        }
+        ultimoPlano=planoGerado;
         return ultimoPlano;
     }
 
