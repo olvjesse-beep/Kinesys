@@ -1135,9 +1135,9 @@ async function cadastrarNovoFuncionario() {
 async function carregarListaEquipe() {
     const tbody = document.getElementById('lista_equipe_corpo');
     if (!tbody) return;
-    if (!_supabase) { tbody.innerHTML = `<tr><td colspan="6" class="kds-u-ta-center">Servidor indisponível. A equipe não é cadastrada offline.</td></tr>`; return; }
+    if (!_supabase) { tbody.innerHTML = `<tr><td colspan="7" class="kds-u-ta-center">Servidor indisponível. A equipe não é cadastrada offline.</td></tr>`; return; }
     const { data, error } = await _supabase.from('equipe').select(CAMPOS_PUBLICOS_PERFIL);
-    if (error || !data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>`; return; }
+    if (error || !data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>`; return; }
     const ordenados = data.slice().sort((a,b) => {
         const ai = a.ativo === false ? 1 : 0;
         const bi = b.ativo === false ? 1 : 0;

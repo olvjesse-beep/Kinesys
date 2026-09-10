@@ -46,6 +46,10 @@ assert.match(home,/rotulo:'Atendimento concluído'/,'Estado concluído deve exis
 assert.match(home,/rotulo:'Remarcado'/,'Estado remarcado deve existir');
 assert.match(home,/rotulo:'Cancelado'/,'Estado cancelado deve existir');
 assert.match(home,/rotulo:'A ser atendido'/,'Estado futuro deve existir');
+const statusBlock=bloco(home,'function situacaoTemporal','function diaSemanaISOHome');
+assert.ok(statusBlock.indexOf("rotulo:'Atendimento concluído'") < statusBlock.indexOf("rotulo:'Remarcado'"),'Concluído deve prevalecer sobre origem por reagendamento');
+assert.ok(statusBlock.indexOf("rotulo:'Em atendimento'") < statusBlock.indexOf("rotulo:'Remarcado'"),'Em atendimento deve prevalecer sobre origem por reagendamento');
+assert.match(equipe,/colspan=\"7\"/,'Estados vazio/erro da tabela devem respeitar as sete colunas');
 assert.match(home,/function intervalosLivresHome/,'Home deve calcular lacunas livres reais da jornada');
 assert.match(home,/nome\.textContent='Horário livre'/,'Lacunas devem ser explicitamente rotuladas');
 assert.match(home,/contextoAgendaHomeFisioterapeuta=contexto\|\|null/,'Jornada e bloqueios devem vir do contexto seguro da Agenda');

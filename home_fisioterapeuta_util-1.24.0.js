@@ -197,7 +197,6 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
     function situacaoTemporal(agendamento,agoraMin){
         const status=String(agendamento?.status||'').toLowerCase();
         if(status==='cancelado') return {rotulo:'Cancelado',classe:'is-cancelled'};
-        if(agendamentoEhReagendadoHome(agendamento)) return {rotulo:'Remarcado',classe:'is-rescheduled'};
         if(status==='falta_justificada'||status==='faltou') return {rotulo:'Falta justificada',classe:'is-absence'};
         if(status==='falta_nao_justificada') return {rotulo:'Falta não justificada',classe:'is-absence'};
         if(STATUS_CONCLUIDOS.has(status)) return {rotulo:'Atendimento concluído',classe:'is-done'};
@@ -205,6 +204,7 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         const inicio=horaMinutos(agendamento?.hora_inicio);
         const fim=horaMinutos(agendamento?.hora_fim);
         if(inicio!==null && agoraMin>=inicio && agoraMin<(fim!==null?fim:inicio+60)) return {rotulo:'Em atendimento',classe:'is-current'};
+        if(agendamentoEhReagendadoHome(agendamento)) return {rotulo:'Remarcado',classe:'is-rescheduled'};
         return {rotulo:'A ser atendido',classe:'is-upcoming'};
     }
 
