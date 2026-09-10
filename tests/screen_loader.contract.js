@@ -94,4 +94,58 @@ assert.match(app,/kinesys:tela-dom-pronta/,'app global deve reagir à montagem t
 const waits=(app.match(/const navegacao = await navegarPara\('tela_avaliacao', true\);/g)||[]).length;
 assert.strictEqual(waits,2,'os dois fluxos que preenchem a Avaliação devem aguardar sua montagem');
 
-console.log(`Screen Loader contract Phase 2C: ${lazyScripts.length} JS + ${lazyStyles.length} CSS sob demanda; DOM da Avaliação externalizado (${Buffer.byteLength(fragment)} bytes).`);
+const financeLazyScripts=[
+  'pendencias_financeiras-1.19.0.js',
+  'descontos_financeiros-1.20.0.js',
+  'balanco_financeiro_admin-1.19.0.js',
+  'analise_admin-1.19.0.js',
+  'financeiro_workspace-1.20.1.js',
+  'financeiro_lancamentos-1.20.0.js'
+];
+const financeLazyStyles=[
+  'financeiro_workspace-1.20.1.css',
+  'financeiro_lancamentos-1.20.0.css',
+  'financeiro_alignment.css'
+];
+const agendaLazyStyles=['agenda_referencia-1.20.0.css'];
+
+assert.match(loader,/tela_financeiro\s*:/,'bundle do Financeiro deve existir');
+assert.match(loader,/tela_agenda\s*:/,'bundle visual da Agenda deve existir');
+
+function assertLazyAsset(file,kind){
+  const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const eager=kind==='script'
+    ? new RegExp(`<script[^>]+src=["'][^"']*${escaped}[^"']*["']`,'i')
+    : new RegExp(`<link[^>]+href=["'][^"']*${escaped}[^"']*["']`,'i');
+  assert.ok(!eager.test(html),`${file} não pode voltar ao carregamento inicial`);
+  assert.ok(loader.includes(file),`${file} deve permanecer registrado no Screen Loader`);
+  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
+}
+for(const file of financeLazyScripts)assertLazyAsset(file,'script');
+for(const file of financeLazyStyles)assertLazyAsset(file,'style');
+for(const file of agendaLazyStyles)assertLazyAsset(file,'style');
+
+let financePos=-1;
+for(const file of financeLazyScripts){
+  const pos=loader.indexOf(file);
+  assert.ok(pos>financePos,`${file} deve preservar a ordem histórica relativa do bundle Financeiro`);
+  financePos=pos;
+}
+
+const eagerSharedScripts=[
+  'financeiro-1.19.0.js',
+  'credito_cliente-1.19.0.js',
+  'agenda-1.20.0.js',
+  'financeiro_agendamento-1.21.0.js'
+];
+for(const file of eagerSharedScripts){
+  const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  assert.match(html,new RegExp(`<script[^>]+src=["'][^"']*${escaped}[^"']*["']`,'i'),`${file} deve continuar eager na Fase 4A por ser núcleo compartilhado`);
+}
+assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
+assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
+assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global de notificações da Agenda deve permanecer preservado');
+assert.match(loader,/VERSION='1\.25\.1-phase4a'/,'Screen Loader deve identificar a Fase 4A');
+
+const deferredRawBytes=145198+27284+2983;
+console.log(`Screen Loader contract Phase 4A: Avaliação continua sob demanda; Financeiro adia ${financeLazyScripts.length} JS + ${financeLazyStyles.length} CSS e Agenda adia ${agendaLazyStyles.length} CSS (${deferredRawBytes} bytes brutos retirados do bootstrap).`);
