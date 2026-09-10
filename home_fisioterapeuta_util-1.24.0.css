@@ -197,3 +197,25 @@
   #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions{grid-column:auto;justify-content:flex-start}
   #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-detail{white-space:normal}
 }
+
+
+/* Meu dia clínico — estados operacionais da janela móvel de 4 horas */
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-free{
+  background:var(--kds-surface-soft);
+  box-shadow:inset 3px 0 0 var(--kds-line);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-free .ks-fisio-day-status,
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-free .ks-fisio-day-patient-name{color:var(--kds-muted)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-cancelled{
+  opacity:.7;
+  background:var(--kds-danger-soft);
+  box-shadow:inset 3px 0 0 var(--kds-danger-line-strong);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-cancelled .ks-fisio-day-status{color:var(--kds-danger)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-rescheduled{
+  background:var(--kds-warning-soft);
+  box-shadow:inset 3px 0 0 var(--kds-warning);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-rescheduled .ks-fisio-day-status{color:var(--kds-warning)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-waiting{background:var(--kds-surface-soft)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-waiting .ks-fisio-day-status{color:var(--kds-accent)}

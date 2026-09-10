@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="design_screens.css">
     <link rel="stylesheet" href="design_typography.css">
     <link rel="stylesheet" href="design_navigation.css">
-    <link rel="stylesheet" href="design_agenda.css">
+    <link rel="stylesheet" href="design_agenda.css?v=20260910-compact-r1">
     <link rel="stylesheet" data-kinesys-lazy-href="design_clinical.css?v=1.19.0-hma-layout-r14">
     <link rel="stylesheet" data-kinesys-lazy-href="design_clinical_direction-1.17.0.css">
     <link rel="stylesheet" href="design_utilities.css">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="financeiro_agendamento-1.21.0.css?v=20260901-r1">
     <link rel="stylesheet" href="design_polish.css?v=20260909-clean-r2">
     <link rel="stylesheet" href="design_experience.css?v=20260909-ux-r1">
-    <link rel="stylesheet" href="home_fisioterapeuta_util-1.24.0.css?v=20260909-r1">
+    <link rel="stylesheet" href="home_fisioterapeuta_util-1.24.0.css?v=20260909-r1&home4h=20260910-r1">
 </head>
 <body>
 
@@ -1077,6 +1077,7 @@
                 <div class="actions">
                     <button class="btn-primary" id="eq_btn_salvar" type="button" onclick="cadastrarNovoFuncionario()">Cadastrar funcionário</button>
                 </div>
+                <p class="field-help"><strong>Acesso:</strong> editar nome, e-mail ou função não troca a senha da conta. Para recuperar a credencial real do Supabase Auth, use <strong>Redefinir acesso</strong> na lista abaixo. Perfis inativos permanecem visíveis e podem ser reativados pelo KineSys.</p>
             </div>
 
             <div class="card">
@@ -1087,12 +1088,13 @@
                             <th>E-mail</th>
                             <th>Perfil</th>
                             <th>Registro</th>
+                            <th>Status</th>
                             <th>Na Agenda</th>
                             <th>Ação</th>
                         </tr>
                     </thead>
                     <tbody id="lista_equipe_corpo">
-                        <tr><td colspan="6" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>
+                        <tr><td colspan="7" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1524,8 +1526,8 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="database/ocupacoes_esportes.js"></script>
-    <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1"></script>
-    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260910-r1"></script>
+    <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1"></script>
+    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260910-r1&agenda_compact=20260910-r1"></script>
     <script defer src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="mensagens_config.js?v=20260910-phase4f-r1"></script>
@@ -1543,10 +1545,10 @@
             <div class="actions"><button type="button" class="btn-primary" onclick="fecharInfoMotorClinico()">Entendi</button></div>
         </div>
     </div>
-    <script defer src="login_access-1.18.0.js"></script>
+    <script defer src="login_access-1.18.0.js?v=20260910-access-r1"></script>
     <script defer src="financeiro_agendamento-1.21.0.js?v=20260910-phase4b-r1"></script>
     <script defer src="ui_experience.js?v=20260909-ux-r1"></script>
-    <script defer src="home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1"></script>
+    <script defer src="home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1"></script>
 </body>
 </html>
 

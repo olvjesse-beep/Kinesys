@@ -152,7 +152,10 @@ const KineSysLogin = (() => {
         document.querySelectorAll('[data-access-back]').forEach(button=>button.onclick=()=>show());
         el('login_cancelar_recovery').onclick=async()=>{if(resetBusy)return;await _supabase?.auth.signOut({scope:'local'});recovery=false;el('login_reset_form').reset();show();history.replaceState(null,'',location.pathname);};
         document.querySelectorAll('[data-toggle-password]').forEach(button=>button.onclick=()=>{const input=el(button.dataset.togglePassword),visible=input.type==='password';input.type=visible?'text':'password';button.textContent=visible?'Ocultar':'Mostrar';button.setAttribute('aria-pressed',String(visible));button.setAttribute('aria-label',visible?'Ocultar senha':'Mostrar senha');});
-        el('login_senha').addEventListener('keyup',event=>el('login_caps').hidden=!event.getModifierState('CapsLock'));
+        el('login_senha').addEventListener('keyup',event=>{
+    const capsAtivo=typeof event.getModifierState==='function' && event.getModifierState('CapsLock');
+    el('login_caps').hidden=!capsAtivo;
+});
     });
     return {start,login,resume,activate,sendRecovery,clearPending};
 })();

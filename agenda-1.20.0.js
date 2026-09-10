@@ -25,6 +25,7 @@ let agendaEdicaoAtendimentoId = null;
 // Evita repetir o mesmo diálogo de exceção várias vezes enquanto o usuário
 // apenas completa os demais campos do mesmo agendamento.
 let agendaExcecaoJornadaPromptadaChaveModal = '';
+const AGENDA_GRADE_PASSO_MIN = 10;
 
 const AGENDA_SELECT_SEMANA = '*, pacientes(id,nome,telefone,dependente,responsavel_nome,responsavel_parentesco,responsavel_telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
 const AGENDA_SELECT_SEMANA_LEGADO = '*, pacientes(id,nome,telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
@@ -1758,7 +1759,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     if (!container) return;
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
     const limites = limitesHorariosGrade(dias, profissionalFiltro);
-    const passo = 30;
+    const passo = AGENDA_GRADE_PASSO_MIN;
     const totalSlots = Math.max(1, Math.ceil((limites.fim - limites.inicio) / passo));
     const hojeISO = instanteAgendaSaoPaulo().data;
     container.dataset.dias = dias.map(d => d.dataISO).join(',');
@@ -1792,7 +1793,9 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     for (let r = 0; r < totalSlots; r++) {
         const minuto = limites.inicio + r * passo;
         const eixo = document.createElement('div');
-        eixo.className = 'agenda-hora-eixo';
+        const restoHora=((minuto%60)+60)%60;
+        const classeLinha=restoHora===0?'hora-cheia':(restoHora===30?'meia-hora':'subhora');
+        eixo.className = 'agenda-hora-eixo ' + classeLinha;
         eixo.style.gridColumn = '1';
         eixo.style.gridRow = String(r + 2);
         eixo.textContent = minuto % 60 === 0 ? minutosParaHora(minuto) : '';
@@ -1808,7 +1811,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             cell.dataset.dia = d.dataISO; cell.dataset.minuto = String(minuto);
             cell.style.gridColumn = String(c + 2);
             cell.style.gridRow = String(r + 2);
-            cell.className = 'agenda-celula ' + (r % 2 ? 'meia-hora ' : '') + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : dentro ? 'atendimento' : 'fora-atendimento');
+            cell.className = 'agenda-celula ' + classeLinha + ' ' + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : dentro ? 'atendimento' : 'fora-atendimento');
 
             const hh = minutosParaHora(minuto);
             if (feriado) {
@@ -3661,7 +3664,7 @@ function instanteAgendaSaoPaulo(agora = new Date()) {
     return {data:`${partes.year}-${partes.month}-${partes.day}`,hora:`${partes.hour}:${partes.minute}`,minutos:Number(partes.hour)*60+Number(partes.minute)+Number(partes.second)/60};
 }
 
-function posicaoMarcadorAgenda(agora, dias, inicio, fim, passo=30) {
+function posicaoMarcadorAgenda(agora, dias, inicio, fim, passo=AGENDA_GRADE_PASSO_MIN) {
     const dia = dias.indexOf(agora.data);
     if (dia < 0 || agora.minutos < inicio || agora.minutos >= fim) return null;
     const slot = (agora.minutos-inicio)/passo;

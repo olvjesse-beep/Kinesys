@@ -9,7 +9,8 @@
 
     const STATUS_CONCLUIDOS = new Set(['atendido','concluido']);
     const STATUS_AUSENCIA = new Set(['falta_justificada','falta_nao_justificada','faltou']);
-    const LIMITE_COMPACTO = 3;
+    const JANELA_HOME_MINUTOS = 4 * 60;
+    let contextoAgendaHomeFisioterapeuta = null;
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
@@ -184,17 +185,98 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         };
     }
 
-    function situacaoTemporal(agendamento,agoraMin,ehProximo){
+    function instanteHomeBrasilia(agora=new Date()){
+        const partes=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(agora).map(p=>[p.type,p.value]));
+        return {data:`${partes.year}-${partes.month}-${partes.day}`,hora:`${partes.hour}:${partes.minute}`,minutos:Number(partes.hour)*60+Number(partes.minute)};
+    }
+
+    function agendamentoEhReagendadoHome(agendamento){
+        return /reagendamento\s+do\s+atendimento/i.test(String(agendamento?.observacoes||''));
+    }
+
+    function situacaoTemporal(agendamento,agoraMin){
         const status=String(agendamento?.status||'').toLowerCase();
-        if(STATUS_AUSENCIA.has(status)) return {rotulo:'Falta',classe:'is-absence'};
-        if(status==='em_recepcao') return {rotulo:'Recepção',classe:'is-current'};
+        if(status==='cancelado') return {rotulo:'Cancelado',classe:'is-cancelled'};
+        if(agendamentoEhReagendadoHome(agendamento)) return {rotulo:'Remarcado',classe:'is-rescheduled'};
+        if(status==='falta_justificada'||status==='faltou') return {rotulo:'Falta justificada',classe:'is-absence'};
+        if(status==='falta_nao_justificada') return {rotulo:'Falta não justificada',classe:'is-absence'};
+        if(STATUS_CONCLUIDOS.has(status)) return {rotulo:'Atendimento concluído',classe:'is-done'};
+        if(status==='em_recepcao') return {rotulo:'A ser atendido',classe:'is-waiting'};
         const inicio=horaMinutos(agendamento?.hora_inicio);
         const fim=horaMinutos(agendamento?.hora_fim);
-        if(!STATUS_CONCLUIDOS.has(status) && inicio!==null && agoraMin>=inicio && agoraMin<=(fim!==null?fim:inicio+60)) return {rotulo:'Agora',classe:'is-current'};
-        if(STATUS_CONCLUIDOS.has(status)) return {rotulo:'Concluído',classe:'is-done'};
-        if(ehProximo) return {rotulo:'Próximo',classe:'is-next'};
-        if(inicio!==null && inicio<agoraMin) return {rotulo:'Passado',classe:'is-past'};
-        return {rotulo:'Hoje',classe:'is-upcoming'};
+        if(inicio!==null && agoraMin>=inicio && agoraMin<(fim!==null?fim:inicio+60)) return {rotulo:'Em atendimento',classe:'is-current'};
+        return {rotulo:'A ser atendido',classe:'is-upcoming'};
+    }
+
+    function diaSemanaISOHome(dataISO){
+        const [a,m,d]=String(dataISO||'').split('-').map(Number);
+        return Number.isFinite(a)&&Number.isFinite(m)&&Number.isFinite(d) ? new Date(a,m-1,d).getDay() : new Date().getDay();
+    }
+
+    function intersectarJanelasHome(gerais,especificas){
+        const out=[];
+        (gerais||[]).forEach(g=>{
+            const gi=horaMinutos(g.hora_inicio), gf=horaMinutos(g.hora_fim);
+            (especificas||[]).forEach(e=>{
+                const ei=horaMinutos(e.hora_inicio), ef=horaMinutos(e.hora_fim);
+                const inicio=Math.max(gi,ei),fim=Math.min(gf,ef);
+                if(Number.isFinite(inicio)&&Number.isFinite(fim)&&inicio<fim) out.push({inicio,fim});
+            });
+        });
+        return out;
+    }
+
+    function janelasAtendimentoHome(dataISO,profissionalId){
+        const horarios=Array.isArray(contextoAgendaHomeFisioterapeuta?.horarios)?contextoAgendaHomeFisioterapeuta.horarios:[];
+        const dia=diaSemanaISOHome(dataISO), pid=String(profissionalId||'');
+        const gerais=horarios.filter(h=>Number(h.dia_semana)===dia&&!h.profissional_id).map(h=>({inicio:horaMinutos(h.hora_inicio),fim:horaMinutos(h.hora_fim)})).filter(j=>Number.isFinite(j.inicio)&&Number.isFinite(j.fim)&&j.inicio<j.fim);
+        const todas=horarios.filter(h=>String(h.profissional_id||'')===pid);
+        if(!todas.length) return gerais;
+        const especificas=todas.filter(h=>Number(h.dia_semana)===dia);
+        if(!especificas.length) return [];
+        return intersectarJanelasHome(
+            gerais.map(j=>({hora_inicio:minutosHoraHome(j.inicio),hora_fim:minutosHoraHome(j.fim)})),
+            especificas
+        );
+    }
+
+    function minutosHoraHome(minutos){
+        const m=Math.max(0,Math.min(1439,Math.round(Number(minutos)||0)));
+        return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+    }
+
+    function bloqueiosAtendimentoHome(dataISO,profissionalId){
+        const bloqueios=Array.isArray(contextoAgendaHomeFisioterapeuta?.bloqueios)?contextoAgendaHomeFisioterapeuta.bloqueios:[];
+        return bloqueios.filter(b=>String(b.data||'')===String(dataISO)&&(!b.profissional_id||String(b.profissional_id)===String(profissionalId))).map(b=>({
+            inicio:b.hora_inicio?horaMinutos(b.hora_inicio):0,
+            fim:b.hora_fim?horaMinutos(b.hora_fim):24*60
+        })).filter(x=>Number.isFinite(x.inicio)&&Number.isFinite(x.fim)&&x.inicio<x.fim);
+    }
+
+    function statusOcupaHorarioHome(status){
+        return ['pre_agendado','agendado','confirmado','em_recepcao'].includes(String(status||'').toLowerCase());
+    }
+
+    function intervalosLivresHome(dataISO,profissionalId,inicioJanela,fimJanela,atendimentos){
+        const janelas=janelasAtendimentoHome(dataISO,profissionalId);
+        const bloqueios=bloqueiosAtendimentoHome(dataISO,profissionalId);
+        const ocupados=(atendimentos||[]).filter(a=>statusOcupaHorarioHome(a.status)).map(a=>({
+            inicio:horaMinutos(a.hora_inicio),fim:horaMinutos(a.hora_fim)
+        })).filter(x=>Number.isFinite(x.inicio)&&Number.isFinite(x.fim)&&x.inicio<x.fim);
+        const indisponiveis=[...bloqueios,...ocupados].sort((a,b)=>a.inicio-b.inicio);
+        const livres=[];
+        janelas.forEach(j=>{
+            const inicio=Math.max(j.inicio,inicioJanela),fim=Math.min(j.fim,fimJanela);
+            if(inicio>=fim)return;
+            let cursor=inicio;
+            indisponiveis.forEach(b=>{
+                if(b.fim<=cursor||b.inicio>=fim)return;
+                if(b.inicio>cursor)livres.push({inicio:cursor,fim:Math.min(b.inicio,fim)});
+                cursor=Math.max(cursor,Math.min(b.fim,fim));
+            });
+            if(cursor<fim)livres.push({inicio:cursor,fim});
+        });
+        return livres.filter(x=>x.fim-x.inicio>=10);
     }
 
     async function abrirProntuario(pacienteId,nome){
@@ -236,106 +318,74 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
 
     function prepararCabecalho(card,total=0){
         card.classList.add('ks-fisio-util','ks-fisio-util-compact');
+        card.classList.remove('is-expanded');
         const eyebrow=card.querySelector('.eyebrow');
         if(eyebrow) eyebrow.textContent='ROTINA CLÍNICA';
         const titulo=document.getElementById('painel_fisio_titulo');
         if(titulo) titulo.textContent='Meu dia clínico';
         const resumo=document.getElementById('painel_fisio_resumo');
-        if(resumo){
-            resumo.setAttribute('role','status');
-            resumo.setAttribute('aria-live','polite');
-        }
+        if(resumo){resumo.setAttribute('role','status');resumo.setAttribute('aria-live','polite');}
         const header=card.querySelector('.card-header');
-        if(!header) return;
+        if(!header)return;
         let actions=header.querySelector('.ks-fisio-header-actions');
-        if(!actions){
-            actions=document.createElement('div');
-            actions.className='ks-fisio-header-actions';
-            header.appendChild(actions);
-        }
+        if(!actions){actions=document.createElement('div');actions.className='ks-fisio-header-actions';header.appendChild(actions);}
         const original=Array.from(header.children).find(el=>el.tagName==='BUTTON');
-        if(original){
-            original.textContent='Atualizar';
-            actions.appendChild(original);
-        }
+        if(original){original.textContent='Atualizar';actions.appendChild(original);}
         let agenda=actions.querySelector('[data-ks-fisio-agenda]');
-        if(!agenda){
-            agenda=criarBotao('Agenda','btn-secondary',()=>{ if(typeof navegarPara==='function') navegarPara('tela_agenda'); });
-            agenda.dataset.ksFisioAgenda='1';
-            actions.prepend(agenda);
-        }
-        let toggle=actions.querySelector('[data-ks-fisio-toggle]');
-        if(!toggle){
-            toggle=criarBotao('Ver todos','btn-secondary',()=>{
-                const expandido=card.classList.toggle('is-expanded');
-                toggle.setAttribute('aria-expanded',expandido?'true':'false');
-                toggle.textContent=expandido?'Ver menos':`Ver todos (${card.dataset.ksTotal||0})`;
-            });
-            toggle.dataset.ksFisioToggle='1';
-            toggle.setAttribute('aria-expanded','false');
-            actions.insertBefore(toggle,agenda.nextSibling);
-        }
+        if(!agenda){agenda=criarBotao('Agenda','btn-secondary',()=>{if(typeof navegarPara==='function')navegarPara('tela_agenda');});agenda.dataset.ksFisioAgenda='1';actions.prepend(agenda);}
+        const toggle=actions.querySelector('[data-ks-fisio-toggle]');
+        if(toggle)toggle.remove();
         card.dataset.ksTotal=String(total||0);
-        toggle.hidden=total<=LIMITE_COMPACTO;
-        toggle.textContent=`Ver todos (${total})`;
-        toggle.setAttribute('aria-expanded',card.classList.contains('is-expanded')?'true':'false');
     }
 
     function montarLinha(item){
-        const {agendamento,paciente,nome,clinica,situacao,registroPendente,extra}=item;
+        const {agendamento,paciente,nome,clinica,situacao,registroPendente}=item;
         const row=document.createElement('article');
-        row.className=`ks-fisio-day-row ${situacao.classe}${registroPendente?' has-record-pending':''}${extra?' is-extra':''}`;
+        row.className=`ks-fisio-day-row ${situacao.classe}${registroPendente?' has-record-pending':''}`;
         row.dataset.agendamentoId=String(agendamento.id||'');
-
-        const time=document.createElement('div');
-        time.className='ks-fisio-day-time';
-        const horario=document.createElement('strong');
-        horario.textContent=String(agendamento.hora_inicio||'').slice(0,5) || '—';
-        const badge=document.createElement('span');
-        badge.className='ks-fisio-day-status';
-        badge.textContent=situacao.rotulo;
-        time.append(horario,badge);
-
-        const content=document.createElement('div');
-        content.className='ks-fisio-day-content';
-        const patientName=document.createElement('strong');
-        patientName.className='ks-fisio-day-patient-name';
-        patientName.textContent=nome;
-        const category=document.createElement('div');
-        category.className='ks-fisio-day-category';
-        category.textContent=clinica.rotuloSessao;
-        const detail=document.createElement('p');
-        detail.className='ks-fisio-day-detail';
-        detail.textContent=clinica.detalhe;
-        content.append(patientName,category,detail);
-
-        const actions=document.createElement('div');
-        actions.className='ks-fisio-day-actions';
+        const time=document.createElement('div');time.className='ks-fisio-day-time';
+        const horario=document.createElement('strong');horario.textContent=String(agendamento.hora_inicio||'').slice(0,5)||'—';
+        const badge=document.createElement('span');badge.className='ks-fisio-day-status';badge.textContent=situacao.rotulo;time.append(horario,badge);
+        const content=document.createElement('div');content.className='ks-fisio-day-content';
+        const patientName=document.createElement('strong');patientName.className='ks-fisio-day-patient-name';patientName.textContent=nome;
+        const category=document.createElement('div');category.className='ks-fisio-day-category';category.textContent=clinica.rotuloSessao;
+        const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=clinica.detalhe;content.append(patientName,category,detail);
+        const actions=document.createElement('div');actions.className='ks-fisio-day-actions';
         const status=String(agendamento.status||'').toLowerCase();
-        const ausencia=STATUS_AUSENCIA.has(status);
-        if(!ausencia){
+        const bloqueiaAcao=STATUS_AUSENCIA.has(status)||status==='cancelado';
+        if(!bloqueiaAcao){
             const modoDestino=clinica.familia==='avaliacao' ? 'avaliacao' : 'evolucao';
             const labelDestino=modoDestino==='avaliacao' ? 'Avaliação' : 'Evolução';
             actions.appendChild(criarBotao(labelDestino,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,modoDestino,agendamento.id)));
-            if(clinica.registroHoje){
-                const done=document.createElement('span');
-                done.className='ks-fisio-record-done';
-                done.textContent='Registro concluído';
-                actions.appendChild(done);
-            }
+            if(clinica.registroHoje){const done=document.createElement('span');done.className='ks-fisio-record-done';done.textContent='Registro concluído';actions.appendChild(done);}
         }
-        if(!paciente) row.classList.add('has-missing-record');
-        row.append(time,content,actions);
-        return row;
+        if(!paciente)row.classList.add('has-missing-record');
+        row.append(time,content,actions);return row;
     }
 
+    function montarLinhaLivre(intervalo){
+        const row=document.createElement('article');row.className='ks-fisio-day-row is-free';
+        const time=document.createElement('div');time.className='ks-fisio-day-time';
+        const horario=document.createElement('strong');horario.textContent=minutosHoraHome(intervalo.inicio);
+        const badge=document.createElement('span');badge.className='ks-fisio-day-status';badge.textContent='Livre';time.append(horario,badge);
+        const content=document.createElement('div');content.className='ks-fisio-day-content';
+        const nome=document.createElement('strong');nome.className='ks-fisio-day-patient-name';nome.textContent='Horário livre';
+        const faixa=document.createElement('div');faixa.className='ks-fisio-day-category';faixa.textContent=`${minutosHoraHome(intervalo.inicio)}–${minutosHoraHome(intervalo.fim)}`;
+        const detalhe=document.createElement('p');detalhe.className='ks-fisio-day-detail';detalhe.textContent='Disponível para novo agendamento';content.append(nome,faixa,detalhe);
+        const actions=document.createElement('div');actions.className='ks-fisio-day-actions';row.append(time,content,actions);return row;
+    }
+
+
+    // Mantido como contrato de compatibilidade do Home. A janela de 4 horas é
+    // cronológica; este helper não limita nem reordena os itens exibidos.
     function pontuacaoPrioridade(item){
-        if(item.situacao.classe==='is-current') return 0;
-        if(item.registroPendente) return 1;
-        if(item.situacao.classe==='is-next') return 2;
-        if(item.situacao.classe==='is-upcoming') return 3;
-        if(item.situacao.classe==='is-past') return 4;
-        if(item.situacao.classe==='is-done') return 5;
+        const classe=String(item?.situacao?.classe||'');
+        if(classe==='is-current') return 0;
+        if(classe==='is-waiting') return 1;
+        if(classe==='is-rescheduled') return 2;
+        if(classe==='is-upcoming') return 3;
+        if(classe==='is-done') return 4;
+        if(classe==='is-cancelled'||classe==='is-absence') return 5;
         return 6;
     }
 
@@ -368,6 +418,7 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         if(!perfilId) return '';
         const {data:contexto,error}=await _supabase.rpc('kinesys_contexto_agenda');
         if(error) throw error;
+        contextoAgendaHomeFisioterapeuta=contexto||null;
         if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return '';
         if(String(contexto?.perfil_id||'')!==perfilId) throw new Error('A sessão mudou. Entre novamente.');
         if(clinicaId && String(contexto?.clinica_id||'')!==clinicaId) throw new Error('A clínica da sessão mudou. Entre novamente.');
@@ -378,106 +429,69 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
 
     async function carregarPainelFisioterapeutaUtil(){
         const card=document.getElementById('card_painel_fisioterapeuta');
-        if(!card) return;
-        const eh=perfilFisioterapeuta();
-        card.hidden=!eh;
-        if(!eh) return;
-        card.classList.remove('is-expanded');
+        if(!card)return;
+        const eh=perfilFisioterapeuta();card.hidden=!eh;if(!eh)return;
         prepararCabecalho(card,0);
+        const resumo=document.getElementById('painel_fisio_resumo'),lista=document.getElementById('painel_fisio_lista');
+        if(!resumo||!lista)return;
+        lista.replaceChildren();resumo.textContent='Organizando as próximas 4 horas…';
+        if(typeof _supabase==='undefined'||!_supabase){resumo.textContent='Não foi possível acessar sua agenda agora.';return;}
 
-        const resumo=document.getElementById('painel_fisio_resumo');
-        const lista=document.getElementById('painel_fisio_lista');
-        if(!resumo||!lista) return;
-        lista.replaceChildren();
-        resumo.textContent='Organizando sua rotina clínica…';
-        if(typeof _supabase==='undefined' || !_supabase){
-            resumo.textContent='Não foi possível acessar sua agenda agora.';
-            return;
-        }
-
-        const perfilInicial=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
+        const perfilInicial=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
         let profissionalId='';
-        try {
-            profissionalId=await resolverProfissionalHomeFisioterapeuta(perfilInicial);
-        } catch(_) {
-            if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)===perfilInicial) resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';
-            return;
+        try{profissionalId=await resolverProfissionalHomeFisioterapeuta(perfilInicial);}catch(_){
+            if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)===perfilInicial)resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';return;
         }
-        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return;
+        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial)return;
+        if(!profissionalId){resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';return;}
 
-        if(!profissionalId){
-            resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';
-            return;
-        }
-
-        const hoje=dataLocalISO();
+        const agora=instanteHomeBrasilia(),hoje=agora.data,inicioJanela=agora.minutos,fimJanela=Math.min(24*60,inicioJanela+JANELA_HOME_MINUTOS);
         let consulta=await _supabase.from('agendamentos')
-            .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,pacientes(id,nome),procedimentos(nome,duracao_minutos)')
-            .eq('data',hoje).eq('profissional_id',profissionalId).neq('status','cancelado').order('hora_inicio');
-        if(consulta.error && /procedimentos|hora_fim|relationship|schema cache/i.test(String(consulta.error.message||''))){
+            .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome),procedimentos(nome,duracao_minutos)')
+            .eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
+        if(consulta.error&&/procedimentos|hora_fim|observacoes|relationship|schema cache/i.test(String(consulta.error.message||''))){
             consulta=await _supabase.from('agendamentos')
-                .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,pacientes(id,nome)')
-                .eq('data',hoje).eq('profissional_id',profissionalId).neq('status','cancelado').order('hora_inicio');
+                .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome)')
+                .eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
         }
-        if(consulta.error){
-            resumo.textContent='Não foi possível carregar seus atendimentos agora.';
-            return;
-        }
+        if(consulta.error){resumo.textContent='Não foi possível carregar seus atendimentos agora.';return;}
 
-        const atendimentos=consulta.data||[];
-        prepararCabecalho(card,atendimentos.length);
-        if(!atendimentos.length){
-            resumo.textContent='Nenhum atendimento agendado para hoje.';
-            const empty=document.createElement('div');
-            empty.className='ks-fisio-painel-vazio';
-            empty.textContent='Seu dia está livre. Abra a Agenda para consultar outros dias.';
-            lista.appendChild(empty);
-            return;
-        }
-
-        let pacientes=[];
-        try { pacientes=typeof obterPacientesSalvos==='function' ? await obterPacientesSalvos() : []; } catch(_) {}
+        const atendimentosHoje=consulta.data||[];
+        const atendimentos=atendimentosHoje.filter(a=>{
+            const inicio=horaMinutos(a.hora_inicio),fim=horaMinutos(a.hora_fim);
+            if(!Number.isFinite(inicio))return false;
+            const termino=Number.isFinite(fim)&&fim>inicio?fim:inicio+30;
+            return termino>inicioJanela&&inicio<fimJanela;
+        });
+        let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
         const mapaPacientes=new Map((pacientes||[]).map(p=>[String(p.id||''),p]));
         const historico=await carregarHistoricoAgenda(atendimentos,hoje,profissionalId);
-        const agora=new Date();
-        const agoraMin=agora.getHours()*60+agora.getMinutes();
-        const futuro=atendimentos.find(a=>{
-            const st=String(a.status||'').toLowerCase();
-            const min=horaMinutos(a.hora_inicio);
-            return !STATUS_CONCLUIDOS.has(st) && !STATUS_AUSENCIA.has(st) && min!==null && min>=agoraMin;
-        });
-
-        let concluidos=0;
-        let registrosPendentes=0;
+        let concluidos=0,registrosPendentes=0,emAtendimento=0;
         const itens=atendimentos.map(a=>{
-            const status=String(a.status||'').toLowerCase();
-            if(STATUS_CONCLUIDOS.has(status)) concluidos++;
-            const paciente=mapaPacientes.get(String(a.paciente_id||''));
-            const seq=sequenciaDoAtendimento(a,historico,hoje);
-            const clinica=contextoClinico(paciente,a,hoje,seq);
-            const inicio=horaMinutos(a.hora_inicio);
-            const registroPendente=!STATUS_AUSENCIA.has(status) && !clinica.registroHoje && (STATUS_CONCLUIDOS.has(status) || (inicio!==null && inicio<agoraMin));
-            if(registroPendente) registrosPendentes++;
-            const nome=String(a.pacientes?.nome || paciente?.nome || 'Paciente');
-            const situacao=situacaoTemporal(a,agoraMin,futuro && String(futuro.id)===String(a.id));
-            return {agendamento:a,paciente,nome,clinica,situacao,registroPendente};
+            const status=String(a.status||'').toLowerCase();if(STATUS_CONCLUIDOS.has(status))concluidos++;
+            const paciente=mapaPacientes.get(String(a.paciente_id||'')),seq=sequenciaDoAtendimento(a,historico,hoje);
+            let clinica=contextoClinico(paciente,a,hoje,seq),situacao=situacaoTemporal(a,inicioJanela);
+            if(situacao.classe==='is-current')emAtendimento++;
+            if(status==='cancelado')clinica={...clinica,detalhe:'Atendimento cancelado · horário liberado'};
+            else if(agendamentoEhReagendadoHome(a))clinica={...clinica,detalhe:'Atendimento remarcado para este horário'};
+            else if(status==='em_recepcao')clinica={...clinica,detalhe:'Paciente em espera na recepção'};
+            const registroPendente=STATUS_CONCLUIDOS.has(status)&&!clinica.registroHoje;
+            if(registroPendente)registrosPendentes++;
+            return {tipo:'atendimento',inicio:horaMinutos(a.hora_inicio),agendamento:a,paciente,nome:String(a.pacientes?.nome||paciente?.nome||'Paciente'),clinica,situacao,registroPendente};
         });
+        const livres=intervalosLivresHome(hoje,profissionalId,inicioJanela,fimJanela,atendimentosHoje).map(x=>({tipo:'livre',inicio:x.inicio,intervalo:x}));
+        const timeline=[...itens,...livres].sort((a,b)=>a.inicio-b.inicio||(a.tipo==='atendimento'?-1:1));
+        prepararCabecalho(card,timeline.length);
 
-        const prioritarios=itens.slice().sort((a,b)=>{
-            const pa=pontuacaoPrioridade(a),pb=pontuacaoPrioridade(b);
-            if(pa!==pb) return pa-pb;
-            return (horaMinutos(a.agendamento.hora_inicio)||0)-(horaMinutos(b.agendamento.hora_inicio)||0);
-        }).slice(0,LIMITE_COMPACTO);
-        const visiveis=new Set(prioritarios.map(x=>String(x.agendamento.id||'')));
-
-        itens.forEach(item=>{
-            item.extra=!visiveis.has(String(item.agendamento.id||''));
-            lista.appendChild(montarLinha(item));
-        });
-
-        const partes=[`${atendimentos.length} hoje`,`${concluidos} concluído(s)`];
-        if(futuro) partes.push(`próximo ${String(futuro.hora_inicio||'').slice(0,5)}`);
-        if(registrosPendentes) partes.push(`${registrosPendentes} registro(s) pendente(s)`);
+        if(!timeline.length){
+            resumo.textContent='Próximas 4 horas · sem atendimentos ou horários disponíveis na sua jornada.';
+            const empty=document.createElement('div');empty.className='ks-fisio-painel-vazio';empty.textContent='Não há atividade clínica disponível nesta janela. Abra a Agenda para consultar outros horários.';lista.appendChild(empty);return;
+        }
+        timeline.forEach(item=>lista.appendChild(item.tipo==='livre'?montarLinhaLivre(item.intervalo):montarLinha(item)));
+        const partes=['Próximas 4 horas',`${itens.length} atendimento(s)`,`${livres.length} horário(s) livre(s)`];
+        if(emAtendimento)partes.push(`${emAtendimento} em atendimento`);
+        if(concluidos)partes.push(`${concluidos} concluído(s)`);
+        if(registrosPendentes)partes.push(`${registrosPendentes} registro(s) pendente(s)`);
         resumo.textContent=partes.join(' · ');
     }
 

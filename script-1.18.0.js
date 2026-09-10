@@ -1138,32 +1138,101 @@ async function carregarListaEquipe() {
     if (!_supabase) { tbody.innerHTML = `<tr><td colspan="6" class="kds-u-ta-center">Servidor indisponível. A equipe não é cadastrada offline.</td></tr>`; return; }
     const { data, error } = await _supabase.from('equipe').select(CAMPOS_PUBLICOS_PERFIL);
     if (error || !data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>`; return; }
-    const ordenados = data.filter(f => f.ativo !== false).sort((a,b) => {
+    const ordenados = data.slice().sort((a,b) => {
+        const ai = a.ativo === false ? 1 : 0;
+        const bi = b.ativo === false ? 1 : 0;
         const am = normalizarNivelAcessoEquipe(a.tipo) === 'MASTER' ? 0 : 1;
         const bm = normalizarNivelAcessoEquipe(b.tipo) === 'MASTER' ? 0 : 1;
-        return am - bm || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+        return ai - bi || am - bm || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
     });
-    tbody.innerHTML = ordenados.map(f => `<tr>
+    tbody.innerHTML = ordenados.map(f => {
+        const ativo = f.ativo !== false;
+        const status = ativo
+            ? '<span class="kds-u-ai-center kds-u-gap-5px kds-u-p-3px-7px kds-u-br-999px kds-u-bg-success-soft kds-u-text-success-text kds-u-fs-meta kds-u-fw-800 kds-u-d-inline-flex">Ativo</span>'
+            : '<span class="kds-u-ai-center kds-u-gap-5px kds-u-p-3px-7px kds-u-br-999px kds-u-bg-neutral-soft kds-u-text-neutral-text kds-u-fs-meta kds-u-fw-800 kds-u-d-inline-flex">Inativo</span>';
+        const reativar = ativo ? '' : `<button type="button" class="ks-team-action btn-primary btn-compact" data-equipe-reativar="${escapeHTML(f.id)}">Reativar</button>`;
+        return `<tr class="${ativo ? '' : 'ks-team-row-inactive'}">
         <td><strong>${escapeHTML(f.nome)}</strong></td>
         <td>${escapeHTML(f.email)}</td>
         <td>${escapeHTML(rotuloPerfil(normalizarNivelAcessoEquipe(f.tipo)))}</td>
         <td>${escapeHTML(f.registro || (conselhoFuncionarioEquipe(f) === 'SECRETARIA' ? 'Administrativo' : 'Sem registro clínico'))}</td>
+        <td>${status}</td>
         <td>${funcionarioPodeAparecerNaAgenda(f)
             ? '<span class="kds-u-ai-center kds-u-gap-5px kds-u-p-3px-7px kds-u-br-999px kds-u-bg-success-soft kds-u-text-success-text kds-u-fs-meta kds-u-fw-800 kds-u-d-inline-flex">✓ Aparece</span>'
             : '<span class="kds-u-ai-center kds-u-gap-5px kds-u-p-3px-7px kds-u-br-999px kds-u-bg-neutral-soft kds-u-text-neutral-text kds-u-fs-meta kds-u-fw-800 kds-u-d-inline-flex">Não aparece</span>'}</td>
         <td><div class="kds-u-gap-6px kds-u-wrap-wrap kds-u-d-flex">
             <button type="button" class="ks-team-action btn-secondary btn-compact" data-equipe-editar="${escapeHTML(f.id)}">Editar</button>
+            ${reativar}
+            <button type="button" class="ks-team-action btn-secondary btn-compact" data-equipe-redefinir="${escapeHTML(f.id)}">Redefinir acesso</button>
             <button type="button" class="ks-team-action btn-danger btn-compact" data-equipe-excluir="${escapeHTML(f.id)}">Excluir</button>
         </div></td>
-    </tr>`).join('');
+    </tr>`;
+    }).join('');
     if (!tbody.dataset.acoesEquipeVinculadas) {
         tbody.dataset.acoesEquipeVinculadas = '1';
         tbody.addEventListener('click', e => {
             const editar = e.target.closest('[data-equipe-editar]');
             if (editar) { abrirEdicaoFuncionario(editar.dataset.equipeEditar); return; }
+            const reativar = e.target.closest('[data-equipe-reativar]');
+            if (reativar) { reativarFuncionario(reativar.dataset.equipeReativar); return; }
+            const redefinir = e.target.closest('[data-equipe-redefinir]');
+            if (redefinir) { enviarRedefinicaoAcessoFuncionario(redefinir.dataset.equipeRedefinir); return; }
             const excluir = e.target.closest('[data-equipe-excluir]');
             if (excluir) excluirFuncionario(excluir.dataset.equipeExcluir);
         });
+    }
+}
+
+
+async function reativarFuncionario(id) {
+    if (!usuarioEhMaster()) { alert('Apenas Administrador pode reativar usuários.'); return false; }
+    if (!_supabase) { alert('Servidor indisponível. Nenhum cadastro foi alterado.'); return false; }
+    try {
+        const { data: cadastro, error: leituraError } = await _supabase.from('equipe').select('id,nome,email,ativo').eq('id', id).maybeSingle();
+        if (leituraError) throw leituraError;
+        if (!cadastro) throw new Error('Funcionário não encontrado ou sem permissão.');
+        if (cadastro.ativo !== false) { await carregarListaEquipe(); return true; }
+        const confirmado = await confirmarKineSys(
+            `Reativar o acesso de ${cadastro.nome || 'este usuário'}? O perfil voltará a aparecer entre os usuários ativos. A senha da conta não será alterada.`,
+            { titulo:'Reativar usuário', confirmar:'Reativar acesso', cancelar:'Cancelar' }
+        );
+        if (!confirmado) return false;
+        const { data, error } = await _supabase.from('equipe').update({ ativo:true }).eq('id', id).select('id');
+        if (error) throw error;
+        if (data?.length !== 1) throw new Error('O banco não confirmou a reativação.');
+        await carregarListaEquipe();
+        if (typeof carregarProfissionaisAgenda === 'function') await carregarProfissionaisAgenda();
+        alert('✅ Perfil reativado. Se a senha não for conhecida, use “Redefinir acesso”.');
+        return true;
+    } catch (err) {
+        console.error('KineSys: falha ao reativar funcionário:', err);
+        alert('Não foi possível reativar o usuário. ' + (err?.message || String(err)));
+        return false;
+    }
+}
+
+async function enviarRedefinicaoAcessoFuncionario(id) {
+    if (!usuarioEhMaster()) { alert('Apenas Administrador pode iniciar a recuperação de acesso da equipe.'); return false; }
+    if (!_supabase) { alert('Servidor indisponível. Nenhum e-mail foi enviado.'); return false; }
+    try {
+        const { data: cadastro, error: leituraError } = await _supabase.from('equipe').select('id,nome,email,ativo').eq('id', id).maybeSingle();
+        if (leituraError) throw leituraError;
+        if (!cadastro?.email) throw new Error('Este perfil não possui e-mail de acesso válido.');
+        const confirmado = await confirmarKineSys(
+            `Enviar um link de redefinição de senha para ${cadastro.nome || 'este usuário'}?\n\nO link será enviado para ${cadastro.email}. A senha atual não é exibida nem alterada pelo administrador.`,
+            { titulo:'Redefinir acesso', confirmar:'Enviar link', cancelar:'Cancelar' }
+        );
+        if (!confirmado) return false;
+        const redirectTo = new URL(location.pathname, location.origin);
+        redirectTo.searchParams.set('recuperar', '1');
+        const { error } = await _supabase.auth.resetPasswordForEmail(String(cadastro.email).trim().toLowerCase(), { redirectTo: redirectTo.href });
+        if (error) throw error;
+        alert(`✅ Link de redefinição enviado para ${cadastro.email}. O usuário deve abrir o e-mail e criar a nova senha.`);
+        return true;
+    } catch (err) {
+        console.error('KineSys: falha ao enviar redefinição de acesso:', err);
+        alert('Não foi possível enviar o link de redefinição. ' + (err?.message || String(err)));
+        return false;
     }
 }
 
