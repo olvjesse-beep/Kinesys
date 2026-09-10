@@ -1,0 +1,61 @@
+name: Phase 4B Agenda lazy rewrite
+
+on:
+  push:
+    branches: [performance/agenda-lazy-phase4b]
+    paths:
+      - '.github/workflows/phase4b-agenda-lazy-rewrite.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/agenda-lazy-phase4b
+          fetch-depth: 0
+
+      - name: Apply exact Phase 4B rewrite
+        run: python .github/scripts/phase4b_agenda_lazy.py
+
+      - name: Validate Phase 4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check screen_loader-1.25.0.js
+          node --check agenda-1.20.0.js
+          node --check agenda_notificacoes_core-1.20.1.js
+          node --check financeiro_agendamento-1.21.0.js
+          node --check tests/screen_loader.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          if [ -f tests/clinical_reasoning_shoulder_elbow.robustness.js ]; then node tests/clinical_reasoning_shoulder_elbow.robustness.js; fi
+          if [ -f tests/clinical_reasoning_hma.integration.js ]; then node tests/clinical_reasoning_hma.integration.js; fi
+          git diff --check
+          git diff --stat
+
+      - name: Commit permanent Phase 4B code
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            index.html \
+            screen_loader-1.25.0.js \
+            agenda-1.20.0.js \
+            agenda_notificacoes_core-1.20.1.js \
+            financeiro_agendamento-1.21.0.js \
+            tests/screen_loader.contract.js \
+            .github/workflows/screen-loader-contract.yml
+          git commit -m 'Lazy-load Agenda while preserving notification core'
+          git push origin HEAD:performance/agenda-lazy-phase4b
