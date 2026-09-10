@@ -11,8 +11,15 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.1-shoulder2';
-  const norm=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  const VERSION='3.1.2-shoulder3';
+  const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  const norm=(v='')=>normBase(v)
+    .replace(/\bencima\b/g,'em cima')
+    .replace(/\b(durmo|dorme|dormia|dormindo|dormir)\b/g,'dormir')
+    .replace(/\b(deito|deita|deitado|deitada|deitando|deitar)\b/g,'deitar')
+    .replace(/\b(apoio|apoia|apoiado|apoiada|apoiando|apoiar)\b/g,'apoiar')
+    .replace(/\bpra\b/g,'para')
+    .replace(/\s+/g,' ').trim();
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
   const hmaTexto=()=>String(document.getElementById('paciente_hma')?.value||'');
@@ -178,7 +185,9 @@
     ombro_manguito:[
       'doi para estender roupa','doi para pegar coisa no armario','doi para colocar algo na prateleira','doi para levantar o filho','doi para tirar a camisa',
       'doi para colocar a mao na cabeca','doi para lavar o cabelo','doi quando levanto o braco de lado','doi quando levanto o braco para frente',
-      'doi no lado de fora do ombro','dor desce so ate o meio do braco','doi no meio do levantamento','doi mais para subir do que parado'
+      'doi no lado de fora do ombro','dor desce so ate o meio do braco','doi no meio do levantamento','doi mais para subir do que parado',
+      'dormir em cima do ombro','dormir sobre o ombro','deitar em cima do ombro','deitar sobre o ombro','dormir em cima do braco','dormir sobre o braco',
+      'deitar em cima do braco','deitar sobre o braco','dormir do lado do ombro','deitar do lado do ombro','doi ao dormir de lado','doi quando deita sobre o ombro'
     ],
     ombro_ruptura_manguito:[
       'nao consigo erguer sozinho mas alguem consegue levantar','o braco despenca','nao sustenta o braco levantado','ficou muito fraco depois de um estalo',
@@ -210,6 +219,12 @@
       'os dois lados doem sem ter machucado','muita rigidez quando acorda'
     ]
   };
+
+  const VOCABULARIO_COMPILADO={};
+  CONDICOES.forEach(cond=>{
+    VOCABULARIO_COMPILADO[cond.id]=uniq([...arr(cond.termos),...arr(VOCABULARIO_NACIONAL[cond.id])]).map(raw=>({raw,normalizado:norm(raw)}));
+  });
+  const ITEM_BANCO_CACHE=new Map();
 
   const MATRIZ_EXAME={
     ombro_trauma_maior:{
@@ -274,13 +289,13 @@
     }
   };
 
-  function textoContexto(){
-    const c=contexto();
+  function textoContexto(c=contexto()){
     return [hmaTexto(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
   }
 
   function pontuar(cond,texto,c){
-    const hits=contem(texto,uniq([...arr(cond.termos),...arr(VOCABULARIO_NACIONAL[cond.id])]));
+    const t=norm(texto);
+    const hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
     let score=Math.min(9,hits.length*1.35);
     const idade=Number(c?.idade||document.getElementById('paciente_idade')?.value||0);
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
@@ -291,10 +306,13 @@
   }
 
   function itemBancoPorCondicao(cond){
+    if(ITEM_BANCO_CACHE.has(cond.id))return ITEM_BANCO_CACHE.get(cond.id);
     try{
       const reg=typeof BANCO_MAPEAMENTO_CLINICO!=='undefined'?BANCO_MAPEAMENTO_CLINICO?.ombro:null;
       const itens=[...arr(reg?.clusters),...arr(reg?.diferenciais)];
-      return itens.find(item=>cond.nomes.some(rx=>rx.test(norm(item?.nome||''))))||null;
+      const item=itens.find(item=>cond.nomes.some(rx=>rx.test(norm(item?.nome||''))))||null;
+      ITEM_BANCO_CACHE.set(cond.id,item);
+      return item;
     }catch(_){return null;}
   }
 
@@ -330,7 +348,7 @@
     if(!plano||plano.insuficiente)return plano;
     const temOmbro=arr(plano.regioes).some(r=>r.id==='ombro')||/ombro|escapul|deltoid|braco/.test(norm(hmaTexto()));
     if(!temOmbro)return plano;
-    const c=contexto(); const texto=textoContexto();
+    const c=contexto(); const texto=textoContexto(c);
     const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);
     const fortes=avaliadas.filter(x=>x.hits.length||x.score>=2.5).slice(0,6);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x,c));
@@ -396,6 +414,9 @@
     if(!m||m.regiao!=='ombro'){host.hidden=true;host.innerHTML='';return;}
     host.hidden=false;
     const matriz=arr(plano?.exame?.matrizOmbro).slice(0,4);
+    const assinatura=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,10),mx:matriz.map(x=>x.id)});
+    if(host.dataset.ks31Signature===assinatura)return;
+    host.dataset.ks31Signature=assinatura;
     host.innerHTML=`<header><div><span>Motor 3.1 · Ombro</span><strong>Perguntas que refinam a hipótese antes dos testes</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header><div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>Use as respostas para mudar a prioridade das hipóteses. Uma frase isolada do paciente não confirma estrutura ou diagnóstico.</footer>`;
   }
   function esc(v=''){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}

@@ -14,13 +14,14 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.0-alpha1';
+    const VERSION='3.0.1-performance1';
     const MAX_REGIOES=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
     const STOPWORDS=new Set(['dor','com','para','sem','por','uma','das','dos','de','do','da','em','no','na','e','ou','hipotese','suspeita','sindrome','padrao','clinico','clinica','relacionada','relacionado','possivel']);
     let ultimoPlano=null;
     let timerAtualizacao=null;
+    let ultimaAssinaturaAtualizacao=null;
 
     function n(v=''){
         return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
@@ -332,9 +333,25 @@
         }
     }
 
-    function atualizar(){
+    function assinaturaAtualizacao(){
+        const c=contextoAtual();
+        const cirurgias=arr(c?.cirurgias).map(x=>typeof x==='string'?x:(x?.texto||x?.nome||''));
+        return JSON.stringify({
+            hma:n(hmaAtual()), origem:n(c?.origemIrradiacao||''), irradiacao:n(c?.irradiacao||''),
+            mecanismo:n(c?.mecanismo||''), idade:Number(c?.idade)||0,
+            fatores:arr(c?.fatoresPiora).map(n).sort(),
+            medicamentos:n(c?.textoMedicamentos||arr(c?.medicamentos).join(' ')),
+            cirurgias:n(c?.textoCirurgias||cirurgias.join(' ')),
+            regioes:regioesSelecionadasAtual().slice().sort()
+        });
+    }
+
+    function atualizar(forcar=false){
         garantirUI();
+        const assinatura=assinaturaAtualizacao();
+        if(!forcar&&ultimoPlano&&assinatura===ultimaAssinaturaAtualizacao)return ultimoPlano;
         const plano=gerarPlano();
+        ultimaAssinaturaAtualizacao=assinatura;
         renderBridge(plano);renderExame(plano);
         const etapa2=document.getElementById('subtela_mapeamento');
         if(etapa2?.classList.contains('ativa')){
@@ -345,12 +362,15 @@
         document.dispatchEvent(new CustomEvent('kinesys:motor3-plano-atualizado',{detail:{versao:VERSION,regioes:plano.regioes.map(r=>r.id),hipoteses:plano.hipoteses.map(h=>h.id)}}));
         return plano;
     }
-    function agendarAtualizacao(){ clearTimeout(timerAtualizacao);timerAtualizacao=setTimeout(atualizar,220); }
+    function agendarAtualizacao(atraso=220){ clearTimeout(timerAtualizacao);timerAtualizacao=setTimeout(()=>atualizar(false),atraso); }
 
     function instalarEventos(){
         const tela=document.getElementById('tela_avaliacao'); if(!tela)return;
         ['paciente_hma','paciente_origem_irradiacao','paciente_irradiacao','paciente_mecanismo_lesao','paciente_idade'].forEach(id=>{
-            const el=document.getElementById(id);if(el){el.addEventListener('input',agendarAtualizacao);el.addEventListener('change',agendarAtualizacao);}
+            const el=document.getElementById(id);if(el){
+                el.addEventListener('input',()=>agendarAtualizacao(id==='paciente_hma'?460:220));
+                el.addEventListener('change',()=>agendarAtualizacao(80));
+            }
         });
         tela.addEventListener('change',e=>{
             if(e.target?.matches('#grupo_regioes_mapeamento input,.fatores-piora-compactos input,input[name*="comorb"],input[name*="anteced"]')) agendarAtualizacao();

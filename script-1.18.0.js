@@ -4588,8 +4588,11 @@ document.addEventListener('DOMContentLoaded', function(){
     document.querySelectorAll('#tela_avaliacao input, #tela_avaliacao select, #tela_avaliacao textarea').forEach(el=>{
         if (el.hasAttribute('data-no-autosave')) return;
         el.addEventListener(el.type==='text'||el.tagName==='TEXTAREA'?'input':'change', event=>{
-            processarRadarEmTempoReal();
-            if(el.id==='paciente_origem_irradiacao'||el.id==='paciente_irradiacao'||el.id==='paciente_hma')renderizarAnaliseIrradiacao();
+            const ehDigitacaoHMA = el.id === 'paciente_hma' && event.type === 'input';
+            if (!ehDigitacaoHMA) {
+                processarRadarEmTempoReal();
+                if(el.id==='paciente_origem_irradiacao'||el.id==='paciente_irradiacao')renderizarAnaliseIrradiacao();
+            }
             agendarAutosaveKineSys();
         });
     });
@@ -6522,12 +6525,41 @@ function atualizarSinteseKinesys20() {
     [d, m].forEach(el => el?.addEventListener('input', () => el.dataset.editado = 'true', { once: true }));
 }
 
+let kinesysHmaTempoRealTimer = null;
+let kinesysHmaUltimaAssinatura = null;
+function assinaturaHMAKineSys(valor='') {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+        .replace(/[^a-z0-9\s]/g,' ').replace(/\bencima\b/g,'em cima').replace(/\s+/g,' ').trim();
+}
+function executarHMAEmTempoRealKineSys(forcar=false) {
+    const campo = document.getElementById('paciente_hma');
+    if (!campo) return;
+    const assinatura = assinaturaHMAKineSys(campo.value);
+    if (!forcar && assinatura === kinesysHmaUltimaAssinatura) return;
+    kinesysHmaUltimaAssinatura = assinatura;
+    if (typeof window.renderizarRadarHMAKineSys === 'function') window.renderizarRadarHMAKineSys();
+    if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
+    const origem = document.getElementById('paciente_origem_irradiacao')?.value || '';
+    const destino = document.getElementById('paciente_irradiacao')?.value || '';
+    if ((origem || destino) && typeof renderizarAnaliseIrradiacao === 'function') renderizarAnaliseIrradiacao();
+}
+function agendarHMAEmTempoRealKineSys(atraso=300, forcar=false) {
+    clearTimeout(kinesysHmaTempoRealTimer);
+    kinesysHmaTempoRealTimer = setTimeout(() => executarHMAEmTempoRealKineSys(forcar), atraso);
+}
 document.addEventListener('input', e => {
     if (e.target?.id !== 'paciente_hma') return;
     const box = document.getElementById('ks20_hma_radar');
     if (box) box.dataset.confirmado = 'false';
-    if (typeof window.renderizarRadarHMAKineSys === 'function') window.renderizarRadarHMAKineSys();
+    if (e.isComposing) return;
+    agendarHMAEmTempoRealKineSys(300, false);
 });
+document.addEventListener('compositionend', e => {
+    if (e.target?.id === 'paciente_hma') agendarHMAEmTempoRealKineSys(80, true);
+});
+document.addEventListener('focusout', e => {
+    if (e.target?.id === 'paciente_hma') agendarHMAEmTempoRealKineSys(40, false);
+}, true);
 document.addEventListener('click', e => {
     if (e.target?.id === 'step_indicador_3' || e.target?.textContent?.includes('Ver resumo e laudo')) setTimeout(atualizarSinteseKinesys20, 80);
 });
@@ -6833,6 +6865,30 @@ document.addEventListener('click', e => {
     "piora ao elevar o membro superior",
     "elevação do braço",
     "elevacao do braco"
+  ],
+  "decubitoOmbro": [
+    "dormir em cima do ombro",
+    "dormir encima do ombro",
+    "dormir sobre o ombro",
+    "deitar em cima do ombro",
+    "deitar encima do ombro",
+    "deitar sobre o ombro",
+    "dorme em cima do ombro",
+    "deita em cima do ombro",
+    "dormir em cima do braço",
+    "dormir encima do braço",
+    "dormir sobre o braço",
+    "deitar em cima do braço",
+    "deitar encima do braço",
+    "deitar sobre o braço",
+    "dorme em cima do braço",
+    "deita em cima do braço",
+    "piora ao dormir de lado sobre o ombro",
+    "piora ao deitar de lado sobre o ombro",
+    "não consegue dormir sobre o ombro",
+    "nao consegue dormir sobre o ombro",
+    "dor quando apoia o ombro na cama",
+    "dor ao apoiar o ombro na cama"
   ],
   "provocacaoOmbro": [
     "movimentar o ombro",
@@ -10228,6 +10284,7 @@ document.addEventListener('click', e => {
     ],
     "pontos": {
       "elevacaoBraco": 3,
+      "decubitoOmbro": 1,
       "amplitudePassivaPreservadaOmbro": 2,
       "passivaOmbroLimitada": -2,
       "carga": 1,
@@ -12315,6 +12372,7 @@ document.addEventListener('click', e => {
       "elevacaoBraco": 3,
       "carga": 1,
       "noturna": 1,
+      "decubitoOmbro": 1,
       "rigidezOmbro": 1,
       "trajetoRestritoOmbro": 1,
       "trajetoAlemCotovelo": -3,
@@ -12851,6 +12909,7 @@ document.addEventListener('click', e => {
     "pontos": {
       "acromioclavicular": 3,
       "traumaOmbro": 1,
+      "decubitoOmbro": 1,
       "ombro": 1
     },
     "minimoPontos": 3,
@@ -13668,6 +13727,7 @@ document.addEventListener('click', e => {
   "mielopatia": "alterações de marcha ou destreza",
   "ombro": "dor no ombro",
   "elevacaoBraco": "dor ao elevar o braço",
+  "decubitoOmbro": "piora ao deitar ou dormir sobre o ombro/membro superior",
   "provocacaoOmbro": "dor reproduzida pelo movimento do ombro",
   "rotacaoOmbro": "limitação funcional de rotação",
   "rigidezOmbro": "rigidez do ombro",
@@ -13864,7 +13924,13 @@ document.addEventListener('click', e => {
 };
 
   function normalizar(valor) {
-    return String(valor || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return String(valor || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+      .replace(/\bencima\b/g, 'em cima')
+      .replace(/\b(durmo|dorme|dormia|dormindo|dormir)\b/g, 'dormir')
+      .replace(/\b(deito|deita|deitado|deitada|deitando|deitar)\b/g, 'deitar')
+      .replace(/\b(apoio|apoia|apoiado|apoiada|apoiando|apoiar)\b/g, 'apoiar')
+      .replace(/\bpra\b/g, 'para')
+      .replace(/\s+/g, ' ').trim();
   }
 
   var STOP_TOKENS_HMA = { a: 1, ao: 1, aos: 1, com: 1, da: 1, das: 1, de: 1, do: 1, dos: 1, e: 1, em: 1, na: 1, nas: 1, no: 1, nos: 1, o: 1, os: 1, para: 1, pela: 1, pelo: 1, por: 1, que: 1, uma: 1, um: 1 };
@@ -14057,7 +14123,7 @@ document.addEventListener('click', e => {
     var incapacidade = ['marchaLimitada','incapazQuatroPassos','perdaForcaAgudaOmbro','bloqueioVerdadeiroJoelho','insuficienciaTibialPosterior','rupturaAquilesAguda','instabilidadeJoelho','falseioObjetivoJoelho','incapacidadeExtensaoAtivaJoelho'];
     var temporalidade = ['cronica','cronicaCervical','noturna','matinal','inicioInsidiosoCervical','inicioAoAcordarCervical','derramePrecoceJoelho','derrameTardioJoelho'];
     var sintomas = ['neurologico','dermatomaMaoEspecifico','dermatomaPeEspecifico','mielopatia','caudaEquina','sistemico','cardiopulmonar','cefaleia','tonturaCervical'];
-    var comportamento = ['carga','flexao','extensao','decubitoLateral','apoioUnipodal','transferencia','elevacaoBraco','provocacaoOmbro','preensao','salto','valsalvaLombar','pioraMovimentoPescoco','provocacaoSindesmose','flexaoProfundaJoelho'];
+    var comportamento = ['carga','flexao','extensao','decubitoLateral','apoioUnipodal','transferencia','elevacaoBraco','decubitoOmbro','provocacaoOmbro','preensao','salto','valsalvaLombar','pioraMovimentoPescoco','provocacaoSindesmose','flexaoProfundaJoelho'];
     if (mecanismo.indexOf(chave) >= 0) return 'mecanismo';
     if (incapacidade.indexOf(chave) >= 0) return 'incapacidade';
     if (temporalidade.indexOf(chave) >= 0) return 'temporalidade';
@@ -14135,7 +14201,7 @@ document.addEventListener('click', e => {
 
   var KINESYS_REGIOES_CONCEITOS_SCORE = {
     cervical: ['cervical','posturaCervical','inicioInsidiosoCervical','torcicoloAgudo','inicioAoAcordarCervical','cronicaCervical','trapezioSuperior','pontoGatilhoCervical','instabilidadeCervical','elevadorEscapula','esforcoCervical','occipitalUnilateral','nervoOccipital','tonturaCervical','cefaleiaCervical','pioraMovimentoPescoco','mielopatia','whiplash','irradiacaoBraco','trajetoAlemCotovelo','trajetoRestritoOmbro','dermatomaMaoEspecifico','trajetoC8Cervical','traumaCervicalImportante','dorLinhaMediaCervical','vascularCervicalDorIncomum','vascularCervicalNeuroCraniano'],
-    ombro: ['ombro','bicepsOmbro','elevacaoBraco','provocacaoOmbro','traumaOmbro','rupturaManguito','perdaForcaAgudaOmbro','acromioclavicular','rigidezOmbro','trajetoRestritoOmbro','artroseGlenoumeral','labralOmbro','deformidadeOmbroTrauma','calcificacaoOmbro','passivaOmbroLimitada','rotacaoExternaPassivaOmbro','amplitudePassivaPreservadaOmbro','apreensaoInstabilidadeOmbro'],
+    ombro: ['ombro','bicepsOmbro','elevacaoBraco','decubitoOmbro','provocacaoOmbro','traumaOmbro','rupturaManguito','perdaForcaAgudaOmbro','acromioclavicular','rigidezOmbro','trajetoRestritoOmbro','artroseGlenoumeral','labralOmbro','deformidadeOmbroTrauma','calcificacaoOmbro','passivaOmbroLimitada','rotacaoExternaPassivaOmbro','amplitudePassivaPreservadaOmbro','apreensaoInstabilidadeOmbro'],
     cotovelo: ['cotoveloMedial','cotoveloLateral','nervoUlnar','bicepsDistal','rupturaBicepsDistal','bursiteOlecrano','pronadorMediano','ligamentoUlnarCotovelo'],
     punho_mao: ['punhoMao','punhoUlnar','mecanicoPunhoUlnar','polegarRadial','mediano','noturnoMao','poupaDedoMinimo','alivioSacudirMao','cmcPolegar','fraturaRadioDistal','dedoGatilho','escafolunar','ligamentoUlnarPolegar'],
     toracica: ['toracica','costal','cardiopulmonar','intercostalNeuralgia'],
@@ -14888,6 +14954,23 @@ document.addEventListener('click', e => {
     };
   };
 
+  (function memoizarAnaliseHMAKineSys(){
+    var original = window.analisarHMAClinicaKineSys;
+    if (typeof original !== 'function' || original.__kinesysMemoized) return;
+    var ultimaChave = null;
+    var ultimoResultado = null;
+    var memo = function(texto, contexto){
+      var chave = normalizar(texto || '') + '|' + JSON.stringify(contexto || {});
+      if (chave === ultimaChave && ultimoResultado) return ultimoResultado;
+      ultimoResultado = original.call(this, texto, contexto);
+      ultimaChave = chave;
+      return ultimoResultado;
+    };
+    memo.__kinesysMemoized = true;
+    memo.__original = original;
+    window.analisarHMAClinicaKineSys = memo;
+  })();
+
   window.renderizarRadarHMAKineSys = function () {
     var campo = document.getElementById('paciente_hma');
     var box = document.getElementById('ks20_hma_radar');
@@ -14941,6 +15024,12 @@ document.addEventListener('click', e => {
     }),
     caso('C2','cervical_ombro','Dor no ombro ao elevar o braço, piora à noite, mas não passa do cotovelo.',{
       principalUmDe:['manguito rotador'], naoDeveIncluir:['componente radicular'], sinaisIncluem:['ombro','elevacaoBraco','noturna','trajetoRestritoOmbro']
+    }),
+    caso('C2A','cervical_ombro','Dor no ombro e piora ao dormir em cima do braço.',{
+      sinaisIncluem:['ombro','decubitoOmbro']
+    }),
+    caso('C2B','cervical_ombro','Dor no ombro e piora ao deitar encima do braco.',{
+      sinaisIncluem:['ombro','decubitoOmbro']
     }),
     caso('C3','cervical_ombro','Dor cervical vai para o ombro, mas não passa do cotovelo e não apresenta formigamento.',{
       qualquerHipoteseInclui:['cervical'], naoDeveIncluir:['tunel do carpo'], sinaisIncluem:['cervical','trajetoRestritoOmbro']
