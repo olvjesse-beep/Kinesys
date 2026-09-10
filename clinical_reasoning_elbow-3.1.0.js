@@ -12,7 +12,7 @@
 (function instalarMotor31Cotovelo(){
   'use strict';
 
-  const VERSION='3.1.2-elbow3';
+  const VERSION='3.1.3-elbow4';
   const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const norm=(v='')=>normBase(v)
     .replace(/\bcotuvelo\b/g,'cotovelo')
@@ -93,8 +93,9 @@
     const origemCervicalPositiva=/(?:dor|sintoma).{0,20}(?:vem|sai|comeca).{0,25}(?:pescoco|nuca)|(?:vem|sai|comeca).{0,20}(?:do |da )?(?:pescoco|nuca)/.test(t);
     const distal=/(?:passa|ultrapassa|vai|chega).{0,35}(?:cotovelo).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:ate).{0,20}(?:mao|dedo|polegar|indicador|anelar|mindinho)/.test(t);
     const ombroNegado=/(?:ombro).{0,30}(?:nao doi|sem dor)|(?:nao doi|sem dor).{0,30}ombro/.test(t);
+    const ombroRemoto=/(?:ombro).{0,35}(?:anos? atras|ha [0-9]+ anos?)|(?:anos? atras|ha [0-9]+ anos?).{0,35}ombro/.test(t);
     const relacaoOmbroDireta=/(?:ombro).{0,60}(?:desce|vai|corre|irrad).{0,55}(?:cotovelo|braco)|(?:comeca|vem|sai).{0,30}(?:do |da )?ombro.{0,80}(?:cotovelo|braco)|(?:levantar|elevar).{0,35}braco.{0,70}(?:cotovelo|dor)/.test(t);
-    const ombroSintomatico=/(?:dor|doi|desconfort).{0,25}ombro|ombro.{0,25}(?:doi|dor|desconfort)/.test(t)&&!ombroNegado;
+    const ombroSintomatico=/(?:dor|doi|desconfort).{0,25}ombro|ombro.{0,25}(?:doi|dor|desconfort)/.test(t)&&!ombroNegado&&!ombroRemoto;
     const relacaoOmbro=relacaoOmbroDireta||ombroSintomatico;
     const lateralAnatomica=/(?:lateral|lado de fora|epicondilo lateral).{0,35}cotovelo|cotovelo.{0,35}(?:lateral|lado de fora|epicondilo lateral)/.test(t);
     const cargaExtensoraLocal=/(?:cotovelo).{0,85}(?:apert|preens|estend.{0,12}punho)|(?:apert|preens|estend.{0,12}punho).{0,85}cotovelo/.test(t);
@@ -131,7 +132,7 @@
     const inflamacaoLocal=sinaisInfeccao>=3;
 
     if(cond.id==='cotovelo_cervical_neural'&&neuroNegado&&cervicalNegada&&!origemCervicalPositiva)return{score:-6,hits:[],bloqueada:true};
-    if(cond.id==='cotovelo_ombro_referida'&&ombroNegado&&!relacaoOmbroDireta)return{score:-5,hits:[],bloqueada:true};
+    if(cond.id==='cotovelo_ombro_referida'&&(ombroNegado||ombroRemoto)&&!relacaoOmbroDireta)return{score:-5,hits:[],bloqueada:true};
 
     if(cond.id==='cotovelo_ombro_referida'&&relacaoOmbroDireta){score+=2.8;hits.push('relação proximal ombro–braço/cotovelo');}
     else if(cond.id==='cotovelo_ombro_referida'&&ombroSintomatico&&/cotovelo/.test(t)){score+=3.6;hits.push('ombro sintomático coexistente com cotovelo');}
