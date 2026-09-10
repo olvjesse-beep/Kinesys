@@ -1,0 +1,116 @@
+/* KineSys — Motor Clínico 3.0: HMA -> hipóteses -> exame dirigido */
+#tela_avaliacao .ks30-hma-bridge{
+  margin:10px 0 0;
+  padding:12px 0 0;
+  border-top:1px solid var(--kds-line-soft);
+  background:transparent;
+}
+#tela_avaliacao .ks30-bridge-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:7px;
+}
+#tela_avaliacao .ks30-bridge-head>div{display:grid;gap:2px}
+#tela_avaliacao .ks30-bridge-head strong{color:var(--kds-petrol-deep);font-size:var(--kds-font-content);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-bridge-head span,
+#tela_avaliacao .ks30-bridge-regions,
+#tela_avaliacao .ks30-bridge-modifiers,
+#tela_avaliacao .ks30-hma-bridge>small{color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-count{white-space:nowrap}
+#tela_avaliacao .ks30-bridge-regions{margin-bottom:8px}
+#tela_avaliacao .ks30-bridge-hypotheses{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 9px}
+#tela_avaliacao .ks30-chip{
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid var(--kds-line);
+  border-radius:var(--kds-radius-pill);
+  background:var(--kds-surface);
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  line-height:var(--kds-leading-ui);
+}
+#tela_avaliacao .ks30-chip.is-primary,
+#tela_avaliacao .ks30-chip.is-selected{border-color:var(--kds-focus-line);background:var(--kds-accent-soft);color:var(--kds-accent-hover)}
+#tela_avaliacao .ks30-bridge-modifiers{display:flex;gap:7px;align-items:baseline;margin-bottom:8px;flex-wrap:wrap}
+#tela_avaliacao .ks30-bridge-modifiers strong{color:var(--kds-text-secondary)}
+
+#tela_avaliacao #subtela_mapeamento .ks30-exam-plan{
+  width:100%;
+  margin:0 0 18px;
+  padding:18px 20px;
+  border:1px solid var(--kds-line);
+  border-radius:var(--kds-radius-md);
+  background:var(--kds-surface);
+  box-shadow:none;
+}
+#tela_avaliacao .ks30-exam-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--kds-line-soft);
+}
+#tela_avaliacao .ks30-exam-head>div:first-child{min-width:0;max-width:760px}
+#tela_avaliacao .ks30-kicker{display:block;margin-bottom:3px;color:var(--kds-accent);font-size:var(--kds-font-metadata);font-weight:750;line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-exam-head h2{margin:0;color:var(--kds-petrol-deep);font-size:var(--kds-font-heading-md);line-height:var(--kds-leading-compact)}
+#tela_avaliacao .ks30-exam-head p{margin:6px 0 0;color:var(--kds-muted);font-size:var(--kds-font-content);line-height:var(--kds-leading-text)}
+#tela_avaliacao .ks30-region-summary{display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap;max-width:300px}
+#tela_avaliacao .ks30-section{padding:14px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_avaliacao .ks30-section:last-of-type{border-bottom:0}
+#tela_avaliacao .ks30-section.is-safety{background:var(--kds-warning-soft);margin:12px -10px 0;padding:12px 10px;border:0;border-radius:var(--kds-radius-sm)}
+#tela_avaliacao .ks30-section.is-gaps{background:var(--kds-surface-soft);margin:12px -10px 0;padding:12px 10px;border:0;border-radius:var(--kds-radius-sm)}
+#tela_avaliacao .ks30-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:9px}
+#tela_avaliacao .ks30-section-title strong{color:var(--kds-petrol-deep);font-size:var(--kds-font-clinical);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-section-title span{color:var(--kds-muted);font-size:var(--kds-font-label)}
+#tela_avaliacao .ks30-line{display:grid;grid-template-columns:minmax(160px,.36fr) minmax(0,1fr);gap:12px;padding:7px 0;color:var(--kds-text-secondary);font-size:var(--kds-font-content);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-line b{color:var(--kds-text)}
+
+#tela_avaliacao .ks30-hypothesis-list{display:grid;gap:0}
+#tela_avaliacao .ks30-hypothesis{padding:10px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_avaliacao .ks30-hypothesis:last-child{border-bottom:0}
+#tela_avaliacao .ks30-hypothesis.is-primary{padding-left:11px;border-left:3px solid var(--kds-accent)}
+#tela_avaliacao .ks30-hypothesis-title{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
+#tela_avaliacao .ks30-hypothesis-title>span{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:700}
+#tela_avaliacao .ks30-hypothesis-title>strong{color:var(--kds-petrol-deep);font-size:var(--kds-font-content);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-hypothesis p{margin:3px 0;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+#tela_avaliacao .ks30-hypothesis p b{color:var(--kds-text)}
+
+#tela_avaliacao .ks30-cluster{padding:0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_avaliacao .ks30-cluster:last-child{border-bottom:0}
+#tela_avaliacao .ks30-cluster>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;cursor:pointer;color:var(--kds-text);font-size:var(--kds-font-content);font-weight:700}
+#tela_avaliacao .ks30-cluster>summary small{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:600}
+#tela_avaliacao .ks30-cluster>div{padding:0 0 10px 18px}
+#tela_avaliacao .ks30-cluster p{margin:5px 0;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+#tela_avaliacao .ks30-cluster p:not(.ks30-rule)::before{content:'— ';color:var(--kds-accent)}
+#tela_avaliacao .ks30-rule{padding-top:5px;border-top:1px solid var(--kds-line-soft)}
+#tela_avaliacao .ks30-evidence{display:block;margin-top:6px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+
+#tela_avaliacao .ks30-analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+#tela_avaliacao .ks30-analysis{min-width:0;padding:8px 0}
+#tela_avaliacao .ks30-analysis>strong{display:block;margin-bottom:4px;color:var(--kds-text);font-size:var(--kds-font-content)}
+#tela_avaliacao .ks30-test{padding:7px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_avaliacao .ks30-test:last-child{border-bottom:0}
+#tela_avaliacao .ks30-test span{display:block;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
+#tela_avaliacao .ks30-test small{display:block;margin-top:2px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+#tela_avaliacao .ks30-disclaimer{padding-top:12px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-text)}
+#tela_avaliacao .ks30-empty{display:grid;gap:4px;padding:2px 0;color:var(--kds-muted)}
+#tela_avaliacao .ks30-empty strong{color:var(--kds-text);font-size:var(--kds-font-content)}
+#tela_avaliacao .ks30-empty span{font-size:var(--kds-font-label)}
+
+@media (max-width:980px){
+  #tela_avaliacao .ks30-exam-head{display:grid;gap:10px}
+  #tela_avaliacao .ks30-region-summary{justify-content:flex-start;max-width:none}
+  #tela_avaliacao .ks30-analysis-grid{grid-template-columns:1fr}
+}
+@media (max-width:700px){
+  #tela_avaliacao #subtela_mapeamento .ks30-exam-plan{padding:15px 14px}
+  #tela_avaliacao .ks30-line{grid-template-columns:1fr;gap:3px}
+  #tela_avaliacao .ks30-bridge-head{display:grid;gap:4px}
+  #tela_avaliacao .ks30-count{white-space:normal}
+}
