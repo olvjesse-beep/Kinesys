@@ -19,7 +19,9 @@ jobs:
           ref: performance/prontuario-export-phase4e
           fetch-depth: 0
       - name: Apply Phase 4E rewrite
-        run: python .github/scripts/phase4e_prontuario_lazy.py
+        run: |
+          python .github/scripts/phase4e_prontuario_lazy.py
+          git checkout -- .github/workflows/kinesys-quality.yml
       - name: Validate Phase 4E
         shell: bash
         run: |
@@ -38,6 +40,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html prontuario_export.js prontuario_export_impl.js design_system-1.20.1.js tests/prontuario_export_lazy.contract.js .github/workflows/kinesys-quality.yml
+          git add index.html prontuario_export.js prontuario_export_impl.js design_system-1.20.1.js tests/prontuario_export_lazy.contract.js
           git commit -m 'Lazy-load prontuario export implementation'
           git push origin HEAD:performance/prontuario-export-phase4e
