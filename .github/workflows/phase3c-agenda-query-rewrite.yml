@@ -5,6 +5,7 @@ on:
     branches: [performance/agenda-query-phase3c]
     paths:
       - '.github/workflows/phase3c-agenda-query-rewrite.yml'
+      - '.github/scripts/phase3c_agenda_query.py'
 
 permissions:
   contents: write
