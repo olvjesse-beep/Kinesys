@@ -26,6 +26,7 @@ for(const file of lazyScripts){
   const eager=new RegExp(`<script[^>]+src=["'][^"']*${escaped}[^"']*["']`,'i');
   assert.ok(!eager.test(html),`${file} não pode voltar ao carregamento inicial`);
   assert.ok(loader.includes(file),`${file} deve permanecer no bundle sob demanda`);
+  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
 }
 
-console.log(`Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda.`);
+console.log(`Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda e presentes no repositório.`);
