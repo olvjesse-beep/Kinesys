@@ -1,0 +1,122 @@
+name: Phase 2B exact lazy rewrite
+
+on:
+  push:
+    branches: [performance/screen-lifecycle-phase2b]
+    paths:
+      - '.github/workflows/phase2b-exact-rewrite.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/screen-lifecycle-phase2b
+          fetch-depth: 0
+
+      - name: Apply exact Phase 2B changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p=Path(path)
+              text=p.read_text(encoding='utf-8')
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          # 1) evaluation_workspace: preserve DOMContentLoaded behavior and support late load.
+          path=Path('evaluation_workspace-1.17.0.js')
+          text=path.read_text(encoding='utf-8')
+          old="""    document.addEventListener('DOMContentLoaded',()=>{\n        const editor=document.getElementById('ks-laudo-texto'),review=document.getElementById('ks-laudo-revisado');\n        editor?.addEventListener('input',()=>{if(!laudo)return;laudo.texto=editor.value;laudo.revisado=false;laudo.atualizadoEm=new Date().toISOString();review.checked=false;agendarAutosaveKineSys();});\n        review?.addEventListener('change',()=>{if(!laudo)return;laudo.revisado=review.checked;if(review.checked)laudo.fonte=dadosAtuais().fonte;laudo.revisadoEm=review.checked?new Date().toISOString():null;agendarAutosaveKineSys();});\n        document.getElementById('ks-laudo-atualizar')?.addEventListener('click',async()=>{\n            if(laudo&&!(await confirmarKineSys('Substituir o texto atual por uma nova base da avaliação? Copie o texto antes se quiser preservar sua redação.',{titulo:'Atualizar base do laudo',confirmar:'Atualizar base'})))return;\n            laudo=textoBase(dadosAtuais());window.renderizarLaudoAvaliacaoKineSys();agendarAutosaveKineSys();\n        });\n        document.getElementById('ks-laudo-copiar')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(editor.value);document.getElementById('ks-laudo-status').textContent='Texto copiado para a área de transferência.';}catch(_){editor.focus();editor.select();document.getElementById('ks-laudo-status').textContent='Texto selecionado. Use copiar no seu dispositivo.';}});\n    });\n"""
+          new="""    let workspaceInicializado=false;\n    function inicializarWorkspaceAvaliacaoKineSys(){\n        if(workspaceInicializado)return;\n        const editor=document.getElementById('ks-laudo-texto'),review=document.getElementById('ks-laudo-revisado');\n        if(!editor&&!review)return;\n        workspaceInicializado=true;\n        editor?.addEventListener('input',()=>{if(!laudo)return;laudo.texto=editor.value;laudo.revisado=false;laudo.atualizadoEm=new Date().toISOString();if(review)review.checked=false;agendarAutosaveKineSys();});\n        review?.addEventListener('change',()=>{if(!laudo)return;laudo.revisado=review.checked;if(review.checked)laudo.fonte=dadosAtuais().fonte;laudo.revisadoEm=review.checked?new Date().toISOString():null;agendarAutosaveKineSys();});\n        document.getElementById('ks-laudo-atualizar')?.addEventListener('click',async()=>{\n            if(laudo&&!(await confirmarKineSys('Substituir o texto atual por uma nova base da avaliação? Copie o texto antes se quiser preservar sua redação.',{titulo:'Atualizar base do laudo',confirmar:'Atualizar base'})))return;\n            laudo=textoBase(dadosAtuais());window.renderizarLaudoAvaliacaoKineSys();agendarAutosaveKineSys();\n        });\n        document.getElementById('ks-laudo-copiar')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(editor.value);document.getElementById('ks-laudo-status').textContent='Texto copiado para a área de transferência.';}catch(_){editor.focus();editor.select();document.getElementById('ks-laudo-status').textContent='Texto selecionado. Use copiar no seu dispositivo.';}});\n        if(typeof clinicaEstruturadaPreservada!=='undefined'&&Object.prototype.hasOwnProperty.call(clinicaEstruturadaPreservada||{},'laudo')){\n            window.preencherLaudoAvaliacaoKineSys(clinicaEstruturadaPreservada.laudo||null);\n        }\n    }\n    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicializarWorkspaceAvaliacaoKineSys,{once:true});\n    else inicializarWorkspaceAvaliacaoKineSys();\n"""
+          if text.count(old)!=1:
+              raise SystemExit(f'evaluation workspace initializer: expected exactly one match, found {text.count(old)}')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          # 2) PROMs: same 50 ms initialization, but also when loaded after DOMContentLoaded.
+          replace_once(
+              'proms_escalas.js',
+              "document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarCatalogoPROM,50));",
+              "if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarCatalogoPROM,50),{once:true});\nelse setTimeout(inicializarCatalogoPROM,50);",
+              'PROM late initializer'
+          )
+
+          # 3) Screen loader: keep historical relative order exactly.
+          replace_once(
+              'screen_loader-1.25.0.js',
+              "const VERSION='1.25.0-phase2a';",
+              "const VERSION='1.25.0-phase2b';",
+              'screen loader version'
+          )
+          replace_once(
+              'screen_loader-1.25.0.js',
+              "                'clinical_engine-1.17.0.js',\n                'evaluation_context_panels-1.18.3.js',",
+              "                'clinical_engine-1.17.0.js',\n                'evaluation_workspace-1.17.0.js',\n                'proms_escalas.js',\n                'evaluation_context_panels-1.18.3.js',",
+              'evaluation bundle order'
+          )
+
+          # 4) index: loader cache-buster and removal of the two remaining eager scripts.
+          replace_once(
+              'index.html',
+              '<script defer src="screen_loader-1.25.0.js?v=20260910-phase2a-r1"></script>',
+              '<script defer src="screen_loader-1.25.0.js?v=20260910-phase2b-r1"></script>',
+              'screen loader cache-buster'
+          )
+          for tag in [
+              '    <script defer src="evaluation_workspace-1.17.0.js"></script>\n',
+              '    <script defer src="proms_escalas.js"></script>\n',
+          ]:
+              p=Path('index.html'); text=p.read_text(encoding='utf-8'); count=text.count(tag)
+              if count!=1:
+                  raise SystemExit(f'index eager tag {tag.strip()}: expected exactly one match, found {count}')
+              p.write_text(text.replace(tag,'',1),encoding='utf-8')
+
+          # 5) Permanent contract: both files must be lazy and historical order must be retained.
+          p=Path('tests/screen_loader.contract.js')
+          text=p.read_text(encoding='utf-8')
+          old="""const lazyScripts=[\n  'clinical_engine-1.17.0.js',\n  'evaluation_context_panels-1.18.3.js',\n  'avaliacao_experiencia-1.22.0.js',\n  'clinical_reasoning_hma-3.0.0.js',\n  'clinical_reasoning_shoulder-3.1.0.js',\n  'clinical_reasoning_elbow-3.1.0.js'\n];\n"""
+          new="""const lazyScripts=[\n  'clinical_engine-1.17.0.js',\n  'evaluation_workspace-1.17.0.js',\n  'proms_escalas.js',\n  'evaluation_context_panels-1.18.3.js',\n  'avaliacao_experiencia-1.22.0.js',\n  'clinical_reasoning_hma-3.0.0.js',\n  'clinical_reasoning_shoulder-3.1.0.js',\n  'clinical_reasoning_elbow-3.1.0.js'\n];\n"""
+          if text.count(old)!=1:
+              raise SystemExit(f'contract lazy list: expected exactly one match, found {text.count(old)}')
+          text=text.replace(old,new,1)
+          marker="""for(const file of lazyScripts){\n  const escaped=file.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');\n  const eager=new RegExp(`<script[^>]+src=[\"'][^\"']*${escaped}[^\"']*[\"']`,'i');\n  assert.ok(!eager.test(html),`${file} não pode voltar ao carregamento inicial`);\n  assert.ok(loader.includes(file),`${file} deve permanecer no bundle sob demanda`);\n  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);\n}\n\n"""
+          addition="""for(const file of lazyScripts){\n  const escaped=file.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');\n  const eager=new RegExp(`<script[^>]+src=[\"'][^\"']*${escaped}[^\"']*[\"']`,'i');\n  assert.ok(!eager.test(html),`${file} não pode voltar ao carregamento inicial`);\n  assert.ok(loader.includes(file),`${file} deve permanecer no bundle sob demanda`);\n  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);\n}\n\nlet ultimaPosicao=-1;\nfor(const file of lazyScripts){\n  const posicao=loader.indexOf(file);\n  assert.ok(posicao>ultimaPosicao,`${file} deve manter a ordem histórica relativa do bundle da Avaliação`);\n  ultimaPosicao=posicao;\n}\n\nconst workspace=fs.readFileSync('evaluation_workspace-1.17.0.js','utf8');\nconst proms=fs.readFileSync('proms_escalas.js','utf8');\nassert.match(workspace,/document\\.readyState===['\"]loading['\"]/, 'workspace deve inicializar também em carregamento tardio');\nassert.match(workspace,/clinicaEstruturadaPreservada/, 'workspace tardio deve recuperar o laudo preservado');\nassert.match(proms,/document\\.readyState===['\"]loading['\"]/, 'PROMs deve inicializar também em carregamento tardio');\n\n"""
+          if text.count(marker)!=1:
+              raise SystemExit(f'contract assertions marker: expected exactly one match, found {text.count(marker)}')
+          text=text.replace(marker,addition,1)
+          text=text.replace('Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda e presentes no repositório.','Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda, ordenados e presentes no repositório.')
+          p.write_text(text,encoding='utf-8')
+          PY
+
+          node --check evaluation_workspace-1.17.0.js
+          node --check proms_escalas.js
+          node --check screen_loader-1.25.0.js
+          node --check tests/screen_loader.contract.js
+          node tests/screen_loader.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          node tests/clinical_reasoning_shoulder_elbow.robustness.js
+          node tests/clinical_reasoning_hma.integration.js
+          git diff --check
+          git diff --stat
+
+      - name: Commit Phase 2B rewrite
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html screen_loader-1.25.0.js evaluation_workspace-1.17.0.js proms_escalas.js tests/screen_loader.contract.js
+          git commit -m 'Lazy load remaining Evaluation workspace and PROMs'
+          git push origin HEAD:performance/screen-lifecycle-phase2b
