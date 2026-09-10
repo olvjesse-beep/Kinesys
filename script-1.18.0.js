@@ -2572,12 +2572,13 @@ async function salvarEIniciarAvaliacao() {
     const paciente = await salvarCadastroSomente(false);
     if (paciente) {
         pacienteAtualId = paciente.id;
-        
+        const navegacao = await navegarPara('tela_avaliacao', true);
+        if (navegacao === false) return null;
+
         document.getElementById('paciente_nome').value = paciente.nome;
         if (paciente.idade) document.getElementById('paciente_idade').value = paciente.idade.replace(' anos', '').trim();
         if (paciente.profissao) document.getElementById('paciente_ocupacao').value = paciente.profissao;
-        
-        navegarPara('tela_avaliacao', true);
+        processarRadarEmTempoReal();
     }
 }
 
@@ -2755,6 +2756,8 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
 
     pacienteAtualId = p.id;
     avaliacaoEdicaoId = avaliacaoIdEditar || null;
+    const navegacao = await navegarPara('tela_avaliacao', true);
+    if (navegacao === false) return;
     estadoMapeamento = {};
     mapeamentoAvaliacaoAnterior = null; // será preenchido abaixo se houver avaliação anterior com mapeamento
     if (document.getElementById('grupo_regioes_mapeamento')) document.getElementById('grupo_regioes_mapeamento').innerHTML = '';
@@ -2841,7 +2844,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
     renderizarRegistrosAvaliacao(p);
     if (!avaliacaoRecente) { const realizadoEl=document.getElementById('avaliacao_realizado_em'); if(realizadoEl){realizadoEl.disabled=false;realizadoEl.value=valorDatetimeLocalAgora();} }
     irParaSubtela('subtela_triagem');
-    navegarPara('tela_avaliacao', true);
+    processarRadarEmTempoReal();
 }
 
 function erroTabelaPacienteAusente(err) {
@@ -4120,6 +4123,80 @@ function instalarObservadorCicloVidaRadar() {
     tela.dataset.radarLifecycleBound = '1';
     sincronizarCicloVidaRadar();
 }
+
+function inicializarAvaliacaoDomKineSys() {
+    const tela = document.getElementById('tela_avaliacao');
+    if (!tela || !document.getElementById('paciente_hma')) return false;
+    if (tela.dataset.kinesysDomInit === '1') return true;
+    tela.dataset.kinesysDomInit = '1';
+
+    tela.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(chk => {
+        if (chk.dataset.kinesysRadarBound === '1') return;
+        chk.dataset.kinesysRadarBound = '1';
+        chk.addEventListener('change', processarRadarEmTempoReal);
+    });
+
+    const inputProfissao = document.getElementById('paciente_ocupacao');
+    const inputEsporte = document.getElementById('paciente_esporte');
+    if (inputProfissao && inputProfissao.dataset.kinesysRadarInputBound !== '1') {
+        inputProfissao.dataset.kinesysRadarInputBound = '1';
+        inputProfissao.addEventListener('input', processarRadarEmTempoReal);
+        inputProfissao.addEventListener('input', sugerirExposicoesOcupacionais);
+    }
+    if (inputEsporte && inputEsporte.dataset.kinesysRadarInputBound !== '1') {
+        inputEsporte.dataset.kinesysRadarInputBound = '1';
+        inputEsporte.addEventListener('input', processarRadarEmTempoReal);
+    }
+
+    const avRealizado = document.getElementById('avaliacao_realizado_em');
+    if (avRealizado && !avRealizado.value) avRealizado.value = valorDatetimeLocalAgora();
+
+    tela.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.hasAttribute('data-no-autosave') || el.dataset.kinesysAutosaveBound === '1') return;
+        el.dataset.kinesysAutosaveBound = '1';
+        el.addEventListener(el.type === 'text' || el.tagName === 'TEXTAREA' ? 'input' : 'change', event => {
+            const ehDigitacaoHMA = el.id === 'paciente_hma' && event.type === 'input';
+            if (!ehDigitacaoHMA) {
+                processarRadarEmTempoReal();
+                if (el.id === 'paciente_origem_irradiacao' || el.id === 'paciente_irradiacao') renderizarAnaliseIrradiacao();
+            }
+            agendarAutosaveKineSys();
+        });
+    });
+
+    if (!tela.querySelector('.medida-objetiva')) adicionarMedidaObjetiva();
+    if (!tela.querySelector('.psfs-row')) adicionarAtividadePSFS();
+    if (!tela.querySelector('.objetivo-row')) adicionarObjetivoTerapeutico();
+
+    atualizarFonteDadosCompacta();
+    [
+        ['grupo_yellow_flags', 'Fatores psicossociais'],
+        ['grupo_exposicoes_ocupacionais', 'Exposição ocupacional'],
+        ['grupo_exposicoes_esportivas', 'Carga esportiva']
+    ].forEach(([id, fallback]) => {
+        const box = document.getElementById(id);
+        if (!box || box.dataset.kinesysSummaryBound === '1') return;
+        box.dataset.kinesysSummaryBound = '1';
+        const details = box.closest('details');
+        const small = details?.querySelector('summary small');
+        const base = small?.textContent || fallback;
+        const atualizar = () => {
+            if (!small) return;
+            const n = box.querySelectorAll('input[type="checkbox"]:checked').length;
+            small.textContent = n ? `${n} selecionado${n > 1 ? 's' : ''}` : base;
+        };
+        box.addEventListener('change', atualizar);
+        atualizar();
+    });
+
+    instalarObservadorCicloVidaRadar();
+    protegerFuncaoKineSys('salvarAvaliacaoAtual', () => 'avaliacao-paciente', null, 'Salvando…');
+    return true;
+}
+
+document.addEventListener('kinesys:tela-dom-pronta', event => {
+    if (event.detail?.id === 'tela_avaliacao') inicializarAvaliacaoDomKineSys();
+});
 
 
 function obterValoresMarcados(selector) {
