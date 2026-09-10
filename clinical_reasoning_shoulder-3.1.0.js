@@ -11,7 +11,7 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.0-shoulder1';
+  const VERSION='3.1.1-shoulder2';
   const norm=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -158,13 +158,129 @@
     }
   ];
 
+  const VOCABULARIO_NACIONAL={
+    ombro_trauma_maior:[
+      'caiu com a mao no chao','caiu apoiando a mao','caiu com o braco esticado','bateu forte no ombro','levou uma pancada no ombro',
+      'depois da queda nao levanta','desde a queda nao consegue erguer o braco','perdeu a forca logo depois da queda','ombro saiu e voltou sozinho'
+    ],
+    ombro_cervical_referida:[
+      'dor sai do pescoco e vai para o ombro','dor vem da nuca para o ombro','dor corre pelo braco','dor desce ate os dedos','dor pega o braco inteiro',
+      'mao formigando','mao adormece','dedos amortecidos','dor em choque','queimacao no braco','virar o pescoco piora o ombro','olhar para cima manda dor para o braco'
+    ],
+    ombro_capsulite:[
+      'nao consigo coçar as costas','nao consigo pegar o bolso de tras','nao consigo fechar o sutiã','nao consigo colocar o cinto','nao consigo vestir a camisa direito',
+      'nao consigo colocar o casaco','nao consigo lavar o cabelo','ombro endureceu','foi travando aos poucos','esta cada vez mais preso','outra pessoa tambem nao consegue levantar meu braco'
+    ],
+    ombro_artrose_gh:[
+      'ombro gasto','desgaste na junta do ombro','junta do ombro raspando','ombro estalando e duro','parece areia dentro','ombro range','dor bem dentro da junta',
+      'perdeu movimento devagar','dificuldade para girar o ombro','ombro duro para quase tudo'
+    ],
+    ombro_manguito:[
+      'doi para estender roupa','doi para pegar coisa no armario','doi para colocar algo na prateleira','doi para levantar o filho','doi para tirar a camisa',
+      'doi para colocar a mao na cabeca','doi para lavar o cabelo','doi quando levanto o braco de lado','doi quando levanto o braco para frente',
+      'doi no lado de fora do ombro','dor desce so ate o meio do braco','doi no meio do levantamento','doi mais para subir do que parado'
+    ],
+    ombro_ruptura_manguito:[
+      'nao consigo erguer sozinho mas alguem consegue levantar','o braco despenca','nao sustenta o braco levantado','ficou muito fraco depois de um estalo',
+      'levanto com a outra mao','nao consegue segurar o peso do proprio braco','perdeu forca de repente'
+    ],
+    ombro_ac:[
+      'dor bem em cima do ombro','dor onde termina a clavicula','dor no ossinho em cima do ombro','doi quando levo a mao para o outro ombro',
+      'doi para colocar a mao no ombro contrario','doi com a alca do cinto','doi com mochila no ombro'
+    ],
+    ombro_biceps:[
+      'dor na frente da junta','doi na frente quando carrego peso','doi para levantar uma sacola','doi para pegar panela com a palma para cima',
+      'doi para puxar alguma coisa','dor na frente quando dobro o cotovelo com peso','dor na frente para fazer academia'
+    ],
+    ombro_instabilidade:[
+      'parece que o ombro vai escapar','parece que vai desencaixar','parece que vai deslocar','sinto o ombro solto','sinto que a junta corre','fica inseguro quando jogo o braco para tras',
+      'tenho medo de abrir o braco e girar para fora','tenho medo de colocar o braco atras da cabeca','parece que sai quando levanto o cotovelo e giro o braco',
+      'ja desloquei o ombro','ja tive luxacao','ja saiu do lugar mais de uma vez','ombro desloca com facilidade','braço morto','armar o braco'
+    ],
+    ombro_labral:[
+      'estalo doloroso dentro do ombro','clique com dor dentro','parece que agarra dentro','parece que prende por dentro','trava dentro da junta','estalido profundo',
+      'doi no fundo do ombro','doi para arremessar','ombro morre depois de arremessar','puxaram meu braco e depois ficou doendo dentro'
+    ],
+    ombro_calcaria:[
+      'crise de dor muito forte no ombro','acordou com o ombro muito dolorido sem cair','dor tao forte que nao consegue mexer','calcificacao apareceu no raio x',
+      'medico falou que tem calcio no ombro','tendinite com calcio'
+    ],
+    ombro_pmr:[
+      'os dois ombros amanhecem travados','ombros duros de manha','demora para soltar os ombros de manha','dor nos dois ombros e nos quadris',
+      'os dois lados doem sem ter machucado','muita rigidez quando acorda'
+    ]
+  };
+
+  const MATRIZ_EXAME={
+    ombro_trauma_maior:{
+      essencial:['Inspeção e deformidade','Exame neurovascular distal','Capacidade ativa sem forçar provocação','Decisão sobre necessidade de imagem/avaliação médica'],
+      complementar:['ADM passiva somente se segura','Força apenas quando trauma grave/fratura-luxação estiverem suficientemente excluídos'],
+      evitar:['Não insistir em testes provocativos especiais antes de excluir lesão traumática importante']
+    },
+    ombro_cervical_referida:{
+      essencial:['Screening cervical','Dermátomos, miótomos e reflexos quando houver sintomas distais','Reprodução/modulação por movimento cervical','Comparar reprodução da dor familiar por cervical e por ombro'],
+      complementar:['Neurodinâmica do membro superior','Cluster cervical quando a apresentação justificar'],
+      evitar:['Não interpretar Spurling, ULTT ou outro teste isolado como diagnóstico definitivo']
+    },
+    ombro_capsulite:{
+      essencial:['ADM ativa e passiva','Rotação externa passiva comparativa','Padrão global de restrição e irritabilidade','História de progressão da rigidez'],
+      complementar:['Medida de flexão/abdução e rotação interna','Função: mão nas costas/cabeça e atividades de vestir-se'],
+      evitar:['Não fechar capsulite apenas por dor noturna ou por um único movimento limitado']
+    },
+    ombro_artrose_gh:{
+      essencial:['ADM ativa e passiva','Padrão de rigidez e crepitação','Reprodução da dor profunda familiar','Impacto funcional'],
+      complementar:['Força global','Correlação com radiografia quando disponível'],
+      evitar:['Não assumir que artrose em imagem seja a causa principal sem concordância clínica']
+    },
+    ombro_manguito:{
+      essencial:['ADM ativa e passiva','Comportamento durante elevação/arco doloroso','Força de abdução','Força de rotação externa','Reprodução da dor familiar sob carga'],
+      complementar:['Jobe/Full Can conforme hipótese','Resistência à rotação externa','Hawkins-Kennedy ou Neer como testes de provocação','Avaliação de tolerância à carga e função overhead'],
+      evitar:['Não usar Neer, Hawkins-Kennedy, Jobe/Empty Can ou arco doloroso isoladamente como diagnóstico estrutural']
+    },
+    ombro_ruptura_manguito:{
+      essencial:['Comparar ADM ativa versus passiva','Força objetiva de abdução e rotação externa','Avaliar perda ativa desproporcional','História de trauma e início da fraqueza'],
+      complementar:['External Rotation Lag Sign','Drop Arm quando apropriado','Hornblower/teres minor quando quadro indicar'],
+      evitar:['Não diferenciar ruptura parcial de total apenas por testes clínicos; considerar imagem quando decisão clínica depender da integridade estrutural']
+    },
+    ombro_ac:{
+      essencial:['Localização focal sobre articulação AC','Palpação reproduzindo a dor familiar','Adução horizontal/cross-body'],
+      complementar:['Paxinos e outros testes AC em combinação quando disponíveis','História de trauma direto'],
+      evitar:['Não usar cross-body ou palpação isoladamente como confirmação definitiva']
+    },
+    ombro_biceps:{
+      essencial:['Localização anterior/sulco bicipital','Flexão do ombro/cotovelo resistida','Supinação resistida','Diferenciação de manguito e labrum'],
+      complementar:['Speed','Yergason','Uppercut quando disponíveis no banco'],
+      evitar:['Não usar Speed ou Yergason isoladamente para confirmar patologia da cabeça longa do bíceps']
+    },
+    ombro_instabilidade:{
+      essencial:['História de luxação/subluxação e direção','Apreensão genuína em posição de risco','Apprehension e Relocation quando apropriados','Laxidade/direção e controle funcional'],
+      complementar:['Load-and-shift','Sulcus sign em suspeita de componente inferior/multidirecional','Testes funcionais específicos do esporte'],
+      evitar:['Dor isolada durante apprehension não equivale a instabilidade; valorizar sensação de apreensão/saída e história clínica']
+    },
+    ombro_labral:{
+      essencial:['História de tração/arremesso/instabilidade','Sintomas mecânicos dolorosos profundos','Diferenciar instabilidade e bíceps','Impacto funcional específico'],
+      complementar:['O’Brien/Active Compression','Crank','Biceps Load ou outros testes quando pertinentes'],
+      evitar:['Não interpretar O’Brien, Crank ou outro teste labral isoladamente; acurácia é variável e clique indolor isolado tem baixo valor']
+    },
+    ombro_calcaria:{
+      essencial:['ADM ativa/passiva limitada por dor versus rigidez','Intensidade/irritabilidade e início da crise','Correlação entre sintomas e imagem quando disponível'],
+      complementar:['Força conforme tolerância','Ultrassom/radiografia quando clinicamente indicado'],
+      evitar:['Não atribuir sintomas a depósito calcificado incidental sem correlação clínica']
+    },
+    ombro_pmr:{
+      essencial:['Idade >=50','Bilateralidade','Duração da rigidez matinal','Sintomas sistêmicos e cintura pélvica','Decisão de encaminhamento médico'],
+      complementar:['Revisão de exames/laboratório quando disponíveis'],
+      evitar:['Não conduzir como duas lesões locais de ombro antes de esclarecer padrão sistêmico']
+    }
+  };
+
   function textoContexto(){
     const c=contexto();
     return [hmaTexto(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
   }
 
   function pontuar(cond,texto,c){
-    const hits=contem(texto,cond.termos);
+    const hits=contem(texto,uniq([...arr(cond.termos),...arr(VOCABULARIO_NACIONAL[cond.id])]));
     let score=Math.min(9,hits.length*1.35);
     const idade=Number(c?.idade||document.getElementById('paciente_idade')?.value||0);
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
@@ -189,6 +305,7 @@
     const perguntas=cond.perguntas.slice();
     const objetivos=cond.objetivos.slice();
     const testes=arr(item?.testes).map(testeNome).filter(Boolean);
+    const matriz=MATRIZ_EXAME[cond.id]||{essencial:[],complementar:[],evitar:[]};
     return {
       id:item?.id||cond.id,
       regiaoId:'ombro',
@@ -198,14 +315,14 @@
       prioridadeOrdenacao:Number((p.score+2).toFixed(2)),
       aFavor:p.hits.length?p.hits.map(x=>`Relato: ${x}`):['Padrão ainda depende de perguntas discriminativas'],
       contra:[],
-      aConfirmar:uniq([...perguntas.slice(0,3),...objetivos.slice(0,2)]),
+      aConfirmar:uniq([...perguntas.slice(0,3),...matriz.essencial.slice(0,3),...objetivos.slice(0,2)]),
       testes,
       regraConfirmacao:item?.regraConfirmacao?.descricao||item?.regraConfirmacao||'',
       interpretacao:String(item?.interpretacao||''),
       evidencia:String(item?.evidencia||''),
       origemHMA:p.hits.length>0,
       item:item||{id:cond.id,nome:cond.rotulo,testes},
-      motor31:{condicaoId:cond.id,perguntas,objetivos,frasesReconhecidas:p.hits,urgente:!!cond.urgente,reforca:cond.reforca,enfraquece:cond.enfraquece}
+      motor31:{condicaoId:cond.id,perguntas,objetivos,frasesReconhecidas:p.hits,urgente:!!cond.urgente,reforca:cond.reforca,enfraquece:cond.enfraquece,matrizExame:matriz}
     };
   }
 
@@ -235,11 +352,17 @@
     plano.exame.seguranca=uniqObj([...(plano.exame.seguranca||[]),...segurancaExtra]);
     plano.exame.perguntasDirigidasOmbro=perguntas;
     plano.exame.objetivosOmbro=objetivos;
-    plano.exame.familiasOmbro=fortes.map(x=>({id:x.cond.id,nome:x.cond.rotulo,frases:x.hits,perguntas:x.cond.perguntas,objetivos:x.cond.objetivos,urgente:!!x.cond.urgente}));
+    plano.exame.familiasOmbro=fortes.map(x=>({id:x.cond.id,nome:x.cond.rotulo,frases:x.hits,perguntas:x.cond.perguntas,objetivos:x.cond.objetivos,urgente:!!x.cond.urgente,matrizExame:MATRIZ_EXAME[x.cond.id]||{essencial:[],complementar:[],evitar:[]}}));
+    plano.exame.matrizOmbro=plano.exame.familiasOmbro.map(x=>({id:x.id,nome:x.nome,...x.matrizExame}));
     plano.motor31={versao:VERSION,regiao:'ombro',frasesReconhecidas:uniq(fortes.flatMap(x=>x.hits)),perguntas,condicoes:plano.exame.familiasOmbro,aviso:'Palavras e frases da HMA orientam investigação; não equivalem a diagnóstico.'};
 
     const extras=[];
-    objetivos.forEach((o,i)=>extras.push({texto:o,tipo:classificarObjetivo(o),hipoteses:fortes.slice(0,3).map(x=>x.cond.rotulo),prioridade:12-i/100,motor31:true}));
+    const objetivosExame=uniq([
+      ...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.essencial)),
+      ...objetivos,
+      ...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.complementar))
+    ]);
+    objetivosExame.forEach((o,i)=>extras.push({texto:o,tipo:classificarObjetivo(o),hipoteses:fortes.slice(0,3).map(x=>x.cond.rotulo),prioridade:12-i/100,motor31:true}));
     const testeMap=new Map();
     [...extras,...arr(plano.exame.testesPrioritarios)].forEach(t=>{const k=norm(t.texto);if(k&&!testeMap.has(k))testeMap.set(k,t);});
     plano.exame.testesPrioritarios=Array.from(testeMap.values()).slice(0,14);
@@ -272,7 +395,8 @@
     const m=plano?.motor31;
     if(!m||m.regiao!=='ombro'){host.hidden=true;host.innerHTML='';return;}
     host.hidden=false;
-    host.innerHTML=`<header><div><span>Motor 3.1 · Ombro</span><strong>Perguntas que refinam a hipótese antes dos testes</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header><div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div><footer>Use as respostas para mudar a prioridade das hipóteses. Uma frase isolada do paciente não confirma estrutura ou diagnóstico.</footer>`;
+    const matriz=arr(plano?.exame?.matrizOmbro).slice(0,4);
+    host.innerHTML=`<header><div><span>Motor 3.1 · Ombro</span><strong>Perguntas que refinam a hipótese antes dos testes</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header><div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>Use as respostas para mudar a prioridade das hipóteses. Uma frase isolada do paciente não confirma estrutura ou diagnóstico.</footer>`;
   }
   function esc(v=''){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
 

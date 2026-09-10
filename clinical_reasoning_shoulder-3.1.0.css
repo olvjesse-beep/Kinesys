@@ -38,3 +38,12 @@ body.ks-design-ready #tela_avaliacao .ks31-shoulder-interview>footer{
   margin-top:10px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:1.45;
 }
 @media(max-width:820px){body.ks-design-ready #tela_avaliacao .ks31-question-grid{grid-template-columns:1fr}}
+
+/* Motor 3.1.1 — matriz de exame por finalidade */
+.ks31-exam-matrix{margin-top:16px;padding-top:14px;border-top:1px solid var(--kds-line-soft)}
+.ks31-exam-matrix>strong{display:block;margin-bottom:8px;color:var(--kds-petrol-deep);font-size:var(--kds-font-label)}
+.ks31-exam-matrix details{border-top:1px solid var(--kds-line-soft)}
+.ks31-exam-matrix summary{cursor:pointer;padding:10px 0;color:var(--kds-petrol-deep);font-weight:700}
+.ks31-exam-matrix details>div{padding:0 0 10px}
+.ks31-exam-matrix details>div>b{display:block;margin:8px 0 4px;color:var(--kds-accent-hover);font-size:var(--kds-font-metadata)}
+.ks31-exam-matrix details>div>p{margin:3px 0;color:var(--kds-text);font-size:var(--kds-font-metadata);line-height:1.45}
