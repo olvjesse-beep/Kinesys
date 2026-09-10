@@ -1065,3 +1065,29 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-duracao-curta .agenda-compromisso{padding:0 3px!important}
 #tela_agenda .agenda-duracao-minima .agenda-compromisso{padding:0 2px!important;border-left-width:2px!important}
 #tela_agenda .agenda-duracao-minima .agenda-paciente-nome{display:none!important}
+
+
+/* ============================================================================
+   AGENDA SUBSLOT STRIPES FIX R3
+   A grade continua calculando em passos de 10 min, mas só hora cheia e
+   meia-hora recebem divisores visuais. Subslots não desenham listras.
+   ========================================================================== */
+@media (min-width:760px){
+  #tela_agenda .agenda-hora-eixo.subhora,
+  #tela_agenda .agenda-celula.subhora{
+    border-top-width:0!important;
+    border-top-style:none!important;
+  }
+  #tela_agenda .agenda-hora-eixo.meia-hora,
+  #tela_agenda .agenda-celula.meia-hora{
+    border-top:1px dashed var(--kds-line-soft)!important;
+  }
+  #tela_agenda .agenda-hora-eixo.hora-cheia,
+  #tela_agenda .agenda-celula.hora-cheia{
+    border-top:1px solid var(--kds-line)!important;
+  }
+  #tela_agenda .agenda-celula.bloqueado.subhora,
+  #tela_agenda .agenda-celula.feriado.subhora{
+    border-top:0!important;
+  }
+}
