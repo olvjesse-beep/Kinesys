@@ -20,7 +20,37 @@ jobs:
           fetch-depth: 0
 
       - name: Apply exact data-loading rewrite
-        run: python .github/scripts/phase3a_data_loading.py
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          source = Path('.github/scripts/phase3a_data_loading.py').read_text(encoding='utf-8')
+          start_marker = '# Saving an evaluation: full selected chart, basic global list only for duplicate-name check.'
+          end_marker = '# Report screens need one full patient, never all patient histories.'
+          start = source.index(start_marker)
+          end = source.index(end_marker, start)
+          replacement = r'''# Saving an evaluation: full selected chart, basic global list only for duplicate-name check.
+          text = replace_once(
+              text,
+              "    let lista=await obterPacientesSalvos();\n    let pacienteExistente=pacienteAtualId?lista.find(p=>String(p.id)===String(pacienteAtualId)):null;",
+              "    let pacienteExistente=pacienteAtualId?await obterPacienteCompletoPorId(pacienteAtualId):null;",
+              'save evaluation loads only selected chart'
+          )
+          text = replace_once(
+              text,
+              "    if(!pacienteExistente&&!pacienteAtualId){const duplicados=lista.filter(",
+              "    if(!pacienteExistente&&!pacienteAtualId){const listaBasica=await obterPacientesBasicos();const duplicados=listaBasica.filter(",
+              'save evaluation duplicate-name check uses lightweight index'
+          )
+
+          '''
+          patched = source[:start] + replacement + source[end:]
+          temp = Path('/tmp/phase3a_data_loading_v2.py')
+          temp.write_text(patched, encoding='utf-8')
+          subprocess.check_call(['python', str(temp)])
+          PY
 
       - name: Validate Phase 3A
         shell: bash
