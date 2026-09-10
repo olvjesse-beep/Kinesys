@@ -1,0 +1,47 @@
+name: TEMP Run Phase 4B Clean
+
+on:
+  push:
+    branches:
+      - perf/phase-4b-agenda-lazy
+    paths:
+      - 'tools/tmp_fix_phase4b_transformer.py'
+      - '.github/workflows/tmp-run-phase4b-clean.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/phase-4b-agenda-lazy
+          fetch-depth: 0
+      - name: Correct transformer
+        run: python3 tools/tmp_fix_phase4b_transformer.py
+      - name: Apply Phase 4B
+        run: python3 tools/tmp_phase4b_agenda_lazy.py
+      - name: Normalize generated test header
+        run: sed -i "1s/^\\\\'use strict\\\\';/'use strict';/" tests/agenda_lazy.contract.js
+      - name: Validate changed runtime
+        shell: bash
+        run: |
+          node --check agenda_runtime_core-1.20.0.js
+          node --check agenda-1.20.0.js
+          node --check financeiro_agendamento-1.21.0.js
+          node --check screen_loader-1.25.0.js
+          node --check script-1.18.0.js
+          node tests/agenda_lazy.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          git diff --check
+      - name: Commit tested runtime only
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add agenda_runtime_core-1.20.0.js agenda-1.20.0.js financeiro_agendamento-1.21.0.js screen_loader-1.25.0.js script-1.18.0.js index.html tests/agenda_lazy.contract.js
+          git commit -m 'Lazy-load Agenda UI behind runtime core'
+          git push origin HEAD:perf/phase-4b-agenda-lazy
