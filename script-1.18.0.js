@@ -183,6 +183,46 @@ const _supabase = (typeof window.supabase !== 'undefined')
 let usuarioLogado = null;
 let avaliacaoEdicaoId = null;
 let evolucaoEdicaoId = null;
+let agendamentoClinicoContexto = null;
+const KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY = 'kinesys_agendamento_clinico_contexto_v1';
+
+function definirAgendamentoClinicoContexto(agendamentoId, pacienteId, modo = '') {
+    const id = String(agendamentoId || '').trim();
+    if (!id) { limparAgendamentoClinicoContexto(); return null; }
+    agendamentoClinicoContexto = {
+        agendamentoId: id,
+        pacienteId: String(pacienteId || '').trim(),
+        modo: String(modo || '').trim().toLowerCase(),
+        definidoEm: new Date().toISOString()
+    };
+    try { sessionStorage.setItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY, JSON.stringify(agendamentoClinicoContexto)); } catch (_) {}
+    return agendamentoClinicoContexto;
+}
+
+function obterAgendamentoClinicoContexto(pacienteId = '', modo = '') {
+    let contexto = agendamentoClinicoContexto;
+    if (!contexto) {
+        try {
+            const salvo = sessionStorage.getItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY);
+            if (salvo) contexto = JSON.parse(salvo);
+        } catch (_) {}
+    }
+    if (!contexto?.agendamentoId) return null;
+    const pacienteEsperado = String(pacienteId || '').trim();
+    const modoEsperado = String(modo || '').trim().toLowerCase();
+    if (pacienteEsperado && contexto.pacienteId && pacienteEsperado !== String(contexto.pacienteId)) return null;
+    if (modoEsperado && contexto.modo && modoEsperado !== String(contexto.modo)) return null;
+    agendamentoClinicoContexto = contexto;
+    return String(contexto.agendamentoId);
+}
+
+function limparAgendamentoClinicoContexto() {
+    agendamentoClinicoContexto = null;
+    try { sessionStorage.removeItem(KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY); } catch (_) {}
+}
+window.definirAgendamentoClinicoContexto = definirAgendamentoClinicoContexto;
+window.obterAgendamentoClinicoContexto = obterAgendamentoClinicoContexto;
+window.limparAgendamentoClinicoContexto = limparAgendamentoClinicoContexto;
 let loginPerfisDisponiveis = [];
 let loginCredencialChave = '';
 let autenticacaoInicializada = false;
@@ -1703,6 +1743,7 @@ function normalizarPacienteDoBanco(p) {
         cadastradoPor: p.cadastradoPor || p.cadastrado_por || '',
         timestampCadastro: p.timestampCadastro || p.timestamp_cadastro || null,
         avaliacoes: (p.avaliacoes || []).map(av => ({
+            agendamentoId: av.agendamentoId || av.agendamento_id || null,
             ...av,
             dataAvaliacao: av.dataAvaliacao || av.data_avaliacao || '',
             dataHoraISO: av.dataHoraISO || av.data_hora_iso || av.salvo_em || null,
@@ -1721,6 +1762,7 @@ function normalizarPacienteDoBanco(p) {
             status: av.status || av.mapeamento?.status || av.mapeamento?.meta?.status || ''
         })),
         evolucoes: (p.evolucoes || []).map(ev => ({
+            agendamentoId: ev.agendamentoId || ev.agendamento_id || null,
             ...ev,
             dataHoraISO: ev.dataHoraISO || ev.data_hora_iso || ev.salvo_em || null,
             realizadoEm: ev.realizadoEm || ev.realizado_em || ev.data_hora_iso || null,
@@ -1888,6 +1930,7 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
                 const avData = {
                     id: av.id || `av_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                     paciente_id: id,
+                    agendamento_id: av.agendamentoId || av.agendamento_id || null,
                     data_avaliacao: av.dataAvaliacao || new Date().toLocaleDateString('pt-BR'),
                     data_hora_iso: av.dataHoraISO || av.salvoEm || new Date().toISOString(),
                     realizado_em: av.realizadoEm || av.dataHoraISO || new Date().toISOString(),
@@ -1921,6 +1964,7 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
                 const evData = {
                     id: ev.id || `ev_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                     paciente_id: id,
+                    agendamento_id: ev.agendamentoId || ev.agendamento_id || null,
                     data: ev.data || String(ev.realizadoEm || '').slice(0,10) || new Date().toISOString().slice(0,10),
                     data_hora_iso: ev.dataHoraISO || ev.salvoEm || new Date().toISOString(),
                     realizado_em: ev.realizadoEm || ev.dataHoraISO || new Date().toISOString(),
@@ -2974,6 +3018,7 @@ async function salvarEvolucaoSessao() {
     const realizadoEm=registroEmEdicao?obterRealizadoEmRegistro(registroEmEdicao):realizadoInput;
     const registro={
         id:registroEmEdicao?.id||`ev_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto(pacienteId,'evolucao'),
         data:String(realizadoEm).slice(0,10),
         dataHoraISO:registroEmEdicao?.dataHoraISO||registroEmEdicao?.salvoEm||agora.toISOString(),
         realizadoEm,
@@ -2993,6 +3038,7 @@ async function salvarEvolucaoSessao() {
     if(registroEmEdicao) pacienteAtual.evolucoes=pacienteAtual.evolucoes.map(e=>String(e.id)===String(registroEmEdicao.id)?registro:e);
     else pacienteAtual.evolucoes.push(registro);
     const sucesso=await salvarPacienteNaNuvem(pacienteAtual,{exigirRastreabilidadeClinica:true});if(!sucesso)return;
+    if(registro.agendamentoId) limparAgendamentoClinicoContexto();
     alert(registroEmEdicao?'✅ Evolução atualizada com rastreabilidade. O carimbo original de salvamento foi preservado.':'✅ Evolução registrada com data, profissional e horário de salvamento.');
     cancelarEdicaoEvolucao(true);
     ['evo_relato','evo_mudancas','evo_dor_durante','evo_dor_24h','evo_rpe','evo_duracao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});carregarHistoricoEvolucao();
@@ -4369,6 +4415,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     const finalizadas=historico.filter(a=>a.status!=='rascunho');
     const dadosAvaliacao={
         id:registroEmEdicao?.id||`av_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto('', 'avaliacao'),
         versaoMotor:KINESYS_MOTOR_VERSION,
         status:registroEmEdicao?.status||(finalizar?'finalizada':'rascunho'),
         registroImutavel:registroEmEdicao?!!registroEmEdicao.registroImutavel:!!finalizar,
@@ -4405,6 +4452,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     pacienteObjeto.avaliadoPor=dadosAvaliacao.profissionalNome;
     const sucesso=await salvarPacienteNaNuvem(pacienteObjeto,{exigirRastreabilidadeClinica:true});
     if(!sucesso)return;
+    if(dadosAvaliacao.agendamentoId) limparAgendamentoClinicoContexto();
     if(registroEmEdicao){
         avaliacaoEdicaoId=null;
         limparRascunhoKineSys();

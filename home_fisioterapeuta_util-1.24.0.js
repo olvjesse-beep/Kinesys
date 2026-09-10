@@ -208,7 +208,8 @@
         },0);
     }
 
-    async function abrirRegistroClinico(pacienteId,modo){
+    async function abrirRegistroClinico(pacienteId,modo,agendamentoId){
+        if(typeof window.definirAgendamentoClinicoContexto==='function') window.definirAgendamentoClinicoContexto(String(agendamentoId||''),String(pacienteId||''),String(modo||''));
         if(!pacienteId) return;
         if(typeof abrirAtendimentoDoPainel==='function'){
             await abrirAtendimentoDoPainel(String(pacienteId),modo);
@@ -310,7 +311,7 @@
         if(!ausencia && !clinica.registroHoje){
             let label='Registrar evolução';
             if(clinica.modo==='avaliacao') label=clinica.familia==='avaliacao' && !clinica.primeiroAtendimentoClinica ? 'Registrar reavaliação' : 'Iniciar avaliação';
-            actions.appendChild(criarBotao(label,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,clinica.modo)));
+            actions.appendChild(criarBotao(label,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,clinica.modo,agendamento.id)));
         } else if(clinica.registroHoje && !ausencia){
             const done=document.createElement('span');
             done.className='ks-fisio-record-done';
