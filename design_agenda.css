@@ -878,7 +878,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
    Agenda compacta proporcional — 10 min = 1 unidade visual
    Mantém a escala temporal real; a altura total se adapta ao viewport desktop.
    ========================================================================== */
-@media (min-width:761px){
+@media (min-width:760px){
   #tela_agenda .agenda-card-semanal{padding:10px}
   #tela_agenda .agenda-visoes{gap:6px;padding:8px 12px}
   #tela_agenda .agenda-toolbar-semanal{gap:8px;margin-bottom:4px}
@@ -927,7 +927,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
    Agenda é uma tela de trabalho: controles compactos + expediente completo.
    A geometria temporal continua proporcional em unidades de 10 minutos.
    ========================================================================== */
-@media (min-width:761px){
+@media (min-width:760px){
   #tela_agenda .agenda-grade-scroll{
     height:clamp(440px,calc(100dvh - 210px),760px)!important;
     max-height:none!important;
@@ -944,7 +944,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   #tela_agenda .agenda-compromisso{height:100%;min-height:0!important;overflow:hidden}
 }
 
-@media (min-width:1281px){
+@media (min-width:1280px){
   #tela_agenda .agenda-card-semanal{padding:0!important}
   #tela_agenda .agenda-visoes{
     min-height:0!important;
