@@ -1,0 +1,22 @@
+name: Refine shoulder decubitus semantics
+on:
+  push:
+    paths:
+      - '.github/workflows/run-decubitus-semantics-refine.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python .tmp_refine_decubitus_semantics.py
+      - run: node --check script-1.18.0.js
+      - run: node --check clinical_reasoning_shoulder-3.1.0.js
+      - run: git diff --check
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add script-1.18.0.js clinical_reasoning_shoulder-3.1.0.js
+          git commit -m "Refine decubitus symptom semantics in shoulder reasoning" || exit 0
+          git push
