@@ -1,0 +1,39 @@
+name: Messages Bootstrap Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'mensagens_config.js'
+      - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'tests/mensagens_config_bootstrap.contract.js'
+      - '.github/workflows/messages-bootstrap-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'mensagens_config.js'
+      - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'tests/mensagens_config_bootstrap.contract.js'
+      - '.github/workflows/messages-bootstrap-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Messages on-demand contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check mensagens_config.js
+          node --check tests/mensagens_config_bootstrap.contract.js
+      - name: Bootstrap and first-use RPC contract
+        run: node tests/mensagens_config_bootstrap.contract.js
