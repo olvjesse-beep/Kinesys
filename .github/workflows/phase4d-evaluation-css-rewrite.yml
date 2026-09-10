@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply Phase 4D rewrite
-        run: python .github/scripts/phase4d_evaluation_css.py
+        run: python .github/scripts/phase4d_evaluation_css_v2.py
 
       - name: Validate Phase 4D
         run: |
