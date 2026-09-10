@@ -2979,33 +2979,11 @@ function limparDadosLocaisPacienteExcluido(id) {
 }
 
 async function excluirPacienteNuvemSeguro(id) {
-    if (!_supabase) throw new Error('Supabase indisponível. A exclusão definitiva exige conexão com a nuvem.');
-
-    // Preferência: RPC transacional da migration de exclusão segura.
-    try {
-        const rpc = await _supabase.rpc('kinesys_excluir_paciente_completo', { p_paciente_id: id });
-        if (!rpc.error) return { modo: 'transacional', resultado: rpc.data || null };
-        if (!/kinesys_excluir_paciente_completo|function .* does not exist|schema cache|PGRST202/i.test(String(rpc.error?.message || rpc.error || ''))) {
-            throw rpc.error;
-        }
-    } catch (err) {
-        if (!/kinesys_excluir_paciente_completo|function .* does not exist|schema cache|PGRST202/i.test(String(err?.message || err || ''))) throw err;
-    }
-
-    // Compatibilidade com instalações que ainda não executaram a migration nova.
-    // O paciente é removido por último; se algum vínculo obrigatório falhar, o
-    // cadastro principal permanece e o sistema informa a falha.
-    const tabelasDependentes = [
-        'pagamentos', 'agendamentos', 'lista_espera', 'arquivos_paciente',
-        'evolucoes', 'avaliacoes', 'planos_atendimento'
-    ];
-    for (const tabela of tabelasDependentes) {
-        const { error } = await _supabase.from(tabela).delete().eq('paciente_id', id);
-        if (error && !erroTabelaPacienteAusente(error)) throw new Error(`Não foi possível excluir ${tabela}: ${error.message || error}`);
-    }
-    const { error: pacienteError } = await _supabase.from('pacientes').delete().eq('id', id);
-    if (pacienteError) throw pacienteError;
-    return { modo: 'compatibilidade' };
+    if (!_supabase) throw new Error('Servidor indisponível. A exclusão definitiva exige conexão com o KineSys.');
+    const { data, error } = await _supabase.rpc('kinesys_excluir_paciente_completo', { p_paciente_id: id });
+    if (error) throw error;
+    if (data && data.ok === false) throw new Error(data.erro || 'O servidor não confirmou a exclusão completa do paciente.');
+    return { modo: 'transacional', resultado: data || null };
 }
 
 async function excluirArquivosLocaisPaciente(id) {
@@ -3067,7 +3045,7 @@ async function excluirPaciente(id) {
         return true;
     } catch (err) {
         console.error('KineSys: falha ao excluir paciente:', err);
-        alert('❌ A exclusão não foi concluída. O cadastro principal não será considerado excluído enquanto o Supabase não confirmar a operação.\n\n' + (err.message || String(err)));
+        alert('❌ A exclusão não foi concluída. Nenhum dado foi removido parcialmente.\n\n' + (err.message || String(err)));
         return false;
     }
 }

@@ -311,18 +311,18 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
 
         const actions=document.createElement('div');
         actions.className='ks-fisio-day-actions';
-        actions.appendChild(criarBotao('Prontuário','btn-secondary',()=>abrirProntuario(agendamento.paciente_id,nome)));
         const status=String(agendamento.status||'').toLowerCase();
         const ausencia=STATUS_AUSENCIA.has(status);
-        if(!ausencia && !clinica.registroHoje){
-            let label='Registrar evolução';
-            if(clinica.modo==='avaliacao') label=clinica.familia==='avaliacao' && !clinica.primeiroAtendimentoClinica ? 'Registrar reavaliação' : 'Iniciar avaliação';
-            actions.appendChild(criarBotao(label,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,clinica.modo,agendamento.id)));
-        } else if(clinica.registroHoje && !ausencia){
-            const done=document.createElement('span');
-            done.className='ks-fisio-record-done';
-            done.textContent='Registro concluído';
-            actions.appendChild(done);
+        if(!ausencia){
+            const modoDestino=clinica.familia==='avaliacao' ? 'avaliacao' : 'evolucao';
+            const labelDestino=modoDestino==='avaliacao' ? 'Avaliação' : 'Evolução';
+            actions.appendChild(criarBotao(labelDestino,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,modoDestino,agendamento.id)));
+            if(clinica.registroHoje){
+                const done=document.createElement('span');
+                done.className='ks-fisio-record-done';
+                done.textContent='Registro concluído';
+                actions.appendChild(done);
+            }
         }
         if(!paciente) row.classList.add('has-missing-record');
         row.append(time,content,actions);
@@ -361,6 +361,21 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         return q.error ? [] : (q.data||[]);
     }
 
+    async function resolverProfissionalHomeFisioterapeuta(perfilInicial){
+        const perfil=perfilInicial || (typeof usuarioLogado!=='undefined' ? usuarioLogado : null);
+        const perfilId=String(perfil?.id||'').trim();
+        const clinicaId=String(perfil?.clinica_id||'').trim();
+        if(!perfilId) return '';
+        const {data:contexto,error}=await _supabase.rpc('kinesys_contexto_agenda');
+        if(error) throw error;
+        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return '';
+        if(String(contexto?.perfil_id||'')!==perfilId) throw new Error('A sessão mudou. Entre novamente.');
+        if(clinicaId && String(contexto?.clinica_id||'')!==clinicaId) throw new Error('A clínica da sessão mudou. Entre novamente.');
+        const profissionais=Array.isArray(contexto?.profissionais) ? contexto.profissionais : [];
+        const proprio=profissionais.find(p=>String(p?.id||'')===perfilId && p?.aparece_na_agenda!==false);
+        return String(proprio?.id||'');
+    }
+
     async function carregarPainelFisioterapeutaUtil(){
         const card=document.getElementById('card_painel_fisioterapeuta');
         if(!card) return;
@@ -381,17 +396,15 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         }
 
         const perfilInicial=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
+        let profissionalId='';
         try {
-            if(typeof carregarProfissionaisAgenda!=='function' || !await carregarProfissionaisAgenda()) throw new Error('Equipe indisponível');
+            profissionalId=await resolverProfissionalHomeFisioterapeuta(perfilInicial);
         } catch(_) {
             if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)===perfilInicial) resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';
             return;
         }
         if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return;
 
-        const profissionalId=typeof profissionalAgendaRestritoAtualId==='function'
-            ? profissionalAgendaRestritoAtualId()
-            : String(perfilInicial?.id||'');
         if(!profissionalId){
             resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';
             return;
