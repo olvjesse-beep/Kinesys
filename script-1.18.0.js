@@ -833,8 +833,7 @@ async function carregarPacientePreCadastradoNaAvaliacao() {
     // Reconsulta para trazer o prontuário completo. Se a nuvem estiver lenta ou indisponível,
     // os dados essenciais acima já permanecerão preenchidos na avaliação.
     try {
-        const lista = await obterPacientesSalvos();
-        const p = lista.find(item => String(item.id) === String(pacienteIdAlvo));
+        const p = await obterPacienteCompletoPorId(pacienteIdAlvo);
         if (p) {
             if (campoNome) campoNome.value = p.nome || opt?.dataset?.nome || '';
             const idadePaciente = idadeNumericaPaciente(p) || idadeOption;
@@ -1865,6 +1864,99 @@ function mesclarPacienteCloudLocal(pacienteCloud, pacienteLocal) {
     };
 }
 
+const KINESYS_CAMPOS_PACIENTE_BASICO = [
+    'id','nome','cpf','nascimento','telefone','profissao','sexo','estado_civil',
+    'dependente','responsavel_nome','responsavel_parentesco','responsavel_telefone',
+    'cep','endereco','data_cadastro','cadastrado_por','timestamp_cadastro'
+].join(',');
+
+const KINESYS_CAMPOS_PACIENTE_BASICO_LEGADO = [
+    'id','nome','cpf','nascimento','telefone','profissao','sexo','estado_civil',
+    'cep','endereco','data_cadastro','cadastrado_por','timestamp_cadastro'
+].join(',');
+
+let pacientesBasicosEmCurso = null;
+const pacientesCompletosEmCurso = new Map();
+
+function projetarPacienteBasico(paciente) {
+    const normalizado = normalizarPacienteDoBanco(paciente || {});
+    const { avaliacoes, evolucoes, documentos, ...basico } = normalizado;
+    return basico;
+}
+
+function mesclarPacienteBasicoCloudLocal(pacienteCloud, pacienteLocal) {
+    const cloud = projetarPacienteBasico(pacienteCloud || {});
+    const local = projetarPacienteBasico(pacienteLocal || {});
+    return {
+        ...local,
+        ...cloud,
+        __dadosLocaisPendentes: !!pacienteLocal?.__dadosLocaisPendentes
+    };
+}
+
+async function consultarPacientesBasicosNaNuvem() {
+    let resposta = await _supabase.from('pacientes').select(KINESYS_CAMPOS_PACIENTE_BASICO);
+    if (resposta.error && /dependente|responsavel_nome|responsavel_parentesco|responsavel_telefone|schema cache|column/i.test(String(resposta.error?.message || resposta.error || ''))) {
+        resposta = await _supabase.from('pacientes').select(KINESYS_CAMPOS_PACIENTE_BASICO_LEGADO);
+    }
+    if (resposta.error) throw resposta.error;
+    return Array.isArray(resposta.data) ? resposta.data : [];
+}
+
+async function obterPacientesBasicos() {
+    if (pacientesBasicosEmCurso) return pacientesBasicosEmCurso;
+    const carregar = async () => {
+        const locais = lerPacientesLocaisComSeguranca();
+        if (_supabase) {
+            try {
+                const dados = await consultarPacientesBasicosNaNuvem();
+                const locaisPorId = new Map(locais.map(p => [String(p.id), p]));
+                const resultado = dados.map(registro => {
+                    const cloud = projetarPacienteBasico(registro);
+                    const local = locaisPorId.get(String(cloud.id));
+                    if (local) locaisPorId.delete(String(cloud.id));
+                    return mesclarPacienteBasicoCloudLocal(cloud, local);
+                });
+                locaisPorId.forEach(local => resultado.push(projetarPacienteBasico({ ...local, __dadosLocaisPendentes: true })));
+                return resultado;
+            } catch (err) {
+                console.warn('KineSys: índice leve de pacientes indisponível; usando cadastros locais preservados.', err);
+            }
+        }
+        return locais.map(p => projetarPacienteBasico({ ...p, __dadosLocaisPendentes: true }));
+    };
+    pacientesBasicosEmCurso = Promise.resolve(carregar()).finally(() => { pacientesBasicosEmCurso = null; });
+    return pacientesBasicosEmCurso;
+}
+
+async function obterPacienteCompletoPorId(id) {
+    const chave = String(id || '').trim();
+    if (!chave) return null;
+    if (pacientesCompletosEmCurso.has(chave)) return pacientesCompletosEmCurso.get(chave);
+
+    const carregar = async () => {
+        const local = lerPacientesLocaisComSeguranca().find(p => String(p.id) === chave) || null;
+        if (_supabase) {
+            try {
+                const { data, error } = await _supabase
+                    .from('pacientes')
+                    .select('*, avaliacoes(*), evolucoes(*)')
+                    .eq('id', chave)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data) return mesclarPacienteCloudLocal(normalizarPacienteDoBanco(data), local);
+            } catch (err) {
+                console.warn(`KineSys: prontuário ${chave} não pôde ser carregado individualmente; tentando cópia local preservada.`, err);
+            }
+        }
+        return local ? normalizarPacienteDoBanco({ ...local, __dadosLocaisPendentes: true }) : null;
+    };
+
+    const promessa = Promise.resolve(carregar()).finally(() => pacientesCompletosEmCurso.delete(chave));
+    pacientesCompletosEmCurso.set(chave, promessa);
+    return promessa;
+}
+
 async function obterPacientesSalvos() {
     const locais = lerPacientesLocaisComSeguranca();
     if (_supabase) {
@@ -2486,7 +2578,7 @@ async function salvarCadastroSomente(redirecionar = true) {
 
     const cpfDigitado = document.getElementById('cad_cpf').value.trim();
     if (cpfDigitado && somenteDigitos(cpfDigitado).length > 0) {
-        const listaAtual = await obterPacientesSalvos();
+        const listaAtual = await obterPacientesBasicos();
         const cpfConflito = listaAtual.find(p =>
             p.id !== pacienteAtualId &&
             p.cpf && somenteDigitos(p.cpf) === somenteDigitos(cpfDigitado)
@@ -2502,8 +2594,7 @@ async function salvarCadastroSomente(redirecionar = true) {
 
     let pacienteExistente = {};
     if (pacienteAtualId) {
-        const lista = await obterPacientesSalvos();
-        pacienteExistente = lista.find(p => p.id === pacienteAtualId) || {};
+        pacienteExistente = await obterPacienteCompletoPorId(pacienteAtualId) || {};
     }
 
     const nomeResponsavel = usuarioLogado ? usuarioLogado.nome : "Desconhecido";
@@ -2583,7 +2674,7 @@ async function salvarEIniciarAvaliacao() {
 }
 
 async function editarCadastro(id) {
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     const p = lista.find(item => item.id === id);
     if (!p) return;
 
@@ -2691,7 +2782,7 @@ function renderizarRegistrosAvaliacao(p) {
     }).join('');
 }
 async function editarAvaliacaoClinica(pacienteId, avaliacaoId) {
-    const lista=await obterPacientesSalvos(), p=lista.find(x=>String(x.id)===String(pacienteId));
+    const p=await obterPacienteCompletoPorId(pacienteId);
     const av=p?obterAvaliacoes(p).find(x=>String(x.id)===String(avaliacaoId)):null;
     if(!p||!av){alert('⚠️ Avaliação não encontrada.');return;}
     if(!registroClinicoPodeEditar(av)){alert(`🔒 O prazo de edição desta avaliação terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(av))}. O registro permanece disponível apenas para consulta.`);return;}
@@ -2725,7 +2816,7 @@ async function renderizarPacientesRecentesHome() {
     const container = document.getElementById('lista_pacientes_recentes');
     if (!container) return;
 
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     if (lista.length === 0) {
         container.innerHTML = `<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center kds-u-p-20px">Nenhum prontuário salvo recentemente.</p>`;
         return;
@@ -2750,8 +2841,7 @@ async function renderizarPacientesRecentesHome() {
 }
 
 async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
-    const lista = await obterPacientesSalvos();
-    const p = lista.find(item => item.id === id);
+    const p = await obterPacienteCompletoPorId(id);
     if (!p) return;
 
     pacienteAtualId = p.id;
@@ -2938,7 +3028,7 @@ async function excluirPaciente(id) {
         alert('🔒 Apenas Administrador pode excluir definitivamente um cadastro de paciente.');
         return false;
     }
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     const paciente = lista.find(p => String(p.id) === String(id));
     if (!paciente) { alert('⚠️ Paciente não encontrado. Atualize a lista e tente novamente.'); return false; }
 
@@ -3008,7 +3098,7 @@ async function atualizarSelectsPacientes() {
     const selectRel = document.getElementById('rel_paciente_select');
     const evoSelecionado = obterPacienteIdEvolucaoAtivo();
     const relSelecionado = String(selectRel?.value || '').trim() || (typeof obterPacienteIdRelatorioAtivo === 'function' ? String(obterPacienteIdRelatorioAtivo() || '').trim() : '');
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
 
     let options = `<option value="">-- Selecione um paciente --</option>`;
     lista.forEach(p => {
@@ -3033,7 +3123,7 @@ async function salvarEvolucaoSessao() {
     const mudancas=document.getElementById('evo_mudancas')?.value.trim()||'';
     const novoAlerta=!!document.getElementById('evo_novo_alerta')?.checked;
     if(novoAlerta&&!mudancas){alert('⚠️ Você marcou novo sinal de alerta. Descreva o que mudou antes de salvar.');return;}
-    const listaAtual=await obterPacientesSalvos();const pacienteAtual=listaAtual.find(x=>String(x.id)===String(pacienteId));
+    const pacienteAtual=await obterPacienteCompletoPorId(pacienteId);
     const registroEmEdicao=evolucaoEdicaoId?(pacienteAtual?.evolucoes||[]).find(e=>String(e.id)===String(evolucaoEdicaoId)):null;
     if(evolucaoEdicaoId&&!registroEmEdicao){alert('⚠️ Evolução em edição não encontrada. Recarregue o histórico.');evolucaoEdicaoId=null;return;}
     if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`🔒 O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
@@ -3093,7 +3183,7 @@ function renderResumoPaciente(idContainer, p) {
 
 async function editarEvolucaoClinica(evolucaoId){
     const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId)return;sincronizarSelectPacienteEvolucao(pacienteId);
-    const lista=await obterPacientesSalvos(),p=lista.find(x=>String(x.id)===String(pacienteId)),e=(p?.evolucoes||[]).find(x=>String(x.id)===String(evolucaoId));
+    const p=await obterPacienteCompletoPorId(pacienteId),e=(p?.evolucoes||[]).find(x=>String(x.id)===String(evolucaoId));
     if(!e){alert('⚠️ Evolução não encontrada.');return;}
     if(!registroClinicoPodeEditar(e)){alert(`🔒 O prazo de edição desta evolução terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(e))}.`);return;}
     evolucaoEdicaoId=e.id;
@@ -3127,8 +3217,7 @@ async function carregarHistoricoEvolucao() {
         return;
     }
 
-    const lista = await obterPacientesSalvos();
-    const p = lista.find(item => String(item.id) === String(pacienteId));
+    const p = await obterPacienteCompletoPorId(pacienteId);
     renderResumoPaciente('resumo_paciente_evolucao', p);
     renderizarRestricoesPersistentesEvolucao(p);
     renderizarLinhaTempoClinicaCompleta(p);
@@ -3296,7 +3385,7 @@ let pacienteCRM = null;
 async function popularSelectCRM() {
     const select = document.getElementById('crm_paciente_select');
     if (!select) return;
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     let options = `<option value="">-- Selecione um paciente --</option>`;
     lista.forEach(p => {
         const contato = obterContatoPreferencialPaciente(p);
@@ -3314,7 +3403,7 @@ async function carregarPacienteCRM() {
         pacienteCRM = null;
         return;
     }
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     const p = lista.find(item => item.id === id);
     if (p) {
         pacienteCRM = p;
@@ -4493,9 +4582,8 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     const realizadoInput=validarRealizacaoClinicaInput('avaliacao_realizado_em');
     if(!realizadoInput)return;
     if(finalizar){const v=validarSegurancaParaFinalizacao();if(!v.ok){alert('Finalização bloqueada.\n\n'+v.mensagem+'\n\nO rascunho permanece disponível.');return;}}
-    let lista=await obterPacientesSalvos();
-    let pacienteExistente=pacienteAtualId?lista.find(p=>String(p.id)===String(pacienteAtualId)):null;
-    if(!pacienteExistente&&!pacienteAtualId){const duplicados=lista.filter(p=>(p.nome||'').toLowerCase()===nome.toLowerCase());if(duplicados.length&&!(await confirmarKineSys(`Já existe(m) ${duplicados.length} paciente(s) chamado(s) "${nome}".\n\nSalvar como NOVO cadastro?`, {titulo:'Paciente com nome semelhante', confirmar:'Salvar como novo'})))return;}
+    let pacienteExistente=pacienteAtualId?await obterPacienteCompletoPorId(pacienteAtualId):null;
+    if(!pacienteExistente&&!pacienteAtualId){const listaBasica=await obterPacientesBasicos();const duplicados=listaBasica.filter(p=>(p.nome||'').toLowerCase()===nome.toLowerCase());if(duplicados.length&&!(await confirmarKineSys(`Já existe(m) ${duplicados.length} paciente(s) chamado(s) "${nome}".\n\nSalvar como NOVO cadastro?`, {titulo:'Paciente com nome semelhante', confirmar:'Salvar como novo'})))return;}
 
     const historico=pacienteExistente?obterAvaliacoes(pacienteExistente):[];
     const registroEmEdicao=avaliacaoEdicaoId?historico.find(a=>String(a.id)===String(avaliacaoEdicaoId)):null;
@@ -5435,7 +5523,7 @@ async function sincronizarPacienteRelatorio(){
 async function onPacienteRelatorioChange(){
     const pacienteId=await sincronizarPacienteRelatorio(); const cont=document.getElementById('preview_relatorio_container'); if(cont)cont.style.display='none';
     if(!pacienteId){renderResumoPaciente('resumo_paciente_relatorio',null);return;}
-    const lista=await obterPacientesSalvos();const p=lista.find(x=>String(x.id)===String(pacienteId));renderResumoPaciente('resumo_paciente_relatorio',p);if(!p)return;const campo=document.getElementById('rel_comp_diagnostico');if(campo)campo.value=obterTextoDocumentalUltimaAvaliacao(p)||'Sem síntese clínica documental registrada.';
+    const p=await obterPacienteCompletoPorId(pacienteId);renderResumoPaciente('resumo_paciente_relatorio',p);if(!p)return;const campo=document.getElementById('rel_comp_diagnostico');if(campo)campo.value=obterTextoDocumentalUltimaAvaliacao(p)||'Sem síntese clínica documental registrada.';
 }
 
 function onTipoDocumentoChange(){
@@ -5546,7 +5634,7 @@ function renderizarTextoRelatorioEstruturado(texto){
 
 async function montarDocumentoComparecimento(){
     const id=await sincronizarPacienteRelatorio();if(!id){alert('⚠️ Selecione um paciente primeiro.');return;}
-    const lista=await obterPacientesSalvos(),p=lista.find(x=>x.id===id);if(!p){alert('Paciente não encontrado.');return;}
+    const p=await obterPacienteCompletoPorId(id);if(!p){alert('Paciente não encontrado.');return;}
     const valorData=document.getElementById('rel_comp_data').value||new Date().toISOString().slice(0,10);
     const data=formatarDataPorExtenso(valorData);
     const entrada=document.getElementById('rel_comp_entrada')?.value||'',saida=document.getElementById('rel_comp_saida')?.value||'';
@@ -5805,8 +5893,7 @@ async function gerarDocumentoComIA(){
 
     const rascunho = document.getElementById('rel_rascunho_rapido').value.trim();
 
-    const lista = await obterPacientesSalvos();
-    const p = lista.find(x => x.id === pacienteId);
+    const p = await obterPacienteCompletoPorId(pacienteId);
     const av = p ? (obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p)) : null;
     const resumoMapa = (av?.mapeamento?.resumoPorRegiao || [])
         .map(r => r.textoDocumento || r.nomeHipotese || '')
@@ -5879,7 +5966,7 @@ async function montarDocumentoIAParaImpressao(){
     if(!pacienteId){alert('⚠️ Selecione um paciente primeiro.');return;}
     if(!texto){alert('⚠️ O Relatório Oficial está vazio. Gere com a IA ou escreva manualmente.');return;}
     const validacao=validarRelatorioIA(false);if(validacao?.criticos?.length){if(!(await confirmarKineSys('O validador encontrou conteúdo potencialmente não sustentado pelos dados registrados. Deseja montar o documento mesmo assim para revisão?', {titulo:'Revisão necessária', confirmar:'Montar mesmo assim'})))return;}
-    const lista=await obterPacientesSalvos(),p=lista.find(x=>x.id===pacienteId);
+    const p=await obterPacienteCompletoPorId(pacienteId);
     const tipoDocumento=document.getElementById('rel_tipo_documento')?.value||'relatorio';
     const objetivo=tipoDocumento==='encaminhamento'?'avaliacao_medica':(document.getElementById('rel_objetivo')?.value||'geral');
     const corpo=renderizarTextoRelatorioEstruturado(texto);
@@ -6351,7 +6438,7 @@ function obterPacienteIdMidiasAtivo() {
 async function popularSelectMidiasPaciente(preSelecionado = '') {
     const select = document.getElementById('midia_paciente_select');
     if (!select) return;
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     select.innerHTML = '<option value="">-- Selecione um paciente --</option>' + lista
         .slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
         .map(p => `<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome)}${p.cpf ? ' · '+escapeHTML(p.cpf) : ''}</option>`).join('');
@@ -6403,7 +6490,7 @@ async function iniciarCapturaComIPhone() {
     const pacienteId = await sincronizarPacienteMidias(false);
     if (!pacienteId) { alert('⚠️ Selecione o paciente antes de iniciar a captura.'); return; }
     const st = await verificarKinesysLocal(true); if (!st) return;
-    const lista = await obterPacientesSalvos();
+    const lista = await obterPacientesBasicos();
     const p = lista.find(x=>String(x.id)===String(pacienteId)); if (!p) { alert('Paciente não encontrado.'); return; }
     try {
         const r = await kinesysLocalFetch('/api/session', {
@@ -6441,7 +6528,7 @@ async function importarDocumentosComputador(input) {
     if(!arquivos.length)return;
     const pacienteId=await sincronizarPacienteMidias(false);
     if(!pacienteId){input.value='';alert('⚠️ Selecione o paciente antes de importar.');return;}
-    const lista=await obterPacientesSalvos();
+    const lista=await obterPacientesBasicos();
     const p=lista.find(x=>String(x.id)===String(pacienteId));
     if(!p){input.value='';alert('Paciente não encontrado.');return;}
     const tipo=document.getElementById('midia_import_tipo')?.value||'documento';
