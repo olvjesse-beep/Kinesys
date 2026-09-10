@@ -25,6 +25,7 @@ let agendaEdicaoAtendimentoId = null;
 // Evita repetir o mesmo diálogo de exceção várias vezes enquanto o usuário
 // apenas completa os demais campos do mesmo agendamento.
 let agendaExcecaoJornadaPromptadaChaveModal = '';
+const AGENDA_GRADE_PASSO_MIN = 10;
 
 const AGENDA_SELECT_SEMANA = '*, pacientes(id,nome,telefone,dependente,responsavel_nome,responsavel_parentesco,responsavel_telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
 const AGENDA_SELECT_SEMANA_LEGADO = '*, pacientes(id,nome,telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
@@ -1644,8 +1645,8 @@ function limitesHorariosGrade(dias, profissionalId) {
         });
     });
     if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) return { inicio: 7 * 60, fim: 20 * 60 };
-    min = Math.floor(min / 30) * 30;
-    max = Math.ceil(max / 30) * 30;
+    min = Math.floor(min / AGENDA_GRADE_PASSO_MIN) * AGENDA_GRADE_PASSO_MIN;
+    max = Math.ceil(max / AGENDA_GRADE_PASSO_MIN) * AGENDA_GRADE_PASSO_MIN;
     return { inicio: Math.max(0, min), fim: Math.min(24 * 60, max) };
 }
 
@@ -1758,7 +1759,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     if (!container) return;
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
     const limites = limitesHorariosGrade(dias, profissionalFiltro);
-    const passo = 30;
+    const passo = AGENDA_GRADE_PASSO_MIN;
     const totalSlots = Math.max(1, Math.ceil((limites.fim - limites.inicio) / passo));
     const hojeISO = instanteAgendaSaoPaulo().data;
     container.dataset.dias = dias.map(d => d.dataISO).join(',');
@@ -1792,7 +1793,9 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     for (let r = 0; r < totalSlots; r++) {
         const minuto = limites.inicio + r * passo;
         const eixo = document.createElement('div');
-        eixo.className = 'agenda-hora-eixo';
+        const restoHora=((minuto%60)+60)%60;
+        const classeLinha=restoHora===0?'hora-cheia':(restoHora===30?'meia-hora':'subhora');
+        eixo.className = 'agenda-hora-eixo ' + classeLinha;
         eixo.style.gridColumn = '1';
         eixo.style.gridRow = String(r + 2);
         eixo.textContent = minuto % 60 === 0 ? minutosParaHora(minuto) : '';
@@ -1808,7 +1811,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             cell.dataset.dia = d.dataISO; cell.dataset.minuto = String(minuto);
             cell.style.gridColumn = String(c + 2);
             cell.style.gridRow = String(r + 2);
-            cell.className = 'agenda-celula ' + (r % 2 ? 'meia-hora ' : '') + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : dentro ? 'atendimento' : 'fora-atendimento');
+            cell.className = 'agenda-celula ' + classeLinha + ' ' + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : dentro ? 'atendimento' : 'fora-atendimento');
 
             const hh = minutosParaHora(minuto);
             if (feriado) {
@@ -1836,6 +1839,10 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             const span = Math.max(1, Math.ceil((Math.min(fimA, limites.fim) - Math.max(ini, limites.inicio)) / passo));
             const overlay = document.createElement('div');
             overlay.className = 'agenda-celula agendado';
+            const duracaoVisual = Math.max(passo, fimA - ini);
+            overlay.dataset.duracaoMinutos = String(duracaoVisual);
+            if (duracaoVisual <= 10) overlay.classList.add('agenda-duracao-minima');
+            else if (duracaoVisual < 30) overlay.classList.add('agenda-duracao-curta');
             overlay.style.gridColumn = String(diaIdx + 2);
             overlay.style.gridRow = `${rowInicio} / span ${span}`;
             overlay.style.zIndex = '3';
@@ -1845,32 +1852,41 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             container.appendChild(overlay);
         });
     } else {
-        // Visão geral: exibe os nomes no horário de início sem declarar disponibilidade individual.
-        agendaAgendamentosSemanaCache.forEach(a => {
-            const diaIdx = dias.findIndex(d => d.dataISO === a.data);
-            if (diaIdx < 0) return;
-            const ini = horaParaMinutos(horaCurta(a.hora_inicio));
-            const rowInicio = Math.floor((ini - limites.inicio) / passo) + 2;
-            if (rowInicio < 2 || rowInicio > totalSlots + 1) return;
-            const seletor = `[data-geral="${a.data}|${horaCurta(a.hora_inicio)}"]`;
-            let grupo = container.querySelector(seletor);
-            if (!grupo) {
-                grupo = document.createElement('div');
-                grupo.dataset.geral = `${a.data}|${horaCurta(a.hora_inicio)}`;
-                grupo.className = 'agenda-celula agendado';
-                grupo.style.gridColumn = String(diaIdx + 2);
-                grupo.style.gridRow = String(rowInicio);
-                grupo.style.zIndex = '3';
-                grupo.style.overflow = 'auto';
-                container.appendChild(grupo);
-            }
-            const card = document.createElement('div');
-            card.className = `agenda-compromisso status-${classeStatusAgenda(a.status)}`;
-            card.style.marginBottom = '2px';
-            card.title = `${a.pacientes?.nome || 'Paciente'} · ${a.equipe?.nome || 'Profissional'}`;
-            card.innerHTML = `<div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div>`;
-            card.addEventListener('click', e => { e.stopPropagation(); abrirDetalheAgendamento(a.id); });
-            grupo.appendChild(card);
+        // Visão da clínica: duração real no eixo vertical e uma faixa horizontal
+        // estável por profissional. Atendimentos simultâneos não se sobrepõem.
+        dias.forEach((d, diaIdx) => {
+            const atendimentosDia = agendaAgendamentosSemanaCache.filter(a => a.data === d.dataISO);
+            const profissionaisDia = Array.from(new Set(atendimentosDia.map(a => String(a.profissional_id || 'sem-profissional'))));
+            const totalFaixas = Math.max(1, profissionaisDia.length);
+            const faixaPorProfissional = new Map(profissionaisDia.map((id, idx) => [id, idx]));
+
+            atendimentosDia.forEach(a => {
+                const ini = horaParaMinutos(horaCurta(a.hora_inicio));
+                const fimA = horaParaMinutos(horaCurta(a.hora_fim));
+                if (!Number.isFinite(ini) || !Number.isFinite(fimA) || fimA <= limites.inicio || ini >= limites.fim) return;
+                const inicioVisivel = Math.max(ini, limites.inicio);
+                const fimVisivel = Math.min(fimA, limites.fim);
+                const rowInicio = Math.floor((inicioVisivel - limites.inicio) / passo) + 2;
+                const span = Math.max(1, Math.ceil((fimVisivel - inicioVisivel) / passo));
+                const duracaoVisual = Math.max(passo, fimA - ini);
+                const faixa = faixaPorProfissional.get(String(a.profissional_id || 'sem-profissional')) || 0;
+
+                const overlay = document.createElement('div');
+                overlay.className = 'agenda-celula agendado agenda-geral-faixa';
+                overlay.dataset.duracaoMinutos = String(duracaoVisual);
+                if (duracaoVisual <= 10) overlay.classList.add('agenda-duracao-minima');
+                else if (duracaoVisual < 30) overlay.classList.add('agenda-duracao-curta');
+                overlay.style.gridColumn = String(diaIdx + 2);
+                overlay.style.gridRow = `${rowInicio} / span ${span}`;
+                overlay.style.zIndex = '3';
+                overlay.style.width = `calc(100% / ${totalFaixas})`;
+                overlay.style.justifySelf = 'start';
+                overlay.style.transform = `translateX(${faixa * 100}%)`;
+                overlay.addEventListener('click', e => { e.stopPropagation(); abrirDetalheAgendamento(a.id); });
+                overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.equipe?.nome || 'Profissional'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
+                overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+                container.appendChild(overlay);
+            });
         });
     }
     iniciarRelogioAgenda();
@@ -3661,7 +3677,7 @@ function instanteAgendaSaoPaulo(agora = new Date()) {
     return {data:`${partes.year}-${partes.month}-${partes.day}`,hora:`${partes.hour}:${partes.minute}`,minutos:Number(partes.hour)*60+Number(partes.minute)+Number(partes.second)/60};
 }
 
-function posicaoMarcadorAgenda(agora, dias, inicio, fim, passo=30) {
+function posicaoMarcadorAgenda(agora, dias, inicio, fim, passo=AGENDA_GRADE_PASSO_MIN) {
     const dia = dias.indexOf(agora.data);
     if (dia < 0 || agora.minutos < inicio || agora.minutos >= fim) return null;
     const slot = (agora.minutos-inicio)/passo;

@@ -872,3 +872,196 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-compromisso{
   border-left-width:1px;
 }
+
+
+/* ============================================================================
+   Agenda compacta proporcional — 10 min = 1 unidade visual
+   Mantém a escala temporal real; a altura total se adapta ao viewport desktop.
+   ========================================================================== */
+@media (min-width:760px){
+  #tela_agenda .agenda-card-semanal{padding:10px}
+  #tela_agenda .agenda-visoes{gap:6px;padding:8px 12px}
+  #tela_agenda .agenda-toolbar-semanal{gap:8px;margin-bottom:4px}
+  #tela_agenda .agenda-toolbar-filtros{gap:7px}
+  #tela_agenda .agenda-grade-scroll{
+    height:clamp(340px,calc(100dvh - 280px),620px);
+    max-height:none;
+    overflow-y:hidden;
+  }
+  #tela_agenda .agenda-semana-grade{
+    --kds-agenda-header-height:42px;
+    height:100%;
+    grid-template-rows:var(--kds-agenda-header-height) repeat(var(--kds-agenda-runtime-slot-count),minmax(3px,1fr));
+  }
+  #tela_agenda .agenda-dia-cabecalho{padding:4px 3px}
+  #tela_agenda .agenda-celula,
+  #tela_agenda .agenda-hora-eixo{min-height:0}
+  #tela_agenda .agenda-compromisso{min-height:0;padding:0 4px;border-radius:4px}
+  #tela_agenda .agenda-hora-eixo{padding:0 6px 0 0;border-top-color:transparent;overflow:visible}
+  #tela_agenda .agenda-hora-eixo.hora-cheia{border-top-color:var(--kds-line)}
+  #tela_agenda .agenda-hora-eixo.meia-hora{border-top:1px dashed var(--kds-line-soft)}
+  #tela_agenda .agenda-celula.subhora{border-top-color:#F4F7F6}
+  #tela_agenda .agenda-celula.meia-hora{border-top:1px dashed #E8EFED}
+  #tela_agenda .agenda-celula.hora-cheia{border-top:1px solid var(--kds-line)}
+}
+
+#tela_agenda .agenda-agora-linha{
+  z-index:9;
+  border-top-width:2px;
+  border-top-color:var(--kds-accent);
+  filter:drop-shadow(0 1px 1px rgba(23,59,69,.18));
+}
+#tela_agenda .agenda-agora-linha::before{width:10px;height:10px;left:-5px;top:-6px}
+#tela_agenda .agenda-agora-linha span{
+  top:-22px;
+  padding:2px 6px;
+  border-color:var(--kds-accent);
+  background:var(--kds-accent);
+  color:var(--kds-surface);
+  font-weight:850;
+}
+
+
+/* ============================================================================
+   AGENDA WORKSPACE COMPACT R2
+   Agenda é uma tela de trabalho: controles compactos + expediente completo.
+   A geometria temporal continua proporcional em unidades de 10 minutos.
+   ========================================================================== */
+@media (min-width:760px){
+  #tela_agenda .agenda-grade-scroll{
+    height:clamp(440px,calc(100dvh - 210px),760px)!important;
+    max-height:none!important;
+    margin-top:0!important;
+    overflow-x:hidden!important;
+    overflow-y:hidden!important;
+  }
+  #tela_agenda .agenda-semana-grade{
+    height:100%!important;
+    grid-template-rows:42px repeat(var(--kds-agenda-runtime-slot-count),minmax(2px,1fr))!important;
+  }
+  #tela_agenda .agenda-dia-cabecalho{min-height:42px!important;padding:3px 3px!important}
+  #tela_agenda .agenda-hora-eixo{padding-top:0!important}
+  #tela_agenda .agenda-compromisso{height:100%;min-height:0!important;overflow:hidden}
+}
+
+@media (min-width:1280px){
+  #tela_agenda .agenda-card-semanal{padding:0!important}
+  #tela_agenda .agenda-visoes{
+    min-height:0!important;
+    gap:6px!important;
+    padding:6px 10px!important;
+  }
+  #tela_agenda .agenda-visoes button{
+    min-height:34px!important;
+    height:34px!important;
+    padding:5px 12px!important;
+  }
+  #tela_agenda .agenda-toolbar-semanal{
+    display:grid!important;
+    grid-template-columns:minmax(440px,1fr) auto!important;
+    align-items:center!important;
+    gap:12px!important;
+    padding:7px 10px!important;
+    margin:0!important;
+    border-bottom:1px solid var(--kds-line-soft)!important;
+  }
+  #tela_agenda .agenda-semana-nav{
+    width:auto!important;
+    min-width:0!important;
+    gap:6px!important;
+    flex-wrap:nowrap!important;
+  }
+  #tela_agenda .agenda-semana-nav>button{
+    min-width:36px!important;
+    width:auto;
+    height:36px!important;
+    min-height:36px!important;
+  }
+  #tela_agenda .agenda-semana-titulo{
+    font-size:var(--kds-font-content)!important;
+    line-height:var(--kds-leading-compact)!important;
+  }
+  #tela_agenda .agenda-periodo-segmentado{
+    margin-left:8px!important;
+    padding:2px!important;
+  }
+  #tela_agenda .agenda-periodo-segmentado button{
+    min-height:32px!important;
+    padding:5px 10px!important;
+  }
+  #tela_agenda .agenda-toolbar-filtros{
+    display:grid!important;
+    grid-template-columns:132px minmax(210px,270px) max-content max-content!important;
+    align-items:end!important;
+    justify-content:end!important;
+    gap:8px!important;
+    width:auto!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+    background:transparent!important;
+  }
+  #tela_agenda .agenda-toolbar-filtros>.input-group{
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  #tela_agenda .agenda-toolbar-filtros label{
+    margin-bottom:2px!important;
+    font-size:var(--kds-font-metadata)!important;
+  }
+  #tela_agenda .agenda-toolbar-filtros :where(input:not([type="checkbox"]):not([type="radio"]),select){
+    height:36px!important;
+    min-height:36px!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  #tela_agenda .agenda-escopo-acesso{display:none!important}
+  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
+  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{
+    height:36px!important;
+    min-height:36px!important;
+    margin:20px 0 0!important;
+    padding:6px 12px!important;
+    align-self:end!important;
+  }
+  #tela_agenda .agenda-feedback:not(:empty){margin:4px 10px!important}
+}
+
+@media (min-width:901px) and (max-width:1280px){
+  #tela_agenda .agenda-visoes{padding:6px 10px!important}
+  #tela_agenda .agenda-toolbar-semanal{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:6px!important;
+    padding:7px 10px!important;
+    margin:0!important;
+  }
+  #tela_agenda .agenda-semana-nav{width:100%!important;min-width:0!important}
+  #tela_agenda .agenda-toolbar-filtros{
+    display:grid!important;
+    grid-template-columns:132px minmax(210px,1fr) max-content max-content!important;
+    gap:8px!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+  }
+  #tela_agenda .agenda-escopo-acesso{display:none!important}
+  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
+  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{margin:20px 0 0!important}
+}
+
+/* Na visão da clínica, cada profissional ocupa uma faixa horizontal do dia. */
+#tela_agenda .agenda-geral-faixa{
+  position:relative;
+  min-width:0!important;
+  overflow:hidden!important;
+  padding:1px!important;
+  box-sizing:border-box!important;
+  background:transparent!important;
+  border:0!important;
+}
+#tela_agenda .agenda-geral-faixa .agenda-compromisso{height:100%;margin:0!important}
+#tela_agenda .agenda-duracao-curta .agenda-compromisso{padding:0 3px!important}
+#tela_agenda .agenda-duracao-minima .agenda-compromisso{padding:0 2px!important;border-left-width:2px!important}
+#tela_agenda .agenda-duracao-minima .agenda-paciente-nome{display:none!important}
