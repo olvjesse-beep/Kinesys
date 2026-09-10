@@ -73,7 +73,7 @@
                 'agenda_referencia-1.20.0.css?v=20260901-r1'
             ]),
             scripts:Object.freeze([
-                'agenda-1.20.0.js?v=20260910-phase4b-r1'
+                'agenda-1.20.0.js?v=20260910-agenda-edit-r1'
             ])
         })
     });

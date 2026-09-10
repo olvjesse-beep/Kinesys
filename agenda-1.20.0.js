@@ -2264,11 +2264,24 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
     const observacoes = document.getElementById('ag_observacoes')?.closest('.input-group');
     const listaEspera = document.querySelector('#modal_agendamento button[onclick*="abrirModalListaEspera"]');
     const botaoSalvar = document.getElementById('btn_salvar_agendamento');
+    const avisoEdicao = document.getElementById('ag_edicao_escopo');
     document.querySelectorAll('#modal_agendamento .agenda-finance-link').forEach(el => {
         el.hidden = editando || !usuarioEhAdministradorAgenda();
     });
-    if (paciente) paciente.disabled = editando;
-    if (data) data.disabled = editando;
+    if (avisoEdicao) {
+        avisoEdicao.hidden = !editando;
+        avisoEdicao.textContent = editando
+            ? 'Editando somente esta ocorrência. Altere apenas Horário, Procedimento ou Profissional. Paciente, data, recorrência, status, confirmação e financeiro serão preservados.'
+            : '';
+    }
+    if (paciente) {
+        paciente.disabled = editando;
+        paciente.setAttribute('aria-disabled', String(editando));
+    }
+    if (data) {
+        data.disabled = editando;
+        data.setAttribute('aria-disabled', String(editando));
+    }
     if (recorrencia) recorrencia.hidden = editando;
     if (extra) extra.hidden = editando;
     if (observacoes) observacoes.hidden = editando;
@@ -2952,7 +2965,7 @@ async function abrirDetalheAgendamento(id) {
             </div>
             <div id="detalhe_status_impacto" class="agenda-status-impacto ${statusCfg.consomeSessao ? 'consome' : ''}">${statusCfg.consomeSessao ? 'Este status consome 1 sessão do pacote vinculado.' : 'Este status não consome sessão do pacote.'}</div>
             <div class="agenda-status-actions">
-                <button type="button" class="btn-secondary" onclick="editarAgendamentoAtual()">Editar atendimento</button>
+                <button type="button" id="btn_editar_atendimento" class="btn-secondary" onclick="editarAgendamentoAtual()">EDITAR ATENDIMENTO</button>
                 <button type="button" class="btn-primary" onclick="salvarStatusAgendamentoAtual()">Salvar status</button>
                 ${statusAgendaPermiteReagendamento(a.status) ? '<button type="button" class="btn-secondary" onclick="reagendarAgendamentoAtual()">Reagendar</button>' : ''}
                 ${usuarioEhAdministradorAgenda() ? `<button type="button" class="btn-secondary agenda-audit-inline-btn" onclick="abrirHistoricoStatusAgenda('${escapeHTML(a.id)}')">Histórico de status</button>` : ''}
