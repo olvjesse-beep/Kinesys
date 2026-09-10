@@ -27,11 +27,13 @@ jobs:
           from pathlib import Path
           p=Path('tools/tmp_phase4b_agenda_lazy.py')
           s=p.read_text(encoding='utf-8')
-          for old,new in [
-            ('${{fmt(s.valorPendente)}}','${fmt(s.valorPendente)}'),
-            ('${{cls}}','${cls}'),
-            ('${{esc(titulo)}}','${esc(titulo)}')
-          ]:
+          dollar='$'
+          replacements=[
+            (dollar+'{{fmt(s.valorPendente)}}', dollar+'{fmt(s.valorPendente)}'),
+            (dollar+'{{cls}}', dollar+'{cls}'),
+            (dollar+'{{esc(titulo)}}', dollar+'{esc(titulo)}')
+          ]
+          for old,new in replacements:
             s=s.replace(old,new)
           p.write_text(s,encoding='utf-8')
           PY
@@ -45,8 +47,8 @@ jobs:
           p=Path('tests/agenda_lazy.contract.js')
           if p.exists():
               s=p.read_text(encoding='utf-8')
-              if s.startswith("\\'use strict\\';"):
-                  s="'use strict';"+s[len("\\'use strict\\';"):]
+              bad="\\'use strict\\';"
+              if s.startswith(bad): s="'use strict';"+s[len(bad):]
               p.write_text(s,encoding='utf-8')
           PY
       - name: Syntax and contracts
