@@ -1,0 +1,70 @@
+name: Phase 2A exact index rewrite
+
+on:
+  push:
+    branches: [performance/screen-lifecycle-phase2a]
+    paths:
+      - '.github/workflows/phase2a-index-rewrite.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/screen-lifecycle-phase2a
+          fetch-depth: 0
+
+      - name: Rewrite only eager evaluation script tags
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path=Path('index.html')
+          text=path.read_text(encoding='utf-8')
+
+          anchor='    <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3"></script>\n'
+          loader='    <script defer src="screen_loader-1.25.0.js?v=20260910-phase2a-r1"></script>\n'
+          if text.count(anchor)!=1:
+              raise SystemExit(f'Expected one core script anchor, found {text.count(anchor)}')
+          if loader not in text:
+              text=text.replace(anchor,anchor+loader,1)
+
+          eager=[
+              '    <script defer src="clinical_engine-1.17.0.js"></script>\n',
+              '    <script defer src="evaluation_context_panels-1.18.3.js"></script>\n',
+              '    <script defer src="avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1"></script>\n',
+              '    <script defer src="clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2"></script>\n',
+              '    <script defer src="clinical_reasoning_shoulder-3.1.0.js?v=20260910-lang-r3"></script>\n',
+              '    <script defer src="clinical_reasoning_elbow-3.1.0.js?v=20260910-r1"></script>\n',
+          ]
+          for tag in eager:
+              count=text.count(tag)
+              if count!=1:
+                  raise SystemExit(f'Expected one eager tag {tag.strip()}, found {count}')
+              text=text.replace(tag,'',1)
+
+          path.write_text(text,encoding='utf-8')
+          PY
+          node --check screen_loader-1.25.0.js
+          node tests/screen_loader.contract.js
+          git diff --check
+          git diff -- index.html
+
+      - name: Commit exact rewrite
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Lazy load evaluation runtime on first access'
+          git push origin HEAD:performance/screen-lifecycle-phase2a
