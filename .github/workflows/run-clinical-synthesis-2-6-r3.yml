@@ -1,0 +1,138 @@
+name: Run Clinical Engine 2.6 synthesis r3
+on:
+  push:
+    paths:
+      - '.github/workflows/run-clinical-synthesis-2-6-r3.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Clinical Engine 2.6 synthesis
+        run: |
+          python .tmp_clinical_synthesis_2_6.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('script-1.18.0.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('/* ========================================================================== \n   KINESYS CLINICAL SYNTHESIS 2.6', '/* ==========================================================================\n   KINESYS CLINICAL SYNTHESIS 2.6', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Check JavaScript syntax and diff integrity
+        run: |
+          node --check script-1.18.0.js
+          node --check clinical_reasoning_hma-3.0.0.js
+          node --check clinical_reasoning_shoulder-3.1.0.js
+          git diff --check
+      - name: Run synthesis invariants
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const src=fs.readFileSync('script-1.18.0.js','utf8');
+          const a=src.indexOf('function pistasHMAHipoteseKineSys');
+          const endMarker='window.sintetizarHipotesesClinicasKineSys=sintetizarHipotesesClinicasKineSys;';
+          const b=src.indexOf(endMarker,a);
+          assert(a>=0&&b>a,'synthesis functions not found');
+          const block=src.slice(a,b+endMarker.length);
+          global.window=global;
+          global.KINESYS_MOTOR_VERSION='2.6.0-test';
+          global.KINESYS_META_CRITERIOS_2={};
+          global.BANCO_MAPEAMENTO_CLINICO={ombro:{nome:'Ombro',redFlags:['Red flag de teste']}};
+          let state={resultados:{},redflagsRevisadas:true,redflagAcknowledge:false,redflagConduta:'',redflagJustificativa:'',hipotesePrincipalAtiva:''};
+          let alerts=[];
+          let forcedStatus='pendente';
+          global.obterEstadoRegiao=()=>state;
+          global.coletarContextoClinico=()=>({hma:''});
+          global.ordenarHipotesesRegiaoKineSys=()=>[];
+          global.inferirFenotipoOperacionalKineSys=()=>null;
+          global.grupoDoItemKineSys=()=> 'cluster';
+          global.chaveHipoteseKineSys=c=>`${c.grupo}::${c.item.id}`;
+          global.alertasTextuaisParaRegiaoKineSys=()=>alerts;
+          global.statusHipoteseKineSys=()=>forcedStatus;
+          global.removerAcentos=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+          global.correspondePistaClinica=(texto,pista)=>removerAcentos(texto).includes(removerAcentos(pista));
+          global.analisarRespostasItem=(estado,grupo,item)=>{
+            const respostas=(item.testes||[]).map((_,i)=>estado.resultados[`${grupo}::${item.id}::${i}`]||'');
+            const n=x=>respostas.filter(r=>r===x).length;
+            return {respostas,positivos:n('positivo'),negativos:n('negativo'),inconclusivos:n('inconclusivo'),naoRealizados:n('nao_realizado'),naoAplicaveis:n('nao_aplicavel'),naoAvaliados:respostas.filter(r=>!r).length,naoConclusivos:n('inconclusivo')+n('nao_realizado')+n('nao_aplicavel')};
+          };
+          global.obterMetaCriteriosKineSys=item=>({minimo:item.regraConfirmacao?.minimo||1,essenciais:item.regraConfirmacao?.obrigatorios||[],essenciaisMinimo:(item.regraConfirmacao?.obrigatorios||[]).length,tipo:item.regraConfirmacao?.tipo||'minimo'});
+          vm.runInThisContext(block);
+
+          const item={id:'h1',nome:'Hipótese teste',testes:['Teste A','Teste B'],palavrasChaveHMA:['dor no ombro']};
+          const cand={grupo:'cluster',item,score:4};
+
+          state.resultados={'cluster::h1::0':'positivo'}; forcedStatus='positivo'; alerts=[];
+          let r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.hipotesePreferencial,null,'isolated positive cannot be preferred without explicit rule');
+          assert.strictEqual(r.hipoteses[0].estadoSintese,'a_confirmar');
+          assert.strictEqual(r.hipoteses[0].achadoPositivoIsoladoSemRegra,true);
+
+          state.resultados={'cluster::h1::0':'positivo','cluster::h1::1':'positivo'}; forcedStatus='positivo';
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.hipotesePreferencial.id,'h1');
+          assert.strictEqual(r.hipoteses[0].estadoSintese,'sustentada');
+          assert(r.hipoteses[0].aFavor.some(x=>x.startsWith('HMA:')));
+          assert(r.hipoteses[0].aFavor.some(x=>x.startsWith('Exame:')));
+
+          state.resultados={'cluster::h1::0':'negativo','cluster::h1::1':'negativo'}; forcedStatus='negativo';
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.hipoteses[0].estadoSintese,'enfraquecida');
+          assert(r.hipoteses[0].proveniencia.hma.some(x=>x.trecho==='dor no ombro'));
+          assert(r.hipoteses[0].contra.some(x=>x.includes('Teste A')));
+
+          state.resultados={'redflag::0':true,'cluster::h1::0':'positivo','cluster::h1::1':'positivo'}; forcedStatus='positivo'; alerts=[];
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.seguranca.ativa,true);
+          assert.strictEqual(r.hipotesePreferencial,null);
+          assert.strictEqual(r.seguranca.bloqueiaPreferenciaLocal,true);
+
+          state.resultados={}; forcedStatus='pendente'; alerts=[];
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.hipoteses[0].estadoSintese,'a_confirmar');
+          assert(r.hipoteses[0].aConfirmar.includes('Teste A'));
+
+          const itemExp={...item,id:'h2',regraConfirmacao:{tipo:'qualquer'}};
+          const candExp={grupo:'cluster',item:itemExp,score:5};
+          state.resultados={'cluster::h2::0':'positivo'}; forcedStatus='positivo'; alerts=[];
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[candExp],null);
+          assert.strictEqual(r.hipotesePreferencial.id,'h2');
+          assert.strictEqual(r.hipoteses[0].achadoPositivoIsoladoSemRegra,false);
+
+          state.resultados={'cluster::h1::0':'positivo','cluster::h1::1':'positivo'}; forcedStatus='positivo'; alerts=[{id:'a1',titulo:'Alerta'}];
+          r=sintetizarHipotesesClinicasKineSys('ombro',{hma:'dor no ombro'},[cand],null);
+          assert.strictEqual(r.hipotesePreferencial,null);
+          assert.strictEqual(r.seguranca.alertasTextuais[0].id,'a1');
+
+          console.log('Clinical synthesis invariants: OK');
+          NODE
+      - name: Static compatibility guards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('script-1.18.0.js').read_text(encoding='utf-8')
+          required=[
+            "const KINESYS_MOTOR_VERSION = '2.6.0';",
+            'window.sintetizarHipotesesClinicasKineSys=sintetizarHipotesesClinicasKineSys;',
+            'estado.sinteseClinica=sintetizarHipotesesClinicasKineSys',
+            'sinteseClinica:sintese',
+            "estado.resultados[`${grupo}::${item.id}::${i}`]",
+            "estado.resultados['redflag::'+i]",
+            'codigoHipotese:codigo',
+            'nomeHipotese:nome',
+            'hipotesesAssociadas:associadas',
+            'auditoriaMotor:est.auditoriaMotor||null'
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing compatibility guards: '+repr(missing))
+          print('Compatibility guards: OK')
+          PY
+      - name: Commit production change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add script-1.18.0.js
+          git commit -m "Add structured HMA-exam clinical synthesis" || exit 0
+          git push
