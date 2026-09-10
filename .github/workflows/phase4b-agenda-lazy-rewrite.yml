@@ -23,6 +23,8 @@ jobs:
         run: python .github/scripts/phase4b_agenda_lazy.py
 
       - name: Validate Phase 4B with captured diagnostics
+        id: validate
+        continue-on-error: true
         shell: bash
         run: |
           set -uo pipefail
@@ -50,22 +52,27 @@ jobs:
           if [ -f tests/clinical_reasoning_shoulder_elbow.robustness.js ]; then run_check node tests/clinical_reasoning_shoulder_elbow.robustness.js; fi
           if [ -f tests/clinical_reasoning_hma.integration.js ]; then run_check node tests/clinical_reasoning_hma.integration.js; fi
           run_check git diff --check
+          git diff --stat >> "$log" 2>&1 || true
+          exit "$status"
 
-          if [ "$status" -ne 0 ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add -f "$log"
-            git commit -m 'Record Phase 4B validation diagnostics'
-            git push origin HEAD:performance/agenda-lazy-phase4b
-            exit 1
-          fi
+      - name: Upload Phase 4B diagnostics
+        if: steps.validate.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4b-validation-diagnostics
+          path: .github/phase4b-validation.txt
+          if-no-files-found: error
+          retention-days: 1
 
-          git diff --stat | tee -a "$log"
-          rm -f "$log"
+      - name: Stop on validation failure
+        if: steps.validate.outcome == 'failure'
+        run: exit 1
 
       - name: Commit permanent Phase 4B code
+        if: steps.validate.outcome == 'success'
         shell: bash
         run: |
+          rm -f .github/phase4b-validation.txt
           if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
             echo 'No changes required.'
             exit 0
