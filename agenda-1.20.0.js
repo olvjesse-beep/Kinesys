@@ -30,6 +30,10 @@ let agendaEdicaoAtendimentoId = null;
 let agendaExcecaoJornadaPromptadaChaveModal = '';
 const AGENDA_NOTIFICACOES_PENDENTES_KEY = 'kinesys_notificacoes_pendentes_v1';
 
+const AGENDA_SELECT_SEMANA = '*, pacientes(id,nome,telefone,dependente,responsavel_nome,responsavel_parentesco,responsavel_telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
+const AGENDA_SELECT_SEMANA_LEGADO = '*, pacientes(id,nome,telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
+let agendaContatoResponsavelDisponivel = true;
+
 async function obterPacientesBasicosAgenda() {
     if (typeof obterPacientesBasicos === 'function') return obterPacientesBasicos();
     if (typeof obterPacientesSalvos === 'function') return obterPacientesSalvos();
@@ -1899,14 +1903,20 @@ async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') 
             ? { data: locais, error: null, somenteLocal: true, erroNuvem: new Error('Supabase indisponível') }
             : { data: [], error: new Error('Supabase indisponível') };
     }
-    let query = _supabase.from('agendamentos')
-        .select('*, pacientes(*), procedimentos(nome,duracao_minutos), equipe(nome)')
-        .gte('data', formatarDataISO(inicio))
-        .lte('data', formatarDataISO(fim))
-        .neq('status', 'cancelado');
-    if (profissionalEscopo) query = query.eq('profissional_id', profissionalEscopo);
-    query = query.order('data').order('hora_inicio');
-    const resultado = await query;
+    const montarConsultaSemana = (selecao) => {
+        let query = _supabase.from('agendamentos')
+            .select(selecao)
+            .gte('data', formatarDataISO(inicio))
+            .lte('data', formatarDataISO(fim))
+            .neq('status', 'cancelado');
+        if (profissionalEscopo) query = query.eq('profissional_id', profissionalEscopo);
+        return query.order('data').order('hora_inicio');
+    };
+    let resultado = await montarConsultaSemana(agendaContatoResponsavelDisponivel ? AGENDA_SELECT_SEMANA : AGENDA_SELECT_SEMANA_LEGADO);
+    if (resultado.error && agendaContatoResponsavelDisponivel && /dependente|responsavel_nome|responsavel_parentesco|responsavel_telefone|schema cache|column .* does not exist/i.test(String(resultado.error?.message || resultado.error || ''))) {
+        agendaContatoResponsavelDisponivel = false;
+        resultado = await montarConsultaSemana(AGENDA_SELECT_SEMANA_LEGADO);
+    }
     if (!resultado.error) {
         if (typeof enriquecerAgendamentosComVinculoLocal === 'function') resultado.data = enriquecerAgendamentosComVinculoLocal(resultado.data || []);
         resultado.data = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda(resultado.data || [], inicio, fim));
