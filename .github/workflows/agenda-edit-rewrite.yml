@@ -17,7 +17,15 @@ jobs:
           ref: feature/agenda-editar-atendimento
           fetch-depth: 0
       - name: Apply incremental edit hardening
-        run: python .github/scripts/agenda_edit_incremental.py
+        run: |
+          python .github/scripts/agenda_edit_incremental.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tests/agenda_editar_atendimento.contract.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("\\'use strict\\';", "'use strict';", 1)
+          p.write_text(s, encoding='utf-8')
+          PY
       - name: Validate agenda edit and existing contracts
         shell: bash
         run: |
