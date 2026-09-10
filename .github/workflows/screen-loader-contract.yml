@@ -1,0 +1,33 @@
+name: Screen Loader Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'screen_loader-1.25.0.js'
+      - 'tests/screen_loader.contract.js'
+      - '.github/workflows/screen-loader-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'screen_loader-1.25.0.js'
+      - 'tests/screen_loader.contract.js'
+      - '.github/workflows/screen-loader-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Lazy loading contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: node --check screen_loader-1.25.0.js
+      - name: Evaluation bundle contract
+        run: node tests/screen_loader.contract.js
