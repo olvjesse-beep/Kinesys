@@ -1,0 +1,105 @@
+name: One-time finalize clinical appointment linkage
+
+on:
+  push:
+    paths:
+      - '.github/workflows/finalize-clinical-appointment-link.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Finalize explicit appointment linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('script-1.18.0.js')
+          s=p.read_text(encoding='utf-8')
+          anchor="window.limparAgendamentoClinicoContexto = limparAgendamentoClinicoContexto;"
+          helper=r'''window.limparAgendamentoClinicoContexto = limparAgendamentoClinicoContexto;
+
+          async function resolverAgendamentoClinicoParaRegistro(pacienteId, realizadoEm, modo = '') {
+              const direto = obterAgendamentoClinicoContexto(pacienteId, modo);
+              if (direto) return direto;
+              if (!_supabase || !pacienteId) return null;
+              const data = String(realizadoEm || '').slice(0, 10);
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+              try {
+                  const { data: agendamentos, error } = await _supabase
+                      .from('agendamentos')
+                      .select('id,status')
+                      .eq('paciente_id', String(pacienteId))
+                      .eq('data', data)
+                      .neq('status', 'cancelado')
+                      .limit(3);
+                  if (error) return null;
+                  const candidatos = (agendamentos || []).filter(a => !['falta_justificada','falta_nao_justificada','faltou'].includes(String(a?.status || '').toLowerCase()));
+                  return candidatos.length === 1 ? String(candidatos[0].id) : null;
+              } catch (_) {
+                  return null;
+              }
+          }
+          window.resolverAgendamentoClinicoParaRegistro = resolverAgendamentoClinicoParaRegistro;'''
+          if s.count(anchor)!=1: raise SystemExit(f'helper anchor count={s.count(anchor)}')
+          s=s.replace(anchor,helper,1)
+
+          old="obterAgendamentoClinicoContexto(pacienteId,'evolucao')"
+          new="await resolverAgendamentoClinicoParaRegistro(pacienteId,realizadoEm,'evolucao')"
+          if s.count(old)!=1: raise SystemExit(f'evolution resolver count={s.count(old)}')
+          s=s.replace(old,new,1)
+
+          old="obterAgendamentoClinicoContexto('', 'avaliacao')"
+          new="await resolverAgendamentoClinicoParaRegistro(pacienteExistente?.id||pacienteAtualId||'',realizadoEm,'avaliacao')"
+          if s.count(old)!=1: raise SystemExit(f'evaluation resolver count={s.count(old)}')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          hp=Path('home_fisioterapeuta_util-1.24.0.js')
+          h=hp.read_text(encoding='utf-8')
+          marker="function contextoClinico(paciente,agendamento,hoje,sequencia){"
+          helper2=r'''function registroVinculadoAoAgendamento(registro,agendamentoId){
+              const id=String(agendamentoId||'');
+              const vinculo=String(registro?.agendamentoId||registro?.agendamento_id||'');
+              return !!id && !!vinculo && id===vinculo;
+          }
+
+          function contextoClinico(paciente,agendamento,hoje,sequencia){'''
+          if h.count(marker)!=1: raise SystemExit(f'home contexto marker count={h.count(marker)}')
+          h=h.replace(marker,helper2,1)
+
+          old="const avaliacaoHoje=avaliacoes.some(a=>dataRegistro(a)===hoje);"
+          new="const avaliacaoHoje=avaliacoes.some(a=>registroVinculadoAoAgendamento(a,agendamento?.id));"
+          if h.count(old)!=1: raise SystemExit(f'avaliacaoHoje count={h.count(old)}')
+          h=h.replace(old,new,1)
+          old="const evolucaoHoje=evolucoes.some(e=>dataRegistro(e)===hoje);"
+          new="const evolucaoHoje=evolucoes.some(e=>registroVinculadoAoAgendamento(e,agendamento?.id));"
+          if h.count(old)!=1: raise SystemExit(f'evolucaoHoje count={h.count(old)}')
+          h=h.replace(old,new,1)
+          hp.write_text(h,encoding='utf-8')
+
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8')
+          refs={
+              'script-1.18.0.js?v=20260910-agendamento-clinico-r1':'script-1.18.0.js?v=20260910-agendamento-clinico-r2',
+              'home_fisioterapeuta_util-1.24.0.js?v=20260910-r2':'home_fisioterapeuta_util-1.24.0.js?v=20260910-r3'
+          }
+          for oldref,newref in refs.items():
+              if html.count(oldref)!=1: raise SystemExit(f'index ref {oldref} count={html.count(oldref)}')
+              html=html.replace(oldref,newref,1)
+          idx.write_text(html,encoding='utf-8')
+          PY
+          node --check script-1.18.0.js
+          node --check home_fisioterapeuta_util-1.24.0.js
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add script-1.18.0.js home_fisioterapeuta_util-1.24.0.js index.html
+          git commit -m "Finalize appointment-specific clinical record linkage"
+          git push
