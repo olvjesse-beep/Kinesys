@@ -1,0 +1,199 @@
+/* KineSys — Meu dia clínico compacto v1.24.0 */
+#tela_home #card_painel_fisioterapeuta.ks-fisio-util-compact{
+  width:min(100%,920px);
+  margin:0 0 16px!important;
+  padding:0!important;
+  border:1px solid var(--kds-line)!important;
+  border-radius:var(--kds-radius-md)!important;
+  background:var(--kds-surface)!important;
+  box-shadow:none!important;
+  overflow:hidden;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact>.card-header{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  margin:0!important;
+  padding:14px 16px 8px!important;
+  border:0!important;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .eyebrow{
+  display:block!important;
+  margin:0 0 2px!important;
+  color:var(--kds-accent)!important;
+  font-size:var(--kds-font-metadata)!important;
+  font-weight:760!important;
+  letter-spacing:.03em!important;
+  text-transform:none!important;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact #painel_fisio_titulo{
+  margin:0!important;
+  color:var(--kds-petrol-deep)!important;
+  font-size:var(--kds-font-heading-sm)!important;
+  line-height:var(--kds-leading-compact)!important;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  flex-wrap:wrap;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-header-actions button{
+  min-height:42px;
+  margin:0!important;
+  padding:7px 12px;
+  white-space:nowrap;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact #painel_fisio_resumo{
+  margin:0!important;
+  padding:0 16px 10px!important;
+  color:var(--kds-muted)!important;
+  font-size:var(--kds-font-label)!important;
+  line-height:var(--kds-leading-ui)!important;
+  border-bottom:1px solid var(--kds-line-soft);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-painel-lista{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row{
+  display:grid;
+  grid-template-columns:70px minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  min-width:0;
+  padding:10px 16px;
+  border:0;
+  border-bottom:1px solid var(--kds-line-soft);
+  background:transparent;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row:last-child{border-bottom:0}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-extra{display:none}
+#card_painel_fisioterapeuta.ks-fisio-util-compact.is-expanded .ks-fisio-day-row.is-extra{display:grid}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-current{
+  background:var(--kds-accent-soft);
+  box-shadow:inset 3px 0 0 var(--kds-accent);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-next{background:var(--kds-surface-soft)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-done,
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-absence{opacity:.72}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.has-record-pending{
+  background:var(--kds-warning-soft);
+  box-shadow:inset 3px 0 0 var(--kds-warning);
+  opacity:1;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-time{
+  display:grid;
+  gap:3px;
+  align-content:center;
+  justify-items:start;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-time>strong{
+  color:var(--kds-petrol-deep);
+  font-size:var(--kds-font-clinical);
+  line-height:var(--kds-leading-tight);
+  font-variant-numeric:tabular-nums;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-status{
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  line-height:var(--kds-leading-ui);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-current .ks-fisio-day-status,
+#card_painel_fisioterapeuta.ks-fisio-util-compact .is-next .ks-fisio-day-status{color:var(--kds-accent)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .has-record-pending .ks-fisio-day-status{color:var(--kds-warning)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-content{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-patient-name{
+  min-width:0;
+  color:var(--kds-petrol-deep);
+  font-size:var(--kds-font-content);
+  line-height:var(--kds-leading-ui);
+  font-weight:720;
+  overflow-wrap:anywhere;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-category{
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  font-weight:720;
+  line-height:var(--kds-leading-ui);
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-detail{
+  margin:0;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .has-record-pending .ks-fisio-day-detail{color:var(--kds-warning)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  flex-wrap:wrap;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions button{
+  min-height:42px;
+  margin:0!important;
+  padding:7px 12px;
+  white-space:nowrap;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-record-done{
+  display:inline-flex;
+  align-items:center;
+  min-height:42px;
+  color:var(--kds-success);
+  font-size:var(--kds-font-label);
+  font-weight:720;
+  white-space:nowrap;
+}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-painel-vazio{
+  padding:16px!important;
+  color:var(--kds-muted)!important;
+  font-size:var(--kds-font-ui)!important;
+  line-height:var(--kds-leading-text)!important;
+  text-align:left!important;
+  background:transparent!important;
+  border:0!important;
+}
+@media(max-width:900px){
+  #tela_home #card_painel_fisioterapeuta.ks-fisio-util-compact{width:100%}
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row{
+    grid-template-columns:64px minmax(0,1fr);
+  }
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions{
+    grid-column:2;
+    justify-content:flex-start;
+  }
+}
+@media(max-width:620px){
+  #card_painel_fisioterapeuta.ks-fisio-util-compact>.card-header{
+    display:grid!important;
+    align-items:start!important;
+    padding:13px 14px 8px!important;
+  }
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-header-actions{justify-content:flex-start;width:100%}
+  #card_painel_fisioterapeuta.ks-fisio-util-compact #painel_fisio_resumo{padding:0 14px 9px!important}
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row{
+    grid-template-columns:1fr;
+    gap:6px;
+    padding:11px 14px;
+  }
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-time{
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions{grid-column:auto;justify-content:flex-start}
+  #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-detail{white-space:normal}
+}
