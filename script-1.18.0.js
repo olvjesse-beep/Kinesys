@@ -14760,6 +14760,9 @@ document.addEventListener('click', e => {
     if (fraquezaAfirmada) {
       add('Déficit motor referido', 'fraqueza/perda de força');
     }
+    if (sinais.has('decubitoOmbro')) {
+      add('Comportamento ao deitar/dormir', 'sintoma relacionado ao apoio/decúbito sobre ombro ou membro superior; esclarecer localização e natureza do sintoma');
+    }
     if (sinais.has('trajetoAlemCotovelo')) {
       add('Extensão distal', 'sintomas alcançam região distal ao cotovelo');
     }
@@ -14905,6 +14908,9 @@ document.addEventListener('click', e => {
     if (/\b(fraqueza|perda de forca|perdeu forca|forca reduzida)\b/.test(normalizar(texto || ''))) {
       lacunasBase.unshift('Caracterizar a fraqueza: início, progressão, distribuição, miótomos, reflexos e diferença entre déficit motor e inibição por dor.');
     }
+    if (sinais.has('decubitoOmbro')) {
+      lacunasBase.unshift('Ao deitar/dormir sobre o braço ou ombro, esclarecer onde surge o sintoma e se é dor no topo/lateral/anterior, pressão, formigamento ou dormência.');
+    }
     if (sinais.has('flexaoProfundaJoelho')) {
       var temLocalizacaoJoelho = sinais.has('joelhoAnterior') || sinais.has('joelhoMedial') || sinais.has('joelhoLateral') || sinais.has('linhaArticularMedialJoelho') || sinais.has('linhaArticularLateralJoelho');
       if (!temLocalizacaoJoelho) lacunasBase.unshift('Localizar a dor provocada pela flexão profunda: anterior/peripatelar, interlinha medial, interlinha lateral ou posterior.');
@@ -15024,6 +15030,12 @@ document.addEventListener('click', e => {
     }),
     caso('C2','cervical_ombro','Dor no ombro ao elevar o braço, piora à noite, mas não passa do cotovelo.',{
       principalUmDe:['manguito rotador'], naoDeveIncluir:['componente radicular'], sinaisIncluem:['ombro','elevacaoBraco','noturna','trajetoRestritoOmbro']
+    }),
+    caso('C2ISO1','cervical_ombro','Dormir encima do braço incomoda.',{
+      sinaisIncluem:['decubitoOmbro']
+    }),
+    caso('C2ISO2','cervical_ombro','Ao deitar sobre o braco piora.',{
+      sinaisIncluem:['decubitoOmbro']
     }),
     caso('C2A','cervical_ombro','Dor no ombro e piora ao dormir em cima do braço.',{
       sinaisIncluem:['ombro','decubitoOmbro']
