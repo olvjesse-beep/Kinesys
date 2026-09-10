@@ -11,7 +11,7 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.2-shoulder3';
+  const VERSION='3.1.3-shoulder4';
   const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const norm=(v='')=>normBase(v)
     .replace(/\bencima\b/g,'em cima')
@@ -299,10 +299,38 @@
     const hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
     let score=Math.min(9,hits.length*1.35);
     const idade=Number(c?.idade||document.getElementById('paciente_idade')?.value||0);
+    const temOmbro=/ombro|braco|deltoid|escapul/.test(t);
+    const traumaMecanismo=/\b(?:cai|caiu|cair|queda|impacto|acidente|luxacao|deslocou|deslocamento)\b|\bpancad\w*/.test(t);
+    const traumaNegado=/(?:sem|nega|negou|nao houve).{0,18}(?:cair|queda|trauma|pancad|impacto)/.test(t);
+    const trauma=traumaMecanismo&&!traumaNegado&&temOmbro;
+    const incapacidadeAguda=/(?:nao consegue|nao levanta|deform|pendurado|perdeu.{0,20}forca|fraqueza.{0,20}repente)/.test(t);
+    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
+    const cervicalLigada=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t);
+    const elevacao=/(?:levantar|levanto|elev|ergu|acima da cabeca|no alto|prateleira|armario)/.test(t);
+    const lateral=/(?:lateral|lado de fora|deltoid)/.test(t);
+    const decubito=/(?:dormir|deitar|apoiar).{0,45}(?:ombro|braco)|(?:ombro|braco).{0,45}(?:dormir|deitar|apoiar)/.test(t);
+    const acSuperior=/(?:ossinho|clavicul|topo|ponta).{0,35}ombro|ombro.{0,35}(?:ossinho|clavicul|topo|ponta)/.test(t);
+    const cruzarBraco=/(?:mao|braco).{0,35}(?:ombro contrario|outro ombro)|(?:cruzar|abracar).{0,30}braco/.test(t);
+    const passivoPreservado=/(?:passiv).{0,30}(?:preserv|livre|vai|consegue)|(?:alguem consegue|outra pessoa consegue|levanto com a outra mao).{0,45}(?:levantar|erguer|braco)/.test(t)&&!/(?:alguem|outra pessoa).{0,25}(?:tambem )?nao consegue/.test(t);
+    const perdaAtivaPassiva=/(?:nao consigo|nao consegue).{0,40}(?:erguer|levantar)|(?:braco despenca|nao sustenta o braco)/.test(t)&&passivoPreservado;
+
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
-    if(cond.id==='ombro_capsulite'&&(c?.diabetico||/diabet|tireo/.test(norm(texto))))score+=1.3;
-    if(cond.id==='ombro_trauma_maior'&&/trauma|queda|lux|acidente|pancada/.test(norm(texto)))score+=2;
-    if(cond.id==='ombro_cervical_referida'&&/(formig|dormen|choque|mao|dedos|pescoco)/.test(norm(texto)))score+=1.5;
+    if(cond.id==='ombro_capsulite'&&(c?.diabetico||/diabet|tireo/.test(t)))score+=1.3;
+    if(cond.id==='ombro_trauma_maior'&&trauma)score+=incapacidadeAguda?4.2:2.8;
+    if(cond.id==='ombro_cervical_referida'){
+      if(neuroDistal)score+=3.1;
+      if(cervicalLigada)score+=2.2;
+    }
+    if(cond.id==='ombro_manguito'&&temOmbro){
+      if(elevacao&&lateral)score+=3.2;
+      else if(elevacao&&/(dor|doi)/.test(t))score+=2.7;
+      if(decubito&&/(dor|doi)/.test(t))score+=1.2;
+    }
+    if(cond.id==='ombro_ac'){
+      if(acSuperior)score+=2.9;
+      if(cruzarBraco)score+=1.7;
+    }
+    if(cond.id==='ombro_ruptura_manguito'&&perdaAtivaPassiva)score+=4;
     return {score:score+cond.ordem/1000,hits:hits.slice(0,5)};
   }
 
