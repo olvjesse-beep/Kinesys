@@ -3,6 +3,7 @@ const fs=require('fs');
 const assert=require('assert');
 
 const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
+const notificacoesAgenda=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
 const financeiro=fs.readFileSync('financeiro-1.19.0.js','utf8');
 
 assert.match(agenda,/async function obterPacientesBasicosAgenda\(\)/,'Agenda must expose a lightweight patient adapter');
@@ -13,11 +14,12 @@ assert.strictEqual(directHeavyAgenda,0,'Agenda selectors must not directly load 
 const lightweightAgenda=(agenda.match(/const pacientes = await obterPacientesBasicosAgenda\(\);/g)||[]).length;
 assert.strictEqual(lightweightAgenda,2,'Agenda appointment and waiting-list selectors must use lightweight patient data');
 
-const notifStart=agenda.indexOf('function iniciarNotificacoesAgenda()');
-assert.ok(notifStart>=0,'Agenda notification lifecycle must exist');
-const notifChunk=agenda.slice(notifStart,notifStart+1800);
+const notifStart=notificacoesAgenda.indexOf('function iniciarNotificacoesAgenda()');
+assert.ok(notifStart>=0,'Agenda notification lifecycle must exist in the eager notification core');
+const notifChunk=notificacoesAgenda.slice(notifStart,notifStart+1800);
 assert.match(notifChunk,/visibilityState === ['"]hidden['"]/, 'Agenda initial notification refresh must skip hidden tabs');
 assert.match(notifChunk,/visibilityState !== ['"]visible['"]/, 'Agenda notification interval must stop work outside visible tabs');
+assert.doesNotMatch(agenda,/function iniciarNotificacoesAgenda\(\)/,'Heavy Agenda module must not duplicate the global notification lifecycle');
 
 const syncTimer=agenda.indexOf('agendaSyncTimer = setInterval');
 assert.ok(syncTimer>=0,'Agenda reliable-sync timer must exist');
@@ -40,4 +42,4 @@ assert.match(agenda,/AGENDA_SELECT_SEMANA_LEGADO/,'Agenda must retain a legacy p
 assert.match(weekChunk,/AGENDA_SELECT_SEMANA/,'Agenda week loader must use the explicit relation contract');
 assert.match(agenda,/agendaContatoResponsavelDisponivel/,'Agenda must cache schema compatibility after a legacy fallback');
 
-console.log('Operational Data Loading contract Phase 3C: Agenda/Finance selectors are lightweight, polling sleeps when hidden, and Agenda week joins only required patient fields.');
+console.log('Operational Data Loading contract Phase 4B: Agenda/Finance selectors remain lightweight, notification polling sleeps when hidden from the eager core, and Agenda week joins only required patient fields.');
