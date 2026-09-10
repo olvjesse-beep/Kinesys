@@ -141,12 +141,18 @@
         return `${d}/${m}`;
     }
 
-    function contextoClinico(paciente,agendamento,hoje,sequencia){
+    function registroVinculadoAoAgendamento(registro,agendamentoId){
+    const id=String(agendamentoId||'');
+    const vinculo=String(registro?.agendamentoId||registro?.agendamento_id||'');
+    return !!id && !!vinculo && id===vinculo;
+}
+
+function contextoClinico(paciente,agendamento,hoje,sequencia){
         const avaliacoes=avaliacoesFinalizadas(paciente);
         const temAvaliacao=avaliacoes.length>0;
-        const avaliacaoHoje=avaliacoes.some(a=>dataRegistro(a)===hoje);
+        const avaliacaoHoje=avaliacoes.some(a=>registroVinculadoAoAgendamento(a,agendamento?.id));
         const evolucoes=evolucoesPaciente(paciente);
-        const evolucaoHoje=evolucoes.some(e=>dataRegistro(e)===hoje);
+        const evolucaoHoje=evolucoes.some(e=>registroVinculadoAoAgendamento(e,agendamento?.id));
         const ultimaEvolucao=evolucoes.slice().sort((a,b)=>String(dataRegistro(a)).localeCompare(String(dataRegistro(b)))).at(-1);
         const ultimaEvolucaoData=dataRegistro(ultimaEvolucao);
         const procedimentoAvaliativo=sequencia.familia==='avaliacao';

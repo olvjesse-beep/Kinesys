@@ -223,6 +223,29 @@ function limparAgendamentoClinicoContexto() {
 window.definirAgendamentoClinicoContexto = definirAgendamentoClinicoContexto;
 window.obterAgendamentoClinicoContexto = obterAgendamentoClinicoContexto;
 window.limparAgendamentoClinicoContexto = limparAgendamentoClinicoContexto;
+
+async function resolverAgendamentoClinicoParaRegistro(pacienteId, realizadoEm, modo = '') {
+    const direto = obterAgendamentoClinicoContexto(pacienteId, modo);
+    if (direto) return direto;
+    if (!_supabase || !pacienteId) return null;
+    const data = String(realizadoEm || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+    try {
+        const { data: agendamentos, error } = await _supabase
+            .from('agendamentos')
+            .select('id,status')
+            .eq('paciente_id', String(pacienteId))
+            .eq('data', data)
+            .neq('status', 'cancelado')
+            .limit(3);
+        if (error) return null;
+        const candidatos = (agendamentos || []).filter(a => !['falta_justificada','falta_nao_justificada','faltou'].includes(String(a?.status || '').toLowerCase()));
+        return candidatos.length === 1 ? String(candidatos[0].id) : null;
+    } catch (_) {
+        return null;
+    }
+}
+window.resolverAgendamentoClinicoParaRegistro = resolverAgendamentoClinicoParaRegistro;
 let loginPerfisDisponiveis = [];
 let loginCredencialChave = '';
 let autenticacaoInicializada = false;
@@ -3018,7 +3041,7 @@ async function salvarEvolucaoSessao() {
     const realizadoEm=registroEmEdicao?obterRealizadoEmRegistro(registroEmEdicao):realizadoInput;
     const registro={
         id:registroEmEdicao?.id||`ev_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
-        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto(pacienteId,'evolucao'),
+        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||await resolverAgendamentoClinicoParaRegistro(pacienteId,realizadoEm,'evolucao'),
         data:String(realizadoEm).slice(0,10),
         dataHoraISO:registroEmEdicao?.dataHoraISO||registroEmEdicao?.salvoEm||agora.toISOString(),
         realizadoEm,
@@ -4415,7 +4438,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     const finalizadas=historico.filter(a=>a.status!=='rascunho');
     const dadosAvaliacao={
         id:registroEmEdicao?.id||`av_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
-        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||obterAgendamentoClinicoContexto('', 'avaliacao'),
+        agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||await resolverAgendamentoClinicoParaRegistro(pacienteExistente?.id||pacienteAtualId||'',realizadoEm,'avaliacao'),
         versaoMotor:KINESYS_MOTOR_VERSION,
         status:registroEmEdicao?.status||(finalizar?'finalizada':'rascunho'),
         registroImutavel:registroEmEdicao?!!registroEmEdicao.registroImutavel:!!finalizar,
