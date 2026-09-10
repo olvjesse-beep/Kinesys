@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.1-phase4a';
+    const VERSION='1.25.2-phase4b';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -64,7 +64,9 @@
             styles:Object.freeze([
                 'agenda_referencia-1.20.0.css?v=20260901-r1'
             ]),
-            scripts:Object.freeze([])
+            scripts:Object.freeze([
+                'agenda-1.20.0.js?v=20260910-phase4b-r1'
+            ])
         })
     });
 
@@ -164,6 +166,10 @@
             const estilosProntos=Promise.all(bundle.styles.map(carregarEstilo));
             await carregarFragmento(idTela,bundle);
             await Promise.all([estilosProntos,carregarScriptsEmOrdem(bundle.scripts)]);
+            if(idTela==='tela_agenda'){
+                try{window.instalarIntegracaoFinanceiroAgenda?.();}catch(error){console.error('KineSys Screen Loader: integração Agenda/Financeiro falhou.',error);}
+                try{window.aplicarProtecoesAgendaKineSys?.();}catch(error){console.error('KineSys Screen Loader: proteções da Agenda falharam.',error);}
+            }
             if(bundle.fragment){
                 document.dispatchEvent(new CustomEvent('kinesys:tela-dom-pronta',{detail:{id:idTela,bundle:bundle.id,fragmento:bundle.fragment,versao:VERSION}}));
             }

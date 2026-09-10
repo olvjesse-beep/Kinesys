@@ -46,7 +46,7 @@
 
     obterMapaPagamentoAgendamentos = mapaFinanceiroAgendamentos;
     obterSituacaoPagamentoAgendamento = async a => (await mapaFinanceiroAgendamentos([a])).get(String(a.id));
-    iconePagamentoAgendaHTML = function(a){
+    const iconePagamentoAgendaHTMLIntegrado = function(a){
         if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return '';
         const s=typeof situacaoPagamentoAgenda==='function'?situacaoPagamentoAgenda(a):null;
         if(!s?.verificado)return '<span class="agenda-fin-icone desconhecido" title="Situação financeira indisponível">$</span>';
@@ -110,8 +110,12 @@
         if(typeof mensagemFinanceiro==='function')mensagemFinanceiro(data?.valor_pendente>0?`Pagamento registrado. Ainda pendente: ${fmt(data.valor_pendente)}.`:'Pagamento registrado. Atendimento quitado.','sucesso');return true;
     };
 
-    const abrirDetalheBase=abrirDetalheAgendamento;
-    abrirDetalheAgendamento=async function(id){
+    function instalarIntegracaoFinanceiroAgenda(){
+        if(typeof abrirDetalheAgendamento!=='function') return false;
+        iconePagamentoAgendaHTML=iconePagamentoAgendaHTMLIntegrado;
+        if(abrirDetalheAgendamento.__kinesysFinanceiroAgendaIntegrado===true) return true;
+        const abrirDetalheBase=abrirDetalheAgendamento;
+        const abrirDetalheIntegrado=async function(id){
         await abrirDetalheBase(id);
         if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return;
         const a=(agendaAgendamentosSemanaCache||[]).concat(agendaAgendamentosDoDiaCache||[]).find(x=>String(x.id)===String(id));if(!a)return;
@@ -120,7 +124,14 @@
         const status=s.pago?'Pago':s.parcial?'Parcial':'Pendente';
         const html=`<section class="agenda-fin-resumo ${esc(s.statusFinanceiro)}"><div><strong>Financeiro · ${status}</strong><span>Original ${fmt(s.valorOriginal)} · desconto ${fmt(s.desconto)} · devido ${fmt(s.valorDevido)}</span><span>Pago ${fmt(s.pagos)} · pendente <b>${fmt(s.valorPendente)}</b></span></div>${a.status!=='cancelado'&&s.valorPendente>0?`<button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(a.id)}')">LANÇAR PAGAMENTO</button>`:''}</section>`;
         const alvo=corpo.querySelector('.agenda-status-editor');if(alvo)alvo.insertAdjacentHTML('beforebegin',html);else corpo.insertAdjacentHTML('beforeend',html);
-    };
+        };
+        abrirDetalheIntegrado.__kinesysFinanceiroAgendaIntegrado=true;
+        abrirDetalheAgendamento=abrirDetalheIntegrado;
+        return true;
+    }
+    window.instalarIntegracaoFinanceiroAgenda=instalarIntegracaoFinanceiroAgenda;
+    instalarIntegracaoFinanceiroAgenda();
+
 
     async function renderizarHistoricoAtendimentos(){
         const seq=++historicoAtendimentosSeq;

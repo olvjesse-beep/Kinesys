@@ -6685,6 +6685,22 @@ async function salvarConfiguracaoBackupLocal(){
 }
 async function executarBackupLocal(){try{const r=await kinesysLocalFetch('/api/backup/run',{method:'POST',body:{}},15000);await atualizarGaleriaMidias(true);alert(`✓ Backup concluído. ${r.copied||0} arquivo(s) copiado(s); ${r.failed||0} falha(s).`);}catch(err){alert('❌ Falha no backup local.\n'+err.message);}}
 
+function aplicarProtecoesAgendaKineSys(){
+    if(window.__kinesysAgendaProtecoesAplicadas===true) return true;
+    const obrigatorias=['salvarProcedimento','salvarHorario','salvarGradeSemanal','salvarBloqueio','salvarAgendamento','salvarListaEspera','abrirOfertaListaEspera'];
+    if(obrigatorias.some(nome=>typeof window[nome]!=='function')) return false;
+    protegerFuncaoKineSys('salvarProcedimento', ()=>'agenda-procedimento', null, 'Salvando…');
+    protegerFuncaoKineSys('salvarHorario', ()=>'agenda-horario', null, 'Salvando…');
+    protegerFuncaoKineSys('salvarGradeSemanal', ()=>'agenda-grade-semanal', '#btn_salvar_grade_semanal', 'Salvando grade…');
+    protegerFuncaoKineSys('salvarBloqueio', ()=>'agenda-bloqueio', null, 'Salvando…');
+    protegerFuncaoKineSys('salvarAgendamento', ()=>'agenda-agendamento', '#btn_salvar_agendamento', 'Salvando…');
+    protegerFuncaoKineSys('salvarListaEspera', ()=>'agenda-lista-espera', null, 'Adicionando…');
+    protegerFuncaoKineSys('abrirOfertaListaEspera', (...args)=>'agenda-reencaixe-'+args.join('|'), null, 'Confirmando…');
+    window.__kinesysAgendaProtecoesAplicadas=true;
+    return true;
+}
+window.aplicarProtecoesAgendaKineSys=aplicarProtecoesAgendaKineSys;
+
 // Proteção de gravações críticas contra cliques repetidos. A trava permanece até a Promise terminar.
 document.addEventListener('DOMContentLoaded', function(){
     setTimeout(function(){
@@ -6693,13 +6709,7 @@ document.addEventListener('DOMContentLoaded', function(){
         protegerFuncaoKineSys('salvarEvolucaoSessao', ()=>'evolucao-paciente', null, 'Registrando…');
         protegerFuncaoKineSys('cadastrarNovoFuncionario', ()=>'cadastro-equipe', null, 'Salvando…');
         protegerFuncaoKineSys('salvarConfiguracaoBackupLocal', ()=>'config-backup-local', null, 'Salvando…');
-        protegerFuncaoKineSys('salvarProcedimento', ()=>'agenda-procedimento', null, 'Salvando…');
-        protegerFuncaoKineSys('salvarHorario', ()=>'agenda-horario', null, 'Salvando…');
-        protegerFuncaoKineSys('salvarGradeSemanal', ()=>'agenda-grade-semanal', '#btn_salvar_grade_semanal', 'Salvando grade…');
-        protegerFuncaoKineSys('salvarBloqueio', ()=>'agenda-bloqueio', null, 'Salvando…');
-        protegerFuncaoKineSys('salvarAgendamento', ()=>'agenda-agendamento', '#btn_salvar_agendamento', 'Salvando…');
-        protegerFuncaoKineSys('salvarListaEspera', ()=>'agenda-lista-espera', null, 'Adicionando…');
-        protegerFuncaoKineSys('abrirOfertaListaEspera', (...args)=>'agenda-reencaixe-'+args.join('|'), null, 'Confirmando…');
+        aplicarProtecoesAgendaKineSys();
     }, 0);
 });
 
