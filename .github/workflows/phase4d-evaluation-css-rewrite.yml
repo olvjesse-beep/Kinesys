@@ -19,10 +19,8 @@ jobs:
           ref: performance/evaluation-css-phase4d
           fetch-depth: 0
 
-      - name: Apply Phase 4D rewrite
-        run: |
-          python .github/scripts/phase4d_evaluation_css_v2.py
-          python .github/scripts/phase4d_contract_href_fix.py
+      - name: Apply retry hardening
+        run: python .github/scripts/phase4d_retry_hardening.py
 
       - name: Validate Phase 4D
         run: |
@@ -34,10 +32,10 @@ jobs:
           node tests/clinical_reasoning_shoulder_elbow.regression.js
           git diff --check
 
-      - name: Commit permanent Phase 4D code
+      - name: Commit permanent Phase 4D hardening
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html screen_loader-1.25.0.js tests/screen_loader.contract.js
-          git commit -m 'Lazy-load evaluation clinical CSS preserving cascade'
+          git add screen_loader-1.25.0.js tests/screen_loader.contract.js
+          git commit -m 'Harden lazy stylesheet retry path'
           git push origin HEAD:performance/evaluation-css-phase4d
