@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.2-phase4b';
+    const VERSION='1.25.3-phase4c';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -28,6 +28,12 @@
                 'dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
             ]),
             scripts:Object.freeze([
+                'cirurgias-1.18.0.js?v=20260902-r1',
+                'database/medicamentos.js',
+                'database/irradiacao_clinica.js',
+                'database/mapeamento_clinico.js',
+                'database/condicoes_mobilidade_v23.js',
+                'database/diferenciais_neurais.js',
                 'clinical_engine-1.17.0.js',
                 'evaluation_workspace-1.17.0.js',
                 'proms_escalas.js',
