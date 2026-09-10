@@ -25,6 +25,10 @@ jobs:
           s=p.read_text(encoding='utf-8')
           s=s.replace("\\'use strict\\';", "'use strict';", 1)
           p.write_text(s, encoding='utf-8')
+          p=Path('screen_loader-1.25.0.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("const VERSION='1.25.5-agenda-edit1';", "const VERSION='1.25.4-phase4d';", 1)
+          p.write_text(s, encoding='utf-8')
           PY
       - name: Validate agenda edit and existing contracts
         shell: bash
