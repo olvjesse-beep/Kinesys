@@ -1,4 +1,4 @@
-/* KineSys 1.21.0 — financeiro canônico por agendamento. Carregado após Agenda e Financeiro. */
+/* KineSys 1.21.0 — financeiro canônico por agendamento. Núcleo financeiro eager; hooks da Agenda instalados após o bundle da Agenda. */
 (function(){
     'use strict';
     let contextoPagamentoAgendamento = null;
@@ -46,14 +46,14 @@
 
     obterMapaPagamentoAgendamentos = mapaFinanceiroAgendamentos;
     obterSituacaoPagamentoAgendamento = async a => (await mapaFinanceiroAgendamentos([a])).get(String(a.id));
-    iconePagamentoAgendaHTML = function(a){
+    function iconePagamentoAgendaIntegradoHTML(a){
         if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return '';
         const s=typeof situacaoPagamentoAgenda==='function'?situacaoPagamentoAgenda(a):null;
         if(!s?.verificado)return '<span class="agenda-fin-icone desconhecido" title="Situação financeira indisponível">$</span>';
         const cls=s.pago?'pago':(s.parcial?'parcial':'pendente');
         const titulo=s.pago?'Pagamento quitado':s.parcial?`Pagamento parcial · pendente ${fmt(s.valorPendente)}`:`Pagamento pendente · ${fmt(s.valorPendente)}`;
         return `<span class="agenda-fin-icone ${cls}" title="${esc(titulo)}" aria-label="${esc(titulo)}">$</span>`;
-    };
+    }
 
     window.atualizarResumoPagamentoAgendamento=function(){
         const c=contextoPagamentoAgendamento;if(!c)return;
@@ -110,17 +110,30 @@
         if(typeof mensagemFinanceiro==='function')mensagemFinanceiro(data?.valor_pendente>0?`Pagamento registrado. Ainda pendente: ${fmt(data.valor_pendente)}.`:'Pagamento registrado. Atendimento quitado.','sucesso');return true;
     };
 
-    const abrirDetalheBase=abrirDetalheAgendamento;
-    abrirDetalheAgendamento=async function(id){
-        await abrirDetalheBase(id);
-        if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return;
-        const a=(agendaAgendamentosSemanaCache||[]).concat(agendaAgendamentosDoDiaCache||[]).find(x=>String(x.id)===String(id));if(!a)return;
-        const s=await obterSituacaoPagamentoAgendamento(a); const corpo=document.getElementById('detalhe_agendamento_corpo');if(!corpo||!s)return;
-        corpo.querySelector('.agenda-pagamento-detalhe')?.remove();
-        const status=s.pago?'Pago':s.parcial?'Parcial':'Pendente';
-        const html=`<section class="agenda-fin-resumo ${esc(s.statusFinanceiro)}"><div><strong>Financeiro · ${status}</strong><span>Original ${fmt(s.valorOriginal)} · desconto ${fmt(s.desconto)} · devido ${fmt(s.valorDevido)}</span><span>Pago ${fmt(s.pagos)} · pendente <b>${fmt(s.valorPendente)}</b></span></div>${a.status!=='cancelado'&&s.valorPendente>0?`<button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(a.id)}')">LANÇAR PAGAMENTO</button>`:''}</section>`;
-        const alvo=corpo.querySelector('.agenda-status-editor');if(alvo)alvo.insertAdjacentHTML('beforebegin',html);else corpo.insertAdjacentHTML('beforeend',html);
-    };
+    let hooksAgendaFinanceiroInstalados=false;
+    function instalarHooksAgendaFinanceiro(){
+        if(hooksAgendaFinanceiroInstalados)return true;
+        if(typeof abrirDetalheAgendamento!=='function'||typeof situacaoPagamentoAgenda!=='function'||typeof iconePagamentoAgendaHTML!=='function')return false;
+        iconePagamentoAgendaHTML=iconePagamentoAgendaIntegradoHTML;
+        const abrirDetalheBase=abrirDetalheAgendamento;
+        abrirDetalheAgendamento=async function(id){
+            await abrirDetalheBase(id);
+            if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return;
+            const a=(agendaAgendamentosSemanaCache||[]).concat(agendaAgendamentosDoDiaCache||[]).find(x=>String(x.id)===String(id));if(!a)return;
+            const s=await obterSituacaoPagamentoAgendamento(a); const corpo=document.getElementById('detalhe_agendamento_corpo');if(!corpo||!s)return;
+            corpo.querySelector('.agenda-pagamento-detalhe')?.remove();
+            const status=s.pago?'Pago':s.parcial?'Parcial':'Pendente';
+            const html=`<section class="agenda-fin-resumo ${esc(s.statusFinanceiro)}"><div><strong>Financeiro · ${status}</strong><span>Original ${fmt(s.valorOriginal)} · desconto ${fmt(s.desconto)} · devido ${fmt(s.valorDevido)}</span><span>Pago ${fmt(s.pagos)} · pendente <b>${fmt(s.valorPendente)}</b></span></div>${a.status!=='cancelado'&&s.valorPendente>0?`<button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(a.id)}')">LANÇAR PAGAMENTO</button>`:''}</section>`;
+            const alvo=corpo.querySelector('.agenda-status-editor');if(alvo)alvo.insertAdjacentHTML('beforebegin',html);else corpo.insertAdjacentHTML('beforeend',html);
+        };
+        hooksAgendaFinanceiroInstalados=true;
+        return true;
+    }
+    document.addEventListener('kinesys:tela-modulos-prontos',event=>{
+        if(event?.detail?.id==='tela_agenda')instalarHooksAgendaFinanceiro();
+    });
+    instalarHooksAgendaFinanceiro();
+
 
     async function renderizarHistoricoAtendimentos(){
         const seq=++historicoAtendimentosSeq;

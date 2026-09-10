@@ -2,6 +2,7 @@
 
 const fs=require('fs');
 const assert=require('assert');
+const vm=require('vm');
 
 const html=fs.readFileSync('index.html','utf8');
 const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
@@ -107,6 +108,7 @@ const financeLazyStyles=[
   'financeiro_lancamentos-1.20.0.css',
   'financeiro_alignment.css'
 ];
+const agendaLazyScripts=['agenda-1.20.0.js'];
 const agendaLazyStyles=['agenda_referencia-1.20.0.css'];
 
 assert.match(loader,/tela_financeiro\s*:/,'bundle do Financeiro deve existir');
@@ -123,6 +125,7 @@ function assertLazyAsset(file,kind){
 }
 for(const file of financeLazyScripts)assertLazyAsset(file,'script');
 for(const file of financeLazyStyles)assertLazyAsset(file,'style');
+for(const file of agendaLazyScripts)assertLazyAsset(file,'script');
 for(const file of agendaLazyStyles)assertLazyAsset(file,'style');
 
 let financePos=-1;
@@ -135,7 +138,7 @@ for(const file of financeLazyScripts){
 const eagerSharedScripts=[
   'financeiro-1.19.0.js',
   'credito_cliente-1.19.0.js',
-  'agenda-1.20.0.js',
+  'agenda_notificacoes_core-1.20.1.js',
   'financeiro_agendamento-1.21.0.js'
 ];
 for(const file of eagerSharedScripts){
@@ -144,8 +147,52 @@ for(const file of eagerSharedScripts){
 }
 assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
 assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
-assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global de notificações da Agenda deve permanecer preservado');
-assert.match(loader,/VERSION='1\.25\.1-phase4a'/,'Screen Loader deve identificar a Fase 4A');
+assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
+assert.match(loader,/VERSION='1\.25\.2-phase4b'/,'Screen Loader deve identificar a Fase 4B');
+
+const agendaModule=fs.readFileSync('agenda-1.20.0.js','utf8');
+const notificationCore=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
+const financeAgendaIntegration=fs.readFileSync('financeiro_agendamento-1.21.0.js','utf8');
+assert.match(notificationCore,/function iniciarNotificacoesAgenda\(/,'núcleo eager deve preservar iniciarNotificacoesAgenda');
+assert.match(notificationCore,/function pararNotificacoesAgenda\(/,'núcleo eager deve preservar pararNotificacoesAgenda');
+assert.match(notificationCore,/function sincronizarNotificacoesPendentesAgenda\(/,'núcleo eager deve preservar sincronização da fila de avisos');
+assert.match(notificationCore,/KineSysScreenLoader\?\.ensure\)\s*\{[\s\S]*ensure\('tela_agenda'\)/,'clique em aviso deve preparar Agenda lazy antes de usar seu estado');
+assert.doesNotMatch(agendaModule,/function iniciarNotificacoesAgenda\(/,'módulo pesado não deve duplicar polling global');
+assert.doesNotMatch(agendaModule,/let agendaNotificacoesTimer\s*=/,'estado global de polling deve existir somente no núcleo eager');
+assert.match(agendaModule,/document\.readyState === 'loading'/,'Agenda deve inicializar eventos mesmo após DOMContentLoaded');
+assert.match(financeAgendaIntegration,/function instalarHooksAgendaFinanceiro\(/,'integração deve possuir instalador tardio dos hooks da Agenda');
+assert.match(financeAgendaIntegration,/kinesys:tela-modulos-prontos/,'integração deve aguardar o bundle da Agenda antes de sobrescrever hooks');
+
+const coreBytes=fs.statSync('agenda_notificacoes_core-1.20.1.js').size;
+const agendaLazyBytes=fs.statSync('agenda-1.20.0.js').size;
+assert.ok(coreBytes<20000,`núcleo de notificações deve permanecer pequeno; atual ${coreBytes} bytes`);
+assert.ok(agendaLazyBytes>180000,`módulo pesado da Agenda deve permanecer efetivamente fora do bootstrap; atual ${agendaLazyBytes} bytes`);
+
+// Smoke test: the eager integration must execute while Agenda globals are absent.
+const fakeDocument={
+  readyState:'complete',
+  getElementById(){return null;},
+  addEventListener(){},
+  querySelector(){return null;},
+  querySelectorAll(){return [];}
+};
+const integrationContext={
+  console,
+  window:{},
+  document:fakeDocument,
+  setTimeout(){return 0;},
+  clearTimeout(){},
+  alert(){},
+  _supabase:null,
+  moedaBR:null,
+  escapeHTML:null,
+  numeroFinanceiro:null,
+  obterMapaPagamentoAgendamentos:async()=>new Map(),
+  obterSituacaoPagamentoAgendamento:async()=>({}),
+  salvarPagamentoFinanceiro:async()=>true,
+  renderizarFinanceiroPaciente(){},
+};
+assert.doesNotThrow(()=>vm.runInNewContext(financeAgendaIntegration,integrationContext,{timeout:1000}),'integração eager não pode exigir Agenda já carregada');
 
 const deferredRawBytes=145198+27284+2983;
-console.log(`Screen Loader contract Phase 4A: Avaliação continua sob demanda; Financeiro adia ${financeLazyScripts.length} JS + ${financeLazyStyles.length} CSS e Agenda adia ${agendaLazyStyles.length} CSS (${deferredRawBytes} bytes brutos retirados do bootstrap).`);
+console.log(`Screen Loader contract Phase 4B: Financeiro mantém ${deferredRawBytes} bytes brutos adiados da 4A; Agenda completa agora é lazy (${agendaLazyBytes} bytes), preservando núcleo global de notificações eager (${coreBytes} bytes).`);
