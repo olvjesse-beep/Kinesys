@@ -385,18 +385,15 @@
         }
         if(acao==='prontuario'){
             if(typeof window.abrirEscolhaProntuarioPDF!=='function'){toast('A exportação do prontuário não está disponível.','erro');return;}
-            window.abrirEscolhaProntuarioPDF(pacienteId);
-            return;
+            return window.abrirEscolhaProntuarioPDF(pacienteId);
         }
         if(acao==='prontuario_simples'){
             if(typeof window.gerarProntuarioCompletoPDF!=='function'){toast('A exportação do prontuário não está disponível.','erro');return;}
-            window.gerarProntuarioCompletoPDF(pacienteId,'simplificado');
-            return;
+            return window.gerarProntuarioCompletoPDF(pacienteId,'simplificado');
         }
         if(acao==='prontuario_detalhado'){
             if(typeof window.gerarProntuarioCompletoPDF!=='function'){toast('A exportação do prontuário não está disponível.','erro');return;}
-            window.gerarProntuarioCompletoPDF(pacienteId,'detalhado');
-            return;
+            return window.gerarProntuarioCompletoPDF(pacienteId,'detalhado');
         }
         if(acao==='excluir'){
             if(typeof window.excluirPaciente!=='function'){toast('A exclusão de paciente não está disponível.','erro');return;}
