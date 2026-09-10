@@ -1,0 +1,87 @@
+/* KineSys — modal de recuperação de rascunho
+   Escopo: diálogos com ação alternativa visível (atualmente recuperação de rascunho). */
+
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])){
+  width:min(520px,100%);
+}
+
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-copy{
+  padding-right:26px;
+}
+
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_message{
+  color:var(--kds-muted);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-text);
+}
+
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:nowrap;
+  gap:8px;
+  margin-top:16px;
+  padding-top:14px;
+}
+
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-actions > button{
+  min-width:0;
+  min-height:42px;
+  padding:8px 13px;
+  border-radius:var(--kds-radius-sm);
+  font-size:var(--kds-font-ui);
+  font-weight:700;
+  line-height:var(--kds-leading-compact);
+  white-space:nowrap;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+/* Descartar é destrutivo, mas secundário. */
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_alternative{
+  background:var(--kds-surface)!important;
+  border:1px solid var(--kds-danger-line-strong)!important;
+  color:var(--kds-danger)!important;
+}
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_alternative:hover{
+  background:var(--kds-danger-soft)!important;
+  border-color:var(--kds-danger)!important;
+}
+
+/* Cancelar permanece neutro. */
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_cancel{
+  background:var(--kds-surface)!important;
+  border-color:var(--kds-line-strong)!important;
+  color:var(--kds-text-secondary)!important;
+}
+
+/* Ação principal sólida, sem halo exagerado. */
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_ok{
+  background:var(--kds-accent)!important;
+  border-color:var(--kds-accent)!important;
+  color:#FFFFFF!important;
+  box-shadow:none!important;
+}
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_ok:hover{
+  background:var(--kds-accent-hover)!important;
+  border-color:var(--kds-accent-hover)!important;
+}
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-actions > button:focus-visible{
+  outline:2px solid var(--kds-focus-line)!important;
+  outline-offset:2px!important;
+  box-shadow:none!important;
+}
+body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) #ks_dialog_alternative:focus-visible{
+  outline-color:var(--kds-danger-line-strong)!important;
+}
+
+@media(max-width:560px){
+  body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-actions{
+    flex-direction:column-reverse;
+    align-items:stretch;
+  }
+  body.ks-design-ready .ks-dialog:has(#ks_dialog_alternative:not([hidden])) .ks-dialog-actions > button{
+    width:100%;
+  }
+}
