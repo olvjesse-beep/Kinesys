@@ -1,0 +1,40 @@
+name: Run Motor 3 synthesis patch safely
+
+on:
+  push:
+    paths:
+      - '.github/workflows/run-motor3-synthesis-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover and run guarded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/patch-motor3-synthesis.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY\n",start)
+          block=src[start:end]
+          lines=[]
+          for line in block.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/patch_motor3.py').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+          python /tmp/patch_motor3.py
+          node --check clinical_reasoning_hma-3.0.0.js
+          node --check script-1.18.0.js
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add clinical_reasoning_hma-3.0.0.js clinical_reasoning_hma-3.0.0.css script-1.18.0.js index.html
+          git commit -m "Connect Motor 3 hypotheses to clinical synthesis"
+          git push
