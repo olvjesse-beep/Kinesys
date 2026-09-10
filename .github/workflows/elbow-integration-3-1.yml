@@ -1,0 +1,165 @@
+name: Integrate Motor 3.1 elbow
+on:
+  push:
+    paths:
+      - '.github/workflows/elbow-integration-3-1.yml'
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire elbow module without renaming existing contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def write_changed(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          # HMA 3.0: preserve the existing shoulder hook and add elbow immediately after it.
+          p=Path('clinical_reasoning_hma-3.0.0.js')
+          s=p.read_text(encoding='utf-8')
+          elbow_hook="""        if(typeof window.enriquecerPlanoCotoveloKineSys==='function'){
+              try { planoGerado=window.enriquecerPlanoCotoveloKineSys(planoGerado)||planoGerado; }
+              catch(err){ console.warn('Motor 3.1 Cotovelo:',err); }
+          }
+"""
+          if 'enriquecerPlanoCotoveloKineSys' not in s:
+              marker="""        if(typeof window.enriquecerPlanoOmbroKineSys==='function'){
+              try { planoGerado=window.enriquecerPlanoOmbroKineSys(planoGerado)||planoGerado; }
+              catch(err){ console.warn('Motor 3.1 Ombro:',err); }
+          }
+"""
+              if marker not in s: raise SystemExit('Shoulder hook marker not found in HMA engine')
+              s=s.replace(marker, marker+elbow_hook, 1)
+          write_changed(p,s)
+
+          # Shoulder 3.1: add an additive per-region registry while preserving plano.motor31.
+          p=Path('clinical_reasoning_shoulder-3.1.0.js')
+          s=p.read_text(encoding='utf-8')
+          if 'plano.motores31={...(plano.motores31||{}),ombro:plano.motor31};' not in s:
+              anchor="\n\n    const extras=[];"
+              pos=s.find(anchor, s.find("plano.motor31={versao:VERSION,regiao:'ombro'"))
+              if pos<0: raise SystemExit('Shoulder motor31/extras marker not found')
+              s=s[:pos]+"\n    plano.motores31={...(plano.motores31||{}),ombro:plano.motor31};"+s[pos:]
+          old="""    const m=plano?.motor31;
+    if(!m||m.regiao!=='ombro'){host.hidden=true;host.innerHTML='';return;}
+"""
+          new="""    const m=plano?.motores31?.ombro||(plano?.motor31?.regiao==='ombro'?plano.motor31:null);
+    if(!m){host.hidden=true;host.innerHTML='';return;}
+"""
+          if old in s: s=s.replace(old,new,1)
+          elif 'plano?.motores31?.ombro' not in s: raise SystemExit('Shoulder render motor marker not found')
+          write_changed(p,s)
+
+          # Index: load elbow visual and logic immediately after the established shoulder module.
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'clinical_reasoning_elbow-3.1.0.css' not in s:
+              marker='    <link rel="stylesheet" href="clinical_reasoning_shoulder-3.1.0.css?v=20260910-r2">\n'
+              if marker not in s: raise SystemExit('Shoulder CSS marker not found in index')
+              s=s.replace(marker,marker+'    <link rel="stylesheet" href="clinical_reasoning_elbow-3.1.0.css?v=20260910-r1">\n',1)
+          if 'clinical_reasoning_elbow-3.1.0.js' not in s:
+              marker='    <script defer src="clinical_reasoning_shoulder-3.1.0.js?v=20260910-lang-r3"></script>\n'
+              if marker not in s: raise SystemExit('Shoulder JS marker not found in index')
+              s=s.replace(marker,marker+'    <script defer src="clinical_reasoning_elbow-3.1.0.js?v=20260910-r1"></script>\n',1)
+          write_changed(p,s)
+          PY
+      - name: Validate JavaScript and whitespace
+        run: |
+          node --check clinical_reasoning_hma-3.0.0.js
+          node --check clinical_reasoning_shoulder-3.1.0.js
+          node --check clinical_reasoning_elbow-3.1.0.js
+          node --check script-1.18.0.js
+          git diff --check
+      - name: Validate elbow clinical invariants
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          let hma='';
+          global.window=global;
+          global.BANCO_MAPEAMENTO_CLINICO={ombro:{clusters:[],diferenciais:[]},cotovelo:{clusters:[],diferenciais:[]}};
+          global.coletarContextoClinico=()=>({origemIrradiacao:'',irradiacao:'',comorbidades:[],textoComorbidades:'',textoMedicamentos:'',textoCirurgias:''});
+          global.document={
+            readyState:'loading',
+            addEventListener:()=>{},
+            getElementById:(id)=>id==='paciente_hma'?{value:hma}:null
+          };
+          vm.runInThisContext(fs.readFileSync('clinical_reasoning_shoulder-3.1.0.js','utf8'));
+          vm.runInThisContext(fs.readFileSync('clinical_reasoning_elbow-3.1.0.js','utf8'));
+          const base=regions=>({insuficiente:false,regioes:regions.map(id=>({id,nome:id})),hipoteses:[],exame:{seguranca:[],testesPrioritarios:[],analises:[]},lacunas:[]});
+
+          // 1) Relação ombro -> braço/cotovelo fica aberta como origem proximal, não como diagnóstico de bursite.
+          hma='Tenho bursite no ombro. A dor começa no ombro e desce até o cotovelo, piorando quando levanto o braço.';
+          let p=window.enriquecerPlanoOmbroKineSys(base(['ombro','cotovelo']));
+          p=window.enriquecerPlanoCotoveloKineSys(p);
+          assert(p.motores31?.ombro,'shoulder registry missing');
+          assert(p.motores31?.cotovelo,'elbow registry missing');
+          assert.strictEqual(p.motor31.regiao,'ombro','legacy plano.motor31 must remain shoulder when shoulder was enriched first');
+          assert.strictEqual(p.exame.correlacaoOmbroCotovelo.ativa,true);
+          assert(p.hipoteses.some(x=>x.motor31?.condicaoId==='cotovelo_ombro_referida'),'proximal shoulder differential missing');
+          assert(!p.hipoteses.some(x=>/bursite do ombro/i.test(x.nome)),'patient label must not become a shoulder-bursitis diagnosis');
+
+          // 2) Dor lateral focal + preensão abre hipótese local e mantém diferenciais.
+          hma='Dor do lado de fora do cotovelo ao apertar a mão e carregar uma sacola.';
+          p=window.enriquecerPlanoCotoveloKineSys(base(['cotovelo']));
+          assert(p.hipoteses.some(x=>x.motor31?.condicaoId==='cotovelo_lateral'),'lateral elbow family missing');
+          assert(p.exame.matrizCotovelo.some(x=>x.id==='cotovelo_lateral'));
+
+          // 3) Sintoma distal/parestésico aciona avaliação neural/cervical em vez de fechamento local.
+          hma='Dor no cotovelo com choque que passa do cotovelo e vai para a mão; mexer o pescoço muda a dor.';
+          p=window.enriquecerPlanoCotoveloKineSys(base(['cotovelo']));
+          assert(p.hipoteses.some(x=>x.motor31?.condicaoId==='cotovelo_cervical_neural'),'cervical/neural differential missing');
+
+          // 4) Quarto/quinto dedos + flexão/apoio aciona túnel cubital/ulnar.
+          hma='Quarto e quinto dedos formigam quando apoio o cotovelo e deixo ele dobrado.';
+          p=window.enriquecerPlanoCotoveloKineSys(base(['cotovelo']));
+          assert(p.hipoteses.some(x=>x.motor31?.condicaoId==='cotovelo_ulnar'),'ulnar neuropathy family missing');
+
+          // 5) Febre + cotovelo vermelho/inchado vira prioridade de segurança.
+          hma='Cotovelo vermelho inchado com febre e muito quente.';
+          p=window.enriquecerPlanoCotoveloKineSys(base(['cotovelo']));
+          assert(p.exame.seguranca.some(x=>/Infecção articular\/bursal/i.test(x.titulo)),'infection safety flag missing');
+
+          // 6) Ruptura de bíceps distal é tratada como exclusão prioritária.
+          hma='Estalo na frente do cotovelo, hematoma e perda de força para supinar depois de levantar uma caixa.';
+          p=window.enriquecerPlanoCotoveloKineSys(base(['cotovelo']));
+          assert(p.exame.seguranca.some(x=>/Ruptura aguda do bíceps distal/i.test(x.titulo)),'distal biceps rupture safety flag missing');
+
+          // 7) Metadados de evidência e cautela diagnóstica permanecem expostos.
+          assert(window.KineSysMotor31Cotovelo.referencias.some(x=>x.pmid==='36453071'));
+          assert(window.KineSysMotor31Cotovelo.referencias.some(x=>x.pmid==='42437185'));
+          assert(window.KineSysMotor31Cotovelo.condicoes.length>=12);
+          console.log('Motor 3.1 Cotovelo clinical invariants: OK');
+          NODE
+      - name: Validate wiring and compatibility contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('clinical_reasoning_hma-3.0.0.js').read_text(encoding='utf-8')
+          o=Path('clinical_reasoning_shoulder-3.1.0.js').read_text(encoding='utf-8')
+          e=Path('clinical_reasoning_elbow-3.1.0.js').read_text(encoding='utf-8')
+          i=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            ('hma elbow hook','enriquecerPlanoCotoveloKineSys' in h),
+            ('shoulder legacy hook','enriquecerPlanoOmbroKineSys' in h),
+            ('shoulder regional registry','plano.motores31' in o and 'ombro:plano.motor31' in o),
+            ('elbow regional registry','motores31' in e and 'cotovelo:motorCotovelo' in e),
+            ('elbow CSS wired','clinical_reasoning_elbow-3.1.0.css' in i),
+            ('elbow JS wired','clinical_reasoning_elbow-3.1.0.js' in i),
+            ('elbow HMA alias preserved',"cotovelo:['cotovelo','epicondilo']" in h),
+            ('no probability wording','probabilidade diagnóstica' not in e.lower())
+          ]
+          failed=[name for name,ok in required if not ok]
+          if failed: raise SystemExit('Compatibility checks failed: '+repr(failed))
+          print('Wiring/compatibility checks: OK')
+          PY
+      - name: Commit integrated elbow engine
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add clinical_reasoning_hma-3.0.0.js clinical_reasoning_shoulder-3.1.0.js index.html
+          git commit -m "Integrate Motor 3.1 elbow across HMA and shoulder" || exit 0
+          git push
