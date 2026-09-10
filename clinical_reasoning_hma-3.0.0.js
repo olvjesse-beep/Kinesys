@@ -265,6 +265,10 @@
             try { planoGerado=window.enriquecerPlanoOmbroKineSys(planoGerado)||planoGerado; }
             catch(err){ console.warn('Motor 3.1 Ombro:',err); }
         }
+        if(typeof window.enriquecerPlanoCotoveloKineSys==='function'){
+            try { planoGerado=window.enriquecerPlanoCotoveloKineSys(planoGerado)||planoGerado; }
+            catch(err){ console.warn('Motor 3.1 Cotovelo:',err); }
+        }
         ultimoPlano=planoGerado;
         return ultimoPlano;
     }

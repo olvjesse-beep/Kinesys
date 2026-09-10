@@ -375,6 +375,7 @@
     plano.exame.familiasOmbro=fortes.map(x=>({id:x.cond.id,nome:x.cond.rotulo,frases:x.hits,perguntas:x.cond.perguntas,objetivos:x.cond.objetivos,urgente:!!x.cond.urgente,matrizExame:MATRIZ_EXAME[x.cond.id]||{essencial:[],complementar:[],evitar:[]}}));
     plano.exame.matrizOmbro=plano.exame.familiasOmbro.map(x=>({id:x.id,nome:x.nome,...x.matrizExame}));
     plano.motor31={versao:VERSION,regiao:'ombro',frasesReconhecidas:uniq([...(relatoDecubito?['relação com decúbito sobre ombro/membro superior']:[]),...fortes.flatMap(x=>x.hits)]),perguntas,condicoes:plano.exame.familiasOmbro,aviso:'Palavras e frases da HMA orientam investigação; não equivalem a diagnóstico.'};
+    plano.motores31={...(plano.motores31||{}),ombro:plano.motor31};
 
     const extras=[];
     const objetivosExame=uniq([
@@ -412,8 +413,8 @@
   function renderPerguntas(plano){
     const host=document.getElementById('ks31_shoulder_interview');
     if(!host)return;
-    const m=plano?.motor31;
-    if(!m||m.regiao!=='ombro'){host.hidden=true;host.innerHTML='';return;}
+    const m=plano?.motores31?.ombro||(plano?.motor31?.regiao==='ombro'?plano.motor31:null);
+    if(!m){host.hidden=true;host.innerHTML='';return;}
     host.hidden=false;
     const matriz=arr(plano?.exame?.matrizOmbro).slice(0,4);
     const assinatura=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,10),mx:matriz.map(x=>x.id)});
