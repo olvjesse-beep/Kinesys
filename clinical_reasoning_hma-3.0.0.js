@@ -375,8 +375,20 @@
         tela.addEventListener('change',e=>{
             if(e.target?.matches('#grupo_regioes_mapeamento input,.fatores-piora-compactos input,input[name*="comorb"],input[name*="anteced"]')) agendarAtualizacao();
         });
-        ['tags_medicamentos','tags_cirurgias'].forEach(id=>{const el=document.getElementById(id);if(el)new MutationObserver(agendarAtualizacao).observe(el,{childList:true,subtree:true,characterData:true});});
-        new MutationObserver(agendarAtualizacao).observe(tela,{subtree:true,attributes:true,attributeFilter:['class']});
+        ['tags_medicamentos','tags_cirurgias'].forEach(id=>{
+            const el=document.getElementById(id);
+            if(el)new MutationObserver(()=>agendarAtualizacao(120)).observe(el,{childList:true,subtree:true,characterData:true});
+        });
+        const etapaMapeamento=document.getElementById('subtela_mapeamento');
+        if(etapaMapeamento){
+            new MutationObserver(mudancas=>{
+                if(mudancas.some(m=>m.target===etapaMapeamento&&m.attributeName==='class'))agendarAtualizacao(100);
+            }).observe(etapaMapeamento,{attributes:true,attributeFilter:['class']});
+        }
+        const grupoRegioes=document.getElementById('grupo_regioes_mapeamento');
+        if(grupoRegioes){
+            new MutationObserver(()=>agendarAtualizacao(120)).observe(grupoRegioes,{childList:true,subtree:true});
+        }
     }
 
     function auditoria(opcoes={}){
