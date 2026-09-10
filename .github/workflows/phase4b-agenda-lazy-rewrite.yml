@@ -85,7 +85,6 @@ jobs:
             agenda-1.20.0.js \
             agenda_notificacoes_core-1.20.1.js \
             financeiro_agendamento-1.21.0.js \
-            tests/screen_loader.contract.js \
-            .github/workflows/screen-loader-contract.yml
+            tests/screen_loader.contract.js
           git commit -m 'Lazy-load Agenda while preserving notification core'
           git push origin HEAD:performance/agenda-lazy-phase4b
