@@ -1,0 +1,48 @@
+name: Agenda Edit Rewrite
+
+on:
+  push:
+    branches:
+      - feature/agenda-editar-atendimento
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agenda-editar-atendimento
+          fetch-depth: 0
+      - name: Apply incremental edit hardening
+        run: python .github/scripts/agenda_edit_incremental.py
+      - name: Validate agenda edit and existing contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check agenda-1.20.0.js
+          node --check screen_loader-1.25.0.js
+          node --check tests/agenda_editar_atendimento.contract.js
+          node tests/agenda_editar_atendimento.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/prontuario_export_lazy.contract.js
+          node tests/mensagens_config_bootstrap.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          git diff --check
+      - name: Commit permanent implementation only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add agenda-1.20.0.js index.html screen_loader-1.25.0.js tests/agenda_editar_atendimento.contract.js
+          if git diff --cached --quiet; then
+            echo 'No permanent changes to commit'
+            exit 0
+          fi
+          git commit -m "Add safe editing for existing agenda appointments"
+          git push origin HEAD:feature/agenda-editar-atendimento
