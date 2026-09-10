@@ -13727,7 +13727,7 @@ document.addEventListener('click', e => {
   "mielopatia": "alterações de marcha ou destreza",
   "ombro": "dor no ombro",
   "elevacaoBraco": "dor ao elevar o braço",
-  "decubitoOmbro": "piora ao deitar ou dormir sobre o ombro/membro superior",
+  "decubitoOmbro": "relação dos sintomas com deitar ou dormir sobre o ombro/membro superior",
   "provocacaoOmbro": "dor reproduzida pelo movimento do ombro",
   "rotacaoOmbro": "limitação funcional de rotação",
   "rigidezOmbro": "rigidez do ombro",

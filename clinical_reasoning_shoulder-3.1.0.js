@@ -28,6 +28,9 @@
     return arr(termos).filter(x=>t.includes(norm(x)));
   };
   const contexto=()=>{try{return typeof coletarContextoClinico==='function'?(coletarContextoClinico()||{}):{};}catch(_){return{};}};
+  const PADRAO_DECUBITO_OMBRO=/(?:dormir|deitar|apoiar).{0,28}(?:em cima|sobre|lado).{0,22}(?:ombro|braco)|(?:ombro|braco).{0,22}(?:dormir|deitar|apoiar)/;
+  const PERGUNTA_DECUBITO_OMBRO='Ao deitar/dormir sobre o braço ou ombro, o que surge exatamente: dor no topo, dor lateral, dor anterior, pressão, formigamento ou dormência?';
+  const OBJETIVO_DECUBITO_OMBRO='Localizar o sintoma provocado pelo decúbito e diferenciar compressão local do ombro/AC de sintomas neurais no membro superior';
 
   const BASE_PERGUNTAS=[
     'Onde exatamente dói: frente, lado, topo, região posterior/escapular ou dor profunda dentro do ombro?',
@@ -185,9 +188,7 @@
     ombro_manguito:[
       'doi para estender roupa','doi para pegar coisa no armario','doi para colocar algo na prateleira','doi para levantar o filho','doi para tirar a camisa',
       'doi para colocar a mao na cabeca','doi para lavar o cabelo','doi quando levanto o braco de lado','doi quando levanto o braco para frente',
-      'doi no lado de fora do ombro','dor desce so ate o meio do braco','doi no meio do levantamento','doi mais para subir do que parado',
-      'dormir em cima do ombro','dormir sobre o ombro','deitar em cima do ombro','deitar sobre o ombro','dormir em cima do braco','dormir sobre o braco',
-      'deitar em cima do braco','deitar sobre o braco','dormir do lado do ombro','deitar do lado do ombro','doi ao dormir de lado','doi quando deita sobre o ombro'
+      'doi no lado de fora do ombro','dor desce so ate o meio do braco','doi no meio do levantamento','doi mais para subir do que parado'
     ],
     ombro_ruptura_manguito:[
       'nao consigo erguer sozinho mas alguem consegue levantar','o braco despenca','nao sustenta o braco levantado','ficou muito fraco depois de um estalo',
@@ -349,6 +350,7 @@
     const temOmbro=arr(plano.regioes).some(r=>r.id==='ombro')||/ombro|escapul|deltoid|braco/.test(norm(hmaTexto()));
     if(!temOmbro)return plano;
     const c=contexto(); const texto=textoContexto(c);
+    const relatoDecubito=PADRAO_DECUBITO_OMBRO.test(norm(hmaTexto()));
     const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);
     const fortes=avaliadas.filter(x=>x.hits.length||x.score>=2.5).slice(0,6);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x,c));
@@ -364,15 +366,15 @@
     const ombroFinal=Array.from(mapa.values()).sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0)).slice(0,6);
     plano.hipoteses=[...ombroFinal,...existentes].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));
 
-    const perguntas=uniq([...BASE_PERGUNTAS,...fortes.flatMap(x=>x.cond.perguntas)]).slice(0,14);
-    const objetivos=uniq(fortes.flatMap(x=>x.cond.objetivos)).slice(0,16);
+    const perguntas=uniq([...(relatoDecubito?[PERGUNTA_DECUBITO_OMBRO]:[]),...BASE_PERGUNTAS,...fortes.flatMap(x=>x.cond.perguntas)]).slice(0,14);
+    const objetivos=uniq([...(relatoDecubito?[OBJETIVO_DECUBITO_OMBRO]:[]),...fortes.flatMap(x=>x.cond.objetivos)]).slice(0,16);
     const segurancaExtra=fortes.filter(x=>x.cond.urgente).map(x=>({titulo:x.cond.rotulo,descricao:`Padrão histórico que merece exclusão prioritária. Pergunte: ${x.cond.perguntas[0]}`}));
     plano.exame.seguranca=uniqObj([...(plano.exame.seguranca||[]),...segurancaExtra]);
     plano.exame.perguntasDirigidasOmbro=perguntas;
     plano.exame.objetivosOmbro=objetivos;
     plano.exame.familiasOmbro=fortes.map(x=>({id:x.cond.id,nome:x.cond.rotulo,frases:x.hits,perguntas:x.cond.perguntas,objetivos:x.cond.objetivos,urgente:!!x.cond.urgente,matrizExame:MATRIZ_EXAME[x.cond.id]||{essencial:[],complementar:[],evitar:[]}}));
     plano.exame.matrizOmbro=plano.exame.familiasOmbro.map(x=>({id:x.id,nome:x.nome,...x.matrizExame}));
-    plano.motor31={versao:VERSION,regiao:'ombro',frasesReconhecidas:uniq(fortes.flatMap(x=>x.hits)),perguntas,condicoes:plano.exame.familiasOmbro,aviso:'Palavras e frases da HMA orientam investigação; não equivalem a diagnóstico.'};
+    plano.motor31={versao:VERSION,regiao:'ombro',frasesReconhecidas:uniq([...(relatoDecubito?['relação com decúbito sobre ombro/membro superior']:[]),...fortes.flatMap(x=>x.hits)]),perguntas,condicoes:plano.exame.familiasOmbro,aviso:'Palavras e frases da HMA orientam investigação; não equivalem a diagnóstico.'};
 
     const extras=[];
     const objetivosExame=uniq([
