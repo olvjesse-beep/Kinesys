@@ -14,8 +14,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Apply refined clinical recognition hardening
-        run: python tools/refine_shoulder_elbow_regression_patch.py
+      - name: Apply final clinical recognition hardening
+        run: python tools/finalize_shoulder_elbow_regression_patch.py
       - name: Validate syntax and regression corpus
         run: |
           node --check clinical_reasoning_shoulder-3.1.0.js
