@@ -367,4 +367,5 @@ function abrirEscalaPROM(key, targetRowId='') {
     nova.document.close();
 }
 
-document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarCatalogoPROM,50));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarCatalogoPROM,50),{once:true});
+else setTimeout(inicializarCatalogoPROM,50);

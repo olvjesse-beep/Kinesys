@@ -8,6 +8,8 @@ const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
 
 const lazyScripts=[
   'clinical_engine-1.17.0.js',
+  'evaluation_workspace-1.17.0.js',
+  'proms_escalas.js',
   'evaluation_context_panels-1.18.3.js',
   'avaliacao_experiencia-1.22.0.js',
   'clinical_reasoning_hma-3.0.0.js',
@@ -29,4 +31,17 @@ for(const file of lazyScripts){
   assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
 }
 
-console.log(`Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda e presentes no repositório.`);
+let ultimaPosicao=-1;
+for(const file of lazyScripts){
+  const posicao=loader.indexOf(file);
+  assert.ok(posicao>ultimaPosicao,`${file} deve manter a ordem histórica relativa do bundle da Avaliação`);
+  ultimaPosicao=posicao;
+}
+
+const workspace=fs.readFileSync('evaluation_workspace-1.17.0.js','utf8');
+const proms=fs.readFileSync('proms_escalas.js','utf8');
+assert.match(workspace,/document\.readyState===['"]loading['"]/, 'workspace deve inicializar também em carregamento tardio');
+assert.match(workspace,/clinicaEstruturadaPreservada/, 'workspace tardio deve recuperar o laudo preservado');
+assert.match(proms,/document\.readyState===['"]loading['"]/, 'PROMs deve inicializar também em carregamento tardio');
+
+console.log(`Screen Loader contract: ${lazyScripts.length} módulos de Avaliação sob demanda, ordenados e presentes no repositório.`);
