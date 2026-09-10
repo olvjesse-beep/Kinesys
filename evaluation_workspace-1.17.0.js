@@ -99,14 +99,23 @@
         document.getElementById('ks-laudo-status').textContent=mudou?'A avaliação mudou. Seu texto foi preservado: atualize a base ou revise as diferenças antes de finalizar.':laudo.modo==='assistido'?'Rascunho assistido com achados completos. Revise e complemente a conclusão.':'Investigação em aberto. Os dados foram reunidos abaixo para você escrever o laudo.';
         const alertas=document.getElementById('card_alertas_consolidados');if(alertas)alertas.hidden=d.seguranca.ok;
     };
-    document.addEventListener('DOMContentLoaded',()=>{
+    let workspaceInicializado=false;
+    function inicializarWorkspaceAvaliacaoKineSys(){
+        if(workspaceInicializado)return;
         const editor=document.getElementById('ks-laudo-texto'),review=document.getElementById('ks-laudo-revisado');
-        editor?.addEventListener('input',()=>{if(!laudo)return;laudo.texto=editor.value;laudo.revisado=false;laudo.atualizadoEm=new Date().toISOString();review.checked=false;agendarAutosaveKineSys();});
+        if(!editor&&!review)return;
+        workspaceInicializado=true;
+        editor?.addEventListener('input',()=>{if(!laudo)return;laudo.texto=editor.value;laudo.revisado=false;laudo.atualizadoEm=new Date().toISOString();if(review)review.checked=false;agendarAutosaveKineSys();});
         review?.addEventListener('change',()=>{if(!laudo)return;laudo.revisado=review.checked;if(review.checked)laudo.fonte=dadosAtuais().fonte;laudo.revisadoEm=review.checked?new Date().toISOString():null;agendarAutosaveKineSys();});
         document.getElementById('ks-laudo-atualizar')?.addEventListener('click',async()=>{
             if(laudo&&!(await confirmarKineSys('Substituir o texto atual por uma nova base da avaliação? Copie o texto antes se quiser preservar sua redação.',{titulo:'Atualizar base do laudo',confirmar:'Atualizar base'})))return;
             laudo=textoBase(dadosAtuais());window.renderizarLaudoAvaliacaoKineSys();agendarAutosaveKineSys();
         });
         document.getElementById('ks-laudo-copiar')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(editor.value);document.getElementById('ks-laudo-status').textContent='Texto copiado para a área de transferência.';}catch(_){editor.focus();editor.select();document.getElementById('ks-laudo-status').textContent='Texto selecionado. Use copiar no seu dispositivo.';}});
-    });
+        if(typeof clinicaEstruturadaPreservada!=='undefined'&&Object.prototype.hasOwnProperty.call(clinicaEstruturadaPreservada||{},'laudo')){
+            window.preencherLaudoAvaliacaoKineSys(clinicaEstruturadaPreservada.laudo||null);
+        }
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicializarWorkspaceAvaliacaoKineSys,{once:true});
+    else inicializarWorkspaceAvaliacaoKineSys();
 })();

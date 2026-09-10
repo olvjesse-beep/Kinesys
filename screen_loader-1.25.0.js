@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.0-phase2a';
+    const VERSION='1.25.0-phase2b';
     const carregamentos=new Map();
     const estilos=new Map();
     const bundles=new Map();
@@ -27,6 +27,8 @@
             ]),
             scripts:Object.freeze([
                 'clinical_engine-1.17.0.js',
+                'evaluation_workspace-1.17.0.js',
+                'proms_escalas.js',
                 'evaluation_context_panels-1.18.3.js',
                 'avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1',
                 'clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
