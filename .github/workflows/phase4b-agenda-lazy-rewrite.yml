@@ -22,28 +22,51 @@ jobs:
       - name: Apply exact Phase 4B rewrite
         run: python .github/scripts/phase4b_agenda_lazy.py
 
-      - name: Validate Phase 4B
+      - name: Validate Phase 4B with captured diagnostics
         shell: bash
         run: |
-          set -euo pipefail
-          node --check screen_loader-1.25.0.js
-          node --check agenda-1.20.0.js
-          node --check agenda_notificacoes_core-1.20.1.js
-          node --check financeiro_agendamento-1.21.0.js
-          node --check tests/screen_loader.contract.js
-          node tests/screen_loader.contract.js
-          node tests/data_loading.contract.js
-          node tests/operational_data_loading.contract.js
-          node tests/clinical_reasoning_shoulder_elbow.regression.js
-          if [ -f tests/clinical_reasoning_shoulder_elbow.robustness.js ]; then node tests/clinical_reasoning_shoulder_elbow.robustness.js; fi
-          if [ -f tests/clinical_reasoning_hma.integration.js ]; then node tests/clinical_reasoning_hma.integration.js; fi
-          git diff --check
-          git diff --stat
+          set -uo pipefail
+          log=.github/phase4b-validation.log
+          : > "$log"
+          status=0
+          run_check() {
+            echo "===== $* =====" | tee -a "$log"
+            "$@" >> "$log" 2>&1
+            code=$?
+            echo "EXIT=$code" | tee -a "$log"
+            echo >> "$log"
+            if [ "$code" -ne 0 ]; then status=1; fi
+          }
+
+          run_check node --check screen_loader-1.25.0.js
+          run_check node --check agenda-1.20.0.js
+          run_check node --check agenda_notificacoes_core-1.20.1.js
+          run_check node --check financeiro_agendamento-1.21.0.js
+          run_check node --check tests/screen_loader.contract.js
+          run_check node tests/screen_loader.contract.js
+          run_check node tests/data_loading.contract.js
+          run_check node tests/operational_data_loading.contract.js
+          run_check node tests/clinical_reasoning_shoulder_elbow.regression.js
+          if [ -f tests/clinical_reasoning_shoulder_elbow.robustness.js ]; then run_check node tests/clinical_reasoning_shoulder_elbow.robustness.js; fi
+          if [ -f tests/clinical_reasoning_hma.integration.js ]; then run_check node tests/clinical_reasoning_hma.integration.js; fi
+          run_check git diff --check
+
+          if [ "$status" -ne 0 ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$log"
+            git commit -m 'Record Phase 4B validation diagnostics'
+            git push origin HEAD:performance/agenda-lazy-phase4b
+            exit 1
+          fi
+
+          git diff --stat | tee -a "$log"
+          rm -f "$log"
 
       - name: Commit permanent Phase 4B code
         shell: bash
         run: |
-          if git diff --quiet; then
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
             echo 'No changes required.'
             exit 0
           fi
