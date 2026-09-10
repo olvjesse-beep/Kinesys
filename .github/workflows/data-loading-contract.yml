@@ -5,13 +5,19 @@ on:
     branches: [main]
     paths:
       - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'financeiro-1.19.0.js'
       - 'tests/data_loading.contract.js'
+      - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
   push:
     branches: [main]
     paths:
       - 'script-1.18.0.js'
+      - 'agenda-1.20.0.js'
+      - 'financeiro-1.19.0.js'
       - 'tests/data_loading.contract.js'
+      - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
   workflow_dispatch:
 
@@ -28,6 +34,11 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check script-1.18.0.js
+          node --check agenda-1.20.0.js
+          node --check financeiro-1.19.0.js
           node --check tests/data_loading.contract.js
-      - name: Patient data loading contract
+          node --check tests/operational_data_loading.contract.js
+      - name: Core patient data loading contract
         run: node tests/data_loading.contract.js
+      - name: Operational patient data loading contract
+        run: node tests/operational_data_loading.contract.js
