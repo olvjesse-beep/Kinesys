@@ -1139,3 +1139,27 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     width:70px!important;
   }
 }
+
+
+/* ============================================================================
+   AGENDA HOUR LABEL VERTICAL FIX R5
+   A escala compacta deixa cada subslot de 10 min menor que a fonte do eixo.
+   A hora cheia ocupa visualmente 30 min apenas na coluna do relógio, evitando
+   clipping vertical sem alterar a geometria temporal dos atendimentos.
+   ========================================================================== */
+@media (min-width:760px){
+  #tela_agenda .agenda-hora-eixo.hora-cheia{
+    grid-row-end:span 3!important;
+    z-index:8!important;
+    min-height:calc(var(--kds-agenda-slot-height) * 3)!important;
+    padding:2px 8px 0 4px!important;
+    overflow:visible!important;
+    line-height:var(--kds-leading-tight)!important;
+    background:#FAFBFB!important;
+  }
+
+  #tela_agenda .agenda-hora-eixo.subhora,
+  #tela_agenda .agenda-hora-eixo.meia-hora{
+    z-index:3!important;
+  }
+}
