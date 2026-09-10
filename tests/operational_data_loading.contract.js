@@ -30,4 +30,14 @@ const finChunk=financeiro.slice(finStart,finStart+850);
 assert.match(finChunk,/obterPacientesBasicos\(\)/,'Finance patient selector must prefer lightweight patient data');
 assert.doesNotMatch(finChunk,/avaliacoes\(\*\)|evolucoes\(\*\)/,'Finance selector cannot request clinical histories');
 
-console.log('Operational Data Loading contract Phase 3B: Agenda/Finance selectors are lightweight and background polling sleeps when hidden.');
+const weekStart=agenda.indexOf('async function carregarAgendamentosSemana');
+const weekEnd=agenda.indexOf('function renderizarGradeSemanal',weekStart);
+assert.ok(weekStart>=0&&weekEnd>weekStart,'Agenda week loader must exist');
+const weekChunk=agenda.slice(weekStart,weekEnd);
+assert.doesNotMatch(weekChunk,/pacientes\(\*\)/,'Agenda week query must not request every patient column');
+assert.match(agenda,/AGENDA_SELECT_SEMANA = ['"][^'"]*pacientes\(id,nome,telefone,dependente,responsavel_nome,responsavel_parentesco,responsavel_telefone\)/,'Agenda week query must request only patient identity/contact fields');
+assert.match(agenda,/AGENDA_SELECT_SEMANA_LEGADO/,'Agenda must retain a legacy patient-contact select');
+assert.match(weekChunk,/AGENDA_SELECT_SEMANA/,'Agenda week loader must use the explicit relation contract');
+assert.match(agenda,/agendaContatoResponsavelDisponivel/,'Agenda must cache schema compatibility after a legacy fallback');
+
+console.log('Operational Data Loading contract Phase 3C: Agenda/Finance selectors are lightweight, polling sleeps when hidden, and Agenda week joins only required patient fields.');
