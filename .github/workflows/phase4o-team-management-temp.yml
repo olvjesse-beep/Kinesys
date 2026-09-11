@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/phase4o-team-management-temp.yml'
       - '.github/scripts/phase4o_team_management.py'
+      - '.github/scripts/phase4o_contract_fix.py'
 
 permissions:
   contents: write
@@ -23,6 +24,9 @@ jobs:
 
       - name: Apply exact extraction
         run: python .github/scripts/phase4o_team_management.py
+
+      - name: Adjust Phase 4O contract assertion
+        run: python .github/scripts/phase4o_contract_fix.py
 
       - name: Validate Phase 4O
         shell: bash
