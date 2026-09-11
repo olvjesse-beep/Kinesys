@@ -24,8 +24,10 @@ const editar = trechoEntre('async function salvarEdicaoAtendimentoAtual', '\nasy
 const detalhe = trechoEntre('async function abrirDetalheAgendamento', '\nasync function editarAgendamentoAtual');
 
 // Busca de paciente: nenhum carregamento visual de toda a base ao abrir o modal.
-assert.match(html, /id="ag_paciente_busca"[^>]*type="search"[^>]*oninput="filtrarPacientesAgendamento\(this\.value\)"/,
-  'Modal deve possuir campo de busca incremental de paciente');
+const inputBusca = html.match(/<input[^>]*id="ag_paciente_busca"[^>]*>/)?.[0] || '';
+assert.match(inputBusca, /type="search"/,'Busca de paciente deve usar input search');
+assert.match(inputBusca, /oninput="filtrarPacientesAgendamento\(this\.value\)"/,
+  'Busca de paciente deve filtrar conforme digitação');
 assert.match(html, /id="ag_paciente_busca_status"[^>]*aria-live="polite"/,
   'Busca deve expor status acessível');
 assert.match(abrir, /prepararBuscaPacienteAgendamento\(pacientes, atendimentoEdicao\?\.paciente_id \|\| ''\)/,
