@@ -41,6 +41,6 @@ assert.ok(designPos>corePos&&homePos>corePos,'overrides modernos devem continuar
 assert.match(design,/window\.renderizarTabelaProntuarios\s*=\s*async function/,'Design System ativo deve continuar substituindo a listagem fallback');
 assert.match(design,/window\.filtrarPacientesSalvos\s*=\s*function/,'Design System ativo deve continuar substituindo o filtro fallback');
 assert.match(home,/window\.renderizarPacientesRecentesHome\s*=\s*\(\)=>carregarAtendimentosHojeDetalhes\(\)/,'Home Detalhes deve continuar substituindo o fallback de recentes');
-assert.match(html,/core_mod=20260911-phase4n-r1/,'cache-bust do monólito deve avançar para 4L');
+assert.match(html,/core_mod=20260911-phase4o-r1/,'cache-bust do monólito deve avançar para 4L');
 
 console.log('Core Modularization Phase 4L: patient records browse fallbacks extracted while later Design System/Home overrides remain authoritative.');
