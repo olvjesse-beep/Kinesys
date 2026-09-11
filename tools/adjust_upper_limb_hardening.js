@@ -29,3 +29,12 @@ s=s.replace(oldEvidence,newEvidence);
 
 fs.writeFileSync(path,s);
 console.log('Elbow lexical, epicondylar and mixed medial-ulnar refinements applied.');
+
+const wristPath='clinical_reasoning_wrist-3.1.0.js';
+let w=fs.readFileSync(wristPath,'utf8');
+const oldUlnarDor=`    const ulnarDor=/(dor ulnar|lado do mindinho).{0,30}punho|punho.{0,30}(ulnar|lado do mindinho)/.test(t);`;
+const newUlnarDor=`    const ulnarDor=/(?:dor ulnar|lado ulnar|regiao ulnar|lado do mindinho).{0,35}punho|punho.{0,35}(?:ulnar|lado ulnar|regiao ulnar|lado do mindinho)/.test(t);`;
+if(!w.includes(oldUlnarDor))throw new Error('Topografia ulnar do punho pós-hardening não encontrada');
+w=w.replace(oldUlnarDor,newUlnarDor);
+fs.writeFileSync(wristPath,w);
+console.log('Wrist TFCC ulnar localization refinement applied.');
