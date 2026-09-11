@@ -10,7 +10,7 @@ function calcularIdadeCadastro() {
     const campoData = document.getElementById('cad_nascimento');
     const campoIdade = document.getElementById('cad_idade');
     if (!campoData || !campoIdade) return;
-    
+
     const dataNasc = campoData.value;
     if (!dataNasc) { campoIdade.value = ""; return; }
 
