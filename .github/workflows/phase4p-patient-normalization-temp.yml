@@ -1,0 +1,60 @@
+name: Phase 4P Patient Normalization Temp
+
+on:
+  push:
+    branches:
+      - performance/patient-normalization-phase4p
+    paths:
+      - '.github/workflows/phase4p-patient-normalization-temp.yml'
+      - '.github/scripts/phase4p_patient_normalization.py'
+
+permissions:
+  contents: write
+
+jobs:
+  modularize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/patient-normalization-phase4p
+          fetch-depth: 0
+
+      - name: Apply exact extraction
+        run: python .github/scripts/phase4p_patient_normalization.py
+
+      - name: Validate Phase 4P
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check patient_data_normalization_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/patient_data_normalization_modularization.contract.js
+          node tests/patient_data_normalization_modularization.contract.js
+          node tests/patient_index_cache_modularization.contract.js
+          node tests/data_cache_integration.contract.js
+          node tests/data_loading.contract.js
+          node tests/patient_chart_read_modularization.contract.js
+          node tests/patient_registration_modularization.contract.js
+          node tests/patient_deletion_modularization.contract.js
+          node tests/fisio_home_patient_self_service.contract.js
+          node tests/document_timeline_modularization.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          node tests/clinical_reasoning_cervical.regression.js
+          git diff --check
+          wc -c script-1.18.0.js patient_data_normalization_core-1.0.0.js
+
+      - name: Commit permanent Phase 4P files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script-1.18.0.js index.html patient_data_normalization_core-1.0.0.js tests
+          if git diff --cached --quiet; then
+            echo 'No permanent changes.'
+            exit 0
+          fi
+          git commit -m 'Modularize patient data normalization'
+          git push origin HEAD:performance/patient-normalization-phase4p
