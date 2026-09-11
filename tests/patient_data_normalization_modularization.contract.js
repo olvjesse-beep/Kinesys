@@ -47,7 +47,7 @@ const normPos=index.indexOf('patient_data_normalization_core-1.0.0.js');
 const patientPos=index.indexOf('patient_index_cache_core-1.0.0.js');
 const corePos=index.indexOf('script-1.18.0.js');
 assert.ok(cachePos>=0&&normPos>cachePos&&patientPos>normPos&&corePos>patientPos,'ordem deve ser cache central -> normalização -> índice leve -> core');
-assert.match(index,/core_mod=20260911-phase4p-r1/,'cache-buster do core deve acompanhar a Phase 4P');
+assert.match(index,/core_mod=20260911-phase4q-r1/,'cache-buster do core deve acompanhar a Phase 4P');
 
 const moduleSize=fs.statSync('patient_data_normalization_core-1.0.0.js').size;
 const coreSize=fs.statSync('script-1.18.0.js').size;

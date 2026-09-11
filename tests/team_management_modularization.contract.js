@@ -40,7 +40,7 @@ const teamPos=index.indexOf(teamTag);
 const corePos=index.indexOf('script-1.18.0.js');
 assert.ok(teamPos>=0,'index deve carregar o módulo de Gestão de Equipe');
 assert.ok(teamPos<corePos,'helpers de equipe devem carregar antes do core consumidor');
-assert.match(index,/core_mod=20260911-phase4p-r1/,'cache-buster do core deve acompanhar a Phase 4O');
+assert.match(index,/core_mod=20260911-phase4q-r1/,'cache-buster do core deve acompanhar a Phase 4O');
 
 const size=fs.statSync('team_management_core-1.0.0.js').size;
 const coreSize=fs.statSync('script-1.18.0.js').size;
