@@ -11,7 +11,13 @@ on:
       - 'clinical_reasoning_wrist-3.1.0.css'
       - 'clinical_reasoning_cervical-3.1.0.js'
       - 'clinical_reasoning_cervical-3.1.0.css'
+      - 'clinical_region_loader-1.0.0.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
+      - 'database/regioes/**'
       - 'screen_loader-1.25.0.js'
+      - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
@@ -29,7 +35,13 @@ on:
       - 'clinical_reasoning_wrist-3.1.0.css'
       - 'clinical_reasoning_cervical-3.1.0.js'
       - 'clinical_reasoning_cervical-3.1.0.css'
+      - 'clinical_region_loader-1.0.0.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
+      - 'database/regioes/**'
       - 'screen_loader-1.25.0.js'
+      - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
@@ -57,12 +69,18 @@ jobs:
           node --check clinical_reasoning_elbow-3.1.0.js
           node --check clinical_reasoning_wrist-3.1.0.js
           node --check clinical_reasoning_cervical-3.1.0.js
+          node --check clinical_region_loader-1.0.0.js
+          for f in database/regioes/*-ext-1.0.0.js; do node --check "$f"; done
+          node --check tests/clinical_bank_regional_equivalence.contract.js
           node --check tests/clinical_reasoning_shoulder_elbow.regression.js
           node --check tests/clinical_reasoning_wrist.regression.js
           node --check tests/clinical_reasoning_upper_limb.adversarial.js
           node --check tests/clinical_reasoning_upper_limb.chaos.js
           node --check tests/clinical_reasoning_cervical.regression.js
           node --check tests/clinical_reasoning_cervical.adversarial.js
+
+      - name: Verify regional clinical bank equivalence
+        run: node tests/clinical_bank_regional_equivalence.contract.js
 
       - name: Run realistic shoulder and elbow HMA corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
