@@ -11,7 +11,6 @@ on:
 permissions:
   contents: write
 
-# rerun-2: use the canonical Agenda edit contract filename
 jobs:
   integrate:
     runs-on: ubuntu-latest
@@ -22,57 +21,30 @@ jobs:
           ref: performance/query-cache-phase1b
           fetch-depth: 0
 
-      - name: Integrate scoped weekly Agenda cache
+      - name: Reapply validated patch with isolated-function guard
         run: |
-          python3 - <<'PY'
+          python3 - <<'OUTER'
+          import subprocess
           from pathlib import Path
 
-          p=Path('agenda-1.20.0.js')
-          s=p.read_text()
-
-          anchor="let agendaContatoResponsavelDisponivel = true;\n"
-          assert s.count(anchor)==1, 'Agenda cache helper anchor changed'
-          helper=anchor+'''\nconst AGENDA_SEMANA_CACHE_TTL_MS = 5000;\n\nfunction prefixoCacheAgendaSemanaAtual() {\n    const perfilId = String(usuarioLogado?.id || 'sem_perfil').trim() || 'sem_perfil';\n    const clinicaId = String(usuarioLogado?.clinica_id || 'sem_clinica').trim() || 'sem_clinica';\n    return `agenda::semana::${perfilId}::${clinicaId}::`;\n}\n\nfunction chaveCacheAgendaSemana(inicio, fim, profissionalEscopo = '') {\n    const inicioISO = formatarDataISO(inicio);\n    const fimISO = formatarDataISO(fim);\n    const profissional = String(profissionalEscopo || 'todos').trim() || 'todos';\n    return `${prefixoCacheAgendaSemanaAtual()}${inicioISO}::${fimISO}::${profissional}`;\n}\n\nfunction invalidarCacheAgendaSemana() {\n    try { return Number(window.KineSysDataCache?.invalidatePrefix?.(prefixoCacheAgendaSemanaAtual()) || 0); }\n    catch (_) { return 0; }\n}\n\nfunction clonarAgendamentosAgenda(lista = []) {\n    return (Array.isArray(lista) ? lista : []).map(item => ({\n        ...item,\n        pacientes: item?.pacientes ? { ...item.pacientes } : item?.pacientes,\n        procedimentos: item?.procedimentos ? { ...item.procedimentos } : item?.procedimentos,\n        equipe: item?.equipe ? { ...item.equipe } : item?.equipe\n    }));\n}\n'''
-          s=s.replace(anchor,helper,1)
-
-          start=s.index("async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') {")
-          end=s.index('function renderizarGradeSemanal',start)
-          assert start>=0 and end>start, 'weekly Agenda loader not found'
-          novo='''async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') {\n    if (!usuarioPodeVerAgendaClinicaToda()) {\n        profissionalEscopo = profissionalAgendaRestritoAtualId();\n        if (!profissionalEscopo) return {data:[],error:new Error('Sua agenda não pôde ser identificada.')};\n    }\n    const filtrarEscopo = (lista) => (lista || []).filter(a => !profissionalEscopo || String(a.profissional_id || '') === String(profissionalEscopo));\n    if (!_supabase) {\n        const locais = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda([], inicio, fim));\n        return locais.length\n            ? { data: locais, error: null, somenteLocal: true, erroNuvem: new Error('Supabase indisponível') }\n            : { data: [], error: new Error('Supabase indisponível') };\n    }\n\n    const buscarSemanaNuvem = async () => {\n        const montarConsultaSemana = (selecao) => {\n            let query = _supabase.from('agendamentos')\n                .select(selecao)\n                .gte('data', formatarDataISO(inicio))\n                .lte('data', formatarDataISO(fim))\n                .neq('status', 'cancelado');\n            if (profissionalEscopo) query = query.eq('profissional_id', profissionalEscopo);\n            return query.order('data').order('hora_inicio');\n        };\n        let resultado = await montarConsultaSemana(agendaContatoResponsavelDisponivel ? AGENDA_SELECT_SEMANA : AGENDA_SELECT_SEMANA_LEGADO);\n        if (resultado.error && agendaContatoResponsavelDisponivel && /dependente|responsavel_nome|responsavel_parentesco|responsavel_telefone|schema cache|column .* does not exist/i.test(String(resultado.error?.message || resultado.error || ''))) {\n            agendaContatoResponsavelDisponivel = false;\n            resultado = await montarConsultaSemana(AGENDA_SELECT_SEMANA_LEGADO);\n        }\n        if (resultado.error) throw resultado.error;\n        return clonarAgendamentosAgenda(resultado.data || []);\n    };\n\n    try {\n        const dadosNuvem = window.KineSysDataCache?.get\n            ? await window.KineSysDataCache.get({\n                key:chaveCacheAgendaSemana(inicio, fim, profissionalEscopo),\n                ttl:AGENDA_SEMANA_CACHE_TTL_MS,\n                fetcher:buscarSemanaNuvem\n            })\n            : await buscarSemanaNuvem();\n        let dados = clonarAgendamentosAgenda(dadosNuvem);\n        if (typeof enriquecerAgendamentosComVinculoLocal === 'function') dados = enriquecerAgendamentosComVinculoLocal(dados || []);\n        dados = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda(dados || [], inicio, fim));\n        return { data:dados, error:null };\n    } catch (error) {\n        // Falhas e resultados somente locais nunca entram no TTL cache.\n        const locais = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda([], inicio, fim));\n        if (locais.length && erroAgendaEhTransitorio(error)) {\n            return { data: locais, error: null, somenteLocal: true, erroNuvem: error };\n        }\n        return { data:null, error };\n    }\n}\n\n'''
-          s=s[:start]+novo+s[end:]
-
-          old="""    } finally {\n        agendaSyncEmCurso = false;\n    }\n\n    if (renderizar && document.getElementById('tela_agenda')?.classList.contains('ativa')) {\n"""
-          new="""    } finally {\n        agendaSyncEmCurso = false;\n    }\n\n    if (sincronizados > 0) invalidarCacheAgendaSemana();\n\n    if (renderizar && document.getElementById('tela_agenda')?.classList.contains('ativa')) {\n"""
-          assert s.count(old)==1, 'sync invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          old="""    if (!salvo) throw new Error('Não foi possível confirmar a atualização do atendimento.');\n\n    Object.assign(a, alteracoes, {\n"""
-          new="""    if (!salvo) throw new Error('Não foi possível confirmar a atualização do atendimento.');\n    invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {\n"""
-          assert s.count(old)==1, 'edit invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          old="""        if (!salvos) {\n            throw primeiroErro || new Error('Nenhum agendamento da série pôde ser salvo.');\n        }\n\n        agendaDataSelecionada = new Date(datasSolicitadas[0] + 'T00:00:00');\n"""
-          new="""        if (!salvos) {\n            throw primeiroErro || new Error('Nenhum agendamento da série pôde ser salvo.');\n        }\n        invalidarCacheAgendaSemana();\n\n        agendaDataSelecionada = new Date(datasSolicitadas[0] + 'T00:00:00');\n"""
-          assert s.count(old)==1, 'create invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          old="""            a.plano_id=planoId;\n        }\n        fecharModal('modal_detalhe_agendamento');\n        await renderizarPainelAgenda();\n"""
-          new="""            a.plano_id=planoId;\n        }\n        invalidarCacheAgendaSemana();\n        fecharModal('modal_detalhe_agendamento');\n        await renderizarPainelAgenda();\n"""
-          assert s.count(old)==1, 'plan invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          old="""    if (!salvo) return;\n    if (planoAutoLocal && typeof salvarVinculoAgendaLocal==='function') salvarVinculoAgendaLocal(agendamentoDetalheAtualId, planoAutoLocal, a.paciente_id, a.procedimento_id, novoStatus);\n"""
-          new="""    if (!salvo) return;\n    invalidarCacheAgendaSemana();\n    if (planoAutoLocal && typeof salvarVinculoAgendaLocal==='function') salvarVinculoAgendaLocal(agendamentoDetalheAtualId, planoAutoLocal, a.paciente_id, a.procedimento_id, novoStatus);\n"""
-          assert s.count(old)==1, 'status invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          old="""    const { error } = await _supabase.from('agendamentos').update({ lembrete_enviado_em: new Date().toISOString() }).eq('id', agendamentoDetalheAtualId);\n    if (!error) {\n        fecharModal('modal_detalhe_agendamento');\n        await renderizarPainelAgenda();\n"""
-          new="""    const { error } = await _supabase.from('agendamentos').update({ lembrete_enviado_em: new Date().toISOString() }).eq('id', agendamentoDetalheAtualId);\n    if (!error) {\n        invalidarCacheAgendaSemana();\n        fecharModal('modal_detalhe_agendamento');\n        await renderizarPainelAgenda();\n"""
-          assert s.count(old)==1, 'reminder invalidation anchor changed'
-          s=s.replace(old,new,1)
-
-          p.write_text(s)
-          PY
+          # Reuse the exact integration script from the preceding commit so this
+          # retry changes only the compatibility guard discovered by the legacy
+          # isolated-function contract.
+          yml=subprocess.check_output(
+              ['git','show','HEAD^:.github/workflows/cache-phase1b-temp.yml'],
+              text=True
+          )
+          marker="          python3 - <<'PY'\n"
+          start=yml.index(marker)+len(marker)
+          end=yml.index("          PY\n",start)
+          linhas=yml[start:end].splitlines()
+          script='\n'.join(l[10:] if l.startswith('          ') else l for l in linhas)+'\n'
+          antigo="    invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
+          novo="    if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
+          assert script.count(antigo)==1, 'edit cache invalidation anchor not found in previous patch'
+          script=script.replace(antigo,novo,1)
+          exec(compile(script,'phase1b_patch.py','exec'),{})
+          OUTER
 
       - name: Validate Phase 1B
         run: |
