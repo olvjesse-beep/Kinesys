@@ -4,21 +4,21 @@
     "keys": [
       "diferenciais"
     ],
-    "bytes": 9634
+    "bytes": 1250
   },
   "joelho": {
     "file": "database/regioes/joelho-ext-1.0.0.js",
     "keys": [
       "diferenciais"
     ],
-    "bytes": 6851
+    "bytes": 2654
   },
   "quadril": {
     "file": "database/regioes/quadril-ext-1.0.0.js",
     "keys": [
       "diferenciais"
     ],
-    "bytes": 6231
+    "bytes": 4486
   },
   "tornozelo_pe": {
     "file": "database/regioes/tornozelo_pe-ext-1.0.0.js",
@@ -26,14 +26,14 @@
       "palavrasChave",
       "diferenciais"
     ],
-    "bytes": 17994
+    "bytes": 12057
   },
   "cotovelo": {
     "file": "database/regioes/cotovelo-ext-1.0.0.js",
     "keys": [
       "diferenciais"
     ],
-    "bytes": 3678
+    "bytes": 2130
   },
   "punho_mao": {
     "file": "database/regioes/punho_mao-ext-1.0.0.js",
@@ -41,13 +41,13 @@
       "palavrasChave",
       "diferenciais"
     ],
-    "bytes": 9488
+    "bytes": 7224
   },
   "coluna_toracica": {
     "file": "database/regioes/coluna_toracica-ext-1.0.0.js",
     "keys": [
       "diferenciais"
     ],
-    "bytes": 2640
+    "bytes": 990
   }
 }
