@@ -1,0 +1,37 @@
+name: Clinical Region Phase 3A Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-region-lazy-phase3a
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-region-lazy-phase3a
+      - name: Apply patch
+        run: node .github/phase3a_patch.js
+      - name: Validate
+        run: |
+          node --check screen_loader-1.25.0.js
+          node --check clinical_region_loader-1.0.0.js
+          node --check tests/screen_loader.contract.js
+          node --check tests/clinical_region_loader.contract.js
+          node tests/screen_loader.contract.js
+          node tests/clinical_region_loader.contract.js
+          git diff --check
+      - name: Commit final branch state
+        run: |
+          rm -f .github/workflows/clinical-region-phase3a-temp.yml .github/phase3a_patch.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Performance — Clinical Region Lazy Loading Phase 3A'
+          git push origin HEAD:performance/clinical-region-lazy-phase3a
