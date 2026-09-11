@@ -8,6 +8,7 @@ on:
       - 'kinesys_data_cache-1.0.0.js'
       - 'patient_index_cache_core-1.0.0.js'
       - 'patient_chart_read_core-1.0.0.js'
+      - 'patient_pre_registration_core-1.0.0.js'
       - 'script-1.18.0.js'
       - 'midias_core-1.0.0.js'
       - 'agenda-1.20.0.js'
@@ -16,6 +17,7 @@ on:
       - 'tests/data_cache_integration.contract.js'
       - 'tests/patient_index_cache_modularization.contract.js'
       - 'tests/patient_chart_read_modularization.contract.js'
+      - 'tests/patient_pre_registration_modularization.contract.js'
       - 'tests/agenda_cache.contract.js'
       - 'tests/agenda_aux_cache.contract.js'
       - 'tests/data_loading.contract.js'
@@ -28,6 +30,7 @@ on:
       - 'kinesys_data_cache-1.0.0.js'
       - 'patient_index_cache_core-1.0.0.js'
       - 'patient_chart_read_core-1.0.0.js'
+      - 'patient_pre_registration_core-1.0.0.js'
       - 'script-1.18.0.js'
       - 'midias_core-1.0.0.js'
       - 'agenda-1.20.0.js'
@@ -36,6 +39,7 @@ on:
       - 'tests/data_cache_integration.contract.js'
       - 'tests/patient_index_cache_modularization.contract.js'
       - 'tests/patient_chart_read_modularization.contract.js'
+      - 'tests/patient_pre_registration_modularization.contract.js'
       - 'tests/agenda_cache.contract.js'
       - 'tests/agenda_aux_cache.contract.js'
       - 'tests/data_loading.contract.js'
@@ -58,6 +62,7 @@ jobs:
           node --check kinesys_data_cache-1.0.0.js
           node --check patient_index_cache_core-1.0.0.js
           node --check patient_chart_read_core-1.0.0.js
+          node --check patient_pre_registration_core-1.0.0.js
           node --check script-1.18.0.js
           node --check midias_core-1.0.0.js
           node --check agenda-1.20.0.js
@@ -66,6 +71,7 @@ jobs:
           node --check tests/data_cache_integration.contract.js
           node --check tests/patient_index_cache_modularization.contract.js
           node --check tests/patient_chart_read_modularization.contract.js
+          node --check tests/patient_pre_registration_modularization.contract.js
           node --check tests/agenda_cache.contract.js
           node --check tests/agenda_aux_cache.contract.js
           node --check tests/data_loading.contract.js
@@ -78,6 +84,8 @@ jobs:
         run: node tests/patient_index_cache_modularization.contract.js
       - name: Patient chart read modularization contract
         run: node tests/patient_chart_read_modularization.contract.js
+      - name: Patient pre-registration modularization contract
+        run: node tests/patient_pre_registration_modularization.contract.js
       - name: Agenda week cache integration contract
         run: node tests/agenda_cache.contract.js
       - name: Agenda auxiliary cache integration contract
