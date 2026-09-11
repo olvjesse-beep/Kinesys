@@ -1,0 +1,34 @@
+name: Financeiro DOM Safe Temp
+
+on:
+  push:
+    branches: [financeiro/settle-remove-pending-charge]
+    paths:
+      - 'tools/financeiro_dom_safe_temp.py'
+      - '.github/workflows/financeiro-dom-safe-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: financeiro/settle-remove-pending-charge
+      - name: Patch eager bootstrap safety
+        run: python tools/financeiro_dom_safe_temp.py
+      - name: Validate
+        run: |
+          node --check financeiro_agendamento-1.21.0.js
+          node tests/financeiro_pendencia_agendamento.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add financeiro_agendamento-1.21.0.js
+          git commit -m "Make finance write-off dialog bootstrap DOM-safe" || exit 0
+          git push origin HEAD:financeiro/settle-remove-pending-charge
