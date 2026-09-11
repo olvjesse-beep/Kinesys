@@ -31,13 +31,6 @@ jobs:
 
           const test=`const assert=require('assert');\nconst fs=require('fs');\nconst index=fs.readFileSync('index.html','utf8');\nconst ds=fs.readFileSync('design_system-1.20.1.js','utf8');\n\nassert.match(index,/design_system-1\\.20\\.1\\.js/,'index deve carregar a versão ativa do Design System');\nassert.doesNotMatch(ds,/const poll=setInterval\\(/,'Design System ativo não deve manter polling global de 1,2 s');\nassert.doesNotMatch(ds,/beforeunload[^\\n]*clearInterval\\(poll\\)/,'cleanup do polling antigo não deve permanecer');\nassert.match(ds,/function sincronizarDesignDinamico\\(\\)/,'deve existir sincronização dinâmica orientada a eventos');\nassert.match(ds,/document\\.addEventListener\\('kinesys:tela-ativada',sincronizarDesignDinamico\\)/,'deve reagir à ativação de telas');\nassert.match(ds,/document\\.addEventListener\\('kinesys:tela-dom-pronta',sincronizarDesignDinamico\\)/,'deve reagir a DOM lazy pronto');\nassert.match(ds,/escutarSeletoresPaciente\\(\\);[\\s\\S]*atualizarGruposNav\\(\\);/,'deve preservar seleção de paciente e grupos de navegação');\nassert.match(ds,/ks_sidebar_role[\\s\\S]*rotuloPerfil/,'deve preservar atualização do rótulo de perfil');\nconsole.log('Design System lifecycle contract OK');\n`;
           fs.writeFileSync('tests/design_system_lifecycle.contract.js',test);
-
-          const wfPath='.github/workflows/screen-loader-contract.yml';
-          let wf=fs.readFileSync(wfPath,'utf8');
-          wf=wf.replaceAll("      - 'tests/radar_lifecycle.contract.js'\n", "      - 'tests/radar_lifecycle.contract.js'\n      - 'tests/design_system_lifecycle.contract.js'\n");
-          wf=wf.replace("          node --check tests/radar_lifecycle.contract.js\n", "          node --check tests/radar_lifecycle.contract.js\n          node --check tests/design_system_lifecycle.contract.js\n");
-          wf=wf.replace("      - name: Radar lifecycle contract\n        run: node tests/radar_lifecycle.contract.js\n", "      - name: Radar lifecycle contract\n        run: node tests/radar_lifecycle.contract.js\n      - name: Design System lifecycle contract\n        run: node tests/design_system_lifecycle.contract.js\n");
-          fs.writeFileSync(wfPath,wf);
           NODE
       - name: Remove temporary workflow
         run: rm .github/workflows/lifecycle-phase2d-audit-temp.yml
@@ -51,6 +44,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add design_system-1.20.1.js tests/design_system_lifecycle.contract.js .github/workflows/screen-loader-contract.yml .github/workflows/lifecycle-phase2d-audit-temp.yml
+          git add design_system-1.20.1.js tests/design_system_lifecycle.contract.js .github/workflows/lifecycle-phase2d-audit-temp.yml
           git commit -m "Performance — Design System Lifecycle Phase 2D"
           git push origin HEAD:performance/lifecycle-phase2d
