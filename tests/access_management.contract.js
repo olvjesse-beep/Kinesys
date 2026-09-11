@@ -13,7 +13,7 @@ assert.match(login,/kinesys_meus_perfis/,'login must resolve profiles from the a
 assert.doesNotMatch(login,/filter\(p=>normalize\(p\.tipo\)===selectedRole\)/,'login must not pre-filter profiles by a role chosen before authentication');
 assert.match(login,/profiles\.length===1/,'single real profile must enter without a second role choice');
 assert.match(login,/Selecione seu perfil/,'multiple real profiles must be selectable after authentication');
-assert.match(login,/new URL\('recuperar-acesso\.html',location\.href\)/,'self-service recovery must use the dedicated public recovery page');
+assert.match(login,/https:\/\/app\.fisiofixfisioterapia\.com\/recuperar-acesso\.html/,'self-service recovery must target the canonical production recovery page');
 assert.match(login,/\.ks-access-tabs'\)\?\.setAttribute\('hidden'/,'legacy role tabs must be hidden from the unified login');
 
 assert.match(recovery,/auth\.updateUser\(\{password\}\)/,'recovery page must update the authenticated recovery user password');
