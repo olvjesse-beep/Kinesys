@@ -89,30 +89,6 @@ let loginCredencialChave = '';
 let autenticacaoInicializada = false;
 let authStateSubscription = null;
 
-function mostrarFeedbackLogin(mensagem = '', tipo = 'info') {
-    const el = document.getElementById('login_feedback');
-    if (!el) return;
-    const tipos = ['erro','sucesso','aviso','info'];
-    const tipoVisual = tipos.includes(tipo) ? tipo : 'info';
-    el.textContent = String(mensagem || '');
-    tipos.forEach(x => el.classList.remove('ks-login-feedback--' + x));
-    el.classList.toggle('has-message', !!mensagem);
-    if (mensagem) el.classList.add('ks-login-feedback--' + tipoVisual);
-    el.style.display = mensagem ? 'block' : 'none';
-    el.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
-    el.setAttribute('aria-live', tipo === 'erro' ? 'assertive' : 'polite');
-}
-
-function sincronizarEstadoAutenticacaoVisual() {
-    const autenticado = !!usuarioLogado;
-    const header = document.querySelector('body > header');
-    const welcome = document.getElementById('header_welcome');
-    const lbl = document.getElementById('lbl_usuario_logado');
-    if (header) header.hidden = !autenticado;
-    if (welcome) welcome.hidden = !autenticado;
-    if (lbl) lbl.textContent = autenticado ? String(usuarioLogado.nome || '') : '';
-    document.body.classList.toggle('kinesys-autenticado', autenticado);
-}
 
 let pacienteAtualId = null; 
 let estadoMapeamento = {};
@@ -140,18 +116,6 @@ const CAMPOS_PUBLICOS_PERFIL = [
     'regional', 'numero_registro', 'aparece_na_agenda', 'ativo', 'idade', 'endereco', 'cpf'
 ].join(',');
 
-function mensagemErroAutenticacao(error) {
-    const texto = String(error?.message || '').toLowerCase();
-    if (/invalid login credentials|email not confirmed/.test(texto)) {
-        return /email not confirmed/.test(texto)
-            ? 'Confirme seu e-mail antes de entrar.'
-            : 'E-mail ou senha inválidos.';
-    }
-    if (/failed to fetch|network|fetch/.test(texto)) {
-        return 'Não foi possível alcançar o servidor. Verifique a conexão e tente novamente.';
-    }
-    return 'Não foi possível autenticar agora. Tente novamente.';
-}
 
 async function buscarPerfisDoUsuarioAuth(authUser) {
     if (!authUser?.id) return [];
@@ -629,8 +593,6 @@ function salvarLocalStorage(pacienteObjeto) {
 /* ================= 9. CADASTRO E EDIÇÃO DO PACIENTE ================= */
 
 
-
-
 /* ================= 10. AVALIAÇÃO ================= */
 
 /* Rastreabilidade clínica v1.11.2
@@ -827,9 +789,6 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
 function erroTabelaPacienteAusente(err) {
     return /does not exist|relation .* does not exist|schema cache|could not find the table/i.test(String(err?.message || err || ''));
 }
-
-
-
 
 
 /* ================= 12. EVOLUÇÕES E RELATÓRIOS ================= */
@@ -1089,7 +1048,6 @@ const API_KEY = '';
 function endpointGemini(modelo) {
     return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`;
 }
-
 
 
 /* gerarDocumentoComIA legado removido na v1.4 */
@@ -2906,8 +2864,6 @@ function construirBlocoRedFlags(idRegiao, regiao, destacar=true) {
 }
 
 
-
-
 /* ==========================================================================
    KINESYS CLINICAL SYNTHESIS 2.6 — RECONCILIAÇÃO HMA ↔ EXAME
    --------------------------------------------------------------------------
@@ -3582,7 +3538,6 @@ async function montarDocumentoIAParaImpressao(){
 }
 
 
-
 /* ================= 1.6 — PRODUTIVIDADE, ALTA, RESTRIÇÕES, PENDÊNCIAS E AUDITORIA IA ================= */
 function minutosEntreHoras(inicio,fim){if(!inicio||!fim)return null;const [hi,mi]=inicio.split(':').map(Number),[hf,mf]=fim.split(':').map(Number);const n=(hf*60+mf)-(hi*60+mi);return n>0?n:null;}
 function atualizarDuracaoComparecimento(){const i=document.getElementById('rel_comp_entrada')?.value,f=document.getElementById('rel_comp_saida')?.value,el=document.getElementById('rel_comp_duracao');if(!el)return;const m=minutosEntreHoras(i,f);el.value=m==null?'':`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}min`;}
@@ -3938,7 +3893,6 @@ function renderizarMapeamentoRegioes(){
     if(!regioes.length){container.innerHTML='<div class="kds-u-ta-center kds-u-text-muted kds-u-fs-meta kds-u-p-24px-10px">Selecione uma região acima para iniciar a investigação.</div>';return;}
     container.innerHTML='';regioes.forEach(id=>container.appendChild(construirCardRegiao(id,contexto)));
 }
-
 
 
 // Proteção de gravações críticas contra cliques repetidos. A trava permanece até a Promise terminar.
@@ -12847,7 +12801,6 @@ document.addEventListener('click', e => {
 })();
 
 
-
 /* ================= AUDITORIA DE TOPOLOGIA E LATERALIDADE ================= */
 (function instalarAuditoriaTopologiaEtapa4(){
   window.executarAuditoriaTopologiaHMAKineSys=function(opcoes){
@@ -12912,7 +12865,6 @@ document.addEventListener('click', e => {
     return{resumo:resumo,resultados:resultados};
   };
 })();
-
 
 
 /* ================= AUDITORIA DE DIAGNÓSTICOS DIFERENCIAIS — ETAPA 7 =================

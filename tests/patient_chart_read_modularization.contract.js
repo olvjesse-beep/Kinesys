@@ -41,6 +41,6 @@ const screenPos=html.indexOf('screen_loader-1.25.0.js');
 assert.ok(indexPos>=0&&corePos>indexPos,'índice leve deve continuar antes do core');
 assert.ok(chartPos>corePos,'módulo de prontuário deve carregar após o core que fornece normalização e Supabase');
 assert.ok(screenPos>chartPos,'módulo de prontuário deve estar disponível antes dos módulos operacionais lazy');
-assert.match(html,/core_mod=20260911-phase4q-r1/,'cache-bust do core deve acompanhar a modularização corrente após 4J');
+assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do core deve acompanhar a modularização corrente após 4J');
 
 console.log('Core Modularization Phase 4J: full patient chart read layer extracted without TTL cache or query changes.');

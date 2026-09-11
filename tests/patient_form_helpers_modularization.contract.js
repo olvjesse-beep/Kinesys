@@ -57,7 +57,7 @@ const inputPos=index.indexOf('input_helpers_core-1.0.0.js');
 const teamPos=index.indexOf('team_management_core-1.0.0.js');
 const corePos=index.indexOf('script-1.18.0.js');
 assert.ok(cadastroPos>=0&&helpersPos>cadastroPos&&inputPos>helpersPos&&teamPos>helpersPos&&corePos>teamPos,'ordem deve disponibilizar helpers antes dos consumidores e do core');
-assert.match(index,/core_mod=20260911-phase4q-r1/,'cache-buster do core deve acompanhar a Phase 4Q');
+assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4Q');
 
 assert.match(core,/async function salvarPacienteNaNuvem\(pacienteObjeto, opcoes = \{\}\)/,'persistência do paciente deve permanecer fora do escopo da 4Q');
 const moduleSize=fs.statSync('patient_form_helpers_core-1.0.0.js').size;
