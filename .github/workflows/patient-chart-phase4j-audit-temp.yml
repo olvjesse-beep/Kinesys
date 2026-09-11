@@ -1,0 +1,40 @@
+name: Patient Chart Phase 4J Audit Temp
+
+on:
+  push:
+    branches: [performance/patient-chart-read-phase4j]
+    paths:
+      - '.github/workflows/patient-chart-phase4j-audit-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit patient chart read boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== TARGET DEFINITIONS ==='
+          grep -nE 'function instanteRegistroClinico|function mesclarRegistrosCloudLocal|function mesclarPacienteCloudLocal|async function obterPacienteCompletoPorId|async function obterPacientesSalvos' script-1.18.0.js
+          echo '=== ALL REFERENCES ==='
+          grep -RInE 'instanteRegistroClinico|mesclarRegistrosCloudLocal|mesclarPacienteCloudLocal|obterPacienteCompletoPorId|obterPacientesSalvos|pacientesCompletosEmCurso' --include='*.js' --include='*.html' . | grep -v '^./.git/' || true
+          echo '=== PATIENT READ TEST REFERENCES ==='
+          grep -RInE 'obterPacienteCompletoPorId|obterPacientesSalvos|mesclarPacienteCloudLocal|pacientesCompletosEmCurso' tests .github/workflows || true
+          echo '=== INDEX ORDER ==='
+          grep -nE 'patient_index_cache_core|script-1.18.0.js|midias_core|document_timeline_core' index.html
+          echo '=== TARGET BLOCK SIZE ==='
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('script-1.18.0.js').read_text()
+          a=s.index('function instanteRegistroClinico(registro) {')
+          b=s.index('async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {})',a)
+          block=s[a:b]
+          print('chars',len(block),'lines',block.count('\n'))
+          print(block[:300])
+          print('...')
+          print(block[-300:])
+          PY
