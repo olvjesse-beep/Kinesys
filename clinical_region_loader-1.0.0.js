@@ -1,6 +1,6 @@
 /* KineSys — Clinical Region Loader 1.0.0
- * Carrega motores clínicos 3.1 apenas quando a região aparece no plano HMA.
- * Preserva a ordem/dependências históricas dos enriquecedores regionais.
+ * Carrega banco clínico completo e motores 3.1 somente quando uma região é necessária.
+ * Preserva ordem/dependências históricas e mantém o índice leve no bundle-base.
  */
 (function instalarClinicalRegionLoader(){
     'use strict';
@@ -9,7 +9,15 @@
     const carregamentos=new Map();
     const estilos=new Map();
     const regioesCarregadas=new Set();
+    let bancoClinicoPronto=false;
+    let bancoClinicoPromise=null;
     let fila=Promise.resolve();
+
+    const BANCO_CLINICO_SCRIPTS=Object.freeze([
+        'database/mapeamento_clinico.js',
+        'database/condicoes_mobilidade_v23.js',
+        'database/diferenciais_neurais.js'
+    ]);
 
     const REGIOES=Object.freeze({
         ombro:Object.freeze({
@@ -61,12 +69,27 @@
             const script=document.createElement('script');
             script.src=src;script.async=false;script.dataset.kinesysClinicalRegion='1';
             script.addEventListener('load',()=>resolve(script),{once:true});
-            script.addEventListener('error',()=>reject(new Error('Falha ao carregar motor regional: '+src)),{once:true});
+            script.addEventListener('error',()=>reject(new Error('Falha ao carregar módulo clínico: '+src)),{once:true});
             document.body.appendChild(script);
         });
         carregamentos.set(href,promessa);
         promessa.catch(()=>carregamentos.delete(href));
         return promessa;
+    }
+
+    async function garantirBancoClinico(){
+        if(bancoClinicoPronto)return false;
+        if(bancoClinicoPromise)return bancoClinicoPromise;
+        bancoClinicoPromise=(async()=>{
+            for(const src of BANCO_CLINICO_SCRIPTS)await carregarScript(src);
+            bancoClinicoPronto=true;
+            document.dispatchEvent(new CustomEvent('kinesys:clinical-bank-ready',{detail:{versao:VERSION}}));
+            return true;
+        })().catch(error=>{
+            bancoClinicoPromise=null;
+            throw error;
+        });
+        return bancoClinicoPromise;
     }
 
     function normalizarRegioes(ids){
@@ -78,6 +101,13 @@
             (REGIOES[chave].depends||[]).forEach(dep=>solicitadas.add(dep));
         });
         return ORDEM.filter(id=>solicitadas.has(id));
+    }
+
+    function regioesSelecionadasDom(){
+        try{
+            return Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input:checked'))
+                .map(input=>String(input.dataset.regiao||'')).filter(Boolean);
+        }catch(_){return[];}
     }
 
     async function carregarRegiao(id){
@@ -92,8 +122,10 @@
     }
 
     async function executar(ids){
-        const ordem=normalizarRegioes(ids);
-        let mudou=false;
+        const solicitadas=Array.from(new Set([...(Array.isArray(ids)?ids:[]),...regioesSelecionadasDom()].filter(Boolean)));
+        if(!solicitadas.length)return[];
+        let mudou=await garantirBancoClinico();
+        const ordem=normalizarRegioes(solicitadas);
         for(const id of ordem){
             if(await carregarRegiao(id))mudou=true;
         }
@@ -127,12 +159,15 @@
     document.addEventListener('kinesys:tela-ativada',event=>{
         if(event.detail?.id==='tela_avaliacao')sincronizarPlanoAtual();
     });
+    document.addEventListener('change',event=>{
+        if(event.target?.matches?.('#grupo_regioes_mapeamento input'))solicitar(regioesSelecionadasDom());
+    });
 
     window.KineSysClinicalRegionLoader=Object.freeze({
         version:VERSION,
         ensure:solicitar,
         sync:sincronizarPlanoAtual,
-        status(){return Object.freeze({loaded:Object.freeze(ORDEM.filter(id=>regioesCarregadas.has(id)))});}
+        status(){return Object.freeze({bankLoaded:bancoClinicoPronto,loaded:Object.freeze(ORDEM.filter(id=>regioesCarregadas.has(id)))});}
     });
 
     sincronizarPlanoAtual();
