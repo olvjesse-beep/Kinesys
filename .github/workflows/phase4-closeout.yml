@@ -1,0 +1,35 @@
+name: Phase 4 Closeout Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'script-1.18.0.js'
+      - 'tests/phase4_closeout.contract.js'
+      - '.github/workflows/phase4-closeout.yml'
+      - '.github/workflows/**phase4**'
+      - 'scripts/**phase4**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'script-1.18.0.js'
+      - 'tests/phase4_closeout.contract.js'
+      - '.github/workflows/phase4-closeout.yml'
+      - '.github/workflows/**phase4**'
+      - 'scripts/**phase4**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closeout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: node --check tests/phase4_closeout.contract.js
+      - name: Phase 4 closeout contract
+        run: node tests/phase4_closeout.contract.js
