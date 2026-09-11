@@ -9,33 +9,44 @@ const KineSysLogin = (() => {
     const el = id => document.getElementById(id);
     const normalize = value => ({MASTER_FEM:'MASTER',PROFISSIONAL:'FISIOTERAPEUTA'})[value] || value;
     const known = value => Object.values(roles).flat().some(([id])=>id === normalize(value));
+    const roleLabel = value => ({MASTER:'Administrador(a)',SECRETARIA:'Secretaria',FISIOTERAPEUTA:'Fisioterapeuta'})[normalize(value)] || normalize(value) || 'Perfil';
+
+    function profileLabel(profile={}) {
+        return [roleLabel(profile.tipo),profile.clinica_nome,profile.registro].filter(Boolean).join(' · ') || profile.nome || 'Perfil';
+    }
     function show(view = 'normal') {
         for (const name of ['normal','recuperar','nova_senha','conta']) el('login_acesso_'+name).hidden = name !== view;
         mostrarFeedbackLogin('');
     }
     function clearPending() {
         pending=[];pendingUser='';loginPerfisDisponiveis=[];loginCredencialChave='';
-        el('login_perfil_group').style.display='none';el('login_perfil').replaceChildren(new Option('Selecione o vínculo',''));
+        el('login_perfil_group').style.display='none';el('login_perfil').replaceChildren(new Option('Selecione seu perfil',''));
         el('login_senha').required=true;el('login_senha').disabled=false;el('login_email').readOnly=false;
     }
+    function configureUnifiedLogin() {
+        document.querySelector('.ks-access-tabs')?.setAttribute('hidden','');
+        const roleGroup=el('login_funcao')?.closest('.input-group');
+        if(roleGroup)roleGroup.hidden=true;
+        const intro=document.querySelector('.ks-access-intro > p');
+        if(intro)intro.textContent='Entre com sua conta. O KineSys libera somente os perfis realmente vinculados ao seu e-mail.';
+        const note=document.querySelector('.ks-access-note');
+        if(note)note.textContent='Se sua conta possui mais de um vínculo, você escolhe o perfil depois que o e-mail e a senha forem confirmados.';
+        el('login_acesso_titulo').textContent='Acesso ao KineSys';
+        el('login_acesso_descricao').textContent='Informe seu e-mail e senha. Seu perfil autorizado será identificado automaticamente.';
+        el('btn_login_entrar').textContent='Entrar';
+    }
     function setArea(next, focus = false) {
+        // Mantido apenas como compatibilidade com HTML/cache antigo. A função escolhida
+        // pelo usuário não é mais fonte de autorização: o banco devolve os perfis reais.
         if(busy || !roles[next])return;
-        area=next;clearPending();el('login_senha').value='';show();
-        document.querySelectorAll('[data-access-area]').forEach(button=>{
-            const selected=button.dataset.accessArea===area;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
-            if(selected && focus)button.focus();
-        });
-        el('login_funcao').replaceChildren(...roles[area].map(([id,label])=>new Option(label,id)));
-        el('login_form_panel').setAttribute('aria-labelledby','login_tab_'+area);
-        el('login_acesso_titulo').textContent=area==='gestao'?'Acesso da gestão':'Acesso do profissional';
-        el('login_acesso_descricao').textContent=area==='gestao'?'Entre para organizar a rotina da clínica.':'Acesso exclusivo ao perfil de fisioterapeuta cadastrado na clínica.';
-        el('btn_login_entrar').textContent=area==='gestao'?'Entrar na gestão':'Entrar como profissional';
+        area=next;
+        if(focus)el('login_email')?.focus();
     }
     function setBusy(value) {
         busy=value;loginEmAndamento=value;
-        document.querySelectorAll('#login_acesso_normal button,#login_funcao,#login_email,#login_senha,#login_perfil').forEach(node=>node.disabled=value);
+        document.querySelectorAll('#login_acesso_normal button,#login_email,#login_senha,#login_perfil').forEach(node=>node.disabled=value);
         el('login_senha').disabled=value || pending.length>0;
-        el('btn_login_entrar').textContent=value?'Verificando acesso…':pending.length?'Entrar com este vínculo':area==='gestao'?'Entrar na gestão':'Entrar como profissional';
+        el('btn_login_entrar').textContent=value?'Verificando acesso…':pending.length?'Entrar com este perfil':'Entrar';
     }
     async function rpc(name, args) {
         if(!_supabase)throw new Error('Serviço de autenticação indisponível.');
@@ -51,9 +62,10 @@ const KineSysLogin = (() => {
         mostrarFeedbackLogin('');liberarAcessoSistema();
     }
     async function activate(profile) {
-        if(!profile?.id)throw new Error('Selecione um perfil válido.');
+        if(!profile?.id || !known(profile.tipo))throw new Error('Selecione um perfil válido.');
+        const expectedType=normalize(profile.tipo);
         const active=await rpc('kinesys_ativar_perfil',{p_perfil_id:String(profile.id)});
-        if(!active || active.id!==profile.id || normalize(active.tipo)!==el('login_funcao').value)throw new Error('O acesso retornado não corresponde ao perfil solicitado. Saia e entre novamente.');
+        if(!active || String(active.id)!==String(profile.id) || normalize(active.tipo)!==expectedType)throw new Error('O acesso retornado não corresponde ao perfil solicitado. Saia e entre novamente.');
         enter(active);return true;
     }
     async function resume() {
@@ -65,16 +77,14 @@ const KineSysLogin = (() => {
     }
     async function login() {
         if(busy || recovery)return;
-        const selectedRole=el('login_funcao').value;
-        if(!roles[area].some(([id])=>id===selectedRole))return;
         if(!pending.length && !el('login_form').reportValidity())return;
-        if(pending.length && el('login_perfil').value===''){mostrarFeedbackLogin('Selecione o vínculo para continuar.','aviso');return;}
-        setBusy(true);mostrarFeedbackLogin('Verificando credenciais e perfil…');
+        if(pending.length && el('login_perfil').value===''){mostrarFeedbackLogin('Selecione o perfil para continuar.','aviso');return;}
+        setBusy(true);mostrarFeedbackLogin(pending.length?'Validando o perfil selecionado…':'Verificando credenciais e perfis…');
         try {
             if(pending.length){
                 const chosen=pending.find(p=>String(p.id)===el('login_perfil').value);
                 const {data,error}=await _supabase.auth.getUser();
-                if(error || data?.user?.id!==pendingUser || normalize(chosen?.tipo)!==selectedRole)throw new Error('Sua sessão mudou. Entre novamente.');
+                if(error || data?.user?.id!==pendingUser || !chosen)throw new Error('Sua sessão mudou. Entre novamente.');
                 await activate(chosen);return;
             }
             const email=el('login_email').value.trim().toLowerCase(),password=el('login_senha').value;
@@ -82,13 +92,14 @@ const KineSysLogin = (() => {
             const {data,error}=await _supabase.auth.signInWithPassword({email,password});
             el('login_senha').value='';
             if(error)throw new Error(mensagemErroAutenticacao(error));
-            const profiles=(await rpc('kinesys_meus_perfis') || []).filter(p=>normalize(p.tipo)===selectedRole);
-            if(!profiles.length){await _supabase.auth.signOut({scope:'local'});throw new Error('Sua conta não possui um perfil ativo para esta opção. Escolha sua função cadastrada ou procure o administrador.');}
+            const profiles=(await rpc('kinesys_meus_perfis') || []).filter(p=>known(p.tipo));
+            if(!profiles.length){await _supabase.auth.signOut({scope:'local'});throw new Error('Esta conta não possui nenhum perfil ativo no KineSys. Procure o administrador da clínica.');}
             if(profiles.length===1){await activate(profiles[0]);return;}
-            pending=profiles;pendingUser=data.user.id;
-            el('login_perfil').replaceChildren(new Option('Selecione o vínculo',''),...profiles.map(p=>new Option([p.clinica_nome,p.registro].filter(Boolean).join(' · ') || p.nome,String(p.id))));
+            pending=profiles.slice().sort((a,b)=>profileLabel(a).localeCompare(profileLabel(b),'pt-BR',{sensitivity:'base'}));
+            loginPerfisDisponiveis=[...pending];pendingUser=data.user.id;
+            el('login_perfil').replaceChildren(new Option('Selecione seu perfil',''),...pending.map(p=>new Option(profileLabel(p),String(p.id))));
             el('login_perfil_group').style.display='block';el('login_senha').required=false;el('login_email').readOnly=true;
-            mostrarFeedbackLogin('Identidade confirmada. Selecione o vínculo que deseja utilizar.','sucesso');
+            mostrarFeedbackLogin('Identidade confirmada. Escolha um dos perfis vinculados à sua conta.','sucesso');
         } catch(error){usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();mostrarFeedbackLogin(error.message || 'Não foi possível entrar. Tente novamente.','erro');}
         finally{setBusy(false);if(pending.length)el('login_perfil').focus();}
     }
@@ -97,10 +108,10 @@ const KineSysLogin = (() => {
         recoveryBusy=true;el('login_recovery_submit').disabled=true;
         try{
             if(!_supabase)throw new Error();
-            const redirectTo=new URL(location.pathname,location.origin);redirectTo.searchParams.set('recuperar','1');
-            const {error}=await _supabase.auth.resetPasswordForEmail(el('login_recovery_email').value.trim().toLowerCase(),{redirectTo:redirectTo.href});
+            const redirectTo='https://app.fisiofixfisioterapia.com/recuperar-acesso.html';
+            const {error}=await _supabase.auth.resetPasswordForEmail(el('login_recovery_email').value.trim().toLowerCase(),{redirectTo});
             if(error)throw error;
-            mostrarFeedbackLogin('Se a conta existir, você receberá um link por e-mail. Confira também a caixa de spam.','sucesso');
+            mostrarFeedbackLogin('Se a conta existir, você receberá um link para criar uma nova senha. Confira também a caixa de spam.','sucesso');
         }catch{mostrarFeedbackLogin('Não foi possível enviar agora. Aguarde alguns minutos e tente novamente.','erro');}
         finally{recoveryBusy=false;el('login_recovery_submit').disabled=false;}
     }
@@ -116,7 +127,7 @@ const KineSysLogin = (() => {
             if(error)throw new Error('A senha não foi aceita. Use uma senha longa e diferente da anterior ou solicite outro link.');
             await _supabase.auth.signOut({scope:'local'});
             recovery=false;el('login_reset_form').reset();show();history.replaceState(null,'',location.pathname);
-            mostrarFeedbackLogin('Senha atualizada. Escolha seu perfil e entre com a nova senha.','sucesso');
+            mostrarFeedbackLogin('Senha atualizada. Entre com seu e-mail e a nova senha.','sucesso');
         }catch(error){mostrarFeedbackLogin(error.message || 'Não foi possível redefinir sua senha.','erro');}
         finally{resetBusy=false;el('login_reset_submit').disabled=false;}
     }
@@ -138,11 +149,10 @@ const KineSysLogin = (() => {
         }catch{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');mostrarFeedbackLogin('Não foi possível recuperar o acesso. Entre novamente.','aviso');}
     }
     document.addEventListener('DOMContentLoaded',()=>{
+        configureUnifiedLogin();
         document.querySelectorAll('[data-access-area]').forEach(button=>{
             button.addEventListener('click',()=>setArea(button.dataset.accessArea));
-            button.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();setArea(event.key==='Home'?'gestao':event.key==='End'?'profissional':area==='gestao'?'profissional':'gestao',true);}});
         });
-        el('login_funcao').addEventListener('change',()=>{clearPending();el('login_senha').value='';mostrarFeedbackLogin('');});
         el('login_email').addEventListener('input',()=>{clearPending();mostrarFeedbackLogin('');});
         el('login_form').addEventListener('submit',event=>{event.preventDefault();login();});
         el('login_recovery_form').addEventListener('submit',event=>{event.preventDefault();sendRecovery();});
@@ -153,9 +163,9 @@ const KineSysLogin = (() => {
         el('login_cancelar_recovery').onclick=async()=>{if(resetBusy)return;await _supabase?.auth.signOut({scope:'local'});recovery=false;el('login_reset_form').reset();show();history.replaceState(null,'',location.pathname);};
         document.querySelectorAll('[data-toggle-password]').forEach(button=>button.onclick=()=>{const input=el(button.dataset.togglePassword),visible=input.type==='password';input.type=visible?'text':'password';button.textContent=visible?'Ocultar':'Mostrar';button.setAttribute('aria-pressed',String(visible));button.setAttribute('aria-label',visible?'Ocultar senha':'Mostrar senha');});
         el('login_senha').addEventListener('keyup',event=>{
-    const capsAtivo=typeof event.getModifierState==='function' && event.getModifierState('CapsLock');
-    el('login_caps').hidden=!capsAtivo;
-});
+            const capsAtivo=typeof event.getModifierState==='function' && event.getModifierState('CapsLock');
+            el('login_caps').hidden=!capsAtivo;
+        });
     });
     return {start,login,resume,activate,sendRecovery,clearPending};
 })();

@@ -1001,7 +1001,7 @@ async function carregarListaEquipe() {
         <td><div class="kds-u-gap-6px kds-u-wrap-wrap kds-u-d-flex">
             <button type="button" class="ks-team-action btn-secondary btn-compact" data-equipe-editar="${escapeHTML(f.id)}">Editar</button>
             ${reativar}
-            <button type="button" class="ks-team-action btn-secondary btn-compact" data-equipe-redefinir="${escapeHTML(f.id)}">Redefinir acesso</button>
+            <button type="button" class="ks-team-action btn-secondary btn-compact" data-equipe-redefinir="${escapeHTML(f.id)}">Definir nova senha</button>
             <button type="button" class="ks-team-action btn-danger btn-compact" data-equipe-excluir="${escapeHTML(f.id)}">Excluir</button>
         </div></td>
     </tr>`;
@@ -1040,7 +1040,7 @@ async function reativarFuncionario(id) {
         if (data?.length !== 1) throw new Error('O banco não confirmou a reativação.');
         await carregarListaEquipe();
         if (typeof carregarProfissionaisAgenda === 'function') await carregarProfissionaisAgenda();
-        alert('✅ Perfil reativado. Se a senha não for conhecida, use “Redefinir acesso”.');
+        alert('✅ Perfil reativado. Se a senha não for conhecida, use “Definir nova senha”.');
         return true;
     } catch (err) {
         console.error('KineSys: falha ao reativar funcionário:', err);
@@ -1050,28 +1050,9 @@ async function reativarFuncionario(id) {
 }
 
 async function enviarRedefinicaoAcessoFuncionario(id) {
-    if (!usuarioEhMaster()) { alert('Apenas Administrador pode iniciar a recuperação de acesso da equipe.'); return false; }
-    if (!_supabase) { alert('Servidor indisponível. Nenhum e-mail foi enviado.'); return false; }
-    try {
-        const { data: cadastro, error: leituraError } = await _supabase.from('equipe').select('id,nome,email,ativo').eq('id', id).maybeSingle();
-        if (leituraError) throw leituraError;
-        if (!cadastro?.email) throw new Error('Este perfil não possui e-mail de acesso válido.');
-        const confirmado = await confirmarKineSys(
-            `Enviar um link de redefinição de senha para ${cadastro.nome || 'este usuário'}?\n\nO link será enviado para ${cadastro.email}. A senha atual não é exibida nem alterada pelo administrador.`,
-            { titulo:'Redefinir acesso', confirmar:'Enviar link', cancelar:'Cancelar' }
-        );
-        if (!confirmado) return false;
-        const redirectTo = new URL(location.pathname, location.origin);
-        redirectTo.searchParams.set('recuperar', '1');
-        const { error } = await _supabase.auth.resetPasswordForEmail(String(cadastro.email).trim().toLowerCase(), { redirectTo: redirectTo.href });
-        if (error) throw error;
-        alert(`✅ Link de redefinição enviado para ${cadastro.email}. O usuário deve abrir o e-mail e criar a nova senha.`);
-        return true;
-    } catch (err) {
-        console.error('KineSys: falha ao enviar redefinição de acesso:', err);
-        alert('Não foi possível enviar o link de redefinição. ' + (err?.message || String(err)));
-        return false;
-    }
+    if (!usuarioEhMaster()) { alert('Apenas Administrador pode definir senhas da equipe.'); return false; }
+    if (!window.KineSysAccessAdmin?.open) { alert('O gerenciamento de acesso ainda não foi carregado. Atualize a página e tente novamente.'); return false; }
+    return window.KineSysAccessAdmin.open(id);
 }
 
 async function excluirFuncionario(id) {

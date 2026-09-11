@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>KineSys — Recuperar acesso</title>
+    <link rel="stylesheet" href="design_tokens.css">
+    <link rel="stylesheet" href="design_base.css">
+    <link rel="stylesheet" href="login_access-1.18.0.css">
+    <style>
+        body{min-height:100vh;margin:0;display:grid;place-items:center;background:#f4f8f7;padding:24px;box-sizing:border-box}.ks-recovery-shell{width:min(100%,520px);background:#fff;border:1px solid #dce7e5;border-radius:20px;box-shadow:0 24px 70px rgba(16,45,49,.14);padding:28px;box-sizing:border-box}.ks-recovery-brand{font-size:1.25rem;font-weight:900;letter-spacing:.04em;margin-bottom:20px}.ks-recovery-brand span{color:#168270}.ks-recovery-shell h1{margin:0 0 8px;font-size:1.65rem}.ks-recovery-shell>p{color:#5a7074;line-height:1.55}.ks-recovery-form{display:grid;gap:15px;margin-top:22px}.ks-recovery-password{display:grid;grid-template-columns:1fr auto;gap:8px}.ks-recovery-password button{border:1px solid #cad8d8;background:#fff;border-radius:9px;padding:0 12px}.ks-recovery-feedback{margin-top:18px;padding:12px 14px;border-radius:10px;line-height:1.45}.ks-recovery-feedback[hidden]{display:none}.ks-recovery-feedback[data-type="error"]{background:#fff0f0;color:#842525}.ks-recovery-feedback[data-type="success"]{background:#edf9f1;color:#1f6437}.ks-recovery-feedback[data-type="info"]{background:#eef6f7;color:#28565d}.ks-recovery-back{display:inline-block;margin-top:18px;color:#176c64;font-weight:700;text-decoration:none}@media(max-width:560px){body{padding:14px}.ks-recovery-shell{padding:20px}.ks-recovery-password{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <main class="ks-recovery-shell">
+        <div class="ks-recovery-brand">KINE<span>SYS</span></div>
+        <h1>Definir nova senha</h1>
+        <p id="recovery_description">Validando seu link de recuperação…</p>
+        <form id="recovery_form" class="ks-recovery-form" hidden>
+            <div class="input-group">
+                <label for="recovery_password">Nova senha</label>
+                <div class="ks-recovery-password"><input id="recovery_password" type="password" autocomplete="new-password" minlength="12" required><button type="button" data-toggle="recovery_password">Mostrar</button></div>
+                <small>Use 12 ou mais caracteres, incluindo maiúscula, minúscula e número.</small>
+            </div>
+            <div class="input-group">
+                <label for="recovery_confirm">Confirmar nova senha</label>
+                <div class="ks-recovery-password"><input id="recovery_confirm" type="password" autocomplete="new-password" minlength="12" required><button type="button" data-toggle="recovery_confirm">Mostrar</button></div>
+            </div>
+            <button id="recovery_submit" class="btn-primary" type="submit">Salvar nova senha</button>
+        </form>
+        <div id="recovery_feedback" class="ks-recovery-feedback" role="status" aria-live="polite" hidden></div>
+        <a class="ks-recovery-back" href="./">Voltar ao KineSys</a>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    (()=>{
+        'use strict';
+        const SUPABASE_URL='https://yulkylvkofeisbjwnxhe.supabase.co';
+        const SUPABASE_KEY='sb_publishable_STAVKxWe_UAlyADqxyQxjQ_c3NP5npE';
+        const client=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
+        const form=document.getElementById('recovery_form');
+        const description=document.getElementById('recovery_description');
+        const feedback=document.getElementById('recovery_feedback');
+        const submit=document.getElementById('recovery_submit');
+        let ready=false,busy=false;
+
+        function setFeedback(message='',type='info'){
+            feedback.textContent=String(message||'');feedback.dataset.type=type;feedback.hidden=!message;
+        }
+        function validatePassword(value=''){
+            const password=String(value||'');
+            if(password.length<12)return 'Use pelo menos 12 caracteres.';
+            if(!/[a-z]/.test(password))return 'Inclua pelo menos uma letra minúscula.';
+            if(!/[A-Z]/.test(password))return 'Inclua pelo menos uma letra maiúscula.';
+            if(!/\d/.test(password))return 'Inclua pelo menos um número.';
+            return '';
+        }
+        function enableForm(){
+            if(ready)return;ready=true;form.hidden=false;description.textContent='Crie uma nova senha para sua conta KineSys.';setFeedback('Link validado. Defina sua nova senha.','info');document.getElementById('recovery_password').focus();
+        }
+        function showInvalid(message='Este link é inválido ou expirou. Solicite uma nova recuperação na tela de login.'){
+            ready=false;form.hidden=true;description.textContent='Não foi possível validar este link.';setFeedback(message,'error');
+        }
+        const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+        const query=new URLSearchParams(location.search);
+        const urlError=hash.get('error_description')||query.get('error_description');
+        if(urlError)showInvalid(decodeURIComponent(urlError.replace(/\+/g,' ')));
+
+        if(!client){showInvalid('O serviço de autenticação não pôde ser carregado. Volte ao KineSys e solicite outro link.');return;}
+        client.auth.onAuthStateChange((event,session)=>{
+            if((event==='PASSWORD_RECOVERY'||event==='SIGNED_IN')&&session)enableForm();
+        });
+        client.auth.getSession().then(({data,error})=>{
+            if(error){showInvalid();return;}
+            if(data?.session)enableForm();
+            else setTimeout(()=>{if(!ready)showInvalid();},1200);
+        }).catch(()=>showInvalid());
+
+        form.addEventListener('submit',async event=>{
+            event.preventDefault();if(!ready||busy)return;
+            const password=document.getElementById('recovery_password').value;
+            const confirm=document.getElementById('recovery_confirm').value;
+            const validation=validatePassword(password);
+            if(validation){setFeedback(validation,'error');return;}
+            if(password!==confirm){setFeedback('As senhas não coincidem.','error');return;}
+            busy=true;submit.disabled=true;submit.textContent='Salvando…';setFeedback('Atualizando sua senha…','info');
+            try{
+                const {data:userData,error:identityError}=await client.auth.getUser();
+                if(identityError||!userData?.user)throw new Error('O link expirou ou não possui uma sessão válida.');
+                const {error}=await client.auth.updateUser({password});
+                if(error)throw error;
+                await client.auth.signOut({scope:'local'});
+                form.hidden=true;description.textContent='Sua senha foi atualizada.';setFeedback('Senha alterada com sucesso. Volte ao KineSys e entre com a nova senha.','success');
+                history.replaceState(null,'',location.pathname);
+            }catch(error){setFeedback(error?.message||'Não foi possível alterar a senha. Solicite outro link e tente novamente.','error');}
+            finally{busy=false;submit.disabled=false;submit.textContent='Salvar nova senha';}
+        });
+        document.querySelectorAll('[data-toggle]').forEach(button=>button.addEventListener('click',()=>{
+            const input=document.getElementById(button.dataset.toggle);if(!input)return;const visible=input.type==='password';input.type=visible?'text':'password';button.textContent=visible?'Ocultar':'Mostrar';button.setAttribute('aria-pressed',String(visible));
+        }));
+    })();
+    </script>
+</body>
+</html>
