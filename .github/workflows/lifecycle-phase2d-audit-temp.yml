@@ -1,0 +1,25 @@
+name: Lifecycle Phase 2D Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/lifecycle-phase2d
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/lifecycle-phase2d
+      - name: Inventory intervals and observers
+        run: |
+          echo '=== script setInterval ==='
+          grep -n -C 4 'setInterval' script-1.18.0.js || true
+          echo '=== script MutationObserver ==='
+          grep -n -C 3 'MutationObserver' script-1.18.0.js || true
+          echo '=== script ResizeObserver ==='
+          grep -n -C 3 'ResizeObserver' script-1.18.0.js || true
