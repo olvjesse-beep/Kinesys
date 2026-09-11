@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
       - 'agenda-1.20.0.js'
@@ -30,6 +31,7 @@ on:
       - 'tests/design_system_lifecycle.contract.js'
       - 'tests/home_lifecycle.contract.js'
       - 'tests/evaluation_context_lifecycle.contract.js'
+      - 'tests/ui_experience_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   push:
@@ -38,6 +40,7 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
       - 'agenda-1.20.0.js'
@@ -61,6 +64,7 @@ on:
       - 'tests/design_system_lifecycle.contract.js'
       - 'tests/home_lifecycle.contract.js'
       - 'tests/evaluation_context_lifecycle.contract.js'
+      - 'tests/ui_experience_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   workflow_dispatch:
@@ -79,6 +83,7 @@ jobs:
         run: |
           node --check screen_loader-1.25.0.js
           node --check script-1.18.0.js
+          node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
           node --check evaluation_context_panels-1.18.3.js
           node --check agenda-1.20.0.js
@@ -98,6 +103,7 @@ jobs:
           node --check tests/design_system_lifecycle.contract.js
           node --check tests/home_lifecycle.contract.js
           node --check tests/evaluation_context_lifecycle.contract.js
+          node --check tests/ui_experience_lifecycle.contract.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
       - name: Agenda lifecycle contract
@@ -112,5 +118,7 @@ jobs:
         run: node tests/home_lifecycle.contract.js
       - name: Evaluation context lifecycle contract
         run: node tests/evaluation_context_lifecycle.contract.js
+      - name: UI experience lifecycle contract
+        run: node tests/ui_experience_lifecycle.contract.js
       - name: Operational data and polling contract
         run: node tests/operational_data_loading.contract.js

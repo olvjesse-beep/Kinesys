@@ -385,7 +385,9 @@
       if(secondary) new MutationObserver(()=>requestAnimationFrame(syncDisclosures)).observe(secondary,{subtree:true,childList:true});
       const examPlan=q('#ks30_exam_plan',evalScreen);
       if(examPlan) new MutationObserver(scheduleClinicalPlan).observe(examPlan,{subtree:true,childList:true});
-      window.setInterval(()=>{if(evalScreen.classList.contains('ativa'))syncPatientContext();},5000);
+      document.addEventListener('kinesys:tela-ativada',event=>{
+        if(event.detail?.id==='tela_avaliacao')requestAnimationFrame(syncPatientContext);
+      });
     }
 
     const observer=new MutationObserver(mutations=>{
