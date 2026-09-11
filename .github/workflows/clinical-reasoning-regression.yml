@@ -9,11 +9,15 @@ on:
       - 'clinical_reasoning_elbow-3.1.0.js'
       - 'clinical_reasoning_wrist-3.1.0.js'
       - 'clinical_reasoning_wrist-3.1.0.css'
+      - 'clinical_reasoning_cervical-3.1.0.js'
+      - 'clinical_reasoning_cervical-3.1.0.css'
       - 'screen_loader-1.25.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
       - 'tests/clinical_reasoning_upper_limb.chaos.js'
+      - 'tests/clinical_reasoning_cervical.regression.js'
+      - 'tests/clinical_reasoning_cervical.adversarial.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   pull_request:
     branches: [main]
@@ -23,11 +27,15 @@ on:
       - 'clinical_reasoning_elbow-3.1.0.js'
       - 'clinical_reasoning_wrist-3.1.0.js'
       - 'clinical_reasoning_wrist-3.1.0.css'
+      - 'clinical_reasoning_cervical-3.1.0.js'
+      - 'clinical_reasoning_cervical-3.1.0.css'
       - 'screen_loader-1.25.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
       - 'tests/clinical_reasoning_upper_limb.chaos.js'
+      - 'tests/clinical_reasoning_cervical.regression.js'
+      - 'tests/clinical_reasoning_cervical.adversarial.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   workflow_dispatch:
 
@@ -36,7 +44,7 @@ permissions:
 
 jobs:
   regression:
-    name: Ombro + cotovelo + punho/mão — HMA clínica
+    name: Ombro + cotovelo + punho/mão + cervical — HMA clínica
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -48,10 +56,13 @@ jobs:
           node --check clinical_reasoning_shoulder-3.1.0.js
           node --check clinical_reasoning_elbow-3.1.0.js
           node --check clinical_reasoning_wrist-3.1.0.js
+          node --check clinical_reasoning_cervical-3.1.0.js
           node --check tests/clinical_reasoning_shoulder_elbow.regression.js
           node --check tests/clinical_reasoning_wrist.regression.js
           node --check tests/clinical_reasoning_upper_limb.adversarial.js
           node --check tests/clinical_reasoning_upper_limb.chaos.js
+          node --check tests/clinical_reasoning_cervical.regression.js
+          node --check tests/clinical_reasoning_cervical.adversarial.js
 
       - name: Run realistic shoulder and elbow HMA corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
@@ -65,4 +76,10 @@ jobs:
       - name: Run noisy HMA chaos corpus
         run: node tests/clinical_reasoning_upper_limb.chaos.js
 
-# Permanent 121-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
+      - name: Run realistic cervical HMA corpus
+        run: node tests/clinical_reasoning_cervical.regression.js
+
+      - name: Run adversarial cervical audit corpus
+        run: node tests/clinical_reasoning_cervical.adversarial.js
+
+# Permanent 175-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand/cervical changes.
