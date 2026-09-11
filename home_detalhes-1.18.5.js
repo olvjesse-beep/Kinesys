@@ -356,7 +356,6 @@ function prepararHomeCompacta(){
         dialog.addEventListener('cancel',e=>{e.preventDefault();fecharAtendimentosHome();});
         dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fecharAtendimentosHome();}});
         dialog.addEventListener('close',()=>{document.body.classList.remove('ks-home-pending-open');expand.setAttribute('aria-expanded','false');if(dialog.dataset.returnFocus!=='false'&&home.classList.contains('ativa'))expand.focus({preventScroll:true});});
-        new MutationObserver(()=>{if(!home.classList.contains('ativa'))fecharAtendimentosHome(false);}).observe(home,{attributes:true,attributeFilter:['class']});
     }
     const antigo=document.getElementById('card_pendencias_clinicas');
     if(antigo&&antigo.tagName!=='BUTTON'){
@@ -374,7 +373,6 @@ function prepararHomeCompacta(){
         dialog.addEventListener('cancel',e=>{e.preventDefault();fecharPendenciasHome();});
         dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fecharPendenciasHome();}});
         dialog.addEventListener('close',()=>{document.body.classList.remove('ks-home-pending-open');trigger.setAttribute('aria-expanded','false');if(dialog.dataset.returnFocus!=='false'&&home.classList.contains('ativa'))trigger.focus({preventScroll:true});});
-        new MutationObserver(()=>{if(!home.classList.contains('ativa'))fecharPendenciasHome(false);}).observe(home,{attributes:true,attributeFilter:['class']});
     }
     if(rec&&typeof telaPermitida==='function'){rec.hidden=!telaPermitida('tela_home_atendimentos');if(rec.hidden)fecharAtendimentosHome(false);}
     const pend=document.getElementById('card_pendencias_clinicas');
@@ -424,4 +422,32 @@ function inicializarHomeDetalhes(){
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarHomeDetalhes,80));
 setTimeout(()=>{if(document.readyState!=='loading')inicializarHomeDetalhes();},700);
-setInterval(()=>{if(document.visibilityState==='visible'&&document.getElementById('tela_home')?.classList.contains('ativa')){carregarAtendimentosHojeDetalhes();carregarPacientesRecentesDetalhes();}},60000);
+let homeDetalhesRefreshTimer=null;
+
+function homeDetalhesTelaAtiva(){
+    return !!document.getElementById('tela_home')?.classList.contains('ativa');
+}
+function executarRefreshPeriodicoHome(){
+    if(document.visibilityState!=='visible'||!homeDetalhesTelaAtiva())return;
+    carregarAtendimentosHojeDetalhes();
+    carregarPacientesRecentesDetalhes();
+}
+function ativarLifecycleHomeDetalhes(){
+    if(!homeDetalhesTelaAtiva())return;
+    if(!homeDetalhesRefreshTimer)homeDetalhesRefreshTimer=setInterval(executarRefreshPeriodicoHome,60000);
+}
+function suspenderLifecycleHomeDetalhes(){
+    if(homeDetalhesRefreshTimer){clearInterval(homeDetalhesRefreshTimer);homeDetalhesRefreshTimer=null;}
+    fecharAtendimentosHome(false);
+    fecharPendenciasHome(false);
+}
+function aoTelaAtivadaHomeDetalhes(event){
+    if(event.detail?.id==='tela_home')ativarLifecycleHomeDetalhes();
+}
+function aoTelaDesativadaHomeDetalhes(event){
+    if(event.detail?.id==='tela_home')suspenderLifecycleHomeDetalhes();
+}
+
+document.addEventListener('kinesys:tela-ativada',aoTelaAtivadaHomeDetalhes);
+document.addEventListener('kinesys:tela-desativada',aoTelaDesativadaHomeDetalhes);
+if(document.readyState!=='loading'&&homeDetalhesTelaAtiva())ativarLifecycleHomeDetalhes();
