@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+import fs from 'node:fs';
 
 const CORE_PATH = 'script-1.18.0.js';
 const INDEX_PATH = 'index.html';
