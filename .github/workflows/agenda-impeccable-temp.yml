@@ -1,0 +1,47 @@
+name: Agenda Impeccable Temp
+
+on:
+  push:
+    branches: [fix/agenda-patient-autocomplete-polish]
+    paths:
+      - '.github/workflows/agenda-impeccable-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit Agenda modal with Impeccable
+        shell: bash
+        run: |
+          set -uo pipefail
+          chmod +x .agents/skills/impeccable/scripts/impeccable || true
+          set +e
+          .agents/skills/impeccable/scripts/impeccable detect --json \
+            index.html \
+            design_tokens.css \
+            design_components.css \
+            design_responsive.css \
+            design_screens.css \
+            design_agenda.css \
+            > /tmp/impeccable.json 2>/tmp/impeccable.err
+          code=$?
+          set -e
+          echo "DETECTOR_EXIT=$code"
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+          raw=Path('/tmp/impeccable.json').read_text(encoding='utf-8').strip() or '[]'
+          data=json.loads(raw)
+          print(f'FINDING_COUNT={len(data)}')
+          cats=Counter((x.get('antipattern') or x.get('name') or 'unknown') for x in data)
+          for k,v in cats.most_common(): print(f'CATEGORY {k}={v}')
+          for i,x in enumerate(data,1):
+              print(f'FINDING {i:03d}=' + json.dumps(x,ensure_ascii=False,separators=(',',':')))
+          PY
+          if [ -s /tmp/impeccable.err ]; then cat /tmp/impeccable.err; fi
+          exit 0
