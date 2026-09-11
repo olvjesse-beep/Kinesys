@@ -1,0 +1,130 @@
+name: Core Modularization Phase 4D Patch Temp
+
+on:
+  push:
+    branches:
+      - performance/core-modularization-phase4d
+    paths:
+      - .github/workflows/core-phase4d-patch-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/core-modularization-phase4d
+      - name: Extract media core
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          core_path=Path('script-1.18.0.js')
+          core=core_path.read_text(encoding='utf-8')
+          start='/* ========================================================================== \n   KINESYS v1.10 — KINESYS LOCAL / FOTOS CLÍNICAS'
+          end='// Proteção de gravações críticas contra cliques repetidos.'
+          if core.count(start)!=1 or core.count(end)!=1:
+              raise SystemExit(f'fronteiras inesperadas: start={core.count(start)} end={core.count(end)}')
+          a=core.index(start); b=core.index(end,a)
+          block=core[a:b]
+          header="/* KineSys — Media Core 1.0.0\n * Extraído de script-1.18.0.js sem alterar nomes, fluxo clínico, persistência ou lifecycle.\n */\n'use strict';\n\n"
+          Path('midias_core-1.0.0.js').write_text(header+block,encoding='utf-8')
+          core_path.write_text(core[:a]+core[b:],encoding='utf-8')
+
+          index=Path('index.html')
+          html=index.read_text(encoding='utf-8')
+          old='''    <script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>\n    <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1"></script>'''
+          new='''    <script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>\n    <script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>\n    <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1"></script>'''
+          if html.count(old)!=1: raise SystemExit('ordem eager esperada não encontrada')
+          index.write_text(html.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Update permanent media contracts
+        run: |
+          cat > tests/midias_lifecycle.contract.js <<'EOF'
+          'use strict';
+
+          const fs = require('fs');
+          const assert = require('assert');
+
+          const app = fs.readFileSync('script-1.18.0.js', 'utf8');
+          const midias = fs.readFileSync('midias_core-1.0.0.js', 'utf8');
+
+          assert.match(midias, /let midiaPollingCapturaSolicitado = false;/, 'Mídias deve rastrear se a captura solicitou polling');
+          assert.match(midias, /let kinesysLocalStatusTimer = null;/, 'status do serviço local deve possuir handle próprio');
+          assert.match(midias, /function telaMidiasAtivaKineSys\(\)/, 'Mídias deve possuir guarda explícita de tela ativa');
+          assert.match(midias, /function suspenderPollingCapturaMidias\(\)/, 'polling de captura deve possuir suspensão explícita');
+          assert.match(midias, /function iniciarPollingStatusMidias\(\)/, 'polling de status deve possuir ativação explícita');
+          assert.match(midias, /function suspenderPollingStatusMidias\(\)/, 'polling de status deve possuir suspensão explícita');
+          assert.match(midias, /function ativarLifecycleMidiasKineSys\(\)/, 'Mídias deve possuir activate do lifecycle');
+          assert.match(midias, /function suspenderLifecycleMidiasKineSys\(\)/, 'Mídias deve possuir suspend do lifecycle');
+
+          assert.match(midias, /clearInterval\(midiaPollTimer\);\s*midiaPollTimer = null;/s, 'suspend deve realmente parar o polling de captura');
+          assert.match(midias, /clearInterval\(kinesysLocalStatusTimer\);\s*kinesysLocalStatusTimer = null;/s, 'suspend deve realmente parar o polling de status');
+          assert.match(midias, /kinesysLocalStatusTimer = setInterval\([\s\S]*?10000\);/, 'status local deve manter cadência histórica de 10 s quando ativo');
+          assert.match(midias, /midiaPollTimer = setInterval\([\s\S]*?1800\);/, 'captura deve manter cadência histórica de 1,8 s quando ativa');
+
+          assert.match(app, /document\.addEventListener\('kinesys:tela-ativada'[\s\S]*?tela_midias[\s\S]*?ativarLifecycleMidiasKineSys/, 'ativação da tela deve iniciar lifecycle de Mídias');
+          assert.match(app, /document\.addEventListener\('kinesys:tela-desativada'[\s\S]*?tela_midias[\s\S]*?suspenderLifecycleMidiasKineSys/, 'desativação da tela deve suspender lifecycle de Mídias');
+
+          assert.doesNotMatch(midias + '\n' + app, /setInterval\(\(\)=>\{if\(document\.getElementById\('tela_midias'\)\?\.classList\.contains\('ativa'\)\)verificarKinesysLocal\(false\);\},10000\)/, 'polling global anônimo de 10 s não pode continuar acordando fora da tela');
+          assert.doesNotMatch(midias + '\n' + app, /setTimeout\(\(\)=>verificarKinesysLocal\(false\),900\)/, 'bootstrap não deve consultar serviço local de Mídias sem a tela ativa');
+
+          console.log('Media lifecycle contract: OK');
+          EOF
+
+          cat > tests/midias_core_modularization.contract.js <<'EOF'
+          'use strict';
+          const fs=require('fs');
+          const assert=require('assert');
+
+          const core=fs.readFileSync('script-1.18.0.js','utf8');
+          const midias=fs.readFileSync('midias_core-1.0.0.js','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+
+          assert(!core.includes('KINESYS v1.10 — KINESYS LOCAL / FOTOS CLÍNICAS'), 'Bloco principal de Mídias ainda está embutido no core');
+          assert(!core.includes("const KINESYS_LOCAL_URL = 'http://127.0.0.1:8765'"), 'Estado principal de Mídias ainda está no core');
+          assert(midias.includes('KINESYS v1.10 — KINESYS LOCAL / FOTOS CLÍNICAS'), 'Módulo extraído perdeu o bloco principal de Mídias');
+          assert(midias.includes("const KINESYS_LOCAL_URL = 'http://127.0.0.1:8765'"), 'Módulo extraído perdeu KineSys Local URL');
+          assert(midias.includes('async function kinesysLocalFetch('), 'Módulo perdeu acesso ao serviço local');
+          assert(midias.includes('async function atualizarGaleriaMidias('), 'Módulo perdeu galeria de Mídias');
+          assert(midias.includes('async function salvarConfiguracaoBackupLocal()'), 'Módulo perdeu configuração de backup local');
+          assert(core.includes("protegerFuncaoKineSys('salvarConfiguracaoBackupLocal'"), 'Ponto de instalação do operation guard para backup deve permanecer no core');
+          assert(core.includes("if (event.detail?.id === 'tela_midias') ativarLifecycleMidiasKineSys();"), 'Listener oficial de ativação deve permanecer no core');
+          assert(core.includes("if (event.detail?.id === 'tela_midias') suspenderLifecycleMidiasKineSys();"), 'Listener oficial de suspensão deve permanecer no core');
+          assert(core.includes('function atualizarPSFSMedia('), 'Patient self-service media helper não deve ser movido nesta etapa');
+
+          const states=['KINESYS_LOCAL_URL','kinesysLocalOnline','kinesysLocalStatus','midiasPacienteAtual','midiaComparacaoA','midiaComparacaoB','midiaPollTimer','midiaPollingCapturaSolicitado','kinesysLocalStatusTimer','midiaUltimaQuantidadeLocal','midiaTabelaSupabaseDisponivel'];
+          for(const state of states) assert(!new RegExp('\\b'+state+'\\b').test(core), `Estado interno ${state} não pode permanecer acoplado ao core`);
+
+          const mediaTag='<script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+          const escapeTag='<script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
+          const coreNeedle='<script defer src="script-1.18.0.js';
+          assert(html.includes(mediaTag), 'index.html não carrega o módulo principal de Mídias');
+          assert(html.indexOf(escapeTag)<html.indexOf(mediaTag), 'HTML escape deve carregar antes de Mídias');
+          assert(html.indexOf(mediaTag)<html.indexOf(coreNeedle), 'Mídias deve carregar antes do core para preservar APIs globais no bootstrap');
+
+          console.log('Media core modularization contract Phase 4D: OK');
+          EOF
+      - name: Validate Phase 4D
+        run: |
+          set -euo pipefail
+          node --check midias_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/midias_lifecycle.contract.js
+          node --check tests/midias_core_modularization.contract.js
+          node tests/midias_lifecycle.contract.js
+          node tests/midias_core_modularization.contract.js
+          node tests/html_escape_modularization.contract.js
+          node tests/operation_guard_modularization.contract.js
+          node tests/menu_dropdown_modularization.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
+      - name: Commit Phase 4D source changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add script-1.18.0.js index.html midias_core-1.0.0.js tests/midias_lifecycle.contract.js tests/midias_core_modularization.contract.js
+          git commit -m "Extract media core from monolith for Phase 4D" || exit 0
+          git push origin HEAD:performance/core-modularization-phase4d
