@@ -6,6 +6,7 @@ on:
       - agenda/ux-corrections-sep11
     paths:
       - tools/agenda_ux_patch_temp.py
+      - tools/agenda_ux_trigger.tmp
 
 permissions:
   contents: write
