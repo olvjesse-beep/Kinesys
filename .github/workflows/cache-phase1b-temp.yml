@@ -25,13 +25,12 @@ jobs:
         run: |
           python3 - <<'OUTER'
           import subprocess
-          from pathlib import Path
 
-          # Reuse the exact integration script from the preceding commit so this
-          # retry changes only the compatibility guard discovered by the legacy
-          # isolated-function contract.
+          # HEAD^^ contains the full Phase 1B patch workflow. Reuse it verbatim,
+          # changing only the edit-function invalidation to remain optional when
+          # the legacy contract evaluates that function in isolation.
           yml=subprocess.check_output(
-              ['git','show','HEAD^:.github/workflows/cache-phase1b-temp.yml'],
+              ['git','show','HEAD^^:.github/workflows/cache-phase1b-temp.yml'],
               text=True
           )
           marker="          python3 - <<'PY'\n"
@@ -39,9 +38,9 @@ jobs:
           end=yml.index("          PY\n",start)
           linhas=yml[start:end].splitlines()
           script='\n'.join(l[10:] if l.startswith('          ') else l for l in linhas)+'\n'
-          antigo="    invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
-          novo="    if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
-          assert script.count(antigo)==1, 'edit cache invalidation anchor not found in previous patch'
+          antigo=r"    invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
+          novo=r"    if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
+          assert script.count(antigo)==1, 'edit cache invalidation anchor not found in full patch source'
           script=script.replace(antigo,novo,1)
           exec(compile(script,'phase1b_patch.py','exec'),{})
           OUTER
