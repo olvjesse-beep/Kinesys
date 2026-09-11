@@ -10,6 +10,7 @@ on:
       - 'script-1.18.0.js'
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
+      - 'html_escape-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -39,6 +40,7 @@ on:
       - 'tests/clinical_loading_budget.contract.js'
       - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/operation_guard_modularization.contract.js'
+      - 'tests/html_escape_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -57,6 +59,7 @@ on:
       - 'script-1.18.0.js'
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
+      - 'html_escape-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -86,6 +89,7 @@ on:
       - 'tests/clinical_loading_budget.contract.js'
       - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/operation_guard_modularization.contract.js'
+      - 'tests/html_escape_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -114,6 +118,7 @@ jobs:
           node --check script-1.18.0.js
           node --check menu_dropdown-1.0.0.js
           node --check operation_guard-1.0.0.js
+          node --check html_escape-1.0.0.js
           node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
           node --check evaluation_context_panels-1.18.3.js
@@ -140,6 +145,7 @@ jobs:
           node --check tests/clinical_loading_budget.contract.js
           node --check tests/menu_dropdown_modularization.contract.js
           node --check tests/operation_guard_modularization.contract.js
+          node --check tests/html_escape_modularization.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -165,6 +171,8 @@ jobs:
         run: node tests/menu_dropdown_modularization.contract.js
       - name: Operation guard modularization contract
         run: node tests/operation_guard_modularization.contract.js
+      - name: HTML escape modularization contract
+        run: node tests/html_escape_modularization.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
