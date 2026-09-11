@@ -46,7 +46,7 @@ assert.ok(pagamentos < cobrancas && cobrancas < agendamentos && agendamentos < p
 assert.match(sql,/revoke all on function public\.kinesys_excluir_paciente_completo_interno_v1112\(text\) from public, anon, authenticated/i,'Função interna deve permanecer inacessível ao cliente');
 assert.match(sql,/grant execute on function public\.kinesys_excluir_paciente_completo\(text\) to authenticated/i,'Wrapper seguro deve permanecer disponível ao usuário autenticado');
 
-assert.match(index,/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1[^"']*core_mod=20260911-phase4o-r1/,'Script precisa invalidar cache sem perder o contrato anterior');
+assert.match(index,/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1[^"']*core_mod=20260911-phase4p-r1/,'Script precisa invalidar cache sem perder o contrato anterior');
 assert.match(index,/patient_deletion_core-1\.0\.0\.js\?v=20260911-phase4m-r1/,'Módulo de exclusão precisa estar no runtime');
 assert.match(index,/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1/,'Home fisioterapeuta precisa invalidar cache');
 
