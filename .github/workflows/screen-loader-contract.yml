@@ -11,6 +11,7 @@ on:
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
       - 'html_escape-1.0.0.js'
+      - 'cadastro_validacoes_core-1.0.0.js'
       - 'midias_core-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
@@ -42,6 +43,7 @@ on:
       - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/operation_guard_modularization.contract.js'
       - 'tests/html_escape_modularization.contract.js'
+      - 'tests/cadastro_validacoes_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/midias_core_modularization.contract.js'
@@ -62,6 +64,7 @@ on:
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
       - 'html_escape-1.0.0.js'
+      - 'cadastro_validacoes_core-1.0.0.js'
       - 'midias_core-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
@@ -93,6 +96,7 @@ on:
       - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/operation_guard_modularization.contract.js'
       - 'tests/html_escape_modularization.contract.js'
+      - 'tests/cadastro_validacoes_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/midias_core_modularization.contract.js'
@@ -123,6 +127,7 @@ jobs:
           node --check menu_dropdown-1.0.0.js
           node --check operation_guard-1.0.0.js
           node --check html_escape-1.0.0.js
+          node --check cadastro_validacoes_core-1.0.0.js
           node --check midias_core-1.0.0.js
           node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
@@ -151,6 +156,7 @@ jobs:
           node --check tests/menu_dropdown_modularization.contract.js
           node --check tests/operation_guard_modularization.contract.js
           node --check tests/html_escape_modularization.contract.js
+          node --check tests/cadastro_validacoes_modularization.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/midias_core_modularization.contract.js
@@ -179,6 +185,8 @@ jobs:
         run: node tests/operation_guard_modularization.contract.js
       - name: HTML escape modularization contract
         run: node tests/html_escape_modularization.contract.js
+      - name: Registration validations modularization contract
+        run: node tests/cadastro_validacoes_modularization.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
