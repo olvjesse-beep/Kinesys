@@ -1,0 +1,98 @@
+name: TEMP Integrate Cervical Motor 3.1
+
+on:
+  push:
+    branches:
+      - feature/clinical-reasoning-cervical-3.1
+    paths:
+      - '.github/workflows/cervical-integration-temp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/clinical-reasoning-cervical-3.1
+          fetch-depth: 0
+
+      - name: Integrate Cervical Motor 3.1
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('screen_loader-1.25.0.js')
+          s=p.read_text()
+          old="                'clinical_reasoning_wrist-3.1.0.css?v=20260910-r1',\n                'radar_clinico_focus-3.0.0.css?v=20260910-r1',"
+          new="                'clinical_reasoning_wrist-3.1.0.css?v=20260910-r1',\n                'clinical_reasoning_cervical-3.1.0.css?v=20260911-r1',\n                'radar_clinico_focus-3.0.0.css?v=20260910-r1',"
+          assert old in s, 'âncora CSS do bundle não encontrada'
+          s=s.replace(old,new,1)
+          old="                'clinical_reasoning_wrist-3.1.0.js?v=20260910-r1&upperlimb=20260910-r1'\n"
+          new="                'clinical_reasoning_wrist-3.1.0.js?v=20260910-r1&upperlimb=20260910-r1',\n                'clinical_reasoning_cervical-3.1.0.js?v=20260911-r1'\n"
+          assert old in s, 'âncora JS do bundle não encontrada'
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('.github/workflows/clinical-reasoning-regression.yml')
+          s=p.read_text()
+          for anchor,addition in [
+            ("      - 'clinical_reasoning_wrist-3.1.0.css'\n", "      - 'clinical_reasoning_wrist-3.1.0.css'\n      - 'clinical_reasoning_cervical-3.1.0.js'\n      - 'clinical_reasoning_cervical-3.1.0.css'\n"),
+            ("      - 'tests/clinical_reasoning_upper_limb.chaos.js'\n", "      - 'tests/clinical_reasoning_upper_limb.chaos.js'\n      - 'tests/clinical_reasoning_cervical.regression.js'\n      - 'tests/clinical_reasoning_cervical.adversarial.js'\n")
+          ]:
+            count=s.count(anchor)
+            assert count==2, f'âncora de paths esperada 2x, encontrada {count}: {anchor!r}'
+            s=s.replace(anchor,addition)
+          s=s.replace('name: Ombro + cotovelo + punho/mão — HMA clínica','name: Ombro + cotovelo + punho/mão + cervical — HMA clínica')
+          anchor="          node --check clinical_reasoning_wrist-3.1.0.js\n"
+          assert anchor in s
+          s=s.replace(anchor,anchor+"          node --check clinical_reasoning_cervical-3.1.0.js\n",1)
+          anchor="          node --check tests/clinical_reasoning_upper_limb.chaos.js\n"
+          assert anchor in s
+          s=s.replace(anchor,anchor+"          node --check tests/clinical_reasoning_cervical.regression.js\n          node --check tests/clinical_reasoning_cervical.adversarial.js\n",1)
+          anchor="      - name: Run noisy HMA chaos corpus\n        run: node tests/clinical_reasoning_upper_limb.chaos.js\n"
+          assert anchor in s
+          s=s.replace(anchor,anchor+"\n      - name: Run realistic cervical HMA corpus\n        run: node tests/clinical_reasoning_cervical.regression.js\n\n      - name: Run adversarial cervical audit corpus\n        run: node tests/clinical_reasoning_cervical.adversarial.js\n",1)
+          s=s.replace('# Permanent 121-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.','# Permanent 175-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand/cervical changes.')
+          p.write_text(s)
+
+          p=Path('tests/screen_loader.contract.js')
+          s=p.read_text()
+          old="  'clinical_reasoning_elbow-3.1.0.js'\n];"
+          new="  'clinical_reasoning_elbow-3.1.0.js',\n  'clinical_reasoning_wrist-3.1.0.js',\n  'clinical_reasoning_cervical-3.1.0.js'\n];"
+          assert old in s, 'âncora lazyScripts não encontrada'
+          s=s.replace(old,new,1)
+          old="  'clinical_reasoning_elbow-3.1.0.css',\n  'radar_clinico_focus-3.0.0.css',"
+          new="  'clinical_reasoning_elbow-3.1.0.css',\n  'clinical_reasoning_wrist-3.1.0.css',\n  'clinical_reasoning_cervical-3.1.0.css',\n  'radar_clinico_focus-3.0.0.css',"
+          assert old in s, 'âncora lazyStyles não encontrada'
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+
+      - name: Validate syntax and targeted suites
+        run: |
+          node --check clinical_reasoning_cervical-3.1.0.js
+          node --check tests/clinical_reasoning_cervical.regression.js
+          node --check tests/clinical_reasoning_cervical.adversarial.js
+          node --check screen_loader-1.25.0.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          node tests/clinical_reasoning_wrist.regression.js
+          node tests/clinical_reasoning_upper_limb.adversarial.js
+          node tests/clinical_reasoning_upper_limb.chaos.js
+          node tests/clinical_reasoning_cervical.regression.js
+          node tests/clinical_reasoning_cervical.adversarial.js
+          node tests/screen_loader.contract.js
+          git diff --check
+
+      - name: Commit verified integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add screen_loader-1.25.0.js .github/workflows/clinical-reasoning-regression.yml tests/screen_loader.contract.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Integrate Cervical Motor 3.1 into lazy evaluation bundle'
+          git push origin HEAD:feature/clinical-reasoning-cervical-3.1
