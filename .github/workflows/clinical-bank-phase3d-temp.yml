@@ -1,0 +1,31 @@
+name: Clinical Bank Phase 3D Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-bank-regional-phase3d
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-bank-regional-phase3d
+      - name: Generate regional extensions
+        run: node .github/phase3d_generate.js
+      - name: Syntax generated extensions
+        run: |
+          for f in database/regioes/*-ext-1.0.0.js; do node --check "$f"; done
+          git diff --check
+      - name: Commit generated extensions
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add database/regioes
+          git commit -m 'feat: generate regional clinical bank extensions'
+          git push origin HEAD:performance/clinical-bank-regional-phase3d
