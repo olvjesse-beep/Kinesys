@@ -3713,7 +3713,8 @@ function renderizarSeletorRegioes() {
             }
             const loader = window.KineSysClinicalRegionLoader;
             if (!loader?.ensure) {
-                renderizarMapeamentoRegioes();
+                input.checked = false;
+                if (typeof window.mostrarToastKineSys === 'function') window.mostrarToastKineSys('Os dados clínicos desta região ainda não estão disponíveis. Tente novamente.','erro',6500);
                 return;
             }
             loader.ensure([idRegiao]).then(() => {
