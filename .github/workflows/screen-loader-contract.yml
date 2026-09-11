@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'home_detalhes-1.18.5.js'
       - 'agenda-1.20.0.js'
       - 'agenda_lifecycle-1.0.0.js'
       - 'agenda_notificacoes_core-1.20.1.js'
@@ -26,6 +27,7 @@ on:
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
       - 'tests/design_system_lifecycle.contract.js'
+      - 'tests/home_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   push:
@@ -34,6 +36,7 @@ on:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
       - 'script-1.18.0.js'
+      - 'home_detalhes-1.18.5.js'
       - 'agenda-1.20.0.js'
       - 'agenda_lifecycle-1.0.0.js'
       - 'agenda_notificacoes_core-1.20.1.js'
@@ -53,6 +56,7 @@ on:
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
       - 'tests/design_system_lifecycle.contract.js'
+      - 'tests/home_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   workflow_dispatch:
@@ -71,6 +75,7 @@ jobs:
         run: |
           node --check screen_loader-1.25.0.js
           node --check script-1.18.0.js
+          node --check home_detalhes-1.18.5.js
           node --check agenda-1.20.0.js
           node --check agenda_lifecycle-1.0.0.js
           node --check agenda_notificacoes_core-1.20.1.js
@@ -86,6 +91,7 @@ jobs:
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
           node --check tests/design_system_lifecycle.contract.js
+          node --check tests/home_lifecycle.contract.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
       - name: Agenda lifecycle contract
@@ -96,5 +102,7 @@ jobs:
         run: node tests/radar_lifecycle.contract.js
       - name: Design System lifecycle contract
         run: node tests/design_system_lifecycle.contract.js
+      - name: Home lifecycle contract
+        run: node tests/home_lifecycle.contract.js
       - name: Operational data and polling contract
         run: node tests/operational_data_loading.contract.js
