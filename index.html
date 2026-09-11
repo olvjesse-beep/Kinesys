@@ -1109,8 +1109,10 @@
             <div id="ag_edicao_escopo" class="agenda-status-impacto" role="note" hidden></div>
             <input type="hidden" id="ag_id">
             <div class="input-group">
-                <label for="ag_paciente_select">Paciente (já cadastrado no sistema)</label>
-                <select id="ag_paciente_select" onchange="popularPlanosNoAgendamento(this.value, document.getElementById('ag_procedimento_select').value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione --</option></select>
+                <label for="ag_paciente_busca">Paciente (já cadastrado no sistema)</label>
+                <input type="search" id="ag_paciente_busca" autocomplete="off" placeholder="Digite o início do nome, ex.: Ana" oninput="filtrarPacientesAgendamento(this.value)">
+                <small id="ag_paciente_busca_status" class="field-help" aria-live="polite">Digite pelo menos uma letra do nome para carregar pacientes.</small>
+                <select id="ag_paciente_select" aria-label="Paciente encontrado" onchange="popularPlanosNoAgendamento(this.value, document.getElementById('ag_procedimento_select').value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione um paciente --</option></select>
             </div>
             <div class="grid-2">
                 <div class="input-group">
@@ -1529,7 +1531,7 @@
     <script defer src="kinesys_data_cache-1.0.0.js?v=20260911-cache-r1"></script>
     <script defer src="menu_dropdown-1.0.0.js?v=20260911-phase4a-r1"></script>
     <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1"></script>
-    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260910-r1&agenda_compact=20260910-r2"></script>
+    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r2&agenda_compact=20260910-r2"></script>
     <script defer src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="mensagens_config.js?v=20260910-phase4f-r1"></script>
