@@ -1,0 +1,48 @@
+name: Lifecycle Phase 2G Patch Temp
+
+on:
+  push:
+    branches:
+      - performance/lifecycle-phase2g
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/lifecycle-phase2g
+          fetch-depth: 0
+      - name: Apply UI experience lifecycle patch
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='ui_experience.js';
+          let s=fs.readFileSync(path,'utf8');
+          const old="      window.setInterval(()=>{if(evalScreen.classList.contains('ativa'))syncPatientContext();},5000);";
+          const replacement=`      document.addEventListener('kinesys:tela-ativada',event=>{\n        if(event.detail?.id==='tela_avaliacao')requestAnimationFrame(syncPatientContext);\n      });`;
+          if(!s.includes(old)) throw new Error('Polling de 5 s esperado não encontrado');
+          s=s.replace(old,replacement);
+          fs.writeFileSync(path,s);
+
+          const test=`const assert=require('assert');\nconst fs=require('fs');\nconst src=fs.readFileSync('ui_experience.js','utf8');\n\nassert.doesNotMatch(src,/setInterval\\(.*syncPatientContext.*5000/s,'polling visual de 5 s não deve permanecer');\nassert.match(src,/document\\.addEventListener\\('kinesys:tela-ativada',event=>\\{[\\s\\S]*event\\.detail\\?\\.id==='tela_avaliacao'[\\s\\S]*requestAnimationFrame\\(syncPatientContext\\)/,'entrada na Avaliação deve sincronizar contexto visual');\nassert.match(src,/evalScreen\\.addEventListener\\('input'/,'sincronização por input deve ser preservada');\nassert.match(src,/evalScreen\\.addEventListener\\('change'/,'sincronização por change deve ser preservada');\nassert.match(src,/new MutationObserver\\(syncStepper\\)/,'observer do stepper deve permanecer');\nassert.match(src,/new MutationObserver\\(syncRadarState\\)/,'observer visual do Radar deve permanecer');\nconsole.log('UI experience lifecycle contract OK');\n`;
+          fs.writeFileSync('tests/ui_experience_lifecycle.contract.js',test);
+          NODE
+      - name: Validate
+        run: |
+          node --check ui_experience.js
+          node --check tests/ui_experience_lifecycle.contract.js
+          node tests/ui_experience_lifecycle.contract.js
+          git diff --check
+      - name: Commit patch and remove temporary workflows
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/workflows/lifecycle-phase2g-audit-temp.yml .github/workflows/lifecycle-phase2g-patch-temp.yml
+          git add ui_experience.js tests/ui_experience_lifecycle.contract.js
+          git commit -m "Performance — UI Experience Lifecycle Phase 2G"
+          git push origin HEAD:performance/lifecycle-phase2g
