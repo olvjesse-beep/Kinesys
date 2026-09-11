@@ -205,7 +205,8 @@ const evaluationDatabaseLazyScripts=[
   'cirurgias-1.18.0.js',
   'database/medicamentos.js',
   'database/irradiacao_clinica.js',
-  'database/mapeamento_regioes-1.0.0.js'
+  'database/mapeamento_regioes-1.0.0.js',
+  'database/mapeamento_clinico_core-1.0.0.js'
 ];
 for(const file of evaluationDatabaseLazyScripts)assertLazyAsset(file,'script');
 
@@ -228,7 +229,14 @@ assert.strictEqual(vm.runInContext('typeof dicionarioCirurgias',clinicalDbContex
 assert.strictEqual(vm.runInContext('typeof dicionarioMedicamentos',clinicalDbContext),'object','dicionário de medicamentos deve existir após carga tardia da Avaliação');
 assert.strictEqual(vm.runInContext('typeof BANCO_IRRADIACAO_CLINICA',clinicalDbContext),'object','banco de irradiação deve existir antes da demanda regional');
 assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_REGIOES',clinicalDbContext),'object','índice leve de regiões deve existir antes da demanda regional');
-assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_CLINICO',clinicalDbContext),'undefined','banco clínico pesado não deve existir no bundle-base da Avaliação');
+assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_CLINICO',clinicalDbContext),'object','núcleo leve do banco clínico deve existir no bundle-base da Avaliação');
+const bancoCore=vm.runInContext('BANCO_MAPEAMENTO_CLINICO',clinicalDbContext);
+assert.deepStrictEqual(Object.keys(bancoCore),Object.keys(vm.runInContext('BANCO_MAPEAMENTO_REGIOES',clinicalDbContext)),'núcleo leve deve preservar todos os IDs regionais');
+for(const reg of Object.values(bancoCore)){
+  assert.ok(Array.isArray(reg.clusters)&&reg.clusters.length===0,'núcleo leve não deve antecipar clusters clínicos');
+  assert.ok(Array.isArray(reg.diferenciais)&&reg.diferenciais.length===0,'núcleo leve não deve antecipar diferenciais clínicos');
+  assert.ok(Array.isArray(reg.redFlags)&&reg.redFlags.length===0,'núcleo leve não deve antecipar red flags clínicas');
+}
 const evaluationDatabaseDeferredBytes=evaluationDatabaseLazyScripts.reduce((total,file)=>total+fs.statSync(file).size,0);
 
 

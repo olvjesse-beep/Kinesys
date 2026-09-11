@@ -32,6 +32,7 @@
                 'database/medicamentos.js',
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
+                'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
                 'clinical_engine-1.17.0.js',
                 'evaluation_workspace-1.17.0.js',
                 'proms_escalas.js',
