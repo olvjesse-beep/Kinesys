@@ -59,4 +59,4 @@ jobs:
       - name: Run adversarial upper-limb audit corpus
         run: node tests/clinical_reasoning_upper_limb.adversarial.js
 
-# Permanent regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
+# Permanent 85-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
