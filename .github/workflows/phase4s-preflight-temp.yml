@@ -1,0 +1,30 @@
+name: Phase 4S Preflight Temp
+
+on:
+  push:
+    branches:
+      - performance/report-ui-helpers-phase4s
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect report UI helper boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          for fn in montarDocumentoComTimbrado endpointGemini minutosEntreHoras atualizarDuracaoComparecimento formatarDataBR; do
+            echo "=== $fn ==="
+            grep -RFn --exclude-dir=.git --exclude='phase4s-preflight-temp.yml' "$fn" . || true
+          done
+          echo '=== candidate source window ==='
+          sed -n '970,1070p' script-1.18.0.js
+          sed -n '3530,3585p' script-1.18.0.js
+          echo '=== prohibited coupling inside exact candidate bodies (manual grep context) ==='
+          grep -nE '_supabase|\.rpc\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem' script-1.18.0.js | awk '$1+0>=970 && $1+0<=1070 || $1+0>=3530 && $1+0<=3585' || true
+          node --check script-1.18.0.js
+          wc -c script-1.18.0.js
