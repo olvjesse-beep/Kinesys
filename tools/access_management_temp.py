@@ -15,3 +15,22 @@ if css_tag not in s:
 if js_tag not in s:
     s=s.replace(js_anchor,js_anchor+js_tag,1)
 p.write_text(s,encoding='utf-8')
+
+core=Path('script-1.18.0.js')
+c=core.read_text(encoding='utf-8')
+start='async function enviarRedefinicaoAcessoFuncionario(id) {'
+end='\nasync function excluirFuncionario(id) {'
+si=c.find(start)
+ei=c.find(end,si)
+if si<0 or ei<0:
+    raise SystemExit('legacy team recovery function absent/ambiguous')
+replacement="""async function enviarRedefinicaoAcessoFuncionario(id) {
+    if (!usuarioEhMaster()) { alert('Apenas Administrador pode definir senhas da equipe.'); return false; }
+    if (!window.KineSysAccessAdmin?.open) { alert('O gerenciamento de acesso ainda não foi carregado. Atualize a página e tente novamente.'); return false; }
+    return window.KineSysAccessAdmin.open(id);
+}
+"""
+c=c[:si]+replacement+c[ei:]
+c=c.replace('>Redefinir acesso</button>','>Definir nova senha</button>')
+c=c.replace('use “Redefinir acesso”.','use “Definir nova senha”.')
+core.write_text(c,encoding='utf-8')
