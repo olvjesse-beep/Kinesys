@@ -1,0 +1,33 @@
+name: Team Management Modularization Contract
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        run: |
+          node --check team_management_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/team_management_modularization.contract.js
+          node --check tests/access_management.contract.js
+
+      - name: Team management modularization contract
+        run: node tests/team_management_modularization.contract.js
+
+      - name: Access management integration contract
+        run: node tests/access_management.contract.js
+
+      - name: Diff whitespace check
+        run: git diff --check

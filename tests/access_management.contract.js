@@ -8,6 +8,7 @@ const recovery=fs.readFileSync('recuperar-acesso.html','utf8');
 const edge=fs.readFileSync('supabase/functions/cadastrar-equipe/index.ts','utf8');
 const index=fs.readFileSync('index.html','utf8');
 const core=fs.readFileSync('script-1.18.0.js','utf8');
+const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
 
 assert.match(login,/kinesys_meus_perfis/,'login must resolve profiles from the authenticated account');
 assert.doesNotMatch(login,/filter\(p=>normalize\(p\.tipo\)===selectedRole\)/,'login must not pre-filter profiles by a role chosen before authentication');
@@ -34,13 +35,13 @@ assert.match(edge,/activeClinics\.size > 1/,'multi-clinic identities must fail c
 assert.match(edge,/kinesys_sessoes_perfil'[\s\S]{0,160}\.delete\(\)/,'profile sessions must be invalidated after an administrative password reset');
 assert.match(edge,/update\(\{ senha: null \}\)/,'legacy equipe password value must be cleared, never replaced with the new password');
 
-const resetStart=core.indexOf('async function enviarRedefinicaoAcessoFuncionario(id)');
-const resetEnd=core.indexOf('async function excluirFuncionario(id)',resetStart);
-assert.ok(resetStart>=0&&resetEnd>resetStart,'team reset compatibility function must exist');
-const resetBlock=core.slice(resetStart,resetEnd);
+const resetStart=team.indexOf('async function enviarRedefinicaoAcessoFuncionario(id)');
+const resetEnd=team.indexOf('async function excluirFuncionario(id)',resetStart);
+assert.ok(resetStart>=0&&resetEnd>resetStart,'team reset compatibility function must exist in the dedicated team module');
+const resetBlock=team.slice(resetStart,resetEnd);
 assert.match(resetBlock,/KineSysAccessAdmin\?\.open/,'legacy team action must delegate to the secure access admin controller');
 assert.doesNotMatch(resetBlock,/resetPasswordForEmail/,'team administration must not depend on recovery email');
-assert.match(core,/>Definir nova senha<\/button>/,'team action must be labeled as direct password definition');
+assert.match(team,/>Definir nova senha<\/button>/,'team action must be labeled as direct password definition');
 assert.doesNotMatch(core,/CAMPOS_PUBLICOS_PERFIL\s*=\s*\[[\s\S]{0,250}['"]senha['"]/,'public team profile projection must continue excluding the legacy password column');
 
 assert.match(index,/access_admin-1\.0\.0\.css/,'access admin stylesheet must be loaded');
