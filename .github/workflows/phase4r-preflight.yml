@@ -1,0 +1,32 @@
+name: Phase 4R Preflight
+
+on:
+  push:
+    branches:
+      - performance/login-ui-helpers-phase4r
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate login helper dependencies and startup
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== KineSysLogin.start references ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'KineSysLogin.start' . || true
+          echo '=== carregarAcessoDaSessao references ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'carregarAcessoDaSessao' . || true
+          echo '=== mostrarFeedbackLogin references ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'mostrarFeedbackLogin' . || true
+          echo '=== sincronizarEstadoAutenticacaoVisual references ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'sincronizarEstadoAutenticacaoVisual' . || true
+          echo '=== mensagemErroAutenticacao references ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'mensagemErroAutenticacao' . || true
+          echo '=== Syntax ==='
+          node --check script-1.18.0.js
+          node --check login_access-1.18.0.js
