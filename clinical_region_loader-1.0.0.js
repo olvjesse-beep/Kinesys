@@ -1,6 +1,6 @@
 /* KineSys — Clinical Region Loader 1.0.0
- * Carrega banco clínico e motores 3.1 somente quando uma região é necessária.
- * O mapeamento-base é compartilhado; extensões clínicas são carregadas por região.
+ * Carrega dados clínicos e motores 3.1 somente quando uma região é necessária.
+ * O núcleo leve mantém IDs/metadados; bancos-base e extensões entram por região.
  */
 (function instalarClinicalRegionLoader(){
     'use strict';
@@ -10,13 +10,21 @@
     const estilos=new Map();
     const regioesCarregadas=new Set();
     const regioesBancoCarregadas=new Set();
-    let bancoClinicoPronto=false;
-    let bancoClinicoPromise=null;
     let fila=Promise.resolve();
 
-    const BANCO_CLINICO_BASE=Object.freeze([
-        'database/mapeamento_clinico.js'
-    ]);
+    const BASES_BANCO=Object.freeze({
+        cervical:'database/regioes/cervical-base-1.0.0.js',
+        cefaleia:'database/regioes/cefaleia-base-1.0.0.js',
+        atm:'database/regioes/atm-base-1.0.0.js',
+        ombro:'database/regioes/ombro-base-1.0.0.js',
+        lombar:'database/regioes/lombar-base-1.0.0.js',
+        joelho:'database/regioes/joelho-base-1.0.0.js',
+        quadril:'database/regioes/quadril-base-1.0.0.js',
+        tornozelo_pe:'database/regioes/tornozelo_pe-base-1.0.0.js',
+        cotovelo:'database/regioes/cotovelo-base-1.0.0.js',
+        punho_mao:'database/regioes/punho_mao-base-1.0.0.js',
+        coluna_toracica:'database/regioes/coluna_toracica-base-1.0.0.js'
+    });
     const EXTENSOES_BANCO=Object.freeze({
         ombro:'database/regioes/ombro-ext-1.0.0.js',
         cotovelo:'database/regioes/cotovelo-ext-1.0.0.js',
@@ -85,21 +93,7 @@
         return promessa;
     }
 
-    async function garantirBancoBase(){
-        if(bancoClinicoPronto)return false;
-        if(bancoClinicoPromise)return bancoClinicoPromise;
-        bancoClinicoPromise=(async()=>{
-            for(const src of BANCO_CLINICO_BASE)await carregarScript(src);
-            bancoClinicoPronto=true;
-            return true;
-        })().catch(error=>{
-            bancoClinicoPromise=null;
-            throw error;
-        });
-        return bancoClinicoPromise;
-    }
-
-    function normalizarRegioes(ids){
+    function normalizarRegioesMotor(ids){
         const solicitadas=new Set();
         (Array.isArray(ids)?ids:[]).forEach(id=>{
             const chave=String(id||'');
@@ -110,25 +104,23 @@
         return ORDEM.filter(id=>solicitadas.has(id));
     }
 
-    async function garantirExtensoesBanco(ids){
-        let mudou=false;
-        const candidatas=Array.from(new Set(Array.isArray(ids)?ids.filter(Boolean):[]));
-        for(const id of candidatas){
-            const src=EXTENSOES_BANCO[id];
-            if(!src||regioesBancoCarregadas.has(id))continue;
-            await carregarScript(src);
-            regioesBancoCarregadas.add(id);
-            mudou=true;
-            document.dispatchEvent(new CustomEvent('kinesys:clinical-bank-region-ready',{detail:{id,versao:VERSION}}));
-        }
-        return mudou;
+    async function garantirBancoRegiao(id){
+        const chave=String(id||'');
+        if(!BASES_BANCO[chave]||regioesBancoCarregadas.has(chave))return false;
+        await carregarScript(BASES_BANCO[chave]);
+        const extensao=EXTENSOES_BANCO[chave];
+        if(extensao)await carregarScript(extensao);
+        regioesBancoCarregadas.add(chave);
+        document.dispatchEvent(new CustomEvent('kinesys:clinical-bank-region-ready',{detail:{id:chave,versao:VERSION}}));
+        return true;
     }
 
     async function garantirBancoClinico(ids){
-        let mudou=await garantirBancoBase();
-        const dependenciasMotor=normalizarRegioes(ids);
-        const regioesBanco=Array.from(new Set([...(Array.isArray(ids)?ids:[]),...dependenciasMotor].filter(Boolean)));
-        if(await garantirExtensoesBanco(regioesBanco))mudou=true;
+        let mudou=false;
+        const regioesBanco=Array.from(new Set((Array.isArray(ids)?ids:[]).map(id=>String(id||'')).filter(id=>BASES_BANCO[id])));
+        for(const id of regioesBanco){
+            if(await garantirBancoRegiao(id))mudou=true;
+        }
         if(mudou)document.dispatchEvent(new CustomEvent('kinesys:clinical-bank-ready',{detail:{regioes:regioesBanco,versao:VERSION}}));
         return mudou;
     }
@@ -152,10 +144,10 @@
     }
 
     async function executar(ids){
-        const solicitadas=Array.from(new Set([...(Array.isArray(ids)?ids:[]),...regioesSelecionadasDom()].filter(Boolean)));
+        const solicitadas=Array.from(new Set([...(Array.isArray(ids)?ids:[]),...regioesSelecionadasDom()].map(id=>String(id||'')).filter(Boolean)));
         if(!solicitadas.length)return[];
         let mudou=await garantirBancoClinico(solicitadas);
-        const ordem=normalizarRegioes(solicitadas);
+        const ordem=normalizarRegioesMotor(solicitadas);
         for(const id of ordem){
             if(await carregarRegiao(id))mudou=true;
         }
@@ -198,7 +190,7 @@
         ensure:solicitar,
         sync:sincronizarPlanoAtual,
         status(){return Object.freeze({
-            bankLoaded:bancoClinicoPronto,
+            bankLoaded:regioesBancoCarregadas.size>0,
             bankRegions:Object.freeze(Array.from(regioesBancoCarregadas)),
             loaded:Object.freeze(ORDEM.filter(id=>regioesCarregadas.has(id)))
         });}

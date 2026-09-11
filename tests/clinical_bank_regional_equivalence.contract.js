@@ -19,19 +19,24 @@ const historical=[
   'database/diferenciais_neurais.js'
 ];
 const manifest=JSON.parse(fs.readFileSync('database/regioes/manifest-1.0.0.json','utf8'));
+const baseManifest=JSON.parse(fs.readFileSync('database/regioes/base-manifest-1.0.0.json','utf8'));
 const regionalFiles=Object.values(manifest).map(item=>item.file);
+const baseFiles=Object.values(baseManifest).map(item=>item.file);
 
 assert.deepStrictEqual(Object.keys(manifest).sort(),[
   'coluna_toracica','cotovelo','joelho','ombro','punho_mao','quadril','tornozelo_pe'
 ].sort(),'manifesto regional deve conter exatamente as regiões historicamente modificadas');
-for(const file of regionalFiles){
+for(const file of [...baseFiles,...regionalFiles]){
   assert.ok(fs.existsSync(file),`${file} deve existir`);
   assert.doesNotThrow(()=>require('child_process').execFileSync(process.execPath,['--check',file]),`${file} deve ter sintaxe válida`);
 }
 
 const esperado=execute(historical);
-const reconstruido=execute(['database/mapeamento_clinico.js',...regionalFiles]);
-assert.deepStrictEqual(reconstruido,esperado,'banco reconstruído pelos fragmentos regionais deve ser estruturalmente idêntico ao banco histórico completo');
+const reconstruidoLegadoBase=execute(['database/mapeamento_clinico.js',...regionalFiles]);
+assert.deepStrictEqual(reconstruidoLegadoBase,esperado,'fragmentos de extensão devem permanecer equivalentes quando aplicados ao banco monolítico de referência');
+
+const caminhoProducao=execute(['database/mapeamento_clinico_core-1.0.0.js',...baseFiles,...regionalFiles]);
+assert.deepStrictEqual(caminhoProducao,esperado,'núcleo + bases regionais + extensões regionais deve reconstruir exatamente o banco histórico completo');
 
 for(const [id,item] of Object.entries(manifest)){
   const base=execute(['database/mapeamento_clinico.js']);

@@ -3707,7 +3707,24 @@ function renderizarSeletorRegioes() {
         input.dataset.regiao = idRegiao;
         input.addEventListener('change', function() {
             input.dataset.tocadoManualmente = 'true';
-            renderizarMapeamentoRegioes();
+            if (!input.checked) {
+                renderizarMapeamentoRegioes();
+                return;
+            }
+            const loader = window.KineSysClinicalRegionLoader;
+            if (!loader?.ensure) {
+                input.checked = false;
+                if (typeof window.mostrarToastKineSys === 'function') window.mostrarToastKineSys('Os dados clínicos desta região ainda não estão disponíveis. Tente novamente.','erro',6500);
+                return;
+            }
+            loader.ensure([idRegiao]).then(() => {
+                const carregada = loader.status?.().bankRegions?.includes(idRegiao);
+                if (carregada) renderizarMapeamentoRegioes();
+                else {
+                    input.checked = false;
+                    if (typeof window.mostrarToastKineSys === 'function') window.mostrarToastKineSys('Não foi possível carregar os dados clínicos desta região. Tente novamente.','erro',6500);
+                }
+            });
         });
 
         const span = document.createElement('span');
