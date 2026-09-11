@@ -13,6 +13,7 @@ on:
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
+      - 'tests/clinical_reasoning_upper_limb.chaos.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   pull_request:
     branches: [main]
@@ -26,6 +27,7 @@ on:
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
       - 'tests/clinical_reasoning_upper_limb.adversarial.js'
+      - 'tests/clinical_reasoning_upper_limb.chaos.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   workflow_dispatch:
 
@@ -49,6 +51,7 @@ jobs:
           node --check tests/clinical_reasoning_shoulder_elbow.regression.js
           node --check tests/clinical_reasoning_wrist.regression.js
           node --check tests/clinical_reasoning_upper_limb.adversarial.js
+          node --check tests/clinical_reasoning_upper_limb.chaos.js
 
       - name: Run realistic shoulder and elbow HMA corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
@@ -59,4 +62,7 @@ jobs:
       - name: Run adversarial upper-limb audit corpus
         run: node tests/clinical_reasoning_upper_limb.adversarial.js
 
-# Permanent 85-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
+      - name: Run noisy HMA chaos corpus
+        run: node tests/clinical_reasoning_upper_limb.chaos.js
+
+# Permanent 121-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
