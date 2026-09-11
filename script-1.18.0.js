@@ -996,18 +996,6 @@ async function carregarHistoricoEvolucao() {
 
 // Monta o miolo #documento_impressao com o timbre de fundo + o conteúdo
 // (texto) por cima, na zona segura — usado pelos 3 tipos de documento.
-function montarDocumentoComTimbrado(htmlConteudo) {
-    const documento = document.getElementById('documento_impressao');
-    documento.innerHTML = `
-        <div class="timbrado-fundo"></div>
-        <div class="timbrado-conteudo">${htmlConteudo}</div>
-    `;
-
-    const container = document.getElementById('preview_relatorio_container');
-    container.style.display = 'block';
-    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 /* ==========================================================================
    1) COMPARECIMENTO — modelo fixo, SEM IA, padrão editorial clínico FISIOFIX
    ========================================================================== */
@@ -1044,11 +1032,6 @@ const GEMINI_CONFIG = {
 // A chave do provedor nunca fica no navegador. A chamada de IA passa por uma
 // Supabase Edge Function autenticada, que guarda GEMINI_API_KEY em segredo.
 const API_KEY = '';
-
-function endpointGemini(modelo) {
-    return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`;
-}
-
 
 /* gerarDocumentoComIA legado removido na v1.4 */
 
@@ -3539,12 +3522,8 @@ async function montarDocumentoIAParaImpressao(){
 
 
 /* ================= 1.6 — PRODUTIVIDADE, ALTA, RESTRIÇÕES, PENDÊNCIAS E AUDITORIA IA ================= */
-function minutosEntreHoras(inicio,fim){if(!inicio||!fim)return null;const [hi,mi]=inicio.split(':').map(Number),[hf,mf]=fim.split(':').map(Number);const n=(hf*60+mf)-(hi*60+mi);return n>0?n:null;}
-function atualizarDuracaoComparecimento(){const i=document.getElementById('rel_comp_entrada')?.value,f=document.getElementById('rel_comp_saida')?.value,el=document.getElementById('rel_comp_duracao');if(!el)return;const m=minutosEntreHoras(i,f);el.value=m==null?'':`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}min`;}
-document.addEventListener('change',e=>{if(['rel_comp_entrada','rel_comp_saida'].includes(e.target?.id))atualizarDuracaoComparecimento();});
 
 function renderizarRestricoesPersistentesEvolucao(p){const box=document.getElementById('banner_restricoes_posop');if(!box)return;if(!p){box.style.display='none';box.innerHTML='';return;}const av=obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p),r=av?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias;if(!r?.ativo){box.style.display='none';box.innerHTML='';return;}const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'}[r.statusCarga]||'Não informada';const itens=[r.procedimento&&`Procedimento: ${escapeHTML(r.procedimento)}`,`Carga: ${escapeHTML(carga)}`,r.ortese&&`Órtese: ${escapeHTML(r.ortese)}`,r.restricaoADM&&`ADM: ${escapeHTML(r.restricaoADM)}`,r.proibicoes&&`Proibições: ${escapeHTML(r.proibicoes)}`,r.retornoMedico&&`Retorno médico: ${escapeHTML(formatarDataBR(r.retornoMedico))}`].filter(Boolean);box.innerHTML=`<strong>⚠ Restrições pós-operatórias vigentes</strong><div class="kds-u-mt-5px kds-u-fs-label">${itens.join(' · ')}</div>`;box.style.display='block';}
-function formatarDataBR(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [a,m,d]=v.split('-');return `${d}/${m}/${a}`;}return v;}
 
 async function duplicarUltimaEvolucao(){const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('⚠️ Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);const lista=await obterPacientesSalvos(),p=lista.find(x=>String(x.id)===String(id)),e=(p?.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||''))).pop();if(!p){alert('⚠️ O paciente selecionado não foi encontrado. Atualize o prontuário e tente novamente.');return;}if(!e){alert('Nenhuma sessão anterior para duplicar.');return;}const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;document.getElementById('evo_relato').value=e.relatoLivre||'';document.getElementById('evo_mudancas').value='';[['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([campoId,v])=>{const el=document.getElementById(campoId);if(el)el.value=v??'';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.checked=false;});if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}alert('⧉ Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');}
 
