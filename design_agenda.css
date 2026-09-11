@@ -567,30 +567,156 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 /* ==========================================================================
    7. Modal de agendamento, recorrência, pacote e horário extraordinário
    ========================================================================== */
-#modal_agendamento .modal-box{
-  width:min(620px,calc(100vw - 32px));
-  max-width:620px;
-  padding:24px;
+#modal_agendamento .agenda-appointment-modal{
+  width:min(700px,calc(100vw - 32px));
+  max-width:700px;
+  max-height:calc(100vh - 32px);
+  padding:26px 28px 20px;
   overflow-x:hidden;
   box-sizing:border-box;
 }
-#modal_agendamento .grid-2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+#modal_agendamento .agenda-appointment-modal>h2{
+  margin:0 44px 20px 0;
+  color:var(--kds-text);
+  font-size:var(--kds-font-heading-lg);
+  line-height:var(--kds-leading-ui);
+  font-weight:750;
+  letter-spacing:0;
+}
+#modal_agendamento .grid-2{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:16px;
+  align-items:start;
+}
 #modal_agendamento .grid-2>*{min-width:0}
-#modal_agendamento .input-group{min-width:0;margin-bottom:14px}
-#modal_agendamento input,#modal_agendamento select,#modal_agendamento textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
-#modal_agendamento .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+#modal_agendamento .input-group{min-width:0;margin-bottom:13px}
+#modal_agendamento .input-group>label,
+#modal_agendamento .kds-group-label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-ui);
+  font-weight:750;
+}
+#modal_agendamento input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#modal_agendamento select,
+#modal_agendamento textarea{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  font-size:var(--kds-font-field);
+}
+#modal_agendamento input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#modal_agendamento select{min-height:45px}
+#modal_agendamento textarea{min-height:76px;resize:vertical}
+#modal_agendamento .field-help{
+  display:block;
+  margin-top:5px;
+  color:var(--kds-muted);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-text);
+  font-weight:500;
+}
+#modal_agendamento .actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  justify-content:flex-end;
+  margin-top:4px;
+  padding-top:16px;
+  border-top:1px solid var(--kds-line-soft);
+}
 #modal_agendamento .actions button{min-width:0;white-space:normal}
-#ag_profissional_select:not(:disabled){background-color:#fff;cursor:pointer}
+#ag_profissional_select:not(:disabled){background-color:var(--kds-surface);cursor:pointer}
 #btn_salvar_agendamento[disabled]{opacity:.62;cursor:wait}
 
-.agenda-finance-link{padding:11px 12px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
-.agenda-finance-link label{color:var(--kds-text);font-weight:800}
-.agenda-finance-link .optional-label{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:600}
-.agenda-package-summary{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--kds-accent-soft);color:#17675F;font-size:var(--kds-font-label);line-height:var(--kds-leading-ui);font-weight:650}
+/* Busca única de paciente: o campo é entrada e seleção; sugestões flutuam abaixo. */
+#modal_agendamento .agenda-patient-search{position:relative;z-index:20;margin-bottom:16px}
+#modal_agendamento .agenda-patient-combobox{position:relative}
+#modal_agendamento .agenda-patient-suggestions{
+  position:absolute;
+  z-index:30;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  max-height:260px;
+  overflow-y:auto;
+  padding:5px;
+  border:1px solid var(--kds-line);
+  border-radius:var(--kds-radius-sm);
+  background:var(--kds-surface);
+  box-shadow:var(--kds-shadow-float);
+}
+#modal_agendamento .agenda-patient-suggestions[hidden]{display:none!important}
+#modal_agendamento .agenda-patient-suggestion{
+  display:block;
+  width:100%;
+  min-height:42px;
+  padding:9px 11px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:var(--kds-text-secondary);
+  text-align:left;
+  font-family:inherit;
+  font-size:var(--kds-font-field);
+  line-height:var(--kds-leading-ui);
+  font-weight:650;
+  cursor:pointer;
+}
+#modal_agendamento .agenda-patient-suggestion:hover,
+#modal_agendamento .agenda-patient-suggestion.is-active{
+  background:var(--kds-accent-soft);
+  color:var(--kds-accent);
+}
+#modal_agendamento .agenda-patient-suggestion:focus-visible{
+  outline:2px solid var(--kds-accent);
+  outline-offset:-2px;
+}
 
-.agenda-recurrencia{margin:4px 0 14px;padding:12px;border:1px solid var(--kds-line);border-radius:10px;background:var(--kds-surface-soft)}
-.agenda-recurrencia>label{color:var(--kds-text);font-weight:800}
-.agenda-recurrencia-grid,.agenda-recurrencia-fim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;margin-top:10px}
+/* Blocos secundários usam divisores, não uma pilha de caixas concorrentes. */
+.agenda-finance-link{
+  margin:0!important;
+  padding:15px 0 0;
+  border:0;
+  border-top:1px solid var(--kds-line-soft);
+  border-radius:0;
+  background:transparent;
+}
+.agenda-finance-link+.agenda-finance-link{margin-top:14px!important}
+.agenda-finance-link label{color:var(--kds-text-secondary);font-weight:750}
+.agenda-finance-link .optional-label{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:600}
+.agenda-finance-link>.btn-secondary{margin-top:8px}
+.agenda-package-summary{
+  margin-top:8px;
+  padding:9px 11px;
+  border:1px solid var(--kds-line-soft);
+  border-radius:var(--kds-radius-sm);
+  background:var(--kds-accent-soft);
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-ui);
+  font-weight:650;
+}
+
+.agenda-recurrencia{
+  margin:3px 0 15px;
+  padding:16px 0 0;
+  border:0;
+  border-top:1px solid var(--kds-line-soft);
+  border-radius:0;
+  background:transparent;
+}
+.agenda-recurrencia>label{
+  display:block;
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-ui);
+  font-weight:750;
+}
+.agenda-recurrencia-grid,.agenda-recurrencia-fim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;margin-top:9px}
 .agenda-recurrencia-grid>*{min-width:0}
 .agenda-recurrencia-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .agenda-dia-pill{
@@ -601,9 +727,9 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   min-width:42px;
   min-height:38px;
   padding:0 10px;
-  border:1px solid #CFE0DC;
+  border:1px solid var(--kds-line);
   border-radius:var(--kds-radius-pill);
-  background:#fff;
+  background:var(--kds-surface);
   color:var(--kds-text-secondary);
   font-size:var(--kds-font-label);
   font-weight:750;
@@ -616,26 +742,40 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .agenda-recorrencia-custom{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
 .agenda-recorrencia-custom .input-group{flex:1;margin:0}
 .agenda-recorrencia-datas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.agenda-recorrencia-chip{display:inline-flex;gap:6px;align-items:center;padding:5px 8px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-pill);background:#fff;color:var(--kds-text-secondary);font-size:var(--kds-font-metadata)}
+.agenda-recorrencia-chip{display:inline-flex;gap:6px;align-items:center;padding:5px 8px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-pill);background:var(--kds-surface);color:var(--kds-text-secondary);font-size:var(--kds-font-metadata)}
 .agenda-recorrencia-chip button{border:0;background:transparent;padding:0;line-height:1;cursor:pointer;color:var(--kds-danger)}
-.agenda-recorrencia-resumo{margin-top:9px;padding:8px 10px;border-radius:8px;background:#F1F7F6;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+.agenda-recorrencia-resumo{margin-top:9px;padding:9px 11px;border:1px solid var(--kds-line-soft);border-radius:var(--kds-radius-sm);background:var(--kds-surface-soft);color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
 .agenda-recorrencia-atalho{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .agenda-recorrencia-atalho button{padding:6px 9px;font-size:var(--kds-font-metadata)}
 
-.agenda-extra-toggle{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid var(--kds-line);border-radius:9px;background:var(--kds-surface-soft);cursor:pointer;color:var(--kds-text-secondary);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
+.agenda-extra-toggle{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:11px 12px;
+  border:1px solid var(--kds-line-soft);
+  border-radius:var(--kds-radius-sm);
+  background:var(--kds-surface);
+  cursor:pointer;
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-label);
+  line-height:var(--kds-leading-ui);
+}
+.agenda-extra-toggle:hover{border-color:var(--kds-line);background:var(--kds-surface-soft)}
 .agenda-extra-toggle input{width:auto;margin-top:2px}
-.agenda-extra-toggle strong{color:var(--kds-text)}
-.agenda-extra-time{margin-top:9px;padding:11px 12px;border:1px solid #E2CFA5;border-radius:9px;background:#FFFDF8}
+.agenda-extra-toggle strong{color:var(--kds-text);font-weight:750}
+.agenda-extra-toggle small{color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-text)}
+.agenda-extra-time{margin-top:8px;padding:11px 12px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);background:var(--kds-surface-soft)}
 .agenda-extra-time .grid-2{align-items:end}
-.agenda-extra-resumo{margin-top:5px;color:#7A6031;font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
-.agenda-extra-icone{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:5px;border-radius:var(--kds-radius-pill);background:#FFF3D8;color:#8B5F12;font-size:var(--kds-font-metadata);font-weight:900;vertical-align:middle}
-.agenda-extra-badge{margin-left:5px;border:1px solid #E8D2A0;background:#FFF3D8;color:#805A16}
+.agenda-extra-resumo{margin-top:5px;color:var(--kds-text-secondary);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
+.agenda-extra-icone{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:5px;border-radius:var(--kds-radius-pill);background:var(--kds-accent-soft);color:var(--kds-accent);font-size:var(--kds-font-metadata);font-weight:900;vertical-align:middle}
+.agenda-extra-badge{margin-left:5px;border:1px solid var(--kds-line);background:var(--kds-accent-soft);color:var(--kds-accent)}
 
 .agenda-plano-vinculo{margin-top:12px;padding:10px;border:1px solid var(--kds-line);border-radius:8px;background:var(--kds-surface-soft)}
 .agenda-plano-vinculo label{display:block;margin-bottom:5px;color:var(--kds-text-secondary);font-size:var(--kds-font-label);font-weight:800}
 .agenda-plano-vinculo>div{display:flex;gap:6px}
 .agenda-plano-vinculo select{flex:1;min-width:0}
-.agenda-plano-vinculo button{border:1px solid var(--kds-line);background:#fff;color:var(--kds-accent);border-radius:6px;padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
+.agenda-plano-vinculo button{border:1px solid var(--kds-line);background:var(--kds-surface);color:var(--kds-accent);border-radius:6px;padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
 .agenda-plano-vinculo small{display:block;margin-top:5px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
 
 /* ==========================================================================
