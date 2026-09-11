@@ -22,6 +22,6 @@ const main='<script defer src="script-1.18.0.js';
 assert(html.includes(tag),'index não carrega document timeline core');
 assert(html.indexOf(crm)<html.indexOf(tag),'document timeline deve carregar após CRM core');
 assert(html.indexOf(tag)<html.indexOf(main),'document timeline deve carregar antes do core consumidor');
-assert(html.includes('core_mod=20260911-phase4o-r1'),'cache-bust do monólito deve acompanhar a modularização corrente sem reutilizar o core anterior');
+assert(html.includes('core_mod=20260911-phase4p-r1'),'cache-bust do monólito deve acompanhar a modularização corrente sem reutilizar o core anterior');
 assert(html.includes('onclick="imprimirDocumento()"'),'HTML perdeu consumidor histórico imprimirDocumento');
 console.log('Document timeline modularization contract Phase 4H: OK');
