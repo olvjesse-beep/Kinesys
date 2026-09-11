@@ -1,0 +1,31 @@
+name: Phase 4R Context Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-appointment-context-phase4r
+    paths:
+      - '.github/workflows/phase4r-context-audit-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-appointment-context-phase4r
+          fetch-depth: 1
+
+      - name: Locate appointment context dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== References ==='
+          grep -R -n -E 'agendamentoClinicoContexto|resolverAgendamentoClinicoParaRegistro|definirAgendamentoClinicoContexto|obterAgendamentoClinicoContexto|limparAgendamentoClinicoContexto|KINESYS_AGENDAMENTO_CLINICO_CONTEXTO_KEY' \
+            --include='*.js' --include='*.html' . \
+            --exclude-dir=.git || true
+          echo '=== End references ==='
