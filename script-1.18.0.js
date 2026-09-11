@@ -6413,6 +6413,8 @@ let midiasPacienteAtual = [];
 let midiaComparacaoA = null;
 let midiaComparacaoB = null;
 let midiaPollTimer = null;
+let midiaPollingCapturaSolicitado = false;
+let kinesysLocalStatusTimer = null;
 let midiaUltimaQuantidadeLocal = 0;
 let midiaTabelaSupabaseDisponivel = true;
 
@@ -6639,9 +6641,23 @@ async function importarDocumentosComputador(input) {
     }
 }
 
+function telaMidiasAtivaKineSys() {
+    return !!document.getElementById('tela_midias')?.classList.contains('ativa');
+}
+
+function suspenderPollingCapturaMidias() {
+    if (midiaPollTimer) {
+        clearInterval(midiaPollTimer);
+        midiaPollTimer = null;
+    }
+}
+
 function iniciarPollingMidias() {
-    if (midiaPollTimer) clearInterval(midiaPollTimer);
+    midiaPollingCapturaSolicitado = true;
+    suspenderPollingCapturaMidias();
+    if (!telaMidiasAtivaKineSys()) return;
     midiaPollTimer = setInterval(async()=>{
+        if (!telaMidiasAtivaKineSys()) return;
         const id=await sincronizarPacienteMidias(false); if(!id) return;
         try {
             const locais=await obterMidiasLocais(id);
@@ -6652,6 +6668,30 @@ function iniciarPollingMidias() {
             }
         } catch(_){}
     },1800);
+}
+
+function iniciarPollingStatusMidias() {
+    if (kinesysLocalStatusTimer || !telaMidiasAtivaKineSys()) return;
+    verificarKinesysLocal(false);
+    kinesysLocalStatusTimer = setInterval(() => {
+        if (telaMidiasAtivaKineSys()) verificarKinesysLocal(false);
+    }, 10000);
+}
+
+function suspenderPollingStatusMidias() {
+    if (!kinesysLocalStatusTimer) return;
+    clearInterval(kinesysLocalStatusTimer);
+    kinesysLocalStatusTimer = null;
+}
+
+function ativarLifecycleMidiasKineSys() {
+    iniciarPollingStatusMidias();
+    if (midiaPollingCapturaSolicitado) iniciarPollingMidias();
+}
+
+function suspenderLifecycleMidiasKineSys() {
+    suspenderPollingStatusMidias();
+    suspenderPollingCapturaMidias();
 }
 
 async function obterMidiasLocais(pacienteId) {
@@ -6771,10 +6811,12 @@ document.addEventListener('DOMContentLoaded', function(){
     }, 0);
 });
 
-// Mantém o indicador do serviço atualizado quando a tela de mídias está aberta.
-document.addEventListener('DOMContentLoaded',function(){
-    setTimeout(()=>verificarKinesysLocal(false),900);
-    setInterval(()=>{if(document.getElementById('tela_midias')?.classList.contains('ativa'))verificarKinesysLocal(false);},10000);
+// Mantém o serviço local ativo somente enquanto a tela de Mídias está em uso.
+document.addEventListener('kinesys:tela-ativada', event => {
+    if (event.detail?.id === 'tela_midias') ativarLifecycleMidiasKineSys();
+});
+document.addEventListener('kinesys:tela-desativada', event => {
+    if (event.detail?.id === 'tela_midias') suspenderLifecycleMidiasKineSys();
 });
 
 window.addEventListener('popstate', () => { const tela = window.location.hash.slice(1); if (usuarioLogado && tela && document.getElementById(tela) && telaPermitida(tela)) navegarPara(tela); });
