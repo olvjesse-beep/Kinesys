@@ -7,6 +7,7 @@ const vm=require('vm');
 const html=fs.readFileSync('index.html','utf8');
 const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
 const app=fs.readFileSync('script-1.18.0.js','utf8');
+const registration=fs.readFileSync('patient_registration_core-1.0.0.js','utf8');
 const regionLoader=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
 const fragmentPath='screens/tela_avaliacao.html';
 assert.ok(fs.existsSync(fragmentPath),'fragmento físico da Avaliação deve existir');
@@ -165,8 +166,8 @@ assert.match(workspace,/clinicaEstruturadaPreservada/,'workspace tardio deve rec
 assert.match(proms,/document\.readyState===['"]loading['"]/,'PROMs deve inicializar também em carregamento tardio');
 assert.match(app,/function inicializarAvaliacaoDomKineSys\(/,'app global deve possuir inicializador idempotente do DOM tardio');
 assert.match(app,/kinesys:tela-dom-pronta/,'app global deve reagir à montagem tardia da Avaliação');
-const waits=(app.match(/const navegacao = await navegarPara\('tela_avaliacao', true\);/g)||[]).length;
-assert.strictEqual(waits,2,'os dois fluxos que preenchem a Avaliação devem aguardar sua montagem');
+const waits=((app+'\n'+registration).match(/const navegacao = await navegarPara\('tela_avaliacao', true\);/g)||[]).length;
+assert.strictEqual(waits,2,'os dois fluxos que preenchem a Avaliação devem aguardar sua montagem, mesmo após modularização do cadastro');
 
 const financeLazyScripts=[
   'pendencias_financeiras-1.19.0.js',

@@ -74,12 +74,12 @@ async function salvarCadastroSomente(redirecionar = true) {
     if (!novoPaciente.avaliacoes) novoPaciente.avaliacoes = [];
 
     const sucesso = await salvarPacienteNaNuvem(novoPaciente);
-    
+
     if (sucesso) {
         if (redirecionar) {
             alert(pacienteAtualId ? "✅ Cadastro atualizado com sucesso!" : "✅ Cadastro salvo na nuvem e disponível para avaliação!");
             pacienteAtualId = null;
-            
+
             ['cad_nome','cad_cpf','cad_nascimento','cad_idade','cad_sexo','cad_estado_civil','cad_telefone','cad_profissao','cad_responsavel_nome','cad_responsavel_parentesco','cad_responsavel_telefone','cad_cep','cad_endereco'].forEach(id => {
                 if(document.getElementById(id)) document.getElementById(id).value = "";
             });
@@ -92,7 +92,7 @@ async function salvarCadastroSomente(redirecionar = true) {
             const cadEndereco = document.getElementById('cad_endereco');
             if (cadEndereco) { delete cadEndereco.dataset.preenchidoPorCep; delete cadEndereco.dataset.cepBase; }
             if(document.getElementById('titulo_tela_cadastro')) document.getElementById('titulo_tela_cadastro').innerText = "Cadastro Geral do Paciente";
-            
+
             navegarPara('tela_home');
         }
         return novoPaciente;
