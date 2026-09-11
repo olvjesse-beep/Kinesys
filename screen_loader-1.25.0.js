@@ -32,16 +32,13 @@
                 'database/medicamentos.js',
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
-                'database/mapeamento_clinico.js',
-                'database/condicoes_mobilidade_v23.js',
-                'database/diferenciais_neurais.js',
                 'clinical_engine-1.17.0.js',
                 'evaluation_workspace-1.17.0.js',
                 'proms_escalas.js',
                 'evaluation_context_panels-1.18.3.js',
                 'avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1',
                 'clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
-                'clinical_region_loader-1.0.0.js?v=20260911-phase3a-r1'
+                'clinical_region_loader-1.0.0.js?v=20260911-phase3c-r1'
             ]),
             afterLoad(){
                 if(typeof window.atualizarMotorClinico3KineSys==='function'){
