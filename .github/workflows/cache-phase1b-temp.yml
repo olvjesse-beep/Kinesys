@@ -14,56 +14,35 @@ permissions:
 jobs:
   integrate:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: performance/query-cache-phase1b
           fetch-depth: 0
-
-      - name: Reapply validated patch with isolated-function guard
+      - name: Bump Agenda lazy asset revision
         run: |
-          python3 - <<'OUTER'
-          import subprocess
-
-          # HEAD^^ contains the full Phase 1B patch workflow. Reuse it verbatim,
-          # changing only the edit-function invalidation to remain optional when
-          # the legacy contract evaluates that function in isolation.
-          yml=subprocess.check_output(
-              ['git','show','HEAD^^:.github/workflows/cache-phase1b-temp.yml'],
-              text=True
-          )
-          marker="          python3 - <<'PY'\n"
-          start=yml.index(marker)+len(marker)
-          end=yml.index("          PY\n",start)
-          linhas=yml[start:end].splitlines()
-          script='\n'.join(l[10:] if l.startswith('          ') else l for l in linhas)+'\n'
-          antigo=r"    invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
-          novo=r"    if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();\n\n    Object.assign(a, alteracoes, {"
-          assert script.count(antigo)==1, 'edit cache invalidation anchor not found in full patch source'
-          script=script.replace(antigo,novo,1)
-          exec(compile(script,'phase1b_patch.py','exec'),{})
-          OUTER
-
-      - name: Validate Phase 1B
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('screen_loader-1.25.0.js')
+          s=p.read_text()
+          old="agenda-1.20.0.js?v=20260910-agenda-edit-r1&compact_time=20260910-r2"
+          new=old+"&data_cache=20260911-r1"
+          assert s.count(old)==1, 'Agenda asset revision anchor changed'
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Validate cache-busted lazy Agenda
         run: |
-          node --check agenda-1.20.0.js
-          node --check tests/agenda_cache.contract.js
-          node tests/agenda_cache.contract.js
-          node tests/data_cache.contract.js
-          node tests/data_cache_integration.contract.js
-          node tests/data_loading.contract.js
-          node tests/operational_data_loading.contract.js
-          node --check tests/agenda_editar_atendimento.contract.js
-          node tests/agenda_editar_atendimento.contract.js
+          node --check screen_loader-1.25.0.js
           node tests/screen_loader.contract.js
+          node tests/agenda_cache.contract.js
+          node tests/agenda_editar_atendimento.contract.js
           git diff --check
-
-      - name: Commit verified Agenda integration
+      - name: Commit cache-bust
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add agenda-1.20.0.js
+          git add screen_loader-1.25.0.js
           git diff --cached --quiet && exit 0
-          git commit -m 'Cache weekly Agenda reads with surgical invalidation'
+          git commit -m 'Bump lazy Agenda revision for cache Phase 1B'
           git push origin HEAD:performance/query-cache-phase1b
