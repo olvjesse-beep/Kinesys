@@ -3,7 +3,8 @@ const fs=require('fs');
 const assert=require('assert');
 const src=fs.readFileSync('script-1.18.0.js','utf8');
 const media=fs.readFileSync('midias_core-1.0.0.js','utf8');
-const runtime=src+'\n'+media;
+const crm=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
+const runtime=src+'\n'+media+'\n'+crm;
 
 assert.match(src,/async function obterPacientesBasicos\(\)/,'lightweight patient index must exist');
 assert.match(src,/async function obterPacienteCompletoPorId\(id\)/,'single-chart loader must exist');
