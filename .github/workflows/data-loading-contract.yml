@@ -9,15 +9,19 @@ on:
       - 'patient_index_cache_core-1.0.0.js'
       - 'patient_chart_read_core-1.0.0.js'
       - 'patient_pre_registration_core-1.0.0.js'
+      - 'patient_records_browse_core-1.0.0.js'
       - 'script-1.18.0.js'
       - 'midias_core-1.0.0.js'
       - 'agenda-1.20.0.js'
       - 'financeiro-1.19.0.js'
+      - 'design_system-1.20.1.js'
+      - 'home_detalhes-1.18.5.js'
       - 'tests/data_cache.contract.js'
       - 'tests/data_cache_integration.contract.js'
       - 'tests/patient_index_cache_modularization.contract.js'
       - 'tests/patient_chart_read_modularization.contract.js'
       - 'tests/patient_pre_registration_modularization.contract.js'
+      - 'tests/patient_records_browse_modularization.contract.js'
       - 'tests/agenda_cache.contract.js'
       - 'tests/agenda_aux_cache.contract.js'
       - 'tests/data_loading.contract.js'
@@ -31,15 +35,19 @@ on:
       - 'patient_index_cache_core-1.0.0.js'
       - 'patient_chart_read_core-1.0.0.js'
       - 'patient_pre_registration_core-1.0.0.js'
+      - 'patient_records_browse_core-1.0.0.js'
       - 'script-1.18.0.js'
       - 'midias_core-1.0.0.js'
       - 'agenda-1.20.0.js'
       - 'financeiro-1.19.0.js'
+      - 'design_system-1.20.1.js'
+      - 'home_detalhes-1.18.5.js'
       - 'tests/data_cache.contract.js'
       - 'tests/data_cache_integration.contract.js'
       - 'tests/patient_index_cache_modularization.contract.js'
       - 'tests/patient_chart_read_modularization.contract.js'
       - 'tests/patient_pre_registration_modularization.contract.js'
+      - 'tests/patient_records_browse_modularization.contract.js'
       - 'tests/agenda_cache.contract.js'
       - 'tests/agenda_aux_cache.contract.js'
       - 'tests/data_loading.contract.js'
@@ -63,6 +71,7 @@ jobs:
           node --check patient_index_cache_core-1.0.0.js
           node --check patient_chart_read_core-1.0.0.js
           node --check patient_pre_registration_core-1.0.0.js
+          node --check patient_records_browse_core-1.0.0.js
           node --check script-1.18.0.js
           node --check midias_core-1.0.0.js
           node --check agenda-1.20.0.js
@@ -72,6 +81,7 @@ jobs:
           node --check tests/patient_index_cache_modularization.contract.js
           node --check tests/patient_chart_read_modularization.contract.js
           node --check tests/patient_pre_registration_modularization.contract.js
+          node --check tests/patient_records_browse_modularization.contract.js
           node --check tests/agenda_cache.contract.js
           node --check tests/agenda_aux_cache.contract.js
           node --check tests/data_loading.contract.js
@@ -86,6 +96,8 @@ jobs:
         run: node tests/patient_chart_read_modularization.contract.js
       - name: Patient pre-registration modularization contract
         run: node tests/patient_pre_registration_modularization.contract.js
+      - name: Patient records browse modularization contract
+        run: node tests/patient_records_browse_modularization.contract.js
       - name: Agenda week cache integration contract
         run: node tests/agenda_cache.contract.js
       - name: Agenda auxiliary cache integration contract
