@@ -6,15 +6,18 @@ const html=fs.readFileSync('index.html','utf8');
 const app=fs.readFileSync('script-1.18.0.js','utf8');
 const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
 const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
+const deletion=fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
 
 const cachePos=html.indexOf('kinesys_data_cache-1.0.0.js');
 const patientPos=html.indexOf('patient_index_cache_core-1.0.0.js');
 const appPos=html.indexOf('script-1.18.0.js');
+const deletionPos=html.indexOf('patient_deletion_core-1.0.0.js');
 const chartPos=html.indexOf('patient_chart_read_core-1.0.0.js');
 assert.ok(cachePos>=0,'data cache core must be loaded by index');
 assert.ok(patientPos>cachePos,'patient index cache module must load after central data cache');
 assert.ok(appPos>patientPos,'patient index cache module must load before the main application');
-assert.ok(chartPos>appPos,'full-chart read module must load after the main core dependencies');
+assert.ok(deletionPos>appPos,'patient deletion module must load after main core dependencies');
+assert.ok(chartPos>deletionPos,'full-chart read module must load after the patient deletion module');
 
 assert.match(patient,/const KINESYS_PACIENTES_BASICOS_CACHE_TTL_MS\s*=\s*15000\s*;/,'patient basic index must use the approved short TTL');
 assert.match(patient,/function chaveCachePacientesBasicos\(\)[\s\S]{0,400}usuarioLogado\?\.id/,'patient cache key must be scoped by active profile');
@@ -42,8 +45,9 @@ const saveStart=app.indexOf('async function salvarPacienteNaNuvem(pacienteObjeto
 assert.ok(saveStart>=0,'patient cloud save must exist');
 assert.match(app.slice(saveStart,saveStart+700),/invalidarCachePacientesBasicos\(\)/,'patient save must invalidate lightweight index before mutation');
 
-const deleteStart=app.indexOf('async function excluirPaciente(id)');
-assert.ok(deleteStart>=0,'patient deletion must exist');
-assert.match(app.slice(deleteStart,deleteStart+700),/invalidarCachePacientesBasicos\(\)/,'patient deletion must force a fresh lightweight index');
+assert.doesNotMatch(app,/async function excluirPaciente\(id\)/,'patient deletion must leave the monolithic core after Phase 4M');
+const deleteStart=deletion.indexOf('async function excluirPaciente(id)');
+assert.ok(deleteStart>=0,'patient deletion must exist in the dedicated module');
+assert.match(deletion.slice(deleteStart,deleteStart+900),/invalidarCachePacientesBasicos\(\)/,'patient deletion must force a fresh lightweight index');
 
-console.log('Data Cache integration: lightweight index remains cached for 15s while full clinical charts remain TTL-free after Phase 4J extraction.');
+console.log('Data Cache integration: lightweight index remains cached for 15s while full clinical charts stay TTL-free and deletion invalidation remains preserved after Phase 4M.');
