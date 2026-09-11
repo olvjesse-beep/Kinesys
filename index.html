@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="design_screens.css">
     <link rel="stylesheet" href="design_typography.css">
     <link rel="stylesheet" href="design_navigation.css">
-    <link rel="stylesheet" href="design_agenda.css?v=20260910-compact-r5">
+    <link rel="stylesheet" href="design_agenda.css?v=20260911-modal-r6">
     <link rel="stylesheet" data-kinesys-lazy-href="design_clinical.css?v=1.19.0-hma-layout-r14">
     <link rel="stylesheet" data-kinesys-lazy-href="design_clinical_direction-1.17.0.css">
     <link rel="stylesheet" href="design_utilities.css">
@@ -1104,16 +1104,19 @@
 
     <!-- MODAL: NOVO/EDITAR AGENDAMENTO -->
     <div class="modal-overlay" id="modal_agendamento">
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal_agendamento_titulo">
+        <div class="modal-box agenda-appointment-modal" role="dialog" aria-modal="true" aria-labelledby="modal_agendamento_titulo">
             <button class="modal-fechar" onclick="fecharModal('modal_agendamento')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="modal_agendamento_titulo">Novo agendamento</h2>
             <div id="ag_edicao_escopo" class="agenda-status-impacto" role="note" hidden></div>
             <input type="hidden" id="ag_id">
-            <div class="input-group">
-                <label for="ag_paciente_busca">Paciente (já cadastrado no sistema)</label>
-                <input type="search" id="ag_paciente_busca" autocomplete="off" placeholder="Digite o início do nome, ex.: Ana" oninput="filtrarPacientesAgendamento(this.value)">
-                <small id="ag_paciente_busca_status" class="field-help" aria-live="polite">Digite pelo menos uma letra do nome para carregar pacientes.</small>
-                <select id="ag_paciente_select" aria-label="Paciente encontrado" onchange="popularPlanosNoAgendamento(this.value, document.getElementById('ag_procedimento_select').value); atualizarHorariosDisponiveisModal()"><option value="">-- Selecione um paciente --</option></select>
+            <div class="input-group agenda-patient-search">
+                <label for="ag_paciente_busca">Paciente *</label>
+                <div class="agenda-patient-combobox">
+                    <input type="search" id="ag_paciente_busca" autocomplete="off" placeholder="Digite parte do nome do paciente" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ag_paciente_sugestoes" aria-describedby="ag_paciente_busca_status" oninput="aoDigitarPacienteAgendamento(this.value)" onkeydown="aoTeclarBuscaPacienteAgendamento(event)">
+                    <input type="hidden" id="ag_paciente_select" value="">
+                    <div id="ag_paciente_sugestoes" class="agenda-patient-suggestions" role="listbox" aria-label="Sugestões de pacientes" hidden></div>
+                </div>
+                <small id="ag_paciente_busca_status" class="field-help" aria-live="polite">Digite parte do nome para localizar um paciente cadastrado.</small>
             </div>
             <div class="grid-2">
                 <div class="input-group">
@@ -1224,7 +1227,7 @@
             <div id="ag_feedback" class="agenda-modal-feedback" role="status" aria-live="polite"></div>
             <div class="actions">
                 <button type="button" class="btn-secondary" onclick="fecharModal('modal_agendamento')">Cancelar</button>
-                <button type="button" class="btn-secondary" onclick="fecharModal('modal_agendamento'); abrirModalListaEspera();">🔔 Sem vaga? Lista de Espera</button>
+                <button type="button" class="btn-secondary" onclick="fecharModal('modal_agendamento'); abrirModalListaEspera();">Lista de espera</button>
                 <button type="button" id="btn_salvar_agendamento" class="btn-primary" onclick="salvarAgendamento()">Confirmar Agendamento</button>
             </div>
         </div>
@@ -1539,7 +1542,7 @@
     <script defer src="document_timeline_core-1.0.0.js?v=20260911-phase4h-r1"></script>
     <script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>
     <script defer src="script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4h-r1"></script>
-    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r2&agenda_compact=20260910-r2"></script>
+    <script defer src="screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1"></script>
     <script defer src="financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="mensagens_config.js?v=20260910-phase4f-r1"></script>

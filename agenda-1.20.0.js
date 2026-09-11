@@ -102,43 +102,187 @@ function ordenarPacientesAgenda(lista = []) {
     );
 }
 
+let agendaPacienteSugestaoAtiva = -1;
+
+function pacienteAgendaPorId(id = '') {
+    const alvo = String(id || '').trim();
+    return agendaPacientesModalCache.find(p => String(p?.id || '') === alvo) || null;
+}
+
+function fecharSugestoesPacienteAgenda() {
+    const busca = document.getElementById('ag_paciente_busca');
+    const lista = document.getElementById('ag_paciente_sugestoes');
+    agendaPacienteSugestaoAtiva = -1;
+    if (lista) {
+        lista.hidden = true;
+        lista.innerHTML = '';
+    }
+    if (busca) {
+        busca.setAttribute('aria-expanded', 'false');
+        busca.removeAttribute('aria-activedescendant');
+    }
+}
+
+function destacarSugestaoPacienteAgenda(indice) {
+    const busca = document.getElementById('ag_paciente_busca');
+    const lista = document.getElementById('ag_paciente_sugestoes');
+    const opcoes = Array.from(lista?.querySelectorAll('[data-paciente-id]') || []);
+    if (!opcoes.length) return;
+    const limite = opcoes.length - 1;
+    agendaPacienteSugestaoAtiva = Math.max(0, Math.min(limite, indice));
+    opcoes.forEach((opcao, i) => {
+        const ativa = i === agendaPacienteSugestaoAtiva;
+        opcao.classList.toggle('is-active', ativa);
+        opcao.setAttribute('aria-selected', String(ativa));
+    });
+    const ativa = opcoes[agendaPacienteSugestaoAtiva];
+    if (ativa) {
+        busca?.setAttribute('aria-activedescendant', ativa.id);
+        ativa.scrollIntoView({ block: 'nearest' });
+    }
+}
+
 function filtrarPacientesAgendamento(termo = '', preservarPacienteId = '') {
-    const sel = document.getElementById('ag_paciente_select');
+    const busca = document.getElementById('ag_paciente_busca');
+    const lista = document.getElementById('ag_paciente_sugestoes');
     const status = document.getElementById('ag_paciente_busca_status');
-    if (!sel) return [];
+    const selecionado = document.getElementById('ag_paciente_select');
+    if (!busca || !lista || !selecionado) return [];
+
     const termoNormalizado = normalizarBuscaPacienteAgenda(termo);
     const preservarId = String(preservarPacienteId || '').trim();
-    let resultados = termoNormalizado
-        ? agendaPacientesModalCache.filter(p => normalizarBuscaPacienteAgenda(p?.nome).startsWith(termoNormalizado))
-        : [];
+    if (!termoNormalizado) {
+        fecharSugestoesPacienteAgenda();
+        if (status) status.textContent = 'Digite parte do nome para localizar um paciente cadastrado.';
+        return [];
+    }
+
+    let resultados = agendaPacientesModalCache.filter(p =>
+        normalizarBuscaPacienteAgenda(p?.nome).includes(termoNormalizado)
+    );
     if (preservarId) {
-        const atual = agendaPacientesModalCache.find(p => String(p?.id || '') === preservarId);
+        const atual = pacienteAgendaPorId(preservarId);
         if (atual && !resultados.some(p => String(p?.id || '') === preservarId)) resultados.push(atual);
     }
     resultados = ordenarPacientesAgenda(resultados);
-    sel.innerHTML = '<option value="">-- Selecione um paciente --</option>' + resultados.map(p =>
-        `<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome || 'Paciente')}</option>`
+
+    lista.innerHTML = resultados.map((p, i) =>
+        `<button type="button" id="ag_paciente_opcao_${i}" class="agenda-patient-suggestion" role="option" aria-selected="false" data-paciente-id="${escapeHTML(String(p?.id || ''))}" onclick="selecionarPacienteAgendamento(this.dataset.pacienteId)">${escapeHTML(p?.nome || 'Paciente')}</button>`
     ).join('');
-    if (preservarId && resultados.some(p => String(p?.id || '') === preservarId)) sel.value = preservarId;
+    lista.hidden = resultados.length === 0;
+    busca.setAttribute('aria-expanded', resultados.length ? 'true' : 'false');
+    busca.removeAttribute('aria-activedescendant');
+    agendaPacienteSugestaoAtiva = -1;
+
     if (status) {
-        if (!termoNormalizado && !preservarId) status.textContent = 'Digite pelo menos uma letra do nome para carregar pacientes.';
-        else status.textContent = resultados.length
-            ? `${resultados.length} paciente(s) encontrado(s), em ordem alfabética.`
-            : 'Nenhum paciente encontrado com esse início de nome.';
+        status.textContent = resultados.length
+            ? `${resultados.length} paciente(s) encontrado(s). Selecione uma sugestão.`
+            : 'Nenhum paciente encontrado com esse trecho do nome.';
     }
     return resultados;
+}
+
+function limparDependenciasPacienteAgendamento() {
+    const plano = document.getElementById('ag_plano_select');
+    const statusPlano = document.getElementById('ag_plano_status');
+    const resumoPlano = document.getElementById('ag_plano_resumo');
+    if (plano) {
+        plano.innerHTML = '<option value="">Selecione um paciente para ver os pacotes</option>';
+        plano.disabled = false;
+    }
+    if (statusPlano) statusPlano.textContent = 'Selecione o paciente para carregar automaticamente os planos/pacotes ativos.';
+    if (resumoPlano) {
+        resumoPlano.hidden = true;
+        resumoPlano.textContent = '';
+    }
+}
+
+function aoDigitarPacienteAgendamento(valor = '') {
+    const selecionado = document.getElementById('ag_paciente_select');
+    const atual = pacienteAgendaPorId(selecionado?.value || '');
+    if (selecionado && atual && normalizarBuscaPacienteAgenda(valor) !== normalizarBuscaPacienteAgenda(atual.nome)) {
+        selecionado.value = '';
+        limparDependenciasPacienteAgendamento();
+    }
+    return filtrarPacientesAgendamento(valor);
+}
+
+function selecionarPacienteAgendamento(id = '') {
+    const paciente = pacienteAgendaPorId(id);
+    const selecionado = document.getElementById('ag_paciente_select');
+    const busca = document.getElementById('ag_paciente_busca');
+    const status = document.getElementById('ag_paciente_busca_status');
+    if (!paciente || !selecionado || !busca) return false;
+
+    selecionado.value = String(paciente.id || '');
+    busca.value = paciente.nome || '';
+    fecharSugestoesPacienteAgenda();
+    if (status) status.textContent = 'Paciente selecionado.';
+
+    const procedimentoId = document.getElementById('ag_procedimento_select')?.value || '';
+    if (typeof popularPlanosNoAgendamento === 'function') {
+        Promise.resolve(popularPlanosNoAgendamento(selecionado.value, procedimentoId)).catch(err =>
+            console.warn('Agenda: não foi possível carregar os planos do paciente selecionado.', err)
+        );
+    }
+    if (typeof atualizarHorariosDisponiveisModal === 'function') atualizarHorariosDisponiveisModal();
+    busca.focus();
+    return true;
+}
+
+function aoTeclarBuscaPacienteAgendamento(event) {
+    const lista = document.getElementById('ag_paciente_sugestoes');
+    const opcoes = Array.from(lista?.querySelectorAll('[data-paciente-id]') || []);
+    if (!opcoes.length) {
+        if (event.key === 'Escape') fecharSugestoesPacienteAgenda();
+        return;
+    }
+    if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        destacarSugestaoPacienteAgenda(agendaPacienteSugestaoAtiva < opcoes.length - 1 ? agendaPacienteSugestaoAtiva + 1 : 0);
+        return;
+    }
+    if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        destacarSugestaoPacienteAgenda(agendaPacienteSugestaoAtiva > 0 ? agendaPacienteSugestaoAtiva - 1 : opcoes.length - 1);
+        return;
+    }
+    if (event.key === 'Enter' && agendaPacienteSugestaoAtiva >= 0) {
+        event.preventDefault();
+        selecionarPacienteAgendamento(opcoes[agendaPacienteSugestaoAtiva]?.dataset?.pacienteId || '');
+        return;
+    }
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        fecharSugestoesPacienteAgenda();
+    }
 }
 
 function prepararBuscaPacienteAgendamento(pacientes = [], pacienteSelecionadoId = '') {
     agendaPacientesModalCache = ordenarPacientesAgenda(pacientes);
     const busca = document.getElementById('ag_paciente_busca');
-    const selecionadoId = String(pacienteSelecionadoId || '').trim();
-    const selecionado = agendaPacientesModalCache.find(p => String(p?.id || '') === selecionadoId);
-    if (busca) busca.value = selecionado?.nome || '';
-    return filtrarPacientesAgendamento(busca?.value || '', selecionadoId);
+    const selecionado = document.getElementById('ag_paciente_select');
+    const status = document.getElementById('ag_paciente_busca_status');
+    const pacienteId = String(pacienteSelecionadoId || '').trim();
+    const paciente = pacienteAgendaPorId(pacienteId);
+    if (selecionado) selecionado.value = paciente?.id ? String(paciente.id) : '';
+    if (busca) busca.value = paciente?.nome || '';
+    fecharSugestoesPacienteAgenda();
+    if (status) status.textContent = paciente ? 'Paciente selecionado.' : 'Digite parte do nome para localizar um paciente cadastrado.';
+    return paciente;
 }
 
-if (typeof window !== 'undefined') window.filtrarPacientesAgendamento = filtrarPacientesAgendamento;
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', event => {
+        if (!event.target?.closest?.('#modal_agendamento .agenda-patient-search')) fecharSugestoesPacienteAgenda();
+    });
+}
+if (typeof window !== 'undefined') {
+    window.filtrarPacientesAgendamento = filtrarPacientesAgendamento;
+    window.aoDigitarPacienteAgendamento = aoDigitarPacienteAgendamento;
+    window.aoTeclarBuscaPacienteAgendamento = aoTeclarBuscaPacienteAgendamento;
+    window.selecionarPacienteAgendamento = selecionarPacienteAgendamento;
+}
 
 // Status oficiais da Agenda. O status é um estado operacional/administrativo;
 // o consumo financeiro é definido explicitamente e não pelo nome do status.
@@ -2960,7 +3104,7 @@ Deseja realmente realizar esse agendamento?`,
         }
 
         const metaBase = {
-            paciente_nome: document.getElementById('ag_paciente_select')?.selectedOptions?.[0]?.textContent || 'Paciente',
+            paciente_nome: pacienteAgendaPorId(pacienteId)?.nome || document.getElementById('ag_paciente_busca')?.value?.trim() || 'Paciente',
             profissional_nome: document.getElementById('ag_profissional_select')?.selectedOptions?.[0]?.textContent || 'Profissional',
             procedimento_nome: document.getElementById('ag_procedimento_select')?.selectedOptions?.[0]?.textContent || 'Atendimento',
             profissional_email: agendaEquipeCache.find(p => String(p.id) === String(profissionalId))?.email || null,
@@ -3176,9 +3320,8 @@ async function reagendarAgendamentoAtual() {
     const dataInicial = a.data && a.data >= hoje ? a.data : hoje;
     fecharModal('modal_detalhe_agendamento');
     await abrirModalAgendamento(a.profissional_id || '', dataInicial, '');
-    const paciente = document.getElementById('ag_paciente_select');
     const procedimento = document.getElementById('ag_procedimento_select');
-    if (paciente) paciente.value = a.paciente_id || '';
+    prepararBuscaPacienteAgendamento(agendaPacientesModalCache, a.paciente_id || '');
     if (procedimento) procedimento.value = a.procedimento_id || '';
     await popularPlanosNoAgendamento(a.paciente_id || '', a.procedimento_id || '', a.plano_id || '');
     const plano = document.getElementById('ag_plano_select');
