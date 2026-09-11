@@ -616,9 +616,16 @@
     // Sessões restauradas podem chamar liberarAcessoSistema antes do design layer. Reaplica metadados logo depois.
     setTimeout(()=>{if(document.readyState!=='loading')prepararTudo();},500);
 
-    // Atualiza barra lateral quando o login muda sem recarregar a página.
-    const poll=setInterval(()=>{const role=document.getElementById('ks_sidebar_role');if(role&&((typeof usuarioLogado!=='undefined')?usuarioLogado:null)&&typeof window.rotuloPerfil==='function')role.textContent=window.rotuloPerfil(((typeof usuarioLogado!=='undefined')?usuarioLogado:null).tipo);escutarSeletoresPaciente();atualizarGruposNav();},1200);
-    window.addEventListener('beforeunload',()=>clearInterval(poll));
+    // Reage ao lifecycle oficial em vez de manter polling global permanente.
+    function sincronizarDesignDinamico(){
+        const role=document.getElementById('ks_sidebar_role');
+        const usuario=(typeof usuarioLogado!=='undefined')?usuarioLogado:null;
+        if(role&&usuario&&typeof window.rotuloPerfil==='function') role.textContent=window.rotuloPerfil(usuario.tipo);
+        escutarSeletoresPaciente();
+        atualizarGruposNav();
+    }
+    document.addEventListener('kinesys:tela-ativada',sincronizarDesignDinamico);
+    document.addEventListener('kinesys:tela-dom-pronta',sincronizarDesignDinamico);
 })();
 
 
