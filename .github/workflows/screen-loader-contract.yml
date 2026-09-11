@@ -24,6 +24,7 @@ on:
       - 'tests/screen_loader.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
+      - 'tests/radar_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   push:
@@ -49,6 +50,7 @@ on:
       - 'tests/screen_loader.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
+      - 'tests/radar_lifecycle.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/screen-loader-contract.yml'
   workflow_dispatch:
@@ -80,11 +82,14 @@ jobs:
           node --check database/diferenciais_neurais.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
+          node --check tests/radar_lifecycle.contract.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
         run: node tests/midias_lifecycle.contract.js
+      - name: Radar lifecycle contract
+        run: node tests/radar_lifecycle.contract.js
       - name: Operational data and polling contract
         run: node tests/operational_data_loading.contract.js
