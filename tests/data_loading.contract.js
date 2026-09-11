@@ -2,17 +2,19 @@
 const fs=require('fs');
 const assert=require('assert');
 const src=fs.readFileSync('script-1.18.0.js','utf8');
+const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
 const media=fs.readFileSync('midias_core-1.0.0.js','utf8');
 const crm=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
-const runtime=src+'\n'+media+'\n'+crm;
+const runtime=patient+'\n'+src+'\n'+media+'\n'+crm;
 
-assert.match(src,/async function obterPacientesBasicos\(\)/,'lightweight patient index must exist');
-assert.match(src,/async function obterPacienteCompletoPorId\(id\)/,'single-chart loader must exist');
-assert.match(src,/KINESYS_CAMPOS_PACIENTE_BASICO/,'explicit lightweight field contract must exist');
+assert.match(patient,/async function obterPacientesBasicos\(\)/,'lightweight patient index must exist in its dedicated module');
+assert.match(src,/async function obterPacienteCompletoPorId\(id\)/,'single-chart loader must remain in the core');
+assert.match(patient,/KINESYS_CAMPOS_PACIENTE_BASICO/,'explicit lightweight field contract must exist');
+assert.doesNotMatch(src,/async function obterPacientesBasicos\(\)/,'lightweight patient index must not be duplicated in the monolithic core');
 
-const basicStart=src.indexOf('async function consultarPacientesBasicosNaNuvem()');
-const basicEnd=src.indexOf('async function obterPacientesBasicos()',basicStart);
-const basicBlock=src.slice(basicStart,basicEnd);
+const basicStart=patient.indexOf('async function consultarPacientesBasicosNaNuvem()');
+const basicEnd=patient.indexOf('async function obterPacientesBasicos()',basicStart);
+const basicBlock=patient.slice(basicStart,basicEnd);
 assert.doesNotMatch(basicBlock,/avaliacoes\(\*\)|evolucoes\(\*\)/,'lightweight index cannot embed clinical histories');
 
 const oneStart=src.indexOf('async function obterPacienteCompletoPorId(id)');
@@ -48,4 +50,4 @@ for(const marker of [
 const oldAllHistory=(src.match(/\.from\('pacientes'\)\s*\n\s*\.select\('\*, avaliacoes\(\*\), evolucoes\(\*\)'\)/g)||[]).length;
 assert.strictEqual(oldAllHistory,2,'full-history patient query must exist only in selected-chart loader and legacy compatibility loader');
 
-console.log('Data Loading contract Phase 3A: lightweight index + selected full chart are separated across the modular runtime.');
+console.log('Data Loading contract: lightweight index module + selected full chart core remain separated across the modular runtime.');
