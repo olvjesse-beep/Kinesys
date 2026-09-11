@@ -21,7 +21,10 @@ replaceExact('screen_loader-1.25.0.js',`                'clinical_reasoning_hma-
                 'clinical_region_loader-1.0.0.js?v=20260911-phase3a-r1'`);
 
 let test=fs.readFileSync('tests/screen_loader.contract.js','utf8');
-function rep(from,to,label){if(!test.includes(from))throw new Error('Missing test block: '+label);test=test.replace(from,to);}
+function rep(from,to,label){
+  if(!test.includes(from))throw new Error('Missing test block: '+label);
+  test=test.replace(from,to);
+}
 rep(`const app=fs.readFileSync('script-1.18.0.js','utf8');`,`const app=fs.readFileSync('script-1.18.0.js','utf8');\nconst regionLoader=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');`,'region loader import');
 rep(`  'clinical_reasoning_hma-3.0.0.js',
   'clinical_reasoning_shoulder-3.1.0.js',
@@ -50,15 +53,10 @@ const regionalStyles=[
 ];
 
 const lazyStyles=[`,'regional arrays');
-const orderNeedle=`let ultimaPosicao=-1;
-for(const file of lazyScripts){
-  const posicao=loader.indexOf(file);
-  assert.ok(posicao>ultimaPosicao,\`${'${file}'} deve manter a ordem histórica relativa do bundle da Avaliação\`);
-  ultimaPosicao=posicao;
-}
-`;
-const orderInsert=orderNeedle+`
-for(const file of regionalScripts){
+
+const scriptMarker=`for(const file of lazyStyles){`;
+if(!test.includes(scriptMarker))throw new Error('Missing marker before lazyStyles loop');
+const regionalScriptChecks=`for(const file of regionalScripts){
   const escaped=file.replace(/[.*+?^${'${}'}()|[\\]\\\\]/g,'\\\\$&');
   const eager=new RegExp(\`<script[^>]+src=["'][^"']*${'${escaped}'}[^"']*["']\`,'i');
   assert.ok(!eager.test(html),\`${'${file}'} não pode voltar ao carregamento inicial\`);
@@ -72,18 +70,13 @@ for(const file of regionalScripts){
   assert.ok(posicao>ultimaRegiao,\`${'${file}'} deve preservar a ordem histórica no loader regional\`);
   ultimaRegiao=posicao;
 }
+
 `;
-rep(orderNeedle,orderInsert,'regional script checks');
-const styleNeedle=`for(const file of lazyStyles){
-  const escaped=file.replace(/[.*+?^${'${}'}()|[\\]\\\\]/g,'\\\\$&');
-  const eager=new RegExp(\`<link[^>]+\\shref=["'][^"']*${'${escaped}'}[^"']*["']\`,'i');
-  assert.ok(!eager.test(html),\`${'${file}'} não pode voltar ao CSS inicial\`);
-  assert.ok(loader.includes(file),\`${'${file}'} deve permanecer no bundle de estilos sob demanda\`);
-  assert.ok(fs.existsSync(file),\`${'${file}'} deve existir fisicamente no repositório\`);
-}
-`;
-const styleInsert=styleNeedle+`
-for(const file of regionalStyles){
+test=test.replace(scriptMarker,regionalScriptChecks+scriptMarker);
+
+const styleMarker=`const phase4dClinicalStyles=`;
+if(!test.includes(styleMarker))throw new Error('Missing phase4d style marker');
+const regionalStyleChecks=`for(const file of regionalStyles){
   const escaped=file.replace(/[.*+?^${'${}'}()|[\\]\\\\]/g,'\\\\$&');
   const eager=new RegExp(\`<link[^>]+\\shref=["'][^"']*${'${escaped}'}[^"']*["']\`,'i');
   assert.ok(!eager.test(html),\`${'${file}'} não pode voltar ao CSS inicial\`);
@@ -91,6 +84,7 @@ for(const file of regionalStyles){
   assert.ok(regionLoader.includes(file),\`${'${file}'} deve permanecer no loader regional\`);
   assert.ok(fs.existsSync(file),\`${'${file}'} deve existir fisicamente no repositório\`);
 }
+
 `;
-rep(styleNeedle,styleInsert,'regional style checks');
+test=test.replace(styleMarker,regionalStyleChecks+styleMarker);
 fs.writeFileSync('tests/screen_loader.contract.js',test);
