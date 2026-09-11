@@ -31,6 +31,7 @@
                 'cirurgias-1.18.0.js?v=20260902-r1',
                 'database/medicamentos.js',
                 'database/irradiacao_clinica.js',
+                'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico.js',
                 'database/condicoes_mobilidade_v23.js',
                 'database/diferenciais_neurais.js',

@@ -73,6 +73,10 @@
         try { return typeof BANCO_MAPEAMENTO_CLINICO!=='undefined' ? BANCO_MAPEAMENTO_CLINICO : {}; }
         catch(_) { return {}; }
     }
+    function indiceRegioes(){
+        try { return typeof BANCO_MAPEAMENTO_REGIOES!=='undefined' ? BANCO_MAPEAMENTO_REGIOES : banco(); }
+        catch(_) { return banco(); }
+    }
     function regioesSelecionadasAtual(){
         try {
             return Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input:checked'))
@@ -106,7 +110,7 @@
     }
 
     function inferirRegioes(hmaResultado,contexto){
-        const B=banco(); const selecionadas=regioesSelecionadasAtual();
+        const B=indiceRegioes(); const selecionadas=regioesSelecionadasAtual();
         const out=[]; const seen=new Set();
         selecionadas.forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'selecionada',score:99,motivos:['selecionada pelo fisioterapeuta']});}});
         const texto=[hmaAtual(),contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
