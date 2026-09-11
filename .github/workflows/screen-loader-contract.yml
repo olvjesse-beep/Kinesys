@@ -20,6 +20,7 @@ on:
       - 'database/ocupacoes_esportes.js'
       - 'database/irradiacao_clinica.js'
       - 'database/mapeamento_regioes-1.0.0.js'
+      - 'database/mapeamento_clinico_core-1.0.0.js'
       - 'database/mapeamento_clinico.js'
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
@@ -32,6 +33,7 @@ on:
       - 'tests/clinical_region_index.contract.js'
       - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
+      - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -60,6 +62,7 @@ on:
       - 'database/ocupacoes_esportes.js'
       - 'database/irradiacao_clinica.js'
       - 'database/mapeamento_regioes-1.0.0.js'
+      - 'database/mapeamento_clinico_core-1.0.0.js'
       - 'database/mapeamento_clinico.js'
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
@@ -72,6 +75,7 @@ on:
       - 'tests/clinical_region_index.contract.js'
       - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
+      - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -110,14 +114,17 @@ jobs:
           node --check database/ocupacoes_esportes.js
           node --check database/irradiacao_clinica.js
           node --check database/mapeamento_regioes-1.0.0.js
+          node --check database/mapeamento_clinico_core-1.0.0.js
           node --check database/mapeamento_clinico.js
           node --check database/condicoes_mobilidade_v23.js
           node --check database/diferenciais_neurais.js
+          for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
           for f in database/regioes/*-ext-1.0.0.js; do node --check "$f"; done
           node --check tests/clinical_region_loader.contract.js
           node --check tests/clinical_region_index.contract.js
           node --check tests/clinical_bank_lazy.contract.js
           node --check tests/clinical_bank_regional_equivalence.contract.js
+          node --check tests/clinical_bank_base_regional_equivalence.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -135,6 +142,8 @@ jobs:
         run: node tests/clinical_bank_lazy.contract.js
       - name: Clinical bank regional equivalence contract
         run: node tests/clinical_bank_regional_equivalence.contract.js
+      - name: Clinical base regional equivalence contract
+        run: node tests/clinical_bank_base_regional_equivalence.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
