@@ -34,6 +34,7 @@ on:
       - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
+      - 'tests/clinical_loading_budget.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -76,6 +77,7 @@ on:
       - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
+      - 'tests/clinical_loading_budget.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -125,6 +127,7 @@ jobs:
           node --check tests/clinical_bank_lazy.contract.js
           node --check tests/clinical_bank_regional_equivalence.contract.js
           node --check tests/clinical_bank_base_regional_equivalence.contract.js
+          node --check tests/clinical_loading_budget.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -144,6 +147,8 @@ jobs:
         run: node tests/clinical_bank_regional_equivalence.contract.js
       - name: Clinical base regional equivalence contract
         run: node tests/clinical_bank_base_regional_equivalence.contract.js
+      - name: Clinical loading performance budget
+        run: node tests/clinical_loading_budget.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
