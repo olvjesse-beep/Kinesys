@@ -5,6 +5,7 @@ on:
     branches: [performance/modularization-phase4l]
     paths:
       - 'tools/modularization_phase4l_patch.py'
+      - 'tests/data_loading.contract.js'
       - '.github/workflows/modularization-phase4l-patch-temp.yml'
 
 permissions:
