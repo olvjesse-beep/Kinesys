@@ -11,6 +11,7 @@ on:
       - 'home_detalhes-*'
       - 'home_fisioterapeuta_util-*'
       - 'design_home_activity-*'
+      - 'design_evaluation_workspace-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'home_detalhes-*'
       - 'home_fisioterapeuta_util-*'
       - 'design_home_activity-*'
+      - 'design_evaluation_workspace-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   workflow_dispatch:
