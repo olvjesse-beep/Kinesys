@@ -26,7 +26,6 @@ const KINESYS_CAMPOS_PACIENTE_BASICO_LEGADO = [
 ].join(',');
 
 let pacientesBasicosEmCurso = null;
-const pacientesCompletosEmCurso = new Map();
 
 const KINESYS_PACIENTES_BASICOS_CACHE_TTL_MS = 15000;
 
