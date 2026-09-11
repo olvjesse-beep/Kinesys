@@ -7,6 +7,7 @@ on:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
       - 'agenda-audit__agenda-1.20.0.js'
       - 'design_system-*.js'
+      - 'financeiro_workspace-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   pull_request:
@@ -15,6 +16,7 @@ on:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
       - 'agenda-audit__agenda-1.20.0.js'
       - 'design_system-*.js'
+      - 'financeiro_workspace-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   workflow_dispatch:
