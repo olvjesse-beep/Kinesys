@@ -2,6 +2,8 @@
 const fs=require('fs');
 const assert=require('assert');
 const src=fs.readFileSync('script-1.18.0.js','utf8');
+const media=fs.readFileSync('midias_core-1.0.0.js','utf8');
+const runtime=src+'\n'+media;
 
 assert.match(src,/async function obterPacientesBasicos\(\)/,'lightweight patient index must exist');
 assert.match(src,/async function obterPacienteCompletoPorId\(id\)/,'single-chart loader must exist');
@@ -25,9 +27,9 @@ for(const marker of [
   "async function popularSelectCRM()",
   "async function popularSelectMidiasPaciente(preSelecionado = '')"
 ]){
-  const pos=src.indexOf(marker);
+  const pos=runtime.indexOf(marker);
   assert.ok(pos>=0,`${marker} must exist`);
-  const chunk=src.slice(pos,pos+1800);
+  const chunk=runtime.slice(pos,pos+1800);
   assert.match(chunk,/obterPacientesBasicos\(\)/,`${marker} must use lightweight patient data`);
 }
 
@@ -45,4 +47,4 @@ for(const marker of [
 const oldAllHistory=(src.match(/\.from\('pacientes'\)\s*\n\s*\.select\('\*, avaliacoes\(\*\), evolucoes\(\*\)'\)/g)||[]).length;
 assert.strictEqual(oldAllHistory,2,'full-history patient query must exist only in selected-chart loader and legacy compatibility loader');
 
-console.log('Data Loading contract Phase 3A: lightweight index + selected full chart are separated.');
+console.log('Data Loading contract Phase 3A: lightweight index + selected full chart are separated across the modular runtime.');
