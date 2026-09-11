@@ -656,7 +656,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   min-height:42px;
   padding:9px 11px;
   border:0;
-  border-radius:7px;
+  border-radius:var(--kds-radius-sm);
   background:transparent;
   color:var(--kds-text-secondary);
   text-align:left;
@@ -775,7 +775,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .agenda-plano-vinculo label{display:block;margin-bottom:5px;color:var(--kds-text-secondary);font-size:var(--kds-font-label);font-weight:800}
 .agenda-plano-vinculo>div{display:flex;gap:6px}
 .agenda-plano-vinculo select{flex:1;min-width:0}
-.agenda-plano-vinculo button{border:1px solid var(--kds-line);background:var(--kds-surface);color:var(--kds-accent);border-radius:6px;padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
+.agenda-plano-vinculo button{border:1px solid var(--kds-line);background:var(--kds-surface);color:var(--kds-accent);border-radius:var(--kds-radius-sm);padding:6px 9px;font-size:var(--kds-font-label);font-weight:800;cursor:pointer}
 .agenda-plano-vinculo small{display:block;margin-top:5px;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui)}
 
 /* ==========================================================================
