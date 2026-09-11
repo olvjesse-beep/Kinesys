@@ -8,6 +8,7 @@ on:
       - 'screen_loader-1.25.0.js'
       - 'clinical_region_loader-1.0.0.js'
       - 'script-1.18.0.js'
+      - 'menu_dropdown-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -35,6 +36,7 @@ on:
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/clinical_loading_budget.contract.js'
+      - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -51,6 +53,7 @@ on:
       - 'screen_loader-1.25.0.js'
       - 'clinical_region_loader-1.0.0.js'
       - 'script-1.18.0.js'
+      - 'menu_dropdown-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -78,6 +81,7 @@ on:
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/clinical_loading_budget.contract.js'
+      - 'tests/menu_dropdown_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -104,6 +108,7 @@ jobs:
           node --check screen_loader-1.25.0.js
           node --check clinical_region_loader-1.0.0.js
           node --check script-1.18.0.js
+          node --check menu_dropdown-1.0.0.js
           node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
           node --check evaluation_context_panels-1.18.3.js
@@ -128,6 +133,7 @@ jobs:
           node --check tests/clinical_bank_regional_equivalence.contract.js
           node --check tests/clinical_bank_base_regional_equivalence.contract.js
           node --check tests/clinical_loading_budget.contract.js
+          node --check tests/menu_dropdown_modularization.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -149,6 +155,8 @@ jobs:
         run: node tests/clinical_bank_base_regional_equivalence.contract.js
       - name: Clinical loading performance budget
         run: node tests/clinical_loading_budget.contract.js
+      - name: Menu dropdown modularization contract
+        run: node tests/menu_dropdown_modularization.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
