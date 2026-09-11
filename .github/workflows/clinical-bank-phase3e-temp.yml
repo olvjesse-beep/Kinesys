@@ -23,12 +23,13 @@ jobs:
         run: node .github/phase3e_generate.js
       - name: Syntax generated banks
         run: |
+          node --check database/mapeamento_clinico_core-1.0.0.js
           for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
           git diff --check
       - name: Commit generated banks
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add database/regioes
+          git add database/regioes database/mapeamento_clinico_core-1.0.0.js
           git commit -m 'feat: generate regional clinical base banks'
           git push origin HEAD:performance/clinical-bank-base-regional-phase3e
