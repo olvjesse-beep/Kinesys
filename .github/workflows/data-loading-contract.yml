@@ -4,18 +4,26 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'kinesys_data_cache-1.0.0.js'
       - 'script-1.18.0.js'
       - 'agenda-1.20.0.js'
       - 'financeiro-1.19.0.js'
+      - 'tests/data_cache.contract.js'
+      - 'tests/data_cache_integration.contract.js'
       - 'tests/data_loading.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'kinesys_data_cache-1.0.0.js'
       - 'script-1.18.0.js'
       - 'agenda-1.20.0.js'
       - 'financeiro-1.19.0.js'
+      - 'tests/data_cache.contract.js'
+      - 'tests/data_cache_integration.contract.js'
       - 'tests/data_loading.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
@@ -26,18 +34,25 @@ permissions:
 
 jobs:
   contract:
-    name: On-demand patient data contract
+    name: On-demand patient data + cache contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
+          node --check kinesys_data_cache-1.0.0.js
           node --check script-1.18.0.js
           node --check agenda-1.20.0.js
           node --check financeiro-1.19.0.js
+          node --check tests/data_cache.contract.js
+          node --check tests/data_cache_integration.contract.js
           node --check tests/data_loading.contract.js
           node --check tests/operational_data_loading.contract.js
+      - name: Data cache behavior contract
+        run: node tests/data_cache.contract.js
+      - name: Patient index cache integration contract
+        run: node tests/data_cache_integration.contract.js
       - name: Core patient data loading contract
         run: node tests/data_loading.contract.js
       - name: Operational patient data loading contract
