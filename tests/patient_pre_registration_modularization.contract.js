@@ -5,6 +5,7 @@ const assert=require('assert');
 const html=fs.readFileSync('index.html','utf8');
 const core=fs.readFileSync('script-1.18.0.js','utf8');
 const mod=fs.readFileSync('patient_pre_registration_core-1.0.0.js','utf8');
+const helpers=fs.readFileSync('patient_form_helpers_core-1.0.0.js','utf8');
 
 const funcoes=[
   'alternarFiltroPreCadastro',
@@ -35,15 +36,19 @@ assert.match(mod,/cargasPacienteAvaliacaoKineSys\+\+/,'guarda de carga da Avalia
 assert.match(mod,/cargasPacienteAvaliacaoKineSys--/,'guarda de carga deve ser liberada em finally');
 assert.doesNotMatch(mod,/_supabase/,'módulo de pré-cadastro não deve introduzir acesso direto ao Supabase');
 
-// Helpers compartilhados continuam no core porque também são contratos do Motor Clínico/input helpers.
-assert.match(core,/function removerAcentos\(str\)/,'helper compartilhado removerAcentos deve permanecer no core nesta fase');
-assert.match(core,/function obterTextoExibicao\(item\)/,'helper compartilhado obterTextoExibicao deve permanecer no core nesta fase');
-assert.match(core,/function calcularIdadeCadastro\(\)/,'cálculo de idade do cadastro fica fora do escopo da 4K');
+// Helpers compartilhados foram promovidos a módulo eager dedicado na Phase 4Q.
+assert.doesNotMatch(core,/function removerAcentos\(str\)/,'removerAcentos não deve voltar ao monólito após 4Q');
+assert.doesNotMatch(core,/function obterTextoExibicao\(item\)/,'obterTextoExibicao não deve voltar ao monólito após 4Q');
+assert.doesNotMatch(core,/function calcularIdadeCadastro\(\)/,'calcularIdadeCadastro não deve voltar ao monólito após 4Q');
+assert.match(helpers,/function removerAcentos\(str\)/,'helper compartilhado removerAcentos deve permanecer no módulo 4Q');
+assert.match(helpers,/function obterTextoExibicao\(item\)/,'helper compartilhado obterTextoExibicao deve permanecer no módulo 4Q');
+assert.match(helpers,/function calcularIdadeCadastro\(\)/,'cálculo de idade do cadastro deve permanecer no módulo 4Q');
 
+const helpersPos=html.indexOf('patient_form_helpers_core-1.0.0.js');
 const inputPos=html.indexOf('input_helpers_core-1.0.0.js');
 const prePos=html.indexOf('patient_pre_registration_core-1.0.0.js');
 const corePos=html.indexOf('script-1.18.0.js');
-assert.ok(inputPos>=0&&prePos>inputPos&&corePos>prePos,'ordem deve manter input helpers -> pré-cadastro -> core');
-assert.match(html,/core_mod=20260911-phase4q-r1/,'cache-bust do monólito deve acompanhar a modularização corrente após 4K');
+assert.ok(helpersPos>=0&&inputPos>helpersPos&&prePos>inputPos&&corePos>prePos,'ordem deve manter helpers compartilhados -> input helpers -> pré-cadastro -> core');
+assert.match(html,/core_mod=20260911-phase4q-r1/,'cache-bust do monólito deve acompanhar a modularização corrente após 4Q');
 
-console.log('Core Modularization Phase 4K: patient pre-registration selector extracted with 2h filter, active-context exception and clinical load trigger preserved.');
+console.log('Core Modularization Phase 4K: patient pre-registration selector preserved after shared helpers moved to Phase 4Q.');
