@@ -9,11 +9,19 @@ const exists = rel => fs.existsSync(path.join(root, rel));
 
 const removedArtifacts = [
   'KineSys_v1.15.0_DEPLOY_APP.zip',
-  'agenda-audit__agenda-1.20.0.js'
+  'agenda-audit__agenda-1.20.0.js',
+  'design_system-1.17.1.js',
+  'design_system-1.18.0.js',
+  'design_system-1.18.1.js',
+  'design_system-1.18.2.js',
+  'design_system-1.18.4.js',
+  'design_system-1.18.5.js'
 ];
 
 for (const artifact of removedArtifacts) {
   assert.equal(exists(artifact), false, `artefato legado removido não deve voltar ao repositório: ${artifact}`);
 }
 
-console.log(`Phase 5 Cleanup Contract OK — ${removedArtifacts.length} artefatos legados permanecem ausentes.`);
+assert.equal(exists('design_system-1.20.1.js'), true, 'Design System ativo deve permanecer disponível');
+
+console.log(`Phase 5 Cleanup Contract OK — ${removedArtifacts.length} artefatos legados permanecem ausentes e o Design System ativo está preservado.`);
