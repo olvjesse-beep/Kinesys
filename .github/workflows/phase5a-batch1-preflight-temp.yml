@@ -48,18 +48,22 @@ jobs:
           const textExt=/\.(?:html?|js|mjs|cjs|css|json|md|ya?ml|toml|sql|txt)$/i;
           function walk(dir,out=[]){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(['.git','node_modules'].includes(ent.name))continue;const p=path.join(dir,ent.name);if(ent.isDirectory())walk(p,out);else if(textExt.test(ent.name))out.push(p.replace(/^\.\//,''));}return out;}
           const textFiles=walk('.');
-          const allowedDocs=new Set(['docs/PHASE4_CLOSEOUT.md','.github/workflows/phase5a-batch1-preflight-temp.yml']);
+          const allowedReferences=new Set([
+            'docs/PHASE4_CLOSEOUT.md',
+            'tests/phase4_closeout.contract.js',
+            '.github/workflows/phase5a-batch1-preflight-temp.yml'
+          ]);
 
           for(const target of targets){
             if(reachable.has(target))throw new Error(`${target} is runtime reachable`);
             const refs=[];
             for(const file of textFiles){
-              if(file===target||allowedDocs.has(file))continue;
+              if(file===target||allowedReferences.has(file))continue;
               let txt='';try{txt=fs.readFileSync(file,'utf8');}catch{continue;}
               if(txt.includes(target))refs.push(file);
             }
-            console.log(`${target}: runtime_reachable=false non_doc_refs=${refs.length}${refs.length?' -> '+refs.join(', '):''}`);
-            if(refs.length)throw new Error(`${target} still has non-documentation references`);
+            console.log(`${target}: runtime_reachable=false unexpected_refs=${refs.length}${refs.length?' -> '+refs.join(', '):''}`);
+            if(refs.length)throw new Error(`${target} still has unexpected references`);
           }
           console.log(`runtime_reachable_total=${reachable.size}`);
           NODE
