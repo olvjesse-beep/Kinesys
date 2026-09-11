@@ -5,11 +5,13 @@ const assert=require('assert');
 const vm=require('vm');
 
 const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
+const regional=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
 const motor=fs.readFileSync('clinical_reasoning_hma-3.0.0.js','utf8');
 const indexSource=fs.readFileSync('database/mapeamento_regioes-1.0.0.js','utf8');
 
 assert.ok(loader.includes('database/mapeamento_regioes-1.0.0.js'),'bundle da Avaliação deve carregar o índice leve de regiões');
-assert.ok(loader.indexOf('database/mapeamento_regioes-1.0.0.js')<loader.indexOf('database/mapeamento_clinico.js'),'índice regional deve carregar antes do banco clínico pesado');
+assert.ok(!loader.includes('database/mapeamento_clinico.js'),'banco clínico pesado não deve permanecer no bundle-base da Avaliação');
+assert.ok(regional.includes('database/mapeamento_clinico.js'),'banco clínico pesado deve permanecer registrado no loader clínico sob demanda');
 assert.ok(loader.indexOf('database/mapeamento_regioes-1.0.0.js')<loader.indexOf('clinical_reasoning_hma-3.0.0.js'),'índice deve existir antes do Motor HMA');
 assert.match(motor,/function indiceRegioes\(\)/,'Motor HMA deve possuir acesso explícito ao índice leve');
 assert.match(motor,/typeof BANCO_MAPEAMENTO_REGIOES!==['"]undefined['"]/,'Motor HMA deve preferir o índice leve quando disponível');
