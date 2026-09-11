@@ -22,9 +22,11 @@ jobs:
           set -euo pipefail
           node --check report_ui_helpers_core-1.0.0.js
           node --check script-1.18.0.js
-          test "$(grep -Ec '^function (montarDocumentoComTimbrado|endpointGemini|minutosEntreHoras|atualizarDuracaoComparecimento|formatarDataBR)\\(' report_ui_helpers_core-1.0.0.js)" -eq 5
-          ! grep -Eq '^function (montarDocumentoComTimbrado|endpointGemini|minutosEntreHoras|atualizarDuracaoComparecimento|formatarDataBR)\\(' script-1.18.0.js
-          ! grep -Eq '_supabase|\\.rpc\\s*\\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem' report_ui_helpers_core-1.0.0.js
+          for fn in montarDocumentoComTimbrado endpointGemini minutosEntreHoras atualizarDuracaoComparecimento formatarDataBR; do
+            grep -Fq "function ${fn}(" report_ui_helpers_core-1.0.0.js
+            ! grep -Fq "function ${fn}(" script-1.18.0.js
+          done
+          ! grep -Eq '_supabase|\.rpc[[:space:]]*\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem' report_ui_helpers_core-1.0.0.js
           grep -Fq 'report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1' index.html
           grep -Fq 'core_mod=20260911-phase4s-r1' index.html
           git diff --check
