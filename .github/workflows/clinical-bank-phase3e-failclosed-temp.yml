@@ -1,0 +1,31 @@
+name: Clinical Bank Phase 3E Fail Closed Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-bank-base-regional-phase3e
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-bank-base-regional-phase3e
+      - name: Apply fail-closed patch
+        run: node .github/phase3e_failclosed_patch.js
+      - name: Validate
+        run: |
+          node --check script-1.18.0.js
+          git diff --check
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script-1.18.0.js
+          git commit -m 'fix: fail closed while regional clinical bank is unavailable'
+          git push origin HEAD:performance/clinical-bank-base-regional-phase3e
