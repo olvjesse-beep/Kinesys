@@ -15,11 +15,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: performance/lifecycle-phase2d
-      - name: Inventory intervals and observers
+      - name: Inventory repository lifecycle workloads
         run: |
-          echo '=== script setInterval ==='
-          grep -n -C 4 'setInterval' script-1.18.0.js || true
-          echo '=== script MutationObserver ==='
-          grep -n -C 3 'MutationObserver' script-1.18.0.js || true
-          echo '=== script ResizeObserver ==='
-          grep -n -C 3 'ResizeObserver' script-1.18.0.js || true
+          echo '=== JS setInterval ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'setInterval' . || true
+          echo '=== JS MutationObserver ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'MutationObserver' . || true
+          echo '=== JS ResizeObserver ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'ResizeObserver' . || true
+          echo '=== JS addEventListener visibility/focus/online/resize ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git -E "addEventListener\(['\"](visibilitychange|focus|online|resize)" . || true
