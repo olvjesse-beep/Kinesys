@@ -1,0 +1,29 @@
+name: Phase 4R Contract Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/login-ui-helpers-phase4r
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit core_mod pins and monolith sections
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== exact phase4q core_mod pins ==='
+          grep -RFn --exclude-dir=.git --exclude='phase4r-contract-audit-temp.yml' 'core_mod=20260911-phase4q-r1' . || true
+          echo '=== all core_mod expectations in tests ==='
+          grep -RFn --include='*.js' 'core_mod=' tests .github/workflows || true
+          echo '=== script section headers ==='
+          grep -nE '^/\* ={5,}|^// ={5,}|^/\* [0-9]+\.|^/\* =+' script-1.18.0.js | tail -n 220 || true
+          echo '=== function declarations count ==='
+          grep -Ec '^(async )?function [A-Za-z0-9_]+' script-1.18.0.js || true
+          echo '=== monolith bytes ==='
+          wc -c script-1.18.0.js
