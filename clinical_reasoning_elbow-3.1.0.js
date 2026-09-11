@@ -12,8 +12,8 @@
 (function instalarMotor31Cotovelo(){
   'use strict';
 
-  const VERSION='3.1.2-elbow3';
-  const norm=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  const VERSION='3.1.3-elbow4';
+  const norm=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim().replace(/\blado d fora\b/g,'lado de fora').replace(/\blado d dentro\b/g,'lado de dentro').replace(/\bn\b/g,'nao');
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
   const hmaTexto=()=>String(document.getElementById('paciente_hma')?.value||'');
@@ -78,45 +78,53 @@
     cotovelo_articular:{essencial:['ADM ativa/passiva de flexão-extensão','Pronação-supinação','Fim de movimento, rigidez, crepitação e bloqueio verdadeiro'],complementar:['Imagem quando houver bloqueio verdadeiro, trauma ou perda progressiva de movimento'],evitar:['Não atribuir rigidez/bloqueio persistente a tendinopatia sem examinar componente articular']}
   };
 
-  function textoContexto(c=contexto()){return [hmaTexto(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');}
+  const relatoTerceiro=(v='')=>/(?:minha|meu)\s+(?:mae|pai|esposa|marido|companheira|companheiro|irma|irmao|avo|filha|filho)\b/.test(norm(v));
+  const hmaPacienteAtual=()=>String(hmaTexto()).split(/[.!?;\n]+/).filter(x=>x.trim()&&!relatoTerceiro(x)).join(' ');
+  function textoContexto(c=contexto()){return [hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');}
   function pontuar(cond,texto){
-    const t=norm(texto);const hits=contem(texto,cond.termos).slice(0,6);let score=Math.min(9,hits.length*1.35);
-    const negado=(termo)=>new RegExp(`(?:(?:sem|nega|negou|nao tem|nao apresenta)\\s+(?:sinais?\\s+de\\s+)?|nem\\s+)${termo}`).test(t);
-    const relacaoOmbro=/ombro.{0,70}(?:cotovelo|braco)|(?:cotovelo|braco).{0,70}ombro/.test(t);
+    const t=norm(texto);let hits=contem(texto,cond.termos).slice(0,6);let score=Math.min(9,hits.length*1.35);
+    const negado=(termo)=>new RegExp(`(?:sem|nega(?:do|ou)?|nao(?:\\s+(?:tem|tenho|teve|tive|houve|sinto|sente|sentiu|apresenta|apresentou|esta|estou|ficou|teve))?|nem)\\s*.{0,38}(?:${termo})`).test(t);
+    const ombroNegado=negado('(?:dor.{0,15})?ombro|ombro.{0,15}dor');
+    const relacaoOmbro=/(?:ombro).{0,70}(?:cotovelo|braco)|(?:cotovelo|braco).{0,70}ombro/.test(t)&&!ombroNegado;
     const distal=/(?:passa|ultrapassa|vai|chega).{0,35}(?:cotovelo).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|\bate\b.{0,20}(?:mao|dedo|polegar|indicador|anelar|mindinho)/.test(t);
-    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
+    const parestesiaNegada=negado('formig\\w*|dormen\\w*|adormec\\w*|amortec\\w*|choque');
+    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t)&&!parestesiaNegada;
     const cervicalLigada=/(?:pescoco|nuca|cervic).{0,90}(?:braco|cotovelo|mao|dedo)|(?:mexer|virar|olhar).{0,35}(?:pescoco|cima).{0,90}(?:dor|braco|cotovelo|mao)/.test(t);
     const localizacaoIncerta=/(?:nao sei|nao sabe|nao consigo dizer).{0,45}(?:lado|dentro|fora|medial|lateral)|(?:dentro|fora|medial|lateral).{0,45}(?:nao sei|nao sabe)/.test(t);
     const lateralAnatomica=!localizacaoIncerta&&(/\bepicondilo lateral\b|(?:lateral|lado de fora|epicondilo lateral).{0,28}cotovelo|cotovelo.{0,28}(?:lateral|lado de fora|epicondilo lateral)/.test(t));
     const cargaExtensoraLocal=/(?:cotovelo).{0,65}(?:apert|preens|estend.{0,15}punho)|(?:apert|preens|estend.{0,15}punho).{0,65}cotovelo|(?:apert|preens|estend.{0,15}punho)/.test(t);
     const cargaExtensoraNegada=/(?:apert|preens|estend.{0,15}punho).{0,32}(?:nao muda|nao piora|nao doi|quase nao|sem dor)|(?:nao muda|nao piora|nao doi|quase nao|sem dor).{0,32}(?:apert|preens|estend.{0,15}punho)/.test(t);
     const cargaExtensoraPositiva=cargaExtensoraLocal&&!cargaExtensoraNegada;
-    const localLateral=lateralAnatomica;
+    const localLateral=lateralAnatomica||(/(?:dor|doi).{0,18}(?:lateral|lado de fora)/.test(t)&&/cotovelo/.test(t)&&!/lateral do braco/.test(t));
     const localMedial=!localizacaoIncerta&&(/\bepicondilo medial\b|(?:medial|lado de dentro|parte de dentro|epicondilo medial).{0,55}cotovelo|cotovelo.{0,55}(?:medial|lado de dentro|parte de dentro)/.test(t));
     const cargaFlexorPronadoraBruta=/(?:flexion|flexao|flexionar).{0,20}punho|pron(?:ar|acao)|punho.{0,20}(?:flexion|flexao)/.test(t);
     const cargaFlexorPronadoraNegada=/(?:flexion|flexao|flexionar|pron(?:ar|acao)).{0,35}(?:nao muda|nao piora|nao doi|sem dor)|(?:nao muda|nao piora|nao doi|sem dor).{0,35}(?:flexion|flexao|flexionar|pron(?:ar|acao))/.test(t);
     const cargaFlexorPronadora=cargaFlexorPronadoraBruta&&!cargaFlexorPronadoraNegada;
     const rotuloTendineoIsolado=/(?:disseram|medico|doutor|laudo).{0,50}(?:epicondilit|tendinit|cotovelo de tenista|cotovelo de golfista)/.test(t)&&/(?:so sei|nao sei onde|nao sei dizer|nao sabe dizer)/.test(t);
-    const padraoRadialDistal=/(?:mais para baixo|abaixo|distal|antebraco).{0,65}(?:epicond|cotovelo|lateral)|(?:lateral).{0,65}(?:antebraco|abaixo|distal)/.test(t);
-    const padraoPLRI=/(?:falseio|cede|cedendo|insegur|instavel|clunk).{0,90}(?:cotovelo|apoi|cadeira|empurr)|(?:cotovelo|apoi|cadeira|empurr).{0,90}(?:falseio|cede|insegur|instavel|clunk)/.test(t);
+    const padraoRadialDistal=/(?:mais para baixo|abaixo|distal|antebraco).{0,65}(?:epicond|cotovelo|lateral|lado de fora)|(?:lateral|lado de fora).{0,65}(?:antebraco|abaixo|distal)|(?:dedos?|quatro|4).{0,30}abaixo.{0,45}cotovelo/.test(t);
+    const instabilidadeNegada=negado('falseio|clunk|insegur\\w*|instavel|cede|ceder');
+    const padraoPLRI=/(?:falseio|cede|cedendo|insegur|instavel|clunk).{0,90}(?:cotovelo|apoi|cadeira|empurr)|(?:cotovelo|apoi|cadeira|empurr).{0,90}(?:falseio|cede|insegur|instavel|clunk)/.test(t)&&!instabilidadeNegada;
     const historiaPLRI=/(?:lux|desloc|trauma|queda).{0,130}(?:falseio|cede|insegur|instavel|clunk)|(?:falseio|cede|insegur|instavel|clunk).{0,130}(?:lux|desloc|trauma|queda)/.test(t);
-    const digitosUlnares=/(?:quarto|quinto|4o|5o|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)|(?:formig|dormen|adormec|amortec|choque).{0,55}(?:quarto|quinto|4o|5o|anelar|mindinho)/.test(t);
+    const digitosUlnares=/(?:quarto|quinto|4o|5o|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)|(?:formig|dormen|adormec|amortec|choque).{0,55}(?:quarto|quinto|4o|5o|anelar|mindinho)/.test(t)&&!parestesiaNegada;
     const flexaoApoio=/(?:dobrad|flex|apoi).{0,45}(?:cotovelo)|cotovelo.{0,45}(?:dobrad|flex|apoi)/.test(t);
     const traumaMecanismo=/\b(?:cai|caiu|cair|queda|trauma|impacto|acidente|luxacao)\b|\bpancad\w*|saiu do lugar|deform/.test(t);
     const traumaNegado=/(?:sem|nega|negou|nao houve).{0,18}(?:cair|queda|trauma|pancad|impacto)/.test(t);
-    const trauma=traumaMecanismo&&!traumaNegado&&/cotovelo/.test(t);
+    const historiaRemotaResolvida=/(?:ha\s+)?\d+\s+anos?\b|anos?\s+atras/.test(t)&&/(?:recuperei|recuperou|fiquei\s+(?:bem|bom)|sem sequela|alta sem sequela|recebi alta)/.test(t);
+    const trauma=traumaMecanismo&&!traumaNegado&&!historiaRemotaResolvida&&/cotovelo/.test(t);
     const incapacidadeTrauma=/(?:deform|nao consegue|nao mexe|incapac|edema rapido)/.test(t);
     const arremessoValgo=/(?:arremess|pitcher|valgo).{0,70}(?:cotovelo|medial)|(?:cotovelo|medial).{0,70}(?:arremess|valgo)/.test(t);
-    const tricepsCarga=/(?:atras|posterior|triceps).{0,55}cotovelo|cotovelo.{0,55}(?:atras|posterior|triceps)/.test(t)&&/(?:estend|empurr|supino|flexao de braco)/.test(t);
-    const articular=/(?:cotovelo).{0,70}(?:trav|bloque|rigid|nao estic|range|crepit)|(?:trav|bloque|rigid|nao estic|range|crepit).{0,70}cotovelo/.test(t);
-    const olecrano=/(?:bola|caroco|inch|edema).{0,60}(?:ponta|atras|olecrano|cotovelo)|(?:ponta|atras|olecrano).{0,60}(?:bola|caroco|inch|edema)/.test(t);
+    const tricepsCarga=/(?:dor\s+)?atras\s+do\s+cotovelo|posterior.{0,35}cotovelo|cotovelo.{0,35}posterior|triceps.{0,45}cotovelo|cotovelo.{0,45}triceps/.test(t)&&/(?:estend|empurr|supino|flexao de braco)/.test(t);
+    const perdaExtensao=/(?:nao estic|nao estend).{0,24}(?:todo|complet|ate o fim)|(?:cotovelo).{0,70}(?:nao estic|nao estend|perdeu extensao|falta extensao)|(?:nao estic|nao estend|perdeu extensao).{0,70}cotovelo/.test(t);
+    const articularBruto=/(?:cotovelo).{0,70}(?:trav|bloque|rigid|range|crepit)|(?:trav|bloque|rigid|range|crepit).{0,70}cotovelo/.test(t);
+    const articular=perdaExtensao||(articularBruto&&!negado('trav\\w*|bloque\\w*|rigid\\w*|range\\w*|crepit\\w*'));
+    const olecrano=/(?:bola|caroco).{0,60}(?:ponta|olecrano|cotovelo)|(?:ponta|olecrano).{0,60}(?:bola|caroco)/.test(t)||((/(?:inch|edema)/.test(t)&&!negado('inch\\w*|edema'))&&/(?:ponta|atras do cotovelo|olecrano)/.test(t));
     const bicepsLocal=/(?:frente|fossa cubital|biceps).{0,55}cotovelo|cotovelo.{0,55}(?:frente|fossa cubital|biceps)/.test(t);
     const cargaSupinacao=/(?:supin|palma para cima|rosca)/.test(t);
     const estaloPositivo=/(?:estalo|rasgou)/.test(t)&&!negado('estalo');
     const hematomaPositivo=/(?:hematoma|equimose)/.test(t)&&!negado('hematoma')&&!negado('equimose');
-    const perdaSupinacao=/(?:perdeu|perda|muita|grande).{0,35}(?:forca).{0,55}(?:supin|palma para cima)|(?:supin).{0,55}(?:perdeu|perda).{0,30}(?:forca)/.test(t);
+    const perdaSupinacao=/(?:perdeu|perda|muita|grande).{0,35}(?:forca).{0,55}(?:supin|palma para cima)|(?:supin).{0,55}(?:perdeu|perda).{0,30}(?:forca)/.test(t)&&!negado('(?:perdeu|perda).{0,20}forca');
     const febrePositiva=/(?:febre|calafrio)/.test(t)&&!negado('febre')&&!negado('calafrio');
-    const sinaisInfeccao=[/(?:vermelh|rubor)/.test(t),/(?:quente|calor)/.test(t),/(?:inch|edema)/.test(t)].filter(Boolean).length;
+    const sinaisInfeccao=[/(?:vermelh|rubor)/.test(t)&&!negado('vermelh\\w*|rubor'),/(?:quente|calor)/.test(t)&&!negado('quente|calor'),/(?:inch|edema)/.test(t)&&!negado('inch\\w*|edema')].filter(Boolean).length;
     const inflamacaoLocal=sinaisInfeccao>=3;
 
     if(cond.id==='cotovelo_ombro_referida'&&relacaoOmbro){score+=2.8;hits.push('relação proximal ombro–braço/cotovelo');}
@@ -154,8 +162,8 @@
     }
     if(cond.id==='cotovelo_infeccao_articular'){
       if(febrePositiva&&sinaisInfeccao>=1)score+=5.4;
-      else if(febrePositiva&&/cotovelo/.test(t))score+=4.2;
       if(inflamacaoLocal)score+=2.6;
+      if(febrePositiva&&sinaisInfeccao===0)score-=2.5;
       if(negado('febre')&&!inflamacaoLocal)score-=4;
     }
     if(cond.id==='cotovelo_trauma_maior'&&trauma)score+=incapacidadeTrauma?4.5:3;
@@ -165,7 +173,11 @@
     if(cond.id==='cotovelo_articular'&&articular)score+=3.4;
     if(cond.id==='cotovelo_olecrano'&&olecrano)score+=3.1;
     if(cond.id==='cotovelo_biceps_distal'&&bicepsLocal&&cargaSupinacao)score+=2.9;
-    if(cond.id==='cotovelo_tunel_radial'&&/(?:mais para baixo|distal|antebraco).{0,60}(?:epicond|lateral)|(?:lateral).{0,60}antebraco/.test(t)&&cargaSupinacao)score+=3.2;
+    if(cond.id==='cotovelo_tunel_radial'&&padraoRadialDistal&&cargaSupinacao)score+=3.2;
+    if(cond.id==='cotovelo_plri'&&(instabilidadeNegada||historiaRemotaResolvida)){score=-5;hits=[];}
+    if(cond.id==='cotovelo_trauma_maior'&&historiaRemotaResolvida){score=-5;hits=[];}
+    if(cond.id==='cotovelo_ulnar'&&parestesiaNegada){score=-5;hits=[];}
+    if(cond.id==='cotovelo_ruptura_biceps_distal'&&negado('estalo|hematoma|equimose|perda.{0,20}forca')&&!perdaSupinacao){score=-5;hits=[];}
     const evidenciaForte=cond.id==='cotovelo_lateral'?(localLateral&&cargaExtensoraPositiva&&!rotuloTendineoIsolado):cond.id==='cotovelo_medial'?(localMedial&&(cargaFlexorPronadora||(digitosUlnares&&!cargaFlexorPronadoraNegada))&&!rotuloTendineoIsolado):true;
     return {score:score+cond.ordem/1000,hits:uniq(hits).slice(0,6),evidenciaForte};
   }

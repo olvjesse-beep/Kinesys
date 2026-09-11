@@ -11,7 +11,7 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.4-shoulder5';
+  const VERSION='3.1.5-shoulder6';
   const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const norm=(v='')=>normBase(v)
     .replace(/\bencima\b/g,'em cima')
@@ -19,7 +19,10 @@
     .replace(/\b(deito|deita|deitado|deitada|deitando|deitar)\b/g,'deitar')
     .replace(/\b(apoio|apoia|apoiado|apoiada|apoiando|apoiar)\b/g,'apoiar')
     .replace(/\bpra\b/g,'para')
+    .replace(/\bn\b/g,'nao')
     .replace(/\s+/g,' ').trim();
+  const relatoTerceiro=(v='')=>/(?:minha|meu)\s+(?:mae|pai|esposa|marido|companheira|companheiro|irma|irmao|avo|avo|filha|filho)\b/.test(norm(v));
+  const hmaPacienteAtual=()=>String(hmaTexto()).split(/[.!?;\n]+/).filter(x=>x.trim()&&!relatoTerceiro(x)).join(' ');
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
   const hmaTexto=()=>String(document.getElementById('paciente_hma')?.value||'');
@@ -306,27 +309,33 @@
   };
 
   function textoContexto(c=contexto()){
-    return [hmaTexto(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
+    return [hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
   }
 
   function pontuar(cond,texto,c){
     const t=norm(texto);
-    const hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
+    let hits=arr(VOCABULARIO_COMPILADO[cond.id]).filter(x=>x.normalizado&&t.includes(x.normalizado)).map(x=>x.raw);
     let score=Math.min(9,hits.length*1.35);
     const idade=Number(c?.idade||document.getElementById('paciente_idade')?.value||0);
     const temOmbro=/ombro|braco|deltoid|escapul/.test(t);
     const traumaMecanismo=/\b(?:cai|caiu|cair|queda|impacto|acidente|luxacao|deslocou|deslocamento)\b|\bpancad\w*/.test(t);
     const traumaNegado=/(?:sem|nega|negou|nao houve).{0,18}(?:cair|queda|trauma|pancad|impacto)/.test(t);
-    const trauma=traumaMecanismo&&!traumaNegado&&temOmbro;
+    const historiaRemotaResolvida=/(?:ha\s+)?\d+\s+anos?\b|anos?\s+atras/.test(t)&&/(?:recuperei|recuperou|fiquei\s+(?:bem|bom)|sem sequela|alta sem sequela|recebi alta)/.test(t);
+    const trauma=traumaMecanismo&&!traumaNegado&&!historiaRemotaResolvida&&temOmbro;
     const incapacidadeAguda=/(?:nao consegue|nao levanta|deform|pendurado|perdeu.{0,20}forca|fraqueza.{0,20}repente)/.test(t);
-    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
-    const cervicalLigada=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t);
+    const neuroNegado=/(?:sem|nao\s+(?:tenho|tem|sinto|sente|apresenta)?|nem).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
+    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t)&&!neuroNegado;
+    const cervicalNegada=/(?:mexer|virar|olhar).{0,35}(?:pescoco|cima).{0,35}(?:nao muda|nao piora|nao reproduz|sem efeito)|(?:pescoco|cervic).{0,45}(?:nao muda|nao piora|nao reproduz)/.test(t);
+    const cervicalLigada=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t)&&!cervicalNegada;
     const elevacao=/(?:levantar|levanto|elev|ergu|acima da cabeca|no alto|prateleira|armario)/.test(t);
     const elevacaoNegada=/(?:levantar|elevar|erguer).{0,38}(?:nao muda|nao piora|nao reproduz|nao doi|sem dor)|(?:nao muda|nao piora|nao reproduz|nao doi).{0,38}(?:levantar|elevar|erguer)/.test(t);
-    const toracico=/(?:dor|pressao|aperto|peso).{0,35}(?:peito|torax)|(?:peito|torax).{0,35}(?:dor|pressao|aperto|peso)/.test(t);
-    const esforcoCardio=/(?:subir|ladeira|escada|caminhar|correr|esforco|atividade fisica)/.test(t);
-    const associadosCardio=/(?:falta de ar|dispneia|suor frio|sudorese|nausea|enjoo|tontura)/.test(t);
+    const toracicoNegado=/(?:sem|nao\s+(?:tenho|tem|sinto|sente)?).{0,38}(?:dor|pressao|aperto|peso).{0,28}(?:peito|torax)|nem.{0,20}(?:dor|pressao|aperto|peso).{0,28}(?:peito|torax)/.test(t);
+    const toracico=/(?:dor|pressao|aperto|peso).{0,35}(?:peito|torax)|(?:peito|torax).{0,35}(?:dor|pressao|aperto|peso)/.test(t)&&!toracicoNegado;
+    const esforcoCardio=/(?:subir|subi|subo|subindo|ladeira|escada|caminhar|caminhei|correr|corri|esforco|atividade fisica)/.test(t);
+    const cardioAssociadoNegado=/(?:sem|nao\s+(?:tenho|tem|sinto|sente)?).{0,30}(?:falta de ar|dispneia|suor frio|sudorese|nausea|enjoo|tontura)|nao\s+(?:suo|suei).{0,10}frio/.test(t);
+    const associadosCardio=/(?:falta de ar|dispneia|suor frio|suei frio|sudorese|nausea|enjoo|enjoei|tontura)/.test(t)&&!cardioAssociadoNegado;
     const lateral=/(?:lateral|lado de fora|deltoid)/.test(t);
+    const manguitoLocalExplicito=/(?:(?:dor|doi).{0,24}(?:lateral|lado de fora|deltoid).{0,34}(?:ombro|braco)|(?:ombro|braco).{0,34}(?:dor|doi).{0,24}(?:lateral|lado de fora|deltoid))/.test(t)&&/(?:elev|levantar|erguer|peso|acima da cabeca|no alto)/.test(t);
     const decubito=/(?:dormir|deitar|apoiar).{0,45}(?:ombro|braco)|(?:ombro|braco).{0,45}(?:dormir|deitar|apoiar)/.test(t);
     const acSuperior=/(?:ossinho|clavicul|topo|ponta).{0,35}ombro|ombro.{0,35}(?:ossinho|clavicul|topo|ponta)/.test(t);
     const cruzarBraco=/(?:mao|braco).{0,35}(?:ombro contrario|outro ombro)|(?:cruzar|abracar).{0,30}braco/.test(t);
@@ -334,14 +343,18 @@
     const perdaAtivaPassiva=/(?:nao consigo|nao consegue).{0,40}(?:erguer|levantar)|(?:braco despenca|nao sustenta o braco)/.test(t)&&passivoPreservado;
 
     if(cond.id==='ombro_cardiorrespiratorio'&&temOmbro&&toracico&&esforcoCardio&&associadosCardio){score+=7;hits.push('ombro + esforço + sintomas cardiorrespiratórios');}
+    if(cond.id==='ombro_cardiorrespiratorio'&&(toracicoNegado||cardioAssociadoNegado)&&!(toracico&&associadosCardio)){score=-5;hits=[];}
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
     if(cond.id==='ombro_capsulite'&&(c?.diabetico||/diabet|tireo/.test(t)))score+=1.3;
     if(cond.id==='ombro_trauma_maior'&&trauma)score+=incapacidadeAguda?4.2:2.8;
     if(cond.id==='ombro_cervical_referida'){
       if(neuroDistal)score+=3.1;
       if(cervicalLigada)score+=2.2;
+      if(neuroNegado&&cervicalNegada){score=-5;hits=[];}
+      else if(neuroNegado&&!cervicalLigada){hits=hits.filter(x=>!/formig|dorm|adorm|choque/i.test(norm(x)));}
     }
     if(cond.id==='ombro_manguito'&&temOmbro){
+      if(manguitoLocalExplicito)score=Math.max(score,4.2);
       if(!elevacaoNegada&&elevacao&&lateral)score+=3.2;
       else if(!elevacaoNegada&&elevacao&&/(dor|doi)/.test(t))score+=2.7;
       if(decubito&&/(dor|doi)/.test(t))score+=1.2;
@@ -352,6 +365,13 @@
       if(acSuperior)score+=2.9;
       if(cruzarBraco)score+=1.7;
     }
+    if(cond.id==='ombro_capsulite'&&passivoPreservado){score=-5;hits=[];}
+    const mecanicoLabralNegado=/(?:clique|estalo).{0,30}(?:nao doi|indolor)|(?:nao trava|nao prende|sem travamento)/.test(t);
+    if(cond.id==='ombro_labral'&&mecanicoLabralNegado){score=-5;hits=[];}
+    const calcariaContralateral=/(?:calcific|calcio).{0,50}ombro\s+(?:esquerdo|direito).{0,70}(?:nunca doi|sem dor|assintomatic).{0,120}ombro\s+(?:direito|esquerdo)/.test(t);
+    if(cond.id==='ombro_calcaria'&&calcariaContralateral){score=-5;hits=[];}
+    if(cond.id==='ombro_trauma_maior'&&historiaRemotaResolvida){score=-5;hits=[];}
+    if(cond.id==='ombro_instabilidade'&&historiaRemotaResolvida&&/(?:sem|nao\s+(?:tenho|tem)?).{0,55}(?:falseio|apreens|sai|desencaix|instabil)/.test(t)){score=-5;hits=[];}
     if(cond.id==='ombro_ruptura_manguito'&&perdaAtivaPassiva)score+=4;
     return {score:score+cond.ordem/1000,hits:hits.slice(0,5)};
   }
