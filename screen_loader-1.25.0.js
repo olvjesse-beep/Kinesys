@@ -27,6 +27,7 @@
                 'clinical_reasoning_shoulder-3.1.0.css?v=20260910-r2',
                 'clinical_reasoning_elbow-3.1.0.css?v=20260910-r1',
                 'clinical_reasoning_wrist-3.1.0.css?v=20260910-r1',
+                'clinical_reasoning_cervical-3.1.0.css?v=20260911-r1',
                 'radar_clinico_focus-3.0.0.css?v=20260910-r1',
                 'dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
             ]),
@@ -45,7 +46,8 @@
                 'clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
                 'clinical_reasoning_shoulder-3.1.0.js?v=20260910-lang-r3&upperlimb=20260910-r1',
                 'clinical_reasoning_elbow-3.1.0.js?v=20260910-r1&upperlimb=20260910-r1',
-                'clinical_reasoning_wrist-3.1.0.js?v=20260910-r1&upperlimb=20260910-r1'
+                'clinical_reasoning_wrist-3.1.0.js?v=20260910-r1&upperlimb=20260910-r1',
+                'clinical_reasoning_cervical-3.1.0.js?v=20260911-r1'
             ]),
             afterLoad(){
                 if(typeof window.atualizarMotorClinico3KineSys==='function'){
