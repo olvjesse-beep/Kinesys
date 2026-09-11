@@ -1,0 +1,45 @@
+name: Core Modularization Phase 4E State Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/core-modularization-phase4e
+    paths:
+      - .github/workflows/core-phase4e-state-audit-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit registration validation boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          lines=Path('script-1.18.0.js').read_text(encoding='utf-8').splitlines()
+          start=2071; end=2485
+          funcs=[]
+          for i in range(start-1,end):
+              m=re.match(r'\s*(?:async\s+)?function\s+([A-Za-z0-9_$]+)\s*\(',lines[i])
+              if m: funcs.append((i+1,m.group(1)))
+          print('CANDIDATE_FUNCTIONS')
+          text='\n'.join(lines)
+          for ln,name in funcs:
+              hits=[i+1 for i,l in enumerate(lines) if re.search(r'\b'+re.escape(name)+r'\b',l)]
+              outside=[n for n in hits if n<start or n>end]
+              print(ln,name,'refs=',len(hits),'outside=',outside)
+          print('STATE_BOUNDARY')
+          for name in ['cacheCEP','consultaCEPController','ultimoCEPPesquisado']:
+              hits=[i+1 for i,l in enumerate(lines) if re.search(r'\b'+name+r'\b',l)]
+              outside=[n for n in hits if n<start or n>end]
+              print(name,'hits=',hits,'outside=',outside)
+              if outside: raise SystemExit(f'{name} referenced outside candidate: {outside}')
+          print('BOUNDARY_MARKERS')
+          for needle in ['/* ================= 9. CADASTRO E EDIÇÃO DO PACIENTE ================= */','async function salvarCadastroSomente(redirecionar = true) {']:
+              print(needle,[i+1 for i,l in enumerate(lines) if needle in l])
+          print('REGISTRATION_VALIDATION_BOUNDARY_OK')
+          PY
