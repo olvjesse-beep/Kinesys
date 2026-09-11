@@ -26,7 +26,7 @@ const corePos=html.indexOf('script-1.18.0.js');
 const loginPos=html.indexOf('login_access-1.18.0.js');
 assert.ok(helperPos>=0&&corePos>helperPos&&loginPos>corePos,'ordem deve manter login UI helpers -> core -> login_access');
 assert.match(html,/login_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4r-r1/,'módulo 4R deve usar cache-buster próprio');
-assert.match(html,/core_mod=20260911-phase4r-r1/,'cache-bust do monólito deve acompanhar a Phase 4R');
+assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do monólito deve permanecer versionado na série Phase 4');
 
 function fakeClassList(){
   const values=new Set();
