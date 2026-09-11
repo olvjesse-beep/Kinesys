@@ -2,10 +2,60 @@
 (function(){
     'use strict';
     let contextoPagamentoAgendamento = null;
+    let contextoBaixaPendenciaAgendamento = null;
     let historicoAtendimentosSeq = 0;
     const fmt = v => typeof moedaBR === 'function' ? moedaBR(Number(v)||0) : (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
     const esc = v => typeof escapeHTML === 'function' ? escapeHTML(String(v??'')) : String(v??'');
     const num = v => typeof numeroFinanceiro === 'function' ? numeroFinanceiro(v) : Number(String(v||0).replace('.','').replace(',','.'));
+
+    function instalarModalBaixaPendencia(){
+        if(document.getElementById('fin_ag_baixa_dialog'))return;
+        document.body.insertAdjacentHTML('beforeend',`<dialog id="fin_ag_baixa_dialog" class="fin-ag-writeoff-dialog">
+          <form id="fin_ag_baixa_form" class="fin-ag-writeoff-card">
+            <div class="fin-ag-writeoff-head"><div><span>Ajuste financeiro</span><h2>Remover pendência</h2></div><button type="button" data-fin-ag-baixa-cancelar aria-label="Fechar">×</button></div>
+            <p>Use esta ação quando a cobrança unitária não deve mais existir como valor a receber. Nenhum pagamento será criado.</p>
+            <div class="input-group"><label for="fin_ag_baixa_tipo">Motivo da baixa</label><select id="fin_ag_baixa_tipo" required><option value="cortesia">Desconto / cortesia</option><option value="migracao_pacote">Paciente migrou para pacote</option><option value="lancamento_incorreto">Lançamento incorreto</option><option value="outro">Outro motivo</option></select></div>
+            <div class="input-group"><label for="fin_ag_baixa_motivo">Justificativa</label><textarea id="fin_ag_baixa_motivo" rows="3" minlength="3" required placeholder="Ex.: paciente fechou pacote após o atendimento"></textarea></div>
+            <div id="fin_ag_baixa_feedback" class="finance-feedback" hidden></div>
+            <div class="fin-ag-writeoff-actions"><button type="button" class="btn-secondary" data-fin-ag-baixa-cancelar>Cancelar</button><button type="submit" class="btn-secondary fin-ag-writeoff-confirm">Remover pendência</button></div>
+          </form>
+        </dialog>`);
+        const dialog=document.getElementById('fin_ag_baixa_dialog');
+        dialog.querySelectorAll('[data-fin-ag-baixa-cancelar]').forEach(b=>b.addEventListener('click',()=>{contextoBaixaPendenciaAgendamento=null;dialog.close();}));
+        dialog.addEventListener('cancel',()=>{contextoBaixaPendenciaAgendamento=null;});
+        dialog.querySelector('#fin_ag_baixa_form')?.addEventListener('submit',confirmarBaixaPendenciaAgendamento);
+    }
+
+    window.abrirBaixaPendenciaAgendamentoFinanceiro=function(id){
+        if(typeof financeiroPodeEditar==='function'&&!financeiroPodeEditar()){alert('Seu perfil não possui permissão para ajustar cobranças.');return;}
+        if(!_supabase){alert('Conecte-se à internet para remover a pendência com segurança.');return;}
+        instalarModalBaixaPendencia();
+        contextoBaixaPendenciaAgendamento={agendamentoId:String(id||'')};
+        const dialog=document.getElementById('fin_ag_baixa_dialog');
+        document.getElementById('fin_ag_baixa_tipo').value='cortesia';
+        document.getElementById('fin_ag_baixa_motivo').value='';
+        const feedback=document.getElementById('fin_ag_baixa_feedback');feedback.hidden=true;feedback.textContent='';feedback.className='finance-feedback';
+        dialog.showModal();
+        setTimeout(()=>document.getElementById('fin_ag_baixa_tipo')?.focus(),0);
+    };
+
+    async function confirmarBaixaPendenciaAgendamento(event){
+        event.preventDefault();
+        const id=contextoBaixaPendenciaAgendamento?.agendamentoId;if(!id||!_supabase)return false;
+        const tipo=document.getElementById('fin_ag_baixa_tipo')?.value||'';
+        const motivo=document.getElementById('fin_ag_baixa_motivo')?.value.trim()||'';
+        const feedback=document.getElementById('fin_ag_baixa_feedback');
+        if(motivo.length<3){feedback.hidden=false;feedback.className='finance-feedback erro';feedback.textContent='Informe uma justificativa para a baixa.';return false;}
+        const botao=document.querySelector('#fin_ag_baixa_form button[type="submit"]');if(botao){botao.disabled=true;botao.textContent='Removendo…';}
+        const {error}=await _supabase.rpc('kinesys_baixar_cobranca_agendamento',{p_agendamento_id:id,p_tipo:tipo,p_motivo:motivo});
+        if(botao){botao.disabled=false;botao.textContent='Remover pendência';}
+        if(error){feedback.hidden=false;feedback.className='finance-feedback erro';feedback.textContent=error.message||'Não foi possível remover a pendência.';return false;}
+        document.getElementById('fin_ag_baixa_dialog')?.close();contextoBaixaPendenciaAgendamento=null;
+        if(typeof carregarFinanceiroPaciente==='function')await carregarFinanceiroPaciente();
+        if(typeof renderizarPainelAgenda==='function')await renderizarPainelAgenda();
+        if(typeof mensagemFinanceiro==='function')mensagemFinanceiro('Pendência removida. A baixa e sua justificativa foram preservadas no histórico de auditoria.','sucesso');
+        return true;
+    }
 
     function instalarCamposPagamentoAgendamento(){
         const modal=document.getElementById('modal_fin_pagamento'); if(!modal||document.getElementById('fin_pag_agendamento_id'))return;
@@ -69,10 +119,17 @@
     window.abrirPagamentoAgendamentoIntegrado=async function(id){
         if(typeof financeiroPodeEditar==='function'&&!financeiroPodeEditar()){alert('Seu perfil não possui permissão para registrar pagamentos.');return;}
         if(!_supabase){alert('Conecte-se à internet para lançar o pagamento com segurança.');return;}
-        const a=(agendaAgendamentosSemanaCache||[]).concat(agendaAgendamentosDoDiaCache||[]).find(x=>String(x.id)===String(id));
-        if(!a){alert('Agendamento não encontrado. Atualize a agenda.');return;}
+        const semana=typeof agendaAgendamentosSemanaCache!=='undefined'?(agendaAgendamentosSemanaCache||[]):[];
+        const dia=typeof agendaAgendamentosDoDiaCache!=='undefined'?(agendaAgendamentosDoDiaCache||[]):[];
+        let a=semana.concat(dia).find(x=>String(x.id)===String(id));
+        if(!a){
+            const r=await _supabase.from('agendamentos').select('id,paciente_id,profissional_id,procedimento_id,plano_id,status,data,hora_inicio').eq('id',id).maybeSingle();
+            if(r.error||!r.data){alert('Agendamento não encontrado. Atualize o Financeiro e tente novamente.');return;}
+            a=r.data;
+        }
         const prep=await _supabase.rpc('kinesys_preparar_cobranca_agendamento',{p_agendamento_id:id});
         if(prep.error){alert('Não foi possível preparar a cobrança: '+(prep.error.message||prep.error));return;}
+        if(prep.data?.baixada_em){alert('Esta pendência já foi removida. Atualize o Financeiro.');return;}
         const sit=await obterSituacaoPagamentoAgendamento(a); if(!sit?.verificado){alert('Não foi possível confirmar a situação financeira.');return;}
         contextoPagamentoAgendamento={...sit,agendamento:a,planoId:prep.data?.plano_id||a.plano_id||'',cobrancaId:prep.data?.id||sit.cobrancaId,valorOriginal:Number(prep.data?.valor_original??sit.valorOriginal),desconto:Number(prep.data?.desconto_valor??sit.desconto),pagos:Number(sit.pagos)||0};
         fecharModal('modal_detalhe_agendamento');
@@ -141,12 +198,19 @@
         lista.querySelector('#fin_historico_agendamentos')?.remove();
         const [cr,pag]=await Promise.all([_supabase.from('cobrancas_agendamento').select('*').eq('paciente_id',pacienteId).order('data_agendamento',{ascending:false}),_supabase.from('pagamentos').select('id,agendamento_id,valor,forma_pagamento,parcelas,data_pagamento,tipo').eq('paciente_id',pacienteId).not('agendamento_id','is',null).order('data_pagamento',{ascending:false})]);
         if(seq!==historicoAtendimentosSeq||cr.error||pag.error)return;lista.querySelector('#fin_historico_agendamentos')?.remove();const pagamentos=pag.data||[];
-        const cards=(cr.data||[]).map(c=>{const ps=pagamentos.filter(p=>String(p.agendamento_id)===String(c.agendamento_id)),pago=ps.reduce((s,p)=>s+Number(p.valor||0),0),pend=Math.max(0,Number(c.valor_devido)-pago),status=pend<=0?'PAGO':pago>0?'PARCIAL':'PENDENTE';return `<article class="fin-ag-history-card"><header><div><strong>${esc(c.procedimento_nome||'Atendimento')}</strong><span>${new Date(c.data_agendamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${esc(c.profissional_nome||'')}</span></div><b class="${status.toLowerCase()}">${status}</b></header><p>Original ${fmt(c.valor_original)} · desconto ${fmt(c.desconto_valor)} · devido ${fmt(c.valor_devido)} · pago ${fmt(pago)} · pendente <strong>${fmt(pend)}</strong></p>${ps.length?`<ul>${ps.map(p=>`<li>${new Date(p.data_pagamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${fmt(p.valor)} · ${esc(p.forma_pagamento)}${p.forma_pagamento==='Cartão de crédito'?` · ${p.parcelas||1}x`:''}${p.tipo==='estorno'?' · estorno':''}</li>`).join('')}</ul>`:'<small>Nenhum pagamento lançado.</small>'}</article>`;}).join('');
-        lista.insertAdjacentHTML('beforeend',`<section id="fin_historico_agendamentos" class="fin-ag-history"><h3>Histórico por atendimento</h3>${cards||'<div class="finance-empty">Nenhum atendimento com cobrança individual.</div>'}</section>`);
+        const cobrancas=cr.data||[],baixadas=cobrancas.filter(c=>!!c.baixada_em),ativas=cobrancas.filter(c=>!c.baixada_em);
+        const cards=ativas.map(c=>{
+            const ps=pagamentos.filter(p=>String(p.agendamento_id)===String(c.agendamento_id)),pago=ps.reduce((s,p)=>s+Number(p.valor||0),0),pend=Math.max(0,Number(c.valor_devido)-pago),status=pend<=0?'PAGO':pago>0?'PARCIAL':'PENDENTE';
+            const podeBaixar=pend>0&&ps.length===0&&c.origem!=='plano';
+            const acoes=pend>0?`<div class="fin-ag-history-actions"><button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(c.agendamento_id)}')">Quitar</button>${podeBaixar?`<button type="button" class="btn-secondary fin-ag-remove-pending" onclick="abrirBaixaPendenciaAgendamentoFinanceiro('${esc(c.agendamento_id)}')">Remover pendência</button>`:''}</div>`:'';
+            return `<article class="fin-ag-history-card"><header><div><strong>${esc(c.procedimento_nome||'Atendimento')}</strong><span>${new Date(c.data_agendamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${esc(c.profissional_nome||'')}</span></div><b class="${status.toLowerCase()}">${status}</b></header><p>Original ${fmt(c.valor_original)} · desconto ${fmt(c.desconto_valor)} · devido ${fmt(c.valor_devido)} · pago ${fmt(pago)} · pendente <strong>${fmt(pend)}</strong></p>${ps.length?`<ul>${ps.map(p=>`<li>${new Date(p.data_pagamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${fmt(p.valor)} · ${esc(p.forma_pagamento)}${p.forma_pagamento==='Cartão de crédito'?` · ${p.parcelas||1}x`:''}${p.tipo==='estorno'?' · estorno':''}</li>`).join('')}</ul>`:'<small>Nenhum pagamento lançado.</small>'}${acoes}</article>`;
+        }).join('');
+        const auditoria=baixadas.length?`<small class="fin-ag-history-audit-note">${baixadas.length} cobrança(s) removida(s) da pendência permanecem preservadas na auditoria financeira.</small>`:'';
+        lista.insertAdjacentHTML('beforeend',`<section id="fin_historico_agendamentos" class="fin-ag-history"><h3>Histórico por atendimento</h3>${cards||'<div class="finance-empty">Nenhum atendimento com cobrança individual pendente.</div>'}${auditoria}</section>`);
     }
     const renderPacienteBase=renderizarFinanceiroPaciente;
     renderizarFinanceiroPaciente=function(){const r=renderPacienteBase.apply(this,arguments);setTimeout(()=>renderizarHistoricoAtendimentos().catch(()=>{}),0);return r;};
 
-    document.addEventListener('DOMContentLoaded',instalarCamposPagamentoAgendamento,{once:true});
-    if(document.readyState!=='loading')instalarCamposPagamentoAgendamento();
+    document.addEventListener('DOMContentLoaded',()=>{instalarCamposPagamentoAgendamento();instalarModalBaixaPendencia();},{once:true});
+    if(document.readyState!=='loading'){instalarCamposPagamentoAgendamento();instalarModalBaixaPendencia();}
 })();
