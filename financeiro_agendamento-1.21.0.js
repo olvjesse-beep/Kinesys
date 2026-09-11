@@ -9,7 +9,7 @@
     const num = v => typeof numeroFinanceiro === 'function' ? numeroFinanceiro(v) : Number(String(v||0).replace('.','').replace(',','.'));
 
     function instalarModalBaixaPendencia(){
-        if(document.getElementById('fin_ag_baixa_dialog'))return;
+        if(!document.body||document.getElementById('fin_ag_baixa_dialog'))return;
         document.body.insertAdjacentHTML('beforeend',`<dialog id="fin_ag_baixa_dialog" class="fin-ag-writeoff-dialog">
           <form id="fin_ag_baixa_form" class="fin-ag-writeoff-card">
             <div class="fin-ag-writeoff-head"><div><span>Ajuste financeiro</span><h2>Remover pendência</h2></div><button type="button" data-fin-ag-baixa-cancelar aria-label="Fechar">×</button></div>
