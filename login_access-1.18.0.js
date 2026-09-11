@@ -108,8 +108,8 @@ const KineSysLogin = (() => {
         recoveryBusy=true;el('login_recovery_submit').disabled=true;
         try{
             if(!_supabase)throw new Error();
-            const redirectTo=new URL('recuperar-acesso.html',location.href);
-            const {error}=await _supabase.auth.resetPasswordForEmail(el('login_recovery_email').value.trim().toLowerCase(),{redirectTo:redirectTo.href});
+            const redirectTo='https://app.fisiofixfisioterapia.com/recuperar-acesso.html';
+            const {error}=await _supabase.auth.resetPasswordForEmail(el('login_recovery_email').value.trim().toLowerCase(),{redirectTo});
             if(error)throw error;
             mostrarFeedbackLogin('Se a conta existir, você receberá um link para criar uma nova senha. Confira também a caixa de spam.','sucesso');
         }catch{mostrarFeedbackLogin('Não foi possível enviar agora. Aguarde alguns minutos e tente novamente.','erro');}
