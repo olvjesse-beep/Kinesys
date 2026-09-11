@@ -102,8 +102,8 @@
         });
         const triagem=document.getElementById('subtela_triagem'),avaliacao=document.getElementById('tela_avaliacao');
         avaliacaoAtivaRef=avaliacao;
-        const navegacao=new MutationObserver(()=>{if(aberto&&(!avaliacao.classList.contains('ativa')||!triagem.classList.contains('ativa')))fechar(false);});
-        navegacao.observe(triagem,{attributes:true,attributeFilter:['class']});navegacao.observe(avaliacao,{attributes:true,attributeFilter:['class']});
+        const navegacao=new MutationObserver(()=>{if(aberto&&!triagem.classList.contains('ativa'))fechar(false);});
+        navegacao.observe(triagem,{attributes:true,attributeFilter:['class']});
 
         document.addEventListener('kinesys:tela-ativada',event=>{
             if(event.detail?.id==='tela_avaliacao')iniciarSincronizacaoContexto();
