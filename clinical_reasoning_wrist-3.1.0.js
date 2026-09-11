@@ -13,8 +13,8 @@
 (function instalarMotor31PunhoMao(){
   'use strict';
 
-  const VERSION='3.1.1-wrist2';
-  const n=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  const VERSION='3.1.2-wrist3';
+  const n=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim().replace(/\bdedao\b/g,'polegar').replace(/\bdedo do meio\b/g,'medio').replace(/\bn\b/g,'nao');
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
   const hma=()=>String(document.getElementById('paciente_hma')?.value||'');
@@ -90,16 +90,19 @@
   };
 
   function textoContexto(c){return [hma(),c?.origemIrradiacao,c?.irradiacao,c?.textoComorbidades,c?.textoMedicamentos,c?.textoCirurgias,...arr(c?.comorbidades),...arr(c?.medicamentos),...arr(c?.cirurgias).map(x=>typeof x==='string'?x:(x?.texto||x?.nome||''))].filter(Boolean).join(' ');}
-  function negado(t,padrao){return new RegExp('(?:sem|nega|negou|nao houve|nao tem|nao sinto).{0,28}(?:'+padrao+')').test(t);}
+  function negado(t,padrao){return new RegExp('(?:sem|nega(?:do|ou)?|nao(?:\\s+(?:houve|tem|tenho|teve|tive|sinto|sente|esta|estou|ficou|e))?|nem)\\s*.{0,38}(?:'+padrao+')').test(t);}
   function hit(t,lista){return arr(lista).filter(x=>t.includes(n(x)));}
 
   function pontuar(cond,texto,c){
-    const t=n(texto), hits=hit(t,cond.termos);let score=Math.min(2.4,hits.length*1.2);const add=(v,m)=>{score+=v;if(m)hits.push(m);};
+    const t=n(texto);let hits=hit(t,cond.termos);let score=Math.min(2.4,hits.length*1.2);const add=(v,m)=>{score+=v;if(m)hits.push(m);};
     const trauma=/\b(cai|caiu|cair|queda|trauma|impacto|pancada|acidente|luxou|luxacao)\b/.test(t)&&!negado(t,'queda|trauma|impacto|pancada|cai');
     const febre=/\b(febre|calafrio|calafrios)\b/.test(t)&&!negado(t,'febre|calafrio');
     const inflam=[/vermelh|rubor/.test(t)&&!negado(t,'vermelh|rubor'),/quente|calor/.test(t)&&!negado(t,'quente|calor'),/inch|edema/.test(t)].filter(Boolean).length;
-    const mediano=/(polegar.{0,35}(indicador|medio)|(indicador|medio).{0,35}polegar)/.test(t)&&/(formig|dormen|adormec)/.test(t);
-    const ulnar=/(anelar|mindinho|quarto|quinto|4o|5o).{0,45}(formig|dormen|adormec)|(formig|dormen|adormec).{0,45}(anelar|mindinho|quarto|quinto|4o|5o)/.test(t);
+    const parestesiaMedianaNegada=/(?:sem|nao\s+(?:tenho|tem|sinto|sente)|nem)\s*(?:formig\w*|dorm\w*|adormec\w*).{0,70}(?:polegar|indicador|medio)|(?:polegar|indicador|medio).{0,38}(?:nao\s+(?:formig\w*|dorm\w*|adormec\w*)|sem\s+(?:formig\w*|dorm\w*|adormec\w*))/.test(t);
+    const parestesiaUlnarNegada=/(?:sem|nao(?:\s+(?:tenho|tem|sinto|sente))?|nem).{0,55}(?:formig|dormen|adormec).{0,70}(?:anelar|mindinho|quarto|quinto|4o|5o)|(?:sem|nao(?:\s+(?:tenho|tem|sinto|sente))?).{0,70}(?:anelar|mindinho|quarto|quinto|4o|5o).{0,45}(?:formig|dormen|adormec)/.test(t);
+    const parestesiaMediana=/(?:formig|dorme|dormenc|adormec)/.test(t);
+    const mediano=/(polegar.{0,35}(indicador|medio)|(indicador|medio).{0,35}polegar)/.test(t)&&parestesiaMediana&&!parestesiaMedianaNegada;
+    const ulnar=/(anelar|mindinho|quarto|quinto|4o|5o).{0,45}(formig|dormen|adormec)|(formig|dormen|adormec).{0,45}(anelar|mindinho|quarto|quinto|4o|5o)/.test(t)&&!parestesiaUlnarNegada;
     const cotovelo=/(cotovelo).{0,45}(dobrad|flex|apoi)|(dobrad|flex|apoi).{0,45}cotovelo/.test(t);
     const cervical=/(pescoco|cervical).{0,70}(mao|dedo|formig|dormen)|(mao|dedo|formig|dormen).{0,70}(pescoco|cervical)/.test(t);
     const radial=/(radial|estiloide radial|lado do polegar|perto do polegar)/.test(t);
@@ -117,13 +120,19 @@
     const dorso=/dor.{0,25}(dorso|dorsal).{0,25}punho|punho.{0,25}(dorso|dorsal)/.test(t);
     const clique=/(clique|estalo|clunk|instabil)/.test(t)&&!negado(t,'clique|estalo');
     const labelOnly=/(medico|doutor|laudo|exame).{0,35}(falou|disse|mostrou|deu).{0,35}(tunel do carpo|tfcc|tendinite|de quervain)/.test(t)&&!/(formig|dormen|radial|ulnar|tabaqueira|base do polegar|trauma|queda|noite|dirig|carga|movimento)/.test(t.replace(/tunel do carpo|tfcc|tendinite|de quervain/g,''));
+    const historiaRemotaResolvida=/(?:ha\s+)?\d+\s+anos?\b|anos?\s+atras/.test(t)&&/(?:alta|sem sequela|recuperei|recuperou|fiquei\s+(?:bem|bom)|resolvido)/.test(t);
+    const vascularNegado=negado(t,'fria|frio|palida|palido|roxa|azulada|cianose|sem pulso|perdeu o pulso');
+    const compartimentalNegado=negado(t,'tenso|dura|desproporcional|insuportavel')||/(?:esticar|alongar).{0,25}dedos.{0,30}(?:nao piora|nao doi|sem dor)/.test(t);
+    const crpsNegado=negado(t,'desproporcional|alodinia|doi ate ao toque|dor ate ao toque')&&negado(t,'muda de cor|temperatura|sua|sudorese|edema');
 
     if(cond.id==='punho_infeccao'){if(febre&&inflam>=1)add(5.6,'febre + inflamação local');if(/corte|ferida|mordida|pus|secrecao/.test(t)&&inflam>=1)add(2.4,'porta de entrada + inflamação');if(negado(t,'febre')&&inflam<2)score-=4;}
-    if(cond.id==='punho_compartimental'&&trauma&&/(tenso|dura|desproporcional|insuportavel|esticar os dedos|alongamento passivo)/.test(t))add(5.7,'trauma + padrão compartimental');
-    if(cond.id==='punho_vascular_agudo'&&(/\b(fria|frio|palida|palido|roxa|azulada|cianose)\b/.test(t)||/sem pulso|perdeu o pulso/.test(t)))add(6,'alteração vascular distal');
+    const estiramentoPassivoPositivo=/(?:esticar os dedos|alongamento passivo).{0,30}(?:doi|doeu|piora|piorou|aumenta a dor)|(?:doi|doeu|piora|piorou|aumenta a dor).{0,30}(?:esticar os dedos|alongamento passivo)/.test(t)&&!/(?:esticar os dedos|alongamento passivo).{0,30}(?:nao doi|nao piora|sem dor)/.test(t);
+    const compartimentalPositivo=/(?:tenso|dura|desproporcional|insuportavel)/.test(t)&&!compartimentalNegado||estiramentoPassivoPositivo;
+    if(cond.id==='punho_compartimental'&&trauma&&compartimentalPositivo)add(5.7,'trauma + padrão compartimental');
+    if(cond.id==='punho_vascular_agudo'&&(/\b(fria|frio|palida|palido|roxa|azulada|cianose)\b/.test(t)||/sem pulso|perdeu o pulso/.test(t))&&!vascularNegado)add(6,'alteração vascular distal');
     if(cond.id==='punho_trauma_maior'&&trauma&&/(deform|nao consigo|nao consegue|incapac|luxou|luxacao)/.test(t))add(5,'trauma + perda estrutural/funcional');
     if(cond.id==='punho_escafoide'){if(trauma&&/(tabaqueira|escafoide)/.test(t))add(6,'trauma + dor em escafoide');else if(trauma&&radial)add(2.2,'trauma + dor radial');if(!trauma)score-=4;}
-    if(cond.id==='fratura_radio_distal_reabilitacao'&&/(fratura|quebrei|quebrou|gesso|placa).{0,45}(punho|radio)|(punho|radio).{0,45}(fratura|gesso|placa)/.test(t))add(4.2,'fratura de punho/rádio distal');
+    if(cond.id==='fratura_radio_distal_reabilitacao'&&!historiaRemotaResolvida&&/(fratura|quebrei|quebrou|gesso|placa).{0,45}(punho|radio)|(punho|radio).{0,45}(fratura|gesso|placa)/.test(t))add(4.2,'fratura de punho/rádio distal');
     if(cond.id==='punho_mediano_proximal'){if(medianoProximal)add(5.7,'distribuição mediana + provocação proximal');if(noturno&&/sacud/.test(t))score-=2.5;}
     if(cond.id==='tunel_carpo'){if(mediano)add(4.8,'distribuição mediana');if(mediano&&/(noite|noturn|dirig|celular|sacud)/.test(t))add(1.5,'comportamento típico');if(labelOnly)score=-5;if(ulnar&&!mediano)score-=3;if(cervical||medianoProximal)score-=5;}
     if(cond.id==='punho_ulnar_guyon'){if(ulnar&&!cotovelo&&!cervical)add(4.1,'distribuição ulnar distal');if(ulnar&&/(palma|guidao|hipotenar)/.test(t))add(1.8,'compressão palmar');if(cotovelo||cervical)score-=5;}
@@ -135,8 +144,16 @@
     if(cond.id==='instabilidade_escafolunar'){if(trauma&&dorso&&clique)add(5.4,'trauma + dor dorsal + clique');else if(trauma&&dorso)add(2.6,'trauma + dor dorsal');if(!trauma)score-=2.5;}
     if(cond.id==='rizartrose'){if(basePolegar&&/(pinca|abrir pote|potes|crepit)/.test(t))add(4.6,'base do polegar + pinça/preensão');if(Number(c?.idade)>=50&&basePolegar)add(.6,'faixa etária compatível');}
     if(cond.id==='punho_sobrecarga_tendinea'){if(!trauma&&!mediano&&!ulnar&&!febre&&/(punho).{0,60}(estender|flexionar|peso|musculacao|computador|repet)|(musculacao|computador|repet).{0,60}punho/.test(t))add(4,'sobrecarga mecânica sem trauma/neuro');if(radial)score-=1.5;if(ulnarDor)score-=5;}
-    if(cond.id==='pos_operatorio_tendao_mao'&&/(cirurgia|reparo|sutura|pos operatorio).{0,55}(tendao|flexor|extensor)|(tendao|flexor|extensor).{0,55}(cirurgia|reparo|sutura)/.test(t))add(5.5,'pós-reparo tendíneo');
-    if(cond.id==='punho_crps'&&/(desproporcional|alodinia|doi ate ao toque|dor ate ao toque)/.test(t)&&/(muda de cor|temperatura|sua|sudorese|edema)/.test(t))add(5.5,'dor desproporcional + alteração autonômica');
+    if(cond.id==='pos_operatorio_tendao_mao'&&!historiaRemotaResolvida&&/(cirurgia|reparo|sutura|pos operatorio).{0,55}(tendao|flexor|extensor)|(tendao|flexor|extensor).{0,55}(cirurgia|reparo|sutura)/.test(t))add(5.5,'pós-reparo tendíneo');
+    const crpsDor=/(desproporcional|alodinia|doi ate ao toque|dor ate ao toque)/.test(t)&&!negado(t,'desproporcional|alodinia|doi ate ao toque|dor ate ao toque');
+    const crpsAutonomico=/(muda de cor|temperatura|sua|sudorese|edema)/.test(t)&&!negado(t,'muda de cor|temperatura|sua|sudorese|edema');
+    if(cond.id==='punho_crps'&&crpsDor&&crpsAutonomico)add(5.5,'dor desproporcional + alteração autonômica');
+    if(cond.id==='tunel_carpo'&&parestesiaMedianaNegada){score=-5;hits=[];}
+    if(cond.id==='punho_ulnar_guyon'&&parestesiaUlnarNegada){score=-5;hits=[];}
+    if(cond.id==='punho_vascular_agudo'&&vascularNegado){score=-5;hits=[];}
+    if(cond.id==='punho_compartimental'&&compartimentalNegado&&!compartimentalPositivo){score=-5;hits=[];}
+    if(cond.id==='punho_crps'&&crpsNegado){score=-5;hits=[];}
+    if((cond.id==='fratura_radio_distal_reabilitacao'||cond.id==='pos_operatorio_tendao_mao')&&historiaRemotaResolvida){score=-5;hits=[];}
     return {score:score+cond.ordem/1000,hits:uniq(hits).slice(0,6)};
   }
 
