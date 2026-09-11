@@ -1,0 +1,46 @@
+name: Core Modularization Phase 4E Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/core-modularization-phase4e
+    paths:
+      - .github/workflows/core-phase4e-audit-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit monolith section boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          lines=Path('script-1.18.0.js').read_text(encoding='utf-8').splitlines()
+          print('LINES',len(lines))
+          print('\nSECTION_HEADERS')
+          for i,l in enumerate(lines,1):
+              if re.search(r'(={8,}|PARTE \d|KINESYS v|^\s*/\*\s*[-=]{5,}|^\s*//\s*[-=]{5,})',l):
+                  s=l.strip()
+                  if s and not s.startswith('*'):
+                      print(i, s[:180])
+          print('\nFUNCTIONS_BY_500_LINES')
+          buckets={}
+          for i,l in enumerate(lines,1):
+              m=re.match(r'\s*(?:async\s+)?function\s+([A-Za-z0-9_$]+)\s*\(',l)
+              if m:
+                  buckets.setdefault((i-1)//500,[]).append((i,m.group(1)))
+          for b,items in buckets.items():
+              print(f'-- {b*500+1}-{(b+1)*500} ({len(items)} funcs) --')
+              print(' | '.join(f'{i}:{n}' for i,n in items))
+          print('\nSTATE_DECLARATIONS_NON_AUTH')
+          banned=re.compile(r'auth|login|permiss|usuario|perfil|agenda|avali|hma|clin|motor|supabase|pacienteAtual|estadoMapeamento',re.I)
+          for i,l in enumerate(lines,1):
+              if re.match(r'\s*(?:let|const|var)\s+[A-Za-z_$][A-Za-z0-9_$]*',l) and not banned.search(l):
+                  if len(l)<220:
+                      print(i,l.strip())
+          PY
