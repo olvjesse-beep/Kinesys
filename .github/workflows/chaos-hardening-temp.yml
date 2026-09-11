@@ -6,6 +6,7 @@ on:
       - audit/clinical-upper-limb-chaos-noisy-hma
     paths:
       - 'tools/chaos_hardening_patch.py'
+      - 'tools/chaos_hardening_patch_v2.py'
       - '.github/workflows/chaos-hardening-temp.yml'
   workflow_dispatch:
 
@@ -24,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply targeted hardening patch
-        run: python3 tools/chaos_hardening_patch.py
+        run: python3 tools/chaos_hardening_patch_v2.py
 
       - name: JavaScript syntax
         run: |
