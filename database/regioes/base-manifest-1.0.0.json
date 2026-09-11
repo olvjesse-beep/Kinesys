@@ -1,0 +1,46 @@
+{
+  "cervical": {
+    "file": "database/regioes/cervical-base-1.0.0.js",
+    "bytes": 14685
+  },
+  "cefaleia": {
+    "file": "database/regioes/cefaleia-base-1.0.0.js",
+    "bytes": 9564
+  },
+  "atm": {
+    "file": "database/regioes/atm-base-1.0.0.js",
+    "bytes": 11841
+  },
+  "ombro": {
+    "file": "database/regioes/ombro-base-1.0.0.js",
+    "bytes": 17365
+  },
+  "lombar": {
+    "file": "database/regioes/lombar-base-1.0.0.js",
+    "bytes": 11979
+  },
+  "joelho": {
+    "file": "database/regioes/joelho-base-1.0.0.js",
+    "bytes": 13373
+  },
+  "quadril": {
+    "file": "database/regioes/quadril-base-1.0.0.js",
+    "bytes": 11525
+  },
+  "tornozelo_pe": {
+    "file": "database/regioes/tornozelo_pe-base-1.0.0.js",
+    "bytes": 14727
+  },
+  "cotovelo": {
+    "file": "database/regioes/cotovelo-base-1.0.0.js",
+    "bytes": 9149
+  },
+  "punho_mao": {
+    "file": "database/regioes/punho_mao-base-1.0.0.js",
+    "bytes": 8627
+  },
+  "coluna_toracica": {
+    "file": "database/regioes/coluna_toracica-base-1.0.0.js",
+    "bytes": 9843
+  }
+}
