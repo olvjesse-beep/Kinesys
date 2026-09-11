@@ -11,6 +11,7 @@ let agendaProcedimentosCache = [];
 let agendaHorariosCache = [];
 let agendaBloqueiosCache = [];
 let agendaEquipeCache = [];
+let agendaPacientesModalCache = [];
 let agendaAgendamentosDoDiaCache = [];
 let agendaAgendamentosSemanaCache = [];
 let agendaListaEsperaCache = [];
@@ -85,6 +86,59 @@ async function obterPacientesBasicosAgenda() {
     if (typeof obterPacientesSalvos === 'function') return obterPacientesSalvos();
     return [];
 }
+
+
+function normalizarBuscaPacienteAgenda(valor) {
+    return String(valor || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('pt-BR')
+        .trim();
+}
+
+function ordenarPacientesAgenda(lista = []) {
+    return [...(Array.isArray(lista) ? lista : [])].sort((a, b) =>
+        String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-BR', { sensitivity: 'base' })
+    );
+}
+
+function filtrarPacientesAgendamento(termo = '', preservarPacienteId = '') {
+    const sel = document.getElementById('ag_paciente_select');
+    const status = document.getElementById('ag_paciente_busca_status');
+    if (!sel) return [];
+    const termoNormalizado = normalizarBuscaPacienteAgenda(termo);
+    const preservarId = String(preservarPacienteId || '').trim();
+    let resultados = termoNormalizado
+        ? agendaPacientesModalCache.filter(p => normalizarBuscaPacienteAgenda(p?.nome).startsWith(termoNormalizado))
+        : [];
+    if (preservarId) {
+        const atual = agendaPacientesModalCache.find(p => String(p?.id || '') === preservarId);
+        if (atual && !resultados.some(p => String(p?.id || '') === preservarId)) resultados.push(atual);
+    }
+    resultados = ordenarPacientesAgenda(resultados);
+    sel.innerHTML = '<option value="">-- Selecione um paciente --</option>' + resultados.map(p =>
+        `<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome || 'Paciente')}</option>`
+    ).join('');
+    if (preservarId && resultados.some(p => String(p?.id || '') === preservarId)) sel.value = preservarId;
+    if (status) {
+        if (!termoNormalizado && !preservarId) status.textContent = 'Digite pelo menos uma letra do nome para carregar pacientes.';
+        else status.textContent = resultados.length
+            ? `${resultados.length} paciente(s) encontrado(s), em ordem alfabética.`
+            : 'Nenhum paciente encontrado com esse início de nome.';
+    }
+    return resultados;
+}
+
+function prepararBuscaPacienteAgendamento(pacientes = [], pacienteSelecionadoId = '') {
+    agendaPacientesModalCache = ordenarPacientesAgenda(pacientes);
+    const busca = document.getElementById('ag_paciente_busca');
+    const selecionadoId = String(pacienteSelecionadoId || '').trim();
+    const selecionado = agendaPacientesModalCache.find(p => String(p?.id || '') === selecionadoId);
+    if (busca) busca.value = selecionado?.nome || '';
+    return filtrarPacientesAgendamento(busca?.value || '', selecionadoId);
+}
+
+if (typeof window !== 'undefined') window.filtrarPacientesAgendamento = filtrarPacientesAgendamento;
 
 // Status oficiais da Agenda. O status é um estado operacional/administrativo;
 // o consumo financeiro é definido explicitamente e não pelo nome do status.
@@ -1654,9 +1708,6 @@ function calcularSlotsLivres(profissionalId, dataISO, duracaoMin, agendamentosBa
         }
     });
 
-    const agora = new Date();
-    const ehHoje = dataISO === formatarDataISO(agora);
-    const minutoAtual = agora.getHours() * 60 + agora.getMinutes();
     const livres = [];
 
     janelas.forEach(j => {
@@ -1665,7 +1716,6 @@ function calcularSlotsLivres(profissionalId, dataISO, duracaoMin, agendamentosBa
         // O passo acompanha a duração do procedimento (ex.: 60 min = 07:00, 08:00, 09:00...).
         for (let ini = inicioJanela; ini + duracaoMin <= fimJanela; ini += duracaoMin) {
             const fimSlot = ini + duracaoMin;
-            if (ehHoje && fimSlot <= minutoAtual) continue;
             const conflita = ocupados.some(([oi, of]) => ini < of && fimSlot > oi);
             if (!conflita) livres.push({ inicio: minutosParaHora(ini), fim: minutosParaHora(fimSlot) });
         }
@@ -2292,11 +2342,6 @@ function intervaloDisponivelNaJornadaRecorrencia(profissionalId, dataISO, horaIn
     if (!dentroPadrao && !opcoes.permitirExtraordinario) {
         return { ok:false, motivo:'fora do horário da clínica/profissional' };
     }
-    const hojeISO = formatarDataISO(new Date());
-    if (dataISO === hojeISO) {
-        const agora = new Date();
-        if (fim <= agora.getHours()*60 + agora.getMinutes()) return { ok:false, motivo:'horário já passou' };
-    }
     const bloqueio = bloqueiosAgendaPara(dataISO, profissionalId).find(b => {
         if (!b.hora_inicio || !b.hora_fim) return true;
         const bi = horaParaMinutos(horaCurta(b.hora_inicio));
@@ -2370,7 +2415,7 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
     if (avisoEdicao) {
         avisoEdicao.hidden = !editando;
         avisoEdicao.textContent = editando
-            ? 'Editando somente esta ocorrência. Altere apenas Horário, Procedimento ou Profissional. Paciente, data, recorrência, status, confirmação e financeiro serão preservados.'
+            ? 'Editando somente esta ocorrência. Altere Data, Horário, Procedimento ou Profissional. Paciente, recorrência, status, confirmação e financeiro serão preservados.'
             : '';
     }
     if (paciente) {
@@ -2378,8 +2423,8 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
         paciente.setAttribute('aria-disabled', String(editando));
     }
     if (data) {
-        data.disabled = editando;
-        data.setAttribute('aria-disabled', String(editando));
+        data.disabled = false;
+        data.setAttribute('aria-disabled', 'false');
     }
     if (recorrencia) recorrencia.hidden = editando;
     if (extra) extra.hidden = editando;
@@ -2433,8 +2478,7 @@ async function abrirModalAgendamento(profissionalPre, dataPre, horaPre, opcoes =
 
         const pacientes = await obterPacientesBasicosAgenda();
         const selPaciente = document.getElementById('ag_paciente_select');
-        selPaciente.innerHTML = '<option value="">-- Selecione --</option>' +
-            pacientes.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('');
+        prepararBuscaPacienteAgendamento(pacientes, atendimentoEdicao?.paciente_id || '');
 
         const profissionalInicial = podeVerClinicaToda
             ? (atendimentoEdicao?.profissional_id || profissionalPre || document.getElementById('agenda_filtro_profissional')?.value || '')
@@ -2656,7 +2700,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
     }
 }
 
-async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, horarioVal }) {
+async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal }) {
     const id = String(agendaEdicaoAtendimentoId || '');
     const a = agendaAgendamentosSemanaCache.find(x => String(x.id) === id)
         || agendaAgendamentosDoDiaCache.find(x => String(x.id) === id);
@@ -2666,6 +2710,10 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, ho
     }
     if (!usuarioPodeVerAgendaClinicaToda() || !agendaPodeMarcarProfissional(profissionalId)) {
         mostrarFeedbackAgendaModal('Seu perfil não possui autorização para editar este atendimento.', 'erro');
+        return false;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dataISO || ''))) {
+        mostrarFeedbackAgendaModal('Selecione uma data válida.', 'erro');
         return false;
     }
     const procedimento = agendaProcedimentosCache.find(p => String(p.id) === String(procedimentoId));
@@ -2683,7 +2731,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, ho
         mostrarFeedbackAgendaModal('Selecione um horário disponível.', 'erro');
         return false;
     }
-    const conflito = await existeConflitoImediato(profissionalId, a.data, horaInicio, horaFim, id);
+    const conflito = await existeConflitoImediato(profissionalId, dataISO, horaInicio, horaFim, id);
     if (conflito) {
         mostrarFeedbackAgendaModal('Este profissional já possui outro atendimento nesse horário. Escolha um horário disponível.', 'erro');
         return false;
@@ -2705,6 +2753,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, ho
     const alteracoes = {
         profissional_id: profissionalId,
         procedimento_id: procedimentoId,
+        data: dataISO,
         hora_inicio: horaInicio,
         hora_fim: horaFim
     };
@@ -2749,6 +2798,9 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, ho
 
     agendaEdicaoAtendimentoId = null;
     document.getElementById('ag_id').value = '';
+    agendaDataSelecionada = new Date(dataISO + 'T00:00:00');
+    const inputDataAgenda = document.getElementById('agenda_data_input');
+    if (inputDataAgenda) inputDataAgenda.value = dataISO;
     fecharModal('modal_agendamento');
     const filtroProfissional = document.getElementById('agenda_filtro_profissional');
     if (filtroProfissional?.value && String(filtroProfissional.value) !== String(profissionalId)) {
@@ -2796,7 +2848,7 @@ async function salvarAgendamento() {
         if (btn) { btn.disabled = true; btn.textContent = 'Salvando alterações…'; }
         mostrarFeedbackAgendaModal('Validando e atualizando este atendimento…', 'info');
         try {
-            await salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, horarioVal });
+            await salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal });
         } catch (err) {
             console.error('Erro ao editar atendimento:', err);
             mostrarFeedbackAgendaModal('Não foi possível salvar as alterações: ' + mensagemErroSalvarAgenda(err), 'erro');
@@ -3066,7 +3118,7 @@ async function abrirDetalheAgendamento(id) {
             </div>
             <div id="detalhe_status_impacto" class="agenda-status-impacto ${statusCfg.consomeSessao ? 'consome' : ''}">${statusCfg.consomeSessao ? 'Este status consome 1 sessão do pacote vinculado.' : 'Este status não consome sessão do pacote.'}</div>
             <div class="agenda-status-actions">
-                <button type="button" id="btn_editar_atendimento" class="btn-secondary" onclick="editarAgendamentoAtual()">EDITAR ATENDIMENTO</button>
+                <button type="button" id="btn_editar_atendimento" class="btn-secondary" onclick="editarAgendamentoAtual()">Editar agendamento</button>
                 <button type="button" class="btn-primary" onclick="salvarStatusAgendamentoAtual()">Salvar status</button>
                 ${statusAgendaPermiteReagendamento(a.status) ? '<button type="button" class="btn-secondary" onclick="reagendarAgendamentoAtual()">Reagendar</button>' : ''}
                 ${usuarioEhAdministradorAgenda() ? `<button type="button" class="btn-secondary agenda-audit-inline-btn" onclick="abrirHistoricoStatusAgenda('${escapeHTML(a.id)}')">Histórico de status</button>` : ''}
