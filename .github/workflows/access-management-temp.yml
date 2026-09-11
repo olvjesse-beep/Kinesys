@@ -17,10 +17,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: security/access-management-recovery
-      - name: Patch index
+      - name: Patch access management integration
         run: python tools/access_management_temp.py
       - name: Validate
         run: |
+          node --check script-1.18.0.js
           node --check login_access-1.18.0.js
           node --check access_admin-1.0.0.js
           node --check tests/access_management.contract.js
@@ -30,6 +31,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add index.html
-          git commit -m "Load access management module" || exit 0
+          git add index.html script-1.18.0.js
+          git commit -m "Wire secure team password reset" || exit 0
           git push origin HEAD:security/access-management-recovery
