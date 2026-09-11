@@ -92,7 +92,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add screen_loader-1.25.0.js .github/workflows/clinical-reasoning-regression.yml tests/screen_loader.contract.js
+          git add screen_loader-1.25.0.js tests/screen_loader.contract.js
           git diff --cached --quiet && exit 0
           git commit -m 'Integrate Cervical Motor 3.1 into lazy evaluation bundle'
           git push origin HEAD:feature/clinical-reasoning-cervical-3.1
