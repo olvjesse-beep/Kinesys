@@ -1,0 +1,47 @@
+name: Cache Phase 4I Patch Temp
+
+on:
+  push:
+    branches: [performance/cache-modularization-phase4i]
+    paths:
+      - 'tools/cache_phase4i_patch.py'
+      - '.github/workflows/cache-phase4i-patch-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/cache-modularization-phase4i
+      - name: Extract patient index cache
+        run: python tools/cache_phase4i_patch.py
+      - name: Validate Phase 4I
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check patient_index_cache_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/data_cache_integration.contract.js
+          node --check tests/patient_index_cache_modularization.contract.js
+          node --check tests/data_loading.contract.js
+          node tests/data_cache.contract.js
+          node tests/data_cache_integration.contract.js
+          node tests/patient_index_cache_modularization.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
+          echo '=== SIZE AFTER EXTRACTION ==='
+          wc -l -c script-1.18.0.js patient_index_cache_core-1.0.0.js
+      - name: Commit extraction
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add script-1.18.0.js index.html
+          git commit -m "Extract patient index cache from monolithic core" || exit 0
+          git push origin HEAD:performance/cache-modularization-phase4i
