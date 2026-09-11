@@ -11,7 +11,7 @@
 (function instalarMotor31Ombro(){
   'use strict';
 
-  const VERSION='3.1.3-shoulder4';
+  const VERSION='3.1.4-shoulder5';
   const normBase=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const norm=(v='')=>normBase(v)
     .replace(/\bencima\b/g,'em cima')
@@ -46,6 +46,16 @@
   ];
 
   const CONDICOES=[
+    {
+      id:'ombro_cardiorrespiratorio', ordem:115, urgente:true,
+      nomes:[/cardiac|cardiopulmonar|dor referida visceral|angina/],
+      rotulo:'Origem cardiorrespiratória/visceral — excluir prioritariamente',
+      termos:['dor no ombro com pressao no peito','dor no ombro com falta de ar','ombro esquerdo durante esforco com suor frio','dor no ombro ao subir ladeira com nausea'],
+      perguntas:['A dor aparece com esforço cardiovascular e melhora ao interromper o esforço?','Há pressão/dor torácica, dispneia, sudorese fria, náusea, tontura ou mal-estar?','O movimento/carga local do ombro reproduz a mesma dor independentemente do esforço?'],
+      objetivos:['Priorizar sinais vitais e triagem de causa não musculoesquelética','Não atrasar avaliação médica/urgência quando o padrão cardiorrespiratório for plausível','Somente prosseguir para provocação musculoesquelética quando a segurança estiver esclarecida'],
+      reforca:['relação com esforço','dor/pressão torácica','dispneia/sudorese/náusea'],
+      enfraquece:['dor local claramente reprodutível sem sintomas sistêmicos ou relação com esforço']
+    },
     {
       id:'ombro_trauma_maior', ordem:100, urgente:true,
       nomes:[/fratura.*ombro|luxacao.*ombro|lesao traumatica importante|ruptura traumatica.*manguito/],
@@ -228,6 +238,11 @@
   const ITEM_BANCO_CACHE=new Map();
 
   const MATRIZ_EXAME={
+    ombro_cardiorrespiratorio:{
+      essencial:['Relação com esforço cardiovascular','Dor/pressão torácica, dispneia, sudorese, náusea/tontura e sinais vitais','Decisão de encaminhamento médico/urgência antes de testes locais'],
+      complementar:['Reprodução musculoesquelética somente após triagem de segurança'],
+      evitar:['Não atribuir dor no ombro a manguito/bíceps quando houver padrão cardiorrespiratório plausível']
+    },
     ombro_trauma_maior:{
       essencial:['Inspeção e deformidade','Exame neurovascular distal','Capacidade ativa sem forçar provocação','Decisão sobre necessidade de imagem/avaliação médica'],
       complementar:['ADM passiva somente se segura','Força apenas quando trauma grave/fratura-luxação estiverem suficientemente excluídos'],
@@ -307,6 +322,10 @@
     const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
     const cervicalLigada=/(?:pescoco|nuca|cervic).{0,80}(?:ombro|braco|mao|dedo)|(?:virar|mexer|olhar).{0,30}(?:pescoco|cima).{0,80}(?:dor|braco|mao)/.test(t);
     const elevacao=/(?:levantar|levanto|elev|ergu|acima da cabeca|no alto|prateleira|armario)/.test(t);
+    const elevacaoNegada=/(?:levantar|elevar|erguer).{0,38}(?:nao muda|nao piora|nao reproduz|nao doi|sem dor)|(?:nao muda|nao piora|nao reproduz|nao doi).{0,38}(?:levantar|elevar|erguer)/.test(t);
+    const toracico=/(?:dor|pressao|aperto|peso).{0,35}(?:peito|torax)|(?:peito|torax).{0,35}(?:dor|pressao|aperto|peso)/.test(t);
+    const esforcoCardio=/(?:subir|ladeira|escada|caminhar|correr|esforco|atividade fisica)/.test(t);
+    const associadosCardio=/(?:falta de ar|dispneia|suor frio|sudorese|nausea|enjoo|tontura)/.test(t);
     const lateral=/(?:lateral|lado de fora|deltoid)/.test(t);
     const decubito=/(?:dormir|deitar|apoiar).{0,45}(?:ombro|braco)|(?:ombro|braco).{0,45}(?:dormir|deitar|apoiar)/.test(t);
     const acSuperior=/(?:ossinho|clavicul|topo|ponta).{0,35}ombro|ombro.{0,35}(?:ossinho|clavicul|topo|ponta)/.test(t);
@@ -314,6 +333,7 @@
     const passivoPreservado=/(?:passiv).{0,30}(?:preserv|livre|vai|consegue)|(?:alguem consegue|outra pessoa consegue|levanto com a outra mao).{0,45}(?:levantar|erguer|braco)/.test(t)&&!/(?:alguem|outra pessoa).{0,25}(?:tambem )?nao consegue/.test(t);
     const perdaAtivaPassiva=/(?:nao consigo|nao consegue).{0,40}(?:erguer|levantar)|(?:braco despenca|nao sustenta o braco)/.test(t)&&passivoPreservado;
 
+    if(cond.id==='ombro_cardiorrespiratorio'&&temOmbro&&toracico&&esforcoCardio&&associadosCardio){score+=7;hits.push('ombro + esforço + sintomas cardiorrespiratórios');}
     if(cond.id==='ombro_pmr'&&idade>=50)score+=2;
     if(cond.id==='ombro_capsulite'&&(c?.diabetico||/diabet|tireo/.test(t)))score+=1.3;
     if(cond.id==='ombro_trauma_maior'&&trauma)score+=incapacidadeAguda?4.2:2.8;
@@ -322,9 +342,11 @@
       if(cervicalLigada)score+=2.2;
     }
     if(cond.id==='ombro_manguito'&&temOmbro){
-      if(elevacao&&lateral)score+=3.2;
-      else if(elevacao&&/(dor|doi)/.test(t))score+=2.7;
+      if(!elevacaoNegada&&elevacao&&lateral)score+=3.2;
+      else if(!elevacaoNegada&&elevacao&&/(dor|doi)/.test(t))score+=2.7;
       if(decubito&&/(dor|doi)/.test(t))score+=1.2;
+      if((neuroDistal||cervicalLigada)&&!(elevacao&&lateral&&!elevacaoNegada))score-=3.2;
+      if(toracico&&esforcoCardio&&associadosCardio)score-=4;
     }
     if(cond.id==='ombro_ac'){
       if(acSuperior)score+=2.9;

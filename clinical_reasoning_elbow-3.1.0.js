@@ -12,7 +12,7 @@
 (function instalarMotor31Cotovelo(){
   'use strict';
 
-  const VERSION='3.1.1-elbow2';
+  const VERSION='3.1.2-elbow3';
   const norm=(v='')=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const arr=v=>Array.isArray(v)?v:[];
   const uniq=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -48,6 +48,7 @@
     {id:'cotovelo_ruptura_biceps_distal',ordem:102,urgente:true,nomes:[/ruptura.*biceps distal/],rotulo:'Ruptura aguda do bíceps distal — excluir/encaminhar precocemente',termos:['estalo na frente do cotovelo','hematoma na frente do cotovelo','biceps subiu depois do estalo','perdeu força para supinar depois do estalo','perdeu força para virar a palma para cima','rasgou o biceps no cotovelo'],perguntas:['Houve estalo súbito sob carga seguido de equimose ou mudança do contorno do bíceps?','A perda de força de supinação é marcante e nova?','Quando ocorreu o evento e houve avaliação ortopédica?'],objetivos:['Inspeção de equimose/alteração do contorno','Força de supinação e flexão com cautela','Hook test quando apropriado','Encaminhamento ortopédico precoce quando ruptura aguda for plausível'],reforca:['estalo sob carga','equimose','perda aguda de supinação'],enfraquece:['dor insidiosa sem perda objetiva de força']},
     {id:'cotovelo_cervical_neural',ordem:98,nomes:[/cervical.*referid|radicul|cervicobraquial|origem cervical/],rotulo:'Origem cervical/neural referida ao cotovelo — excluir ou confirmar',termos:['dor vem do pescoco e chega no cotovelo','dor desce do pescoco pelo braco','dor passa do cotovelo e vai para a mao','formigamento no braco e mao','dedos dormentes com dor no cotovelo','choque ate a mao','mexer o pescoco muda a dor no cotovelo'],perguntas:['A dor ultrapassa o cotovelo e chega à mão ou a dedos específicos?','Há parestesia, dormência, choque ou perda de força distal?','Rotação, extensão ou inclinação cervical modifica a dor familiar?','A carga local do cotovelo/punho consegue reproduzir a queixa independentemente do pescoço?'],objetivos:['Screening cervical antes de atribuir a dor a tecido local','Dermátomos, miótomos e reflexos quando indicado','Neurodinâmica conforme distribuição','Comparar reprodução do sintoma por cervical versus carga local do cotovelo'],reforca:['sintoma além do cotovelo','parestesia','modulação cervical'],enfraquece:['dor focal consistentemente reproduzida por carga local']},
     {id:'cotovelo_ombro_referida',ordem:96,nomes:[/dor referida.*ombro|origem proximal.*ombro|manguito.*referid/],rotulo:'Dor referida/irradiada de origem proximal no ombro — investigar',termos:['dor comeca no ombro e vai ate o cotovelo','dor do ombro desce ate o cotovelo','dor do ombro vai para o cotovelo','dor lateral do braco ate o cotovelo','bursite no ombro e dor no cotovelo','tendinite no ombro e dor no cotovelo','manguito e dor no cotovelo','levantar o braco da dor ate o cotovelo'],perguntas:['O sintoma começa no ombro/lateral do braço e termina próximo ao cotovelo, ou o cotovelo é o ponto inicial?','Elevação, abdução, rotação ou carga do ombro reproduz exatamente a dor percebida no braço/cotovelo?','Preensão, extensão/flexão do punho ou pronação-supinação reproduzem a dor independentemente do ombro?','Há sintomas que passam do cotovelo até mão/dedos ou modulação pelo pescoço?'],objetivos:['Mapear início e distribuição do sintoma no membro superior','Comparar provocação pelo ombro versus provocação por carga local do cotovelo/punho','ADM ativa/passiva e força do ombro quando o relato indicar origem proximal','Screening cervical/neural se houver sintomas distais ou modulação cervical'],reforca:['início no ombro','dor lateral do braço até cotovelo','reprodução por elevação/carga do ombro'],enfraquece:['dor focal no epicôndilo reproduzida por punho/preensão','parestesia distal dominante']},
+    {id:'cotovelo_plri',ordem:93,nomes:[/instabilidade posterolateral|plri|lucl|rotatoria posterolateral/],rotulo:'Instabilidade rotatória posterolateral (PLRI/LUCL) — investigar',termos:['cotovelo dando falseio','cotovelo cede quando apoio','clunk no cotovelo ao apoiar','inseguranca para empurrar depois de luxacao','cotovelo instavel depois de deslocar','falseio depois de luxacao do cotovelo'],perguntas:['Houve luxação/trauma prévio e desde então sensação de falseio, apreensão ou instabilidade?','Apoiar a mão para levantar da cadeira, fazer flexão ou empurrar provoca clunk/falseio mais do que dor tendínea focal?','Há deformidade atual ou incapacidade aguda que obrigue excluir nova fratura/luxação antes de testar estabilidade?'],objetivos:['História de luxação/trauma e episódios de instabilidade','Avaliar apreensão/falseio em carga axial e extensão com progressão cautelosa','Chair push-up/tabletop relocation ou pivot-shift apenas quando apropriado e seguro','Diferenciar PLRI de epicondilalgia lateral, túnel radial e componente articular'],reforca:['luxação/trauma prévio','falseio/apreensão','clunk em carga axial'],enfraquece:['dor focal estável reproduzida apenas por carga extensora sem instabilidade']},
     {id:'cotovelo_lateral',ordem:88,nomes:[/epicondilalgia lateral|epicondilite lateral|tendinopatia.*extensor/],rotulo:'Dor lateral do cotovelo / tendinopatia extensora — investigar',termos:['dor do lado de fora do cotovelo','dor lateral no cotovelo','cotovelo de tenista','doi para apertar a mao','doi para carregar sacola','doi para pegar xicara','doi para usar mouse','doi para estender o punho','epicondilo lateral dolorido'],perguntas:['A dor é focal no epicôndilo lateral/região extensora proximal?','Preensão ou extensão resistida do punho reproduz a dor familiar?','Há perda de força de preensão relacionada à dor?','Existe dor mais distal no túnel radial, sintomas neurais ou influência cervical?'],objetivos:['Localização/palpação da origem extensora como dado complementar','Preensão sem dor ou dinamometria comparativa quando disponível','Extensão de punho/dedos resistida e tolerância à carga','Diferenciar túnel radial e origem cervical/proximal'],reforca:['dor lateral focal','preensão dolorosa','carga extensora'],enfraquece:['parestesia distal','dor reproduzida primariamente pelo ombro/pescoço']},
     {id:'cotovelo_tunel_radial',ordem:86,nomes:[/tunel radial|interosseo posterior|nervo radial/],rotulo:'Síndrome do túnel radial / nervo interósseo posterior — investigar',termos:['dor no tunel radial','dor mais para baixo do epicondilo lateral','dor lateral no antebraco','doi para supinar','dor ao virar a palma para cima','fraqueza para estender os dedos','nervo radial no cotovelo'],perguntas:['A dor é mais distal que o epicôndilo lateral, sobre a massa extensora/supinador?','Supinação resistida reproduz a dor?','Existe fraqueza motora de extensão dos dedos/polegar sem perda sensitiva típica?','Os testes de carga extensora focal no epicôndilo reproduzem a mesma dor ou uma dor diferente?'],objetivos:['Localização do ponto doloroso relativo ao epicôndilo lateral','Supinação resistida','Exame motor do nervo interósseo posterior/radial','Neurodinâmica e screening cervical conforme contexto'],reforca:['dor distal ao epicôndilo','supinação dolorosa','déficit motor radial'],enfraquece:['dor estritamente focal no epicôndilo com preensão/extensão de punho']},
     {id:'cotovelo_medial',ordem:84,nomes:[/epicondilalgia medial|epicondilite medial|tendinopatia.*flexor|flexor pronador/],rotulo:'Dor medial do cotovelo / tendinopatia flexor-pronadora — investigar',termos:['dor do lado de dentro do cotovelo','dor medial no cotovelo','cotovelo de golfista','doi para flexionar o punho','doi para pronar','doi para apertar do lado de dentro','epicondilo medial dolorido'],perguntas:['A dor é focal sobre o epicôndilo medial/origem flexor-pronadora?','Flexão de punho ou pronação resistida reproduz a dor familiar?','Há parestesia no quarto/quinto dedos ou piora com flexão prolongada do cotovelo?','Há dor com valgo/arremesso que sugira ligamento colateral ulnar?'],objetivos:['Palpação/localização medial','Flexão de punho e pronação resistidas','Preensão e tolerância à carga','Diferenciar nervo ulnar e ligamento colateral ulnar'],reforca:['dor medial focal','carga flexor-pronadora'],enfraquece:['parestesia ulnar predominante','dor de valgo em arremesso']},
@@ -65,6 +66,7 @@
     cotovelo_ruptura_biceps_distal:{essencial:['Inspeção de equimose e contorno do bíceps','Força de supinação/flexão com cautela','Hook test quando apropriado','Tempo desde a lesão e encaminhamento ortopédico'],complementar:['Imagem quando a decisão médica depender de confirmação/extensão'],evitar:['Não reduzir ruptura aguda a "tendinite" quando houver estalo, equimose e perda objetiva de força']},
     cotovelo_cervical_neural:{essencial:['Movimentos cervicais e reprodução do sintoma familiar','Dermátomos, miótomos e reflexos quando indicado','Comparar cervical/neurodinâmica com provocação local do cotovelo'],complementar:['Spurling/distração e neurodinâmica conforme hipótese'],evitar:['Não atribuir sintomas distais/parestésicos a epicondilalgia apenas porque existe dor no cotovelo']},
     cotovelo_ombro_referida:{essencial:['Mapear início e trajeto da dor ombro–braço–cotovelo','ADM ativa/passiva do ombro','Carga/força do ombro reproduzindo ou não a dor familiar','Carga local do cotovelo/punho para comparação'],complementar:['Screening cervical/neural se o sintoma ultrapassar o cotovelo ou houver parestesia','Comparar comportamento com elevação do braço versus preensão/punho'],evitar:['Não confirmar bursite, manguito ou outra estrutura do ombro apenas pela irradiação; usar o padrão completo da história e exame']},
+    cotovelo_plri:{essencial:['História de luxação/trauma e sensação de falseio/apreensão','Carga axial em extensão com observação de instabilidade quando segura','Comparar com carga extensora focal e exame radiocapitellar/articular'],complementar:['Chair push-up/tabletop relocation','Pivot-shift posterolateral por examinador experiente quando apropriado','Imagem estática/dinâmica quando a decisão clínica exigir'],evitar:['Não provocar instabilidade vigorosamente em trauma agudo ou cotovelo ainda não esclarecido']},
     cotovelo_lateral:{essencial:['Localização lateral e origem extensora','Preensão sem dor/dinamometria comparativa quando disponível','Extensão de punho/dedos resistida e tolerância à carga','Screening cervical/neural e túnel radial conforme apresentação'],complementar:['Cozen, Mill ou Maudsley como testes de provocação dentro do conjunto clínico','PRTEE/DASH quando aplicável'],evitar:['Não usar Cozen, Mill, Maudsley ou palpação isoladamente como confirmação estrutural']},
     cotovelo_tunel_radial:{essencial:['Localização do sintoma distal ao epicôndilo lateral','Supinação resistida','Exame motor radial/PIN','Diferenciação de epicondilalgia lateral'],complementar:['Extensão resistida do terceiro dedo e neurodinâmica como dados complementares'],evitar:['Não interpretar um único teste provocativo como diagnóstico definitivo de túnel radial/PIN']},
     cotovelo_medial:{essencial:['Localização medial/origem flexor-pronadora','Flexão de punho resistida','Pronação resistida','Diferenciar nervo ulnar e UCL'],complementar:['Preensão/dinamometria e tolerância à carga funcional'],evitar:['Não usar dor à palpação ou um teste resistido isolado como confirmação de estrutura específica']},
@@ -81,13 +83,23 @@
     const t=norm(texto);const hits=contem(texto,cond.termos).slice(0,6);let score=Math.min(9,hits.length*1.35);
     const negado=(termo)=>new RegExp(`(?:(?:sem|nega|negou|nao tem|nao apresenta)\\s+(?:sinais?\\s+de\\s+)?|nem\\s+)${termo}`).test(t);
     const relacaoOmbro=/ombro.{0,70}(?:cotovelo|braco)|(?:cotovelo|braco).{0,70}ombro/.test(t);
-    const distal=/(?:passa|ultrapassa|vai|chega).{0,35}(?:cotovelo).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:ate).{0,20}(?:mao|dedo|polegar|indicador|anelar|mindinho)/.test(t);
+    const distal=/(?:passa|ultrapassa|vai|chega).{0,35}(?:cotovelo).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|\bate\b.{0,20}(?:mao|dedo|polegar|indicador|anelar|mindinho)/.test(t);
     const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,55}(?:mao|dedo|polegar|indicador|anelar|mindinho)|(?:mao|dedo|polegar|indicador|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)/.test(t);
     const cervicalLigada=/(?:pescoco|nuca|cervic).{0,90}(?:braco|cotovelo|mao|dedo)|(?:mexer|virar|olhar).{0,35}(?:pescoco|cima).{0,90}(?:dor|braco|cotovelo|mao)/.test(t);
-    const lateralAnatomica=/(?:lateral|lado de fora|epicondilo lateral).{0,28}cotovelo|cotovelo.{0,28}(?:lateral|lado de fora|epicondilo lateral)/.test(t);
-    const cargaExtensoraLocal=/(?:cotovelo).{0,65}(?:apert|preens|estend.{0,12}punho)|(?:apert|preens|estend.{0,12}punho).{0,65}cotovelo/.test(t);
-    const localLateral=lateralAnatomica||cargaExtensoraLocal;
-    const localMedial=/(?:medial|lado de dentro|epicondilo medial).{0,55}cotovelo|cotovelo.{0,55}(?:medial|lado de dentro)/.test(t);
+    const localizacaoIncerta=/(?:nao sei|nao sabe|nao consigo dizer).{0,45}(?:lado|dentro|fora|medial|lateral)|(?:dentro|fora|medial|lateral).{0,45}(?:nao sei|nao sabe)/.test(t);
+    const lateralAnatomica=!localizacaoIncerta&&(/\bepicondilo lateral\b|(?:lateral|lado de fora|epicondilo lateral).{0,28}cotovelo|cotovelo.{0,28}(?:lateral|lado de fora|epicondilo lateral)/.test(t));
+    const cargaExtensoraLocal=/(?:cotovelo).{0,65}(?:apert|preens|estend.{0,15}punho)|(?:apert|preens|estend.{0,15}punho).{0,65}cotovelo|(?:apert|preens|estend.{0,15}punho)/.test(t);
+    const cargaExtensoraNegada=/(?:apert|preens|estend.{0,15}punho).{0,32}(?:nao muda|nao piora|nao doi|quase nao|sem dor)|(?:nao muda|nao piora|nao doi|quase nao|sem dor).{0,32}(?:apert|preens|estend.{0,15}punho)/.test(t);
+    const cargaExtensoraPositiva=cargaExtensoraLocal&&!cargaExtensoraNegada;
+    const localLateral=lateralAnatomica;
+    const localMedial=!localizacaoIncerta&&(/\bepicondilo medial\b|(?:medial|lado de dentro|parte de dentro|epicondilo medial).{0,55}cotovelo|cotovelo.{0,55}(?:medial|lado de dentro|parte de dentro)/.test(t));
+    const cargaFlexorPronadoraBruta=/(?:flexion|flexao|flexionar).{0,20}punho|pron(?:ar|acao)|punho.{0,20}(?:flexion|flexao)/.test(t);
+    const cargaFlexorPronadoraNegada=/(?:flexion|flexao|flexionar|pron(?:ar|acao)).{0,35}(?:nao muda|nao piora|nao doi|sem dor)|(?:nao muda|nao piora|nao doi|sem dor).{0,35}(?:flexion|flexao|flexionar|pron(?:ar|acao))/.test(t);
+    const cargaFlexorPronadora=cargaFlexorPronadoraBruta&&!cargaFlexorPronadoraNegada;
+    const rotuloTendineoIsolado=/(?:disseram|medico|doutor|laudo).{0,50}(?:epicondilit|tendinit|cotovelo de tenista|cotovelo de golfista)/.test(t)&&/(?:so sei|nao sei onde|nao sei dizer|nao sabe dizer)/.test(t);
+    const padraoRadialDistal=/(?:mais para baixo|abaixo|distal|antebraco).{0,65}(?:epicond|cotovelo|lateral)|(?:lateral).{0,65}(?:antebraco|abaixo|distal)/.test(t);
+    const padraoPLRI=/(?:falseio|cede|cedendo|insegur|instavel|clunk).{0,90}(?:cotovelo|apoi|cadeira|empurr)|(?:cotovelo|apoi|cadeira|empurr).{0,90}(?:falseio|cede|insegur|instavel|clunk)/.test(t);
+    const historiaPLRI=/(?:lux|desloc|trauma|queda).{0,130}(?:falseio|cede|insegur|instavel|clunk)|(?:falseio|cede|insegur|instavel|clunk).{0,130}(?:lux|desloc|trauma|queda)/.test(t);
     const digitosUlnares=/(?:quarto|quinto|4o|5o|anelar|mindinho).{0,55}(?:formig|dormen|adormec|amortec|choque)|(?:formig|dormen|adormec|amortec|choque).{0,55}(?:quarto|quinto|4o|5o|anelar|mindinho)/.test(t);
     const flexaoApoio=/(?:dobrad|flex|apoi).{0,45}(?:cotovelo)|cotovelo.{0,45}(?:dobrad|flex|apoi)/.test(t);
     const traumaMecanismo=/\b(?:cai|caiu|cair|queda|trauma|impacto|acidente|luxacao)\b|\bpancad\w*|saiu do lugar|deform/.test(t);
@@ -116,9 +128,22 @@
       if(neuroDistal||distal)score+=3.2;
       if(cervicalLigada)score+=2.4;
     }
-    if(cond.id==='cotovelo_lateral'&&localLateral)score+=2.8;
-    if(cond.id==='cotovelo_lateral'&&relacaoOmbro&&/lateral do braco/.test(t)&&!cargaExtensoraLocal)score-=3.2;
-    if(cond.id==='cotovelo_medial'&&localMedial)score+=2.8;
+    if(cond.id==='cotovelo_plri'){if(padraoPLRI&&historiaPLRI){score+=5.8;hits.push('instabilidade dinâmica após trauma/luxação');}else if(padraoPLRI){score+=2.8;hits.push('falseio/clunk em carga');}}
+    if(cond.id==='cotovelo_lateral'){
+      if(localLateral&&cargaExtensoraPositiva)score+=3.4;else if(localLateral)score+=0.7;
+      if((neuroDistal||cervicalLigada||articular)&&!cargaExtensoraPositiva)score-=3.2;
+      if(padraoRadialDistal&&cargaSupinacao)score-=3.2;
+      if(rotuloTendineoIsolado)score=-5;
+    }
+    if(cond.id==='cotovelo_lateral'&&relacaoOmbro&&/lateral do braco/.test(t)&&!cargaExtensoraPositiva)score-=3.2;
+    if(cond.id==='cotovelo_medial'){
+      if(localMedial&&cargaFlexorPronadora)score+=3.4;
+      else if(localMedial&&digitosUlnares&&!cargaFlexorPronadoraNegada){score=Math.max(score,2.65);hits.push('dor medial focal coexistindo com sintomas ulnares');}
+      else if(localMedial)score+=0.7;
+      if(arremessoValgo&&!cargaFlexorPronadora)score-=3.2;
+      if(cargaFlexorPronadoraNegada)score-=3.5;
+      if(rotuloTendineoIsolado)score=-5;
+    }
     if(cond.id==='cotovelo_ulnar'){
       if(digitosUlnares)score+=3.4;
       if(digitosUlnares&&flexaoApoio)score+=1.2;
@@ -141,7 +166,8 @@
     if(cond.id==='cotovelo_olecrano'&&olecrano)score+=3.1;
     if(cond.id==='cotovelo_biceps_distal'&&bicepsLocal&&cargaSupinacao)score+=2.9;
     if(cond.id==='cotovelo_tunel_radial'&&/(?:mais para baixo|distal|antebraco).{0,60}(?:epicond|lateral)|(?:lateral).{0,60}antebraco/.test(t)&&cargaSupinacao)score+=3.2;
-    return {score:score+cond.ordem/1000,hits:uniq(hits).slice(0,6)};
+    const evidenciaForte=cond.id==='cotovelo_lateral'?(localLateral&&cargaExtensoraPositiva&&!rotuloTendineoIsolado):cond.id==='cotovelo_medial'?(localMedial&&(cargaFlexorPronadora||(digitosUlnares&&!cargaFlexorPronadoraNegada))&&!rotuloTendineoIsolado):true;
+    return {score:score+cond.ordem/1000,hits:uniq(hits).slice(0,6),evidenciaForte};
   }
   function itemBancoPorCondicao(cond){
     if(ITEM_BANCO_CACHE.has(cond.id))return ITEM_BANCO_CACHE.get(cond.id);
@@ -160,7 +186,7 @@
   function planoCotoveloEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
     const textoHma=norm(hmaTexto());const temCotovelo=arr(plano.regioes).some(r=>r.id==='cotovelo')||/cotovelo|epicond|olecran|fossa cubital|antebraco/.test(textoHma);if(!temCotovelo)return plano;
-    const c=contexto();const texto=textoContexto(c);const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);let fortes=avaliadas.filter(x=>x.hits.length||x.score>=2.5).slice(0,7);
+    const c=contexto();const texto=textoContexto(c);const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);let fortes=avaliadas.filter(x=>{if(x.cond.id==='cotovelo_lateral'||x.cond.id==='cotovelo_medial')return x.evidenciaForte&&x.score>=2.5;return x.hits.length||x.score>=2.5;}).slice(0,7);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x));const existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='cotovelo');const cotoveloBase=arr(plano.hipoteses).filter(h=>h.regiaoId==='cotovelo');const mapa=new Map();
     [...especialistas,...cotoveloBase].forEach(h=>{const k=norm(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
     const cotoveloFinal=Array.from(mapa.values()).sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0)).slice(0,7);plano.hipoteses=[...cotoveloFinal,...existentes].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));

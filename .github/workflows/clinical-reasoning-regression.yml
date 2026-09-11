@@ -12,6 +12,7 @@ on:
       - 'screen_loader-1.25.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
+      - 'tests/clinical_reasoning_upper_limb.adversarial.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   pull_request:
     branches: [main]
@@ -24,6 +25,7 @@ on:
       - 'screen_loader-1.25.0.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
       - 'tests/clinical_reasoning_wrist.regression.js'
+      - 'tests/clinical_reasoning_upper_limb.adversarial.js'
       - '.github/workflows/clinical-reasoning-regression.yml'
   workflow_dispatch:
 
@@ -46,6 +48,7 @@ jobs:
           node --check clinical_reasoning_wrist-3.1.0.js
           node --check tests/clinical_reasoning_shoulder_elbow.regression.js
           node --check tests/clinical_reasoning_wrist.regression.js
+          node --check tests/clinical_reasoning_upper_limb.adversarial.js
 
       - name: Run realistic shoulder and elbow HMA corpus
         run: node tests/clinical_reasoning_shoulder_elbow.regression.js
@@ -53,4 +56,7 @@ jobs:
       - name: Run realistic wrist and hand HMA corpus
         run: node tests/clinical_reasoning_wrist.regression.js
 
-# Permanent regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
+      - name: Run adversarial upper-limb audit corpus
+        run: node tests/clinical_reasoning_upper_limb.adversarial.js
+
+# Permanent 85-case regression gate for Motor Clínico 3.1 shoulder/elbow/wrist-hand changes.
