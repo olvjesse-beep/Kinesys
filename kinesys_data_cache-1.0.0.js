@@ -9,6 +9,11 @@
     const entradas=new Map();
     const emCurso=new Map();
     const metricas={hits:0,misses:0,deduplicados:0,gravacoes:0,invalidacoes:0,erros:0};
+    const metricasPorEscopo={
+        pacientes:{hits:0,misses:0,deduplicados:0},
+        agenda:{hits:0,misses:0,deduplicados:0},
+        procedimentos:{hits:0,misses:0,deduplicados:0}
+    };
 
     function chave(valor){
         if(Array.isArray(valor))return valor.map(v=>String(v??'').trim()).join('::');
@@ -16,6 +21,19 @@
     }
 
     function agora(){return Date.now();}
+
+    function escopoDaChave(k){
+        if(k.startsWith('pacientes::basicos::'))return 'pacientes';
+        if(k.startsWith('agenda::semana::'))return 'agenda';
+        if(k.startsWith('agenda::aux::procedimentos::'))return 'procedimentos';
+        return '';
+    }
+
+    function registrarLeitura(k,tipo){
+        metricas[tipo]++;
+        const escopo=escopoDaChave(k);
+        if(escopo)metricasPorEscopo[escopo][tipo]++;
+    }
 
     function lerEntrada(k){
         const entrada=entradas.get(k);
@@ -37,12 +55,12 @@
 
         if(!forcar){
             const entrada=lerEntrada(k);
-            if(entrada){metricas.hits++;return entrada.valor;}
+            if(entrada){registrarLeitura(k,'hits');return entrada.valor;}
             const pendente=emCurso.get(k);
-            if(pendente){metricas.deduplicados++;return pendente;}
+            if(pendente){registrarLeitura(k,'deduplicados');return pendente;}
         }
 
-        metricas.misses++;
+        registrarLeitura(k,'misses');
         const promessa=Promise.resolve()
             .then(()=>buscar())
             .then(valor=>{
@@ -99,8 +117,30 @@
         return total;
     }
 
+    function resumoEscopo(nome){
+        const atual=metricasPorEscopo[nome];
+        return Object.freeze({
+            hits:atual.hits,
+            misses:atual.misses,
+            deduplicados:atual.deduplicados,
+            leiturasEvitadasEstimadas:atual.hits+atual.deduplicados
+        });
+    }
+
     function stats(){
-        return Object.freeze({version:VERSION,entries:entradas.size,inflight:emCurso.size,...metricas});
+        const escopos=Object.freeze({
+            pacientes:resumoEscopo('pacientes'),
+            agenda:resumoEscopo('agenda'),
+            procedimentos:resumoEscopo('procedimentos')
+        });
+        return Object.freeze({
+            version:VERSION,
+            entries:entradas.size,
+            inflight:emCurso.size,
+            ...metricas,
+            leiturasEvitadasEstimadas:metricas.hits+metricas.deduplicados,
+            escopos
+        });
     }
 
     window.KineSysDataCache=Object.freeze({
