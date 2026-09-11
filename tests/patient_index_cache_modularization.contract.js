@@ -6,6 +6,7 @@ const html=fs.readFileSync('index.html','utf8');
 const core=fs.readFileSync('script-1.18.0.js','utf8');
 const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
 const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
+const deletion=fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
 
 assert.doesNotMatch(core,/async function obterPacientesBasicos\(\)/,'lightweight patient cache loader must leave the monolithic core');
 assert.doesNotMatch(core,/function chaveCachePacientesBasicos\(\)/,'patient cache key helper must leave the monolithic core');
@@ -40,8 +41,9 @@ assert.ok(cachePos>=0&&patientPos>cachePos&&corePos>patientPos,'Phase 4I load or
 const saveStart=core.indexOf('async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {})');
 assert.ok(saveStart>=0,'patient cloud save must remain in core');
 assert.match(core.slice(saveStart,saveStart+700),/invalidarCachePacientesBasicos\(\)/,'patient save must still invalidate the lightweight cache before mutation');
-const deleteStart=core.indexOf('async function excluirPaciente(id)');
-assert.ok(deleteStart>=0,'patient deletion must remain in core');
-assert.match(core.slice(deleteStart,deleteStart+700),/invalidarCachePacientesBasicos\(\)/,'patient deletion must still invalidate the lightweight cache');
+assert.doesNotMatch(core,/async function excluirPaciente\(id\)/,'patient deletion must leave the monolithic core after Phase 4M');
+const deleteStart=deletion.indexOf('async function excluirPaciente(id)');
+assert.ok(deleteStart>=0,'patient deletion must remain available in the dedicated Phase 4M module');
+assert.match(deletion.slice(deleteStart,deleteStart+900),/invalidarCachePacientesBasicos\(\)/,'patient deletion must still invalidate the lightweight cache');
 
-console.log('Core Modularization Phase 4I: lightweight patient index/cache contracts remain preserved after Phase 4J.');
+console.log('Core Modularization Phase 4I: lightweight patient index/cache contracts remain preserved after Phase 4M.');

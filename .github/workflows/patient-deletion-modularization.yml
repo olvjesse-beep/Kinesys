@@ -1,0 +1,41 @@
+name: Patient Deletion Modularization Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'patient_deletion_core-1.0.0.js'
+      - 'script-1.18.0.js'
+      - 'patient_index_cache_core-1.0.0.js'
+      - 'index.html'
+      - 'tests/patient_deletion_modularization.contract.js'
+      - 'tests/fisio_home_patient_self_service.contract.js'
+      - 'tests/patient_index_cache_modularization.contract.js'
+      - '.github/workflows/patient-deletion-modularization.yml'
+  pull_request:
+    paths:
+      - 'patient_deletion_core-1.0.0.js'
+      - 'script-1.18.0.js'
+      - 'patient_index_cache_core-1.0.0.js'
+      - 'index.html'
+      - 'tests/patient_deletion_modularization.contract.js'
+      - 'tests/fisio_home_patient_self_service.contract.js'
+      - 'tests/patient_index_cache_modularization.contract.js'
+      - '.github/workflows/patient-deletion-modularization.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax
+        run: |
+          node --check patient_deletion_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/patient_deletion_modularization.contract.js
+      - name: Patient deletion contracts
+        run: |
+          node tests/patient_deletion_modularization.contract.js
+          node tests/fisio_home_patient_self_service.contract.js
+          node tests/patient_index_cache_modularization.contract.js
