@@ -11,6 +11,7 @@ on:
       - 'financeiro-1.19.0.js'
       - 'tests/data_cache.contract.js'
       - 'tests/data_cache_integration.contract.js'
+      - 'tests/agenda_cache.contract.js'
       - 'tests/data_loading.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
@@ -24,6 +25,7 @@ on:
       - 'financeiro-1.19.0.js'
       - 'tests/data_cache.contract.js'
       - 'tests/data_cache_integration.contract.js'
+      - 'tests/agenda_cache.contract.js'
       - 'tests/data_loading.contract.js'
       - 'tests/operational_data_loading.contract.js'
       - '.github/workflows/data-loading-contract.yml'
@@ -34,7 +36,7 @@ permissions:
 
 jobs:
   contract:
-    name: On-demand patient data + cache contract
+    name: On-demand data + scoped cache contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -47,12 +49,15 @@ jobs:
           node --check financeiro-1.19.0.js
           node --check tests/data_cache.contract.js
           node --check tests/data_cache_integration.contract.js
+          node --check tests/agenda_cache.contract.js
           node --check tests/data_loading.contract.js
           node --check tests/operational_data_loading.contract.js
       - name: Data cache behavior contract
         run: node tests/data_cache.contract.js
       - name: Patient index cache integration contract
         run: node tests/data_cache_integration.contract.js
+      - name: Agenda week cache integration contract
+        run: node tests/agenda_cache.contract.js
       - name: Core patient data loading contract
         run: node tests/data_loading.contract.js
       - name: Operational patient data loading contract
