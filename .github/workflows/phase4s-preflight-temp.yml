@@ -1,4 +1,4 @@
-name: Phase 4S Preflight Temp
+name: Phase 4S Temporary Extraction
 
 on:
   push:
@@ -6,25 +6,94 @@ on:
       - performance/report-ui-helpers-phase4s
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  preflight:
+  extract-and-validate:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect report UI helper boundary
+      - name: Extract exact report UI helpers
         shell: bash
         run: |
           set -euo pipefail
-          for fn in montarDocumentoComTimbrado endpointGemini minutosEntreHoras atualizarDuracaoComparecimento formatarDataBR; do
-            echo "=== $fn ==="
-            grep -RFn --exclude-dir=.git --exclude='phase4s-preflight-temp.yml' "$fn" . || true
-          done
-          echo '=== candidate source window ==='
-          sed -n '970,1070p' script-1.18.0.js
-          sed -n '3530,3585p' script-1.18.0.js
-          echo '=== prohibited coupling inside exact candidate bodies (manual grep context) ==='
-          grep -nE '_supabase|\.rpc\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem' script-1.18.0.js | awk '$1+0>=970 && $1+0<=1070 || $1+0>=3530 && $1+0<=3585' || true
+          node <<'NODE'
+          const fs=require('fs');
+          const corePath='script-1.18.0.js';
+          const indexPath='index.html';
+          const modulePath='report_ui_helpers_core-1.0.0.js';
+          let core=fs.readFileSync(corePath,'utf8');
+          let index=fs.readFileSync(indexPath,'utf8');
+
+          const blocks=[
+`function montarDocumentoComTimbrado(htmlConteudo) {
+    const documento = document.getElementById('documento_impressao');
+    documento.innerHTML = \`
+        <div class="timbrado-fundo"></div>
+        <div class="timbrado-conteudo">\${htmlConteudo}</div>
+    \`;
+
+    const container = document.getElementById('preview_relatorio_container');
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}`,
+`function endpointGemini(modelo) {
+    return \`https://generativelanguage.googleapis.com/v1beta/models/\${encodeURIComponent(modelo)}:generateContent\`;
+}`,
+`function minutosEntreHoras(inicio,fim){if(!inicio||!fim)return null;const [hi,mi]=inicio.split(':').map(Number),[hf,mf]=fim.split(':').map(Number);const n=(hf*60+mf)-(hi*60+mi);return n>0?n:null;}`,
+`function atualizarDuracaoComparecimento(){const i=document.getElementById('rel_comp_entrada')?.value,f=document.getElementById('rel_comp_saida')?.value,el=document.getElementById('rel_comp_duracao');if(!el)return;const m=minutosEntreHoras(i,f);el.value=m==null?'':\`\${Math.floor(m/60)}h \${String(m%60).padStart(2,'0')}min\`;}`,
+`document.addEventListener('change',e=>{if(['rel_comp_entrada','rel_comp_saida'].includes(e.target?.id))atualizarDuracaoComparecimento();});`,
+`function formatarDataBR(v){if(!v)return'';if(/^\\d{4}-\\d{2}-\\d{2}$/.test(v)){const [a,m,d]=v.split('-');return \`\${d}/\${m}/\${a}\`;}return v;}`
+          ];
+
+          for(const block of blocks){
+            const count=core.split(block).length-1;
+            if(count!==1)throw new Error(`Bloco esperado exatamente uma vez; encontrado ${count}: ${block.slice(0,70)}`);
+            core=core.replace(block,'');
+          }
+
+          const module=`'use strict';\n\n/* Phase 4S — helpers de apresentação/formatação de documentos.\n * Sem persistência, Supabase, autorização ou regra clínica.\n */\n\n${blocks.join('\n\n')}\n`;
+          if(/_supabase|\\.rpc\\s*\\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem/.test(module)){
+            throw new Error('Acoplamento proibido detectado no módulo 4S');
+          }
+
+          const lines=index.split('\n');
+          const coreIdx=lines.findIndex(line=>line.includes('script-1.18.0.js'));
+          if(coreIdx<0)throw new Error('script-1.18.0.js não encontrado no index');
+          if(!index.includes('report_ui_helpers_core-1.0.0.js')){
+            const indent=(lines[coreIdx].match(/^\\s*/)||['    '])[0];
+            lines.splice(coreIdx,0,`${indent}<script defer src="report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1"></script>`);
+          }
+          index=lines.join('\n');
+          const matches=index.match(/core_mod=20260911-phase4[a-z]+-r\\d+/g)||[];
+          if(matches.length!==1)throw new Error(`Esperado 1 core_mod Phase 4; encontrado ${matches.length}`);
+          index=index.replace(/core_mod=20260911-phase4[a-z]+-r\\d+/,'core_mod=20260911-phase4s-r1');
+
+          fs.writeFileSync(corePath,core);
+          fs.writeFileSync(modulePath,module);
+          fs.writeFileSync(indexPath,index);
+          NODE
+      - name: Validate isolated extraction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check report_ui_helpers_core-1.0.0.js
           node --check script-1.18.0.js
-          wc -c script-1.18.0.js
+          test "$(grep -Ec '^function (montarDocumentoComTimbrado|endpointGemini|minutosEntreHoras|atualizarDuracaoComparecimento|formatarDataBR)\\(' report_ui_helpers_core-1.0.0.js)" -eq 5
+          ! grep -Eq '^function (montarDocumentoComTimbrado|endpointGemini|minutosEntreHoras|atualizarDuracaoComparecimento|formatarDataBR)\\(' script-1.18.0.js
+          ! grep -Eq '_supabase|\\.rpc\\s*\\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNuvem' report_ui_helpers_core-1.0.0.js
+          grep -Fq 'report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1' index.html
+          grep -Fq 'core_mod=20260911-phase4s-r1' index.html
+          git diff --check
+          wc -c report_ui_helpers_core-1.0.0.js script-1.18.0.js
+      - name: Commit generated Phase 4S runtime changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script-1.18.0.js report_ui_helpers_core-1.0.0.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Modularize report UI helpers'
+          git push origin HEAD:performance/report-ui-helpers-phase4s
