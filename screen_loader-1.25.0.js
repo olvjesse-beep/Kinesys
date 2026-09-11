@@ -5,7 +5,7 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.5-phase2a';
+    const VERSION='1.25.4-phase4d';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
