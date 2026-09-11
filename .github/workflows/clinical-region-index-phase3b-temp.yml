@@ -1,0 +1,46 @@
+name: Clinical Region Index Phase 3B Temp
+on:
+  push:
+    branches: [performance/clinical-region-index-phase3b]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-region-index-phase3b
+      - name: Generate index and patch
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const ctx={console};vm.createContext(ctx);
+          for(const f of ['database/mapeamento_clinico.js','database/condicoes_mobilidade_v23.js','database/diferenciais_neurais.js'])vm.runInContext(fs.readFileSync(f,'utf8'),ctx,{filename:f});
+          const idx=vm.runInContext("Object.fromEntries(Object.entries(BANCO_MAPEAMENTO_CLINICO).map(([id,r])=>[id,{nome:String(r?.nome||id),palavrasChave:Array.from(new Set((r?.palavrasChave||[]).filter(Boolean)))}]))",ctx);
+          fs.writeFileSync('database/mapeamento_regioes-1.0.0.js',"/* KineSys — índice leve de regiões clínicas 1.0.0. Gerado do banco vigente; nomes/IDs preservados. */\nconst BANCO_MAPEAMENTO_REGIOES = Object.freeze("+JSON.stringify(idx,null,2)+");\n");
+          function rep(path,from,to){let s=fs.readFileSync(path,'utf8');if(!s.includes(from))throw new Error('Missing block '+path);s=s.replace(from,to);fs.writeFileSync(path,s);}
+          rep('screen_loader-1.25.0.js',"                'database/irradiacao_clinica.js',\n                'database/mapeamento_clinico.js',","                'database/irradiacao_clinica.js',\n                'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',\n                'database/mapeamento_clinico.js',");
+          rep('clinical_reasoning_hma-3.0.0.js',"    function banco(){\n        try { return typeof BANCO_MAPEAMENTO_CLINICO!=='undefined' ? BANCO_MAPEAMENTO_CLINICO : {}; }\n        catch(_) { return {}; }\n    }","    function banco(){\n        try { return typeof BANCO_MAPEAMENTO_CLINICO!=='undefined' ? BANCO_MAPEAMENTO_CLINICO : {}; }\n        catch(_) { return {}; }\n    }\n    function indiceRegioes(){\n        try { return typeof BANCO_MAPEAMENTO_REGIOES!=='undefined' ? BANCO_MAPEAMENTO_REGIOES : banco(); }\n        catch(_) { return banco(); }\n    }");
+          rep('clinical_reasoning_hma-3.0.0.js',"    function inferirRegioes(hmaResultado,contexto){\n        const B=banco(); const selecionadas=regioesSelecionadasAtual();","    function inferirRegioes(hmaResultado,contexto){\n        const B=indiceRegioes(); const selecionadas=regioesSelecionadasAtual();");
+          NODE
+      - name: Validate
+        run: |
+          node --check database/mapeamento_regioes-1.0.0.js
+          node --check clinical_reasoning_hma-3.0.0.js
+          node --check screen_loader-1.25.0.js
+          node --check tests/clinical_region_index.contract.js
+          node tests/clinical_region_index.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
+      - name: Commit final state
+        shell: bash
+        run: |
+          rm -f .github/workflows/clinical-region-index-phase3b-temp.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add database/mapeamento_regioes-1.0.0.js clinical_reasoning_hma-3.0.0.js screen_loader-1.25.0.js tests/clinical_region_index.contract.js .github/workflows/clinical-region-index-phase3b-temp.yml
+          git commit -m 'Performance — Clinical Region Index Phase 3B'
+          git push origin HEAD:performance/clinical-region-index-phase3b
