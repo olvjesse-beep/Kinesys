@@ -1,0 +1,36 @@
+name: Modularization Phase 4K Audit Temp
+
+on:
+  push:
+    branches: [performance/modularization-phase4k]
+    paths:
+      - '.github/workflows/modularization-phase4k-audit-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit low-risk core candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== CORE SIZE / HEADERS ==='
+          wc -l -c script-1.18.0.js
+          grep -nE '^/\*.*={5,}|^// ={5,}' script-1.18.0.js | head -n 90 || true
+          echo '=== SECTION 3 FUNCTIONS (age/filter) ==='
+          sed -n '454,695p' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
+          echo '=== SECTION 9 FUNCTIONS (patient form) ==='
+          awk '/\/\* ================= 9\. CADASTRO/{f=1} /\/\* ================= 10\. AVALIAÇÃO/{f=0} f' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
+          echo '=== SECTION 11 FUNCTIONS (records/search) ==='
+          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
+          echo '=== SECTION 11 FULL ==='
+          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js | head -n 340
+          echo '=== SECTION 11 DEPENDENCY COUNTS ==='
+          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js > /tmp/sec11.js
+          for p in _supabase usuarioLogado usuarioEhMaster obterPacientesBasicos obterPacienteCompletoPorId salvarPacienteNaNuvem navegarPara escapeHTML localStorage KineSysDataCache; do printf '%s: ' "$p"; grep -o "$p" /tmp/sec11.js | wc -l; done
+          echo '=== EXTERNAL REFERENCES TO SECTION 11 CANDIDATES ==='
+          grep -RInE 'renderizarPacientesRecentesHome|editarCadastro|renderizarListaProntuarios|excluirPaciente|atualizarSelectsPacientes' --include='*.js' --include='*.html' . | grep -v '^./.git/' || true
