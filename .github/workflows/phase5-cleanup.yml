@@ -1,0 +1,31 @@
+name: Phase 5 Cleanup Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'KineSys_v1.15.0_DEPLOY_APP.zip'
+      - 'agenda-audit__agenda-1.20.0.js'
+      - 'tests/phase5_cleanup.contract.js'
+      - '.github/workflows/phase5-cleanup.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'KineSys_v1.15.0_DEPLOY_APP.zip'
+      - 'agenda-audit__agenda-1.20.0.js'
+      - 'tests/phase5_cleanup.contract.js'
+      - '.github/workflows/phase5-cleanup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cleanup contract syntax
+        run: node --check tests/phase5_cleanup.contract.js
+      - name: Phase 5 cleanup contract
+        run: node tests/phase5_cleanup.contract.js
