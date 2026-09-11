@@ -1,0 +1,34 @@
+name: Operational Resume Refresh Temp
+
+on:
+  push:
+    branches: [performance/operational-resume-refresh]
+    paths:
+      - 'tools/operational_resume_refresh_temp.py'
+      - '.github/workflows/operational-resume-refresh-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/operational-resume-refresh
+      - name: Apply index patch
+        run: python tools/operational_resume_refresh_temp.py
+      - name: Validate
+        run: |
+          node --check operational_resume_refresh-1.0.0.js
+          node --check tests/operational_resume_refresh.contract.js
+          node tests/operational_resume_refresh.contract.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Load operational resume refresh controller" || exit 0
+          git push origin HEAD:performance/operational-resume-refresh
