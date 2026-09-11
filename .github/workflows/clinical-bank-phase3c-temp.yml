@@ -1,0 +1,40 @@
+name: Clinical Bank Phase 3C Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-bank-lazy-phase3c
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-bank-lazy-phase3c
+      - name: Patch contract
+        run: node .github/phase3c_patch.js
+      - name: Validate
+        run: |
+          node --check screen_loader-1.25.0.js
+          node --check clinical_region_loader-1.0.0.js
+          node --check tests/screen_loader.contract.js
+          node --check tests/clinical_region_loader.contract.js
+          node --check tests/clinical_region_index.contract.js
+          node --check tests/clinical_bank_lazy.contract.js
+          node tests/screen_loader.contract.js
+          node tests/clinical_region_loader.contract.js
+          node tests/clinical_region_index.contract.js
+          node tests/clinical_bank_lazy.contract.js
+          git diff --check
+      - name: Commit patched contract
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/screen_loader.contract.js
+          git commit -m 'test: adapt Screen Loader contract for Phase 3C'
+          git push origin HEAD:performance/clinical-bank-lazy-phase3c
