@@ -69,7 +69,7 @@
                 'agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1'
             ]),
             scripts:Object.freeze([
-                'agenda-1.20.0.js?v=20260911-agenda-edit-r2&compact_time=20260910-r2&data_cache=20260911-r2',
+                'agenda-1.20.0.js?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
                 'agenda_lifecycle-1.0.0.js?v=20260911-phase2a-r1'
             ])
         })
