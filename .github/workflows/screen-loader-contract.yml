@@ -29,6 +29,7 @@ on:
       - 'tests/screen_loader.contract.js'
       - 'tests/clinical_region_loader.contract.js'
       - 'tests/clinical_region_index.contract.js'
+      - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -66,6 +67,7 @@ on:
       - 'tests/screen_loader.contract.js'
       - 'tests/clinical_region_loader.contract.js'
       - 'tests/clinical_region_index.contract.js'
+      - 'tests/clinical_bank_lazy.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -109,6 +111,7 @@ jobs:
           node --check database/diferenciais_neurais.js
           node --check tests/clinical_region_loader.contract.js
           node --check tests/clinical_region_index.contract.js
+          node --check tests/clinical_bank_lazy.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -122,6 +125,8 @@ jobs:
         run: node tests/clinical_region_loader.contract.js
       - name: Clinical region index contract
         run: node tests/clinical_region_index.contract.js
+      - name: Clinical bank lazy loading contract
+        run: node tests/clinical_bank_lazy.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
