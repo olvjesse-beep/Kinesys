@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
 
+# rerun-2: memory-only assertion now checks executable source without a misleading comment token
 jobs:
   integrate:
     runs-on: ubuntu-latest
