@@ -16,20 +16,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: performance/clinical-bank-base-regional-phase3e
-      - name: Audit direct bank references
-        run: |
-          grep -RIn --exclude='mapeamento_clinico.js' --exclude-dir='.git' 'BANCO_MAPEAMENTO_CLINICO' . || true
       - name: Generate regional base banks
         run: node .github/phase3e_generate.js
-      - name: Syntax generated banks
+      - name: Apply integration patch
+        run: node .github/phase3e_patch.js
+      - name: Validate patched sources
         run: |
           node --check database/mapeamento_clinico_core-1.0.0.js
           for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
+          node --check clinical_region_loader-1.0.0.js
+          node --check screen_loader-1.25.0.js
+          node --check script-1.18.0.js
+          node --check tests/screen_loader.contract.js
+          node tests/screen_loader.contract.js
           git diff --check
-      - name: Commit generated banks
+      - name: Commit Phase 3E generated and patched files
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add database/regioes database/mapeamento_clinico_core-1.0.0.js
-          git commit -m 'feat: generate regional clinical base banks'
+          git add database/regioes database/mapeamento_clinico_core-1.0.0.js screen_loader-1.25.0.js script-1.18.0.js tests/screen_loader.contract.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'perf: integrate regional clinical base banks'
           git push origin HEAD:performance/clinical-bank-base-regional-phase3e
