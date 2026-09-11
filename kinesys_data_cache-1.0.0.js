@@ -1,6 +1,6 @@
 /* KineSys — Data Cache 1.0.0
  * Cache em memória da sessão para dados operacionais leves.
- * Não persiste prontuário nem dados clínicos em localStorage/sessionStorage.
+ * Não persiste prontuário nem dados clínicos fora da memória da página.
  */
 (function instalarKineSysDataCache(){
     'use strict';
