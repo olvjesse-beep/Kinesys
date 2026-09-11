@@ -5,6 +5,7 @@ on:
     branches: ['audit/clinical-upper-limb-hardening']
     paths:
       - 'tools/apply_upper_limb_hardening.js'
+      - 'tools/adjust_upper_limb_hardening.js'
       - '.github/workflows/apply-upper-limb-hardening.yml'
 
 permissions:
@@ -22,7 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply exact hardening patch
-        run: node tools/apply_upper_limb_hardening.js
+        run: |
+          node tools/apply_upper_limb_hardening.js
+          node tools/adjust_upper_limb_hardening.js
 
       - name: JavaScript syntax
         run: |
