@@ -1,0 +1,30 @@
+name: Lifecycle Phase 2G Audit Temp
+
+on:
+  push:
+    branches:
+      - performance/lifecycle-phase2g
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory lifecycle work
+        shell: bash
+        run: |
+          echo '=== setInterval ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'setInterval(' . || true
+          echo '=== MutationObserver ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'MutationObserver' . || true
+          echo '=== ResizeObserver ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'ResizeObserver' . || true
+          echo '=== IntersectionObserver ==='
+          grep -RIn --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'IntersectionObserver' . || true
+          echo '=== Supabase channels/subscriptions ==='
+          grep -RInE --include='*.js' --exclude-dir=node_modules --exclude-dir=.git '\.channel\(|\.subscribe\(|removeChannel|removeSubscription' . || true
+          echo '=== recurring setTimeout patterns ==='
+          grep -RInE --include='*.js' --exclude-dir=node_modules --exclude-dir=.git 'setTimeout\([^,]+,[[:space:]]*[0-9]+' . || true
