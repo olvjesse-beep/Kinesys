@@ -1,0 +1,115 @@
+name: Core Modularization Phase 4E Patch Temp
+
+on:
+  push:
+    branches:
+      - performance/core-modularization-phase4e
+    paths:
+      - .github/workflows/core-phase4e-patch-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/core-modularization-phase4e
+      - name: Extract registration validation core
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          core_path=Path('script-1.18.0.js')
+          core=core_path.read_text(encoding='utf-8')
+          start='function somenteDigitos(valor) {'
+          end='async function salvarCadastroSomente(redirecionar = true) {'
+          if core.count(start)!=1 or core.count(end)!=1:
+              raise SystemExit(f'fronteiras inesperadas: start={core.count(start)} end={core.count(end)}')
+          a=core.index(start); b=core.index(end,a)
+          block=core[a:b]
+          insertion="""\nfunction definirUltimoCEPPesquisadoKineSys(valor = '') {\n    ultimoCEPPesquisado = somenteDigitos(valor);\n}\n"""
+          anchor="let ultimoCEPPesquisado = '';\n"
+          if block.count(anchor)!=1:
+              raise SystemExit('estado ultimoCEPPesquisado inesperado')
+          block=block.replace(anchor,anchor+insertion,1)
+          header="/* KineSys — Cadastro Validations Core 1.0.0\n * Extraído de script-1.18.0.js preservando nomes, validações e fluxo de CEP.\n */\n'use strict';\n\n"
+          Path('cadastro_validacoes_core-1.0.0.js').write_text(header+block,encoding='utf-8')
+          core=core[:a]+core[b:]
+          old1="definirStatusCEP('', '');\n            ultimoCEPPesquisado = '';"
+          new1="definirStatusCEP('', '');\n            definirUltimoCEPPesquisadoKineSys('');"
+          old2="definirStatusCEP('', '');\n    ultimoCEPPesquisado = somenteDigitos(p.cep || '');"
+          new2="definirStatusCEP('', '');\n    definirUltimoCEPPesquisadoKineSys(p.cep || '');"
+          if core.count(old1)!=1 or core.count(old2)!=1:
+              raise SystemExit(f'call sites inesperados: reset={core.count(old1)} edit={core.count(old2)}')
+          core=core.replace(old1,new1,1).replace(old2,new2,1)
+          core_path.write_text(core,encoding='utf-8')
+
+          index=Path('index.html')
+          html=index.read_text(encoding='utf-8')
+          old='''    <script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>\n    <script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>'''
+          new='''    <script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>\n    <script defer src="cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>\n    <script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>'''
+          if html.count(old)!=1: raise SystemExit('ordem eager esperada não encontrada')
+          index.write_text(html.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Add permanent modularization contract
+        run: |
+          cat > tests/cadastro_validacoes_modularization.contract.js <<'EOF'
+          'use strict';
+          const fs=require('fs');
+          const assert=require('assert');
+
+          const core=fs.readFileSync('script-1.18.0.js','utf8');
+          const cadastro=fs.readFileSync('cadastro_validacoes_core-1.0.0.js','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+
+          assert(!core.includes('VALIDAÇÕES CADASTRAIS — v1.8.2'), 'Validações cadastrais ainda estão embutidas no monólito');
+          assert(!core.includes('CEP INTELIGENTE (v1.8.2)'), 'CEP inteligente ainda está embutido no monólito');
+          assert(cadastro.includes('VALIDAÇÕES CADASTRAIS — v1.8.2'), 'Módulo perdeu validações cadastrais');
+          assert(cadastro.includes('CEP INTELIGENTE (v1.8.2)'), 'Módulo perdeu CEP inteligente');
+
+          for(const fn of ['somenteDigitos','formatarCPF','formatarCEP','formatarTelefoneBR','cpfValido','cepValido','telefoneBRValido','definirEstadoCampo','limparEstadoCampo','validarCPFInput','validarCEPInput','definirStatusCEP','consultarCEPAutomaticamente','buscarCEPPeloBotao','validarTelefoneInput','alternarCamposResponsavel','validarResponsavelCadastro','configurarValidacoesCadastrais']) {
+            assert(cadastro.includes(`function ${fn}(`) || cadastro.includes(`async function ${fn}(`), `Módulo perdeu ${fn}`);
+          }
+          assert(cadastro.includes("const cacheCEP = new Map();"), 'cache CEP deve permanecer encapsulado no módulo');
+          assert(cadastro.includes('let consultaCEPController = null;'), 'AbortController do CEP deve permanecer encapsulado no módulo');
+          assert(cadastro.includes("let ultimoCEPPesquisado = '';"), 'estado do último CEP deve permanecer encapsulado no módulo');
+          assert(!/\b(?:cacheCEP|consultaCEPController|ultimoCEPPesquisado)\b/.test(core), 'Estado interno do CEP não pode vazar para o core');
+          assert(cadastro.includes("function definirUltimoCEPPesquisadoKineSys(valor = '')"), 'Módulo deve expor sincronização mínima do último CEP');
+          assert(core.includes("definirUltimoCEPPesquisadoKineSys('');"), 'limpeza pós-salvamento deve preservar reset do último CEP');
+          assert(core.includes("definirUltimoCEPPesquisadoKineSys(p.cep || '');"), 'edição deve preservar sincronização do CEP carregado');
+          assert(cadastro.includes("document.addEventListener('DOMContentLoaded', configurarValidacoesCadastrais);"), 'bootstrap das validações deve permanecer registrado');
+
+          const cadastroTag='<script defer src="cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>';
+          const escapeTag='<script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
+          const mediaTag='<script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+          const coreNeedle='<script defer src="script-1.18.0.js';
+          assert(html.includes(cadastroTag), 'index.html não carrega cadastro_validacoes_core');
+          assert(html.indexOf(escapeTag)<html.indexOf(cadastroTag), 'HTML escape deve carregar antes das validações cadastrais');
+          assert(html.indexOf(cadastroTag)<html.indexOf(mediaTag), 'validações cadastrais devem manter ordem eager determinística antes de Mídias');
+          assert(html.indexOf(cadastroTag)<html.indexOf(coreNeedle), 'validações cadastrais devem carregar antes do core consumidor');
+
+          console.log('Cadastro validations modularization contract Phase 4E: OK');
+          EOF
+      - name: Validate Phase 4E extraction
+        run: |
+          set -euo pipefail
+          node --check cadastro_validacoes_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/cadastro_validacoes_modularization.contract.js
+          node tests/cadastro_validacoes_modularization.contract.js
+          node tests/midias_core_modularization.contract.js
+          node tests/html_escape_modularization.contract.js
+          node tests/operation_guard_modularization.contract.js
+          node tests/menu_dropdown_modularization.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          git diff --check
+      - name: Commit Phase 4E source changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add script-1.18.0.js index.html cadastro_validacoes_core-1.0.0.js tests/cadastro_validacoes_modularization.contract.js
+          git commit -m "Extract registration validation core for Phase 4E" || exit 0
+          git push origin HEAD:performance/core-modularization-phase4e
