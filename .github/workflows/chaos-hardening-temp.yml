@@ -7,6 +7,7 @@ on:
     paths:
       - 'tools/chaos_hardening_patch.py'
       - 'tools/chaos_hardening_patch_v2.py'
+      - 'tools/chaos_hardening_patch_v3.py'
       - '.github/workflows/chaos-hardening-temp.yml'
   workflow_dispatch:
 
@@ -25,7 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply targeted hardening patch
-        run: python3 tools/chaos_hardening_patch_v2.py
+        run: python3 tools/chaos_hardening_patch_v3.py
 
       - name: JavaScript syntax
         run: |
