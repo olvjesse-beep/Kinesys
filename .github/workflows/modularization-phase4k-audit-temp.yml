@@ -14,23 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Audit low-risk core candidates
+      - name: Audit pre-registration module candidate
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== CORE SIZE / HEADERS ==='
-          wc -l -c script-1.18.0.js
-          grep -nE '^/\*.*={5,}|^// ={5,}' script-1.18.0.js | head -n 90 || true
-          echo '=== SECTION 3 FUNCTIONS (age/filter) ==='
-          sed -n '454,695p' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
-          echo '=== SECTION 9 FUNCTIONS (patient form) ==='
-          awk '/\/\* ================= 9\. CADASTRO/{f=1} /\/\* ================= 10\. AVALIAÇÃO/{f=0} f' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
-          echo '=== SECTION 11 FUNCTIONS (records/search) ==='
-          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js | grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(async\s*)?\(' || true
-          echo '=== SECTION 11 FULL ==='
-          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js | head -n 340
-          echo '=== SECTION 11 DEPENDENCY COUNTS ==='
-          awk '/\/\* ================= 11\. PRONTUÁRIOS E BUSCA/{f=1} /\/\* ================= 12\. EVOLUÇÕES E RELATÓRIOS/{f=0} f' script-1.18.0.js > /tmp/sec11.js
-          for p in _supabase usuarioLogado usuarioEhMaster obterPacientesBasicos obterPacienteCompletoPorId salvarPacienteNaNuvem navegarPara escapeHTML localStorage KineSysDataCache; do printf '%s: ' "$p"; grep -o "$p" /tmp/sec11.js | wc -l; done
-          echo '=== EXTERNAL REFERENCES TO SECTION 11 CANDIDATES ==='
-          grep -RInE 'renderizarPacientesRecentesHome|editarCadastro|renderizarListaProntuarios|excluirPaciente|atualizarSelectsPacientes' --include='*.js' --include='*.html' . | grep -v '^./.git/' || true
+          awk '/\/\* ================= 3\. IDADE E FILTRO DE 2 HORAS/{f=1} /\/\* ==========================================================================/&&f{f=0} f' script-1.18.0.js > /tmp/sec3.js
+          echo '=== SECTION 3 SIZE / FUNCTIONS ==='
+          wc -l -c /tmp/sec3.js
+          grep -nE '^(async )?function |^(const|let|var) [A-Za-z_$][A-Za-z0-9_$]*\s*=' /tmp/sec3.js || true
+          echo '=== SECTION 3 DEPENDENCIES ==='
+          for p in _supabase usuarioLogado usuarioEhMaster obterPacientesSalvos obterPacienteCompletoPorId idadeNumericaPaciente pacienteAtualId cargasPacienteAvaliacaoKineSys processarRadarEmTempoReal escapeHTML localStorage alternarCamposResponsavel; do count=$(grep -o "$p" /tmp/sec3.js 2>/dev/null | wc -l || true); echo "$p: $count"; done
+          echo '=== REFERENCES IN CURRENT PRODUCTION FILES ==='
+          grep -RInE 'calcularIdadeCadastro|removerAcentos|obterTextoExibicao|alternarFiltroPreCadastro|fecharBuscaPacientesPreCadastro|sincronizarBuscaPacientePreCadastro|selecionarPacienteBuscaPreCadastro|filtrarPacientesPreCadastro|navegarBuscaPacientesPreCadastro|atualizarSelectPacientesPreCadastro|carregarPacientePreCadastradoNaAvaliacao|exibindoTodosPreCadastros' --include='*.js' --include='*.html' . | grep -v '^./.git/' | grep -v '^./script-1.17' | grep -v '^./script.js:' | grep -v '^./supabase/' || true
+          echo '=== TOP-LEVEL CALLS / DOM READY CONTEXT ==='
+          grep -n -B4 -A5 -E 'atualizarSelectPacientesPreCadastro\(|carregarPacientePreCadastradoNaAvaliacao\(|filtrarPacientesPreCadastro\(|calcularIdadeCadastro\(' script-1.18.0.js | head -n 260 || true
+          echo '=== INDEX INLINE HANDLERS ==='
+          grep -nE 'calcularIdadeCadastro|alternarFiltroPreCadastro|filtrarPacientesPreCadastro|navegarBuscaPacientesPreCadastro|carregarPacientePreCadastradoNaAvaliacao|sincronizarBuscaPacientePreCadastro' index.html || true
