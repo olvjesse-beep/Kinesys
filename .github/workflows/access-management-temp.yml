@@ -1,0 +1,35 @@
+name: Access Management Temp
+
+on:
+  push:
+    branches: [security/access-management-recovery]
+    paths:
+      - 'tools/access_management_temp.py'
+      - '.github/workflows/access-management-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/access-management-recovery
+      - name: Patch index
+        run: python tools/access_management_temp.py
+      - name: Validate
+        run: |
+          node --check login_access-1.18.0.js
+          node --check access_admin-1.0.0.js
+          node --check tests/access_management.contract.js
+          node tests/access_management.contract.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Load access management module" || exit 0
+          git push origin HEAD:security/access-management-recovery
