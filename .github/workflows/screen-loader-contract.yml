@@ -11,6 +11,7 @@ on:
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
       - 'html_escape-1.0.0.js'
+      - 'midias_core-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -43,6 +44,7 @@ on:
       - 'tests/html_escape_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
+      - 'tests/midias_core_modularization.contract.js'
       - 'tests/radar_lifecycle.contract.js'
       - 'tests/design_system_lifecycle.contract.js'
       - 'tests/home_lifecycle.contract.js'
@@ -60,6 +62,7 @@ on:
       - 'menu_dropdown-1.0.0.js'
       - 'operation_guard-1.0.0.js'
       - 'html_escape-1.0.0.js'
+      - 'midias_core-1.0.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
       - 'evaluation_context_panels-1.18.3.js'
@@ -92,6 +95,7 @@ on:
       - 'tests/html_escape_modularization.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
+      - 'tests/midias_core_modularization.contract.js'
       - 'tests/radar_lifecycle.contract.js'
       - 'tests/design_system_lifecycle.contract.js'
       - 'tests/home_lifecycle.contract.js'
@@ -119,6 +123,7 @@ jobs:
           node --check menu_dropdown-1.0.0.js
           node --check operation_guard-1.0.0.js
           node --check html_escape-1.0.0.js
+          node --check midias_core-1.0.0.js
           node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
           node --check evaluation_context_panels-1.18.3.js
@@ -148,6 +153,7 @@ jobs:
           node --check tests/html_escape_modularization.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
+          node --check tests/midias_core_modularization.contract.js
           node --check tests/radar_lifecycle.contract.js
           node --check tests/design_system_lifecycle.contract.js
           node --check tests/home_lifecycle.contract.js
@@ -177,6 +183,8 @@ jobs:
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract
         run: node tests/midias_lifecycle.contract.js
+      - name: Media core modularization contract
+        run: node tests/midias_core_modularization.contract.js
       - name: Radar lifecycle contract
         run: node tests/radar_lifecycle.contract.js
       - name: Design System lifecycle contract
