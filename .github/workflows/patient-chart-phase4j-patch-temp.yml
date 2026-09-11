@@ -1,0 +1,52 @@
+name: Patient Chart Phase 4J Patch Temp
+
+on:
+  push:
+    branches: [performance/patient-chart-read-phase4j]
+    paths:
+      - 'tools/patient_chart_phase4j_patch.py'
+      - '.github/workflows/patient-chart-phase4j-patch-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/patient-chart-read-phase4j
+      - name: Extract patient chart read layer
+        run: python tools/patient_chart_phase4j_patch.py
+      - name: Validate Phase 4J extraction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check patient_index_cache_core-1.0.0.js
+          node --check patient_chart_read_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/patient_chart_read_modularization.contract.js
+          node --check tests/patient_index_cache_modularization.contract.js
+          node --check tests/data_cache_integration.contract.js
+          node --check tests/data_loading.contract.js
+          node tests/data_cache.contract.js
+          node tests/patient_chart_read_modularization.contract.js
+          node tests/patient_index_cache_modularization.contract.js
+          node tests/data_cache_integration.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/screen_loader.contract.js
+          git diff --check
+          echo '=== CACHE-BUST EXPECTATIONS ==='
+          grep -RIn 'core_mod=20260911-phase4i-r1' tests .github/workflows --exclude='patient-chart-phase4j-patch-temp.yml' || true
+          echo '=== SIZE AFTER EXTRACTION ==='
+          wc -l -c script-1.18.0.js patient_chart_read_core-1.0.0.js patient_index_cache_core-1.0.0.js
+      - name: Commit extraction
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add script-1.18.0.js index.html
+          git commit -m "Extract patient chart read layer from monolithic core" || exit 0
+          git push origin HEAD:performance/patient-chart-read-phase4j
