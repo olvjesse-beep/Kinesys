@@ -3,19 +3,6 @@ if (typeof dicionarioOcupacoesEsportes === 'undefined') {
 }
 
 /* ==========================================================================
-   FUNÇÃO DE SEGURANÇA: ESCAPE DE HTML (PROTEÇÃO CONTRA XSS)
-   ========================================================================== */
-function escapeHTML(valor) {
-    if (valor === null || valor === undefined) return "";
-    return String(valor)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-/* ==========================================================================
    KINESYS - SCRIPT DEFINITIVO (ID ÚNICO E SEM DUPLICATAS) - PARTE 1 DE 4
    Auth, SPA, Filtro de Pré-Cadastro e Utilitários
    ========================================================================== */
