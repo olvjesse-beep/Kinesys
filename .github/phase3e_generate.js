@@ -3,10 +3,15 @@ const fs=require('fs');
 const vm=require('vm');
 const path=require('path');
 
-const context={console};
-vm.createContext(context);
-vm.runInContext(fs.readFileSync('database/mapeamento_clinico.js','utf8'),context,{filename:'database/mapeamento_clinico.js',timeout:5000});
-const banco=JSON.parse(JSON.stringify(vm.runInContext('BANCO_MAPEAMENTO_CLINICO',context)));
+function run(file,expr){
+  const context={console};
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file,timeout:5000});
+  return JSON.parse(JSON.stringify(vm.runInContext(expr,context)));
+}
+
+const banco=run('database/mapeamento_clinico.js','BANCO_MAPEAMENTO_CLINICO');
+const indice=run('database/mapeamento_regioes-1.0.0.js','BANCO_MAPEAMENTO_REGIOES');
 const outDir='database/regioes';
 fs.mkdirSync(outDir,{recursive:true});
 for(const name of fs.readdirSync(outDir)){
@@ -20,4 +25,17 @@ for(const [id,reg] of Object.entries(banco)){
   manifest[id]={file,bytes:Buffer.byteLength(source)};
 }
 fs.writeFileSync('database/regioes/base-manifest-1.0.0.json',JSON.stringify(manifest,null,2)+'\n');
-console.log(JSON.stringify({sourceBytes:fs.statSync('database/mapeamento_clinico.js').size,regions:manifest},null,2));
+
+const coreEntries={};
+for(const [id,meta] of Object.entries(indice)){
+  coreEntries[id]={
+    nome:String(meta?.nome||id),
+    palavrasChave:Array.isArray(meta?.palavrasChave)?meta.palavrasChave:[],
+    clusters:[],
+    diferenciais:[],
+    redFlags:[]
+  };
+}
+const core=`/* KineSys — núcleo leve do banco clínico 1.0.0.\n * Mantém IDs/metadados regionais disponíveis antes dos bancos detalhados sob demanda.\n * Gerado deterministicamente de database/mapeamento_regioes-1.0.0.js.\n */\nconst BANCO_MAPEAMENTO_CLINICO = ${JSON.stringify(coreEntries,null,2)};\n`;
+fs.writeFileSync('database/mapeamento_clinico_core-1.0.0.js',core);
+console.log(JSON.stringify({sourceBytes:fs.statSync('database/mapeamento_clinico.js').size,coreBytes:Buffer.byteLength(core),regions:manifest},null,2));
