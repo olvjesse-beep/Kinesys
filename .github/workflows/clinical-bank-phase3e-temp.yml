@@ -1,0 +1,34 @@
+name: Clinical Bank Phase 3E Temp
+
+on:
+  push:
+    branches:
+      - performance/clinical-bank-base-regional-phase3e
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/clinical-bank-base-regional-phase3e
+      - name: Audit direct bank references
+        run: |
+          grep -RIn --exclude='mapeamento_clinico.js' --exclude-dir='.git' 'BANCO_MAPEAMENTO_CLINICO' . || true
+      - name: Generate regional base banks
+        run: node .github/phase3e_generate.js
+      - name: Syntax generated banks
+        run: |
+          for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
+          git diff --check
+      - name: Commit generated banks
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add database/regioes
+          git commit -m 'feat: generate regional clinical base banks'
+          git push origin HEAD:performance/clinical-bank-base-regional-phase3e
