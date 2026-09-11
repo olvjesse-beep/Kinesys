@@ -31,6 +31,35 @@ const AGENDA_SELECT_SEMANA = '*, pacientes(id,nome,telefone,dependente,responsav
 const AGENDA_SELECT_SEMANA_LEGADO = '*, pacientes(id,nome,telefone), procedimentos(nome,duracao_minutos), equipe(nome)';
 let agendaContatoResponsavelDisponivel = true;
 
+const AGENDA_SEMANA_CACHE_TTL_MS = 5000;
+
+function prefixoCacheAgendaSemanaAtual() {
+    const perfilId = String(usuarioLogado?.id || 'sem_perfil').trim() || 'sem_perfil';
+    const clinicaId = String(usuarioLogado?.clinica_id || 'sem_clinica').trim() || 'sem_clinica';
+    return `agenda::semana::${perfilId}::${clinicaId}::`;
+}
+
+function chaveCacheAgendaSemana(inicio, fim, profissionalEscopo = '') {
+    const inicioISO = formatarDataISO(inicio);
+    const fimISO = formatarDataISO(fim);
+    const profissional = String(profissionalEscopo || 'todos').trim() || 'todos';
+    return `${prefixoCacheAgendaSemanaAtual()}${inicioISO}::${fimISO}::${profissional}`;
+}
+
+function invalidarCacheAgendaSemana() {
+    try { return Number(window.KineSysDataCache?.invalidatePrefix?.(prefixoCacheAgendaSemanaAtual()) || 0); }
+    catch (_) { return 0; }
+}
+
+function clonarAgendamentosAgenda(lista = []) {
+    return (Array.isArray(lista) ? lista : []).map(item => ({
+        ...item,
+        pacientes: item?.pacientes ? { ...item.pacientes } : item?.pacientes,
+        procedimentos: item?.procedimentos ? { ...item.procedimentos } : item?.procedimentos,
+        equipe: item?.equipe ? { ...item.equipe } : item?.equipe
+    }));
+}
+
 async function obterPacientesBasicosAgenda() {
     if (typeof obterPacientesBasicos === 'function') return obterPacientesBasicos();
     if (typeof obterPacientesSalvos === 'function') return obterPacientesSalvos();
@@ -630,6 +659,8 @@ async function sincronizarAgendamentosPendentes({ silencioso = true, renderizar 
     } finally {
         agendaSyncEmCurso = false;
     }
+
+    if (sincronizados > 0) invalidarCacheAgendaSemana();
 
     if (renderizar && document.getElementById('tela_agenda')?.classList.contains('ativa')) {
         await renderizarPainelAgenda({ pularSync: true });
@@ -1725,33 +1756,46 @@ async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') 
             ? { data: locais, error: null, somenteLocal: true, erroNuvem: new Error('Supabase indisponível') }
             : { data: [], error: new Error('Supabase indisponível') };
     }
-    const montarConsultaSemana = (selecao) => {
-        let query = _supabase.from('agendamentos')
-            .select(selecao)
-            .gte('data', formatarDataISO(inicio))
-            .lte('data', formatarDataISO(fim))
-            .neq('status', 'cancelado');
-        if (profissionalEscopo) query = query.eq('profissional_id', profissionalEscopo);
-        return query.order('data').order('hora_inicio');
-    };
-    let resultado = await montarConsultaSemana(agendaContatoResponsavelDisponivel ? AGENDA_SELECT_SEMANA : AGENDA_SELECT_SEMANA_LEGADO);
-    if (resultado.error && agendaContatoResponsavelDisponivel && /dependente|responsavel_nome|responsavel_parentesco|responsavel_telefone|schema cache|column .* does not exist/i.test(String(resultado.error?.message || resultado.error || ''))) {
-        agendaContatoResponsavelDisponivel = false;
-        resultado = await montarConsultaSemana(AGENDA_SELECT_SEMANA_LEGADO);
-    }
-    if (!resultado.error) {
-        if (typeof enriquecerAgendamentosComVinculoLocal === 'function') resultado.data = enriquecerAgendamentosComVinculoLocal(resultado.data || []);
-        resultado.data = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda(resultado.data || [], inicio, fim));
-        return resultado;
-    }
 
-    // Se a nuvem oscilar, não apagamos visualmente o que acabou de ser salvo.
-    // A Agenda mostra os registros preservados localmente e tenta sincronizar depois.
-    const locais = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda([], inicio, fim));
-    if (locais.length && erroAgendaEhTransitorio(resultado.error)) {
-        return { data: locais, error: null, somenteLocal: true, erroNuvem: resultado.error };
+    const buscarSemanaNuvem = async () => {
+        const montarConsultaSemana = (selecao) => {
+            let query = _supabase.from('agendamentos')
+                .select(selecao)
+                .gte('data', formatarDataISO(inicio))
+                .lte('data', formatarDataISO(fim))
+                .neq('status', 'cancelado');
+            if (profissionalEscopo) query = query.eq('profissional_id', profissionalEscopo);
+            return query.order('data').order('hora_inicio');
+        };
+        let resultado = await montarConsultaSemana(agendaContatoResponsavelDisponivel ? AGENDA_SELECT_SEMANA : AGENDA_SELECT_SEMANA_LEGADO);
+        if (resultado.error && agendaContatoResponsavelDisponivel && /dependente|responsavel_nome|responsavel_parentesco|responsavel_telefone|schema cache|column .* does not exist/i.test(String(resultado.error?.message || resultado.error || ''))) {
+            agendaContatoResponsavelDisponivel = false;
+            resultado = await montarConsultaSemana(AGENDA_SELECT_SEMANA_LEGADO);
+        }
+        if (resultado.error) throw resultado.error;
+        return clonarAgendamentosAgenda(resultado.data || []);
+    };
+
+    try {
+        const dadosNuvem = window.KineSysDataCache?.get
+            ? await window.KineSysDataCache.get({
+                key:chaveCacheAgendaSemana(inicio, fim, profissionalEscopo),
+                ttl:AGENDA_SEMANA_CACHE_TTL_MS,
+                fetcher:buscarSemanaNuvem
+            })
+            : await buscarSemanaNuvem();
+        let dados = clonarAgendamentosAgenda(dadosNuvem);
+        if (typeof enriquecerAgendamentosComVinculoLocal === 'function') dados = enriquecerAgendamentosComVinculoLocal(dados || []);
+        dados = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda(dados || [], inicio, fim));
+        return { data:dados, error:null };
+    } catch (error) {
+        // Falhas e resultados somente locais nunca entram no TTL cache.
+        const locais = filtrarEscopo(mesclarAgendamentosPendentesNaAgenda([], inicio, fim));
+        if (locais.length && erroAgendaEhTransitorio(error)) {
+            return { data: locais, error: null, somenteLocal: true, erroNuvem: error };
+        }
+        return { data:null, error };
     }
-    return resultado;
 }
 
 function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
@@ -2650,6 +2694,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, ho
         salvo = atualizarPayloadAgendamentoPendenteSync(id, alteracoes);
     }
     if (!salvo) throw new Error('Não foi possível confirmar a atualização do atendimento.');
+    if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();
 
     Object.assign(a, alteracoes, {
         equipe: agendaEquipeCache.find(p => String(p.id) === String(profissionalId)) || a.equipe,
@@ -2888,6 +2933,7 @@ Deseja realmente realizar esse agendamento?`,
         if (!salvos) {
             throw primeiroErro || new Error('Nenhum agendamento da série pôde ser salvo.');
         }
+        invalidarCacheAgendaSemana();
 
         agendaDataSelecionada = new Date(datasSolicitadas[0] + 'T00:00:00');
         const inputData = document.getElementById('agenda_data_input');
@@ -3078,6 +3124,7 @@ async function vincularPlanoAgendamentoAtual() {
             }
             a.plano_id=planoId;
         }
+        invalidarCacheAgendaSemana();
         fecharModal('modal_detalhe_agendamento');
         await renderizarPainelAgenda();
         if(typeof atualizarFinanceiroAposAgenda==='function')await atualizarFinanceiroAposAgenda();
@@ -3169,6 +3216,7 @@ async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
     }
 
     if (!salvo) return;
+    invalidarCacheAgendaSemana();
     if (planoAutoLocal && typeof salvarVinculoAgendaLocal==='function') salvarVinculoAgendaLocal(agendamentoDetalheAtualId, planoAutoLocal, a.paciente_id, a.procedimento_id, novoStatus);
     else if(typeof atualizarStatusVinculoAgendaLocal==='function') atualizarStatusVinculoAgendaLocal(agendamentoDetalheAtualId, novoStatus);
 
@@ -3295,6 +3343,7 @@ async function enviarLembreteAgendamentoAtual() {
 
     const { error } = await _supabase.from('agendamentos').update({ lembrete_enviado_em: new Date().toISOString() }).eq('id', agendamentoDetalheAtualId);
     if (!error) {
+        invalidarCacheAgendaSemana();
         fecharModal('modal_detalhe_agendamento');
         await renderizarPainelAgenda();
     }
