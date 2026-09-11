@@ -6,7 +6,7 @@ const vm=require('vm');
 
 const messages=fs.readFileSync('mensagens_config.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
-const app=fs.readFileSync('script-1.18.0.js','utf8');
+const crm=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
 const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
 
 assert.match(html,/mensagens_config\.js\?v=20260910-phase4f-r1/,'index deve invalidar o cache da Phase 4F');
@@ -19,7 +19,7 @@ assert.strictEqual((messages.match(/carregarConfiguracoesMensagens\(false\)/g)||
 assert.match(messages,/async function obterMensagemPadraoConfigurada\(chave, contexto=\{\}, atualizar=true\)/,'API pública deve continuar atualizando por padrão');
 assert.match(messages,/if \(atualizar\) await carregarConfiguracoesMensagens\(true\);/,'uso real deve continuar buscando configuração atual quando solicitado');
 
-const crmCalls=app.match(/obterMensagemPadraoConfigurada\([^\n]+,\s*contexto(?:Base)?,\s*true\)/g)||[];
+const crmCalls=crm.match(/obterMensagemPadraoConfigurada\([^\n]+,\s*contexto(?:Base)?,\s*true\)/g)||[];
 assert.strictEqual(crmCalls.length,3,'os três envios CRM runtime devem continuar forçando atualização no uso');
 const agendaCalls=agenda.match(/obterMensagemPadraoConfigurada\([^\n]+,\s*contexto(?:Mensagem|Oferta),\s*true\)/g)||[];
 assert.strictEqual(agendaCalls.length,2,'os dois envios da Agenda runtime devem continuar forçando atualização no uso');
