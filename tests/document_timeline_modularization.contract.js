@@ -10,9 +10,8 @@ for(const symbol of ['let documentoAtualMeta=null;','const documentosTimelineNuv
 }
 for(const fn of ['obterDocumentosTimelineLocal','carregarDocumentosTimelineNuvem','salvarDocumentoTimelineLocal','removerDocumentoTimelineLocal','registrarDocumentoAtual','imprimirDocumento']) {
   assert(mod.includes(`function ${fn}(`)||mod.includes(`async function ${fn}(`),`módulo perdeu ${fn}`);
+  assert(!core.includes(`function ${fn}(`)&&!core.includes(`async function ${fn}(`),`declaração ${fn} permaneceu no monólito`);
 }
-assert(!core.includes("localStorage.getItem('kinesys_documentos_timeline')"),'storage documental permaneceu no monólito');
-assert(!core.includes("_supabase.from('documentos_timeline')"),'persistência documental permaneceu no monólito');
 assert(mod.includes("_supabase.from('documentos_timeline')"),'módulo perdeu persistência Supabase documental');
 assert(mod.includes("localStorage.getItem('kinesys_documentos_timeline')"),'módulo perdeu fallback local documental');
 assert(mod.includes('await registrarDocumentoAtual();')&&mod.includes('window.print();'),'impressão deve registrar timeline antes de imprimir');
@@ -23,5 +22,6 @@ const main='<script defer src="script-1.18.0.js';
 assert(html.includes(tag),'index não carrega document timeline core');
 assert(html.indexOf(crm)<html.indexOf(tag),'document timeline deve carregar após CRM core');
 assert(html.indexOf(tag)<html.indexOf(main),'document timeline deve carregar antes do core consumidor');
+assert(html.includes('core_mod=20260911-phase4h-r1'),'cache do monólito não foi invalidado para 4H');
 assert(html.includes('onclick="imprimirDocumento()"'),'HTML perdeu consumidor histórico imprimirDocumento');
 console.log('Document timeline modularization contract Phase 4H: OK');
