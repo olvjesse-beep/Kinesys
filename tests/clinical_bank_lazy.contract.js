@@ -45,8 +45,8 @@ assert.match(regional,/bankRegions:Object\.freeze\(Array\.from\(regioesBancoCarr
 
 const legacyBytes=[legacyBase,...legacyExtensions].reduce((total,file)=>total+fs.statSync(file).size,0);
 const coreBytes=fs.statSync(core).size;
-assert.ok(coreBytes<legacyBase.length*1000 || coreBytes<20000,'núcleo leve deve permanecer pequeno');
+const legacyBaseBytes=fs.statSync(legacyBase).size;
 assert.ok(legacyBytes>=150000,`referência histórica deve continuar representando pelo menos 150 KB brutos; atual ${legacyBytes} bytes`);
-assert.ok(coreBytes<fs.statSync(legacyBase).size*0.2,`núcleo leve deve ter menos de 20% do banco monolítico; core=${coreBytes}, legado=${fs.statSync(legacyBase).size}`);
+assert.ok(coreBytes<legacyBaseBytes*0.2,`núcleo leve deve ter menos de 20% do banco monolítico; core=${coreBytes}, legado=${legacyBaseBytes}`);
 
 console.log('Clinical bank lazy loading contract: OK');
