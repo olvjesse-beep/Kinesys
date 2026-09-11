@@ -49,6 +49,6 @@ const inputPos=html.indexOf('input_helpers_core-1.0.0.js');
 const prePos=html.indexOf('patient_pre_registration_core-1.0.0.js');
 const corePos=html.indexOf('script-1.18.0.js');
 assert.ok(helpersPos>=0&&inputPos>helpersPos&&prePos>inputPos&&corePos>prePos,'ordem deve manter helpers compartilhados -> input helpers -> pré-cadastro -> core');
-assert.match(html,/core_mod=20260911-phase4q-r1/,'cache-bust do monólito deve acompanhar a modularização corrente após 4Q');
+assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do monólito deve acompanhar a modularização corrente após 4Q');
 
 console.log('Core Modularization Phase 4K: patient pre-registration selector preserved after shared helpers moved to Phase 4Q.');

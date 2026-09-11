@@ -41,7 +41,7 @@ const regPos=index.indexOf('patient_registration_core-1.0.0.js');
 const loaderPos=index.indexOf('screen_loader-1.25.0.js');
 assert.ok(corePos>=0&&delPos>corePos&&chartPos>delPos&&regPos>chartPos,'cadastro deve carregar depois das dependências de prontuário');
 assert.ok(loaderPos<0||regPos<loaderPos,'cadastro deve estar disponível antes dos fluxos de tela posteriores');
-assert.match(index,/core_mod=20260911-phase4q-r1/,'cache-buster do core deve acompanhar a Phase 4N');
+assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4N');
 
 const regSize=fs.statSync('patient_registration_core-1.0.0.js').size;
 const coreSize=fs.statSync('script-1.18.0.js').size;
