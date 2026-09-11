@@ -44,6 +44,6 @@ const inputPos=html.indexOf('input_helpers_core-1.0.0.js');
 const prePos=html.indexOf('patient_pre_registration_core-1.0.0.js');
 const corePos=html.indexOf('script-1.18.0.js');
 assert.ok(inputPos>=0&&prePos>inputPos&&corePos>prePos,'ordem deve manter input helpers -> pré-cadastro -> core');
-assert.match(html,/core_mod=20260911-phase4p-r1/,'cache-bust do monólito deve acompanhar a modularização corrente após 4K');
+assert.match(html,/core_mod=20260911-phase4q-r1/,'cache-bust do monólito deve acompanhar a modularização corrente após 4K');
 
 console.log('Core Modularization Phase 4K: patient pre-registration selector extracted with 2h filter, active-context exception and clinical load trigger preserved.');
