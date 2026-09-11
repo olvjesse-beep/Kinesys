@@ -8,6 +8,9 @@ on:
       - 'agenda-audit__agenda-1.20.0.js'
       - 'design_system-*.js'
       - 'financeiro_workspace-*'
+      - 'home_detalhes-*'
+      - 'home_fisioterapeuta_util-*'
+      - 'design_home_activity-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   pull_request:
@@ -17,6 +20,9 @@ on:
       - 'agenda-audit__agenda-1.20.0.js'
       - 'design_system-*.js'
       - 'financeiro_workspace-*'
+      - 'home_detalhes-*'
+      - 'home_fisioterapeuta_util-*'
+      - 'design_home_activity-*'
       - 'tests/phase5_cleanup.contract.js'
       - '.github/workflows/phase5-cleanup.yml'
   workflow_dispatch:
