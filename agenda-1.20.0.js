@@ -2402,6 +2402,7 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
     const editando = !!agendamento?.id;
     agendaEdicaoAtendimentoId = editando ? String(agendamento.id) : null;
     const paciente = document.getElementById('ag_paciente_select');
+    const pacienteBusca = document.getElementById('ag_paciente_busca');
     const data = document.getElementById('ag_data_input');
     const recorrencia = document.getElementById('ag_recorrencia_bloco');
     const extra = document.getElementById('ag_horario_extra_toggle')?.closest('.input-group');
@@ -2421,6 +2422,10 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
     if (paciente) {
         paciente.disabled = editando;
         paciente.setAttribute('aria-disabled', String(editando));
+    }
+    if (pacienteBusca) {
+        pacienteBusca.disabled = editando;
+        pacienteBusca.setAttribute('aria-disabled', String(editando));
     }
     if (data) {
         data.disabled = false;

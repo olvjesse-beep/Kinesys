@@ -53,6 +53,7 @@ assert.match(recorrencia, /intervaloDentroDaJornadaPadrao/,'Jornada continua pro
 // Edição: mesmo id, agora permitindo data + hora + procedimento + profissional.
 assert.match(detalhe, /id="btn_editar_atendimento"[^>]*onclick="editarAgendamentoAtual\(\)"[^>]*>Editar agendamento<\/button>/,
   'Detalhe deve oferecer botão explícito Editar agendamento');
+assert.match(configurar, /pacienteBusca\.disabled = editando/,'Busca de paciente deve ficar bloqueada no modo edição');
 assert.match(configurar, /data\.disabled = false/,'Data deve permanecer editável no modo edição');
 assert.match(configurar, /Data, Horário, Procedimento ou Profissional/,
   'Aviso de edição deve comunicar os quatro campos editáveis');
