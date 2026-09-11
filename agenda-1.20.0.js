@@ -60,6 +60,26 @@ function clonarAgendamentosAgenda(lista = []) {
     }));
 }
 
+const AGENDA_PROCEDIMENTOS_CACHE_TTL_MS = 15000;
+
+function chaveCacheProcedimentosAgenda() {
+    const perfilId = String(usuarioLogado?.id || 'sem_perfil').trim() || 'sem_perfil';
+    const clinicaId = String(usuarioLogado?.clinica_id || 'sem_clinica').trim() || 'sem_clinica';
+    return `agenda::aux::procedimentos::${perfilId}::${clinicaId}`;
+}
+
+function invalidarCacheProcedimentosAgenda() {
+    try { return !!window.KineSysDataCache?.invalidate?.(chaveCacheProcedimentosAgenda()); }
+    catch (_) { return false; }
+}
+
+function clonarProcedimentosAgenda(lista = []) {
+    return (Array.isArray(lista) ? lista : []).map(item => ({
+        ...item,
+        profissionais_ids: Array.isArray(item?.profissionais_ids) ? [...item.profissionais_ids] : item?.profissionais_ids
+    }));
+}
+
 async function obterPacientesBasicosAgenda() {
     if (typeof obterPacientesBasicos === 'function') return obterPacientesBasicos();
     if (typeof obterPacientesSalvos === 'function') return obterPacientesSalvos();
@@ -890,11 +910,27 @@ async function carregarProcedimentos() {
         return;
     }
     if (!_supabase) return;
-    const { data, error } = await _supabase.from('procedimentos').select('*').order('nome');
-    if (error) { console.warn('Erro ao carregar procedimentos:', error); return; }
-    agendaProcedimentosCache = data || [];
-    renderizarListaProcedimentos();
-    popularSelectProcedimentosModal();
+
+    const buscarProcedimentosAgenda = async () => {
+        const { data, error } = await _supabase.from('procedimentos').select('*').order('nome');
+        if (error) throw error;
+        return clonarProcedimentosAgenda(data || []);
+    };
+
+    try {
+        const dados = window.KineSysDataCache?.get
+            ? await window.KineSysDataCache.get({
+                key:chaveCacheProcedimentosAgenda(),
+                ttl:AGENDA_PROCEDIMENTOS_CACHE_TTL_MS,
+                fetcher:buscarProcedimentosAgenda
+            })
+            : await buscarProcedimentosAgenda();
+        agendaProcedimentosCache = clonarProcedimentosAgenda(dados || []);
+        renderizarListaProcedimentos();
+        popularSelectProcedimentosModal();
+    } catch (error) {
+        console.warn('Erro ao carregar procedimentos:', error);
+    }
 }
 
 function renderizarListaProcedimentos() {
@@ -982,6 +1018,7 @@ async function salvarProcedimento() {
             ({ error } = await _supabase.from('procedimentos').insert([registro]));
         }
         if (error) throw error;
+        invalidarCacheProcedimentosAgenda();
         fecharModal('modal_procedimento');
         await carregarProcedimentos();
     } catch (err) {
@@ -992,6 +1029,7 @@ async function salvarProcedimento() {
 async function alternarAtivoProcedimento(id, novoValor) {
     const { error } = await _supabase.from('procedimentos').update({ ativo: novoValor }).eq('id', id);
     if (error) { alert('❌ Erro ao atualizar procedimento.'); return; }
+    invalidarCacheProcedimentosAgenda();
     await carregarProcedimentos();
 }
 
@@ -999,6 +1037,7 @@ async function excluirProcedimento(id) {
     if (!(await confirmarKineSys('Excluir este procedimento definitivamente? Agendamentos já feitos com ele não serão apagados.', {titulo:'Excluir procedimento', confirmar:'Excluir', destrutivo:true}))) return;
     const { error } = await _supabase.from('procedimentos').delete().eq('id', id);
     if (error) { alert('❌ Não foi possível excluir (pode haver agendamentos vinculados). Considere apenas desativar.'); return; }
+    invalidarCacheProcedimentosAgenda();
     await carregarProcedimentos();
 }
 
