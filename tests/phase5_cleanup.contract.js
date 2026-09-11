@@ -15,7 +15,11 @@ const removedArtifacts = [
   'design_system-1.18.1.js',
   'design_system-1.18.2.js',
   'design_system-1.18.4.js',
-  'design_system-1.18.5.js'
+  'design_system-1.18.5.js',
+  'financeiro_workspace-1.19.0.js',
+  'financeiro_workspace-1.19.0.css',
+  'financeiro_workspace-1.20.0.js',
+  'financeiro_workspace-1.20.0.css'
 ];
 
 for (const artifact of removedArtifacts) {
@@ -23,5 +27,7 @@ for (const artifact of removedArtifacts) {
 }
 
 assert.equal(exists('design_system-1.20.1.js'), true, 'Design System ativo deve permanecer disponível');
+assert.equal(exists('financeiro_workspace-1.20.1.js'), true, 'Financeiro workspace JS ativo deve permanecer disponível');
+assert.equal(exists('financeiro_workspace-1.20.1.css'), true, 'Financeiro workspace CSS ativo deve permanecer disponível');
 
-console.log(`Phase 5 Cleanup Contract OK — ${removedArtifacts.length} artefatos legados permanecem ausentes e o Design System ativo está preservado.`);
+console.log(`Phase 5 Cleanup Contract OK — ${removedArtifacts.length} artefatos legados permanecem ausentes e os sucessores ativos estão preservados.`);
