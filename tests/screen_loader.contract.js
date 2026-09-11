@@ -19,7 +19,9 @@ const lazyScripts=[
   'avaliacao_experiencia-1.22.0.js',
   'clinical_reasoning_hma-3.0.0.js',
   'clinical_reasoning_shoulder-3.1.0.js',
-  'clinical_reasoning_elbow-3.1.0.js'
+  'clinical_reasoning_elbow-3.1.0.js',
+  'clinical_reasoning_wrist-3.1.0.js',
+  'clinical_reasoning_cervical-3.1.0.js'
 ];
 
 const lazyStyles=[
@@ -31,6 +33,8 @@ const lazyStyles=[
   'clinical_reasoning_hma-3.0.0.css',
   'clinical_reasoning_shoulder-3.1.0.css',
   'clinical_reasoning_elbow-3.1.0.css',
+  'clinical_reasoning_wrist-3.1.0.css',
+  'clinical_reasoning_cervical-3.1.0.css',
   'radar_clinico_focus-3.0.0.css',
   'dialog_rascunho_focus-1.0.0.css'
 ];
