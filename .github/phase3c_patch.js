@@ -62,7 +62,8 @@ assert.strictEqual(vm.runInContext('typeof dicionarioCirurgias',clinicalDbContex
 assert.strictEqual(vm.runInContext('typeof dicionarioMedicamentos',clinicalDbContext),'object','dicionário de medicamentos deve existir após carga tardia da Avaliação');
 assert.strictEqual(vm.runInContext('typeof BANCO_IRRADIACAO_CLINICA',clinicalDbContext),'object','banco de irradiação deve existir antes da demanda regional');
 assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_REGIOES',clinicalDbContext),'object','índice leve de regiões deve existir antes da demanda regional');
-assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_CLINICO',clinicalDbContext),'undefined','banco clínico pesado não deve existir no bundle-base da Avaliação');`;
+assert.strictEqual(vm.runInContext('typeof BANCO_MAPEAMENTO_CLINICO',clinicalDbContext),'undefined','banco clínico pesado não deve existir no bundle-base da Avaliação');
+const evaluationDatabaseDeferredBytes=evaluationDatabaseLazyScripts.reduce((total,file)=>total+fs.statSync(file).size,0);`;
 if(!s.includes(from))throw new Error('Bloco de bases da Avaliação não encontrado');
 s=s.replace(from,to);
 fs.writeFileSync(path,s);
