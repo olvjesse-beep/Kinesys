@@ -1,0 +1,59 @@
+name: Phase 4Q Form Text Helpers Temp
+
+on:
+  push:
+    branches:
+      - performance/form-text-helpers-phase4q
+    paths:
+      - '.github/workflows/phase4q-form-text-helpers-temp.yml'
+      - '.github/scripts/phase4q_form_text_helpers.py'
+
+permissions:
+  contents: write
+
+jobs:
+  modularize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/form-text-helpers-phase4q
+          fetch-depth: 0
+
+      - name: Apply exact extraction
+        run: python .github/scripts/phase4q_form_text_helpers.py
+
+      - name: Validate Phase 4Q
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check patient_form_helpers_core-1.0.0.js
+          node --check script-1.18.0.js
+          node --check tests/patient_form_helpers_modularization.contract.js
+          node tests/patient_form_helpers_modularization.contract.js
+          node tests/team_management_modularization.contract.js
+          node tests/cadastro_validacoes_modularization.contract.js
+          node tests/input_helpers_modularization.contract.js
+          node tests/patient_registration_modularization.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/patient_data_normalization_modularization.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
+          node tests/clinical_reasoning_cervical.regression.js
+          git diff --check
+          wc -c script-1.18.0.js patient_form_helpers_core-1.0.0.js
+
+      - name: Commit permanent Phase 4Q files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script-1.18.0.js index.html patient_form_helpers_core-1.0.0.js tests
+          if git diff --cached --quiet; then
+            echo 'No permanent changes.'
+            exit 0
+          fi
+          git commit -m 'Modularize patient form and text helpers'
+          git push origin HEAD:performance/form-text-helpers-phase4q
