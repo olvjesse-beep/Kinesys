@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/phase4m-patient-deletion-temp.yml'
       - '.github/scripts/phase4m_patient_deletion.py'
+      - '.github/scripts/phase4m_update_phase4i_contract.py'
 
 permissions:
   contents: write
@@ -22,7 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply exact extraction
-        run: python .github/scripts/phase4m_patient_deletion.py
+        run: |
+          python .github/scripts/phase4m_patient_deletion.py
+          python .github/scripts/phase4m_update_phase4i_contract.py
 
       - name: Validate Phase 4M
         shell: bash
@@ -31,6 +34,7 @@ jobs:
           node --check patient_deletion_core-1.0.0.js
           node --check script-1.18.0.js
           node --check tests/patient_deletion_modularization.contract.js
+          node --check tests/patient_index_cache_modularization.contract.js
           node tests/patient_deletion_modularization.contract.js
           node tests/fisio_home_patient_self_service.contract.js
           node tests/patient_index_cache_modularization.contract.js
@@ -48,7 +52,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add script-1.18.0.js index.html patient_deletion_core-1.0.0.js tests/patient_deletion_modularization.contract.js tests/fisio_home_patient_self_service.contract.js
+          git add script-1.18.0.js index.html patient_deletion_core-1.0.0.js tests/patient_deletion_modularization.contract.js tests/fisio_home_patient_self_service.contract.js tests/patient_index_cache_modularization.contract.js
           if git diff --cached --quiet; then
             echo 'No permanent changes.'
             exit 0
