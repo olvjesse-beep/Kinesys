@@ -8,6 +8,7 @@ on:
       - 'tools/chaos_hardening_patch.py'
       - 'tools/chaos_hardening_patch_v2.py'
       - 'tools/chaos_hardening_patch_v3.py'
+      - 'tools/chaos_hardening_patch_v4.py'
       - '.github/workflows/chaos-hardening-temp.yml'
   workflow_dispatch:
 
@@ -26,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply targeted hardening patch
-        run: python3 tools/chaos_hardening_patch_v3.py
+        run: python3 tools/chaos_hardening_patch_v4.py
 
       - name: JavaScript syntax
         run: |
@@ -35,17 +36,14 @@ jobs:
           node --check clinical_reasoning_wrist-3.1.0.js
           node --check tests/clinical_reasoning_upper_limb.chaos.js
 
-      - name: Existing shoulder and elbow regression
-        run: node tests/clinical_reasoning_shoulder_elbow.regression.js
-
-      - name: Existing wrist regression
-        run: node tests/clinical_reasoning_wrist.regression.js
-
-      - name: Existing adversarial regression
-        run: node tests/clinical_reasoning_upper_limb.adversarial.js
-
-      - name: Noisy HMA chaos regression
-        run: node tests/clinical_reasoning_upper_limb.chaos.js
+      - name: Run all clinical suites
+        run: |
+          status=0
+          node tests/clinical_reasoning_shoulder_elbow.regression.js || status=1
+          node tests/clinical_reasoning_wrist.regression.js || status=1
+          node tests/clinical_reasoning_upper_limb.adversarial.js || status=1
+          node tests/clinical_reasoning_upper_limb.chaos.js || status=1
+          exit $status
 
       - name: Diff integrity
         run: git diff --check
