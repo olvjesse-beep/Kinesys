@@ -4275,8 +4275,11 @@ function sincronizarCicloVidaRadar() {
 function instalarObservadorCicloVidaRadar() {
     const tela = document.getElementById('tela_avaliacao');
     if (!tela || tela.dataset.radarLifecycleBound === '1') return;
-    const observer = new MutationObserver(() => sincronizarCicloVidaRadar());
-    observer.observe(tela, { attributes: true, attributeFilter: ['class'] });
+    const sincronizarSeAvaliacao = event => {
+        if (event?.detail?.id === 'tela_avaliacao') sincronizarCicloVidaRadar();
+    };
+    document.addEventListener('kinesys:tela-ativada', sincronizarSeAvaliacao);
+    document.addEventListener('kinesys:tela-desativada', sincronizarSeAvaliacao);
     tela.dataset.radarLifecycleBound = '1';
     sincronizarCicloVidaRadar();
 }
