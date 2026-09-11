@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
+      - 'clinical_region_loader-1.0.0.js'
       - 'script-1.18.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
@@ -25,6 +26,7 @@ on:
       - 'design_clinical_direction-1.17.0.css'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
+      - 'tests/clinical_region_loader.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -39,6 +41,7 @@ on:
     paths:
       - 'index.html'
       - 'screen_loader-1.25.0.js'
+      - 'clinical_region_loader-1.0.0.js'
       - 'script-1.18.0.js'
       - 'ui_experience.js'
       - 'home_detalhes-1.18.5.js'
@@ -58,6 +61,7 @@ on:
       - 'design_clinical_direction-1.17.0.css'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
+      - 'tests/clinical_region_loader.contract.js'
       - 'tests/agenda_lifecycle.contract.js'
       - 'tests/midias_lifecycle.contract.js'
       - 'tests/radar_lifecycle.contract.js'
@@ -82,6 +86,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check screen_loader-1.25.0.js
+          node --check clinical_region_loader-1.0.0.js
           node --check script-1.18.0.js
           node --check ui_experience.js
           node --check home_detalhes-1.18.5.js
@@ -97,6 +102,7 @@ jobs:
           node --check database/mapeamento_clinico.js
           node --check database/condicoes_mobilidade_v23.js
           node --check database/diferenciais_neurais.js
+          node --check tests/clinical_region_loader.contract.js
           node --check tests/agenda_lifecycle.contract.js
           node --check tests/midias_lifecycle.contract.js
           node --check tests/radar_lifecycle.contract.js
@@ -106,6 +112,8 @@ jobs:
           node --check tests/ui_experience_lifecycle.contract.js
       - name: Evaluation DOM and bundle contract
         run: node tests/screen_loader.contract.js
+      - name: Clinical region lazy loading contract
+        run: node tests/clinical_region_loader.contract.js
       - name: Agenda lifecycle contract
         run: node tests/agenda_lifecycle.contract.js
       - name: Media lifecycle contract

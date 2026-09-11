@@ -7,6 +7,7 @@ const vm=require('vm');
 const html=fs.readFileSync('index.html','utf8');
 const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
 const app=fs.readFileSync('script-1.18.0.js','utf8');
+const regionLoader=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
 const fragmentPath='screens/tela_avaliacao.html';
 assert.ok(fs.existsSync(fragmentPath),'fragmento físico da Avaliação deve existir');
 const fragment=fs.readFileSync(fragmentPath,'utf8');
@@ -18,10 +19,20 @@ const lazyScripts=[
   'evaluation_context_panels-1.18.3.js',
   'avaliacao_experiencia-1.22.0.js',
   'clinical_reasoning_hma-3.0.0.js',
+  'clinical_region_loader-1.0.0.js'
+];
+
+const regionalScripts=[
   'clinical_reasoning_shoulder-3.1.0.js',
   'clinical_reasoning_elbow-3.1.0.js',
   'clinical_reasoning_wrist-3.1.0.js',
   'clinical_reasoning_cervical-3.1.0.js'
+];
+const regionalStyles=[
+  'clinical_reasoning_shoulder-3.1.0.css',
+  'clinical_reasoning_elbow-3.1.0.css',
+  'clinical_reasoning_wrist-3.1.0.css',
+  'clinical_reasoning_cervical-3.1.0.css'
 ];
 
 const lazyStyles=[
@@ -31,10 +42,6 @@ const lazyStyles=[
   'design_evaluation_context-1.18.3.css',
   'avaliacao_experiencia-1.22.0.css',
   'clinical_reasoning_hma-3.0.0.css',
-  'clinical_reasoning_shoulder-3.1.0.css',
-  'clinical_reasoning_elbow-3.1.0.css',
-  'clinical_reasoning_wrist-3.1.0.css',
-  'clinical_reasoning_cervical-3.1.0.css',
   'radar_clinico_focus-3.0.0.css',
   'dialog_rascunho_focus-1.0.0.css'
 ];
@@ -83,11 +90,35 @@ for(const file of lazyScripts){
   ultimaPosicao=posicao;
 }
 
+for(const file of regionalScripts){
+  const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\for(const file of lazyStyles){');
+  const eager=new RegExp(`<script[^>]+src=["'][^"']*${escaped}[^"']*["']`,'i');
+  assert.ok(!eager.test(html),`${file} não pode voltar ao carregamento inicial`);
+  assert.ok(!loader.includes(file),`${file} não deve permanecer no bundle base da Avaliação`);
+  assert.ok(regionLoader.includes(file),`${file} deve permanecer no loader regional`);
+  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
+}
+let ultimaRegiao=-1;
+for(const file of regionalScripts){
+  const posicao=regionLoader.indexOf(file);
+  assert.ok(posicao>ultimaRegiao,`${file} deve preservar a ordem histórica no loader regional`);
+  ultimaRegiao=posicao;
+}
+
 for(const file of lazyStyles){
   const escaped=file.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');
   const eager=new RegExp(`<link[^>]+\shref=["'][^"']*${escaped}[^"']*["']`,'i');
   assert.ok(!eager.test(html),`${file} não pode voltar ao CSS inicial`);
   assert.ok(loader.includes(file),`${file} deve permanecer no bundle de estilos sob demanda`);
+  assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
+}
+
+for(const file of regionalStyles){
+  const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\const phase4dClinicalStyles=');
+  const eager=new RegExp(`<link[^>]+\shref=["'][^"']*${escaped}[^"']*["']`,'i');
+  assert.ok(!eager.test(html),`${file} não pode voltar ao CSS inicial`);
+  assert.ok(!loader.includes(file),`${file} não deve permanecer no bundle base de estilos`);
+  assert.ok(regionLoader.includes(file),`${file} deve permanecer no loader regional`);
   assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
 }
 
