@@ -1,4 +1,4 @@
-name: Phase 4R Preflight
+name: Phase 4R Temporary Extraction
 
 on:
   push:
@@ -6,27 +6,44 @@ on:
       - performance/login-ui-helpers-phase4r
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  preflight:
+  extract-and-validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Locate login helper dependencies and startup
+        with:
+          ref: performance/login-ui-helpers-phase4r
+      - name: Apply exact helper extraction
+        run: node scripts/phase4r-extract-login-ui-helpers.js
+      - name: Validate isolated extraction
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== KineSysLogin.start references ==='
-          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'KineSysLogin.start' . || true
-          echo '=== carregarAcessoDaSessao references ==='
-          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'carregarAcessoDaSessao' . || true
-          echo '=== mostrarFeedbackLogin references ==='
-          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'mostrarFeedbackLogin' . || true
-          echo '=== sincronizarEstadoAutenticacaoVisual references ==='
-          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'sincronizarEstadoAutenticacaoVisual' . || true
-          echo '=== mensagemErroAutenticacao references ==='
-          grep -RFn --exclude-dir=.git --exclude='phase4r-preflight.yml' 'mensagemErroAutenticacao' . || true
-          echo '=== Syntax ==='
+          node --check login_ui_helpers_core-1.0.0.js
           node --check script-1.18.0.js
           node --check login_access-1.18.0.js
+          test "$(grep -c '^function mostrarFeedbackLogin' login_ui_helpers_core-1.0.0.js)" -eq 1
+          test "$(grep -c '^function sincronizarEstadoAutenticacaoVisual' login_ui_helpers_core-1.0.0.js)" -eq 1
+          test "$(grep -c '^function mensagemErroAutenticacao' login_ui_helpers_core-1.0.0.js)" -eq 1
+          ! grep -q '^function mostrarFeedbackLogin' script-1.18.0.js
+          ! grep -q '^function sincronizarEstadoAutenticacaoVisual' script-1.18.0.js
+          ! grep -q '^function mensagemErroAutenticacao' script-1.18.0.js
+          ! grep -Eq '_supabase|\.rpc\(|localStorage|sessionStorage|PERMISSOES_POR_PERFIL' login_ui_helpers_core-1.0.0.js
+          grep -q 'login_ui_helpers_core-1.0.0.js?v=20260911-phase4r-r1' index.html
+          grep -q 'core_mod=20260911-phase4r-r1' index.html
+          git diff --check
+      - name: Commit generated Phase 4R runtime changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- script-1.18.0.js index.html login_ui_helpers_core-1.0.0.js; then
+            echo 'No generated changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script-1.18.0.js index.html login_ui_helpers_core-1.0.0.js
+          git commit -m 'Modularize login UI helpers'
+          git push origin HEAD:performance/login-ui-helpers-phase4r
