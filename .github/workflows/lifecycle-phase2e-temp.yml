@@ -1,0 +1,53 @@
+name: Lifecycle Phase 2E Temp
+
+on:
+  push:
+    branches:
+      - performance/lifecycle-phase2e
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: performance/lifecycle-phase2e
+          fetch-depth: 0
+      - name: Apply Home lifecycle patch
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='home_detalhes-1.18.5.js';
+          let s=fs.readFileSync(path,'utf8');
+
+          const observerAtend="        new MutationObserver(()=>{if(!home.classList.contains('ativa'))fecharAtendimentosHome(false);}).observe(home,{attributes:true,attributeFilter:['class']});\n";
+          const observerPend="        new MutationObserver(()=>{if(!home.classList.contains('ativa'))fecharPendenciasHome(false);}).observe(home,{attributes:true,attributeFilter:['class']});\n";
+          if(!s.includes(observerAtend)||!s.includes(observerPend)) throw new Error('Observers esperados da Home não encontrados');
+          s=s.replace(observerAtend,'').replace(observerPend,'');
+
+          const oldTimer="setInterval(()=>{if(document.visibilityState==='visible'&&document.getElementById('tela_home')?.classList.contains('ativa')){carregarAtendimentosHojeDetalhes();carregarPacientesRecentesDetalhes();}},60000);";
+          const replacement=`let homeDetalhesRefreshTimer=null;\n\nfunction homeDetalhesTelaAtiva(){\n    return !!document.getElementById('tela_home')?.classList.contains('ativa');\n}\nfunction executarRefreshPeriodicoHome(){\n    if(document.visibilityState!=='visible'||!homeDetalhesTelaAtiva())return;\n    carregarAtendimentosHojeDetalhes();\n    carregarPacientesRecentesDetalhes();\n}\nfunction ativarLifecycleHomeDetalhes(){\n    if(!homeDetalhesTelaAtiva())return;\n    if(!homeDetalhesRefreshTimer)homeDetalhesRefreshTimer=setInterval(executarRefreshPeriodicoHome,60000);\n}\nfunction suspenderLifecycleHomeDetalhes(){\n    if(homeDetalhesRefreshTimer){clearInterval(homeDetalhesRefreshTimer);homeDetalhesRefreshTimer=null;}\n    fecharAtendimentosHome(false);\n    fecharPendenciasHome(false);\n}\nfunction aoTelaAtivadaHomeDetalhes(event){\n    if(event.detail?.id==='tela_home')ativarLifecycleHomeDetalhes();\n}\nfunction aoTelaDesativadaHomeDetalhes(event){\n    if(event.detail?.id==='tela_home')suspenderLifecycleHomeDetalhes();\n}\n\ndocument.addEventListener('kinesys:tela-ativada',aoTelaAtivadaHomeDetalhes);\ndocument.addEventListener('kinesys:tela-desativada',aoTelaDesativadaHomeDetalhes);\nif(document.readyState!=='loading'&&homeDetalhesTelaAtiva())ativarLifecycleHomeDetalhes();`;
+          if(!s.includes(oldTimer)) throw new Error('Timer global de 60 s esperado não encontrado');
+          s=s.replace(oldTimer,replacement);
+          fs.writeFileSync(path,s);
+
+          const test=`const assert=require('assert');\nconst fs=require('fs');\nconst home=fs.readFileSync('home_detalhes-1.18.5.js','utf8');\n\nassert.doesNotMatch(home,/new MutationObserver\\(\\(\\)=>\\{if\\(!home\\.classList\\.contains\\('ativa'\\)\\)fecharAtendimentosHome\\(false\\);\\}\\)/,'Home não deve observar classe apenas para fechar atendimentos');\nassert.doesNotMatch(home,/new MutationObserver\\(\\(\\)=>\\{if\\(!home\\.classList\\.contains\\('ativa'\\)\\)fecharPendenciasHome\\(false\\);\\}\\)/,'Home não deve observar classe apenas para fechar pendências');\nassert.doesNotMatch(home,/setInterval\\(\\(\\)=>\\{if\\(document\\.visibilityState==='visible'&&document\\.getElementById\\('tela_home'\\)\\?\\.classList\\.contains\\('ativa'\\)\\)/,'polling global antigo de 60 s não pode permanecer');\nassert.match(home,/let homeDetalhesRefreshTimer=null;/,'timer da Home deve ter lifecycle explícito');\nassert.match(home,/homeDetalhesRefreshTimer=setInterval\\(executarRefreshPeriodicoHome,60000\\)/,'cadência histórica de 60 s deve ser preservada enquanto ativa');\nassert.match(home,/clearInterval\\(homeDetalhesRefreshTimer\\)/,'timer deve ser suspenso ao sair da Home');\nassert.match(home,/document\\.addEventListener\\('kinesys:tela-ativada',aoTelaAtivadaHomeDetalhes\\)/,'Home deve reagir ao lifecycle oficial de ativação');\nassert.match(home,/document\\.addEventListener\\('kinesys:tela-desativada',aoTelaDesativadaHomeDetalhes\\)/,'Home deve reagir ao lifecycle oficial de desativação');\nassert.match(home,/fecharAtendimentosHome\\(false\\);[\\s\\S]*fecharPendenciasHome\\(false\\);/,'saída da Home deve fechar diálogos sem devolver foco');\nassert.match(home,/document\\.visibilityState!=='visible'/,'refresh deve continuar respeitando visibilidade do documento');\nconsole.log('Home lifecycle contract OK');\n`;
+          fs.writeFileSync('tests/home_lifecycle.contract.js',test);
+          NODE
+      - name: Validate
+        run: |
+          node --check home_detalhes-1.18.5.js
+          node --check tests/home_lifecycle.contract.js
+          node tests/home_lifecycle.contract.js
+          git diff --check
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add home_detalhes-1.18.5.js tests/home_lifecycle.contract.js
+          git commit -m "Performance — Home Lifecycle Phase 2E"
+          git push origin HEAD:performance/lifecycle-phase2e
