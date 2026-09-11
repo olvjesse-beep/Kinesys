@@ -1947,6 +1947,18 @@ const KINESYS_CAMPOS_PACIENTE_BASICO_LEGADO = [
 let pacientesBasicosEmCurso = null;
 const pacientesCompletosEmCurso = new Map();
 
+const KINESYS_PACIENTES_BASICOS_CACHE_TTL_MS = 15000;
+
+function chaveCachePacientesBasicos() {
+    const perfilId = String(usuarioLogado?.id || 'sem_perfil').trim() || 'sem_perfil';
+    return `pacientes::basicos::${perfilId}`;
+}
+
+function invalidarCachePacientesBasicos() {
+    try { return !!window.KineSysDataCache?.invalidate?.(chaveCachePacientesBasicos()); }
+    catch (_) { return false; }
+}
+
 function projetarPacienteBasico(paciente) {
     const normalizado = normalizarPacienteDoBanco(paciente || {});
     const { avaliacoes, evolucoes, documentos, ...basico } = normalizado;
@@ -1973,7 +1985,6 @@ async function consultarPacientesBasicosNaNuvem() {
 }
 
 async function obterPacientesBasicos() {
-    if (pacientesBasicosEmCurso) return pacientesBasicosEmCurso;
     const carregar = async () => {
         const locais = lerPacientesLocaisComSeguranca();
         if (_supabase) {
@@ -1994,6 +2005,14 @@ async function obterPacientesBasicos() {
         }
         return locais.map(p => projetarPacienteBasico({ ...p, __dadosLocaisPendentes: true }));
     };
+    if (window.KineSysDataCache?.get) {
+        return window.KineSysDataCache.get({
+            key:chaveCachePacientesBasicos(),
+            ttl:KINESYS_PACIENTES_BASICOS_CACHE_TTL_MS,
+            fetcher:carregar
+        });
+    }
+    if (pacientesBasicosEmCurso) return pacientesBasicosEmCurso;
     pacientesBasicosEmCurso = Promise.resolve(carregar()).finally(() => { pacientesBasicosEmCurso = null; });
     return pacientesBasicosEmCurso;
 }
@@ -2056,6 +2075,7 @@ async function obterPacientesSalvos() {
 }
 
 async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
+    invalidarCachePacientesBasicos();
     const {
         id, nome, cpf, nascimento, telefone, profissao, sexo, estadoCivil, estado_civil,
         dependente, responsavelNome, responsavelParentesco, responsavelTelefone,
@@ -3075,6 +3095,7 @@ async function excluirPaciente(id) {
         alert('🔒 Apenas Administrador pode excluir definitivamente um cadastro de paciente.');
         return false;
     }
+    invalidarCachePacientesBasicos();
     const lista = await obterPacientesBasicos();
     const paciente = lista.find(p => String(p.id) === String(id));
     if (!paciente) { alert('⚠️ Paciente não encontrado. Atualize a lista e tente novamente.'); return false; }
