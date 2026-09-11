@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# trigger-2
 p=Path('script-1.18.0.js')
 s=p.read_text(encoding='utf-8')
 start="let documentoAtualMeta=null;\n"
