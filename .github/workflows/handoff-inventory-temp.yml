@@ -1,0 +1,21 @@
+name: Handoff Inventory Temp
+
+on:
+  push:
+    branches:
+      - chore/handoff-organization
+    paths:
+      - 'tools/handoff_inventory_temp.js'
+      - '.github/workflows/handoff-inventory-temp.yml'
+
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inventory root and literal references
+        shell: cmd
+        run: node tools\handoff_inventory_temp.js
