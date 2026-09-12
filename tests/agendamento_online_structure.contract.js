@@ -36,5 +36,17 @@ assert(sql.includes("origem in ('interno', 'online')"),
   'origem do agendamento deve ter contrato explícito');
 assert(sql.includes("origem_cadastro in ('interno', 'agendamento_online')"),
   'origem do cadastro do paciente deve ter contrato explícito');
+assert(sql.includes("public.kinesys_pode_operar('agendamentos', 'SELECT')"),
+  'RLS do agendamento online deve reutilizar o contrato de autorização da Agenda');
+assert(sql.includes("public.kinesys_pode_operar('agendamentos', 'INSERT')"),
+  'inserções internas da configuração/publicação devem respeitar kinesys_pode_operar');
+assert(sql.includes("public.kinesys_pode_operar('agendamentos', 'UPDATE')"),
+  'atualizações internas da configuração/publicação devem respeitar kinesys_pode_operar');
+assert(sql.includes("public.kinesys_pode_operar('agendamentos', 'DELETE')"),
+  'exclusões internas da configuração/publicação devem respeitar kinesys_pode_operar');
+assert(sql.includes('public.kinesys_agenda_escopo_permitido(profissional_id)'),
+  'disponibilidade online deve preservar o escopo profissional consolidado da Agenda');
+assert(sql.includes("in ('MASTER', 'MASTER_FEM')"),
+  'ativação e configuração global do portal devem permanecer administrativas');
 
 console.log('agendamento_online_structure.contract: OK');
