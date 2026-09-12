@@ -27,7 +27,11 @@ const removedArtifacts = [
   'design_home_activity-1.18.2.css',
   'design_home_activity-1.18.4.css',
   'design_evaluation_workspace-1.17.0.css',
-  'design_evaluation_workspace-1.17.1.css'
+  'design_evaluation_workspace-1.17.1.css',
+  'analise_admin.js',
+  'credito_cliente.js',
+  'descontos_financeiros.js',
+  'pendencias_financeiras.js'
 ];
 
 for (const artifact of removedArtifacts) {
