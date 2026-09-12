@@ -1,0 +1,33 @@
+name: Phase 5C Closeout Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles/**'
+      - 'DESIGN.md'
+      - 'PRODUCT.md'
+      - 'tests/phase5c_closeout.contract.js'
+      - '.github/workflows/phase5c-closeout.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closeout:
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\\PROGRA~1\\Git\\bin\\bash.exe --noprofile --norc -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Phase 5C closeout contract
+        run: node tests/phase5c_closeout.contract.js
