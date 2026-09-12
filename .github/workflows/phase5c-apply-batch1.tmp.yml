@@ -1,0 +1,45 @@
+name: Phase 5C Temporary Apply Batch 1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/phase5c_apply_batch1.tmp.js'
+      - '.github/workflows/phase5c-apply-batch1.tmp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chore/phase5c-organization-audit
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply folder move
+        run: node tests/phase5c_apply_batch1.tmp.js
+
+      - name: Validate diff
+        run: |
+          git diff --check
+          git status --short
+
+      - name: Commit batch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html styles/design_polish.css styles/design_experience.css design_polish.css design_experience.css
+          git commit -m "Phase 5C: move polish and experience styles"
+          git push origin HEAD:chore/phase5c-organization-audit
