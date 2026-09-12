@@ -114,6 +114,9 @@ create index if not exists idx_pacientes_cadastro_online_pendente
     where origem_cadastro = 'agendamento_online' and cadastro_validado = false;
 
 -- 6) RLS. Nenhuma tabela de configuração/publicação recebe permissão anon.
+-- As policies reaproveitam o contrato de autorização da Agenda interna por
+-- kinesys_pode_operar('agendamentos', ...) e, quando há profissional_id,
+-- também o escopo consolidado de kinesys_agenda_escopo_permitido(...).
 alter table public.configuracoes_agendamento_online enable row level security;
 alter table public.disponibilidade_agendamento_online enable row level security;
 
@@ -127,8 +130,9 @@ grant select, insert, update, delete on table public.disponibilidade_agendamento
 grant all on table public.configuracoes_agendamento_online to service_role;
 grant all on table public.disponibilidade_agendamento_online to service_role;
 
--- Configuração geral: equipe interna pode ler; somente administradores podem
--- ativar/desativar o portal ou alterar antecedência/horizonte.
+-- Configuração geral: quem pode consultar Agenda pode ler a configuração.
+-- Ativar/desativar o portal e alterar antecedência/horizonte permanece restrito
+-- a MASTER/MASTER_FEM, além do mesmo contrato operacional da Agenda.
 drop policy if exists ks_agendamento_online_config_select on public.configuracoes_agendamento_online;
 create policy ks_agendamento_online_config_select
 on public.configuracoes_agendamento_online
@@ -136,8 +140,7 @@ for select
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
-    and coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in
-        ('MASTER', 'MASTER_FEM', 'SECRETARIA', 'FISIOTERAPEUTA')
+    and public.kinesys_pode_operar('agendamentos', 'SELECT')
 );
 
 drop policy if exists ks_agendamento_online_config_insert on public.configuracoes_agendamento_online;
@@ -147,6 +150,7 @@ for insert
 to authenticated
 with check (
     clinica_id = public.kinesys_current_clinica_id()
+    and public.kinesys_pode_operar('agendamentos', 'INSERT')
     and coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM')
 );
 
@@ -157,10 +161,12 @@ for update
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
+    and public.kinesys_pode_operar('agendamentos', 'UPDATE')
     and coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM')
 )
 with check (
     clinica_id = public.kinesys_current_clinica_id()
+    and public.kinesys_pode_operar('agendamentos', 'UPDATE')
     and coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM')
 );
 
@@ -171,11 +177,12 @@ for delete
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
+    and public.kinesys_pode_operar('agendamentos', 'DELETE')
     and coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM')
 );
 
--- Publicação de horários: administradores/secretaria gerenciam qualquer
--- profissional da clínica; fisioterapeuta gerencia somente a própria agenda.
+-- Publicação de horários: usa o mesmo contrato operacional e o mesmo escopo
+-- profissional já consolidado pela Agenda interna.
 drop policy if exists ks_agendamento_online_disponibilidade_select on public.disponibilidade_agendamento_online;
 create policy ks_agendamento_online_disponibilidade_select
 on public.disponibilidade_agendamento_online
@@ -183,13 +190,8 @@ for select
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
-    and (
-        coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM', 'SECRETARIA')
-        or (
-            coalesce(public.kinesys_perfil_sessao()->>'tipo', '') = 'FISIOTERAPEUTA'
-            and profissional_id = coalesce(public.kinesys_perfil_sessao()->>'id', '')
-        )
-    )
+    and public.kinesys_pode_operar('agendamentos', 'SELECT')
+    and public.kinesys_agenda_escopo_permitido(profissional_id)
 );
 
 drop policy if exists ks_agendamento_online_disponibilidade_insert on public.disponibilidade_agendamento_online;
@@ -199,13 +201,8 @@ for insert
 to authenticated
 with check (
     clinica_id = public.kinesys_current_clinica_id()
-    and (
-        coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM', 'SECRETARIA')
-        or (
-            coalesce(public.kinesys_perfil_sessao()->>'tipo', '') = 'FISIOTERAPEUTA'
-            and profissional_id = coalesce(public.kinesys_perfil_sessao()->>'id', '')
-        )
-    )
+    and public.kinesys_pode_operar('agendamentos', 'INSERT')
+    and public.kinesys_agenda_escopo_permitido(profissional_id)
 );
 
 drop policy if exists ks_agendamento_online_disponibilidade_update on public.disponibilidade_agendamento_online;
@@ -215,23 +212,13 @@ for update
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
-    and (
-        coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM', 'SECRETARIA')
-        or (
-            coalesce(public.kinesys_perfil_sessao()->>'tipo', '') = 'FISIOTERAPEUTA'
-            and profissional_id = coalesce(public.kinesys_perfil_sessao()->>'id', '')
-        )
-    )
+    and public.kinesys_pode_operar('agendamentos', 'UPDATE')
+    and public.kinesys_agenda_escopo_permitido(profissional_id)
 )
 with check (
     clinica_id = public.kinesys_current_clinica_id()
-    and (
-        coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM', 'SECRETARIA')
-        or (
-            coalesce(public.kinesys_perfil_sessao()->>'tipo', '') = 'FISIOTERAPEUTA'
-            and profissional_id = coalesce(public.kinesys_perfil_sessao()->>'id', '')
-        )
-    )
+    and public.kinesys_pode_operar('agendamentos', 'UPDATE')
+    and public.kinesys_agenda_escopo_permitido(profissional_id)
 );
 
 drop policy if exists ks_agendamento_online_disponibilidade_delete on public.disponibilidade_agendamento_online;
@@ -241,11 +228,6 @@ for delete
 to authenticated
 using (
     clinica_id = public.kinesys_current_clinica_id()
-    and (
-        coalesce(public.kinesys_perfil_sessao()->>'tipo', '') in ('MASTER', 'MASTER_FEM', 'SECRETARIA')
-        or (
-            coalesce(public.kinesys_perfil_sessao()->>'tipo', '') = 'FISIOTERAPEUTA'
-            and profissional_id = coalesce(public.kinesys_perfil_sessao()->>'id', '')
-        )
-    )
+    and public.kinesys_pode_operar('agendamentos', 'DELETE')
+    and public.kinesys_agenda_escopo_permitido(profissional_id)
 );
