@@ -7,6 +7,7 @@ const css = fs.readFileSync('styles/home_profissional_dashboard-1.0.0.css','utf8
 
 assert.match(dashboard,/tipo==='FISIOTERAPEUTA'\|\|tipo==='PROFISSIONAL'/,'dashboard deve ficar restrito ao perfil profissional');
 assert.match(dashboard,/lista_pacientes_recentes/,'Home profissional deve retirar o card legado de recentes\/24h');
+assert.match(dashboard,/data-ks-home-detail=\"recentes\"/,'Home profissional deve retirar também o resumo de cadastros criado pelo Design System');
 assert.match(dashboard,/card_pendencias_clinicas/,'Home profissional deve substituir o card grande de pendências');
 assert.match(dashboard,/ks_prof_pendencias_badge/,'pendências devem usar badge discreto');
 assert.match(dashboard,/Avaliação a concluir/,'pendências devem contemplar avaliação a concluir');
