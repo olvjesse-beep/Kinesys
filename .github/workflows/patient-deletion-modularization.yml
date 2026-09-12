@@ -23,9 +23,13 @@ on:
       - 'tests/patient_index_cache_modularization.contract.js'
       - '.github/workflows/patient-deletion-modularization.yml'
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   contract:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4

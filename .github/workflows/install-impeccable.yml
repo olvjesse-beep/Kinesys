@@ -11,9 +11,13 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   install:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +31,7 @@ jobs:
         run: npx -y impeccable@latest install -y --providers=codex --scope=project --no-hooks
 
       - name: Commit generated Codex skill files
-        shell: bash
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
