@@ -26,7 +26,9 @@ for (const name of rootFiles) {
 }
 
 const TEXT_EXTS = new Set(['.js','.css','.html','.htm','.php','.json','.md','.yml','.yaml','.txt','.sql','.xml','.webmanifest']);
-const SKIP_PREFIXES = ['.git/','.agents/','.impeccable/','DESIGN_SYSTEM/','docs/'];
+// Workflows are migrated separately through the GitHub connector because the
+// runner's GITHUB_TOKEN intentionally cannot update workflow files.
+const SKIP_PREFIXES = ['.git/','.github/','.agents/','.impeccable/','DESIGN_SYSTEM/','docs/'];
 function walk(dir, out=[]) {
   for (const ent of fs.readdirSync(dir,{withFileTypes:true})) {
     const full = path.join(dir,ent.name);
@@ -71,7 +73,6 @@ for (const rel of rewriteFiles) {
       text = parts.join(escapedDst);
     }
   }
-  // Glob/path patterns not covered by exact filenames.
   text = text
     .replaceAll('clinical_reasoning_*.js','src/clinical/clinical_reasoning_*.js')
     .replaceAll('clinical_reasoning_*.css','styles/clinical_reasoning_*.css')
