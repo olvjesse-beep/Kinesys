@@ -35,15 +35,29 @@ concurrency:
 jobs:
   quality:
     name: Runtime contracts
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 10
+    env:
+      PSExecutionPolicyPreference: Bypass
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: JavaScript syntax
-        shell: bash
         run: |
           set -euo pipefail
           count=0
@@ -56,7 +70,6 @@ jobs:
           echo "- Syntax valid in **$count** files." >> "$GITHUB_STEP_SUMMARY"
 
       - name: HTML, forms and runtime asset contracts
-        shell: bash
         run: |
           python - <<'PY'
           from collections import Counter
@@ -213,7 +226,6 @@ jobs:
           cat /tmp/html-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: KDS runtime CSS contracts
-        shell: bash
         run: |
           python - <<'PY'
           from html.parser import HTMLParser
@@ -312,7 +324,6 @@ jobs:
           cat /tmp/css-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Impeccable detector advisory summary
-        shell: bash
         run: |
           set -uo pipefail
           chmod +x .agents/skills/impeccable/scripts/impeccable || true
