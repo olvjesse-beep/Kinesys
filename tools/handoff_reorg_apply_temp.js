@@ -44,10 +44,14 @@ function shouldRewrite(rel) {
   if (rel.startsWith('tools/handoff_') && rel.endsWith('_temp.js')) return false;
   return true;
 }
+function regexLiteral(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+}
 
 const allFiles = walk(root);
 const rewriteFiles = allFiles.filter(shouldRewrite);
 let replacements = 0;
+let escapedReplacements = 0;
 for (const rel of rewriteFiles) {
   const full = path.join(root,rel);
   let text;
@@ -58,6 +62,13 @@ for (const rel of rewriteFiles) {
       const parts = text.split(src);
       replacements += parts.length - 1;
       text = parts.join(dst);
+    }
+    const escapedSrc = regexLiteral(src);
+    const escapedDst = regexLiteral(dst);
+    if (text.includes(escapedSrc)) {
+      const parts = text.split(escapedSrc);
+      escapedReplacements += parts.length - 1;
+      text = parts.join(escapedDst);
     }
   }
   // Glob/path patterns not covered by exact filenames.
@@ -98,5 +109,5 @@ if (unexpected.length || missing.length) {
   throw new Error(`Unexpected root state. unexpected=${unexpected.join(',')} missing=${missing.join(',')}`);
 }
 
-console.log(`Applied ${moves.length} moves and ${replacements} literal reference replacements.`);
+console.log(`Applied ${moves.length} moves, ${replacements} literal replacements and ${escapedReplacements} escaped-path replacements.`);
 console.log('Root files: ' + actualRoot.join(', '));
