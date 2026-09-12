@@ -1,0 +1,49 @@
+name: Login UI Helpers Modularization Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/auth/login_ui_helpers_core-1.0.0.js'
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'index.html'
+      - 'tests/login_ui_helpers_modularization.contract.js'
+      - '.github/workflows/login-ui-helpers-modularization.yml'
+  pull_request:
+    paths:
+      - 'src/auth/login_ui_helpers_core-1.0.0.js'
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'index.html'
+      - 'tests/login_ui_helpers_modularization.contract.js'
+      - '.github/workflows/login-ui-helpers-modularization.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check src/auth/login_ui_helpers_core-1.0.0.js
+          node --check src/auth/login_access-1.18.0.js
+          node --check src/core/script-1.18.0.js
+          node --check tests/login_ui_helpers_modularization.contract.js
+      - name: Login UI helpers modularization contract
+        run: node tests/login_ui_helpers_modularization.contract.js
+      - name: Whitespace integrity
+        run: git diff --check HEAD^

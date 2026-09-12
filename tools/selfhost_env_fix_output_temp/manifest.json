@@ -1,0 +1,105 @@
+{
+  "changed": [
+    "agenda-edit-contract.yml",
+    "crm-relationship-contract.yml",
+    "data-loading-contract.yml",
+    "document-timeline-contract.yml",
+    "impeccable-detail-audit.yml",
+    "input-helpers-contract.yml",
+    "login-ui-helpers-modularization.yml",
+    "messages-bootstrap-contract.yml",
+    "operational-resume-refresh-contract.yml",
+    "patient-deletion-modularization.yml",
+    "patient-registration-modularization.yml",
+    "prontuario-export-contract.yml",
+    "report-ui-helpers-modularization.yml",
+    "screen-loader-contract.yml"
+  ],
+  "manifest": [
+    {
+      "name": "agenda-edit-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "crm-relationship-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "data-loading-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "document-timeline-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "impeccable-detail-audit.yml",
+      "fixes": [
+        "setup-python",
+        "portable-temp-path"
+      ]
+    },
+    {
+      "name": "input-helpers-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "login-ui-helpers-modularization.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "messages-bootstrap-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "operational-resume-refresh-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "patient-deletion-modularization.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "patient-registration-modularization.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "prontuario-export-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "report-ui-helpers-modularization.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    },
+    {
+      "name": "screen-loader-contract.yml",
+      "fixes": [
+        "setup-node"
+      ]
+    }
+  ]
+}
