@@ -45,7 +45,7 @@ function shouldRewrite(rel) {
   return true;
 }
 function regexLiteral(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replaceAll('/','\\/');
 }
 
 const allFiles = walk(root);
