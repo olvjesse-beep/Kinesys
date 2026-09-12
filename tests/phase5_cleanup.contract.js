@@ -10,6 +10,7 @@ const exists = rel => fs.existsSync(path.join(root, rel));
 const removedArtifacts = [
   'KineSys_v1.15.0_DEPLOY_APP.zip',
   'agenda-audit__agenda-1.20.0.js',
+  'agenda.js',
   'design_system-1.17.1.js',
   'design_system-1.18.0.js',
   'design_system-1.18.1.js',
@@ -44,6 +45,7 @@ for (const artifact of removedArtifacts) {
   assert.equal(exists(artifact), false, `artefato legado removido não deve voltar ao repositório: ${artifact}`);
 }
 
+assert.equal(exists('agenda-1.20.0.js'), true, 'Agenda ativa 1.20.0 deve permanecer disponível');
 assert.equal(exists('design_system-1.20.1.js'), true, 'Design System ativo deve permanecer disponível');
 assert.equal(exists('financeiro-1.19.0.js'), true, 'Financeiro ativo deve permanecer disponível');
 assert.equal(exists('balanco_financeiro_admin-1.19.0.js'), true, 'Balanço financeiro ativo deve permanecer disponível');
