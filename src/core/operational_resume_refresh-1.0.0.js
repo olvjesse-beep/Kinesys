@@ -1,7 +1,7 @@
 /* KineSys — Operational Resume Refresh 1.0.0
  * Revalida dados operacionais ao retornar ao navegador sem criar polling novo.
  * Agenda: força leitura fresca dos agendamentos da semana.
- * Home: atualiza o Meu Dia Clínico do fisioterapeuta.
+ * Home: atualiza o Meu Dia Clínico do fisioterapeuta e o painel profissional focado.
  */
 (function instalarOperationalResumeRefresh(){
     'use strict';
@@ -9,6 +9,8 @@
     const VERSION='1.0.0';
     const MIN_AUSENCIA_MS=1500;
     const TELAS_REVALIDAVEIS=new Set(['tela_agenda','tela_home']);
+    const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
+    const PROFESSIONAL_HOME_STYLE='styles/home_profissional_dashboard-1.0.0.css';
     let ausenteDesde=0;
     let telaAoAusentar='';
     let refreshEmCurso=null;
@@ -24,6 +26,18 @@
 
     function usuarioAtivo(){
         return typeof usuarioLogado!=='undefined' && !!usuarioLogado;
+    }
+
+    function garantirHomeProfissionalFocada(){
+        if(!document.querySelector(`link[href^="${PROFESSIONAL_HOME_STYLE}"]`)){
+            const link=document.createElement('link');
+            link.rel='stylesheet';link.href=PROFESSIONAL_HOME_STYLE;
+            document.head.appendChild(link);
+        }
+        if(window.KineSysProfessionalHome||document.querySelector(`script[src^="${PROFESSIONAL_HOME_SCRIPT}"]`))return;
+        const script=document.createElement('script');
+        script.src=PROFESSIONAL_HOME_SCRIPT;script.async=false;
+        document.body.appendChild(script);
     }
 
     function marcarAusencia(){
@@ -54,9 +68,16 @@
     }
 
     async function revalidarMeuDiaClinico(){
-        if(typeof carregarPainelFisioterapeuta!=='function')return false;
-        await carregarPainelFisioterapeuta();
-        return true;
+        let atualizou=false;
+        if(typeof carregarPainelFisioterapeuta==='function'){
+            await carregarPainelFisioterapeuta();
+            atualizou=true;
+        }
+        if(window.KineSysProfessionalHome?.refresh){
+            await window.KineSysProfessionalHome.refresh();
+            atualizou=true;
+        }
+        return atualizou;
     }
 
     function reativarAgendaSemReload(){
@@ -118,6 +139,7 @@
         return true;
     }
 
+    garantirHomeProfissionalFocada();
     document.addEventListener('visibilitychange',aoVisibilityChange);
     window.addEventListener('blur',aoBlur,{passive:true});
     window.addEventListener('focus',aoFocus,{passive:true});
