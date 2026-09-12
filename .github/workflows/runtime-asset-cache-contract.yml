@@ -1,0 +1,43 @@
+name: Runtime Asset Cache Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/core/operational_resume_refresh-1.0.0.js'
+      - 'tests/runtime_asset_cache.contract.js'
+      - '.github/workflows/runtime-asset-cache-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/core/operational_resume_refresh-1.0.0.js'
+      - 'tests/runtime_asset_cache.contract.js'
+      - '.github/workflows/runtime-asset-cache-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: 'C:\\PROGRA~1\\Git\\bin\\bash.exe --noprofile --norc -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate runtime cache invalidation
+        run: |
+          node --check src/ui/screen_loader-1.25.0.js
+          node --check src/core/operational_resume_refresh-1.0.0.js
+          node --check tests/runtime_asset_cache.contract.js
+          node tests/runtime_asset_cache.contract.js
+          git diff --check
