@@ -1,0 +1,29 @@
+name: Phase 5C Temporary Root Inventory
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/phase5c_inventory.tmp.js'
+      - '.github/workflows/phase5c-inventory.tmp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Root CSS reference inventory
+        run: node tests/phase5c_inventory.tmp.js
