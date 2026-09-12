@@ -29,9 +29,12 @@ jobs:
         run: |
           set -euo pipefail
           node --check src/home/home_fisioterapeuta_util-1.24.0.js
+          node --check src/home/home_detalhes-1.18.5.js
           node --check src/core/script-1.18.0.js
           node --check tests/fisio_home_patient_self_service.contract.js
+          node --check tests/home_atendimentos_24h.contract.js
           node tests/fisio_home_patient_self_service.contract.js
+          node tests/home_atendimentos_24h.contract.js
           node tests/agenda_editar_atendimento.contract.js
           node tests/screen_loader.contract.js
           node tests/data_loading.contract.js

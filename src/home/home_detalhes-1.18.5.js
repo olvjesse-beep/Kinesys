@@ -31,15 +31,19 @@ function dataClinicaHome(ms){
 function referenciaAtendimentoHome(a){
     // Horário de marcação como atendido; legado explicitamente identificado na UI.
     if(a.atendido_em){const t=Date.parse(a.atendido_em);return Number.isFinite(t)?{t,legado:false}:null;}
+    const t=instanteAgendaHome(a);
+    return Number.isFinite(t)?{t,legado:true}:null;
+}
+function instanteAgendaHome(a){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(a.data||'')||!/^\d{2}:\d{2}/.test(a.hora_inicio||''))return null;
     const t=Date.parse(`${a.data}T${String(a.hora_inicio).slice(0,5)}:00-03:00`);
-    return Number.isFinite(t)?{t,legado:true}:null;
+    return Number.isFinite(t)?t:null;
 }
 function filtrarAtendimentos24hHome(dados,agora=Date.now(),profissional=''){
     return dados.filter(a=>['atendido','concluido'].includes(String(a.status||'').toLowerCase()))
         .filter(a=>!profissional||String(a.profissional_id)===profissional)
-        .map(a=>({...a,__referencia:referenciaAtendimentoHome(a)}))
-        .filter(a=>a.__referencia&&a.__referencia.t>=agora-86400000&&a.__referencia.t<=agora)
+        .map(a=>({...a,__referencia:referenciaAtendimentoHome(a),__instanteAgenda:instanteAgendaHome(a)}))
+        .filter(a=>a.__referencia&&Number.isFinite(a.__instanteAgenda)&&a.__instanteAgenda>=agora-86400000&&a.__instanteAgenda<=agora)
         .sort((a,b)=>b.__referencia.t-a.__referencia.t||String(a.id).localeCompare(String(b.id)));
 }
 
@@ -104,14 +108,11 @@ function agendamentosLocaisHojeHomeDetalhes(hoje) {
 }
 
 async function consultarAtendimentos24hHome(agora,profissional,comHorario=true){
-    const inicio=new Date(agora-86400000).toISOString(),fim=new Date(agora).toISOString();
     const diaInicio=dataClinicaHome(agora-86400000),diaFim=dataClinicaHome(agora);
     const campos='id,paciente_id,profissional_id,data,hora_inicio,status'+(comHorario?',atendido_em':'');
     const todos=[];
     for(let offset=0;;offset+=500){
-        let q=_supabase.from('agendamentos').select(campos).in('status',['atendido','concluido']);
-        if(comHorario)q=q.or(`and(atendido_em.gte.${inicio},atendido_em.lte.${fim}),and(atendido_em.is.null,data.gte.${diaInicio},data.lte.${diaFim})`);
-        else q=q.gte('data',diaInicio).lte('data',diaFim);
+        let q=_supabase.from('agendamentos').select(campos).in('status',['atendido','concluido']).gte('data',diaInicio).lte('data',diaFim);
         if(profissional)q=q.eq('profissional_id',profissional);
         const r=await q.order('id').range(offset,offset+499);
         if(r.error){
