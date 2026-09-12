@@ -21,5 +21,9 @@ assert.match(css,/\.ks-prof-home-active \.ks-home-overview\{display:none!importa
 assert.match(css,/@media\(max-width:620px\)[\s\S]*#ks_home_hero\{display:none!important\}/,'telefone deve remover o hero redundante e liberar espaço vertical');
 assert.match(css,/min-height:44px/,'ações móveis devem manter alvo de toque de pelo menos 44px');
 assert.match(css,/ks-prof-greeting-clean/,'CSS deve remover contorno indevido da saudação');
+assert.match(css,/\[data-ks-fisio-agenda\]/,'mobile deve destacar Agenda como ação principal do Meu dia clínico');
+assert.match(css,/#ks_prof_pendencias_badge[\s\S]*position:absolute/,'badge de pendências deve funcionar como indicador sobreposto no mobile');
+assert.match(css,/\.ks-prof-empty-state\.compact[\s\S]*text-align:left!important/,'estado vazio de notificações deve ser compacto e alinhado à leitura mobile');
+assert.match(css,/@media\(max-width:430px\)/,'telefone estreito deve ter refinamento responsivo dedicado');
 
 console.log('professional_home_polish.contract.js OK');
