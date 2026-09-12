@@ -7,6 +7,8 @@
 
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
+    const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
+    const ONLINE_CONFIG_REVISION='20260912-r1';
     let alvoAtual=null;
     let busy=false;
 
@@ -171,7 +173,45 @@
         abrir(botao.dataset.equipeRedefinir);
     }
 
+    function carregarConfiguracoesAgendaOnline(){
+        if(window.KineSysConfiguracoesAgendaOnline)return;
+        if(document.querySelector(`script[src^="${ONLINE_CONFIG_SCRIPT}"]`))return;
+        const script=document.createElement('script');
+        script.src=`${ONLINE_CONFIG_SCRIPT}?v=${ONLINE_CONFIG_REVISION}`;
+        script.async=false;
+        script.addEventListener('load',()=>{
+            const tela=document.getElementById('tela_configuracoes');
+            if(tela?.classList.contains('ativa'))window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
+        });
+        document.body.appendChild(script);
+    }
+
+    function encaminharAberturaConfiguracoes(event){
+        if(!event.target?.closest?.('#menu_configuracoes a'))return;
+        carregarConfiguracoesAgendaOnline();
+        setTimeout(()=>window.KineSysConfiguracoesAgendaOnline?.onOpen?.(),0);
+    }
+
+    function observarConfiguracoesAtivas(){
+        const tela=document.getElementById('tela_configuracoes');
+        if(!tela)return;
+        const observer=new MutationObserver(()=>{
+            if(tela.classList.contains('ativa')){
+                carregarConfiguracoesAgendaOnline();
+                window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
+            }
+        });
+        observer.observe(tela,{attributes:true,attributeFilter:['class']});
+    }
+
     document.addEventListener('click',interceptarClique,true);
+    document.addEventListener('click',encaminharAberturaConfiguracoes,true);
+    if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',()=>{carregarConfiguracoesAgendaOnline();observarConfiguracoesAtivas();},{once:true});
+    }else{
+        carregarConfiguracoesAgendaOnline();
+        observarConfiguracoesAtivas();
+    }
 
     window.KineSysAccessAdmin=Object.freeze({version:VERSION,open:abrir,validatePassword:validarSenha});
 })();
