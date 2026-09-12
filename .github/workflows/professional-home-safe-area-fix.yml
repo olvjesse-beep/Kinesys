@@ -1,0 +1,46 @@
+name: Professional Home Safe Area Fix
+
+on:
+  push:
+    branches: [polish/professional-home-mobile-impeccable]
+    paths:
+      - '.github/workflows/professional-home-safe-area-fix.yml'
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
+jobs:
+  fix:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: polish/professional-home-mobile-impeccable
+          fetch-depth: 0
+      - name: Fix safe-area selector and validate
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='styles/home_profissional_dashboard-1.0.0.css';
+          let s=fs.readFileSync(p,'utf8');
+          const from='.ks-prof-home-active #tela_home{padding-bottom:max(16px,env(safe-area-inset-bottom))}';
+          const to='#tela_home.ks-prof-home-active{padding-bottom:max(16px,env(safe-area-inset-bottom))}';
+          if(!s.includes(from)) throw new Error('safe-area selector not found');
+          s=s.replace(from,to);
+          fs.writeFileSync(p,s,'utf8');
+          NODE
+          node tests/professional_home_polish.contract.js
+          node tests/professional_home_focus.contract.js
+          node tests/runtime_asset_cache.contract.js
+          git diff --check
+          rm .github/workflows/professional-home-safe-area-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add styles/home_profissional_dashboard-1.0.0.css .github/workflows/professional-home-safe-area-fix.yml
+          git commit -m "style: fix mobile safe area selector"
+          git push origin HEAD:polish/professional-home-mobile-impeccable
