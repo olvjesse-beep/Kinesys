@@ -3,7 +3,7 @@ const fs=require('fs');
 const assert=require('assert');
 
 const login=fs.readFileSync('login_access-1.18.0.js','utf8');
-const script=fs.readFileSync('script-1.18.0.js','utf8');
+const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
 const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
 const agendaCss=fs.readFileSync('design_agenda.css','utf8');
 const agendaRefCss=fs.readFileSync('agenda_referencia-1.20.0.css','utf8');
@@ -16,7 +16,7 @@ function bloco(texto,inicio,fim){const a=texto.indexOf(inicio);assert.ok(a>=0,`a
 
 // Login e administração de acesso.
 assert.match(login,/typeof event\.getModifierState==='function'/,'Caps Lock deve tolerar eventos sem getModifierState');
-const equipe=bloco(script,'async function carregarListaEquipe','async function excluirFuncionario');
+const equipe=bloco(team,'async function carregarListaEquipe','async function excluirFuncionario');
 assert.doesNotMatch(equipe,/data\.filter\(f => f\.ativo !== false\)/,'Perfis inativos não podem desaparecer da administração');
 assert.match(equipe,/data-equipe-reativar/,'Lista deve permitir reativar perfil inativo');
 assert.match(equipe,/data-equipe-redefinir/,'Lista deve permitir recuperar acesso');
