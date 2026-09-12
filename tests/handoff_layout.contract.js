@@ -68,8 +68,11 @@ assert.ok(!/<link[^>]+href=["']design_base\.css/i.test(html), 'index.html não p
 
 const loader = fs.readFileSync(path.join(ROOT, 'src/ui/screen_loader-1.25.0.js'), 'utf8');
 assert.ok(loader.includes('src/agenda/agenda-1.20.0.js'), 'Screen loader deve usar path organizado da Agenda');
-assert.ok(loader.includes('src/clinical/clinical_reasoning_shoulder-3.1.0.js'), 'Screen loader deve usar path organizado do Motor Clínico');
+assert.ok(loader.includes('src/clinical/clinical_region_loader-1.0.0.js'), 'Screen loader deve usar path organizado do loader clínico regional');
 assert.ok(loader.includes('styles/agenda_referencia-1.20.0.css'), 'Screen loader deve usar path organizado de CSS lazy');
+
+const regionLoader = fs.readFileSync(path.join(ROOT, 'src/clinical/clinical_region_loader-1.0.0.js'), 'utf8');
+assert.ok(regionLoader.includes('src/clinical/clinical_reasoning_shoulder-3.1.0.js'), 'Loader clínico regional deve usar path organizado do Motor Clínico de ombro');
 
 const designBase = fs.readFileSync(path.join(ROOT, 'styles/design_base.css'), 'utf8');
 assert.ok(designBase.includes('../assets/timbrado-fisiofix.png'), 'Asset relativo do design_base deve considerar o diretório styles');
