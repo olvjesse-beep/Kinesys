@@ -4,6 +4,7 @@ const assert=require('assert');
 
 const login=fs.readFileSync('login_access-1.18.0.js','utf8');
 const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
+const accessAdmin=fs.readFileSync('access_admin-1.0.0.js','utf8');
 const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
 const agendaCss=fs.readFileSync('design_agenda.css','utf8');
 const agendaRefCss=fs.readFileSync('agenda_referencia-1.20.0.css','utf8');
@@ -20,7 +21,9 @@ const equipe=bloco(team,'async function carregarListaEquipe','async function exc
 assert.doesNotMatch(equipe,/data\.filter\(f => f\.ativo !== false\)/,'Perfis inativos não podem desaparecer da administração');
 assert.match(equipe,/data-equipe-reativar/,'Lista deve permitir reativar perfil inativo');
 assert.match(equipe,/data-equipe-redefinir/,'Lista deve permitir recuperar acesso');
-assert.match(equipe,/resetPasswordForEmail/,'Redefinição deve atingir a credencial real do Supabase Auth');
+assert.match(equipe,/window\.KineSysAccessAdmin\.open/,'Equipe deve delegar a redefinição ao módulo administrativo de acesso');
+assert.match(accessAdmin,/_supabase\.functions\.invoke\('cadastrar-equipe'/,'Redefinição deve usar a Edge Function autenticada');
+assert.match(accessAdmin,/action:'reset_password'/,'Redefinição deve alterar a credencial real do Supabase Auth');
 assert.match(equipe,/update\(\{ ativo:true \}\)/,'Reativação deve preservar cadastro e apenas reabrir o perfil');
 assert.match(html,/<th>Status<\/th>/,'Tabela deve mostrar status do perfil');
 assert.match(html,/editar nome, e-mail ou função não troca a senha/,'UI deve explicar que editar cadastro não redefine senha');
