@@ -1,0 +1,34 @@
+name: Temporary Online Config Cache Bump
+
+on:
+  push:
+    branches: [feature/agendamento-online-v1]
+    paths:
+      - '.github/workflows/temp-online-config-cache-bump.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agendamento-online-v1
+          fetch-depth: 0
+      - name: Bump access admin cache key
+        shell: powershell
+        run: |
+          $path = 'index.html'
+          $old = 'src/admin/access_admin-1.0.0.js?v=20260911-access-r1'
+          $new = 'src/admin/access_admin-1.0.0.js?v=20260912-online-config-r1'
+          $content = [System.IO.File]::ReadAllText($path)
+          if (-not $content.Contains($old)) { throw "Expected access_admin cache key was not found." }
+          $content = $content.Replace($old, $new)
+          [System.IO.File]::WriteAllText($path, $content, (New-Object System.Text.UTF8Encoding($false)))
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'chore: invalidate admin settings bootstrap cache'
+          git push origin HEAD:feature/agendamento-online-v1
