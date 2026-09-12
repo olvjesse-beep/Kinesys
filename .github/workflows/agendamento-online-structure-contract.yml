@@ -4,15 +4,25 @@ on:
   pull_request:
     paths:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/configuracoes_agendamento_online-1.0.0.css'
       - 'tests/agendamento_online_structure.contract.js'
+      - 'tests/agendamento_online_admin_config.contract.js'
       - '.github/workflows/agendamento-online-structure-contract.yml'
   push:
     branches: [main]
     paths:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/configuracoes_agendamento_online-1.0.0.css'
       - 'tests/agendamento_online_structure.contract.js'
+      - 'tests/agendamento_online_admin_config.contract.js'
       - '.github/workflows/agendamento-online-structure-contract.yml'
 
 jobs:
@@ -26,3 +36,9 @@ jobs:
       - name: Online scheduling structure contract
         shell: cmd
         run: node tests\agendamento_online_structure.contract.js
+      - name: Online scheduling admin configuration contract
+        shell: cmd
+        run: node tests\agendamento_online_admin_config.contract.js
+      - name: JavaScript syntax
+        shell: cmd
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js
