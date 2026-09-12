@@ -2,7 +2,9 @@ const fs = require('fs');
 const assert = require('assert');
 
 const migrationPath = 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql';
+const indexMigrationPath = 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql';
 const sql = fs.readFileSync(migrationPath, 'utf8');
+const indexSql = fs.readFileSync(indexMigrationPath, 'utf8');
 
 assert(sql.includes('add column if not exists agendamento_online_ativo boolean not null default false'),
   'procedimentos deve permanecer fechado para agendamento online por padrão');
@@ -48,5 +50,9 @@ assert(sql.includes('public.kinesys_agenda_escopo_permitido(profissional_id)'),
   'disponibilidade online deve preservar o escopo profissional consolidado da Agenda');
 assert(sql.includes("in ('MASTER', 'MASTER_FEM')"),
   'ativação e configuração global do portal devem permanecer administrativas');
+assert(indexSql.includes('create index if not exists idx_disponibilidade_agendamento_online_profissional'),
+  'FK profissional da disponibilidade online deve ter índice de cobertura');
+assert(indexSql.includes('on public.disponibilidade_agendamento_online (profissional_id)'),
+  'índice de cobertura deve iniciar por profissional_id');
 
 console.log('agendamento_online_structure.contract: OK');
