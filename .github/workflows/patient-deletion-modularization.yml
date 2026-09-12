@@ -33,6 +33,11 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Syntax
         run: |
           node --check src/patient/patient_deletion_core-1.0.0.js

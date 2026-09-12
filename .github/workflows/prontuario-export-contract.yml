@@ -35,6 +35,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: JavaScript syntax
         run: |
           node --check src/patient/prontuario_export.js

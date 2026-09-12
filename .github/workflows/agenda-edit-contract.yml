@@ -35,6 +35,11 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Validate existing appointment editing
         shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
         run: |
