@@ -3,9 +3,9 @@ const fs=require('fs');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const mod=fs.readFileSync('patient_pre_registration_core-1.0.0.js','utf8');
-const helpers=fs.readFileSync('patient_form_helpers_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod=fs.readFileSync('src/patient/patient_pre_registration_core-1.0.0.js','utf8');
+const helpers=fs.readFileSync('src/patient/patient_form_helpers_core-1.0.0.js','utf8');
 
 const funcoes=[
   'alternarFiltroPreCadastro',
@@ -44,10 +44,10 @@ assert.match(helpers,/function removerAcentos\(str\)/,'helper compartilhado remo
 assert.match(helpers,/function obterTextoExibicao\(item\)/,'helper compartilhado obterTextoExibicao deve permanecer no módulo 4Q');
 assert.match(helpers,/function calcularIdadeCadastro\(\)/,'cálculo de idade do cadastro deve permanecer no módulo 4Q');
 
-const helpersPos=html.indexOf('patient_form_helpers_core-1.0.0.js');
-const inputPos=html.indexOf('input_helpers_core-1.0.0.js');
-const prePos=html.indexOf('patient_pre_registration_core-1.0.0.js');
-const corePos=html.indexOf('script-1.18.0.js');
+const helpersPos=html.indexOf('src/patient/patient_form_helpers_core-1.0.0.js');
+const inputPos=html.indexOf('src/ui/input_helpers_core-1.0.0.js');
+const prePos=html.indexOf('src/patient/patient_pre_registration_core-1.0.0.js');
+const corePos=html.indexOf('src/core/script-1.18.0.js');
 assert.ok(helpersPos>=0&&inputPos>helpersPos&&prePos>inputPos&&corePos>prePos,'ordem deve manter helpers compartilhados -> input helpers -> pré-cadastro -> core');
 assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do monólito deve acompanhar a modularização corrente após 4Q');
 

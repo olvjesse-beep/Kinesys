@@ -1,6 +1,6 @@
 /* KineSys — Patient Index Cache Core 1.0.0
  * Índice leve de pacientes, fallback local e cache curto extraídos de
- * script-1.18.0.js sem alterar TTL, chaves, invalidação ou dados clínicos.
+ * src/core/script-1.18.0.js sem alterar TTL, chaves, invalidação ou dados clínicos.
  */
 'use strict';
 

@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'); const assert=require('assert');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const mod=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod=fs.readFileSync('src/core/crm_relationship_core-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 assert(!core.includes('MÓDULO CRM E RELACIONAMENTO'),'CRM ainda embutido no monólito');
 assert(mod.includes('MÓDULO CRM E RELACIONAMENTO'),'módulo perdeu marcador CRM');
@@ -9,9 +9,9 @@ for(const fn of ['popularSelectCRM','carregarPacienteCRM','enviarWhatsApp','obte
 assert(mod.includes('let pacienteCRM = null;'),'módulo perdeu estado pacienteCRM');
 assert(!core.includes('let pacienteCRM = null;'),'estado pacienteCRM permaneceu no core');
 assert((core.match(/\bpopularSelectCRM\b/g)||[]).length>=3,'core perdeu consumidores históricos de popularSelectCRM');
-const tag='<script defer src="crm_relationship_core-1.0.0.js?v=20260911-phase4g-r1"></script>';
-const input='<script defer src="input_helpers_core-1.0.0.js?v=20260911-phase4f-r1"></script>';
-const main='<script defer src="script-1.18.0.js';
+const tag='<script defer src="src/core/crm_relationship_core-1.0.0.js?v=20260911-phase4g-r1"></script>';
+const input='<script defer src="src/ui/input_helpers_core-1.0.0.js?v=20260911-phase4f-r1"></script>';
+const main='<script defer src="src/core/script-1.18.0.js';
 assert(html.includes(tag),'index não carrega CRM core');
 assert(html.indexOf(input)<html.indexOf(tag),'CRM deve carregar após input helpers');
 assert(html.indexOf(tag)<html.indexOf(main),'CRM deve carregar antes do core consumidor');

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const src = fs.readFileSync('agenda-1.20.0.js', 'utf8');
+const src = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 
 function trechoEntre(inicio, fim) {
   const a = src.indexOf(inicio);
@@ -24,7 +24,7 @@ assert(carregarProcedimentos.includes('clonarProcedimentosAgenda'), 'Dados de ca
 
 const horarios = trechoEntre('async function carregarHorarios()', 'function renderizarListaHorarios');
 const bloqueios = trechoEntre('async function carregarBloqueios()', 'function renderizarListaBloqueios');
-const equipe = trechoEntre('async function carregarProfissionaisAgenda()', '/* --------------------------------------------------------------------\n   PROCEDIMENTOS');
+const equipe = trechoEntre('async function carregarProfissionaisAgenda()', 'async function carregarProcedimentos()');
 assert(!horarios.includes('KineSysDataCache'), 'Horários afetam disponibilidade e não devem entrar no cache auxiliar desta fase.');
 assert(!bloqueios.includes('KineSysDataCache'), 'Bloqueios afetam disponibilidade e não devem entrar no cache auxiliar desta fase.');
 assert(!equipe.includes('KineSysDataCache'), 'Contexto/equipe de acesso não deve ser cacheado nesta fase.');

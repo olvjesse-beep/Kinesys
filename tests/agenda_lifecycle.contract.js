@@ -2,12 +2,12 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const lifecycle=fs.readFileSync('agenda_lifecycle-1.0.0.js','utf8');
-const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const lifecycle=fs.readFileSync('src/agenda/agenda_lifecycle-1.0.0.js','utf8');
+const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 
-assert.ok(loader.indexOf('agenda-1.20.0.js')<loader.indexOf('agenda_lifecycle-1.0.0.js'),'Agenda lifecycle must load after the Agenda module');
-assert.match(loader,/agenda_lifecycle-1\.0\.0\.js/,'Agenda lifecycle must remain lazy with the Agenda bundle');
+assert.ok(loader.indexOf('src/agenda/agenda-1.20.0.js')<loader.indexOf('src/agenda/agenda_lifecycle-1.0.0.js'),'Agenda lifecycle must load after the Agenda module');
+assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js/,'Agenda lifecycle must remain lazy with the Agenda bundle');
 
 assert.match(lifecycle,/function activate\(/,'Agenda lifecycle must expose activate');
 assert.match(lifecycle,/function suspend\(/,'Agenda lifecycle must expose suspend');

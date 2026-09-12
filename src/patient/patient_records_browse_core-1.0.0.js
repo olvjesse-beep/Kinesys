@@ -1,6 +1,6 @@
 /* KineSys — Patient Records Browse Core 1.0.0
  * Fallback de navegação/listagem de prontuários e recentes da Home extraído de
- * script-1.18.0.js. O Design System/Home Detalhes podem substituir estes
+ * src/core/script-1.18.0.js. O Design System/Home Detalhes podem substituir estes
  * renderizadores depois, como já ocorre no runtime de produção.
  */
 'use strict';

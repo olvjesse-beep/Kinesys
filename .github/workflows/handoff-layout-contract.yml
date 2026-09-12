@@ -1,0 +1,36 @@
+name: Handoff Layout Contract
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'recuperar-acesso.html'
+      - 'src/**'
+      - 'styles/**'
+      - 'assets/**'
+      - 'docs/HANDOFF_ARCHITECTURE.md'
+      - 'tests/handoff_layout.contract.js'
+      - '.github/workflows/handoff-layout-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'recuperar-acesso.html'
+      - 'src/**'
+      - 'styles/**'
+      - 'assets/**'
+      - 'docs/HANDOFF_ARCHITECTURE.md'
+      - 'tests/handoff_layout.contract.js'
+      - '.github/workflows/handoff-layout-contract.yml'
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Handoff layout contract
+        shell: cmd
+        run: node tests\handoff_layout.contract.js

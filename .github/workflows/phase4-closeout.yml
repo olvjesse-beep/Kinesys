@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/phase4_closeout.contract.js'
       - '.github/workflows/phase4-closeout.yml'
       - '.github/workflows/**phase4**'
@@ -14,7 +14,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/phase4_closeout.contract.js'
       - '.github/workflows/phase4-closeout.yml'
       - '.github/workflows/**phase4**'
@@ -24,11 +24,19 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   closeout:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: JavaScript syntax
         run: node --check tests/phase4_closeout.contract.js
       - name: Phase 4 closeout contract

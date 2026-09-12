@@ -4,21 +4,21 @@ on:
   push:
     branches: [main]
     paths:
-      - 'agenda-1.20.0.js'
-      - 'design_agenda.css'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'styles/design_agenda.css'
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'financeiro_agendamento-1.21.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
       - 'tests/agenda_editar_atendimento.contract.js'
       - 'tests/agenda_ux_corrections.contract.js'
       - '.github/workflows/agenda-edit-contract.yml'
   pull_request:
     paths:
-      - 'agenda-1.20.0.js'
-      - 'design_agenda.css'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'styles/design_agenda.css'
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'financeiro_agendamento-1.21.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
       - 'tests/agenda_editar_atendimento.contract.js'
       - 'tests/agenda_ux_corrections.contract.js'
       - '.github/workflows/agenda-edit-contract.yml'
@@ -26,17 +26,26 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   contract:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Validate existing appointment editing
-        shell: bash
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
         run: |
           set -euo pipefail
-          node --check agenda-1.20.0.js
-          node --check screen_loader-1.25.0.js
+          node --check src/agenda/agenda-1.20.0.js
+          node --check src/ui/screen_loader-1.25.0.js
           node --check tests/agenda_editar_atendimento.contract.js
           node --check tests/agenda_ux_corrections.contract.js
           node tests/agenda_editar_atendimento.contract.js

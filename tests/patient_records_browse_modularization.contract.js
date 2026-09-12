@@ -3,10 +3,10 @@ const fs=require('fs');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const mod=fs.readFileSync('patient_records_browse_core-1.0.0.js','utf8');
-const design=fs.readFileSync('design_system-1.20.1.js','utf8');
-const home=fs.readFileSync('home_detalhes-1.18.5.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
+const design=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');
+const home=fs.readFileSync('src/home/home_detalhes-1.18.5.js','utf8');
 
 for(const fn of ['renderizarTabelaProntuarios','filtrarPacientesSalvos','renderizarPacientesRecentesHome']){
   assert(!core.includes(`function ${fn}(`)&&!core.includes(`async function ${fn}(`),`declaração ${fn} permaneceu no monólito`);
@@ -32,10 +32,10 @@ assert.match(core,/if \(idTela === 'tela_buscar'\) renderizarTabelaProntuarios\(
 assert.match(core,/renderizarPacientesRecentesHome\(\)/,'core deve continuar podendo atualizar recentes da Home');
 assert.match(html,/oninput="filtrarPacientesSalvos\(\)"/,'handler inline da busca de prontuários deve permanecer intacto');
 
-const modulePos=html.indexOf('patient_records_browse_core-1.0.0.js');
-const corePos=html.indexOf('script-1.18.0.js');
-const designPos=html.indexOf('design_system-1.20.1.js');
-const homePos=html.indexOf('home_detalhes-1.18.5.js');
+const modulePos=html.indexOf('src/patient/patient_records_browse_core-1.0.0.js');
+const corePos=html.indexOf('src/core/script-1.18.0.js');
+const designPos=html.indexOf('src/core/design_system-1.20.1.js');
+const homePos=html.indexOf('src/home/home_detalhes-1.18.5.js');
 assert.ok(modulePos>=0&&modulePos<corePos,'módulo de browse deve carregar antes do core consumidor');
 assert.ok(designPos>corePos&&homePos>corePos,'overrides modernos devem continuar carregando depois do fallback/core');
 assert.match(design,/window\.renderizarTabelaProntuarios\s*=\s*async function/,'Design System ativo deve continuar substituindo a listagem fallback');

@@ -5,7 +5,7 @@ global.enriquecerPlanoCotoveloKineSys=(plano)=>{plano.__ponteAnteriorVisitada=(p
 global.BANCO_MAPEAMENTO_CLINICO={cervical:{clusters:[],diferenciais:[]}};
 global.coletarContextoClinico=()=>({origemIrradiacao:'',irradiacao:'',comorbidades:[],medicamentos:[],cirurgias:[],textoComorbidades:'',textoMedicamentos:'',textoCirurgias:'',...currentContext});
 global.document={readyState:'loading',addEventListener:()=>{},getElementById:(id)=>{if(id==='paciente_hma')return{value:currentHma};if(id==='paciente_idade')return{value:currentContext.idade||''};return null;}};
-const motorSource=fs.readFileSync(__dirname+'/../clinical_reasoning_cervical-3.1.0.js','utf8');
+const motorSource=fs.readFileSync(__dirname+'/../src/clinical/clinical_reasoning_cervical-3.1.0.js','utf8');
 vm.runInThisContext(motorSource);
 const bancoSource=fs.readFileSync(__dirname+'/../database/mapeamento_clinico.js','utf8');
 for(const id of ['radiculopatia_cervical','mielopatia_cervical_suspeita','pos_operatorio_cervical','lesao_muscular_cervical_aguda','dor_cervical_mecanica','cefaleia_cervicogenica','dor_cervical_padrao_irradiado','dor_cervical_coordenacao_movimento','instabilidade_craniocervical']){

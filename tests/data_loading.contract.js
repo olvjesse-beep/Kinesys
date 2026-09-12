@@ -1,12 +1,12 @@
 'use strict';
 const fs=require('fs');
 const assert=require('assert');
-const src=fs.readFileSync('script-1.18.0.js','utf8');
-const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
-const browse=fs.readFileSync('patient_records_browse_core-1.0.0.js','utf8');
-const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
-const media=fs.readFileSync('midias_core-1.0.0.js','utf8');
-const crm=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
+const src=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const patient=fs.readFileSync('src/patient/patient_index_cache_core-1.0.0.js','utf8');
+const browse=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
+const chart=fs.readFileSync('src/patient/patient_chart_read_core-1.0.0.js','utf8');
+const media=fs.readFileSync('src/core/midias_core-1.0.0.js','utf8');
+const crm=fs.readFileSync('src/core/crm_relationship_core-1.0.0.js','utf8');
 const runtime=patient+'\n'+browse+'\n'+src+'\n'+chart+'\n'+media+'\n'+crm;
 
 assert.match(patient,/async function obterPacientesBasicos\(\)/,'lightweight patient index must exist in its dedicated module');

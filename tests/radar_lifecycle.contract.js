@@ -1,7 +1,7 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const source = fs.readFileSync('script-1.18.0.js', 'utf8');
+const source = fs.readFileSync('src/core/script-1.18.0.js', 'utf8');
 
 assert.match(source, /function instalarObservadorCicloVidaRadar\(\)/, 'Radar deve manter o ponto público de instalação do lifecycle');
 assert.doesNotMatch(source, /new MutationObserver\(\(\) => sincronizarCicloVidaRadar\(\)\)/, 'Radar não deve manter MutationObserver apenas para detectar ativação da tela');

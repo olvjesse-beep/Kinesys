@@ -7,9 +7,9 @@ global.window=global;
 global.BANCO_MAPEAMENTO_CLINICO={ombro:{clusters:[],diferenciais:[]},cotovelo:{clusters:[],diferenciais:[]},punho_mao:{clusters:[],diferenciais:[]}};
 global.coletarContextoClinico=()=>({origemIrradiacao:'',irradiacao:'',comorbidades:[],medicamentos:[],cirurgias:[],textoComorbidades:'',textoMedicamentos:'',textoCirurgias:'',...currentContext});
 global.document={readyState:'loading',addEventListener:()=>{},getElementById:(id)=>id==='paciente_hma'?{value:currentHma}:id==='paciente_idade'?{value:currentContext.idade||''}:null};
-vm.runInThisContext(fs.readFileSync(__dirname+'/../clinical_reasoning_shoulder-3.1.0.js','utf8'));
-vm.runInThisContext(fs.readFileSync(__dirname+'/../clinical_reasoning_elbow-3.1.0.js','utf8'));
-vm.runInThisContext(fs.readFileSync(__dirname+'/../clinical_reasoning_wrist-3.1.0.js','utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname+'/../src/clinical/clinical_reasoning_shoulder-3.1.0.js','utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname+'/../src/clinical/clinical_reasoning_elbow-3.1.0.js','utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname+'/../src/clinical/clinical_reasoning_wrist-3.1.0.js','utf8'));
 function base(regiao){return{insuficiente:false,regioes:[{id:regiao,nome:regiao}],hipoteses:[],exame:{seguranca:[],testesPrioritarios:[],analises:[],modificadores:[]},lacunas:[]};}
 function motor(regiao){if(regiao==='ombro')return window.KineSysMotor31Ombro.enriquecer;if(regiao==='cotovelo')return window.KineSysMotor31Cotovelo.enriquecer;return window.KineSysMotor31PunhoMao.enriquecer;}
 function ids(p,regiao){return p.hipoteses.filter(h=>h.regiaoId===regiao&&h.motor31?.condicaoId).map(h=>h.motor31.condicaoId);}

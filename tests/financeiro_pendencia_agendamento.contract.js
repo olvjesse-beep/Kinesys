@@ -3,10 +3,10 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const js=fs.readFileSync('financeiro_agendamento-1.21.0.js','utf8');
-const css=fs.readFileSync('financeiro_agendamento-1.21.0.css','utf8');
+const js=fs.readFileSync('src/finance/financeiro_agendamento-1.21.0.js','utf8');
+const css=fs.readFileSync('styles/financeiro_agendamento-1.21.0.css','utf8');
 const html=fs.readFileSync('index.html','utf8');
-const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
 const sqlBase=fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_FINANCEIRO_BAIXA_COBRANCA_AGENDAMENTO_20260911.sql','utf8');
 const sqlGuard=fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_FINANCEIRO_BAIXA_COBRANCA_GUARD_20260911.sql','utf8');
 const sql=sqlBase+'\n'+sqlGuard;
@@ -42,8 +42,8 @@ assert.doesNotMatch(js,/from\('cobrancas_agendamento'\)\.delete\(/,'Frontend nã
 
 assert.match(css,/\.fin-ag-history-actions/,'Ações de quitação/baixa devem possuir layout próprio');
 assert.match(css,/\.fin-ag-writeoff-dialog/,'Baixa deve usar diálogo visual dedicado');
-assert.match(html,/financeiro_agendamento-1\.21\.0\.css\?v=20260911-pending-r1/,'CSS deve ter cache bust da correção');
-assert.match(html,/financeiro_agendamento-1\.21\.0\.js\?v=20260911-pending-r1/,'JS deve ter cache bust da correção');
+assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css\?v=20260911-pending-r1/,'CSS deve ter cache bust da correção');
+assert.match(html,/src\/finance\/financeiro_agendamento-1\.21\.0\.js\?v=20260911-pending-r1/,'JS deve ter cache bust da correção');
 assert.match(loader,/const VERSION\s*=\s*['"]1\.25\.4-phase4d['"]/,'Versão pública contratual do Screen Loader deve permanecer intacta');
 
 console.log('Financeiro pending appointment contract: OK');

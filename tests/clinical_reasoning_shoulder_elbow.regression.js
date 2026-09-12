@@ -29,8 +29,8 @@ global.document = {
   }
 };
 
-vm.runInThisContext(fs.readFileSync('clinical_reasoning_shoulder-3.1.0.js', 'utf8'));
-vm.runInThisContext(fs.readFileSync('clinical_reasoning_elbow-3.1.0.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('src/clinical/clinical_reasoning_shoulder-3.1.0.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('src/clinical/clinical_reasoning_elbow-3.1.0.js', 'utf8'));
 
 function base(regioes) {
   return {

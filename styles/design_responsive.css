@@ -43,7 +43,7 @@
             body.ks-design-ready img, body.ks-design-ready video, body.ks-design-ready canvas{ max-width:100%; }
             body.ks-design-ready p, body.ks-design-ready small, body.ks-design-ready label, body.ks-design-ready td, body.ks-design-ready th, body.ks-design-ready button, body.ks-design-ready a{ overflow-wrap:anywhere; }
 
-            /* Sidebar/backdrop consolidados em design_navigation.css (Etapa 7). */
+            /* Sidebar/backdrop consolidados em styles/design_navigation.css (Etapa 7). */
 
             /* Tabelas legadas: em telas menores, rolagem fica dentro da
                própria tabela em vez de cortar colunas fora da margem. */

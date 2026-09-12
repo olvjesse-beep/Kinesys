@@ -1,5 +1,5 @@
 /* KineSys — Cadastro Validations Core 1.0.0
- * Extraído de script-1.18.0.js preservando nomes, validações e fluxo de CEP.
+ * Extraído de src/core/script-1.18.0.js preservando nomes, validações e fluxo de CEP.
  */
 'use strict';
 

@@ -3,9 +3,9 @@ const fs=require('fs');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const indexCache=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
-const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const indexCache=fs.readFileSync('src/patient/patient_index_cache_core-1.0.0.js','utf8');
+const chart=fs.readFileSync('src/patient/patient_chart_read_core-1.0.0.js','utf8');
 
 for(const fn of ['instanteRegistroClinico','mesclarRegistrosCloudLocal','mesclarPacienteCloudLocal','obterPacienteCompletoPorId','obterPacientesSalvos']) {
   assert(!core.includes(`function ${fn}(`)&&!core.includes(`async function ${fn}(`),`declaração ${fn} permaneceu no monólito`);
@@ -34,10 +34,10 @@ assert.match(chart,/normalizarPacienteDoBanco/,'normalização histórica preser
 assert.match(chart,/window\.obterPacienteCompletoPorId = obterPacienteCompletoPorId/,'API individual deve permanecer disponível via window');
 assert.match(chart,/window\.obterPacientesSalvos = obterPacientesSalvos/,'API legada deve permanecer disponível via window');
 
-const indexPos=html.indexOf('patient_index_cache_core-1.0.0.js');
-const corePos=html.indexOf('script-1.18.0.js');
-const chartPos=html.indexOf('patient_chart_read_core-1.0.0.js');
-const screenPos=html.indexOf('screen_loader-1.25.0.js');
+const indexPos=html.indexOf('src/patient/patient_index_cache_core-1.0.0.js');
+const corePos=html.indexOf('src/core/script-1.18.0.js');
+const chartPos=html.indexOf('src/patient/patient_chart_read_core-1.0.0.js');
+const screenPos=html.indexOf('src/ui/screen_loader-1.25.0.js');
 assert.ok(indexPos>=0&&corePos>indexPos,'índice leve deve continuar antes do core');
 assert.ok(chartPos>corePos,'módulo de prontuário deve carregar após o core que fornece normalização e Supabase');
 assert.ok(screenPos>chartPos,'módulo de prontuário deve estar disponível antes dos módulos operacionais lazy');

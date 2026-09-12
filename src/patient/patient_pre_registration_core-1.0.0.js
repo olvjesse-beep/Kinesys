@@ -1,5 +1,5 @@
 /* KineSys — Patient Pre-Registration Core 1.0.0
- * Seletor de paciente/pré-cadastro da Avaliação extraído de script-1.18.0.js.
+ * Seletor de paciente/pré-cadastro da Avaliação extraído de src/core/script-1.18.0.js.
  * Preserva filtro temporal, busca acessível, contexto ativo e carga do prontuário.
  */
 'use strict';

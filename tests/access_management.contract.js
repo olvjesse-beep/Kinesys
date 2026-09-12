@@ -2,13 +2,13 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const login=fs.readFileSync('login_access-1.18.0.js','utf8');
-const admin=fs.readFileSync('access_admin-1.0.0.js','utf8');
+const login=fs.readFileSync('src/auth/login_access-1.18.0.js','utf8');
+const admin=fs.readFileSync('src/admin/access_admin-1.0.0.js','utf8');
 const recovery=fs.readFileSync('recuperar-acesso.html','utf8');
 const edge=fs.readFileSync('supabase/functions/cadastrar-equipe/index.ts','utf8');
 const index=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const team=fs.readFileSync('src/admin/team_management_core-1.0.0.js','utf8');
 
 assert.match(login,/kinesys_meus_perfis/,'login must resolve profiles from the authenticated account');
 assert.doesNotMatch(login,/filter\(p=>normalize\(p\.tipo\)===selectedRole\)/,'login must not pre-filter profiles by a role chosen before authentication');
@@ -44,8 +44,8 @@ assert.doesNotMatch(resetBlock,/resetPasswordForEmail/,'team administration must
 assert.match(team,/>Definir nova senha<\/button>/,'team action must be labeled as direct password definition');
 assert.doesNotMatch(core,/CAMPOS_PUBLICOS_PERFIL\s*=\s*\[[\s\S]{0,250}['"]senha['"]/,'public team profile projection must continue excluding the legacy password column');
 
-assert.match(index,/access_admin-1\.0\.0\.css/,'access admin stylesheet must be loaded');
-assert.match(index,/access_admin-1\.0\.0\.js/,'access admin controller must be loaded');
-assert.ok(index.indexOf('login_access-1.18.0.js')<index.indexOf('access_admin-1.0.0.js'),'access admin must load after login access and the core globals it relies on');
+assert.match(index,/styles\/access_admin-1\.0\.0\.css/,'access admin stylesheet must be loaded');
+assert.match(index,/src\/admin\/access_admin-1\.0\.0\.js/,'access admin controller must be loaded');
+assert.ok(index.indexOf('src/auth/login_access-1.18.0.js')<index.indexOf('src/admin/access_admin-1.0.0.js'),'access admin must load after login access and the core globals it relies on');
 
 console.log('Access management contract OK: unified profile login, dedicated recovery and MASTER-only server-side password reset.');

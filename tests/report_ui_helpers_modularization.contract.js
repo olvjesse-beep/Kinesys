@@ -5,8 +5,8 @@ const vm = require('vm');
 const assert = require('assert');
 
 const html = fs.readFileSync('index.html','utf8');
-const core = fs.readFileSync('script-1.18.0.js','utf8');
-const mod = fs.readFileSync('report_ui_helpers_core-1.0.0.js','utf8');
+const core = fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod = fs.readFileSync('src/reports/report_ui_helpers_core-1.0.0.js','utf8');
 
 const funcoes = [
   'montarDocumentoComTimbrado',
@@ -28,10 +28,10 @@ assert.doesNotMatch(mod, /PERMISSOES_POR_PERFIL|telaPermitida|salvarPacienteNaNu
 assert.doesNotMatch(mod, /estadoMapeamento|processarRadar|analisarHMA|clinical/i,
   'helpers de relatório não devem incorporar lógica do Motor Clínico');
 
-const modulePos = html.indexOf('report_ui_helpers_core-1.0.0.js');
-const corePos = html.indexOf('script-1.18.0.js');
+const modulePos = html.indexOf('src/reports/report_ui_helpers_core-1.0.0.js');
+const corePos = html.indexOf('src/core/script-1.18.0.js');
 assert.ok(modulePos >= 0 && corePos > modulePos, 'ordem deve manter report UI helpers antes do monólito');
-assert.match(html, /report_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4s-r1/,
+assert.match(html, /src\/reports\/report_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4s-r1/,
   'módulo 4S deve usar cache-buster próprio');
 assert.match(html, /core_mod=20260911-phase4[a-z]+-r\d+/,
   'cache-bust do monólito deve permanecer versionado na série Phase 4');
@@ -68,7 +68,7 @@ const context = {
   encodeURIComponent
 };
 vm.createContext(context);
-vm.runInContext(mod, context, {filename:'report_ui_helpers_core-1.0.0.js'});
+vm.runInContext(mod, context, {filename:'src/reports/report_ui_helpers_core-1.0.0.js'});
 
 assert.equal(context.minutosEntreHoras('08:00','09:30'), 90);
 assert.equal(context.minutosEntreHoras('09:30','08:00'), null);

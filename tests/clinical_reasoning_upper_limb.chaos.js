@@ -25,9 +25,9 @@ global.document = {
   }
 };
 
-vm.runInThisContext(fs.readFileSync(__dirname + '/../clinical_reasoning_shoulder-3.1.0.js', 'utf8'));
-vm.runInThisContext(fs.readFileSync(__dirname + '/../clinical_reasoning_elbow-3.1.0.js', 'utf8'));
-vm.runInThisContext(fs.readFileSync(__dirname + '/../clinical_reasoning_wrist-3.1.0.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname + '/../src/clinical/clinical_reasoning_shoulder-3.1.0.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname + '/../src/clinical/clinical_reasoning_elbow-3.1.0.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync(__dirname + '/../src/clinical/clinical_reasoning_wrist-3.1.0.js', 'utf8'));
 
 function base(regiao) {
   return {

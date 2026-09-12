@@ -26,8 +26,8 @@ jobs:
 
       - name: JavaScript syntax
         run: |
-          node --check patient_form_helpers_core-1.0.0.js
-          node --check script-1.18.0.js
+          node --check src/patient/patient_form_helpers_core-1.0.0.js
+          node --check src/core/script-1.18.0.js
           node --check tests/patient_form_helpers_modularization.contract.js
 
       - name: Patient form helpers contract

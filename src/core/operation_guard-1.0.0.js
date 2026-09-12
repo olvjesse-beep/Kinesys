@@ -1,5 +1,5 @@
 /* KineSys — Operation Guard 1.0.0
- * Extraído de script-1.18.0.js sem alterar contratos públicos, timing ou comportamento.
+ * Extraído de src/core/script-1.18.0.js sem alterar contratos públicos, timing ou comportamento.
  */
 'use strict';
 

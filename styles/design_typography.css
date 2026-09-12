@@ -32,7 +32,7 @@ body.ks-design-ready small, body.ks-design-ready .field-help, body.ks-design-rea
   font-size:var(--kds-font-metadata)!important;
   line-height:var(--kds-leading-text)!important;
 }
-/* Botões do Design System são dimensionados em design_components.css.
+/* Botões do Design System são dimensionados em styles/design_components.css.
    A regra abaixo preserva conforto de controles legados/customizados. */
 body.ks-design-ready button:not(.btn-primary):not(.btn-secondary):not(.btn-nav):not(.btn-danger):not(.btn-link-compacto){
   font-size:var(--kds-font-ui)!important;
@@ -40,7 +40,7 @@ body.ks-design-ready button:not(.btn-primary):not(.btn-secondary):not(.btn-nav):
 }
 body.ks-design-ready .badge, body.ks-design-ready [class*="-badge"]{font-size:var(--kds-font-metadata)!important;line-height:var(--kds-leading-compact)!important}
 
-/* Navegação e títulos de página: design_navigation.css (Etapa 7). */
+/* Navegação e títulos de página: styles/design_navigation.css (Etapa 7). */
 
 /* Paciente ativo */
 .ks-patient-context{padding:11px 12px!important}

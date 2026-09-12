@@ -4,15 +4,15 @@ on:
   push:
     branches: [main]
     paths:
-      - 'report_ui_helpers_core-1.0.0.js'
-      - 'script-1.18.0.js'
+      - 'src/reports/report_ui_helpers_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'index.html'
       - 'tests/report_ui_helpers_modularization.contract.js'
       - '.github/workflows/report-ui-helpers-modularization.yml'
   pull_request:
     paths:
-      - 'report_ui_helpers_core-1.0.0.js'
-      - 'script-1.18.0.js'
+      - 'src/reports/report_ui_helpers_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'index.html'
       - 'tests/report_ui_helpers_modularization.contract.js'
       - '.github/workflows/report-ui-helpers-modularization.yml'
@@ -20,17 +20,25 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   contract:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: JavaScript syntax
         run: |
-          node --check report_ui_helpers_core-1.0.0.js
-          node --check script-1.18.0.js
+          node --check src/reports/report_ui_helpers_core-1.0.0.js
+          node --check src/core/script-1.18.0.js
           node --check tests/report_ui_helpers_modularization.contract.js
       - name: Report UI helpers modularization contract
         run: node tests/report_ui_helpers_modularization.contract.js

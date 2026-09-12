@@ -5,18 +5,18 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'prontuario_export.js'
-      - 'prontuario_export_impl.js'
-      - 'design_system-1.20.1.js'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
       - 'tests/prontuario_export_lazy.contract.js'
       - '.github/workflows/prontuario-export-contract.yml'
   push:
     branches: [main]
     paths:
       - 'index.html'
-      - 'prontuario_export.js'
-      - 'prontuario_export_impl.js'
-      - 'design_system-1.20.1.js'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
       - 'tests/prontuario_export_lazy.contract.js'
       - '.github/workflows/prontuario-export-contract.yml'
   workflow_dispatch:
@@ -24,18 +24,27 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   contract:
     name: Lazy export contract
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: JavaScript syntax
         run: |
-          node --check prontuario_export.js
-          node --check prontuario_export_impl.js
-          node --check design_system-1.20.1.js
+          node --check src/patient/prontuario_export.js
+          node --check src/patient/prontuario_export_impl.js
+          node --check src/core/design_system-1.20.1.js
           node --check tests/prontuario_export_lazy.contract.js
       - name: First-click and public API contract
         run: node tests/prontuario_export_lazy.contract.js

@@ -3,10 +3,10 @@ const fs=require('fs');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
-const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
-const deletion=fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const patient=fs.readFileSync('src/patient/patient_index_cache_core-1.0.0.js','utf8');
+const chart=fs.readFileSync('src/patient/patient_chart_read_core-1.0.0.js','utf8');
+const deletion=fs.readFileSync('src/patient/patient_deletion_core-1.0.0.js','utf8');
 
 assert.doesNotMatch(core,/async function obterPacientesBasicos\(\)/,'lightweight patient cache loader must leave the monolithic core');
 assert.doesNotMatch(core,/function chaveCachePacientesBasicos\(\)/,'patient cache key helper must leave the monolithic core');
@@ -33,9 +33,9 @@ const fullEnd=chart.indexOf('async function obterPacientesSalvos()',fullStart);
 const fullBlock=chart.slice(fullStart,fullEnd);
 assert.doesNotMatch(fullBlock,/KineSysDataCache/,'full clinical charts must remain outside TTL cache');
 
-const cachePos=html.indexOf('kinesys_data_cache-1.0.0.js');
-const patientPos=html.indexOf('patient_index_cache_core-1.0.0.js');
-const corePos=html.indexOf('script-1.18.0.js');
+const cachePos=html.indexOf('src/core/kinesys_data_cache-1.0.0.js');
+const patientPos=html.indexOf('src/patient/patient_index_cache_core-1.0.0.js');
+const corePos=html.indexOf('src/core/script-1.18.0.js');
 assert.ok(cachePos>=0&&patientPos>cachePos&&corePos>patientPos,'Phase 4I load order must remain central cache -> patient index cache -> main core');
 
 const saveStart=core.indexOf('async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {})');

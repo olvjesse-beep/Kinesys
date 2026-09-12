@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
-      - 'agenda-audit__agenda-1.20.0.js'
+      - 'agenda-audit__src/agenda/agenda-1.20.0.js'
       - 'agenda.js'
       - 'design_clinical_direction.css'
       - 'cirurgias-1.17.0.js'
@@ -27,7 +27,7 @@ on:
     branches: [main]
     paths:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
-      - 'agenda-audit__agenda-1.20.0.js'
+      - 'agenda-audit__src/agenda/agenda-1.20.0.js'
       - 'agenda.js'
       - 'design_clinical_direction.css'
       - 'cirurgias-1.17.0.js'

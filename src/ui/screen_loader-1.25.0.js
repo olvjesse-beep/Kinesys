@@ -18,28 +18,28 @@
             id:'avaliacao',
             fragment:'screens/tela_avaliacao.html?v=20260910-phase2c-r1',
             styles:Object.freeze([
-                'design_clinical.css?v=1.19.0-hma-layout-r14',
-                'design_clinical_direction-1.17.0.css',
-                'design_evaluation_workspace-1.18.0.css',
-                'design_evaluation_context-1.18.3.css',
-                'avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1',
-                'clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
-                'radar_clinico_focus-3.0.0.css?v=20260910-r1',
-                'dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
+                'styles/design_clinical.css?v=1.19.0-hma-layout-r14',
+                'styles/design_clinical_direction-1.17.0.css',
+                'styles/design_evaluation_workspace-1.18.0.css',
+                'styles/design_evaluation_context-1.18.3.css',
+                'styles/avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1',
+                'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
+                'styles/radar_clinico_focus-3.0.0.css?v=20260910-r1',
+                'styles/dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
             ]),
             scripts:Object.freeze([
-                'cirurgias-1.18.0.js?v=20260902-r1',
+                'src/clinical/cirurgias-1.18.0.js?v=20260902-r1',
                 'database/medicamentos.js',
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
-                'clinical_engine-1.17.0.js',
-                'evaluation_workspace-1.17.0.js',
-                'proms_escalas.js',
-                'evaluation_context_panels-1.18.3.js',
-                'avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1',
-                'clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
-                'clinical_region_loader-1.0.0.js?v=20260911-phase3c-r1'
+                'src/clinical/clinical_engine-1.17.0.js',
+                'src/clinical/evaluation_workspace-1.17.0.js',
+                'src/clinical/proms_escalas.js',
+                'src/clinical/evaluation_context_panels-1.18.3.js',
+                'src/clinical/avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1',
+                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
+                'src/clinical/clinical_region_loader-1.0.0.js?v=20260911-phase3c-r1'
             ]),
             afterLoad(){
                 if(typeof window.atualizarMotorClinico3KineSys==='function'){
@@ -50,27 +50,27 @@
         tela_financeiro:Object.freeze({
             id:'financeiro',
             styles:Object.freeze([
-                'financeiro_workspace-1.20.1.css?v=20260901-r1',
-                'financeiro_lancamentos-1.20.0.css?v=20260901-r2',
-                'financeiro_alignment.css?v=20260909-align-r4'
+                'styles/financeiro_workspace-1.20.1.css?v=20260901-r1',
+                'styles/financeiro_lancamentos-1.20.0.css?v=20260901-r2',
+                'styles/financeiro_alignment.css?v=20260909-align-r4'
             ]),
             scripts:Object.freeze([
-                'pendencias_financeiras-1.19.0.js?v=20260901-r2',
-                'descontos_financeiros-1.20.0.js?v=20260909-r2',
-                'balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
-                'analise_admin-1.19.0.js?v=20260901-r2',
-                'financeiro_workspace-1.20.1.js?v=20260901-r1',
-                'financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1'
+                'src/finance/pendencias_financeiras-1.19.0.js?v=20260901-r2',
+                'src/finance/descontos_financeiros-1.20.0.js?v=20260909-r2',
+                'src/finance/balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
+                'src/admin/analise_admin-1.19.0.js?v=20260901-r2',
+                'src/finance/financeiro_workspace-1.20.1.js?v=20260901-r1',
+                'src/finance/financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1'
             ])
         }),
         tela_agenda:Object.freeze({
             id:'agenda',
             styles:Object.freeze([
-                'agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1'
+                'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1'
             ]),
             scripts:Object.freeze([
-                'agenda-1.20.0.js?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
-                'agenda_lifecycle-1.0.0.js?v=20260911-phase2a-r1'
+                'src/agenda/agenda-1.20.0.js?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
+                'src/agenda/agenda_lifecycle-1.0.0.js?v=20260911-phase2a-r1'
             ])
         })
     });

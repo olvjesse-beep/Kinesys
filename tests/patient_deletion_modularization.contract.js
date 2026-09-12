@@ -2,8 +2,8 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const core = fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
-const monolith = fs.readFileSync('script-1.18.0.js','utf8');
+const core = fs.readFileSync('src/patient/patient_deletion_core-1.0.0.js','utf8');
+const monolith = fs.readFileSync('src/core/script-1.18.0.js','utf8');
 const index = fs.readFileSync('index.html','utf8');
 
 const moved = [
@@ -26,14 +26,14 @@ assert.match(core,/invalidarCachePacientesBasicos\(\)/,'Índice leve de paciente
 assert.match(core,/Nenhum dado foi removido parcialmente/,'Mensagem de atomicidade deve permanecer');
 assert.match(core,/window\.excluirPaciente\s*=\s*excluirPaciente/,'Contrato global de excluirPaciente deve ser explícito');
 
-const monolithPos = index.indexOf('script-1.18.0.js');
-const deletionPos = index.indexOf('patient_deletion_core-1.0.0.js');
-const chartPos = index.indexOf('patient_chart_read_core-1.0.0.js');
+const monolithPos = index.indexOf('src/core/script-1.18.0.js');
+const deletionPos = index.indexOf('src/patient/patient_deletion_core-1.0.0.js');
+const chartPos = index.indexOf('src/patient/patient_chart_read_core-1.0.0.js');
 assert.ok(monolithPos >= 0 && deletionPos > monolithPos, 'Módulo de exclusão deve carregar depois do core legado');
 assert.ok(chartPos < 0 || deletionPos < chartPos, 'Módulo de exclusão deve estar disponível antes dos módulos carregados depois do core');
 
-const statCore = fs.statSync('patient_deletion_core-1.0.0.js').size;
-const statMonolith = fs.statSync('script-1.18.0.js').size;
+const statCore = fs.statSync('src/patient/patient_deletion_core-1.0.0.js').size;
+const statMonolith = fs.statSync('src/core/script-1.18.0.js').size;
 assert.ok(statCore > 1500, 'Extração de exclusão parece pequena demais para ser real');
 assert.ok(statMonolith < 709195, `Monólito deve reduzir em relação à Phase 4L; atual=${statMonolith}`);
 
