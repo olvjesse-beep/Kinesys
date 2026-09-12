@@ -22,6 +22,9 @@ jobs:
         with:
           ref: fix/runtime-asset-cache-versioning
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Update stale assertions
         run: |
           node <<'NODE'
