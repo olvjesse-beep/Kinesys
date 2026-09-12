@@ -7,7 +7,7 @@ on:
     paths:
       - 'tools/handoff_reorg_apply_temp.js'
       - 'tools/handoff_reorg_validate_temp.js'
-      - 'tests/access_agenda_home4h.contract.js'
+      - 'tests/**'
       - '.github/workflows/handoff-reorg-apply-temp.yml'
 
 permissions:
