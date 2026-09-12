@@ -7,7 +7,7 @@ on:
       - 'index.html'
       - '**/*.css'
       - '**/*.js'
-      - 'design_tokens.css'
+      - 'styles/design_tokens.css'
       - 'DESIGN.md'
       - '.impeccable/**'
       - '.agents/skills/impeccable/**'
@@ -18,7 +18,7 @@ on:
       - 'index.html'
       - '**/*.css'
       - '**/*.js'
-      - 'design_tokens.css'
+      - 'styles/design_tokens.css'
       - 'DESIGN.md'
       - '.impeccable/**'
       - '.agents/skills/impeccable/**'
@@ -280,7 +280,7 @@ jobs:
           index_html = Path('index.html').read_text(encoding='utf-8')
           used_kds.update(re.findall(r'var\(\s*(--kds-[a-z0-9-]+)', index_html, re.I))
 
-          token_text = Path('design_tokens.css').read_text(encoding='utf-8')
+          token_text = Path('styles/design_tokens.css').read_text(encoding='utf-8')
           static_defined_kds = set(re.findall(r'(--kds-[a-z0-9-]+)\s*:', token_text, re.I))
 
           runtime_defined_kds = set()
@@ -334,11 +334,11 @@ jobs:
           set +e
           .agents/skills/impeccable/scripts/impeccable detect --json \
             index.html \
-            design_tokens.css \
-            design_components.css \
-            design_responsive.css \
-            design_screens.css \
-            avaliacao_experiencia-1.22.0.css \
+            styles/design_tokens.css \
+            styles/design_components.css \
+            styles/design_responsive.css \
+            styles/design_screens.css \
+            styles/avaliacao_experiencia-1.22.0.css \
             > "$impeccable_json" 2>"$impeccable_err"
           code=$?
           set -e

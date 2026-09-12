@@ -4,17 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - 'patient_registration_core-1.0.0.js'
-      - 'script-1.18.0.js'
-      - 'patient_chart_read_core-1.0.0.js'
+      - 'src/patient/patient_registration_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/patient/patient_chart_read_core-1.0.0.js'
       - 'index.html'
       - 'tests/patient_registration_modularization.contract.js'
       - '.github/workflows/patient-registration-modularization.yml'
   pull_request:
     paths:
-      - 'patient_registration_core-1.0.0.js'
-      - 'script-1.18.0.js'
-      - 'patient_chart_read_core-1.0.0.js'
+      - 'src/patient/patient_registration_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/patient/patient_chart_read_core-1.0.0.js'
       - 'index.html'
       - 'tests/patient_registration_modularization.contract.js'
       - '.github/workflows/patient-registration-modularization.yml'
@@ -27,8 +27,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Syntax
         run: |
-          node --check patient_registration_core-1.0.0.js
-          node --check script-1.18.0.js
+          node --check src/patient/patient_registration_core-1.0.0.js
+          node --check src/core/script-1.18.0.js
           node --check tests/patient_registration_modularization.contract.js
       - name: Registration boundary contract
         run: node tests/patient_registration_modularization.contract.js

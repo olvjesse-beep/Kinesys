@@ -5,22 +5,22 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'clinical_region_loader-1.0.0.js'
-      - 'script-1.18.0.js'
-      - 'menu_dropdown-1.0.0.js'
-      - 'operation_guard-1.0.0.js'
-      - 'html_escape-1.0.0.js'
-      - 'cadastro_validacoes_core-1.0.0.js'
-      - 'midias_core-1.0.0.js'
-      - 'ui_experience.js'
-      - 'home_detalhes-1.18.5.js'
-      - 'evaluation_context_panels-1.18.3.js'
-      - 'agenda-1.20.0.js'
-      - 'agenda_lifecycle-1.0.0.js'
-      - 'agenda_notificacoes_core-1.20.1.js'
-      - 'financeiro_agendamento-1.21.0.js'
-      - 'cirurgias-1.18.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/ui/menu_dropdown-1.0.0.js'
+      - 'src/core/operation_guard-1.0.0.js'
+      - 'src/core/html_escape-1.0.0.js'
+      - 'src/core/cadastro_validacoes_core-1.0.0.js'
+      - 'src/core/midias_core-1.0.0.js'
+      - 'src/ui/ui_experience.js'
+      - 'src/home/home_detalhes-1.18.5.js'
+      - 'src/clinical/evaluation_context_panels-1.18.3.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda_notificacoes_core-1.20.1.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
+      - 'src/clinical/cirurgias-1.18.0.js'
       - 'database/medicamentos.js'
       - 'database/ocupacoes_esportes.js'
       - 'database/irradiacao_clinica.js'
@@ -30,8 +30,8 @@ on:
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
       - 'database/regioes/**'
-      - 'design_clinical.css'
-      - 'design_clinical_direction-1.17.0.css'
+      - 'styles/design_clinical.css'
+      - 'styles/design_clinical_direction-1.17.0.css'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
       - 'tests/clinical_region_loader.contract.js'
@@ -58,22 +58,22 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'clinical_region_loader-1.0.0.js'
-      - 'script-1.18.0.js'
-      - 'menu_dropdown-1.0.0.js'
-      - 'operation_guard-1.0.0.js'
-      - 'html_escape-1.0.0.js'
-      - 'cadastro_validacoes_core-1.0.0.js'
-      - 'midias_core-1.0.0.js'
-      - 'ui_experience.js'
-      - 'home_detalhes-1.18.5.js'
-      - 'evaluation_context_panels-1.18.3.js'
-      - 'agenda-1.20.0.js'
-      - 'agenda_lifecycle-1.0.0.js'
-      - 'agenda_notificacoes_core-1.20.1.js'
-      - 'financeiro_agendamento-1.21.0.js'
-      - 'cirurgias-1.18.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/ui/menu_dropdown-1.0.0.js'
+      - 'src/core/operation_guard-1.0.0.js'
+      - 'src/core/html_escape-1.0.0.js'
+      - 'src/core/cadastro_validacoes_core-1.0.0.js'
+      - 'src/core/midias_core-1.0.0.js'
+      - 'src/ui/ui_experience.js'
+      - 'src/home/home_detalhes-1.18.5.js'
+      - 'src/clinical/evaluation_context_panels-1.18.3.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda_notificacoes_core-1.20.1.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
+      - 'src/clinical/cirurgias-1.18.0.js'
       - 'database/medicamentos.js'
       - 'database/ocupacoes_esportes.js'
       - 'database/irradiacao_clinica.js'
@@ -83,8 +83,8 @@ on:
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
       - 'database/regioes/**'
-      - 'design_clinical.css'
-      - 'design_clinical_direction-1.17.0.css'
+      - 'styles/design_clinical.css'
+      - 'styles/design_clinical_direction-1.17.0.css'
       - 'screens/**/*.html'
       - 'tests/screen_loader.contract.js'
       - 'tests/clinical_region_loader.contract.js'
@@ -121,22 +121,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
-          node --check screen_loader-1.25.0.js
-          node --check clinical_region_loader-1.0.0.js
-          node --check script-1.18.0.js
-          node --check menu_dropdown-1.0.0.js
-          node --check operation_guard-1.0.0.js
-          node --check html_escape-1.0.0.js
-          node --check cadastro_validacoes_core-1.0.0.js
-          node --check midias_core-1.0.0.js
-          node --check ui_experience.js
-          node --check home_detalhes-1.18.5.js
-          node --check evaluation_context_panels-1.18.3.js
-          node --check agenda-1.20.0.js
-          node --check agenda_lifecycle-1.0.0.js
-          node --check agenda_notificacoes_core-1.20.1.js
-          node --check financeiro_agendamento-1.21.0.js
-          node --check cirurgias-1.18.0.js
+          node --check src/ui/screen_loader-1.25.0.js
+          node --check src/clinical/clinical_region_loader-1.0.0.js
+          node --check src/core/script-1.18.0.js
+          node --check src/ui/menu_dropdown-1.0.0.js
+          node --check src/core/operation_guard-1.0.0.js
+          node --check src/core/html_escape-1.0.0.js
+          node --check src/core/cadastro_validacoes_core-1.0.0.js
+          node --check src/core/midias_core-1.0.0.js
+          node --check src/ui/ui_experience.js
+          node --check src/home/home_detalhes-1.18.5.js
+          node --check src/clinical/evaluation_context_panels-1.18.3.js
+          node --check src/agenda/agenda-1.20.0.js
+          node --check src/agenda/agenda_lifecycle-1.0.0.js
+          node --check src/agenda/agenda_notificacoes_core-1.20.1.js
+          node --check src/finance/financeiro_agendamento-1.21.0.js
+          node --check src/clinical/cirurgias-1.18.0.js
           node --check database/medicamentos.js
           node --check database/ocupacoes_esportes.js
           node --check database/irradiacao_clinica.js

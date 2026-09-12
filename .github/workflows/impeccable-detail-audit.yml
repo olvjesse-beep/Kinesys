@@ -22,11 +22,11 @@ jobs:
           set +e
           .agents/skills/impeccable/scripts/impeccable detect --json \
             index.html \
-            design_tokens.css \
-            design_components.css \
-            design_responsive.css \
-            design_screens.css \
-            avaliacao_experiencia-1.22.0.css \
+            styles/design_tokens.css \
+            styles/design_components.css \
+            styles/design_responsive.css \
+            styles/design_screens.css \
+            styles/avaliacao_experiencia-1.22.0.css \
             > /tmp/impeccable.json 2>/tmp/impeccable.err
           code=$?
           set -e

@@ -4,21 +4,21 @@ on:
   push:
     branches: [main]
     paths:
-      - 'agenda-1.20.0.js'
-      - 'design_agenda.css'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'styles/design_agenda.css'
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'financeiro_agendamento-1.21.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
       - 'tests/agenda_editar_atendimento.contract.js'
       - 'tests/agenda_ux_corrections.contract.js'
       - '.github/workflows/agenda-edit-contract.yml'
   pull_request:
     paths:
-      - 'agenda-1.20.0.js'
-      - 'design_agenda.css'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'styles/design_agenda.css'
       - 'index.html'
-      - 'screen_loader-1.25.0.js'
-      - 'financeiro_agendamento-1.21.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
       - 'tests/agenda_editar_atendimento.contract.js'
       - 'tests/agenda_ux_corrections.contract.js'
       - '.github/workflows/agenda-edit-contract.yml'
@@ -35,8 +35,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --check agenda-1.20.0.js
-          node --check screen_loader-1.25.0.js
+          node --check src/agenda/agenda-1.20.0.js
+          node --check src/ui/screen_loader-1.25.0.js
           node --check tests/agenda_editar_atendimento.contract.js
           node --check tests/agenda_ux_corrections.contract.js
           node tests/agenda_editar_atendimento.contract.js

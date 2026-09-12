@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/phase4_closeout.contract.js'
       - '.github/workflows/phase4-closeout.yml'
       - '.github/workflows/**phase4**'
@@ -14,7 +14,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/phase4_closeout.contract.js'
       - '.github/workflows/phase4-closeout.yml'
       - '.github/workflows/**phase4**'

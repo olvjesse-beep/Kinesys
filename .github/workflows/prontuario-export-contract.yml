@@ -5,18 +5,18 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'prontuario_export.js'
-      - 'prontuario_export_impl.js'
-      - 'design_system-1.20.1.js'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
       - 'tests/prontuario_export_lazy.contract.js'
       - '.github/workflows/prontuario-export-contract.yml'
   push:
     branches: [main]
     paths:
       - 'index.html'
-      - 'prontuario_export.js'
-      - 'prontuario_export_impl.js'
-      - 'design_system-1.20.1.js'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
       - 'tests/prontuario_export_lazy.contract.js'
       - '.github/workflows/prontuario-export-contract.yml'
   workflow_dispatch:
@@ -33,9 +33,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
-          node --check prontuario_export.js
-          node --check prontuario_export_impl.js
-          node --check design_system-1.20.1.js
+          node --check src/patient/prontuario_export.js
+          node --check src/patient/prontuario_export_impl.js
+          node --check src/core/design_system-1.20.1.js
           node --check tests/prontuario_export_lazy.contract.js
       - name: First-click and public API contract
         run: node tests/prontuario_export_lazy.contract.js

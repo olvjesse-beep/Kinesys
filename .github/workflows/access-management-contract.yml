@@ -3,12 +3,12 @@ name: Access Management Contract
 on:
   pull_request:
     paths:
-      - 'login_access-1.18.0.js'
-      - 'access_admin-1.0.0.js'
-      - 'access_admin-1.0.0.css'
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/access_admin-1.0.0.css'
       - 'recuperar-acesso.html'
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'supabase/functions/cadastrar-equipe/index.ts'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_LIMPEZA_SENHAS_LEGADAS_EQUIPE_20260911.sql'
       - 'tests/access_management.contract.js'
@@ -16,12 +16,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'login_access-1.18.0.js'
-      - 'access_admin-1.0.0.js'
-      - 'access_admin-1.0.0.css'
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/access_admin-1.0.0.css'
       - 'recuperar-acesso.html'
       - 'index.html'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'supabase/functions/cadastrar-equipe/index.ts'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_LIMPEZA_SENHAS_LEGADAS_EQUIPE_20260911.sql'
       - 'tests/access_management.contract.js'
@@ -42,8 +42,8 @@ jobs:
           node-version: 22
       - name: Syntax check
         run: |
-          node --check login_access-1.18.0.js
-          node --check access_admin-1.0.0.js
+          node --check src/auth/login_access-1.18.0.js
+          node --check src/admin/access_admin-1.0.0.js
           node --check tests/access_management.contract.js
       - name: Access management contract
         run: node tests/access_management.contract.js

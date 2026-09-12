@@ -4,24 +4,24 @@ on:
   push:
     branches: [main]
     paths:
-      - 'clinical_reasoning_hma-3.0.0.js'
-      - 'clinical_reasoning_shoulder-3.1.0.js'
-      - 'clinical_reasoning_elbow-3.1.0.js'
-      - 'clinical_reasoning_wrist-3.1.0.js'
-      - 'clinical_reasoning_wrist-3.1.0.css'
-      - 'clinical_reasoning_cervical-3.1.0.js'
-      - 'clinical_reasoning_cervical-3.1.0.css'
-      - 'clinical_region_loader-1.0.0.js'
-      - 'clinical_engine*.js'
-      - 'cirurgias-*.js'
+      - 'src/clinical/clinical_reasoning_hma-3.0.0.js'
+      - 'src/clinical/clinical_reasoning_shoulder-3.1.0.js'
+      - 'src/clinical/clinical_reasoning_elbow-3.1.0.js'
+      - 'src/clinical/clinical_reasoning_wrist-3.1.0.js'
+      - 'styles/clinical_reasoning_wrist-3.1.0.css'
+      - 'src/clinical/clinical_reasoning_cervical-3.1.0.js'
+      - 'styles/clinical_reasoning_cervical-3.1.0.css'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/clinical/clinical_engine*.js'
+      - 'src/clinical/cirurgias-*.js'
       - 'database/mapeamento_clinico_core-1.0.0.js'
       - 'database/mapeamento_clinico.js'
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
       - 'database/regioes/**'
-      - 'screen_loader-1.25.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
       - 'script.js'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
@@ -34,24 +34,24 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'clinical_reasoning_hma-3.0.0.js'
-      - 'clinical_reasoning_shoulder-3.1.0.js'
-      - 'clinical_reasoning_elbow-3.1.0.js'
-      - 'clinical_reasoning_wrist-3.1.0.js'
-      - 'clinical_reasoning_wrist-3.1.0.css'
-      - 'clinical_reasoning_cervical-3.1.0.js'
-      - 'clinical_reasoning_cervical-3.1.0.css'
-      - 'clinical_region_loader-1.0.0.js'
-      - 'clinical_engine*.js'
-      - 'cirurgias-*.js'
+      - 'src/clinical/clinical_reasoning_hma-3.0.0.js'
+      - 'src/clinical/clinical_reasoning_shoulder-3.1.0.js'
+      - 'src/clinical/clinical_reasoning_elbow-3.1.0.js'
+      - 'src/clinical/clinical_reasoning_wrist-3.1.0.js'
+      - 'styles/clinical_reasoning_wrist-3.1.0.css'
+      - 'src/clinical/clinical_reasoning_cervical-3.1.0.js'
+      - 'styles/clinical_reasoning_cervical-3.1.0.css'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/clinical/clinical_engine*.js'
+      - 'src/clinical/cirurgias-*.js'
       - 'database/mapeamento_clinico_core-1.0.0.js'
       - 'database/mapeamento_clinico.js'
       - 'database/condicoes_mobilidade_v23.js'
       - 'database/diferenciais_neurais.js'
       - 'database/regioes/**'
-      - 'screen_loader-1.25.0.js'
+      - 'src/ui/screen_loader-1.25.0.js'
       - 'script.js'
-      - 'script-1.18.0.js'
+      - 'src/core/script-1.18.0.js'
       - 'tests/clinical_bank_regional_equivalence.contract.js'
       - 'tests/clinical_bank_base_regional_equivalence.contract.js'
       - 'tests/clinical_reasoning_shoulder_elbow.regression.js'
@@ -85,11 +85,11 @@ jobs:
 
       - name: JavaScript syntax
         run: |
-          node --check clinical_reasoning_shoulder-3.1.0.js
-          node --check clinical_reasoning_elbow-3.1.0.js
-          node --check clinical_reasoning_wrist-3.1.0.js
-          node --check clinical_reasoning_cervical-3.1.0.js
-          node --check clinical_region_loader-1.0.0.js
+          node --check src/clinical/clinical_reasoning_shoulder-3.1.0.js
+          node --check src/clinical/clinical_reasoning_elbow-3.1.0.js
+          node --check src/clinical/clinical_reasoning_wrist-3.1.0.js
+          node --check src/clinical/clinical_reasoning_cervical-3.1.0.js
+          node --check src/clinical/clinical_region_loader-1.0.0.js
           node --check database/mapeamento_clinico_core-1.0.0.js
           for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
           for f in database/regioes/*-ext-1.0.0.js; do node --check "$f"; done
