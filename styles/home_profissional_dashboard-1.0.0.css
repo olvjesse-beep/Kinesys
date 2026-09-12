@@ -91,7 +91,7 @@
 /* Home profissional — polish mobile r5 (hierarquia, densidade e toque). */
 @media(max-width:620px){
   .ks-prof-home-active{--ks-prof-gap:8px}
-  .ks-prof-home-active #tela_home{padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  #tela_home.ks-prof-home-active{padding-bottom:max(16px,env(safe-area-inset-bottom))}
   .ks-prof-home-active #card_painel_fisioterapeuta.ks-fisio-util-compact{
     border-color:var(--kds-line)!important;
     border-radius:var(--kds-radius-lg)!important;
