@@ -6,6 +6,7 @@
     'use strict';
 
     const VERSION='1.25.4-phase4d';
+    const ASSET_REVISION='20260912-runtime-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -75,7 +76,7 @@
         })
     });
 
-    function urlAbsoluta(src){return new URL(src,document.baseURI).href;}
+    function urlAbsoluta(src){const url=new URL(src,document.baseURI);url.searchParams.set('ksv',ASSET_REVISION);return url.href;}
 
     function carregarEstilo(src){
         const href=urlAbsoluta(src);
@@ -104,7 +105,7 @@
                 reservado.addEventListener('load',aoCarregar,{once:true});
                 reservado.addEventListener('error',aoErro,{once:true});
                 reservado.dataset.kinesysLazy='1';
-                reservado.href=src;
+                reservado.href=href;
             });
             estilos.set(href,promessa);
             promessa.catch(()=>estilos.delete(href));
@@ -112,7 +113,7 @@
         }
         const promessa=new Promise((resolve,reject)=>{
             const link=document.createElement('link');
-            link.rel='stylesheet';link.href=src;link.dataset.kinesysLazy='1';
+            link.rel='stylesheet';link.href=href;link.dataset.kinesysLazy='1';
             link.addEventListener('load',()=>resolve(link),{once:true});
             link.addEventListener('error',()=>reject(new Error('Falha ao carregar estilo: '+src)),{once:true});
             document.head.appendChild(link);
@@ -133,7 +134,7 @@
         }
         const promessa=new Promise((resolve,reject)=>{
             const script=document.createElement('script');
-            script.src=src;script.async=false;script.dataset.kinesysLazy='1';
+            script.src=href;script.async=false;script.dataset.kinesysLazy='1';
             script.addEventListener('load',()=>resolve(script),{once:true});
             script.addEventListener('error',()=>reject(new Error('Falha ao carregar módulo: '+src)),{once:true});
             document.body.appendChild(script);
@@ -156,7 +157,8 @@
 
         alvo.dataset.kinesysFragmentState='loading';
         const promessa=(async()=>{
-            const resposta=await fetch(bundle.fragment,{credentials:'same-origin',cache:'default'});
+            const fragmentUrl=urlAbsoluta(bundle.fragment);
+            const resposta=await fetch(fragmentUrl,{credentials:'same-origin',cache:'no-cache'});
             if(!resposta.ok)throw new Error('Falha ao carregar tela '+idTela+' ('+resposta.status+')');
             const html=await resposta.text();
             if(!html.trim())throw new Error('Fragmento vazio para '+idTela);
