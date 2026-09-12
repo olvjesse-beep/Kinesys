@@ -6,6 +6,7 @@ on:
       - chore/handoff-organization
     paths:
       - 'tools/handoff_inventory_temp.js'
+      - 'tools/handoff_reorg_plan_temp.js'
       - '.github/workflows/handoff-inventory-temp.yml'
 
 jobs:
@@ -19,3 +20,6 @@ jobs:
       - name: Inventory root and literal references
         shell: cmd
         run: node tools\handoff_inventory_temp.js
+      - name: Dry-run handoff reorganization
+        shell: cmd
+        run: node tools\handoff_reorg_plan_temp.js
