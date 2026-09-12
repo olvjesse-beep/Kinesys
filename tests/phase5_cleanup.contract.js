@@ -36,6 +36,7 @@ const removedArtifacts = [
   'pendencias_financeiras.js',
   'script-1.17.0.js',
   'script-1.17.1.js',
+  'script.js',
   'cirurgias-1.17.0.js',
   'clinical_engine_v232.js',
   'balanco_financeiro_admin.js',
