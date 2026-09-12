@@ -1,7 +1,7 @@
 /* KineSys Agenda 1.20 — camada de compatibilidade.
  *
  * O layout, espaçamento, densidade, grade temporal e responsividade da Agenda
- * pertencem exclusivamente a design_agenda.css.
+ * pertencem exclusivamente a styles/design_agenda.css.
  *
  * Este arquivo permanece registrado no bundle lazy para preservar o contrato
  * histórico do Screen Loader, mas não redefine geometria nem cores. Isso evita

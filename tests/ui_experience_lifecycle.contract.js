@@ -1,6 +1,6 @@
 const assert=require('assert');
 const fs=require('fs');
-const src=fs.readFileSync('ui_experience.js','utf8');
+const src=fs.readFileSync('src/ui/ui_experience.js','utf8');
 
 assert.doesNotMatch(src,/setInterval\(.*syncPatientContext.*5000/s,'polling visual de 5 s não deve permanecer');
 assert.match(src,/document\.addEventListener\('kinesys:tela-ativada',event=>\{[\s\S]*event\.detail\?\.id==='tela_avaliacao'[\s\S]*requestAnimationFrame\(syncPatientContext\)/,'entrada na Avaliação deve sincronizar contexto visual');

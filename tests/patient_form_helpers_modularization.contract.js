@@ -3,9 +3,9 @@ const fs=require('fs');
 const assert=require('assert');
 const vm=require('vm');
 
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const helpers=fs.readFileSync('patient_form_helpers_core-1.0.0.js','utf8');
-const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const helpers=fs.readFileSync('src/patient/patient_form_helpers_core-1.0.0.js','utf8');
+const team=fs.readFileSync('src/admin/team_management_core-1.0.0.js','utf8');
 const index=fs.readFileSync('index.html','utf8');
 
 for(const fn of ['calcularIdadeCadastro','removerAcentos','obterTextoExibicao']){
@@ -51,11 +51,11 @@ assert.match(fields.cad_idade.value,/^10 anos$/,'idade de exemplo determinístic
 assert.strictEqual(fields.cad_dependente.checked,true,'menor de 18 deve ser marcado como dependente');
 assert.strictEqual(alternou,1,'campos do responsável devem ser sincronizados para menor');
 
-const cadastroPos=index.indexOf('cadastro_validacoes_core-1.0.0.js');
-const helpersPos=index.indexOf('patient_form_helpers_core-1.0.0.js');
-const inputPos=index.indexOf('input_helpers_core-1.0.0.js');
-const teamPos=index.indexOf('team_management_core-1.0.0.js');
-const corePos=index.indexOf('script-1.18.0.js');
+const cadastroPos=index.indexOf('src/core/cadastro_validacoes_core-1.0.0.js');
+const helpersPos=index.indexOf('src/patient/patient_form_helpers_core-1.0.0.js');
+const inputPos=index.indexOf('src/ui/input_helpers_core-1.0.0.js');
+const teamPos=index.indexOf('src/admin/team_management_core-1.0.0.js');
+const corePos=index.indexOf('src/core/script-1.18.0.js');
 assert.ok(cadastroPos>=0&&helpersPos>cadastroPos&&inputPos>helpersPos&&teamPos>helpersPos&&corePos>teamPos,'ordem deve disponibilizar helpers antes dos consumidores e do core');
 assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4Q');
 
@@ -64,8 +64,8 @@ function tamanhoUtf8Normalizado(path){
   const texto=fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n');
   return Buffer.byteLength(texto,'utf8');
 }
-const moduleSize=tamanhoUtf8Normalizado('patient_form_helpers_core-1.0.0.js');
-const coreSize=tamanhoUtf8Normalizado('script-1.18.0.js');
+const moduleSize=tamanhoUtf8Normalizado('src/patient/patient_form_helpers_core-1.0.0.js');
+const coreSize=tamanhoUtf8Normalizado('src/core/script-1.18.0.js');
 assert.ok(moduleSize>1200,`módulo parece pequeno demais: ${moduleSize}`);
 assert.ok(coreSize<663152,`monólito deve reduzir em relação à 4P; atual=${coreSize}`);
 console.log(`Patient form helpers modularization: OK | module=${moduleSize} bytes | monolith=${coreSize} bytes`);

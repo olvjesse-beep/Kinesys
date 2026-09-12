@@ -4,9 +4,9 @@ const fs=require('fs');
 const assert=require('assert');
 const vm=require('vm');
 
-const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const regional=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
-const motor=fs.readFileSync('clinical_reasoning_hma-3.0.0.js','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const regional=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8');
+const motor=fs.readFileSync('src/clinical/clinical_reasoning_hma-3.0.0.js','utf8');
 const indexSource=fs.readFileSync('database/mapeamento_regioes-1.0.0.js','utf8');
 const baseManifest=JSON.parse(fs.readFileSync('database/regioes/base-manifest-1.0.0.json','utf8'));
 
@@ -18,7 +18,7 @@ for(const entry of Object.values(baseManifest)){
   assert.ok(regional.includes(entry.file),`${entry.file} deve permanecer registrado no loader clínico sob demanda`);
 }
 assert.ok(loader.indexOf('database/mapeamento_regioes-1.0.0.js')<loader.indexOf('database/mapeamento_clinico_core-1.0.0.js'),'índice regional deve existir antes do núcleo leve');
-assert.ok(loader.indexOf('database/mapeamento_clinico_core-1.0.0.js')<loader.indexOf('clinical_reasoning_hma-3.0.0.js'),'núcleo leve deve existir antes do Motor HMA');
+assert.ok(loader.indexOf('database/mapeamento_clinico_core-1.0.0.js')<loader.indexOf('src/clinical/clinical_reasoning_hma-3.0.0.js'),'núcleo leve deve existir antes do Motor HMA');
 assert.match(motor,/function indiceRegioes\(\)/,'Motor HMA deve possuir acesso explícito ao índice leve');
 assert.match(motor,/typeof BANCO_MAPEAMENTO_REGIOES!==['"]undefined['"]/,'Motor HMA deve preferir o índice leve quando disponível');
 assert.match(motor,/const B=indiceRegioes\(\)/,'inferência inicial de região deve usar o índice leve');

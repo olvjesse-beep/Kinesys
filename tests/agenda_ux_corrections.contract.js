@@ -3,10 +3,10 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const agenda = fs.readFileSync('agenda-1.20.0.js', 'utf8');
+const agenda = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
-const loader = fs.readFileSync('screen_loader-1.25.0.js', 'utf8');
-const agendaCss = fs.readFileSync('design_agenda.css', 'utf8');
+const loader = fs.readFileSync('src/ui/screen_loader-1.25.0.js', 'utf8');
+const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
 
 function trechoEntre(inicio, fim) {
   const a = agenda.indexOf(inicio);
@@ -99,13 +99,13 @@ assert.match(editar, /\.eq\('id', id\)/,'UPDATE continua limitado ao mesmo id');
 assert.doesNotMatch(editar, /\.insert\(|\.upsert\(/,'Edição não pode recriar o agendamento');
 
 // Cache bust obrigatório mantendo Agenda lazy e Screen Loader contratual.
-assert.match(html,/design_agenda\.css\?v=20260911-modal-r6/,
+assert.match(html,/styles\/design_agenda\.css\?v=20260911-modal-r6/,
   'Index deve invalidar o CSS do modal corrigido');
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,
   'Index deve invalidar cache do Screen Loader para o autocomplete');
-assert.match(loader,/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1/,
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1/,
   'Screen Loader deve entregar a Agenda corrigida');
-assert.doesNotMatch(html,/<script[^>]+agenda-1\.20\.0\.js/i,'Agenda deve permanecer lazy');
+assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve permanecer lazy');
 assert.match(loader,/const VERSION='1\.25\.4-phase4d';/,'Versão contratual do Screen Loader deve permanecer intacta');
 
 console.log('Agenda UX corrections contract: autocomplete + modal polish OK');

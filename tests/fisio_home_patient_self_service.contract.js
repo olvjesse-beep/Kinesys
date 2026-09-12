@@ -2,9 +2,9 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const home = fs.readFileSync('home_fisioterapeuta_util-1.24.0.js','utf8');
-const script = fs.readFileSync('script-1.18.0.js','utf8');
-const deletion = fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
+const home = fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
+const script = fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const deletion = fs.readFileSync('src/patient/patient_deletion_core-1.0.0.js','utf8');
 const index = fs.readFileSync('index.html','utf8');
 const sql = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_EXCLUSAO_PACIENTE_SELF_SERVICE_v1.24.1.sql','utf8');
 
@@ -46,8 +46,8 @@ assert.ok(pagamentos < cobrancas && cobrancas < agendamentos && agendamentos < p
 assert.match(sql,/revoke all on function public\.kinesys_excluir_paciente_completo_interno_v1112\(text\) from public, anon, authenticated/i,'Função interna deve permanecer inacessível ao cliente');
 assert.match(sql,/grant execute on function public\.kinesys_excluir_paciente_completo\(text\) to authenticated/i,'Wrapper seguro deve permanecer disponível ao usuário autenticado');
 
-assert.match(index,/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1[^"']*core_mod=20260911-phase4[a-z]+-r\d+/,'Script precisa invalidar cache sem perder o contrato anterior');
-assert.match(index,/patient_deletion_core-1\.0\.0\.js\?v=20260911-phase4m-r1/,'Módulo de exclusão precisa estar no runtime');
-assert.match(index,/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1/,'Home fisioterapeuta precisa invalidar cache');
+assert.match(index,/src\/core\/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1[^"']*core_mod=20260911-phase4[a-z]+-r\d+/,'Script precisa invalidar cache sem perder o contrato anterior');
+assert.match(index,/src\/patient\/patient_deletion_core-1\.0\.0\.js\?v=20260911-phase4m-r1/,'Módulo de exclusão precisa estar no runtime');
+assert.match(index,/src\/home\/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1/,'Home fisioterapeuta precisa invalidar cache');
 
 console.log('Fisio home + patient self-service contract: OK');

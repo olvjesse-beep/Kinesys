@@ -2,16 +2,16 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const login=fs.readFileSync('login_access-1.18.0.js','utf8');
-const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
-const accessAdmin=fs.readFileSync('access_admin-1.0.0.js','utf8');
-const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
-const agendaCss=fs.readFileSync('design_agenda.css','utf8');
-const agendaRefCss=fs.readFileSync('agenda_referencia-1.20.0.css','utf8');
-const home=fs.readFileSync('home_fisioterapeuta_util-1.24.0.js','utf8');
-const homeCss=fs.readFileSync('home_fisioterapeuta_util-1.24.0.css','utf8');
+const login=fs.readFileSync('src/auth/login_access-1.18.0.js','utf8');
+const team=fs.readFileSync('src/admin/team_management_core-1.0.0.js','utf8');
+const accessAdmin=fs.readFileSync('src/admin/access_admin-1.0.0.js','utf8');
+const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
+const agendaCss=fs.readFileSync('styles/design_agenda.css','utf8');
+const agendaRefCss=fs.readFileSync('styles/agenda_referencia-1.20.0.css','utf8');
+const home=fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
+const homeCss=fs.readFileSync('styles/home_fisioterapeuta_util-1.24.0.css','utf8');
 const html=fs.readFileSync('index.html','utf8');
-const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
 
 function bloco(texto,inicio,fim){const a=texto.indexOf(inicio);assert.ok(a>=0,`ausente: ${inicio}`);const b=texto.indexOf(fim,a);assert.ok(b>a,`fim ausente: ${fim}`);return texto.slice(a,b);}
 
@@ -39,10 +39,10 @@ assert.match(agendaCss,/height:clamp\(440px,calc\(100dvh - 210px\),760px\)!impor
 assert.doesNotMatch(agendaRefCss,/agenda-toolbar-semanal\s*\{[^}]*display\s*:\s*grid/i,'Folha de referência lazy não pode voltar a controlar a geometria da Agenda');
 assert.match(agendaCss,/grid-template-rows:var\(--kds-agenda-header-height\) repeat\(var\(--kds-agenda-runtime-slot-count\),minmax\(3px,1fr\)\)/,'Slots devem dividir a altura disponível');
 assert.match(agendaCss,/\.agenda-agora-linha\{[\s\S]*z-index:9/,'Linha Agora deve ficar destacada acima dos compromissos');
-assert.match(loader,/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1/,'Agenda lazy deve invalidar cache');
-assert.match(loader,/agenda_referencia-1\.20\.0\.css\?v=20260910-layout-shim-r1/,'Shim lazy deve invalidar o CSS legado em cache');
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1/,'Agenda lazy deve invalidar cache');
+assert.match(loader,/styles\/agenda_referencia-1\.20\.0\.css\?v=20260910-layout-shim-r1/,'Shim lazy deve invalidar o CSS legado em cache');
 assert.match(agenda,/agenda-geral-faixa/,'Visão da clínica deve preservar duração e separar profissionais simultâneos');
-assert.doesNotMatch(html,/<script[^>]+agenda-1\.20\.0\.js/i,'Agenda deve continuar lazy');
+assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve continuar lazy');
 
 // Meu dia clínico: somente janela seguinte de 4h, com estados e lacunas livres.
 assert.match(home,/const JANELA_HOME_MINUTOS = 4 \* 60;/,'Home deve limitar a janela a quatro horas');
@@ -67,9 +67,9 @@ assert.match(homeCss,/is-cancelled/,'Cancelamento deve ter estado visual própri
 assert.match(homeCss,/is-rescheduled/,'Reagendamento deve ter estado visual próprio');
 
 // Cache dos arquivos alterados sem remover revisões anteriores.
-assert.match(html,/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1/);
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/);
-assert.match(html,/login_access-1\.18\.0\.js\?v=20260910-access-r1/);
-assert.match(html,/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1/);
+assert.match(html,/src\/core\/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1/);
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/);
+assert.match(html,/src\/auth\/login_access-1\.18\.0\.js\?v=20260910-access-r1/);
+assert.match(html,/src\/home\/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1/);
 
 console.log('Access + Agenda compact + Home 4h contract: OK');

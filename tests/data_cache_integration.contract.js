@@ -3,16 +3,16 @@ const fs=require('fs');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const app=fs.readFileSync('script-1.18.0.js','utf8');
-const patient=fs.readFileSync('patient_index_cache_core-1.0.0.js','utf8');
-const chart=fs.readFileSync('patient_chart_read_core-1.0.0.js','utf8');
-const deletion=fs.readFileSync('patient_deletion_core-1.0.0.js','utf8');
+const app=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const patient=fs.readFileSync('src/patient/patient_index_cache_core-1.0.0.js','utf8');
+const chart=fs.readFileSync('src/patient/patient_chart_read_core-1.0.0.js','utf8');
+const deletion=fs.readFileSync('src/patient/patient_deletion_core-1.0.0.js','utf8');
 
-const cachePos=html.indexOf('kinesys_data_cache-1.0.0.js');
-const patientPos=html.indexOf('patient_index_cache_core-1.0.0.js');
-const appPos=html.indexOf('script-1.18.0.js');
-const deletionPos=html.indexOf('patient_deletion_core-1.0.0.js');
-const chartPos=html.indexOf('patient_chart_read_core-1.0.0.js');
+const cachePos=html.indexOf('src/core/kinesys_data_cache-1.0.0.js');
+const patientPos=html.indexOf('src/patient/patient_index_cache_core-1.0.0.js');
+const appPos=html.indexOf('src/core/script-1.18.0.js');
+const deletionPos=html.indexOf('src/patient/patient_deletion_core-1.0.0.js');
+const chartPos=html.indexOf('src/patient/patient_chart_read_core-1.0.0.js');
 assert.ok(cachePos>=0,'data cache core must be loaded by index');
 assert.ok(patientPos>cachePos,'patient index cache module must load after central data cache');
 assert.ok(appPos>patientPos,'patient index cache module must load before the main application');

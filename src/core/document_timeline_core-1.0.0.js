@@ -1,5 +1,5 @@
 /* KineSys — Document Timeline Core 1.0.0
- * Timeline documental e registro de impressão extraídos de script-1.18.0.js
+ * Timeline documental e registro de impressão extraídos de src/core/script-1.18.0.js
  * preservando APIs, storage local e persistência Supabase existentes.
  */
 'use strict';

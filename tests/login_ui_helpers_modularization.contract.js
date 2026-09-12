@@ -4,9 +4,9 @@ const vm=require('vm');
 const assert=require('assert');
 
 const html=fs.readFileSync('index.html','utf8');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const mod=fs.readFileSync('login_ui_helpers_core-1.0.0.js','utf8');
-const login=fs.readFileSync('login_access-1.18.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod=fs.readFileSync('src/auth/login_ui_helpers_core-1.0.0.js','utf8');
+const login=fs.readFileSync('src/auth/login_access-1.18.0.js','utf8');
 
 const funcoes=['mostrarFeedbackLogin','sincronizarEstadoAutenticacaoVisual','mensagemErroAutenticacao'];
 for(const fn of funcoes){
@@ -21,11 +21,11 @@ assert.match(login,/mostrarFeedbackLogin\(/,'controlador de login deve continuar
 assert.match(login,/sincronizarEstadoAutenticacaoVisual\(/,'controlador de login deve continuar consumindo o helper visual');
 assert.match(login,/mensagemErroAutenticacao\(/,'controlador de login deve continuar consumindo o normalizador de erro');
 
-const helperPos=html.indexOf('login_ui_helpers_core-1.0.0.js');
-const corePos=html.indexOf('script-1.18.0.js');
-const loginPos=html.indexOf('login_access-1.18.0.js');
+const helperPos=html.indexOf('src/auth/login_ui_helpers_core-1.0.0.js');
+const corePos=html.indexOf('src/core/script-1.18.0.js');
+const loginPos=html.indexOf('src/auth/login_access-1.18.0.js');
 assert.ok(helperPos>=0&&corePos>helperPos&&loginPos>corePos,'ordem deve manter login UI helpers -> core -> login_access');
-assert.match(html,/login_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4r-r1/,'módulo 4R deve usar cache-buster próprio');
+assert.match(html,/src\/auth\/login_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4r-r1/,'módulo 4R deve usar cache-buster próprio');
 assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do monólito deve permanecer versionado na série Phase 4');
 
 function fakeClassList(){
@@ -54,7 +54,7 @@ vm.createContext(context);
 
 // Reproduz a ordem real: helper eager é avaliado antes do monólito; usuarioLogado só é
 // declarado depois, mas nenhuma função visual é invocada antes do DOMContentLoaded.
-vm.runInContext(mod,context,{filename:'login_ui_helpers_core-1.0.0.js'});
+vm.runInContext(mod,context,{filename:'src/auth/login_ui_helpers_core-1.0.0.js'});
 vm.runInContext('let usuarioLogado = null;',context,{filename:'core-binding.js'});
 
 context.mostrarFeedbackLogin('Falha','erro');

@@ -8,7 +8,7 @@
 'use strict';
 
 const VERSION='1.0.0-phase4e';
-const IMPLEMENTACAO='prontuario_export_impl.js?v=20260910-phase4e-r1';
+const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20260910-phase4e-r1';
 const PERFIS_DETALHADO=new Set(['MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','FISIOTERAPEUTA','PROFISSIONAL']);
 let carregamento=null;
 
@@ -73,7 +73,7 @@ function carregarImplementacao(){
         const aoErro=()=>{
             limpar();
             script.remove();
-            reject(new Error('Falha ao baixar prontuario_export_impl.js.'));
+            reject(new Error('Falha ao baixar src/patient/prontuario_export_impl.js.'));
         };
         script.addEventListener('load',aoCarregar,{once:true});
         script.addEventListener('error',aoErro,{once:true});

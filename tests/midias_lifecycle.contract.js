@@ -3,8 +3,8 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const app = fs.readFileSync('script-1.18.0.js', 'utf8');
-const midias = fs.readFileSync('midias_core-1.0.0.js', 'utf8');
+const app = fs.readFileSync('src/core/script-1.18.0.js', 'utf8');
+const midias = fs.readFileSync('src/core/midias_core-1.0.0.js', 'utf8');
 
 assert.match(midias, /let midiaPollingCapturaSolicitado = false;/, 'Mídias deve rastrear se a captura solicitou polling');
 assert.match(midias, /let kinesysLocalStatusTimer = null;/, 'status do serviço local deve possuir handle próprio');

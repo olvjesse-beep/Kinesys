@@ -2,8 +2,8 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const midias=fs.readFileSync('midias_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const midias=fs.readFileSync('src/core/midias_core-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 
 assert(!core.includes('KINESYS v1.10 — KINESYS LOCAL / FOTOS CLÍNICAS'), 'Bloco principal de Mídias ainda está embutido no core');
@@ -21,9 +21,9 @@ assert(core.includes('function atualizarPSFSMedia('), 'Patient self-service medi
 const states=['KINESYS_LOCAL_URL','kinesysLocalOnline','kinesysLocalStatus','midiasPacienteAtual','midiaComparacaoA','midiaComparacaoB','midiaPollTimer','midiaPollingCapturaSolicitado','kinesysLocalStatusTimer','midiaUltimaQuantidadeLocal','midiaTabelaSupabaseDisponivel'];
 for(const state of states) assert(!new RegExp('\\b'+state+'\\b').test(core), `Estado interno ${state} não pode permanecer acoplado ao core`);
 
-const mediaTag='<script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
-const escapeTag='<script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
-const coreNeedle='<script defer src="script-1.18.0.js';
+const mediaTag='<script defer src="src/core/midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+const escapeTag='<script defer src="src/core/html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
+const coreNeedle='<script defer src="src/core/script-1.18.0.js';
 assert(html.includes(mediaTag), 'index.html não carrega o módulo principal de Mídias');
 assert(html.indexOf(escapeTag)<html.indexOf(mediaTag), 'HTML escape deve carregar antes de Mídias');
 assert(html.indexOf(mediaTag)<html.indexOf(coreNeedle), 'Mídias deve carregar antes do core para preservar APIs globais no bootstrap');

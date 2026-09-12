@@ -2,9 +2,9 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const registration=fs.readFileSync('patient_registration_core-1.0.0.js','utf8');
-const cadastro=fs.readFileSync('cadastro_validacoes_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const registration=fs.readFileSync('src/patient/patient_registration_core-1.0.0.js','utf8');
+const cadastro=fs.readFileSync('src/core/cadastro_validacoes_core-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 
 assert(!core.includes('VALIDAÇÕES CADASTRAIS — v1.8.2'), 'Validações cadastrais ainda estão embutidas no monólito');
@@ -25,11 +25,11 @@ assert(registration.includes("definirUltimoCEPPesquisadoKineSys('');"), 'limpeza
 assert(registration.includes("definirUltimoCEPPesquisadoKineSys(p.cep || '');"), 'edição deve preservar sincronização do CEP carregado após modularização do cadastro');
 assert(cadastro.includes("document.addEventListener('DOMContentLoaded', configurarValidacoesCadastrais);"), 'bootstrap das validações deve permanecer registrado');
 
-const cadastroTag='<script defer src="cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>';
-const escapeTag='<script defer src="html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
-const mediaTag='<script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
-const coreNeedle='<script defer src="script-1.18.0.js';
-const registrationTag='<script defer src="patient_registration_core-1.0.0.js?v=20260911-phase4n-r1"></script>';
+const cadastroTag='<script defer src="src/core/cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>';
+const escapeTag='<script defer src="src/core/html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
+const mediaTag='<script defer src="src/core/midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+const coreNeedle='<script defer src="src/core/script-1.18.0.js';
+const registrationTag='<script defer src="src/patient/patient_registration_core-1.0.0.js?v=20260911-phase4n-r1"></script>';
 assert(html.includes(cadastroTag), 'index.html não carrega cadastro_validacoes_core');
 assert(html.indexOf(escapeTag)<html.indexOf(cadastroTag), 'HTML escape deve carregar antes das validações cadastrais');
 assert(html.indexOf(cadastroTag)<html.indexOf(mediaTag), 'validações cadastrais devem manter ordem eager determinística antes de Mídias');

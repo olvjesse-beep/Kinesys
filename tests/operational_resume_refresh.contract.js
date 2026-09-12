@@ -2,10 +2,10 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const runtime=fs.readFileSync('operational_resume_refresh-1.0.0.js','utf8');
+const runtime=fs.readFileSync('src/core/operational_resume_refresh-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
-const agendaLifecycle=fs.readFileSync('agenda_lifecycle-1.0.0.js','utf8');
-const homeFisio=fs.readFileSync('home_fisioterapeuta_util-1.24.0.js','utf8');
+const agendaLifecycle=fs.readFileSync('src/agenda/agenda_lifecycle-1.0.0.js','utf8');
+const homeFisio=fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
 
 assert.match(runtime,/MIN_AUSENCIA_MS\s*=\s*1500/,'retorno deve ignorar trocas acidentais muito curtas');
 assert.match(runtime,/visibilitychange/,'retorno deve observar visibilidade da aba');
@@ -26,10 +26,10 @@ assert.match(agendaLifecycle,/function suspend\(/,'Agenda lifecycle precisa mant
 assert.match(agendaLifecycle,/function activate\(/,'Agenda lifecycle precisa manter API de ativação');
 assert.match(homeFisio,/window\.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaUtil/,'Meu Dia Clínico precisa manter API pública de atualização');
 
-const homeTag='home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1';
-const resumeTag='operational_resume_refresh-1.0.0.js?v=20260911-r1';
+const homeTag='src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1';
+const resumeTag='src/core/operational_resume_refresh-1.0.0.js?v=20260911-r1';
 assert(html.includes(resumeTag),'index deve carregar operational resume refresh');
 assert(html.indexOf(homeTag)<html.indexOf(resumeTag),'resume refresh deve carregar depois do Meu Dia Clínico');
-assert(html.indexOf('screen_loader-1.25.0.js')<html.indexOf(resumeTag),'resume refresh deve carregar depois do lifecycle oficial de telas');
+assert(html.indexOf('src/ui/screen_loader-1.25.0.js')<html.indexOf(resumeTag),'resume refresh deve carregar depois do lifecycle oficial de telas');
 
 console.log('Operational resume refresh contract: Agenda + Meu Dia Clínico revalidam ao retornar sem polling adicional.');

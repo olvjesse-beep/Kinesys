@@ -1,6 +1,6 @@
 /* KineSys — Patient Chart Read Core 1.0.0
  * Leitura de prontuário completo e reconciliação nuvem/local extraídas de
- * script-1.18.0.js sem adicionar cache TTL ao conteúdo clínico.
+ * src/core/script-1.18.0.js sem adicionar cache TTL ao conteúdo clínico.
  */
 'use strict';
 

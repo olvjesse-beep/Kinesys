@@ -1,7 +1,7 @@
 const fs = require('fs');
 const assert = require('assert');
 
-const src = fs.readFileSync('agenda-1.20.0.js', 'utf8');
+const src = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 
 function trechoEntre(inicio, fim) {
   const a = src.indexOf(inicio);

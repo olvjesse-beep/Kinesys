@@ -21,11 +21,11 @@ for (const artifact of resolvedLegacy) {
 }
 
 const activeSuccessors = [
-  'agenda-1.20.0.js',
-  'design_clinical_direction-1.17.0.css',
-  'cirurgias-1.18.0.js',
-  'clinical_engine-1.17.0.js',
-  'script-1.18.0.js'
+  'src/agenda/agenda-1.20.0.js',
+  'styles/design_clinical_direction-1.17.0.css',
+  'src/clinical/cirurgias-1.18.0.js',
+  'src/clinical/clinical_engine-1.17.0.js',
+  'src/core/script-1.18.0.js'
 ];
 
 for (const artifact of activeSuccessors) {
@@ -43,24 +43,24 @@ for (const artifact of resolvedLegacy) {
 const html = read('index.html');
 assert.match(
   html,
-  /<script\b[^>]*\bsrc=["'][^"']*script-1\.18\.0\.js(?:[?"'])/i,
-  'index.html deve continuar carregando script-1.18.0.js'
+  /<script\b[^>]*\bsrc=["'][^"']*src\/core\/script-1\.18\.0\.js(?:[?"'])/i,
+  'index.html deve continuar carregando src/core/script-1.18.0.js'
 );
 assert.ok(
   !/<script\b[^>]*\bsrc=["'][^"']*script\.js(?:[?"'])/i.test(html),
   'index.html não deve voltar a carregar script.js'
 );
 assert.ok(
-  html.includes('design_clinical_direction-1.17.0.css'),
-  'index.html deve continuar apontando para design_clinical_direction-1.17.0.css'
+  html.includes('styles/design_clinical_direction-1.17.0.css'),
+  'index.html deve continuar apontando para styles/design_clinical_direction-1.17.0.css'
 );
 
-const screenLoader = read('screen_loader-1.25.0.js');
+const screenLoader = read('src/ui/screen_loader-1.25.0.js');
 for (const runtimeAsset of [
-  'agenda-1.20.0.js',
-  'design_clinical_direction-1.17.0.css',
-  'cirurgias-1.18.0.js',
-  'clinical_engine-1.17.0.js'
+  'src/agenda/agenda-1.20.0.js',
+  'styles/design_clinical_direction-1.17.0.css',
+  'src/clinical/cirurgias-1.18.0.js',
+  'src/clinical/clinical_engine-1.17.0.js'
 ]) {
   assert.ok(
     screenLoader.includes(runtimeAsset),
@@ -68,10 +68,10 @@ for (const runtimeAsset of [
   );
 }
 
-assert.equal(exists('prontuario_export.js'), true, 'fachada de exportação do prontuário deve permanecer disponível');
-assert.equal(exists('prontuario_export_impl.js'), true, 'implementação lazy de exportação deve permanecer disponível');
+assert.equal(exists('src/patient/prontuario_export.js'), true, 'fachada de exportação do prontuário deve permanecer disponível');
+assert.equal(exists('src/patient/prontuario_export_impl.js'), true, 'implementação lazy de exportação deve permanecer disponível');
 assert.ok(
-  read('prontuario_export.js').includes('prontuario_export_impl.js'),
+  read('src/patient/prontuario_export.js').includes('src/patient/prontuario_export_impl.js'),
   'fachada de prontuário deve continuar carregando a implementação lazy'
 );
 

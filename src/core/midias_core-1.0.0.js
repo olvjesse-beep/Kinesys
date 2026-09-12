@@ -1,5 +1,5 @@
 /* KineSys — Media Core 1.0.0
- * Extraído de script-1.18.0.js sem alterar nomes, fluxo clínico, persistência ou lifecycle.
+ * Extraído de src/core/script-1.18.0.js sem alterar nomes, fluxo clínico, persistência ou lifecycle.
  */
 'use strict';
 

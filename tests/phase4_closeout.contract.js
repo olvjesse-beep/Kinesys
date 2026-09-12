@@ -28,9 +28,9 @@ for (const asset of assets) {
 }
 
 assert.equal(
-  scripts.filter(item => item === 'script-1.18.0.js').length,
+  scripts.filter(item => item === 'src/core/script-1.18.0.js').length,
   1,
-  'o monólito ativo script-1.18.0.js deve ser carregado exatamente uma vez'
+  'o monólito ativo src/core/script-1.18.0.js deve ser carregado exatamente uma vez'
 );
 
 const legacyDirectRefs = [
@@ -38,7 +38,7 @@ const legacyDirectRefs = [
   'script-1.17.0.js',
   'script-1.17.1.js',
   'agenda.js',
-  'agenda-audit__agenda-1.20.0.js',
+  'agenda-audit__src/agenda/agenda-1.20.0.js',
   'KineSys_v1.15.0_DEPLOY_APP.zip'
 ];
 for (const legacy of legacyDirectRefs) {

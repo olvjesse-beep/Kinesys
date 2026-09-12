@@ -3,12 +3,12 @@ const fs=require('fs');
 const assert=require('assert');
 const vm=require('vm');
 
-const source=fs.readFileSync('kinesys_data_cache-1.0.0.js','utf8');
+const source=fs.readFileSync('src/core/kinesys_data_cache-1.0.0.js','utf8');
 assert.doesNotMatch(source,/localStorage|sessionStorage/,'data cache must remain memory-only');
 
 const context={window:{},console,setTimeout,clearTimeout,Date,Map,Object,Promise,Error,String,Number,Array};
 vm.createContext(context);
-vm.runInContext(source,context,{filename:'kinesys_data_cache-1.0.0.js'});
+vm.runInContext(source,context,{filename:'src/core/kinesys_data_cache-1.0.0.js'});
 const cache=context.window.KineSysDataCache;
 assert.ok(cache&&typeof cache.get==='function','global data cache API must exist');
 

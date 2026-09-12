@@ -4,12 +4,12 @@ const fs=require('fs');
 const assert=require('assert');
 const vm=require('vm');
 
-const messages=fs.readFileSync('mensagens_config.js','utf8');
+const messages=fs.readFileSync('src/core/mensagens_config.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
-const crm=fs.readFileSync('crm_relationship_core-1.0.0.js','utf8');
-const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
+const crm=fs.readFileSync('src/core/crm_relationship_core-1.0.0.js','utf8');
+const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 
-assert.match(html,/mensagens_config\.js\?v=20260910-phase4f-r1/,'index deve invalidar o cache da Phase 4F');
+assert.match(html,/src\/core\/mensagens_config\.js\?v=20260910-phase4f-r1/,'index deve invalidar o cache da Phase 4F');
 assert.match(messages,/document\.addEventListener\('DOMContentLoaded', inicializarConfiguracaoMensagens\);/,'marcação administrativa da tela deve continuar inicializada no DOMContentLoaded');
 
 const initMatch=messages.match(/function inicializarConfiguracaoMensagens\(\) \{([\s\S]*?)\n\}/);
@@ -46,7 +46,7 @@ const context={
   alert(){},confirm(){return true;}
 };
 context.window.window=context.window;
-vm.runInNewContext(messages,context,{filename:'mensagens_config.js',timeout:1000});
+vm.runInNewContext(messages,context,{filename:'src/core/mensagens_config.js',timeout:1000});
 assert.strictEqual(typeof domReady,'function','script deve registrar inicialização DOM');
 domReady();
 assert.strictEqual(rpcCalls,0,'DOMContentLoaded não deve consumir RPC de mensagens na Phase 4F');

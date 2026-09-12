@@ -3,24 +3,24 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const screen=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const regional=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
+const screen=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const regional=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8');
 
 const regionalScripts=[
-  'clinical_reasoning_shoulder-3.1.0.js',
-  'clinical_reasoning_elbow-3.1.0.js',
-  'clinical_reasoning_wrist-3.1.0.js',
-  'clinical_reasoning_cervical-3.1.0.js'
+  'src/clinical/clinical_reasoning_shoulder-3.1.0.js',
+  'src/clinical/clinical_reasoning_elbow-3.1.0.js',
+  'src/clinical/clinical_reasoning_wrist-3.1.0.js',
+  'src/clinical/clinical_reasoning_cervical-3.1.0.js'
 ];
 const regionalStyles=[
-  'clinical_reasoning_shoulder-3.1.0.css',
-  'clinical_reasoning_elbow-3.1.0.css',
-  'clinical_reasoning_wrist-3.1.0.css',
-  'clinical_reasoning_cervical-3.1.0.css'
+  'styles/clinical_reasoning_shoulder-3.1.0.css',
+  'styles/clinical_reasoning_elbow-3.1.0.css',
+  'styles/clinical_reasoning_wrist-3.1.0.css',
+  'styles/clinical_reasoning_cervical-3.1.0.css'
 ];
 
-assert.ok(screen.includes('clinical_region_loader-1.0.0.js'),'Avaliação deve carregar o coordenador regional sob demanda');
-assert.ok(screen.indexOf('clinical_reasoning_hma-3.0.0.js')<screen.indexOf('clinical_region_loader-1.0.0.js'),'loader regional deve iniciar depois do Motor HMA base');
+assert.ok(screen.includes('src/clinical/clinical_region_loader-1.0.0.js'),'Avaliação deve carregar o coordenador regional sob demanda');
+assert.ok(screen.indexOf('src/clinical/clinical_reasoning_hma-3.0.0.js')<screen.indexOf('src/clinical/clinical_region_loader-1.0.0.js'),'loader regional deve iniciar depois do Motor HMA base');
 for(const file of [...regionalScripts,...regionalStyles]){
   assert.ok(!screen.includes(file),`${file} não deve permanecer no bundle base da Avaliação`);
   assert.ok(regional.includes(file),`${file} deve permanecer registrado no loader regional`);

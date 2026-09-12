@@ -1,5 +1,5 @@
 /* KineSys — Menu Dropdown 1.0.0
- * Extraído de script-1.18.0.js sem alterar contratos públicos ou comportamento.
+ * Extraído de src/core/script-1.18.0.js sem alterar contratos públicos ou comportamento.
  */
 (function instalarMenuDropdownKineSys(){
     'use strict';

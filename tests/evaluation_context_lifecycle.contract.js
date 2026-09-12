@@ -1,6 +1,6 @@
 const assert=require('assert');
 const fs=require('fs');
-const src=fs.readFileSync('evaluation_context_panels-1.18.3.js','utf8');
+const src=fs.readFileSync('src/clinical/evaluation_context_panels-1.18.3.js','utf8');
 
 assert.match(src,/const navegacao=new MutationObserver\(\(\)=>\{if\(aberto&&!triagem\.classList\.contains\('ativa'\)\)fechar\(false\);\}\)/,'observer deve permanecer restrito à subtela de triagem');
 assert.match(src,/navegacao\.observe\(triagem,\{attributes:true,attributeFilter:\['class'\]\}\)/,'triagem deve continuar observada');

@@ -2,8 +2,8 @@ const fs=require('fs');
 const vm=require('vm');
 const assert=require('assert');
 
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const guard=fs.readFileSync('operation_guard-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const guard=fs.readFileSync('src/core/operation_guard-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 
 assert(!core.includes('const KINESYS_OPERACOES_EM_CURSO = new Set()'), 'Estado do operation guard ainda está embutido no core');
@@ -19,9 +19,9 @@ assert(guard.includes('function protegerFuncaoKineSys('), 'Módulo perdeu proteg
 assert(guard.includes("protegida.__kinesysProtegida = true"), 'Idempotência do wrapper foi alterada');
 assert(guard.includes("protegida.__original = original"), 'Referência à função original foi alterada');
 
-const guardTag='<script defer src="operation_guard-1.0.0.js?v=20260911-phase4b-r1"></script>';
-const coreNeedle='<script defer src="script-1.18.0.js';
-const menuNeedle='<script defer src="menu_dropdown-1.0.0.js?v=20260911-phase4a-r1"></script>';
+const guardTag='<script defer src="src/core/operation_guard-1.0.0.js?v=20260911-phase4b-r1"></script>';
+const coreNeedle='<script defer src="src/core/script-1.18.0.js';
+const menuNeedle='<script defer src="src/ui/menu_dropdown-1.0.0.js?v=20260911-phase4a-r1"></script>';
 assert(html.includes(guardTag), 'index.html não carrega o operation guard extraído');
 assert(html.indexOf(menuNeedle) < html.indexOf(guardTag), 'Ordem eager existente deve ser preservada: menu antes do guard');
 assert(html.indexOf(guardTag) < html.indexOf(coreNeedle), 'Operation guard deve carregar antes do script principal');
@@ -45,7 +45,7 @@ function criarBotao(){
   };
   context.window=context;
   vm.createContext(context);
-  vm.runInContext(guard,context,{filename:'operation_guard-1.0.0.js'});
+  vm.runInContext(guard,context,{filename:'src/core/operation_guard-1.0.0.js'});
 
   let resolver;
   let execucoes=0;

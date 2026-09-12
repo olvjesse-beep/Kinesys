@@ -2,7 +2,7 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
+const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 
 assert.match(agenda,/const AGENDA_SEMANA_CACHE_TTL_MS\s*=\s*5000\s*;/,'Agenda week cache must use a short 5s TTL');
 assert.match(agenda,/function chaveCacheAgendaSemana\(inicio, fim, profissionalEscopo = ''\)/,'Agenda week cache key helper must exist');

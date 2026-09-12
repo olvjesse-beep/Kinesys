@@ -1,6 +1,6 @@
 const assert=require('assert');
 const fs=require('fs');
-const home=fs.readFileSync('home_detalhes-1.18.5.js','utf8');
+const home=fs.readFileSync('src/home/home_detalhes-1.18.5.js','utf8');
 
 assert.doesNotMatch(home,/new MutationObserver\(\(\)=>\{if\(!home\.classList\.contains\('ativa'\)\)fecharAtendimentosHome\(false\);\}\)/,'Home não deve observar classe apenas para fechar atendimentos');
 assert.doesNotMatch(home,/new MutationObserver\(\(\)=>\{if\(!home\.classList\.contains\('ativa'\)\)fecharPendenciasHome\(false\);\}\)/,'Home não deve observar classe apenas para fechar pendências');

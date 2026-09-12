@@ -4,10 +4,10 @@ const fs = require('fs');
 const assert = require('assert');
 const vm = require('vm');
 
-const agenda = fs.readFileSync('agenda-1.20.0.js', 'utf8');
+const agenda = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
-const loader = fs.readFileSync('screen_loader-1.25.0.js', 'utf8');
-const financeiro = fs.readFileSync('financeiro_agendamento-1.21.0.js', 'utf8');
+const loader = fs.readFileSync('src/ui/screen_loader-1.25.0.js', 'utf8');
+const financeiro = fs.readFileSync('src/finance/financeiro_agendamento-1.21.0.js', 'utf8');
 
 function trechoEntre(inicio, fim) {
   const a = agenda.indexOf(inicio);
@@ -88,9 +88,9 @@ assert.match(editar, /await renderizarPainelAgenda\(\)/,'Agenda deve atualizar a
 assert.match(editar, /await abrirDetalheAgendamento\(id\)/,'Detalhe deve reabrir no mesmo atendimento atualizado');
 
 // Cache-busting: garante que o navegador realmente recebe a versão nova, mantendo Agenda lazy.
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,'index deve invalidar cache do Screen Loader');
-assert.match(loader,/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3/,'Screen Loader deve invalidar cache da Agenda');
-assert.doesNotMatch(html,/<script[^>]+agenda-1\.20\.0\.js/i,'Agenda deve continuar fora do bootstrap');
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,'index deve invalidar cache do Screen Loader');
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3/,'Screen Loader deve invalidar cache da Agenda');
+assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve continuar fora do bootstrap');
 
 // Smoke dinâmico do UPDATE: prova mesmo id, quatro campos e nenhuma criação.
 async function executarEdicao({pagos=0}={}) {

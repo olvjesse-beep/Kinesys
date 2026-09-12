@@ -5,49 +5,49 @@ const assert=require('assert');
 const vm=require('vm');
 
 const html=fs.readFileSync('index.html','utf8');
-const loader=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const app=fs.readFileSync('script-1.18.0.js','utf8');
-const registration=fs.readFileSync('patient_registration_core-1.0.0.js','utf8');
-const regionLoader=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const app=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const registration=fs.readFileSync('src/patient/patient_registration_core-1.0.0.js','utf8');
+const regionLoader=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8');
 const fragmentPath='screens/tela_avaliacao.html';
 assert.ok(fs.existsSync(fragmentPath),'fragmento físico da Avaliação deve existir');
 const fragment=fs.readFileSync(fragmentPath,'utf8');
 
 const lazyScripts=[
-  'clinical_engine-1.17.0.js',
-  'evaluation_workspace-1.17.0.js',
-  'proms_escalas.js',
-  'evaluation_context_panels-1.18.3.js',
-  'avaliacao_experiencia-1.22.0.js',
-  'clinical_reasoning_hma-3.0.0.js',
-  'clinical_region_loader-1.0.0.js'
+  'src/clinical/clinical_engine-1.17.0.js',
+  'src/clinical/evaluation_workspace-1.17.0.js',
+  'src/clinical/proms_escalas.js',
+  'src/clinical/evaluation_context_panels-1.18.3.js',
+  'src/clinical/avaliacao_experiencia-1.22.0.js',
+  'src/clinical/clinical_reasoning_hma-3.0.0.js',
+  'src/clinical/clinical_region_loader-1.0.0.js'
 ];
 
 const regionalScripts=[
-  'clinical_reasoning_shoulder-3.1.0.js',
-  'clinical_reasoning_elbow-3.1.0.js',
-  'clinical_reasoning_wrist-3.1.0.js',
-  'clinical_reasoning_cervical-3.1.0.js'
+  'src/clinical/clinical_reasoning_shoulder-3.1.0.js',
+  'src/clinical/clinical_reasoning_elbow-3.1.0.js',
+  'src/clinical/clinical_reasoning_wrist-3.1.0.js',
+  'src/clinical/clinical_reasoning_cervical-3.1.0.js'
 ];
 const regionalStyles=[
-  'clinical_reasoning_shoulder-3.1.0.css',
-  'clinical_reasoning_elbow-3.1.0.css',
-  'clinical_reasoning_wrist-3.1.0.css',
-  'clinical_reasoning_cervical-3.1.0.css'
+  'styles/clinical_reasoning_shoulder-3.1.0.css',
+  'styles/clinical_reasoning_elbow-3.1.0.css',
+  'styles/clinical_reasoning_wrist-3.1.0.css',
+  'styles/clinical_reasoning_cervical-3.1.0.css'
 ];
 
 const lazyStyles=[
-  'design_clinical.css',
-  'design_clinical_direction-1.17.0.css',
-  'design_evaluation_workspace-1.18.0.css',
-  'design_evaluation_context-1.18.3.css',
-  'avaliacao_experiencia-1.22.0.css',
-  'clinical_reasoning_hma-3.0.0.css',
-  'radar_clinico_focus-3.0.0.css',
-  'dialog_rascunho_focus-1.0.0.css'
+  'styles/design_clinical.css',
+  'styles/design_clinical_direction-1.17.0.css',
+  'styles/design_evaluation_workspace-1.18.0.css',
+  'styles/design_evaluation_context-1.18.3.css',
+  'styles/avaliacao_experiencia-1.22.0.css',
+  'styles/clinical_reasoning_hma-3.0.0.css',
+  'styles/radar_clinico_focus-3.0.0.css',
+  'styles/dialog_rascunho_focus-1.0.0.css'
 ];
 
-assert.match(html,/screen_loader-1\.25\.0\.js/,'index.html deve carregar o Screen Loader');
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js/,'index.html deve carregar o Screen Loader');
 assert.match(loader,/tela_avaliacao\s*:/,'bundle da Avaliação deve existir');
 assert.ok(loader.includes('screens/tela_avaliacao.html'),'bundle deve registrar o fragmento da Avaliação');
 assert.match(loader,/kinesys:tela-ativada/,'ciclo de vida deve emitir ativação');
@@ -123,13 +123,13 @@ for(const file of regionalStyles){
   assert.ok(fs.existsSync(file),`${file} deve existir fisicamente no repositório`);
 }
 
-const phase4dClinicalStyles=['design_clinical.css','design_clinical_direction-1.17.0.css'];
+const phase4dClinicalStyles=['styles/design_clinical.css','styles/design_clinical_direction-1.17.0.css'];
 for(const file of phase4dClinicalStyles){
   const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   assert.match(html,new RegExp(`<link[^>]+rel=["']stylesheet["'][^>]+data-kinesys-lazy-href=["'][^"']*${escaped}[^"']*["']`,'i'),`${file} deve manter placeholder na posição histórica do head`);
 }
-assert.ok(html.indexOf('data-kinesys-lazy-href="design_clinical.css')<html.indexOf('data-kinesys-lazy-href="design_clinical_direction-1.17.0.css'),'cascade clínico deve preservar design_clinical antes de clinical_direction');
-assert.ok(loader.indexOf('design_clinical.css')<loader.indexOf('design_clinical_direction-1.17.0.css'),'bundle deve preservar a ordem clínica das duas folhas');
+assert.ok(html.indexOf('data-kinesys-lazy-href="styles/design_clinical.css')<html.indexOf('data-kinesys-lazy-href="styles/design_clinical_direction-1.17.0.css'),'cascade clínico deve preservar design_clinical antes de clinical_direction');
+assert.ok(loader.indexOf('styles/design_clinical.css')<loader.indexOf('styles/design_clinical_direction-1.17.0.css'),'bundle deve preservar a ordem clínica das duas folhas');
 assert.match(loader,/data-kinesys-lazy-href/,'Screen Loader deve reconhecer placeholders CSS lazy');
 assert.match(loader,/reservado\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');
 assert.match(loader,/reservado\.removeAttribute\('href'\)/,'falha de rede deve liberar o placeholder para uma nova tentativa real');
@@ -137,7 +137,7 @@ assert.match(loader,/removeEventListener\('load',aoCarregar\)/,'retry CSS não d
 const phase4dCssDeferredBytes=phase4dClinicalStyles.reduce((total,file)=>total+fs.statSync(file).size,0);
 assert.ok(phase4dCssDeferredBytes>=100000,`Fase 4D deve adiar pelo menos 100 KB brutos de CSS clínico; atual ${phase4dCssDeferredBytes} bytes`);
 const allowedClinicalBreakpoints=new Set([1280,1180,1100,980,900,820,760,700,620,560,520,430]);
-const tokenText=fs.readFileSync('design_tokens.css','utf8');
+const tokenText=fs.readFileSync('styles/design_tokens.css','utf8');
 const definedClinicalTokens=new Set(Array.from(tokenText.matchAll(/(--kds-[a-z0-9-]+)\s*:/gi),m=>m[1]));
 for(const jsFile of fs.readdirSync('.').filter(file=>file.endsWith('.js'))){
   const source=fs.readFileSync(jsFile,'utf8');
@@ -159,8 +159,8 @@ for(const file of phase4dClinicalStyles){
 }
 
 
-const workspace=fs.readFileSync('evaluation_workspace-1.17.0.js','utf8');
-const proms=fs.readFileSync('proms_escalas.js','utf8');
+const workspace=fs.readFileSync('src/clinical/evaluation_workspace-1.17.0.js','utf8');
+const proms=fs.readFileSync('src/clinical/proms_escalas.js','utf8');
 assert.match(workspace,/document\.readyState===['"]loading['"]/,'workspace deve inicializar também em carregamento tardio');
 assert.match(workspace,/clinicaEstruturadaPreservada/,'workspace tardio deve recuperar o laudo preservado');
 assert.match(proms,/document\.readyState===['"]loading['"]/,'PROMs deve inicializar também em carregamento tardio');
@@ -170,20 +170,20 @@ const waits=((app+'\n'+registration).match(/const navegacao = await navegarPara\
 assert.strictEqual(waits,2,'os dois fluxos que preenchem a Avaliação devem aguardar sua montagem, mesmo após modularização do cadastro');
 
 const financeLazyScripts=[
-  'pendencias_financeiras-1.19.0.js',
-  'descontos_financeiros-1.20.0.js',
-  'balanco_financeiro_admin-1.19.0.js',
-  'analise_admin-1.19.0.js',
-  'financeiro_workspace-1.20.1.js',
-  'financeiro_lancamentos-1.20.0.js'
+  'src/finance/pendencias_financeiras-1.19.0.js',
+  'src/finance/descontos_financeiros-1.20.0.js',
+  'src/finance/balanco_financeiro_admin-1.19.0.js',
+  'src/admin/analise_admin-1.19.0.js',
+  'src/finance/financeiro_workspace-1.20.1.js',
+  'src/finance/financeiro_lancamentos-1.20.0.js'
 ];
 const financeLazyStyles=[
-  'financeiro_workspace-1.20.1.css',
-  'financeiro_lancamentos-1.20.0.css',
-  'financeiro_alignment.css'
+  'styles/financeiro_workspace-1.20.1.css',
+  'styles/financeiro_lancamentos-1.20.0.css',
+  'styles/financeiro_alignment.css'
 ];
-const agendaLazyScripts=['agenda-1.20.0.js'];
-const agendaLazyStyles=['agenda_referencia-1.20.0.css'];
+const agendaLazyScripts=['src/agenda/agenda-1.20.0.js'];
+const agendaLazyStyles=['styles/agenda_referencia-1.20.0.css'];
 
 assert.match(loader,/tela_financeiro\s*:/,'bundle do Financeiro deve existir');
 assert.match(loader,/tela_agenda\s*:/,'bundle visual da Agenda deve existir');
@@ -203,7 +203,7 @@ for(const file of agendaLazyScripts)assertLazyAsset(file,'script');
 for(const file of agendaLazyStyles)assertLazyAsset(file,'style');
 
 const evaluationDatabaseLazyScripts=[
-  'cirurgias-1.18.0.js',
+  'src/clinical/cirurgias-1.18.0.js',
   'database/medicamentos.js',
   'database/irradiacao_clinica.js',
   'database/mapeamento_regioes-1.0.0.js',
@@ -218,7 +218,7 @@ for(const file of evaluationDatabaseLazyScripts){
   evaluationDbPos=pos;
 }
 assert.match(html,/<script[^>]+src=["'][^"']*database\/ocupacoes_esportes\.js[^"']*["']/i,'ocupações/esportes permanece eager nesta fase porque o núcleo principal ainda o valida no bootstrap');
-assert.doesNotMatch(loader,/scripts:Object\.freeze\(\[[\s\S]*?database\/ocupacoes_esportes\.js[\s\S]*?clinical_engine-1\.17\.0\.js/,'ocupações/esportes não deve ser carregado duas vezes no bundle da Avaliação');
+assert.doesNotMatch(loader,/scripts:Object\.freeze\(\[[\s\S]*?database\/ocupacoes_esportes\.js[\s\S]*?src\/clinical\/clinical_engine-1\.17\.0\.js/,'ocupações/esportes não deve ser carregado duas vezes no bundle da Avaliação');
 
 // Smoke test das bases que continuam disponíveis ao abrir a Avaliação.
 const clinicalDbContext={console};
@@ -249,24 +249,24 @@ for(const file of financeLazyScripts){
 }
 
 const eagerSharedScripts=[
-  'financeiro-1.19.0.js',
-  'credito_cliente-1.19.0.js',
-  'agenda_notificacoes_core-1.20.1.js',
-  'financeiro_agendamento-1.21.0.js'
+  'src/finance/financeiro-1.19.0.js',
+  'src/finance/credito_cliente-1.19.0.js',
+  'src/agenda/agenda_notificacoes_core-1.20.1.js',
+  'src/finance/financeiro_agendamento-1.21.0.js'
 ];
 for(const file of eagerSharedScripts){
   const escaped=file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   assert.match(html,new RegExp(`<script[^>]+src=["'][^"']*${escaped}[^"']*["']`,'i'),`${file} deve continuar eager na Fase 4A por ser núcleo compartilhado`);
 }
-assert.match(html,/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
-assert.match(html,/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
+assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
+assert.match(html,/styles\/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
 assert.match(loader,/VERSION='1\.25\.4-phase4d'/,'Screen Loader deve identificar a Fase 4D');
-assert.match(html,/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');
 
-const agendaModule=fs.readFileSync('agenda-1.20.0.js','utf8');
-const notificationCore=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
-const financeAgendaIntegration=fs.readFileSync('financeiro_agendamento-1.21.0.js','utf8');
+const agendaModule=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
+const notificationCore=fs.readFileSync('src/agenda/agenda_notificacoes_core-1.20.1.js','utf8');
+const financeAgendaIntegration=fs.readFileSync('src/finance/financeiro_agendamento-1.21.0.js','utf8');
 assert.match(notificationCore,/function iniciarNotificacoesAgenda\(/,'núcleo eager deve preservar iniciarNotificacoesAgenda');
 assert.match(notificationCore,/function pararNotificacoesAgenda\(/,'núcleo eager deve preservar pararNotificacoesAgenda');
 assert.match(notificationCore,/function sincronizarNotificacoesPendentesAgenda\(/,'núcleo eager deve preservar sincronização da fila de avisos');
@@ -277,8 +277,8 @@ assert.match(agendaModule,/document\.readyState === 'loading'/,'Agenda deve inic
 assert.match(financeAgendaIntegration,/function instalarHooksAgendaFinanceiro\(/,'integração deve possuir instalador tardio dos hooks da Agenda');
 assert.match(financeAgendaIntegration,/kinesys:tela-modulos-prontos/,'integração deve aguardar o bundle da Agenda antes de sobrescrever hooks');
 
-const coreBytes=fs.statSync('agenda_notificacoes_core-1.20.1.js').size;
-const agendaLazyBytes=fs.statSync('agenda-1.20.0.js').size;
+const coreBytes=fs.statSync('src/agenda/agenda_notificacoes_core-1.20.1.js').size;
+const agendaLazyBytes=fs.statSync('src/agenda/agenda-1.20.0.js').size;
 assert.ok(coreBytes<20000,`núcleo de notificações deve permanecer pequeno; atual ${coreBytes} bytes`);
 assert.ok(agendaLazyBytes>180000,`módulo pesado da Agenda deve permanecer efetivamente fora do bootstrap; atual ${agendaLazyBytes} bytes`);
 

@@ -1,8 +1,8 @@
 'use strict';
 const fs=require('fs');
 const assert=require('assert');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const team=fs.readFileSync('team_management_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const team=fs.readFileSync('src/admin/team_management_core-1.0.0.js','utf8');
 const index=fs.readFileSync('index.html','utf8');
 
 const functions=[
@@ -35,15 +35,15 @@ assert.match(team,/update\(\{ ativo: false, aparece_na_agenda: false \}\)/,'perf
 assert.match(team,/from\('equipe'\)\.delete\(\)/,'perfil sem histórico deve manter caminho de exclusão existente');
 assert.doesNotMatch(team,/service_role|SUPABASE_SERVICE_ROLE_KEY/i,'módulo frontend não pode conter segredo administrativo');
 
-const teamTag='team_management_core-1.0.0.js?v=20260911-phase4o-r1';
+const teamTag='src/admin/team_management_core-1.0.0.js?v=20260911-phase4o-r1';
 const teamPos=index.indexOf(teamTag);
-const corePos=index.indexOf('script-1.18.0.js');
+const corePos=index.indexOf('src/core/script-1.18.0.js');
 assert.ok(teamPos>=0,'index deve carregar o módulo de Gestão de Equipe');
 assert.ok(teamPos<corePos,'helpers de equipe devem carregar antes do core consumidor');
 assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4O');
 
-const size=fs.statSync('team_management_core-1.0.0.js').size;
-const coreSize=fs.statSync('script-1.18.0.js').size;
+const size=fs.statSync('src/admin/team_management_core-1.0.0.js').size;
+const coreSize=fs.statSync('src/core/script-1.18.0.js').size;
 assert.ok(size>12000,`módulo de equipe parece pequeno demais: ${size}`);
 assert.ok(coreSize<695645,`monólito deve reduzir em relação à 4N; atual=${coreSize}`);
 console.log(`Team management modularization: OK | module=${size} bytes | monolith=${coreSize} bytes`);

@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'); const assert=require('assert');
-const core=fs.readFileSync('script-1.18.0.js','utf8');
-const mod=fs.readFileSync('input_helpers_core-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
+const mod=fs.readFileSync('src/ui/input_helpers_core-1.0.0.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 assert(!core.includes('TERMÔMETRO DA DOR (ESCALA EVA)'), 'EVA ainda embutido no monólito');
 assert(!core.includes('AUTOCOMPLETES (RESTAURADOS E ORIGINAIS)'), 'autocompletes ainda embutidos no monólito');
@@ -11,10 +11,10 @@ for(const fn of ['aplicarClasseEvaKineSys','toggleCirurgias','expandirSugestoesI
 for(const state of ['OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE','OPCOES_INDIVIDUAIS_CIRURGIAS']) assert(mod.includes(`const ${state} =`),`módulo perdeu ${state}`);
 assert(!core.includes('OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE'), 'estado autocomplete vazou para core');
 assert(!core.includes('OPCOES_INDIVIDUAIS_CIRURGIAS'), 'estado cirurgias vazou para core');
-const tag='<script defer src="input_helpers_core-1.0.0.js?v=20260911-phase4f-r1"></script>';
-const cadastro='<script defer src="cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>';
-const media='<script defer src="midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
-const main='<script defer src="script-1.18.0.js';
+const tag='<script defer src="src/ui/input_helpers_core-1.0.0.js?v=20260911-phase4f-r1"></script>';
+const cadastro='<script defer src="src/core/cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>';
+const media='<script defer src="src/core/midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+const main='<script defer src="src/core/script-1.18.0.js';
 assert(html.includes(tag),'index não carrega input helpers');
 assert(html.indexOf(cadastro)<html.indexOf(tag),'input helpers deve carregar após cadastro validations');
 assert(html.indexOf(tag)<html.indexOf(media),'input helpers deve carregar antes de mídias');

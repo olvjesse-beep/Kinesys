@@ -2,9 +2,9 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const agenda=fs.readFileSync('agenda-1.20.0.js','utf8');
-const notificacoesAgenda=fs.readFileSync('agenda_notificacoes_core-1.20.1.js','utf8');
-const financeiro=fs.readFileSync('financeiro-1.19.0.js','utf8');
+const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
+const notificacoesAgenda=fs.readFileSync('src/agenda/agenda_notificacoes_core-1.20.1.js','utf8');
+const financeiro=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
 
 assert.match(agenda,/async function obterPacientesBasicosAgenda\(\)/,'Agenda must expose a lightweight patient adapter');
 assert.match(agenda,/typeof obterPacientesBasicos === ['"]function['"]/,'Agenda adapter must prefer the lightweight global patient index');

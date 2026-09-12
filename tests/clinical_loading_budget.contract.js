@@ -3,34 +3,34 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const screen=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const regional=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
+const screen=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const regional=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8');
 const strip=v=>String(v).split('?')[0];
 const bytes=files=>files.reduce((total,file)=>total+fs.statSync(strip(file)).size,0);
 const unique=files=>Array.from(new Set(files.map(strip)));
 
 const evaluationBase=[
   'screens/tela_avaliacao.html',
-  'design_clinical.css',
-  'design_clinical_direction-1.17.0.css',
-  'design_evaluation_workspace-1.18.0.css',
-  'design_evaluation_context-1.18.3.css',
-  'avaliacao_experiencia-1.22.0.css',
-  'clinical_reasoning_hma-3.0.0.css',
-  'radar_clinico_focus-3.0.0.css',
-  'dialog_rascunho_focus-1.0.0.css',
-  'cirurgias-1.18.0.js',
+  'styles/design_clinical.css',
+  'styles/design_clinical_direction-1.17.0.css',
+  'styles/design_evaluation_workspace-1.18.0.css',
+  'styles/design_evaluation_context-1.18.3.css',
+  'styles/avaliacao_experiencia-1.22.0.css',
+  'styles/clinical_reasoning_hma-3.0.0.css',
+  'styles/radar_clinico_focus-3.0.0.css',
+  'styles/dialog_rascunho_focus-1.0.0.css',
+  'src/clinical/cirurgias-1.18.0.js',
   'database/medicamentos.js',
   'database/irradiacao_clinica.js',
   'database/mapeamento_regioes-1.0.0.js',
   'database/mapeamento_clinico_core-1.0.0.js',
-  'clinical_engine-1.17.0.js',
-  'evaluation_workspace-1.17.0.js',
-  'proms_escalas.js',
-  'evaluation_context_panels-1.18.3.js',
-  'avaliacao_experiencia-1.22.0.js',
-  'clinical_reasoning_hma-3.0.0.js',
-  'clinical_region_loader-1.0.0.js'
+  'src/clinical/clinical_engine-1.17.0.js',
+  'src/clinical/evaluation_workspace-1.17.0.js',
+  'src/clinical/proms_escalas.js',
+  'src/clinical/evaluation_context_panels-1.18.3.js',
+  'src/clinical/avaliacao_experiencia-1.22.0.js',
+  'src/clinical/clinical_reasoning_hma-3.0.0.js',
+  'src/clinical/clinical_region_loader-1.0.0.js'
 ];
 
 const scenarios={
@@ -40,23 +40,23 @@ const scenarios={
   ombro:[
     'database/regioes/ombro-base-1.0.0.js',
     'database/regioes/ombro-ext-1.0.0.js',
-    'clinical_reasoning_shoulder-3.1.0.css',
-    'clinical_reasoning_shoulder-3.1.0.js'
+    'styles/clinical_reasoning_shoulder-3.1.0.css',
+    'src/clinical/clinical_reasoning_shoulder-3.1.0.js'
   ],
   punho_mao:[
     'database/regioes/punho_mao-base-1.0.0.js',
     'database/regioes/punho_mao-ext-1.0.0.js',
-    'clinical_reasoning_elbow-3.1.0.css',
-    'clinical_reasoning_elbow-3.1.0.js',
-    'clinical_reasoning_wrist-3.1.0.css',
-    'clinical_reasoning_wrist-3.1.0.js'
+    'styles/clinical_reasoning_elbow-3.1.0.css',
+    'src/clinical/clinical_reasoning_elbow-3.1.0.js',
+    'styles/clinical_reasoning_wrist-3.1.0.css',
+    'src/clinical/clinical_reasoning_wrist-3.1.0.js'
   ],
   cervical:[
     'database/regioes/cervical-base-1.0.0.js',
-    'clinical_reasoning_elbow-3.1.0.css',
-    'clinical_reasoning_elbow-3.1.0.js',
-    'clinical_reasoning_cervical-3.1.0.css',
-    'clinical_reasoning_cervical-3.1.0.js'
+    'styles/clinical_reasoning_elbow-3.1.0.css',
+    'src/clinical/clinical_reasoning_elbow-3.1.0.js',
+    'styles/clinical_reasoning_cervical-3.1.0.css',
+    'src/clinical/clinical_reasoning_cervical-3.1.0.js'
   ]
 };
 

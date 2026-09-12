@@ -3,8 +3,8 @@
 const fs=require('fs');
 const assert=require('assert');
 
-const screen=fs.readFileSync('screen_loader-1.25.0.js','utf8');
-const regional=fs.readFileSync('clinical_region_loader-1.0.0.js','utf8');
+const screen=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const regional=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8');
 
 const legacyBase='database/mapeamento_clinico.js';
 const core='database/mapeamento_clinico_core-1.0.0.js';
