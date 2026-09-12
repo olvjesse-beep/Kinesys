@@ -36,6 +36,7 @@ const removedArtifacts = [
   'pendencias_financeiras.js',
   'script-1.17.0.js',
   'script-1.17.1.js',
+  'cirurgias-1.17.0.js',
   'balanco_financeiro_admin.js',
   'financeiro.js',
   'home_detalhes.js',
@@ -59,5 +60,6 @@ assert.equal(exists('home_fisioterapeuta_util-1.24.0.css'), true, 'Home fisioter
 assert.equal(exists('design_home_activity-1.18.5.css'), true, 'Home activity CSS ativo deve permanecer disponível');
 assert.equal(exists('design_evaluation_workspace-1.18.0.css'), true, 'Evaluation workspace CSS ativo deve permanecer disponível');
 assert.equal(exists('script-1.18.0.js'), true, 'Core 1.18.0 ativo deve permanecer disponível');
+assert.equal(exists('cirurgias-1.18.0.js'), true, 'Dicionário de cirurgias ativo 1.18.0 deve permanecer disponível');
 
 console.log(`Phase 5 Cleanup Contract OK — ${removedArtifacts.length} artefatos legados permanecem ausentes e os sucessores ativos estão preservados.`);
