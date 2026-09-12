@@ -24,21 +24,21 @@ jobs:
           fetch-depth: 0
       - name: Update stale assertions
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('tests/screen_loader.contract.js')
-          s=p.read_text(encoding='utf-8')
-          replacements={
-          "assert.match(loader,/fetch\\(bundle\\.fragment/,'fragmento deve ser buscado somente sob demanda');": "assert.match(loader,/const fragmentUrl=urlAbsoluta\\(bundle\\.fragment\\)/,'fragmento deve receber a revisão global antes da busca');\nassert.match(loader,/fetch\\(fragmentUrl,\\{credentials:'same-origin',cache:'no-cache'\\}\\)/,'fragmento deve ser buscado somente sob demanda com revalidação');",
-          "assert.match(loader,/reservado\\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');": "assert.match(loader,/reservado\\.href=href/,'Screen Loader deve ativar no placeholder a URL já versionada em vez de anexar a folha ao fim do head');",
-          "assert.match(html,/src\\/ui\\/screen_loader-1\\.25\\.0\\.js\\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');": "assert.match(html,/src\\/ui\\/screen_loader-1\\.25\\.0\\.js\\?v=[^\\\"']+/,'index deve manter cache-buster explícito do Screen Loader');"
+          node <<'NODE'
+          const fs=require('fs');
+          const path='tests/screen_loader.contract.js';
+          let s=fs.readFileSync(path,'utf8');
+          const replacements=[
+            ["assert.match(loader,/fetch\\(bundle\\.fragment/,'fragmento deve ser buscado somente sob demanda');", "assert.match(loader,/const fragmentUrl=urlAbsoluta\\(bundle\\.fragment\\)/,'fragmento deve receber a revisão global antes da busca');\nassert.match(loader,/fetch\\(fragmentUrl,\\{credentials:'same-origin',cache:'no-cache'\\}\\)/,'fragmento deve ser buscado somente sob demanda com revalidação');"],
+            ["assert.match(loader,/reservado\\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');", "assert.match(loader,/reservado\\.href=href/,'Screen Loader deve ativar no placeholder a URL já versionada em vez de anexar a folha ao fim do head');"],
+            ["assert.match(html,/src\\/ui\\/screen_loader-1\\.25\\.0\\.js\\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');", "assert.match(html,/src\\/ui\\/screen_loader-1\\.25\\.0\\.js\\?v=[^\\\"']+/,'index deve manter cache-buster explícito do Screen Loader');"]
+          ];
+          for(const [oldText,newText] of replacements){
+            if(!s.includes(oldText))throw new Error('assertion not found: '+oldText);
+            s=s.replace(oldText,newText);
           }
-          for old,new in replacements.items():
-              if old not in s:
-                  raise SystemExit(f'assertion not found: {old}')
-              s=s.replace(old,new)
-          p.write_text(s,encoding='utf-8')
-          PY
+          fs.writeFileSync(path,s,'utf8');
+          NODE
           node --check tests/screen_loader.contract.js
           node tests/screen_loader.contract.js
           rm .github/workflows/screen-loader-contract-repair.yml
