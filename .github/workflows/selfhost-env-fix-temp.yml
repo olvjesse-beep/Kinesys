@@ -3,7 +3,7 @@ name: Self-hosted Environment Fix Temp
 on:
   push:
     branches:
-      - chore/handoff-organization
+      - chore/handoff-ci-env-fix-work
     paths:
       - 'tools/selfhost_env_fix_temp.js'
       - '.github/workflows/selfhost-env-fix-temp.yml'
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: chore/handoff-organization
+          ref: chore/handoff-ci-env-fix-work
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -33,4 +33,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com" &&
           git add tools/selfhost_env_fix_output_temp &&
           git commit -m "CI: generate self-hosted environment fixes" &&
-          git push origin HEAD:chore/handoff-organization
+          git push origin HEAD:chore/handoff-ci-env-fix-work
