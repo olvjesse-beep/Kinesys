@@ -24,7 +24,7 @@ assert(carregarProcedimentos.includes('clonarProcedimentosAgenda'), 'Dados de ca
 
 const horarios = trechoEntre('async function carregarHorarios()', 'function renderizarListaHorarios');
 const bloqueios = trechoEntre('async function carregarBloqueios()', 'function renderizarListaBloqueios');
-const equipe = trechoEntre('async function carregarProfissionaisAgenda()', '/* --------------------------------------------------------------------\n   PROCEDIMENTOS');
+const equipe = trechoEntre('async function carregarProfissionaisAgenda()', 'async function carregarProcedimentos()');
 assert(!horarios.includes('KineSysDataCache'), 'Horários afetam disponibilidade e não devem entrar no cache auxiliar desta fase.');
 assert(!bloqueios.includes('KineSysDataCache'), 'Bloqueios afetam disponibilidade e não devem entrar no cache auxiliar desta fase.');
 assert(!equipe.includes('KineSysDataCache'), 'Contexto/equipe de acesso não deve ser cacheado nesta fase.');
