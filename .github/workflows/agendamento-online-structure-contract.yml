@@ -1,0 +1,26 @@
+name: Agendamento Online Structure Contract
+
+on:
+  pull_request:
+    paths:
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'tests/agendamento_online_structure.contract.js'
+      - '.github/workflows/agendamento-online-structure-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'tests/agendamento_online_structure.contract.js'
+      - '.github/workflows/agendamento-online-structure-contract.yml'
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Online scheduling structure contract
+        shell: cmd
+        run: node tests\agendamento_online_structure.contract.js
