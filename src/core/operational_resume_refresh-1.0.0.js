@@ -12,7 +12,7 @@
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
     const PROFESSIONAL_HOME_STYLE='styles/home_profissional_dashboard-1.0.0.css';
     const PROFESSIONAL_HOME_POLISH='src/home/home_profissional_polish-1.0.0.js';
-    const PROFESSIONAL_HOME_ASSET_VERSION='20260912-runtime-r3';
+    const PROFESSIONAL_HOME_ASSET_VERSION='20260912-home-mobile-r4';
     let ausenteDesde=0;
     let telaAoAusentar='';
     let refreshEmCurso=null;

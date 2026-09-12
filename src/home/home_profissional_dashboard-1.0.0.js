@@ -45,6 +45,10 @@
 
     function esconderCardsLegados(){
         const home=document.getElementById('tela_home');if(!home)return;
+        const overview=home.querySelector('.ks-home-overview');
+        if(overview){overview.hidden=true;overview.dataset.profHomeLegacyHidden='1';}
+        const cadastro24h=home.querySelector('[data-ks-home-detail="recentes"]');
+        if(cadastro24h){cadastro24h.hidden=true;cadastro24h.dataset.profHomeLegacyHidden='1';}
         const recente=document.getElementById('lista_pacientes_recentes')?.closest('.card');
         if(recente){recente.hidden=true;recente.dataset.profHomeLegacyHidden='1';}
         const pend=document.getElementById('card_pendencias_clinicas');

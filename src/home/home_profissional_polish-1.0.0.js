@@ -13,9 +13,13 @@
     }
 
     function esconderCardCadastros24h(home){
+        const resumo=home.querySelector('[data-ks-home-detail="recentes"]');
+        if(resumo){resumo.hidden=true;resumo.dataset.profHomeLegacyHidden='1';}
+        const overview=home.querySelector('.ks-home-overview');
+        if(overview){overview.hidden=true;overview.dataset.profHomeLegacyHidden='1';}
         const count=document.getElementById('ks_home_recent_count');
         if(count){
-            const card=count.closest('.card,article,section');
+            const card=count.closest('[data-ks-home-detail="recentes"],.card,article');
             if(card&&card.id!=='card_painel_fisioterapeuta'&&card.id!=='ks_prof_home_workspace'){
                 card.hidden=true;
                 card.dataset.profHomeLegacyHidden='1';
@@ -24,7 +28,7 @@
         home.querySelectorAll('h1,h2,h3').forEach(titulo=>{
             const texto=String(titulo.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
             if(texto.includes('cadastros')&&texto.includes('ultimas 24 horas')){
-                const card=titulo.closest('.card,article,section');
+                const card=titulo.closest('[data-ks-home-detail="recentes"],.card,article');
                 if(card){card.hidden=true;card.dataset.profHomeLegacyHidden='1';}
             }
         });
