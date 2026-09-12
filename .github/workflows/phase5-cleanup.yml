@@ -34,9 +34,18 @@ permissions:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Cleanup contract syntax
         run: node --check tests/phase5_cleanup.contract.js
       - name: Phase 5 cleanup contract
