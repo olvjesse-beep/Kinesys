@@ -33,7 +33,11 @@ const removedArtifacts = [
   'descontos_financeiros.js',
   'pendencias_financeiras.js',
   'script-1.17.0.js',
-  'script-1.17.1.js'
+  'script-1.17.1.js',
+  'balanco_financeiro_admin.js',
+  'financeiro.js',
+  'home_detalhes.js',
+  'design_system.js'
 ];
 
 for (const artifact of removedArtifacts) {
@@ -41,6 +45,8 @@ for (const artifact of removedArtifacts) {
 }
 
 assert.equal(exists('design_system-1.20.1.js'), true, 'Design System ativo deve permanecer disponível');
+assert.equal(exists('financeiro-1.19.0.js'), true, 'Financeiro ativo deve permanecer disponível');
+assert.equal(exists('balanco_financeiro_admin-1.19.0.js'), true, 'Balanço financeiro ativo deve permanecer disponível');
 assert.equal(exists('financeiro_workspace-1.20.1.js'), true, 'Financeiro workspace JS ativo deve permanecer disponível');
 assert.equal(exists('financeiro_workspace-1.20.1.css'), true, 'Financeiro workspace CSS ativo deve permanecer disponível');
 assert.equal(exists('home_detalhes-1.18.5.js'), true, 'Home detalhes ativo deve permanecer disponível');
