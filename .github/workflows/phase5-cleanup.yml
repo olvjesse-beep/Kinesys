@@ -6,6 +6,7 @@ on:
     paths:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
       - 'agenda-audit__agenda-1.20.0.js'
+      - 'agenda.js'
       - 'design_system-*.js'
       - 'financeiro_workspace-*'
       - 'home_detalhes-*'
@@ -23,6 +24,7 @@ on:
     paths:
       - 'KineSys_v1.15.0_DEPLOY_APP.zip'
       - 'agenda-audit__agenda-1.20.0.js'
+      - 'agenda.js'
       - 'design_system-*.js'
       - 'financeiro_workspace-*'
       - 'home_detalhes-*'
@@ -45,7 +47,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     defaults:
       run:
-        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+        shell: 'C:\\PROGRA~1\\Git\\bin\\bash.exe --noprofile --norc -eo pipefail {0}'
     steps:
       - uses: actions/checkout@v4
 
