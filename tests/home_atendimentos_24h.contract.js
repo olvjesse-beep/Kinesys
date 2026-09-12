@@ -21,7 +21,7 @@ function filtrarAtendimentos24hHome(dados,agora=Date.now(),profissional=''){
         .sort((a,b)=>b.__referencia.t-a.__referencia.t||String(a.id).localeCompare(String(b.id)));
 }
 
-const agora = Date.parse('2026-09-12T16:00:00-03:00');
+const agora = Date.parse('2026-09-12T11:25:00-03:00');
 const dados = [
     {
         id:'antigo',
