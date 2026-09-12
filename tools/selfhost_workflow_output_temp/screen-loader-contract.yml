@@ -1,0 +1,211 @@
+name: Screen Loader Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/ui/menu_dropdown-1.0.0.js'
+      - 'src/core/operation_guard-1.0.0.js'
+      - 'src/core/html_escape-1.0.0.js'
+      - 'src/core/cadastro_validacoes_core-1.0.0.js'
+      - 'src/core/midias_core-1.0.0.js'
+      - 'src/ui/ui_experience.js'
+      - 'src/home/home_detalhes-1.18.5.js'
+      - 'src/clinical/evaluation_context_panels-1.18.3.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda_notificacoes_core-1.20.1.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
+      - 'src/clinical/cirurgias-1.18.0.js'
+      - 'database/medicamentos.js'
+      - 'database/ocupacoes_esportes.js'
+      - 'database/irradiacao_clinica.js'
+      - 'database/mapeamento_regioes-1.0.0.js'
+      - 'database/mapeamento_clinico_core-1.0.0.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
+      - 'database/regioes/**'
+      - 'styles/design_clinical.css'
+      - 'styles/design_clinical_direction-1.17.0.css'
+      - 'screens/**/*.html'
+      - 'tests/screen_loader.contract.js'
+      - 'tests/clinical_region_loader.contract.js'
+      - 'tests/clinical_region_index.contract.js'
+      - 'tests/clinical_bank_lazy.contract.js'
+      - 'tests/clinical_bank_regional_equivalence.contract.js'
+      - 'tests/clinical_bank_base_regional_equivalence.contract.js'
+      - 'tests/clinical_loading_budget.contract.js'
+      - 'tests/menu_dropdown_modularization.contract.js'
+      - 'tests/operation_guard_modularization.contract.js'
+      - 'tests/html_escape_modularization.contract.js'
+      - 'tests/cadastro_validacoes_modularization.contract.js'
+      - 'tests/agenda_lifecycle.contract.js'
+      - 'tests/midias_lifecycle.contract.js'
+      - 'tests/midias_core_modularization.contract.js'
+      - 'tests/radar_lifecycle.contract.js'
+      - 'tests/design_system_lifecycle.contract.js'
+      - 'tests/home_lifecycle.contract.js'
+      - 'tests/evaluation_context_lifecycle.contract.js'
+      - 'tests/ui_experience_lifecycle.contract.js'
+      - 'tests/operational_data_loading.contract.js'
+      - '.github/workflows/screen-loader-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/ui/screen_loader-1.25.0.js'
+      - 'src/clinical/clinical_region_loader-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'src/ui/menu_dropdown-1.0.0.js'
+      - 'src/core/operation_guard-1.0.0.js'
+      - 'src/core/html_escape-1.0.0.js'
+      - 'src/core/cadastro_validacoes_core-1.0.0.js'
+      - 'src/core/midias_core-1.0.0.js'
+      - 'src/ui/ui_experience.js'
+      - 'src/home/home_detalhes-1.18.5.js'
+      - 'src/clinical/evaluation_context_panels-1.18.3.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda_notificacoes_core-1.20.1.js'
+      - 'src/finance/financeiro_agendamento-1.21.0.js'
+      - 'src/clinical/cirurgias-1.18.0.js'
+      - 'database/medicamentos.js'
+      - 'database/ocupacoes_esportes.js'
+      - 'database/irradiacao_clinica.js'
+      - 'database/mapeamento_regioes-1.0.0.js'
+      - 'database/mapeamento_clinico_core-1.0.0.js'
+      - 'database/mapeamento_clinico.js'
+      - 'database/condicoes_mobilidade_v23.js'
+      - 'database/diferenciais_neurais.js'
+      - 'database/regioes/**'
+      - 'styles/design_clinical.css'
+      - 'styles/design_clinical_direction-1.17.0.css'
+      - 'screens/**/*.html'
+      - 'tests/screen_loader.contract.js'
+      - 'tests/clinical_region_loader.contract.js'
+      - 'tests/clinical_region_index.contract.js'
+      - 'tests/clinical_bank_lazy.contract.js'
+      - 'tests/clinical_bank_regional_equivalence.contract.js'
+      - 'tests/clinical_bank_base_regional_equivalence.contract.js'
+      - 'tests/clinical_loading_budget.contract.js'
+      - 'tests/menu_dropdown_modularization.contract.js'
+      - 'tests/operation_guard_modularization.contract.js'
+      - 'tests/html_escape_modularization.contract.js'
+      - 'tests/cadastro_validacoes_modularization.contract.js'
+      - 'tests/agenda_lifecycle.contract.js'
+      - 'tests/midias_lifecycle.contract.js'
+      - 'tests/midias_core_modularization.contract.js'
+      - 'tests/radar_lifecycle.contract.js'
+      - 'tests/design_system_lifecycle.contract.js'
+      - 'tests/home_lifecycle.contract.js'
+      - 'tests/evaluation_context_lifecycle.contract.js'
+      - 'tests/ui_experience_lifecycle.contract.js'
+      - 'tests/operational_data_loading.contract.js'
+      - '.github/workflows/screen-loader-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
+jobs:
+  contract:
+    name: Lazy loading contract
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check src/ui/screen_loader-1.25.0.js
+          node --check src/clinical/clinical_region_loader-1.0.0.js
+          node --check src/core/script-1.18.0.js
+          node --check src/ui/menu_dropdown-1.0.0.js
+          node --check src/core/operation_guard-1.0.0.js
+          node --check src/core/html_escape-1.0.0.js
+          node --check src/core/cadastro_validacoes_core-1.0.0.js
+          node --check src/core/midias_core-1.0.0.js
+          node --check src/ui/ui_experience.js
+          node --check src/home/home_detalhes-1.18.5.js
+          node --check src/clinical/evaluation_context_panels-1.18.3.js
+          node --check src/agenda/agenda-1.20.0.js
+          node --check src/agenda/agenda_lifecycle-1.0.0.js
+          node --check src/agenda/agenda_notificacoes_core-1.20.1.js
+          node --check src/finance/financeiro_agendamento-1.21.0.js
+          node --check src/clinical/cirurgias-1.18.0.js
+          node --check database/medicamentos.js
+          node --check database/ocupacoes_esportes.js
+          node --check database/irradiacao_clinica.js
+          node --check database/mapeamento_regioes-1.0.0.js
+          node --check database/mapeamento_clinico_core-1.0.0.js
+          node --check database/mapeamento_clinico.js
+          node --check database/condicoes_mobilidade_v23.js
+          node --check database/diferenciais_neurais.js
+          for f in database/regioes/*-base-1.0.0.js; do node --check "$f"; done
+          for f in database/regioes/*-ext-1.0.0.js; do node --check "$f"; done
+          node --check tests/clinical_region_loader.contract.js
+          node --check tests/clinical_region_index.contract.js
+          node --check tests/clinical_bank_lazy.contract.js
+          node --check tests/clinical_bank_regional_equivalence.contract.js
+          node --check tests/clinical_bank_base_regional_equivalence.contract.js
+          node --check tests/clinical_loading_budget.contract.js
+          node --check tests/menu_dropdown_modularization.contract.js
+          node --check tests/operation_guard_modularization.contract.js
+          node --check tests/html_escape_modularization.contract.js
+          node --check tests/cadastro_validacoes_modularization.contract.js
+          node --check tests/agenda_lifecycle.contract.js
+          node --check tests/midias_lifecycle.contract.js
+          node --check tests/midias_core_modularization.contract.js
+          node --check tests/radar_lifecycle.contract.js
+          node --check tests/design_system_lifecycle.contract.js
+          node --check tests/home_lifecycle.contract.js
+          node --check tests/evaluation_context_lifecycle.contract.js
+          node --check tests/ui_experience_lifecycle.contract.js
+      - name: Evaluation DOM and bundle contract
+        run: node tests/screen_loader.contract.js
+      - name: Clinical region lazy loading contract
+        run: node tests/clinical_region_loader.contract.js
+      - name: Clinical region index contract
+        run: node tests/clinical_region_index.contract.js
+      - name: Clinical bank lazy loading contract
+        run: node tests/clinical_bank_lazy.contract.js
+      - name: Clinical bank regional equivalence contract
+        run: node tests/clinical_bank_regional_equivalence.contract.js
+      - name: Clinical base regional equivalence contract
+        run: node tests/clinical_bank_base_regional_equivalence.contract.js
+      - name: Clinical loading performance budget
+        run: node tests/clinical_loading_budget.contract.js
+      - name: Menu dropdown modularization contract
+        run: node tests/menu_dropdown_modularization.contract.js
+      - name: Operation guard modularization contract
+        run: node tests/operation_guard_modularization.contract.js
+      - name: HTML escape modularization contract
+        run: node tests/html_escape_modularization.contract.js
+      - name: Registration validations modularization contract
+        run: node tests/cadastro_validacoes_modularization.contract.js
+      - name: Agenda lifecycle contract
+        run: node tests/agenda_lifecycle.contract.js
+      - name: Media lifecycle contract
+        run: node tests/midias_lifecycle.contract.js
+      - name: Media core modularization contract
+        run: node tests/midias_core_modularization.contract.js
+      - name: Radar lifecycle contract
+        run: node tests/radar_lifecycle.contract.js
+      - name: Design System lifecycle contract
+        run: node tests/design_system_lifecycle.contract.js
+      - name: Home lifecycle contract
+        run: node tests/home_lifecycle.contract.js
+      - name: Evaluation context lifecycle contract
+        run: node tests/evaluation_context_lifecycle.contract.js
+      - name: UI experience lifecycle contract
+        run: node tests/ui_experience_lifecycle.contract.js
+      - name: Operational data and polling contract
+        run: node tests/operational_data_loading.contract.js

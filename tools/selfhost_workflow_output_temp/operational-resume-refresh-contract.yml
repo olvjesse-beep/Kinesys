@@ -1,0 +1,46 @@
+name: Operational Resume Refresh Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/core/operational_resume_refresh-1.0.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/home/home_fisioterapeuta_util-1.24.0.js'
+      - 'tests/operational_resume_refresh.contract.js'
+      - '.github/workflows/operational-resume-refresh-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/core/operational_resume_refresh-1.0.0.js'
+      - 'src/agenda/agenda_lifecycle-1.0.0.js'
+      - 'src/agenda/agenda-1.20.0.js'
+      - 'src/home/home_fisioterapeuta_util-1.24.0.js'
+      - 'tests/operational_resume_refresh.contract.js'
+      - '.github/workflows/operational-resume-refresh-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check src/core/operational_resume_refresh-1.0.0.js
+          node --check tests/operational_resume_refresh.contract.js
+      - name: Resume refresh contract
+        run: node tests/operational_resume_refresh.contract.js
+      - name: Diff hygiene
+        run: git diff --check

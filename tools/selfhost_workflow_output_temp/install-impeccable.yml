@@ -1,0 +1,47 @@
+name: Install Impeccable for Codex
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/install-impeccable.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
+jobs:
+  install:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Impeccable for Codex in this project
+        run: npx -y impeccable@latest install -y --providers=codex --scope=project --no-hooks
+
+      - name: Commit generated Codex skill files
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .agents
+          if [ -d .codex ]; then
+            git add .codex
+          fi
+          if git diff --cached --quiet; then
+            echo "No Impeccable changes to commit."
+            exit 0
+          fi
+          git commit -m "Add Impeccable Codex skill"
+          git push
