@@ -1,0 +1,51 @@
+name: Access Management Contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/access_admin-1.0.0.css'
+      - 'recuperar-acesso.html'
+      - 'index.html'
+      - 'src/core/script-1.18.0.js'
+      - 'supabase/functions/cadastrar-equipe/index.ts'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_LIMPEZA_SENHAS_LEGADAS_EQUIPE_20260911.sql'
+      - 'tests/access_management.contract.js'
+      - '.github/workflows/access-management-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/auth/login_access-1.18.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/access_admin-1.0.0.css'
+      - 'recuperar-acesso.html'
+      - 'index.html'
+      - 'src/core/script-1.18.0.js'
+      - 'supabase/functions/cadastrar-equipe/index.ts'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_LIMPEZA_SENHAS_LEGADAS_EQUIPE_20260911.sql'
+      - 'tests/access_management.contract.js'
+      - '.github/workflows/access-management-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  access-management:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check src/auth/login_access-1.18.0.js
+          node --check src/admin/access_admin-1.0.0.js
+          node --check tests/access_management.contract.js
+      - name: Access management contract
+        run: node tests/access_management.contract.js
+      - name: Diff whitespace check
+        run: git diff --check HEAD^

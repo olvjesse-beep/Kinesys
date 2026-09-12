@@ -1,0 +1,41 @@
+name: Prontuario Export Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
+      - 'tests/prontuario_export_lazy.contract.js'
+      - '.github/workflows/prontuario-export-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/patient/prontuario_export.js'
+      - 'src/patient/prontuario_export_impl.js'
+      - 'src/core/design_system-1.20.1.js'
+      - 'tests/prontuario_export_lazy.contract.js'
+      - '.github/workflows/prontuario-export-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Lazy export contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check src/patient/prontuario_export.js
+          node --check src/patient/prontuario_export_impl.js
+          node --check src/core/design_system-1.20.1.js
+          node --check tests/prontuario_export_lazy.contract.js
+      - name: First-click and public API contract
+        run: node tests/prontuario_export_lazy.contract.js

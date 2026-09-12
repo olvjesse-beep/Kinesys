@@ -1,0 +1,38 @@
+name: Report UI Helpers Modularization Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/reports/report_ui_helpers_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'index.html'
+      - 'tests/report_ui_helpers_modularization.contract.js'
+      - '.github/workflows/report-ui-helpers-modularization.yml'
+  pull_request:
+    paths:
+      - 'src/reports/report_ui_helpers_core-1.0.0.js'
+      - 'src/core/script-1.18.0.js'
+      - 'index.html'
+      - 'tests/report_ui_helpers_modularization.contract.js'
+      - '.github/workflows/report-ui-helpers-modularization.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: JavaScript syntax
+        run: |
+          node --check src/reports/report_ui_helpers_core-1.0.0.js
+          node --check src/core/script-1.18.0.js
+          node --check tests/report_ui_helpers_modularization.contract.js
+      - name: Report UI helpers modularization contract
+        run: node tests/report_ui_helpers_modularization.contract.js
+      - name: Whitespace integrity
+        run: git diff --check HEAD^
