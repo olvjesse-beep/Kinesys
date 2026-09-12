@@ -72,6 +72,7 @@ jobs:
       - name: HTML, forms and runtime asset contracts
         run: |
           python - <<'PY'
+          import os
           from collections import Counter
           from html.parser import HTMLParser
           from pathlib import Path
@@ -209,25 +210,26 @@ jobs:
           if scripts_without_nonblocking:
               failures.append('Scripts without defer/type=module: ' + ', '.join(scripts_without_nonblocking))
 
-          Path('/tmp/html-summary.md').write_text(
+          summary = (
               '### HTML and accessibility\n'
               f'- IDs: **{len(parser.ids)}**; duplicates: **{len(duplicates)}**.\n'
               f'- Inline `<style>` blocks: **{parser.style_blocks}**.\n'
               f'- Visible form controls without accessible name: **{len(unnamed)}**.\n'
               f'- Form buttons without explicit `type`: **{len(parser.form_buttons_without_type)}**.\n'
               f'- Missing local runtime assets: **{len(missing_assets)}**.\n'
-              f'- Runtime scripts: **{len(parser.scripts)}**; blocking classic scripts: **{len(scripts_without_nonblocking)}**.\n',
-              encoding='utf-8'
+              f'- Runtime scripts: **{len(parser.scripts)}**; blocking classic scripts: **{len(scripts_without_nonblocking)}**.\n'
           )
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as handle:
+              handle.write(summary)
 
           if failures:
               raise SystemExit('\n'.join(failures))
           PY
-          cat /tmp/html-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: KDS runtime CSS contracts
         run: |
           python - <<'PY'
+          import os
           from html.parser import HTMLParser
           from pathlib import Path
           from urllib.parse import urlsplit
@@ -301,15 +303,16 @@ jobs:
           print(f'KDS_TOKEN_RUNTIME_DEFINED_COUNT={len(runtime_defined_kds)}')
           print(f'KDS_TOKEN_UNDEFINED_COUNT={len(undefined_kds)}')
 
-          Path('/tmp/css-summary.md').write_text(
+          summary = (
               '### KineSys Design System contracts\n'
               f'- Runtime CSS files checked: **{len(css_files)}**.\n'
               f'- Font sizes below 12.5px: **{len(microtype)}**.\n'
               f'- Breakpoints outside the official contract: **{len(noncontract_breakpoints)}**.\n'
               f'- Static KDS tokens: **{len(static_defined_kds)}**; runtime-injected KDS tokens: **{len(runtime_defined_kds)}**.\n'
-              f'- Undefined `--kds-*` tokens used at runtime: **{len(undefined_kds)}**.\n',
-              encoding='utf-8'
+              f'- Undefined `--kds-*` tokens used at runtime: **{len(undefined_kds)}**.\n'
           )
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as handle:
+              handle.write(summary)
 
           failures = []
           if microtype:
@@ -321,11 +324,12 @@ jobs:
           if failures:
               raise SystemExit('\n\n'.join(failures))
           PY
-          cat /tmp/css-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Impeccable detector advisory summary
         run: |
           set -uo pipefail
+          impeccable_json='.kinesys-impeccable.json'
+          impeccable_err='.kinesys-impeccable.err'
           chmod +x .agents/skills/impeccable/scripts/impeccable || true
           set +e
           .agents/skills/impeccable/scripts/impeccable detect --json \
@@ -335,17 +339,18 @@ jobs:
             design_responsive.css \
             design_screens.css \
             avaliacao_experiencia-1.22.0.css \
-            > /tmp/impeccable.json 2>/tmp/impeccable.err
+            > "$impeccable_json" 2>"$impeccable_err"
           code=$?
           set -e
           python - "$code" <<'PY'
           import json
+          import os
           import sys
           from collections import Counter
           from pathlib import Path
 
           code = int(sys.argv[1])
-          raw = Path('/tmp/impeccable.json').read_text(encoding='utf-8').strip()
+          raw = Path('.kinesys-impeccable.json').read_text(encoding='utf-8').strip()
           try:
               findings = json.loads(raw) if raw else []
           except Exception:
@@ -365,13 +370,14 @@ jobs:
           if kinds:
               lines.append('- Most frequent categories: ' + ', '.join(f'`{k}` ({v})' for k,v in kinds.most_common(8)) + '.')
           lines.append('- Detector findings do **not** block this workflow; KineSys clinical semantics and documented design decisions require contextual review.')
-          Path('/tmp/impeccable-summary.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as handle:
+              handle.write('\n'.join(lines) + '\n')
           PY
-          cat /tmp/impeccable-summary.md >> "$GITHUB_STEP_SUMMARY"
-          if [ -s /tmp/impeccable.err ]; then
+          if [ -s "$impeccable_err" ]; then
             echo "Impeccable stderr (informational):"
-            cat /tmp/impeccable.err
+            cat "$impeccable_err"
           fi
+          rm -f "$impeccable_json" "$impeccable_err"
           exit 0
 
 # validation touch: quieter visual pass 4
