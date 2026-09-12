@@ -14,7 +14,7 @@ function insertAfterCheckout(text, block) {
   const re = /(^\s*-\s+uses:\s+actions\/checkout@v4(?:\r?\n(?:\s+with:\r?\n(?:\s{10,}.*\r?\n)*))?)/m;
   const m = text.match(re);
   if (!m) throw new Error('checkout@v4 step not found');
-  return text.replace(re, `$1${block}`);
+  return text.replace(re, (match) => match + (match.endsWith('\n') ? '' : '\n') + block);
 }
 
 for (const name of fs.readdirSync(workflows).sort()) {
