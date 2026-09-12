@@ -10,8 +10,8 @@ assert(!core.includes('let menuTimeout = null'), 'Estado do menu ainda está no 
 assert(menu.includes('let menuTimeout = null'), 'Módulo extraído perdeu o estado do menu');
 assert(menu.includes("document.addEventListener('DOMContentLoaded'"), 'Módulo extraído perdeu bootstrap DOMContentLoaded');
 assert(menu.includes("window.addEventListener('resize'"), 'Módulo extraído perdeu ajuste responsivo');
-assert(menu.includes('setTimeout(function() {\n                    fecharMenu();\n                }, 200)'), 'Delay de saída do dropdown mudou');
-assert(menu.includes('setTimeout(function() {\n                    fecharMenu();\n                }, 300)'), 'Delay de saída do container mudou');
+assert(/setTimeout\(function\(\) \{\r?\n\s*fecharMenu\(\);\r?\n\s*\}, 200\)/.test(menu), 'Delay de saída do dropdown mudou');
+assert(/setTimeout\(function\(\) \{\r?\n\s*fecharMenu\(\);\r?\n\s*\}, 300\)/.test(menu), 'Delay de saída do container mudou');
 
 const menuTag='<script defer src="menu_dropdown-1.0.0.js?v=20260911-phase4a-r1"></script>';
 const coreNeedle='<script defer src="script-1.18.0.js';
