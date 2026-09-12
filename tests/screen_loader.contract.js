@@ -54,7 +54,8 @@ assert.match(loader,/kinesys:tela-ativada/,'ciclo de vida deve emitir ativação
 assert.match(loader,/kinesys:tela-desativada/,'ciclo de vida deve emitir desativação');
 assert.match(loader,/kinesys:tela-dom-pronta/,'loader deve emitir montagem de DOM');
 assert.match(loader,/revisaoNavegacao/,'navegação tardia deve proteger contra corrida de cliques');
-assert.match(loader,/fetch\(bundle\.fragment/,'fragmento deve ser buscado somente sob demanda');
+assert.match(loader,/const fragmentUrl=urlAbsoluta\(bundle\.fragment\)/,'fragmento deve receber a revisão global antes da busca');
+assert.match(loader,/fetch\(fragmentUrl,\{credentials:'same-origin',cache:'no-cache'\}\)/,'fragmento deve ser buscado somente sob demanda com revalidação');
 assert.match(loader,/replaceChildren/,'fragmento deve ser montado no placeholder preservado');
 assert.match(loader,/kinesysFragmentState/,'estado de montagem do fragmento deve ser rastreável');
 
@@ -131,7 +132,7 @@ for(const file of phase4dClinicalStyles){
 assert.ok(html.indexOf('data-kinesys-lazy-href="styles/design_clinical.css')<html.indexOf('data-kinesys-lazy-href="styles/design_clinical_direction-1.17.0.css'),'cascade clínico deve preservar design_clinical antes de clinical_direction');
 assert.ok(loader.indexOf('styles/design_clinical.css')<loader.indexOf('styles/design_clinical_direction-1.17.0.css'),'bundle deve preservar a ordem clínica das duas folhas');
 assert.match(loader,/data-kinesys-lazy-href/,'Screen Loader deve reconhecer placeholders CSS lazy');
-assert.match(loader,/reservado\.href=src/,'Screen Loader deve ativar o href no placeholder em vez de anexar a folha ao fim do head');
+assert.match(loader,/reservado\.href=href/,'Screen Loader deve ativar no placeholder a URL já versionada em vez de anexar a folha ao fim do head');
 assert.match(loader,/reservado\.removeAttribute\('href'\)/,'falha de rede deve liberar o placeholder para uma nova tentativa real');
 assert.match(loader,/removeEventListener\('load',aoCarregar\)/,'retry CSS não deve deixar listener de carga órfão após erro');
 const phase4dCssDeferredBytes=phase4dClinicalStyles.reduce((total,file)=>total+fs.statSync(file).size,0);
@@ -262,7 +263,7 @@ assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css/,'CSS da integra
 assert.match(html,/styles\/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
 assert.match(loader,/VERSION='1\.25\.4-phase4d'/,'Screen Loader deve identificar a Fase 4D');
-assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1/,'index deve invalidar o cache do Screen Loader na Fase 4D');
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=[^\"']+/,'index deve manter cache-buster explícito do Screen Loader');
 
 const agendaModule=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 const notificationCore=fs.readFileSync('src/agenda/agenda_notificacoes_core-1.20.1.js','utf8');

@@ -27,8 +27,8 @@ assert.match(agendaLifecycle,/function activate\(/,'Agenda lifecycle precisa man
 assert.match(homeFisio,/window\.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaUtil/,'Meu Dia Clínico precisa manter API pública de atualização');
 
 const homeTag='src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1';
-const resumeTag='src/core/operational_resume_refresh-1.0.0.js?v=20260911-r1';
-assert(html.includes(resumeTag),'index deve carregar operational resume refresh');
+const resumeTag='src/core/operational_resume_refresh-1.0.0.js';
+assert(html.includes(resumeTag),'index deve carregar operational resume refresh independentemente da revisão de cache');
 assert(html.indexOf(homeTag)<html.indexOf(resumeTag),'resume refresh deve carregar depois do Meu Dia Clínico');
 assert(html.indexOf('src/ui/screen_loader-1.25.0.js')<html.indexOf(resumeTag),'resume refresh deve carregar depois do lifecycle oficial de telas');
 
