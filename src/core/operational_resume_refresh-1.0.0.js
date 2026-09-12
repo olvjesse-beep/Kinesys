@@ -11,6 +11,8 @@
     const TELAS_REVALIDAVEIS=new Set(['tela_agenda','tela_home']);
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
     const PROFESSIONAL_HOME_STYLE='styles/home_profissional_dashboard-1.0.0.css';
+    const PROFESSIONAL_HOME_POLISH='src/home/home_profissional_polish-1.0.0.js';
+    const PROFESSIONAL_HOME_ASSET_VERSION='20260912-r2';
     let ausenteDesde=0;
     let telaAoAusentar='';
     let refreshEmCurso=null;
@@ -28,16 +30,24 @@
         return typeof usuarioLogado!=='undefined' && !!usuarioLogado;
     }
 
+    function carregarScriptUmaVez(base,globalName){
+        if(globalName&&window[globalName])return;
+        if(document.querySelector(`script[src^="${base}"]`))return;
+        const script=document.createElement('script');
+        script.src=`${base}?v=${PROFESSIONAL_HOME_ASSET_VERSION}`;
+        script.async=false;
+        document.body.appendChild(script);
+    }
+
     function garantirHomeProfissionalFocada(){
         if(!document.querySelector(`link[href^="${PROFESSIONAL_HOME_STYLE}"]`)){
             const link=document.createElement('link');
-            link.rel='stylesheet';link.href=PROFESSIONAL_HOME_STYLE;
+            link.rel='stylesheet';
+            link.href=`${PROFESSIONAL_HOME_STYLE}?v=${PROFESSIONAL_HOME_ASSET_VERSION}`;
             document.head.appendChild(link);
         }
-        if(window.KineSysProfessionalHome||document.querySelector(`script[src^="${PROFESSIONAL_HOME_SCRIPT}"]`))return;
-        const script=document.createElement('script');
-        script.src=PROFESSIONAL_HOME_SCRIPT;script.async=false;
-        document.body.appendChild(script);
+        carregarScriptUmaVez(PROFESSIONAL_HOME_SCRIPT,'KineSysProfessionalHome');
+        carregarScriptUmaVez(PROFESSIONAL_HOME_POLISH,'KineSysProfessionalHomePolish');
     }
 
     function marcarAusencia(){
@@ -77,6 +87,7 @@
             await window.KineSysProfessionalHome.refresh();
             atualizou=true;
         }
+        window.KineSysProfessionalHomePolish?.refresh?.();
         return atualizou;
     }
 
