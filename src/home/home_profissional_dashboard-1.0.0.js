@@ -155,7 +155,7 @@
             const procedimentoNome=String((Array.isArray(a.procedimentos)?a.procedimentos[0]?.nome:a.procedimentos?.nome)||'');
             const avaliativo=ehProcedimentoAvaliativo(procedimentoNome);
             const modo=(!finalizadas.length||avaliativo)?'avaliacao':'evolucao';
-            const registros=modo==='avaliacao'?avaliacoes:(Array.isArray(paciente.evolucoes)?paciente.evolucoes:[]);
+            const registros=modo==='avaliacao'?finalizadas:(Array.isArray(paciente.evolucoes)?paciente.evolucoes:[]);
             if(registros.some(reg=>registroVinculado(reg,a.id)))continue;
             itens.push({
                 id:String(a.id),pacienteId:String(a.paciente_id||''),
