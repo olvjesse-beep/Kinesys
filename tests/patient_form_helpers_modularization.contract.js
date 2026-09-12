@@ -60,8 +60,12 @@ assert.ok(cadastroPos>=0&&helpersPos>cadastroPos&&inputPos>helpersPos&&teamPos>h
 assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4Q');
 
 assert.match(core,/async function salvarPacienteNaNuvem\(pacienteObjeto, opcoes = \{\}\)/,'persistência do paciente deve permanecer fora do escopo da 4Q');
-const moduleSize=fs.statSync('patient_form_helpers_core-1.0.0.js').size;
-const coreSize=fs.statSync('script-1.18.0.js').size;
+function tamanhoUtf8Normalizado(path){
+  const texto=fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n');
+  return Buffer.byteLength(texto,'utf8');
+}
+const moduleSize=tamanhoUtf8Normalizado('patient_form_helpers_core-1.0.0.js');
+const coreSize=tamanhoUtf8Normalizado('script-1.18.0.js');
 assert.ok(moduleSize>1200,`módulo parece pequeno demais: ${moduleSize}`);
 assert.ok(coreSize<663152,`monólito deve reduzir em relação à 4P; atual=${coreSize}`);
 console.log(`Patient form helpers modularization: OK | module=${moduleSize} bytes | monolith=${coreSize} bytes`);
