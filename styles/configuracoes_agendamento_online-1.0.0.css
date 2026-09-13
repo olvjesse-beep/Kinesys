@@ -1,14 +1,14 @@
 /* KineSys — Configurações do agendamento online v1.0.0
-   Mobile-first, usando somente tokens --kds-* existentes. */
+   Revisão compacta: densidade funcional, sem alterar contratos ou comportamento. */
 
 #tela_configuracoes.ks-config-hub-ready {
-    max-width: 1120px;
+    max-width: 1040px;
     margin: 0 auto;
-    padding-bottom: 18px;
+    padding-bottom: 20px;
 }
 
 .ks-config-hub-header {
-    margin: 0 0 14px;
+    margin: 0 0 12px;
 }
 
 .ks-config-hub-header h1 {
@@ -20,8 +20,8 @@
 }
 
 .ks-config-hub-header p {
-    max-width: 72ch;
-    margin: 7px 0 0;
+    max-width: 70ch;
+    margin: 5px 0 0;
     color: var(--kds-muted);
     font-size: var(--kds-font-content);
     line-height: var(--kds-leading-text);
@@ -32,20 +32,19 @@
     top: calc(var(--kds-topbar-mobile-height) + 6px);
     z-index: 8;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px;
     margin: 0 0 14px;
-    padding: 4px;
+    padding: 3px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-md);
     background: var(--kds-surface);
-    box-shadow: var(--kds-shadow-soft);
 }
 
 .ks-config-tabs button {
     min-height: 44px;
     margin: 0;
-    padding: 9px 10px;
+    padding: 8px 12px;
     border: 0;
     border-radius: var(--kds-radius-sm);
     background: transparent;
@@ -98,7 +97,7 @@
 
 .ks-online-topline p,
 .ks-online-section-head p {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
     color: var(--kds-muted);
     font-size: var(--kds-font-content);
     line-height: var(--kds-leading-text);
@@ -109,8 +108,8 @@
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 5px 10px;
+    min-height: 28px;
+    padding: 4px 9px;
     border-radius: var(--kds-radius-pill);
     font: 700 var(--kds-font-metadata)/1 var(--kds-font-family-ui);
     white-space: nowrap;
@@ -138,7 +137,7 @@
 
 .ks-online-feedback {
     margin: 0 0 12px;
-    padding: 11px 12px;
+    padding: 10px 12px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-sm);
     font-size: var(--kds-font-content);
@@ -162,29 +161,29 @@
     color: var(--kds-danger);
 }
 
+/* Estrutura modular: quatro blocos reais, sem um card gigante envolvendo tudo. */
 .ks-online-surface {
-    overflow: hidden;
-    border: 1px solid var(--kds-line);
+    display: grid;
+    gap: 12px;
+    background: transparent;
+}
+
+.ks-online-section {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--kds-line-soft);
     border-radius: 12px;
     background: var(--kds-surface);
 }
 
-.ks-online-section {
-    padding: 16px;
-}
-
-.ks-online-section + .ks-online-section {
-    border-top: 1px solid var(--kds-line-soft);
-}
-
 .ks-online-section-head {
     display: grid;
-    gap: 14px;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .ks-online-section-head-simple {
-    gap: 10px;
+    gap: 8px;
 }
 
 .ks-online-section h3 {
@@ -194,12 +193,12 @@
 
 .ks-online-fields {
     display: grid;
-    gap: 14px;
+    gap: 12px;
 }
 
 .ks-online-field {
     display: grid;
-    gap: 7px;
+    gap: 6px;
     min-width: 0;
     margin: 0;
 }
@@ -218,7 +217,7 @@
     min-height: var(--kds-control-height);
     box-sizing: border-box;
     margin: 0;
-    padding: 10px 12px;
+    padding: 9px 11px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-sm);
     background: var(--kds-surface);
@@ -227,7 +226,7 @@
 }
 
 .ks-online-field textarea {
-    min-height: 92px;
+    min-height: 76px;
     resize: vertical;
 }
 
@@ -244,19 +243,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
-    min-height: 56px;
+    gap: 12px;
     box-sizing: border-box;
     margin: 0;
     cursor: pointer;
 }
 
 .ks-switch-row {
-    padding: 8px 0;
+    min-height: 52px;
+    padding: 6px 0;
 }
 
 .ks-switch-row-master {
-    padding: 12px;
+    min-height: 58px;
+    padding: 8px 10px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-md);
     background: var(--kds-surface-soft);
@@ -279,7 +279,7 @@
 .ks-online-choice small,
 .ks-online-day-head small {
     display: block;
-    margin-top: 3px;
+    margin-top: 2px;
     color: var(--kds-muted);
     font-size: var(--kds-font-metadata);
     line-height: var(--kds-leading-text);
@@ -287,8 +287,8 @@
 
 .ks-switch-control {
     position: relative;
-    flex: 0 0 52px;
-    width: 52px;
+    flex: 0 0 48px;
+    width: 48px;
     height: 44px;
     display: inline-flex;
     align-items: center;
@@ -305,7 +305,7 @@
 .ks-switch-control > span {
     position: relative;
     display: block;
-    width: 42px;
+    width: 40px;
     height: 24px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-pill);
@@ -332,7 +332,7 @@
 }
 
 .ks-switch-control input:checked + span::after {
-    transform: translateX(18px);
+    transform: translateX(16px);
 }
 
 .ks-switch-control input:focus-visible + span {
@@ -340,29 +340,29 @@
     outline-offset: 2px;
 }
 
+/* Listas de seleção sem cards internos: linhas operacionais leves. */
 .ks-online-choice-list {
-    overflow: hidden;
-    border: 1px solid var(--kds-line-soft);
-    border-radius: var(--kds-radius-md);
+    display: grid;
 }
 
 .ks-online-choice {
-    min-height: 64px;
-    padding: 10px 12px;
-    background: var(--kds-surface);
-}
-
-.ks-online-choice + .ks-online-choice {
+    min-height: 50px;
+    padding: 7px 0;
     border-top: 1px solid var(--kds-line-soft);
+    background: transparent;
 }
 
-.ks-online-choice:has(input:checked) {
-    background: var(--kds-accent-soft);
+.ks-online-choice:first-child {
+    border-top: 0;
+}
+
+.ks-online-choice:has(input:checked) .ks-online-choice-copy strong {
+    color: var(--kds-accent);
 }
 
 .ks-online-empty {
     margin: 0;
-    padding: 16px;
+    padding: 12px;
     border: 1px dashed var(--kds-line);
     border-radius: var(--kds-radius-sm);
     color: var(--kds-muted);
@@ -371,12 +371,13 @@
 }
 
 .ks-online-profissional-select {
-    margin-bottom: 14px;
+    max-width: 360px;
+    margin-bottom: 10px;
 }
 
 .ks-online-week {
     display: grid;
-    gap: 10px;
+    gap: 6px;
 }
 
 .ks-online-day {
@@ -391,7 +392,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 9px 10px;
     background: var(--kds-surface-soft);
 }
 
@@ -401,8 +402,9 @@
 }
 
 .ks-online-add-time {
-    min-height: 44px;
+    min-height: 42px;
     margin: 0;
+    padding-inline: 11px;
     white-space: nowrap;
 }
 
@@ -413,21 +415,26 @@
 .ks-online-time-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px;
     border-top: 1px solid var(--kds-line-soft);
 }
 
 .ks-online-time-row label {
     display: grid;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
+}
+
+.ks-online-time-row input[type="time"] {
+    font-variant-numeric: tabular-nums;
 }
 
 .ks-online-remove-time {
     grid-column: 1 / -1;
-    min-height: 44px;
+    min-height: 42px;
     margin: 0;
+    padding: 8px 11px;
     border: 1px solid var(--kds-danger-line);
     border-radius: var(--kds-radius-sm);
     background: var(--kds-surface);
@@ -441,9 +448,9 @@
     bottom: 0;
     z-index: 9;
     display: grid;
-    gap: 10px;
-    margin: 12px 0 0;
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 10px 11px calc(10px + env(safe-area-inset-bottom));
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-md);
     background: var(--kds-surface);
@@ -451,7 +458,7 @@
 }
 
 .ks-online-savebar .btn-primary {
-    min-height: 46px;
+    min-height: 44px;
     width: 100%;
     margin: 0;
 }
@@ -477,12 +484,7 @@
 }
 
 @media (max-width: 430px) {
-    .ks-online-time-row {
-        grid-template-columns: 1fr;
-    }
-
     .ks-online-topline {
-        align-items: flex-start;
         flex-direction: column;
     }
 
@@ -498,6 +500,10 @@
     .ks-online-add-time {
         width: 100%;
     }
+
+    .ks-online-time-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (min-width: 701px) {
@@ -512,22 +518,21 @@
     .ks-config-tabs {
         position: static;
         width: max-content;
-        min-width: 430px;
-        margin-bottom: 18px;
-        box-shadow: none;
+        min-width: 360px;
+        margin-bottom: 16px;
     }
 
     .ks-online-topline {
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
 
     .ks-online-section {
-        padding: 20px 22px;
+        padding: 16px 18px;
     }
 
     .ks-online-section-head {
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
         align-items: start;
     }
 
@@ -537,37 +542,150 @@
     }
 
     .ks-online-fields-2 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+        align-items: start;
     }
 
     .ks-online-field-wide {
         grid-column: 1 / -1;
     }
 
+    .ks-online-field:has(#ks_online_titulo) {
+        max-width: 480px;
+    }
+
+    .ks-online-field:has(#ks_online_antecedencia),
+    .ks-online-field:has(#ks_online_horizonte) {
+        width: 220px;
+        max-width: 100%;
+        justify-self: start;
+    }
+
+    .ks-switch-row:not(.ks-switch-row-master) {
+        max-width: 360px;
+    }
+
     .ks-online-choice {
-        padding-inline: 14px;
-    }
-
-    .ks-online-time-row {
-        grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
-        align-items: end;
-    }
-
-    .ks-online-remove-time {
-        grid-column: auto;
-        min-width: 104px;
-        padding-inline: 14px;
+        min-height: 48px;
     }
 
     .ks-online-savebar {
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
-        padding: 12px 14px;
+        padding: 10px 12px;
     }
 
     .ks-online-savebar .btn-primary {
         width: auto;
-        min-width: 170px;
+        min-width: 164px;
+    }
+}
+
+@media (min-width: 901px) {
+    .ks-online-surface {
+        grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+        align-items: start;
+    }
+
+    #ks_online_sec_publicacao,
+    #ks_online_sec_horarios {
+        grid-column: 1 / -1;
+    }
+
+    #ks_online_sec_profissionais,
+    #ks_online_sec_procedimentos {
+        height: 100%;
+    }
+
+    /* Agenda compacta: dia, períodos e ação ocupam só o espaço que precisam. */
+    .ks-online-week {
+        gap: 0;
+        border-top: 1px solid var(--kds-line-soft);
+    }
+
+    .ks-online-day {
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr) 126px;
+        align-items: center;
+        min-height: 60px;
+        overflow: visible;
+        border: 0;
+        border-bottom: 1px solid var(--kds-line-soft);
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .ks-online-day-head {
+        display: contents;
+    }
+
+    .ks-online-day-head > div {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;
+        padding: 9px 10px 9px 0;
+    }
+
+    .ks-online-day-head small {
+        margin-top: 1px;
+    }
+
+    .ks-online-add-time {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        min-width: 116px;
+        min-height: 42px;
+        padding-inline: 10px;
+    }
+
+    .ks-online-time-list {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 8px;
+        min-width: 0;
+        padding: 8px 10px;
+    }
+
+    .ks-online-time-list:empty {
+        display: block;
+        min-height: 42px;
+    }
+
+    .ks-online-time-row {
+        display: grid;
+        grid-template-columns: 112px 112px 82px;
+        align-items: end;
+        gap: 6px;
+        width: max-content;
+        max-width: 100%;
+        padding: 0;
+        border: 0;
+    }
+
+    .ks-online-time-row label {
+        gap: 3px;
+    }
+
+    .ks-online-time-row label > span {
+        font-size: var(--kds-font-metadata);
+        line-height: var(--kds-leading-ui);
+    }
+
+    .ks-online-time-row input[type="time"] {
+        width: 112px;
+        min-height: 42px;
+        padding: 7px 8px;
+    }
+
+    .ks-online-remove-time {
+        grid-column: auto;
+        min-width: 82px;
+        min-height: 42px;
+        padding: 7px 9px;
     }
 }
 
