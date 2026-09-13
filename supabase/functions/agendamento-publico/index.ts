@@ -10,6 +10,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 const OCUPA_HORARIO = new Set(["pre_agendado", "agendado", "confirmado", "em_recepcao"]);
 const MAX_HORIZONTE_DIAS = 90;
 const MAX_SLOTS_RESPOSTA = 500;
+const MAX_BODY_CHARS = 12000;
 
 function cors(req: Request) {
   const origem = req.headers.get("origin") || "";
@@ -37,22 +38,34 @@ function texto(valor: unknown, max = 160) {
   return String(valor ?? "").trim().slice(0, max);
 }
 
+function digitos(valor: unknown, max = 20) {
+  return texto(valor, max * 2).replace(/\D/g, "").slice(0, max);
+}
+
 function horaCurta(valor: unknown) {
   return texto(valor, 8).slice(0, 5);
+}
+
+function uuidValido(valor: unknown) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(texto(valor, 40));
+}
+
+function dataValida(valor: unknown) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(texto(valor, 10));
+}
+
+function horaValida(valor: unknown) {
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(horaCurta(valor));
 }
 
 function horaParaMinutos(hora: string) {
   const m = hora.match(/^(\d{2}):(\d{2})$/);
   if (!m) return Number.NaN;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  return h * 60 + min;
+  return Number(m[1]) * 60 + Number(m[2]);
 }
 
 function minutosParaHora(total: number) {
-  const h = String(Math.floor(total / 60)).padStart(2, "0");
-  const m = String(total % 60).padStart(2, "0");
-  return `${h}:${m}`;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function dataISO(data: Date) {
@@ -201,18 +214,15 @@ async function catalogoPublico(slug: string) {
     tipo: texto(p.tipo || "Profissional", 80).replaceAll("_", " "),
   }));
   const idsProf = new Set(profissionais.map((p) => p.id));
-  const procedimentos = (procRes.data || []).map((p) => {
-    const vinculados = Array.isArray(p.profissionais_ids)
+  const procedimentos = (procRes.data || []).map((p) => ({
+    id: texto(p.id, 80),
+    nome: texto(p.nome, 120),
+    duracao_minutos: Math.max(5, Math.min(480, Number(p.duracao_minutos) || 30)),
+    valor: config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
+    profissionais_ids: Array.isArray(p.profissionais_ids)
       ? p.profissionais_ids.map(String).filter((id: string) => idsProf.has(id))
-      : [];
-    return {
-      id: texto(p.id, 80),
-      nome: texto(p.nome, 120),
-      duracao_minutos: Math.max(5, Math.min(480, Number(p.duracao_minutos) || 30)),
-      valor: config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
-      profissionais_ids: vinculados,
-    };
-  });
+      : [],
+  }));
 
   if (!profissionais.length || !procedimentos.length || !(dispRes.data || []).length) return fechado;
   return {
@@ -326,6 +336,99 @@ async function slotsPublicos(slug: string, profissionalId: string, procedimentoI
   };
 }
 
+function payloadReservaValido(body: Record<string, unknown>) {
+  const paciente = (body.paciente && typeof body.paciente === "object") ? body.paciente as Record<string, unknown> : {};
+  const dependente = paciente.dependente === true;
+  const telefone = digitos(paciente.telefone, 11);
+  const cpf = digitos(paciente.cpf, 11);
+  const respTelefone = digitos(paciente.responsavel_telefone, 11);
+
+  if (!uuidValido(body.request_id) || !uuidValido(body.procedimento_id)) return null;
+  if (!texto(body.profissional_id, 120) || !dataValida(body.data) || !horaValida(body.hora_inicio)) return null;
+  if (texto(paciente.nome, 120).length < 3 || !dataValida(paciente.nascimento)) return null;
+  if (telefone.length < 10 || telefone.length > 11) return null;
+  if (cpf && cpf.length !== 11) return null;
+  if (dependente) {
+    if (texto(paciente.responsavel_nome, 120).length < 3 || texto(paciente.responsavel_parentesco, 60).length < 2 || respTelefone.length < 10) return null;
+  }
+
+  return {
+    requestId: texto(body.request_id, 40),
+    profissionalId: texto(body.profissional_id, 120),
+    procedimentoId: texto(body.procedimento_id, 40),
+    data: texto(body.data, 10),
+    horaInicio: horaCurta(body.hora_inicio),
+    nome: texto(paciente.nome, 120).replace(/\s+/g, " "),
+    cpf,
+    nascimento: texto(paciente.nascimento, 10),
+    telefone,
+    dependente,
+    responsavelNome: dependente ? texto(paciente.responsavel_nome, 120).replace(/\s+/g, " ") : "",
+    responsavelParentesco: dependente ? texto(paciente.responsavel_parentesco, 60) : "",
+    responsavelTelefone: dependente ? respTelefone : "",
+  };
+}
+
+async function reservarOnline(slug: string, body: Record<string, unknown>) {
+  const reserva = payloadReservaValido(body);
+  if (!reserva) return { status: 400, body: { erro: "Revise os dados do agendamento e tente novamente.", codigo: "DADOS_INVALIDOS" } };
+
+  const { data, error } = await supabase.rpc("kinesys_criar_agendamento_online", {
+    p_clinica_slug: slug,
+    p_request_id: reserva.requestId,
+    p_profissional_id: reserva.profissionalId,
+    p_procedimento_id: reserva.procedimentoId,
+    p_data: reserva.data,
+    p_hora_inicio: reserva.horaInicio,
+    p_nome: reserva.nome,
+    p_cpf: reserva.cpf,
+    p_nascimento: reserva.nascimento,
+    p_telefone: reserva.telefone,
+    p_dependente: reserva.dependente,
+    p_responsavel_nome: reserva.responsavelNome || null,
+    p_responsavel_parentesco: reserva.responsavelParentesco || null,
+    p_responsavel_telefone: reserva.responsavelTelefone || null,
+  });
+
+  if (!error && data?.ok) {
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        agendamento_id: data.agendamento_id,
+        data: data.data,
+        hora_inicio: data.hora_inicio,
+        hora_fim: data.hora_fim,
+      },
+    };
+  }
+
+  const codigo = texto(error?.code, 16);
+  if (codigo === "23P01") {
+    return { status: 409, body: { erro: "Esse horário não está mais disponível.", codigo: "HORARIO_INDISPONIVEL" } };
+  }
+  if (codigo === "22023") {
+    return { status: 400, body: { erro: texto(error?.message, 240) || "Revise os dados informados.", codigo: "DADOS_INVALIDOS" } };
+  }
+  if (codigo === "P0001") {
+    return { status: 409, body: { erro: "A disponibilidade da agenda mudou. Atualize os horários e tente novamente.", codigo: "AGENDA_ATUALIZADA" } };
+  }
+
+  console.error("agendamento-publico reservar", error);
+  return { status: 500, body: { erro: "Não foi possível confirmar o agendamento agora.", codigo: "ERRO_INTERNO" } };
+}
+
+async function lerBody(req: Request) {
+  const raw = await req.text();
+  if (raw.length > MAX_BODY_CHARS) throw new Error("BODY_TOO_LARGE");
+  try {
+    const body = JSON.parse(raw || "{}");
+    return body && typeof body === "object" && !Array.isArray(body) ? body as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return resposta(req, { erro: "Serviço temporariamente indisponível." }, 503);
@@ -338,18 +441,27 @@ Deno.serve(async (req: Request) => {
       return resposta(req, dados.encontrado ? dados : { encontrado: false, aberto: false }, dados.encontrado ? 200 : 404);
     }
     if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      if (body?.acao !== "slots") return resposta(req, { erro: "Ação não suportada." }, 400);
+      const body = await lerBody(req);
       const slug = texto(body.clinica, 80).toLowerCase();
-      const profissionalId = texto(body.profissional_id, 120);
-      const procedimentoId = texto(body.procedimento_id, 80);
-      if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug) || !profissionalId || !procedimentoId) {
-        return resposta(req, { erro: "Parâmetros inválidos." }, 400);
+      if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug)) return resposta(req, { erro: "Parâmetros inválidos." }, 400);
+
+      if (body.acao === "slots") {
+        const profissionalId = texto(body.profissional_id, 120);
+        const procedimentoId = texto(body.procedimento_id, 80);
+        if (!profissionalId || !uuidValido(procedimentoId)) return resposta(req, { erro: "Parâmetros inválidos." }, 400);
+        return resposta(req, await slotsPublicos(slug, profissionalId, procedimentoId));
       }
-      return resposta(req, await slotsPublicos(slug, profissionalId, procedimentoId));
+
+      if (body.acao === "reservar") {
+        const resultado = await reservarOnline(slug, body);
+        return resposta(req, resultado.body, resultado.status);
+      }
+
+      return resposta(req, { erro: "Ação não suportada." }, 400);
     }
     return resposta(req, { erro: "Método não permitido." }, 405);
   } catch (erro) {
+    if (erro instanceof Error && erro.message === "BODY_TOO_LARGE") return resposta(req, { erro: "Solicitação muito grande." }, 413);
     console.error("agendamento-publico", erro);
     return resposta(req, { erro: "Não foi possível consultar a agenda agora." }, 500);
   }
