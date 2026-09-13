@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#F4F7F6">
   <title>Agendamento online</title>
   <link rel="stylesheet" href="../styles/design_tokens.css?v=20260912-online-r1">
-  <link rel="stylesheet" href="./agendamento-publico.css?v=20260912-r2">
+  <link rel="stylesheet" href="./agendamento-publico.css?v=20260913-v3">
 </head>
 <body>
   <main class="ks-public-page" id="ks_public_app">
@@ -22,7 +22,7 @@
     <section id="ks_public_loading" class="ks-public-state" aria-live="polite">
       <div class="ks-public-loader" aria-hidden="true"></div>
       <h1>Carregando agenda</h1>
-      <p>Consultando os horários disponíveis da clínica.</p>
+      <p>Consultando os profissionais e horários disponíveis.</p>
     </section>
 
     <section id="ks_public_closed" class="ks-public-state" hidden>
@@ -40,152 +40,195 @@
 
     <section id="ks_public_success" class="ks-public-state ks-public-success" hidden>
       <span class="ks-public-state-label">Agendamento confirmado</span>
-      <h1>Seu horário foi reservado</h1>
-      <p id="ks_public_success_summary"></p>
+      <h1>Seu atendimento foi agendado!</h1>
+      <p id="ks_public_success_message" class="ks-public-success-message"></p>
       <div class="ks-public-success-card">
         <strong id="ks_public_success_date"></strong>
         <span id="ks_public_success_service"></span>
         <span id="ks_public_success_professional"></span>
       </div>
-      <p class="ks-public-success-note">A clínica recebeu o novo agendamento. Guarde a data e o horário escolhidos.</p>
+      <div id="ks_public_success_address_box" class="ks-public-success-address" hidden>
+        <strong>Local do atendimento</strong>
+        <span id="ks_public_success_address"></span>
+      </div>
       <button type="button" class="ks-public-btn ks-public-btn-secondary" id="ks_public_new_booking">Fazer outro agendamento</button>
     </section>
 
     <div id="ks_public_flow" class="ks-public-flow" hidden>
-      <div class="ks-public-intro">
-        <h1 id="ks_public_title">Agende seu atendimento</h1>
-        <p id="ks_public_description"></p>
-      </div>
-
-      <nav class="ks-public-progress" aria-label="Progresso do agendamento">
-        <div class="ks-public-progress-copy">
-          <span id="ks_public_progress_count">Etapa 1 de 4</span>
-          <strong id="ks_public_progress_label">Atendimento</strong>
-        </div>
-        <div class="ks-public-progress-track" aria-hidden="true">
-          <span data-progress-segment="0" class="ativo"></span>
-          <span data-progress-segment="1"></span>
-          <span data-progress-segment="2"></span>
-          <span data-progress-segment="3"></span>
-        </div>
-      </nav>
-
-      <section class="ks-public-step" id="ks_public_step_procedimento" data-step="procedimento">
-        <div class="ks-public-step-head">
-          <h2>Qual atendimento você procura?</h2>
-          <p>Escolha um serviço para ver os profissionais disponíveis.</p>
-        </div>
-        <div id="ks_public_procedimentos" class="ks-public-options"></div>
-      </section>
-
-      <section class="ks-public-step" id="ks_public_step_profissional" data-step="profissional" hidden>
-        <button type="button" class="ks-public-back" data-voltar="procedimento">Trocar atendimento</button>
-        <div class="ks-public-step-head">
-          <h2>Escolha o profissional</h2>
-          <p>Mostramos somente profissionais publicados pela clínica para esse atendimento.</p>
-        </div>
-        <div id="ks_public_profissionais" class="ks-public-options"></div>
-      </section>
-
-      <section class="ks-public-step" id="ks_public_step_horario" data-step="horario" hidden>
-        <button type="button" class="ks-public-back" data-voltar="profissional">Trocar profissional</button>
-        <div class="ks-public-step-head">
-          <h2>Escolha a data e o horário</h2>
-          <p id="ks_public_slot_context">Os horários abaixo já consideram a duração do atendimento e a agenda do profissional.</p>
-        </div>
-        <div id="ks_public_slots_loading" class="ks-public-inline-state" hidden>
-          <div class="ks-public-loader" aria-hidden="true"></div><span>Consultando horários livres…</span>
-        </div>
-        <div id="ks_public_sem_horarios" class="ks-public-empty" hidden>
-          <strong>Nenhum horário disponível agora</strong>
-          <span>Tente outro profissional ou volte mais tarde.</span>
-        </div>
-        <div id="ks_public_datas" class="ks-public-dates" role="list"></div>
-        <div id="ks_public_horarios_area" class="ks-public-times-area" hidden>
-          <h3 id="ks_public_data_escolhida"></h3>
-          <div id="ks_public_horarios" class="ks-public-times"></div>
-        </div>
-      </section>
-
-      <section class="ks-public-step" id="ks_public_step_dados" data-step="dados" hidden>
-        <button type="button" class="ks-public-back" data-voltar="horario">Trocar horário</button>
-        <div class="ks-public-step-head">
-          <h2>Dados de quem será atendido</h2>
-          <p>Use os dados do paciente. Eles serão usados pela clínica para identificar o cadastro e registrar este agendamento.</p>
-        </div>
-
-        <div class="ks-public-booking-summary" aria-live="polite">
-          <strong id="ks_public_form_summary_date"></strong>
-          <span id="ks_public_form_summary_service"></span>
-          <span id="ks_public_form_summary_professional"></span>
-        </div>
-
-        <form id="ks_public_form" class="ks-public-form" novalidate>
-          <label class="ks-public-field ks-public-field-wide">
-            <span>Nome completo</span>
-            <input id="ks_public_nome" name="nome" type="text" autocomplete="name" maxlength="120" required>
-          </label>
-          <label class="ks-public-field">
-            <span>Data de nascimento</span>
-            <input id="ks_public_nascimento" name="nascimento" type="date" autocomplete="bday" required>
-          </label>
-          <label class="ks-public-field">
-            <span>Celular</span>
-            <input id="ks_public_telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(38) 99999-9999" required>
-          </label>
-          <label class="ks-public-field ks-public-field-wide">
-            <span>CPF <small>opcional</small></span>
-            <input id="ks_public_cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00">
-            <small class="ks-public-field-help">Se informado, ajuda a clínica a localizar um cadastro já existente sem duplicá-lo.</small>
-          </label>
-
-          <label class="ks-public-check-row ks-public-field-wide" for="ks_public_dependente">
-            <input id="ks_public_dependente" name="dependente" type="checkbox">
-            <span><strong>Este atendimento é para um dependente</strong><small>Informe o responsável se outra pessoa responde pelo paciente.</small></span>
-          </label>
-
-          <div id="ks_public_responsavel" class="ks-public-dependent-fields ks-public-field-wide" hidden>
-            <label class="ks-public-field ks-public-field-wide">
-              <span>Nome do responsável</span>
-              <input id="ks_public_responsavel_nome" type="text" autocomplete="name" maxlength="120">
-            </label>
-            <label class="ks-public-field">
-              <span>Parentesco</span>
-              <select id="ks_public_responsavel_parentesco">
-                <option value="">Selecione</option>
-                <option value="Mãe">Mãe</option>
-                <option value="Pai">Pai</option>
-                <option value="Responsável legal">Responsável legal</option>
-                <option value="Outro">Outro</option>
-              </select>
-            </label>
-            <label class="ks-public-field">
-              <span>Celular do responsável</span>
-              <input id="ks_public_responsavel_telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(38) 99999-9999">
-            </label>
+      <div class="ks-public-layout">
+        <aside class="ks-public-profile-panel" aria-live="polite">
+          <div class="ks-public-profile-hero">
+            <div class="ks-public-avatar" id="ks_public_profile_avatar" aria-hidden="true">KS</div>
+            <img id="ks_public_profile_photo" class="ks-public-profile-photo" alt="" hidden>
+            <div class="ks-public-profile-main">
+              <span class="ks-public-profile-kicker">Profissional</span>
+              <h1 id="ks_public_profile_name">Escolha um profissional</h1>
+              <p id="ks_public_profile_title">Selecione ao lado para conhecer o perfil e os horários disponíveis.</p>
+              <small id="ks_public_profile_register" hidden></small>
+            </div>
           </div>
 
-          <label class="ks-public-check-row ks-public-field-wide" for="ks_public_consentimento">
-            <input id="ks_public_consentimento" type="checkbox" required>
-            <span><strong>Confirmo que os dados informados estão corretos</strong><small>E podem ser usados pela clínica para viabilizar este agendamento.</small></span>
-          </label>
+          <section id="ks_public_profile_about" class="ks-public-profile-section" hidden>
+            <h2>Apresentação</h2>
+            <p id="ks_public_profile_about_text"></p>
+          </section>
 
-          <div id="ks_public_form_feedback" class="ks-public-form-feedback ks-public-field-wide" role="alert" hidden></div>
-          <button type="submit" class="ks-public-btn ks-public-btn-primary ks-public-submit ks-public-field-wide" id="ks_public_confirmar">Confirmar agendamento</button>
-        </form>
-      </section>
+          <section id="ks_public_profile_formation" class="ks-public-profile-section" hidden>
+            <h2>Formação</h2>
+            <div id="ks_public_profile_formation_list" class="ks-public-profile-list"></div>
+          </section>
 
-      <aside id="ks_public_selection" class="ks-public-selection" hidden aria-live="polite">
-        <div>
-          <span>Horário selecionado</span>
-          <strong id="ks_public_selection_title"></strong>
-          <small id="ks_public_selection_meta"></small>
-        </div>
-        <button type="button" class="ks-public-btn ks-public-btn-primary" id="ks_public_continue">Continuar</button>
-      </aside>
+          <section class="ks-public-profile-section">
+            <h2>Convênios atendidos</h2>
+            <div id="ks_public_profile_insurances" class="ks-public-chips">
+              <span class="ks-public-chip">Atendimento particular</span>
+            </div>
+          </section>
+
+          <section id="ks_public_profile_location" class="ks-public-profile-section" hidden>
+            <h2>Local de atendimento</h2>
+            <p id="ks_public_profile_location_text"></p>
+          </section>
+        </aside>
+
+        <section class="ks-public-booking-panel">
+          <div class="ks-public-intro">
+            <span class="ks-public-eyebrow">AGENDAMENTO ONLINE</span>
+            <h1 id="ks_public_title">Agende seu atendimento</h1>
+            <p id="ks_public_description"></p>
+          </div>
+
+          <nav class="ks-public-progress" aria-label="Progresso do agendamento">
+            <div class="ks-public-progress-copy">
+              <span id="ks_public_progress_count">Etapa 1 de 4</span>
+              <strong id="ks_public_progress_label">Profissional</strong>
+            </div>
+            <div class="ks-public-progress-track" aria-hidden="true">
+              <span data-progress-segment="0" class="ativo"></span>
+              <span data-progress-segment="1"></span>
+              <span data-progress-segment="2"></span>
+              <span data-progress-segment="3"></span>
+            </div>
+          </nav>
+
+          <section class="ks-public-step" id="ks_public_step_profissional" data-step="profissional">
+            <div class="ks-public-step-head">
+              <h2>Escolha o profissional</h2>
+              <p>Selecione quem realizará o atendimento.</p>
+            </div>
+            <div id="ks_public_profissionais" class="ks-public-options"></div>
+          </section>
+
+          <section class="ks-public-step" id="ks_public_step_procedimento" data-step="procedimento" hidden>
+            <button type="button" class="ks-public-back" data-voltar="profissional">Trocar profissional</button>
+            <div class="ks-public-step-head">
+              <h2>Escolha o atendimento</h2>
+              <p>Mostramos somente os serviços compatíveis com o profissional selecionado.</p>
+            </div>
+            <div id="ks_public_procedimentos" class="ks-public-options"></div>
+          </section>
+
+          <section class="ks-public-step" id="ks_public_step_horario" data-step="horario" hidden>
+            <button type="button" class="ks-public-back" data-voltar="procedimento">Trocar atendimento</button>
+            <div class="ks-public-step-head">
+              <h2>Escolha a data e o horário</h2>
+              <p id="ks_public_slot_context">Os horários abaixo já consideram a duração do atendimento e a agenda do profissional.</p>
+            </div>
+            <div id="ks_public_slots_loading" class="ks-public-inline-state" hidden>
+              <div class="ks-public-loader" aria-hidden="true"></div><span>Consultando horários livres…</span>
+            </div>
+            <div id="ks_public_sem_horarios" class="ks-public-empty" hidden>
+              <strong>Nenhum horário disponível agora</strong>
+              <span>Tente outro atendimento, outro profissional ou volte mais tarde.</span>
+            </div>
+            <div id="ks_public_datas" class="ks-public-dates" role="list"></div>
+            <div id="ks_public_horarios_area" class="ks-public-times-area" hidden>
+              <h3 id="ks_public_data_escolhida"></h3>
+              <div id="ks_public_horarios" class="ks-public-times"></div>
+            </div>
+          </section>
+
+          <section class="ks-public-step" id="ks_public_step_dados" data-step="dados" hidden>
+            <button type="button" class="ks-public-back" data-voltar="horario">Trocar horário</button>
+            <div class="ks-public-step-head">
+              <h2>Dados de quem será atendido</h2>
+              <p>Use os dados do paciente. A clínica utilizará essas informações para identificar o cadastro e registrar o agendamento.</p>
+            </div>
+
+            <div class="ks-public-booking-summary" aria-live="polite">
+              <strong id="ks_public_form_summary_date"></strong>
+              <span id="ks_public_form_summary_service"></span>
+              <span id="ks_public_form_summary_professional"></span>
+            </div>
+
+            <form id="ks_public_form" class="ks-public-form" novalidate>
+              <label class="ks-public-field ks-public-field-wide">
+                <span>Nome completo</span>
+                <input id="ks_public_nome" name="nome" type="text" autocomplete="name" maxlength="120" required>
+              </label>
+              <label class="ks-public-field">
+                <span>Data de nascimento</span>
+                <input id="ks_public_nascimento" name="nascimento" type="date" autocomplete="bday" required>
+              </label>
+              <label class="ks-public-field">
+                <span>Celular</span>
+                <input id="ks_public_telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(38) 99999-9999" required>
+              </label>
+              <label class="ks-public-field ks-public-field-wide">
+                <span>CPF <small>opcional</small></span>
+                <input id="ks_public_cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00">
+                <small class="ks-public-field-help">Se informado, ajuda a clínica a localizar um cadastro já existente sem duplicá-lo.</small>
+              </label>
+
+              <label class="ks-public-check-row ks-public-field-wide" for="ks_public_dependente">
+                <input id="ks_public_dependente" name="dependente" type="checkbox">
+                <span><strong>Este atendimento é para um dependente</strong><small>Informe o responsável se outra pessoa responde pelo paciente.</small></span>
+              </label>
+
+              <div id="ks_public_responsavel" class="ks-public-dependent-fields ks-public-field-wide" hidden>
+                <label class="ks-public-field ks-public-field-wide">
+                  <span>Nome do responsável</span>
+                  <input id="ks_public_responsavel_nome" type="text" autocomplete="name" maxlength="120">
+                </label>
+                <label class="ks-public-field">
+                  <span>Parentesco</span>
+                  <select id="ks_public_responsavel_parentesco">
+                    <option value="">Selecione</option>
+                    <option value="Mãe">Mãe</option>
+                    <option value="Pai">Pai</option>
+                    <option value="Responsável legal">Responsável legal</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </label>
+                <label class="ks-public-field">
+                  <span>Celular do responsável</span>
+                  <input id="ks_public_responsavel_telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(38) 99999-9999">
+                </label>
+              </div>
+
+              <label class="ks-public-check-row ks-public-field-wide" for="ks_public_consentimento">
+                <input id="ks_public_consentimento" type="checkbox" required>
+                <span><strong>Confirmo que os dados informados estão corretos</strong><small>E podem ser usados pela clínica para viabilizar este agendamento.</small></span>
+              </label>
+
+              <div id="ks_public_form_feedback" class="ks-public-form-feedback ks-public-field-wide" role="alert" hidden></div>
+              <button type="submit" class="ks-public-btn ks-public-btn-primary ks-public-submit ks-public-field-wide" id="ks_public_confirmar">Confirmar agendamento</button>
+            </form>
+          </section>
+
+          <aside id="ks_public_selection" class="ks-public-selection" hidden aria-live="polite">
+            <div>
+              <span>Horário selecionado</span>
+              <strong id="ks_public_selection_title"></strong>
+              <small id="ks_public_selection_meta"></small>
+            </div>
+            <button type="button" class="ks-public-btn ks-public-btn-primary" id="ks_public_continue">Continuar</button>
+          </aside>
+        </section>
+      </div>
     </div>
   </main>
 
-  <script src="./agendamento-publico.js?v=20260912-r2" defer></script>
+  <script src="./agendamento-publico.js?v=20260913-v3" defer></script>
 </body>
 </html>
