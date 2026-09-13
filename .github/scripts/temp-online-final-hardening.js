@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { execFileSync } = require('child_process');
 
 function read(path) {
   return fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
@@ -15,6 +16,11 @@ function replaceExact(content, oldText, newText, label) {
 
 const adminPath = 'src/admin/configuracoes_agendamento_online-1.0.0.js';
 let admin = read(adminPath);
+
+admin = replaceExact(admin,
+`    const ASSET_REVISION = '20260912-r1';`,
+`    const ASSET_REVISION = '20260913-online-r2';`,
+'cache do CSS administrativo');
 
 admin = replaceExact(admin,
 `        document.getElementById('ks_online_profissional_horarios')?.addEventListener('change', evento => {
@@ -152,6 +158,28 @@ admin = replaceExact(admin,
 
 write(adminPath, admin);
 
+const accessPath = 'src/admin/access_admin-1.0.0.js';
+let access = read(accessPath);
+access = replaceExact(access,
+`    const ONLINE_CONFIG_REVISION='20260912-r1';`,
+`    const ONLINE_CONFIG_REVISION='20260913-online-r2';`,
+'cache do módulo administrativo');
+write(accessPath, access);
+
+const cssPath = 'styles/configuracoes_agendamento_online-1.0.0.css';
+let css = read(cssPath);
+css = replaceExact(css,
+`@media (max-width: 430px) {
+    .ks-online-topline {`,
+`@media (max-width: 430px) {
+    .ks-online-time-row {
+        grid-template-columns: 1fr;
+    }
+
+    .ks-online-topline {`,
+'horários em coluna única no telefone');
+write(cssPath, css);
+
 const edgePath = 'supabase/functions/agendamento-publico/index.ts';
 let edge = read(edgePath);
 edge = replaceExact(edge,
@@ -189,16 +217,21 @@ write(edgePath, edge);
 
 const indexPath = 'index.html';
 let index = read(indexPath);
-const finalTag = 'src/admin/access_admin-1.0.0.js?v=20260913-online-r1';
+const finalTag = 'src/admin/access_admin-1.0.0.js?v=20260913-online-r2';
 if (!index.includes(finalTag)) {
   const antigos = [
     'src/admin/access_admin-1.0.0.js?v=20260911-access-r1',
-    'src/admin/access_admin-1.0.0.js?v=20260912-online-config-r1'
+    'src/admin/access_admin-1.0.0.js?v=20260912-online-config-r1',
+    'src/admin/access_admin-1.0.0.js?v=20260913-online-r1'
   ];
   const antigo = antigos.find((tag) => index.includes(tag));
   if (!antigo) throw new Error('cache do bootstrap administrativo: tag esperada não encontrada');
   index = index.replace(antigo, finalTag);
   write(indexPath, index);
 }
+
+// O workflow já adiciona os três arquivos centrais; estes dois extras precisam
+// permanecer no mesmo commit atômico de hardening.
+execFileSync('git', ['add', accessPath, cssPath], { stdio: 'inherit' });
 
 console.log('temp-online-final-hardening: OK');
