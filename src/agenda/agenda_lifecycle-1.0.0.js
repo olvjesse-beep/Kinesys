@@ -6,6 +6,8 @@
     'use strict';
 
     const VERSION='1.0.0';
+    const MOBILE_STYLE_ID='ks_agenda_mobile_style';
+    const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r1';
     let relogioTimer=null;
     let resizeObserver=null;
     let listenersAtivos=false;
@@ -13,6 +15,28 @@
 
     function telaAgendaAtiva(){
         return !!document.getElementById('tela_agenda')?.classList.contains('ativa');
+    }
+
+    function garantirEstiloMobileAgenda(){
+        if(document.getElementById(MOBILE_STYLE_ID))return;
+        const link=document.createElement('link');
+        link.id=MOBILE_STYLE_ID;
+        link.rel='stylesheet';
+        link.href=new URL(MOBILE_STYLE_SRC,document.baseURI).href;
+        link.dataset.kinesysAgendaMobile='1';
+        document.head.appendChild(link);
+    }
+
+    function sincronizarEstadoVisualAgenda(){
+        if(!telaAgendaAtiva())return;
+        document.body.dataset.tela='tela_agenda';
+        const titulo=document.getElementById('ks_page_title');
+        const subtitulo=document.getElementById('ks_page_subtitle');
+        if(titulo)titulo.textContent='Agenda';
+        if(subtitulo)subtitulo.textContent='Semana de atendimento e disponibilidade';
+        document.querySelectorAll('#dropdownContent li[data-tela-menu]').forEach(item=>{
+            item.classList.toggle('ks-active',item.dataset.telaMenu==='tela_agenda');
+        });
     }
 
     function atualizarSeAtiva(){
@@ -33,6 +57,8 @@
 
     function activate(){
         if(destruido||!telaAgendaAtiva())return false;
+        garantirEstiloMobileAgenda();
+        sincronizarEstadoVisualAgenda();
         atualizarSeAtiva();
         if(!listenersAtivos){
             document.addEventListener('visibilitychange',aoVisibilityChange);
