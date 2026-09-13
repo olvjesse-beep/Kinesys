@@ -67,6 +67,12 @@ assert(css.includes('@media (max-width: 430px)'),
   'layout deve tratar celulares estreitos no breakpoint oficial');
 assert(css.includes('@media (min-width: 701px)'),
   'layout deve evoluir para desktop somente no breakpoint oficial complementar');
+assert(css.includes('grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr)'),
+  'configuração desktop deve modularizar profissionais e procedimentos sem empilhar tudo em largura total');
+assert(css.includes('grid-template-columns: 112px 112px 82px'),
+  'editor desktop de horários deve dimensionar inputs e ação pelo conteúdo, sem campos de hora elásticos');
+assert(css.includes('max-width: 360px') && css.includes('.ks-online-profissional-select'),
+  'seleção de profissional deve permanecer compacta e proporcional ao conteúdo');
 assert(!/#[0-9a-f]{3,8}\b/i.test(css),
   'CSS novo deve usar somente tokens --kds-* e não cores locais');
 
