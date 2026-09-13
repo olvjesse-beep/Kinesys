@@ -1,8 +1,31 @@
 name: Impeccable detailed visual audit
 
 on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'styles/design_tokens.css'
+      - 'styles/design_components.css'
+      - 'styles/design_responsive.css'
+      - 'styles/design_screens.css'
+      - 'styles/design_polish.css'
+      - 'styles/design_liquid_glass-1.0.0.css'
+      - 'styles/navigation_glass-1.0.0.css'
+      - 'styles/login_access-1.18.0.css'
+      - 'tests/system_liquid_glass.contract.js'
+      - '.github/workflows/impeccable-detail-audit.yml'
   push:
     paths:
+      - 'index.html'
+      - 'styles/design_tokens.css'
+      - 'styles/design_components.css'
+      - 'styles/design_responsive.css'
+      - 'styles/design_screens.css'
+      - 'styles/design_polish.css'
+      - 'styles/design_liquid_glass-1.0.0.css'
+      - 'styles/navigation_glass-1.0.0.css'
+      - 'styles/login_access-1.18.0.css'
+      - 'tests/system_liquid_glass.contract.js'
       - '.github/workflows/impeccable-detail-audit.yml'
   workflow_dispatch:
 
@@ -23,6 +46,9 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: System Liquid Glass contract
+        run: node tests/system_liquid_glass.contract.js
+
       - name: Measure KineSys visual findings
         shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
         run: |
@@ -35,6 +61,10 @@ jobs:
             styles/design_components.css \
             styles/design_responsive.css \
             styles/design_screens.css \
+            styles/design_polish.css \
+            styles/design_liquid_glass-1.0.0.css \
+            styles/navigation_glass-1.0.0.css \
+            styles/login_access-1.18.0.css \
             styles/avaliacao_experiencia-1.22.0.css \
             > .impeccable-detail.json 2>.impeccable-detail.err
           code=$?
