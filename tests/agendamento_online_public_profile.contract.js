@@ -102,6 +102,16 @@ assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agen
   'servidor deve substituir a referência legada pela revisão do novo hub');
 assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css'),
   'servidor deve revalidar explicitamente o estilo glass da navegação');
+assert(htaccess.includes('design_navigation\\.css'),
+  'servidor deve revalidar a folha estrutural da navegação junto com o glass');
+assert(htaccess.includes('Header always set Clear-Site-Data "\\"cache\\""'),
+  'entrega deve limpar somente o cache uma vez para remover bootstrap legado');
+assert(!htaccess.includes('Clear-Site-Data "\\"cookies\\"') && !htaccess.includes('Clear-Site-Data "\\"storage\\"'),
+  'reset de entrega não pode limpar sessão, cookies ou armazenamento local');
+assert(htaccess.includes('kinesys_delivery_config_agenda_r2_seen=1') && htaccess.includes('env=!kinesys_delivery_config_agenda_r2_seen'),
+  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão');
+assert(htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r2'),
+  'resposta HTML deve possuir fallback explícito para carregar o glass com revisão nova');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
