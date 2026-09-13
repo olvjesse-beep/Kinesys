@@ -76,13 +76,15 @@ admin = replaceExact(admin,
 `    function estadoPublicacaoAtual() {
         const profissionais = state.profissionais.filter(p => p.agendamento_online_ativo);
         const profissionaisIds = new Set(profissionais.map(p => String(p.id)));
+        const horarios = state.disponibilidadeEditada.filter(x => profissionaisIds.has(String(x.profissional_id)));
+        const profissionaisComHorarios = new Set(horarios.map(x => String(x.profissional_id)));
         const procedimentos = state.procedimentos.filter(p => p.agendamento_online_ativo);
         const procedimentoIncompativel = procedimentos.find(p => {
             const vinculados = Array.isArray(p.profissionais_ids) ? p.profissionais_ids.map(String) : [];
-            return vinculados.length > 0 && !vinculados.some(id => profissionaisIds.has(id));
+            if (!vinculados.length) return profissionaisComHorarios.size === 0;
+            return !vinculados.some(id => profissionaisComHorarios.has(id));
         }) || null;
-        const horarios = state.disponibilidadeEditada.filter(x => profissionaisIds.has(String(x.profissional_id)));
-        return { profissionais, profissionaisIds, procedimentos, procedimentoIncompativel, horarios };
+        return { profissionais, profissionaisIds, profissionaisComHorarios, procedimentos, procedimentoIncompativel, horarios };
     }
 
     function atualizarResumoPublicacao() {`,
@@ -107,7 +109,7 @@ admin = replaceExact(admin,
 `        const publicacao = estadoPublicacaoAtual();
         if (!publicacao.profissionais.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um profissional.', id: 'ks_online_sec_profissionais' };
         if (!publicacao.procedimentos.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um procedimento.', id: 'ks_online_sec_procedimentos' };
-        if (publicacao.procedimentoIncompativel) return { ok: false, msg: \`O procedimento “\${publicacao.procedimentoIncompativel.nome || 'selecionado'}” não possui profissional publicado habilitado.\`, id: 'ks_online_sec_procedimentos' };
+        if (publicacao.procedimentoIncompativel) return { ok: false, msg: \`O procedimento “\${publicacao.procedimentoIncompativel.nome || 'selecionado'}” não possui profissional publicado com horário online compatível.\`, id: 'ks_online_sec_procedimentos' };
         if (!publicacao.horarios.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um período para um profissional publicado.', id: 'ks_online_sec_horarios' };`,
 'validação de publicação compatível');
 
@@ -215,6 +217,18 @@ edge = replaceExact(edge,
 'filtragem consistente do catálogo público');
 write(edgePath, edge);
 
+const testPath = 'tests/agendamento_online_admin_config.contract.js';
+let test = read(testPath);
+test = replaceExact(test,
+`assert(js.includes('não possui profissional publicado habilitado'),
+  'procedimento restrito deve exigir ao menos um profissional publicado compatível');`,
+`assert(js.includes('não possui profissional publicado com horário online compatível'),
+  'procedimento restrito deve exigir profissional publicado com disponibilidade online');
+assert(js.includes('profissionaisComHorarios'),
+  'validação administrativa deve cruzar procedimento com profissional que possui período publicado');`,
+'contrato de compatibilidade procedimento-horário');
+write(testPath, test);
+
 const indexPath = 'index.html';
 let index = read(indexPath);
 const finalTag = 'src/admin/access_admin-1.0.0.js?v=20260913-online-r2';
@@ -230,8 +244,8 @@ if (!index.includes(finalTag)) {
   write(indexPath, index);
 }
 
-// O workflow já adiciona os três arquivos centrais; estes dois extras precisam
+// O workflow já adiciona os arquivos centrais; estes extras precisam
 // permanecer no mesmo commit atômico de hardening.
-execFileSync('git', ['add', accessPath, cssPath], { stdio: 'inherit' });
+execFileSync('git', ['add', accessPath, cssPath, testPath], { stdio: 'inherit' });
 
 console.log('temp-online-final-hardening: OK');
