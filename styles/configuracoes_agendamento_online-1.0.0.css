@@ -1,0 +1,581 @@
+/* KineSys — Configurações do agendamento online v1.0.0
+   Mobile-first, usando somente tokens --kds-* existentes. */
+
+#tela_configuracoes.ks-config-hub-ready {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding-bottom: 18px;
+}
+
+.ks-config-hub-header {
+    margin: 0 0 14px;
+}
+
+.ks-config-hub-header h1 {
+    margin: 0;
+    color: var(--kds-text);
+    font-size: var(--kds-font-title-mobile);
+    line-height: var(--kds-leading-tight);
+    letter-spacing: -0.02em;
+}
+
+.ks-config-hub-header p {
+    max-width: 72ch;
+    margin: 7px 0 0;
+    color: var(--kds-muted);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-text);
+}
+
+.ks-config-tabs {
+    position: sticky;
+    top: calc(var(--kds-topbar-mobile-height) + 6px);
+    z-index: 8;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+    margin: 0 0 14px;
+    padding: 4px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface);
+    box-shadow: var(--kds-shadow-soft);
+}
+
+.ks-config-tabs button {
+    min-height: 44px;
+    margin: 0;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: var(--kds-radius-sm);
+    background: transparent;
+    color: var(--kds-text-secondary);
+    font: 700 var(--kds-font-label)/var(--kds-leading-ui) var(--kds-font-family-ui);
+    cursor: pointer;
+}
+
+.ks-config-tabs button[aria-selected="true"] {
+    background: var(--kds-text);
+    color: var(--kds-surface);
+}
+
+.ks-config-tabs button:focus-visible,
+.ks-online-shell button:focus-visible,
+.ks-online-shell input:focus-visible,
+.ks-online-shell select:focus-visible,
+.ks-online-shell textarea:focus-visible {
+    outline: 2px solid var(--kds-focus-line);
+    outline-offset: 2px;
+}
+
+.ks-config-panel[hidden] {
+    display: none !important;
+}
+
+.ks-online-shell {
+    width: 100%;
+    color: var(--kds-text);
+}
+
+.ks-online-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+}
+
+.ks-online-topline h2,
+.ks-online-section h3 {
+    margin: 0;
+    color: var(--kds-text);
+}
+
+.ks-online-topline h2 {
+    font-size: var(--kds-font-heading-lg);
+    line-height: var(--kds-leading-compact);
+}
+
+.ks-online-topline p,
+.ks-online-section-head p {
+    margin: 5px 0 0;
+    color: var(--kds-muted);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-text);
+}
+
+.ks-online-badge,
+.ks-online-count {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    border-radius: var(--kds-radius-pill);
+    font: 700 var(--kds-font-metadata)/1 var(--kds-font-family-ui);
+    white-space: nowrap;
+}
+
+.ks-online-badge.fechado {
+    background: var(--kds-surface-muted);
+    color: var(--kds-text-secondary);
+}
+
+.ks-online-badge.ativo {
+    background: var(--kds-accent-soft);
+    color: var(--kds-success);
+}
+
+.ks-online-badge.atencao {
+    background: var(--kds-warning-soft);
+    color: var(--kds-warning);
+}
+
+.ks-online-count {
+    background: var(--kds-surface-soft);
+    color: var(--kds-muted);
+}
+
+.ks-online-feedback {
+    margin: 0 0 12px;
+    padding: 11px 12px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-text);
+}
+
+.ks-online-feedback.neutro {
+    background: var(--kds-surface-soft);
+    color: var(--kds-text-secondary);
+}
+
+.ks-online-feedback.sucesso {
+    border-color: var(--kds-line);
+    background: var(--kds-success-soft);
+    color: var(--kds-success);
+}
+
+.ks-online-feedback.erro {
+    border-color: var(--kds-danger-line);
+    background: var(--kds-danger-soft);
+    color: var(--kds-danger);
+}
+
+.ks-online-surface {
+    overflow: hidden;
+    border: 1px solid var(--kds-line);
+    border-radius: 12px;
+    background: var(--kds-surface);
+}
+
+.ks-online-section {
+    padding: 16px;
+}
+
+.ks-online-section + .ks-online-section {
+    border-top: 1px solid var(--kds-line-soft);
+}
+
+.ks-online-section-head {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.ks-online-section-head-simple {
+    gap: 10px;
+}
+
+.ks-online-section h3 {
+    font-size: var(--kds-font-heading-sm);
+    line-height: var(--kds-leading-ui);
+}
+
+.ks-online-fields {
+    display: grid;
+    gap: 14px;
+}
+
+.ks-online-field {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+}
+
+.ks-online-field > span,
+.ks-online-time-row label > span {
+    color: var(--kds-text-secondary);
+    font: 700 var(--kds-font-label)/var(--kds-leading-ui) var(--kds-font-family-ui);
+}
+
+.ks-online-field input,
+.ks-online-field select,
+.ks-online-field textarea,
+.ks-online-time-row input {
+    width: 100%;
+    min-height: var(--kds-control-height);
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    background: var(--kds-surface);
+    color: var(--kds-text);
+    font: 400 16px/var(--kds-leading-text) var(--kds-font-family-ui);
+}
+
+.ks-online-field textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.ks-online-field input:focus,
+.ks-online-field select:focus,
+.ks-online-field textarea:focus,
+.ks-online-time-row input:focus {
+    border-color: var(--kds-focus-line);
+    box-shadow: 0 0 0 3px var(--kds-focus-halo);
+}
+
+.ks-switch-row,
+.ks-online-choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 56px;
+    box-sizing: border-box;
+    margin: 0;
+    cursor: pointer;
+}
+
+.ks-switch-row {
+    padding: 8px 0;
+}
+
+.ks-switch-row-master {
+    padding: 12px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface-soft);
+}
+
+.ks-switch-row > span:first-child,
+.ks-online-choice-copy {
+    min-width: 0;
+}
+
+.ks-switch-row strong,
+.ks-online-choice strong {
+    display: block;
+    color: var(--kds-text);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-ui);
+}
+
+.ks-switch-row small,
+.ks-online-choice small,
+.ks-online-day-head small {
+    display: block;
+    margin-top: 3px;
+    color: var(--kds-muted);
+    font-size: var(--kds-font-metadata);
+    line-height: var(--kds-leading-text);
+}
+
+.ks-switch-control {
+    position: relative;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ks-switch-control input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.ks-switch-control > span {
+    position: relative;
+    display: block;
+    width: 42px;
+    height: 24px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-pill);
+    background: var(--kds-surface-muted);
+    transition: background-color .16s ease-out, border-color .16s ease-out;
+}
+
+.ks-switch-control > span::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--kds-surface);
+    box-shadow: var(--kds-shadow-control);
+    transition: transform .16s ease-out;
+}
+
+.ks-switch-control input:checked + span {
+    border-color: var(--kds-accent);
+    background: var(--kds-accent);
+}
+
+.ks-switch-control input:checked + span::after {
+    transform: translateX(18px);
+}
+
+.ks-switch-control input:focus-visible + span {
+    outline: 2px solid var(--kds-focus-line);
+    outline-offset: 2px;
+}
+
+.ks-online-choice-list {
+    overflow: hidden;
+    border: 1px solid var(--kds-line-soft);
+    border-radius: var(--kds-radius-md);
+}
+
+.ks-online-choice {
+    min-height: 64px;
+    padding: 10px 12px;
+    background: var(--kds-surface);
+}
+
+.ks-online-choice + .ks-online-choice {
+    border-top: 1px solid var(--kds-line-soft);
+}
+
+.ks-online-choice:has(input:checked) {
+    background: var(--kds-accent-soft);
+}
+
+.ks-online-empty {
+    margin: 0;
+    padding: 16px;
+    border: 1px dashed var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    color: var(--kds-muted);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-text);
+}
+
+.ks-online-profissional-select {
+    margin-bottom: 14px;
+}
+
+.ks-online-week {
+    display: grid;
+    gap: 10px;
+}
+
+.ks-online-day {
+    overflow: hidden;
+    border: 1px solid var(--kds-line-soft);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface);
+}
+
+.ks-online-day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--kds-surface-soft);
+}
+
+.ks-online-day-head strong {
+    color: var(--kds-text);
+    font-size: var(--kds-font-content);
+}
+
+.ks-online-add-time {
+    min-height: 44px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.ks-online-time-list:empty {
+    display: none;
+}
+
+.ks-online-time-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+    border-top: 1px solid var(--kds-line-soft);
+}
+
+.ks-online-time-row label {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ks-online-remove-time {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    margin: 0;
+    border: 1px solid var(--kds-danger-line);
+    border-radius: var(--kds-radius-sm);
+    background: var(--kds-surface);
+    color: var(--kds-danger);
+    font: 700 var(--kds-font-label)/1 var(--kds-font-family-ui);
+    cursor: pointer;
+}
+
+.ks-online-savebar {
+    position: sticky;
+    bottom: 0;
+    z-index: 9;
+    display: grid;
+    gap: 10px;
+    margin: 12px 0 0;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface);
+    box-shadow: var(--kds-shadow-panel);
+}
+
+.ks-online-savebar .btn-primary {
+    min-height: 46px;
+    width: 100%;
+    margin: 0;
+}
+
+.ks-online-save-meta {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ks-online-save-meta strong {
+    overflow: hidden;
+    color: var(--kds-text-secondary);
+    font-size: var(--kds-font-label);
+    line-height: var(--kds-leading-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ks-online-save-meta span {
+    color: var(--kds-warning);
+    font-size: var(--kds-font-metadata);
+}
+
+@media (max-width: 430px) {
+    .ks-online-time-row {
+        grid-template-columns: 1fr;
+    }
+
+    .ks-online-topline {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ks-online-badge {
+        align-self: flex-start;
+    }
+
+    .ks-online-day-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .ks-online-add-time {
+        width: 100%;
+    }
+}
+
+@media (min-width: 701px) {
+    #tela_configuracoes.ks-config-hub-ready {
+        padding-bottom: 28px;
+    }
+
+    .ks-config-hub-header h1 {
+        font-size: var(--kds-font-title);
+    }
+
+    .ks-config-tabs {
+        position: static;
+        width: max-content;
+        min-width: 430px;
+        margin-bottom: 18px;
+        box-shadow: none;
+    }
+
+    .ks-online-topline {
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .ks-online-section {
+        padding: 20px 22px;
+    }
+
+    .ks-online-section-head {
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+        align-items: start;
+    }
+
+    .ks-online-section-head-simple {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+    }
+
+    .ks-online-fields-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ks-online-field-wide {
+        grid-column: 1 / -1;
+    }
+
+    .ks-online-choice {
+        padding-inline: 14px;
+    }
+
+    .ks-online-time-row {
+        grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+        align-items: end;
+    }
+
+    .ks-online-remove-time {
+        grid-column: auto;
+        min-width: 104px;
+        padding-inline: 14px;
+    }
+
+    .ks-online-savebar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        padding: 12px 14px;
+    }
+
+    .ks-online-savebar .btn-primary {
+        width: auto;
+        min-width: 170px;
+    }
+}
+
+@media (pointer: coarse) {
+    .ks-config-tabs button,
+    .ks-online-add-time,
+    .ks-online-remove-time,
+    .ks-online-savebar .btn-primary {
+        min-height: 44px;
+    }
+}

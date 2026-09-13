@@ -1,0 +1,64 @@
+name: Agendamento Online Structure Contract
+
+on:
+  pull_request:
+    paths:
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RATE_LIMIT_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql'
+      - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/configuracoes_agendamento_online-1.0.0.css'
+      - 'agendamento/**'
+      - 'supabase/functions/agendamento-publico/**'
+      - 'tests/agendamento_online_structure.contract.js'
+      - 'tests/agendamento_online_admin_config.contract.js'
+      - 'tests/agendamento_online_public_portal.contract.js'
+      - 'tests/agendamento_online_booking.contract.js'
+      - '.github/workflows/agendamento-online-structure-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RATE_LIMIT_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql'
+      - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
+      - 'src/admin/access_admin-1.0.0.js'
+      - 'styles/configuracoes_agendamento_online-1.0.0.css'
+      - 'agendamento/**'
+      - 'supabase/functions/agendamento-publico/**'
+      - 'tests/agendamento_online_structure.contract.js'
+      - 'tests/agendamento_online_admin_config.contract.js'
+      - 'tests/agendamento_online_public_portal.contract.js'
+      - 'tests/agendamento_online_booking.contract.js'
+      - '.github/workflows/agendamento-online-structure-contract.yml'
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Online scheduling structure contract
+        shell: cmd
+        run: node tests\agendamento_online_structure.contract.js
+      - name: Online scheduling admin configuration contract
+        shell: cmd
+        run: node tests\agendamento_online_admin_config.contract.js
+      - name: Public scheduling portal contract
+        shell: cmd
+        run: node tests\agendamento_online_public_portal.contract.js
+      - name: Atomic online booking contract
+        shell: cmd
+        run: node tests\agendamento_online_booking.contract.js
+      - name: JavaScript syntax
+        shell: cmd
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico.js && node --check tests\agendamento_online_structure.contract.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_booking.contract.js
