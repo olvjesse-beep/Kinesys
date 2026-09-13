@@ -6,6 +6,8 @@ const nameMigration = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENT
 const fkIndex = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_PERFIL_PUBLICO_FK_INDEX_20260913.sql', 'utf8');
 const addon = fs.readFileSync('src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js', 'utf8');
 const addonCss = fs.readFileSync('styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css', 'utf8');
+const layout = fs.readFileSync('src/admin/configuracoes_agendamento_online_layout-1.0.0.js', 'utf8');
+const layoutCss = fs.readFileSync('styles/configuracoes_agendamento_online_layout-1.0.0.css', 'utf8');
 const bootstrap = fs.readFileSync('src/admin/access_admin-1.0.0.js', 'utf8');
 const rootHtml = fs.readFileSync('index.html', 'utf8');
 
@@ -42,12 +44,33 @@ assert(addon.includes("from('agendamento_online_profissionais_config')"),
 assert(!addon.includes("from('agendamentos')") && !addon.includes("from('pacientes')"),
   'editor de perfil público não deve tocar agendamentos ou pacientes');
 
+assert(layout.includes("{ id: 'geral'") && layout.includes("{ id: 'profissional'") && layout.includes("{ id: 'servicos'") && layout.includes("{ id: 'horarios'"),
+  'configuração deve usar divulgação progressiva em quatro tarefas claras');
+assert(layout.includes("sessionStorage.setItem(STORAGE_KEY"),
+  'etapa atual da configuração deve permanecer estável durante a sessão');
+assert(layout.includes("role=\"tablist\"") && layout.includes('aria-selected'),
+  'navegação interna deve preservar semântica acessível de tabs');
+assert(layoutCss.includes('.ks-online-layout-nav'), 'layout destilado deve possuir navegação operacional própria');
+assert(layoutCss.includes('grid-template-columns: 112px 112px'),
+  'horários HH:MM não devem desperdiçar largura de desktop');
+assert(layoutCss.includes('.ks-online-week') && layoutCss.includes('repeat(2, minmax(0, 1fr))'),
+  'semana deve usar duas colunas no desktop para reduzir varredura vertical');
+assert(layoutCss.includes('@media (max-width: 700px)') && layoutCss.includes('overflow-x: auto'),
+  'navegação de tarefas deve adaptar-se a celular sem esmagar rótulos');
+assert(layoutCss.includes('@media (max-width: 430px)'),
+  'horários e ações devem possuir tratamento específico para celulares estreitos');
+assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout deve usar apenas tokens do KDS');
+
 assert(bootstrap.includes('configuracoes_agendamento_online_perfil_publico-1.0.0.js'),
   'bootstrap deve carregar o módulo V2 de perfil público');
-assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v4'"),
+assert(bootstrap.includes('configuracoes_agendamento_online_layout-1.0.0.js'),
+  'bootstrap deve carregar o layout destilado depois do perfil público');
+assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v5'"),
   'módulo V2 deve possuir revisão explícita de cache');
+assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-online-v5'"),
+  'layout destilado deve possuir revisão explícita de cache');
 assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
-  'HTML principal deve invalidar o cache do bootstrap administrativo');
+  'HTML principal mantém o bootstrap estável; atualização forçada revalida o módulo administrativo');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
