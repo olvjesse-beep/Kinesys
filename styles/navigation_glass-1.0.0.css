@@ -1,67 +1,69 @@
-/* KineSys — Sidebar Clear Liquid Glass r10
-   Direção óptica: vidro translúcido/polido, não frosted glass leitoso.
-   O painel inteiro é a lâmina de vidro; itens internos permanecem flat. */
+/* KineSys — Sidebar iPhone-like Liquid Glass
+   Direção: clear liquid glass / iPhone glass.
+   Preserva o shell funcional do drawer mobile e move o material visual
+   para uma lâmina óptica mais clara, polida e refrativa. */
 
 :root {
-    --ks-clear-glass-base: rgba(7, 61, 70, .46);
-    --ks-clear-glass-base-deep: rgba(5, 46, 56, .54);
-    --ks-clear-glass-tint: rgba(45, 139, 138, .20);
-    --ks-clear-glass-edge: rgba(228, 255, 252, .42);
-    --ks-clear-glass-edge-soft: rgba(255, 255, 255, .15);
-    --ks-clear-glass-specular: rgba(255, 255, 255, .31);
-    --ks-clear-glass-shadow: rgba(2, 18, 23, .24);
+    --ks-sidebar-liquid-tint: rgba(22, 118, 124, .32);
+    --ks-sidebar-liquid-tint-deep: rgba(7, 72, 80, .48);
+    --ks-sidebar-liquid-shade: rgba(4, 43, 50, .30);
+    --ks-sidebar-liquid-border: rgba(242, 255, 254, .34);
+    --ks-sidebar-liquid-border-soft: rgba(255, 255, 255, .18);
+    --ks-sidebar-liquid-highlight: rgba(255, 255, 255, .34);
+    --ks-sidebar-liquid-highlight-soft: rgba(220, 255, 251, .14);
+    --ks-sidebar-liquid-shadow: rgba(2, 16, 20, .18);
+    --ks-sidebar-liquid-shadow-deep: rgba(2, 16, 20, .10);
 
-    --ks-clear-glass-text: rgba(248, 253, 253, .98);
-    --ks-clear-glass-muted: rgba(218, 238, 237, .82);
-    --ks-clear-glass-section: rgba(210, 234, 233, .72);
-    --ks-clear-glass-icon: rgba(185, 244, 237, .98);
-    --ks-clear-glass-accent: rgba(156, 244, 234, .98);
+    --ks-sidebar-liquid-text: rgba(247, 252, 252, .98);
+    --ks-sidebar-liquid-muted: rgba(225, 241, 240, .78);
+    --ks-sidebar-liquid-section: rgba(221, 239, 238, .68);
+    --ks-sidebar-liquid-icon: rgba(219, 248, 245, .96);
+    --ks-sidebar-liquid-accent: rgba(169, 248, 240, .95);
 
-    --ks-clear-glass-hover: rgba(230, 255, 252, .060);
-    --ks-clear-glass-active: rgba(204, 252, 246, .090);
+    --ks-sidebar-item-hover: rgba(245, 255, 254, .065);
+    --ks-sidebar-item-focus: rgba(244, 255, 254, .08);
+    --ks-sidebar-item-active: rgba(238, 255, 253, .085);
 }
 
-/*
- * O painel inteiro é o vidro.
- * Blur moderado: transparência, borda e reflexão fazem o material parecer vidro;
- * o blur não deve transformar a superfície em uma placa fosca.
- */
+/* O painel inteiro é uma única lâmina de vidro liquid glass. */
 html body.ks-design-ready #ks_sidebar {
     position: fixed;
     inset: 0 auto 0 0;
     isolation: isolate;
-    background-color: var(--ks-clear-glass-base-deep);
+    background-color: rgba(10, 84, 92, .26);
     background-image:
-        radial-gradient(
-            145% 31% at 18% -5%,
-            rgba(255, 255, 255, .22) 0%,
-            rgba(217, 255, 250, .070) 33%,
-            rgba(255, 255, 255, 0) 63%
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, .12) 0%,
+            rgba(255, 255, 255, .03) 9%,
+            rgba(255, 255, 255, 0) 20%
         ),
         linear-gradient(
-            116deg,
-            rgba(255, 255, 255, .070) 0%,
-            rgba(255, 255, 255, .018) 13%,
-            rgba(255, 255, 255, 0) 27%
+            135deg,
+            rgba(255, 255, 255, .18) 0%,
+            rgba(255, 255, 255, .055) 11%,
+            rgba(255, 255, 255, 0) 24%
         ),
         linear-gradient(
             180deg,
-            var(--ks-clear-glass-tint) 0%,
-            var(--ks-clear-glass-base) 45%,
-            var(--ks-clear-glass-base-deep) 100%
+            var(--ks-sidebar-liquid-tint) 0%,
+            rgba(18, 108, 114, .28) 34%,
+            var(--ks-sidebar-liquid-tint-deep) 100%
         );
-    border-right: 1px solid var(--ks-clear-glass-edge);
+    border-right: 1px solid var(--ks-sidebar-liquid-border);
     box-shadow:
-        inset 0 1px 0 var(--ks-clear-glass-specular),
+        inset 0 1px 0 var(--ks-sidebar-liquid-highlight),
         inset 1px 0 0 rgba(255, 255, 255, .18),
-        inset -1px 0 0 rgba(239, 255, 253, .10),
-        inset 0 -1px 0 rgba(2, 28, 33, .18),
-        16px 0 40px var(--ks-clear-glass-shadow);
-    -webkit-backdrop-filter: blur(14px) saturate(155%) contrast(105%);
-    backdrop-filter: blur(14px) saturate(155%) contrast(105%);
+        inset -1px 0 0 var(--ks-sidebar-liquid-border-soft),
+        inset 0 -1px 0 rgba(255, 255, 255, .05),
+        0 0 0 1px rgba(240, 255, 253, .05),
+        18px 0 38px var(--ks-sidebar-liquid-shadow),
+        0 10px 26px var(--ks-sidebar-liquid-shadow-deep);
+    -webkit-backdrop-filter: blur(16px) saturate(132%) brightness(1.02);
+    backdrop-filter: blur(16px) saturate(132%) brightness(1.02);
 }
 
-/* Reflexo especular localizado: brilho de vidro polido, não véu branco. */
+/* Reflexos ópticos finos, sem “névoa fosca”. */
 html body.ks-design-ready #ks_sidebar::before {
     content: "";
     position: absolute;
@@ -70,41 +72,39 @@ html body.ks-design-ready #ks_sidebar::before {
     pointer-events: none;
     background:
         radial-gradient(
-            82% 18% at 16% 0%,
-            rgba(255, 255, 255, .25) 0%,
-            rgba(235, 255, 252, .075) 44%,
-            rgba(255, 255, 255, 0) 76%
+            124% 46% at 18% -2%,
+            rgba(255, 255, 255, .28) 0%,
+            rgba(240, 255, 253, .11) 19%,
+            rgba(255, 255, 255, 0) 48%
+        ),
+        radial-gradient(
+            56% 18% at 78% 12%,
+            rgba(165, 248, 240, .18) 0%,
+            rgba(165, 248, 240, .05) 26%,
+            rgba(165, 248, 240, 0) 62%
         ),
         linear-gradient(
             90deg,
-            rgba(255, 255, 255, .095) 0%,
-            rgba(255, 255, 255, .020) 7%,
+            rgba(255, 255, 255, .14) 0%,
+            rgba(255, 255, 255, .038) 7%,
             rgba(255, 255, 255, 0) 16%
-        ),
-        linear-gradient(
-            270deg,
-            rgba(226, 255, 251, .11) 0%,
-            rgba(226, 255, 251, .025) 1.8%,
-            rgba(226, 255, 251, 0) 7%
         );
 }
 
-/* Borda interna com luz e sombra opostas para sugerir espessura/refração. */
+/* Película ótica interna para sensação de espessura do vidro. */
 html body.ks-design-ready #ks_sidebar::after {
     content: "";
     position: absolute;
     inset: 1px;
     z-index: 0;
     pointer-events: none;
-    border: 1px solid rgba(235, 255, 253, .11);
-    border-left-color: rgba(255, 255, 255, .17);
-    border-right-color: rgba(210, 255, 249, .15);
-    border-bottom-color: rgba(2, 31, 37, .16);
     border-radius: inherit;
+    border: 1px solid rgba(244, 255, 254, .08);
+    border-top-color: rgba(255, 255, 255, .16);
+    border-left-color: rgba(255, 255, 255, .13);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .11),
-        inset -2px 0 4px rgba(218, 255, 250, .045),
-        inset 0 -2px 6px rgba(1, 29, 35, .10);
+        inset 0 1px 0 rgba(255, 255, 255, .07),
+        inset 0 -1px 0 rgba(5, 54, 60, .10);
 }
 
 body.ks-design-ready #ks_sidebar > * {
@@ -113,46 +113,46 @@ body.ks-design-ready #ks_sidebar > * {
 }
 
 body.ks-design-ready #ks_sidebar .header-brand::before {
-    background: var(--ks-clear-glass-accent);
-    box-shadow: 0 0 14px rgba(156, 244, 234, .20);
+    background: var(--ks-sidebar-liquid-accent);
+    box-shadow: 0 0 16px rgba(169, 248, 240, .20);
 }
 
 body.ks-design-ready #ks_sidebar .header-brand h1 {
-    color: var(--ks-clear-glass-text);
+    color: var(--ks-sidebar-liquid-text);
     letter-spacing: -.02em;
 }
 
 body.ks-design-ready #ks_sidebar .header-brand p {
-    color: var(--ks-clear-glass-muted);
+    color: var(--ks-sidebar-liquid-muted);
 }
 
-/* Card do usuário: segunda lâmina muito fina, ainda transparente. */
+/* Camada secundária leve, quase como um subpainel de vidro. */
 body.ks-design-ready #ks_sidebar .header-welcome {
     background:
         linear-gradient(
             180deg,
-            rgba(255, 255, 255, .060) 0%,
-            rgba(255, 255, 255, .018) 100%
+            rgba(255, 255, 255, .082) 0%,
+            rgba(255, 255, 255, .028) 100%
         );
-    border: 1px solid rgba(231, 255, 252, .18);
-    border-radius: 17px;
+    border: 1px solid rgba(244, 255, 254, .16);
+    border-radius: 18px;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .15),
-        inset 0 -1px 0 rgba(2, 34, 40, .08),
-        0 8px 22px rgba(2, 24, 29, .06);
-    -webkit-backdrop-filter: blur(8px) saturate(135%);
-    backdrop-filter: blur(8px) saturate(135%);
+        inset 0 1px 0 rgba(255, 255, 255, .11),
+        inset 0 -1px 0 rgba(255, 255, 255, .02),
+        0 8px 20px rgba(2, 16, 20, .08);
+    -webkit-backdrop-filter: blur(8px) saturate(112%);
+    backdrop-filter: blur(8px) saturate(112%);
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome strong,
 body.ks-design-ready #ks_sidebar .header-welcome #lbl_usuario_logado {
-    color: var(--ks-clear-glass-text);
+    color: var(--ks-sidebar-liquid-text);
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome small,
 body.ks-design-ready #ks_sidebar .header-welcome p,
 body.ks-design-ready #ks_sidebar .header-welcome span:not(#lbl_usuario_logado) {
-    color: var(--ks-clear-glass-muted);
+    color: var(--ks-sidebar-liquid-muted);
 }
 
 body.ks-design-ready #ks_sidebar :is(
@@ -162,7 +162,7 @@ body.ks-design-ready #ks_sidebar :is(
     .dropdown-label,
     .ks-nav-label
 ) {
-    color: var(--ks-clear-glass-section);
+    color: var(--ks-sidebar-liquid-section);
     font-weight: 760;
     letter-spacing: -.01em;
 }
@@ -187,32 +187,35 @@ body.ks-design-ready #ks_sidebar .nav-item {
     margin: 0;
 }
 
-/* Itens internos flat: sem cápsulas, sem relevo e sem blur individual. */
+/* Vidro pertence ao painel; itens internos continuam flat. */
 body.ks-design-ready #ks_sidebar .dropdown-content a,
 body.ks-design-ready #ks_sidebar .nav-link {
     min-height: 46px;
     border: 0;
     border-radius: 12px;
     background: transparent;
-    color: var(--ks-clear-glass-text);
+    color: var(--ks-sidebar-liquid-text);
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    transition: background .16s ease, color .16s ease, transform .16s ease;
+    transition:
+        background .16s ease,
+        color .16s ease,
+        transform .16s ease;
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content a:hover,
 body.ks-design-ready #ks_sidebar .nav-link:hover {
-    background: var(--ks-clear-glass-hover);
+    background: var(--ks-sidebar-item-hover);
     color: #fff;
     transform: translateX(1px);
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content a:focus-visible,
 body.ks-design-ready #ks_sidebar .nav-link:focus-visible {
-    outline: 2px solid rgba(178, 250, 242, .82);
+    outline: 2px solid rgba(179, 249, 243, .72);
     outline-offset: 1px;
-    background: rgba(232, 255, 252, .060);
+    background: var(--ks-sidebar-item-focus);
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a,
@@ -221,26 +224,26 @@ body.ks-design-ready #ks_sidebar .nav-link.active {
     background:
         linear-gradient(
             90deg,
-            var(--ks-clear-glass-active) 0%,
-            rgba(204, 252, 246, .028) 72%,
-            rgba(204, 252, 246, 0) 100%
+            rgba(239, 255, 253, .12) 0%,
+            rgba(239, 255, 253, .05) 66%,
+            rgba(239, 255, 253, 0) 100%
         );
     color: #fff;
-    box-shadow: inset 2px 0 0 var(--ks-clear-glass-accent);
+    box-shadow: inset 2px 0 0 var(--ks-sidebar-liquid-accent);
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-icon,
 body.ks-design-ready #ks_sidebar .dropdown-content a i,
 body.ks-design-ready #ks_sidebar .nav-link i,
 body.ks-design-ready #ks_sidebar .nav-link svg {
-    color: var(--ks-clear-glass-icon);
+    color: var(--ks-sidebar-liquid-icon);
     opacity: .98;
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a .ks-nav-icon,
 body.ks-design-ready #ks_sidebar .nav-item.active .ks-nav-icon,
 body.ks-design-ready #ks_sidebar .nav-link.active .ks-nav-icon {
-    color: rgba(238, 255, 253, 1);
+    color: rgba(240, 255, 253, 1);
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-logout {
@@ -253,43 +256,42 @@ body.ks-design-ready #ks_sidebar .ks-nav-logout {
     html body.ks-design-ready #ks_sidebar {
         position: fixed;
         inset: 0 auto 0 0;
-        border-radius: 0 26px 26px 0;
-        background-color: rgba(5, 48, 57, .52);
+        border-radius: 0 24px 24px 0;
+        background-color: rgba(9, 86, 94, .22);
         background-image:
-            radial-gradient(
-                145% 29% at 18% -5%,
-                rgba(255, 255, 255, .24) 0%,
-                rgba(217, 255, 250, .070) 34%,
-                rgba(255, 255, 255, 0) 64%
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, .14) 0%,
+                rgba(255, 255, 255, .03) 10%,
+                rgba(255, 255, 255, 0) 20%
             ),
             linear-gradient(
-                116deg,
-                rgba(255, 255, 255, .075) 0%,
-                rgba(255, 255, 255, .018) 13%,
-                rgba(255, 255, 255, 0) 27%
+                135deg,
+                rgba(255, 255, 255, .18) 0%,
+                rgba(255, 255, 255, .06) 11%,
+                rgba(255, 255, 255, 0) 26%
             ),
             linear-gradient(
                 180deg,
-                rgba(45, 139, 138, .22) 0%,
-                rgba(7, 61, 70, .48) 47%,
-                rgba(5, 46, 56, .56) 100%
+                rgba(30, 132, 137, .28) 0%,
+                rgba(18, 108, 114, .24) 36%,
+                rgba(7, 72, 80, .44) 100%
             );
-        border-right-color: rgba(232, 255, 252, .46);
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .34),
-            inset 1px 0 0 rgba(255, 255, 255, .20),
-            inset -1px 0 0 rgba(235, 255, 252, .13),
-            inset 0 -1px 0 rgba(2, 28, 33, .17),
-            18px 0 44px rgba(2, 18, 23, .28);
-        -webkit-backdrop-filter: blur(12px) saturate(158%) contrast(106%);
-        backdrop-filter: blur(12px) saturate(158%) contrast(106%);
+            inset 0 1px 0 rgba(255, 255, 255, .30),
+            inset 1px 0 0 rgba(255, 255, 255, .18),
+            inset -1px 0 0 rgba(255, 255, 255, .12),
+            inset 0 -1px 0 rgba(255, 255, 255, .05),
+            18px 0 36px rgba(2, 16, 20, .18);
+        -webkit-backdrop-filter: blur(12px) saturate(128%) brightness(1.02);
+        backdrop-filter: blur(12px) saturate(128%) brightness(1.02);
     }
 
     body.ks-design-ready #ks_sidebar .header-welcome {
         background: linear-gradient(
             180deg,
-            rgba(255, 255, 255, .064) 0%,
-            rgba(255, 255, 255, .018) 100%
+            rgba(255, 255, 255, .085) 0%,
+            rgba(255, 255, 255, .03) 100%
         );
     }
 
@@ -304,9 +306,9 @@ body.ks-design-ready #ks_sidebar .ks-nav-logout {
     html body.ks-design-ready #ks_sidebar {
         background: linear-gradient(
             180deg,
-            rgba(32, 110, 113, .94) 0%,
-            rgba(15, 75, 84, .95) 46%,
-            rgba(6, 48, 57, .96) 100%
+            rgba(41, 141, 145, .86) 0%,
+            rgba(22, 103, 110, .84) 42%,
+            rgba(8, 69, 77, .88) 100%
         );
     }
 }
