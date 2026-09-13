@@ -9,7 +9,7 @@ on:
       - 'styles/design_responsive.css'
       - 'styles/design_screens.css'
       - 'styles/design_polish.css'
-      - 'styles/design_liquid_glass-1.0.1.css'
+      - 'styles/design_liquid_glass-1.0.0.css'
       - 'styles/navigation_glass-1.0.0.css'
       - 'styles/login_access-1.18.0.css'
       - '.github/workflows/impeccable-detail-audit.yml'
@@ -21,7 +21,7 @@ on:
       - 'styles/design_responsive.css'
       - 'styles/design_screens.css'
       - 'styles/design_polish.css'
-      - 'styles/design_liquid_glass-1.0.1.css'
+      - 'styles/design_liquid_glass-1.0.0.css'
       - 'styles/navigation_glass-1.0.0.css'
       - 'styles/login_access-1.18.0.css'
       - '.github/workflows/impeccable-detail-audit.yml'
@@ -57,7 +57,7 @@ jobs:
             styles/design_responsive.css \
             styles/design_screens.css \
             styles/design_polish.css \
-            styles/design_liquid_glass-1.0.1.css \
+            styles/design_liquid_glass-1.0.0.css \
             styles/navigation_glass-1.0.0.css \
             styles/login_access-1.18.0.css \
             styles/avaliacao_experiencia-1.22.0.css \
