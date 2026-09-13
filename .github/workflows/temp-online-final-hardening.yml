@@ -1,0 +1,34 @@
+name: Temporary Online Final Hardening
+
+on:
+  push:
+    branches: [feature/agendamento-online-v1]
+    paths:
+      - '.github/workflows/temp-online-final-hardening.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agendamento-online-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate temporary patch script
+        shell: cmd
+        run: node --check .github\scripts\temp-online-final-hardening.js
+      - name: Apply final hardening
+        shell: cmd
+        run: node .github\scripts\temp-online-final-hardening.js
+      - name: Validate changed runtime and contracts
+        shell: cmd
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node tests\agendamento_online_admin_config.contract.js && node tests\agendamento_online_public_portal.contract.js && node tests\agendamento_online_structure.contract.js && node tests\agendamento_online_booking.contract.js
+      - name: Commit patch and remove temporary files
+        shell: cmd
+        run: git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com" && git add src/admin/configuracoes_agendamento_online-1.0.0.js supabase/functions/agendamento-publico/index.ts index.html && git rm .github/workflows/temp-online-final-hardening.yml .github/scripts/temp-online-final-hardening.js && git diff --cached --check && git commit -m "fix: endurecer publicação e catálogo online" && git push origin HEAD:feature/agendamento-online-v1
