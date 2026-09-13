@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 function patch(path, transforms) {
-  let text = fs.readFileSync(path, 'utf8');
+  let text = fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
   for (const [from, to, label] of transforms) {
     if (!text.includes(from)) throw new Error(`${path}: trecho não encontrado (${label})`);
     text = text.replace(from, to);
