@@ -33,14 +33,14 @@
   #tela_agenda #agenda_painel .agenda-semana-grade{
     --kds-agenda-slot-height:8px!important;
     --kds-agenda-header-height:44px!important;
-    --kds-agenda-hour-axis-width:52px!important;
+    --kds-agenda-hour-axis-width:64px!important;
     display:grid!important;
     width:max-content!important;
     min-width:max-content!important;
     max-width:none!important;
     height:auto!important;
     min-height:0!important;
-    grid-template-columns:52px repeat(var(--kds-agenda-runtime-day-count),145px)!important;
+    grid-template-columns:64px repeat(var(--kds-agenda-runtime-day-count),145px)!important;
     grid-template-rows:44px repeat(var(--kds-agenda-runtime-slot-count),8px)!important;
     align-items:stretch!important;
   }
@@ -55,9 +55,9 @@
 
   #tela_agenda #agenda_painel .agenda-hora-eixo,
   #tela_agenda #agenda_painel .agenda-canto{
-    width:52px!important;
-    min-width:52px!important;
-    max-width:52px!important;
+    width:64px!important;
+    min-width:64px!important;
+    max-width:64px!important;
     box-sizing:border-box!important;
   }
 
@@ -68,22 +68,43 @@
     height:auto!important;
     padding-top:0!important;
     padding-bottom:0!important;
+    border-top:0!important;
+  }
+
+  /*
+   * Grade visual simplificada:
+   * subdivisões de 10 e 30 minutos continuam existindo para posicionamento,
+   * mas não desenham linhas. Apenas a hora cheia ganha uma divisória suave.
+   */
+  #tela_agenda #agenda_painel .agenda-celula.subhora,
+  #tela_agenda #agenda_painel .agenda-hora-eixo.subhora,
+  #tela_agenda #agenda_painel .agenda-celula.meia-hora,
+  #tela_agenda #agenda_painel .agenda-hora-eixo.meia-hora{
+    border-top:0!important;
+  }
+
+  #tela_agenda #agenda_painel .agenda-celula.hora-cheia,
+  #tela_agenda #agenda_painel .agenda-hora-eixo.hora-cheia{
+    border-top:1px solid #DCE7E4!important;
   }
 
   #tela_agenda #agenda_painel .agenda-hora-eixo{
     position:sticky!important;
     left:0!important;
     z-index:24!important;
-    padding-right:5px!important;
-    overflow:visible!important;
-    background:#FAFBFB!important;
-    font-size:12.5px!important;
-    line-height:1!important;
-  }
-
-  #tela_agenda #agenda_painel .agenda-hora-eixo.hora-cheia{
+    display:flex!important;
+    justify-content:flex-end!important;
     align-items:flex-start!important;
-    padding-top:1px!important;
+    padding:1px 8px 0 6px!important;
+    overflow:visible!important;
+    white-space:nowrap!important;
+    text-align:right!important;
+    background:#FAFBFB!important;
+    color:#5E7378!important;
+    font-size:14px!important;
+    line-height:1!important;
+    font-weight:700!important;
+    border-right:1px solid #DDE8E5!important;
   }
 
   #tela_agenda #agenda_painel .agenda-semana-grade .agenda-canto,
@@ -159,7 +180,7 @@
     width:100%!important;
     min-width:100%!important;
     max-width:100%!important;
-    grid-template-columns:52px minmax(0,1fr)!important;
+    grid-template-columns:64px minmax(0,1fr)!important;
   }
 
   #tela_agenda #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-dia-cabecalho,
@@ -172,8 +193,8 @@
 
 @media (max-width:430px){
   #tela_agenda #agenda_painel .agenda-semana-grade{
-    --kds-agenda-hour-axis-width:50px!important;
-    grid-template-columns:50px repeat(var(--kds-agenda-runtime-day-count),142px)!important;
+    --kds-agenda-hour-axis-width:64px!important;
+    grid-template-columns:64px repeat(var(--kds-agenda-runtime-day-count),142px)!important;
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho,
@@ -185,12 +206,12 @@
 
   #tela_agenda #agenda_painel .agenda-hora-eixo,
   #tela_agenda #agenda_painel .agenda-canto{
-    width:50px!important;
-    min-width:50px!important;
-    max-width:50px!important;
+    width:64px!important;
+    min-width:64px!important;
+    max-width:64px!important;
   }
 
   #tela_agenda #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-semana-grade{
-    grid-template-columns:50px minmax(0,1fr)!important;
+    grid-template-columns:64px minmax(0,1fr)!important;
   }
 }
