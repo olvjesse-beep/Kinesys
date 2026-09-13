@@ -1,0 +1,137 @@
+/* KineSys — Agendamento online V2: identidade pública e perfil por profissional */
+.ks-online-v2-link-grid,
+.ks-online-v2-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.ks-online-v2-span-12 { grid-column: 1 / -1; }
+.ks-online-v2-span-8 { grid-column: span 8; }
+.ks-online-v2-span-6 { grid-column: span 6; }
+.ks-online-v2-span-4 { grid-column: span 4; }
+
+.ks-online-v2-linkbox {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: end;
+    padding: 12px;
+    border: 1px solid var(--kds-line-soft);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface-subtle);
+}
+
+.ks-online-v2-linkbox .ks-online-field { margin: 0; }
+.ks-online-v2-linkbox input[readonly] {
+    background: var(--kds-surface);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--kds-font-metadata);
+}
+
+.ks-online-v2-copy,
+.ks-online-v2-save {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.ks-online-v2-help {
+    margin: 4px 0 0;
+    color: var(--kds-text-muted);
+    font-size: var(--kds-font-metadata);
+    line-height: 1.45;
+}
+
+.ks-online-v2-workspace-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+    gap: 18px;
+    align-items: end;
+}
+
+.ks-online-v2-selector-slot .ks-online-profissional-select {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.ks-online-v2-selector-slot select { width: 100%; }
+
+.ks-online-v2-profile-editor {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--kds-line-soft);
+}
+
+.ks-online-v2-profile-editor textarea { resize: vertical; }
+.ks-online-v2-profile-editor #ks_online_v2_apresentacao { min-height: 96px; }
+.ks-online-v2-profile-editor #ks_online_v2_formacao,
+.ks-online-v2-profile-editor #ks_online_v2_local { min-height: 78px; }
+.ks-online-v2-profile-editor #ks_online_v2_mensagem_confirmacao { min-height: 126px; }
+
+.ks-online-v2-convenios {
+    display: grid;
+    gap: 8px;
+}
+
+.ks-online-v2-convenios[hidden] { display: none; }
+
+.ks-online-v2-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.ks-online-v2-feedback {
+    margin-right: auto;
+    color: var(--kds-text-muted);
+    font-size: var(--kds-font-metadata);
+}
+.ks-online-v2-feedback[data-tipo="erro"] { color: var(--kds-danger); }
+.ks-online-v2-feedback[data-tipo="sucesso"] { color: var(--kds-success); }
+
+.ks-online-v2-procedure-context {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    color: var(--kds-text-muted);
+    font-size: var(--kds-font-metadata);
+}
+
+#ks_online_sec_profissional_publico {
+    grid-column: 1 / -1;
+}
+
+#ks_online_sec_identidade_publica {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+    .ks-online-v2-span-8,
+    .ks-online-v2-span-6,
+    .ks-online-v2-span-4 { grid-column: 1 / -1; }
+
+    .ks-online-v2-workspace-head {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+}
+
+@media (max-width: 620px) {
+    .ks-online-v2-linkbox { grid-template-columns: 1fr; }
+    .ks-online-v2-copy,
+    .ks-online-v2-save { width: 100%; min-height: 44px; }
+    .ks-online-v2-actions { align-items: stretch; flex-direction: column; }
+    .ks-online-v2-feedback { margin-right: 0; }
+    .ks-online-v2-link-grid,
+    .ks-online-v2-profile-grid { gap: 10px; }
+    .ks-online-v2-profile-editor input,
+    .ks-online-v2-profile-editor textarea,
+    .ks-online-v2-profile-editor select,
+    #ks_online_sec_identidade_publica input,
+    #ks_online_sec_identidade_publica textarea { font-size: 16px; }
+}
