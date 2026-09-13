@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Bump online cache chain
-        shell: bash
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}'
         run: |
           set -euo pipefail
           sed -i 's/20260913-online-r2/20260913-online-r3/g' src/admin/access_admin-1.0.0.js
