@@ -8,6 +8,8 @@
     const VERSION='1.0.0';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
+    const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
+    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r18';
     let relogioTimer=null;
     let resizeObserver=null;
     let mutationObserver=null;
@@ -19,14 +21,19 @@
         return !!document.getElementById('tela_agenda')?.classList.contains('ativa');
     }
 
-    function garantirEstiloMobileAgenda(){
-        if(document.getElementById(MOBILE_STYLE_ID)||document.querySelector('link[href*="styles/agenda_mobile-1.0.0.css"]'))return;
+    function garantirLinkEstilo(id,src,marcador){
+        if(document.getElementById(id)||document.querySelector(`link[href*="${src.split('?')[0]}"]`))return;
         const link=document.createElement('link');
-        link.id=MOBILE_STYLE_ID;
+        link.id=id;
         link.rel='stylesheet';
-        link.href=new URL(MOBILE_STYLE_SRC,document.baseURI).href;
-        link.dataset.kinesysAgendaMobile='1';
+        link.href=new URL(src,document.baseURI).href;
+        link.dataset[marcador]='1';
         document.head.appendChild(link);
+    }
+
+    function garantirEstiloMobileAgenda(){
+        garantirLinkEstilo(MOBILE_STYLE_ID,MOBILE_STYLE_SRC,'kinesysAgendaMobile');
+        garantirLinkEstilo(MOBILE_GRID_STYLE_ID,MOBILE_GRID_STYLE_SRC,'kinesysAgendaMobileGrid');
     }
 
     function sincronizarEstadoVisualAgenda(){
