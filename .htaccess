@@ -4,7 +4,7 @@
 # por navegador nesta revisão. Clear-Site-Data usa somente "cache": cookies,
 # sessão e localStorage permanecem intactos.
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css)$">
+  <FilesMatch "^(index\.html|screen_loader-1\.25\.0\.js|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
@@ -14,11 +14,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_system_glass_r12=1" kinesys_delivery_system_glass_r12_seen=1
+  SetEnvIf Cookie "kinesys_delivery_agenda_mobile_r16=1" kinesys_delivery_agenda_mobile_r16_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_system_glass_r12_seen
-      Header always set Set-Cookie "kinesys_delivery_system_glass_r12=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_system_glass_r12_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_mobile_r16_seen
+      Header always set Set-Cookie "kinesys_delivery_agenda_mobile_r16=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_mobile_r16_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -31,8 +31,9 @@
   Substitute "s|src/core/design_system-1.20.1.js?v=20260910-phase4e-r1|src/core/design_system-1.20.1.js?v=20260913-drawer-r9|ni"
   Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
   Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11|ni"
+  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260913-agenda-mobile-r16|ni"
   Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"></head>|ni"
+  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"></head>|ni"
 </IfModule>
 
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
