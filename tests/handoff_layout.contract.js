@@ -10,7 +10,10 @@ const rootFiles = fs.readdirSync(ROOT, { withFileTypes: true })
   .map(entry => entry.name)
   .sort();
 
+// .htaccess faz parte da entrega de produção do KineSys (cache/headers/fallback)
+// e já existe na main. O contrato continua impedindo retorno de JS/CSS soltos à raiz.
 const expectedRootFiles = [
+  '.htaccess',
   'DESIGN.md',
   'PRODUCT.md',
   'default.php',
@@ -21,7 +24,7 @@ const expectedRootFiles = [
 assert.deepStrictEqual(
   rootFiles,
   expectedRootFiles,
-  `A raiz do KineSys deve permanecer limitada aos 5 entrypoints/contextos documentados. Atual: ${rootFiles.join(', ')}`
+  `A raiz do KineSys deve permanecer limitada aos 6 arquivos de entrada/contexto/entrega documentados. Atual: ${rootFiles.join(', ')}`
 );
 
 const rootRuntime = rootFiles.filter(name => /\.(?:js|css)$/i.test(name));

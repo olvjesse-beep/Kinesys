@@ -82,8 +82,8 @@ assert(layoutCss.includes('@media (max-width: 430px)'),
   'horários e ações devem possuir tratamento específico para celulares estreitos');
 assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout administrativo deve usar apenas tokens do KDS');
 
-assert(glassCss.includes('position: fixed') && !glassCss.includes('position: relative'),
-  'camada glass não pode anular o position fixed estrutural do sidebar');
+assert(/html body\.ks-design-ready #ks_sidebar\s*\{[\s\S]*?position:\s*fixed/.test(glassCss),
+  'camada glass deve preservar o position fixed estrutural do próprio sidebar');
 assert(glassCss.includes('backdrop-filter: blur(14px) saturate(155%) contrast(105%)') && glassCss.includes('-webkit-backdrop-filter: blur(14px) saturate(155%) contrast(105%)'),
   'clear liquid glass deve usar blur moderado e preservar transparência óptica com suporte WebKit');
 assert(glassCss.includes('--ks-clear-glass-base: rgba(7, 61, 70, .46)') && glassCss.includes('--ks-clear-glass-base-deep: rgba(5, 46, 56, .54)'),
