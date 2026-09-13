@@ -1,15 +1,32 @@
+# KineSys — entrega segura do hub Configurações > Agenda e navegação glass.
+# Mantém o HTML/JS/CSS administrativo revalidável e força apenas uma limpeza
+# de cache por navegador nesta revisão. Clear-Site-Data usa somente "cache":
+# cookies, sessão e localStorage permanecem intactos.
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|navigation_glass-1\.0\.0\.css)$">
+  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
   </FilesMatch>
 </IfModule>
 
-# O index legado mantém uma referência estável do bootstrap administrativo.
-# Substituímos a revisão somente na resposta HTML para que mudanças do hub
-# Configurações > Agenda recebam uma URL inequívoca sem reescrever o index inteiro.
+# Alguns navegadores ainda podem reutilizar a cópia antiga do bootstrap antes de
+# conhecer os novos headers. Nesta revisão limpamos somente o cache uma vez e
+# gravamos um cookie técnico para não repetir a limpeza nas próximas aberturas.
+<IfModule mod_setenvif.c>
+  SetEnvIf Cookie "kinesys_delivery_config_agenda_r2=1" kinesys_delivery_config_agenda_r2_seen=1
+  <IfModule mod_headers.c>
+    <Files "index.html">
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_config_agenda_r2_seen
+      Header always set Set-Cookie "kinesys_delivery_config_agenda_r2=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_config_agenda_r2_seen
+    </Files>
+  </IfModule>
+</IfModule>
+
+# Fallback para hosts com mod_substitute disponível: entrega URLs inequívocas
+# diretamente na resposta HTML sem alterar DOM, IDs, funções ou contratos.
 <IfModule mod_substitute.c>
   AddOutputFilterByType SUBSTITUTE text/html
   Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1|ni"
+  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-glass-r2\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-glass-r2\">|ni"
 </IfModule>
