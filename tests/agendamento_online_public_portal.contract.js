@@ -25,6 +25,10 @@ assert(edge.includes('SUPABASE_SERVICE_ROLE_KEY'), 'fronteira pública deve perm
 assert(edge.includes('config?.ativo') || edge.includes('config.ativo'), 'fronteira pública deve respeitar o liga/desliga administrativo');
 assert(edge.includes('agendamento_online_ativo'), 'fronteira pública deve respeitar publicação explícita');
 assert(edge.includes('disponibilidade_agendamento_online'), 'slots devem respeitar somente períodos publicados online');
+assert(edge.includes('idsComDisponibilidade') && edge.includes('.filter((p) => idsComDisponibilidade.has(String(p.id)))'),
+  'catálogo não deve exibir profissional sem nenhum período online publicado');
+assert(edge.includes('vinculadosOriginais.length && !vinculadosPublicos.length'),
+  'procedimento restrito não deve aparecer se nenhum profissional autorizado estiver publicado');
 assert(edge.includes('bloqueios_agenda'), 'slots devem respeitar bloqueios da Agenda');
 assert(edge.includes('.neq("status", "cancelado")') && !edge.includes('OCUPA_HORARIO'),
   'slots públicos devem tratar todo agendamento não cancelado como indisponível, igual à constraint final');
