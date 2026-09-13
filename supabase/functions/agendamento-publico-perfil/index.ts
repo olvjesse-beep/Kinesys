@@ -45,7 +45,7 @@ async function resolverClinica(slug: string) {
 
   const { data: cfgPorSlug, error: cfgSlugError } = await supabase
     .from("configuracoes_agendamento_online")
-    .select("clinica_id,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
+    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
     .eq("slug_publico", slugNormalizado)
     .maybeSingle();
   if (cfgSlugError) throw cfgSlugError;
@@ -72,7 +72,7 @@ async function resolverClinica(slug: string) {
 
   const { data: configPublica, error: cfgError } = await supabase
     .from("configuracoes_agendamento_online")
-    .select("clinica_id,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
+    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
     .eq("clinica_id", clinica.id)
     .maybeSingle();
   if (cfgError) throw cfgError;
@@ -136,7 +136,7 @@ async function carregarPerfilPublico(slug: string) {
     api_slug: texto(clinica.slug, 80),
     link_slug: texto(configPublica?.slug_publico || clinica.slug, 80),
     clinica: {
-      nome: texto(clinica.nome, 120),
+      nome: texto(configPublica?.nome_publico || clinica.nome, 120),
       endereco: texto(configPublica?.endereco_publico || "", 500),
       telefone: texto(configPublica?.telefone_publico || "", 80),
     },

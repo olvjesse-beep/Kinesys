@@ -79,6 +79,11 @@
 
                 <div class="ks-online-v2-link-grid">
                     <label class="ks-online-field ks-online-v2-span-4">
+                        <span>Nome público da clínica</span>
+                        <input id="ks_online_v2_nome_publico" type="text" maxlength="120" autocomplete="organization" placeholder="Ex.: FisioFix Fisioterapia">
+                        <small class="ks-online-v2-help">Este nome aparece para o paciente sem alterar o nome interno da clínica.</small>
+                    </label>
+                    <label class="ks-online-field ks-online-v2-span-4">
                         <span>Nome no link</span>
                         <input id="ks_online_v2_slug" type="text" maxlength="80" autocomplete="off" placeholder="nome-da-clinica">
                         <small class="ks-online-v2-help">Use letras minúsculas, números e hífen. O link é exclusivo por clínica.</small>
@@ -254,7 +259,7 @@
             const [clinicaRes, configRes, profRes, perfisRes, procRes] = await Promise.all([
                 client.from('clinicas').select('id,nome,slug').eq('id', state.clinicaId).maybeSingle(),
                 client.from('configuracoes_agendamento_online')
-                    .select('slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao')
+                    .select('nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao')
                     .eq('clinica_id', state.clinicaId).maybeSingle(),
                 client.from('equipe')
                     .select('id,nome,tipo,ativo,aparece_na_agenda')
@@ -290,6 +295,7 @@
 
     function preencherIdentidade() {
         const sugerido = state.config?.slug_publico || slugificar(state.clinica?.nome || '') || state.clinica?.slug || '';
+        if ($('ks_online_v2_nome_publico')) $('ks_online_v2_nome_publico').value = state.config?.nome_publico || '';
         if ($('ks_online_v2_slug')) $('ks_online_v2_slug').value = sugerido;
         if ($('ks_online_v2_endereco')) $('ks_online_v2_endereco').value = state.config?.endereco_publico || '';
         if ($('ks_online_v2_telefone')) $('ks_online_v2_telefone').value = state.config?.telefone_publico || '';
@@ -396,6 +402,7 @@
         try {
             const { error: cfgError } = await client.from('configuracoes_agendamento_online')
                 .update({
+                    nome_publico: String($('ks_online_v2_nome_publico')?.value || '').trim(),
                     slug_publico: slug,
                     endereco_publico: String($('ks_online_v2_endereco')?.value || '').trim(),
                     telefone_publico: String($('ks_online_v2_telefone')?.value || '').trim(),
@@ -426,6 +433,7 @@
 
             state.config = {
                 ...(state.config || {}),
+                nome_publico: String($('ks_online_v2_nome_publico')?.value || '').trim(),
                 slug_publico: slug,
                 endereco_publico: String($('ks_online_v2_endereco')?.value || '').trim(),
                 telefone_publico: String($('ks_online_v2_telefone')?.value || '').trim(),
