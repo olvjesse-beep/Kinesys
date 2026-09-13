@@ -1,0 +1,32 @@
+name: Liquid Glass System Contract
+
+on:
+  pull_request:
+    paths:
+      - 'styles/liquid_glass_system-1.0.0.css'
+      - '.htaccess'
+      - '.github/workflows/impeccable-detail-audit.yml'
+      - '.github/workflows/liquid-glass-system-contract.yml'
+      - 'tests/liquid_glass_system.contract.js'
+  push:
+    branches: [main]
+    paths:
+      - 'styles/liquid_glass_system-1.0.0.css'
+      - '.htaccess'
+      - '.github/workflows/impeccable-detail-audit.yml'
+      - '.github/workflows/liquid-glass-system-contract.yml'
+      - 'tests/liquid_glass_system.contract.js'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate system Liquid Glass contract
+        run: node tests\liquid_glass_system.contract.js
