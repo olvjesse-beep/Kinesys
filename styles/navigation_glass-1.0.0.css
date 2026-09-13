@@ -1,54 +1,76 @@
 /* KineSys — Sidebar Glass Premium
-   Material único no painel + glass individual em cada aba.
-   Mantém identidade petróleo/teal e prevalece sobre design_polish.css
-   sem !important. */
+   Glass aplicado ao painel inteiro do sidebar.
+   Itens internos planos, sem relevo de cartões individuais. */
 
 :root {
-    --ks-sidebar-glass-bg: rgba(13, 43, 50, .82);
-    --ks-sidebar-glass-bg-mobile: rgba(13, 43, 50, .86);
-    --ks-sidebar-glass-border: rgba(255, 255, 255, .095);
-    --ks-sidebar-glass-border-soft: rgba(255, 255, 255, .055);
-    --ks-sidebar-glass-highlight: rgba(255, 255, 255, .035);
-    --ks-sidebar-glass-shadow: rgba(4, 18, 22, .22);
-    --ks-sidebar-glass-text: rgba(241, 247, 248, .94);
-    --ks-sidebar-glass-muted: rgba(204, 220, 222, .68);
-    --ks-sidebar-glass-icon: rgba(151, 221, 214, .90);
-    --ks-sidebar-glass-section: rgba(214, 229, 231, .50);
-    --ks-sidebar-tab-top: rgba(255, 255, 255, .058);
-    --ks-sidebar-tab-bottom: rgba(255, 255, 255, .022);
-    --ks-sidebar-tab-border: rgba(255, 255, 255, .085);
-    --ks-sidebar-tab-shadow: rgba(4, 18, 22, .075);
-    --ks-sidebar-tab-hover-top: rgba(255, 255, 255, .082);
-    --ks-sidebar-tab-hover-bottom: rgba(127, 218, 210, .040);
-    --ks-sidebar-tab-active-top: rgba(127, 218, 210, .145);
-    --ks-sidebar-tab-active-bottom: rgba(255, 255, 255, .045);
-    --ks-sidebar-glass-accent: rgba(127, 218, 210, .90);
+    --ks-sidebar-glass-panel-top: rgba(145, 223, 216, .18);
+    --ks-sidebar-glass-panel-mid: rgba(79, 167, 160, .14);
+    --ks-sidebar-glass-panel-bottom: rgba(26, 82, 90, .22);
+    --ks-sidebar-glass-panel-mobile-top: rgba(145, 223, 216, .20);
+    --ks-sidebar-glass-panel-mobile-bottom: rgba(26, 82, 90, .26);
+    --ks-sidebar-glass-panel-border: rgba(198, 241, 236, .32);
+    --ks-sidebar-glass-panel-border-soft: rgba(255, 255, 255, .12);
+    --ks-sidebar-glass-panel-highlight: rgba(255, 255, 255, .18);
+    --ks-sidebar-glass-panel-shadow: rgba(4, 18, 22, .20);
+
+    --ks-sidebar-glass-text: rgba(243, 249, 249, .96);
+    --ks-sidebar-glass-muted: rgba(220, 236, 237, .76);
+    --ks-sidebar-glass-icon: rgba(178, 237, 232, .95);
+    --ks-sidebar-glass-section: rgba(225, 239, 240, .68);
+
+    --ks-sidebar-item-hover: rgba(255, 255, 255, .08);
+    --ks-sidebar-item-hover-border: rgba(214, 245, 242, .10);
+    --ks-sidebar-item-active: rgba(164, 232, 226, .14);
+    --ks-sidebar-item-active-border: rgba(188, 243, 238, .16);
+    --ks-sidebar-glass-accent: rgba(151, 235, 228, .96);
 }
 
 html body.ks-design-ready #ks_sidebar {
-    background: var(--ks-sidebar-glass-bg);
-    background-image: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, .025) 0%,
-        rgba(255, 255, 255, .006) 22%,
-        rgba(0, 0, 0, .012) 100%
-    );
-    border-right: 1px solid var(--ks-sidebar-glass-border);
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            180deg,
+            var(--ks-sidebar-glass-panel-top) 0%,
+            var(--ks-sidebar-glass-panel-mid) 34%,
+            var(--ks-sidebar-glass-panel-bottom) 100%
+        );
+    border-right: 1px solid var(--ks-sidebar-glass-panel-border);
     box-shadow:
-        inset -1px 0 0 var(--ks-sidebar-glass-border-soft),
-        inset 0 1px 0 var(--ks-sidebar-glass-highlight),
-        12px 0 34px var(--ks-sidebar-glass-shadow);
-    -webkit-backdrop-filter: blur(24px) saturate(118%);
-    backdrop-filter: blur(24px) saturate(118%);
+        inset 0 1px 0 var(--ks-sidebar-glass-panel-highlight),
+        inset -1px 0 0 var(--ks-sidebar-glass-panel-border-soft),
+        14px 0 34px var(--ks-sidebar-glass-panel-shadow);
+    -webkit-backdrop-filter: blur(28px) saturate(125%);
+    backdrop-filter: blur(28px) saturate(125%);
+}
+
+html body.ks-design-ready #ks_sidebar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, .13) 0%,
+            rgba(255, 255, 255, .05) 12%,
+            rgba(255, 255, 255, 0) 26%
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, .08) 0%,
+            rgba(255, 255, 255, .02) 10%,
+            rgba(255, 255, 255, 0) 18%
+        );
 }
 
 body.ks-design-ready #ks_sidebar .header-brand::before {
     background: var(--ks-sidebar-glass-accent);
-    box-shadow: 0 0 14px rgba(127, 218, 210, .13);
+    box-shadow: 0 0 12px rgba(151, 235, 228, .22);
 }
 
 body.ks-design-ready #ks_sidebar .header-brand h1 {
-    color: #f5f9f9;
+    color: #f7fbfb;
 }
 
 body.ks-design-ready #ks_sidebar .header-brand p {
@@ -56,18 +78,12 @@ body.ks-design-ready #ks_sidebar .header-brand p {
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome {
-    background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, .050) 0%,
-        rgba(255, 255, 255, .020) 100%
-    );
-    border-color: rgba(255, 255, 255, .095);
-    border-radius: 16px;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .040),
-        0 8px 22px rgba(0, 0, 0, .060);
-    -webkit-backdrop-filter: blur(14px) saturate(114%);
-    backdrop-filter: blur(14px) saturate(114%);
+    background: rgba(255, 255, 255, .035);
+    border: 1px solid rgba(218, 245, 242, .12);
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+    -webkit-backdrop-filter: blur(10px) saturate(112%);
+    backdrop-filter: blur(10px) saturate(112%);
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome strong,
@@ -104,7 +120,7 @@ body.ks-design-ready #ks_sidebar :is(
 
 body.ks-design-ready #ks_sidebar .dropdown-content,
 body.ks-design-ready #ks_sidebar .nav-list {
-    gap: 7px;
+    gap: 4px;
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content li,
@@ -112,72 +128,45 @@ body.ks-design-ready #ks_sidebar .nav-item {
     margin: 0;
 }
 
-/* Cada item é uma lâmina de vidro independente. */
+/* Itens internos planos: sem cartões em relevo. */
 body.ks-design-ready #ks_sidebar .dropdown-content a,
 body.ks-design-ready #ks_sidebar .nav-link {
-    min-height: 48px;
-    border: 1px solid var(--ks-sidebar-tab-border);
+    min-height: 46px;
+    border: 1px solid transparent;
     border-radius: 14px;
-    background:
-        linear-gradient(
-            180deg,
-            var(--ks-sidebar-tab-top) 0%,
-            var(--ks-sidebar-tab-bottom) 100%
-        );
+    background: rgba(255, 255, 255, .02);
     color: var(--ks-sidebar-glass-text);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .040),
-        inset 0 -1px 0 rgba(255, 255, 255, .012),
-        0 5px 16px var(--ks-sidebar-tab-shadow);
-    -webkit-backdrop-filter: blur(13px) saturate(116%);
-    backdrop-filter: blur(13px) saturate(116%);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     transition:
         background .18s ease,
         border-color .18s ease,
-        box-shadow .18s ease,
         color .18s ease,
         transform .18s ease;
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content a:hover,
 body.ks-design-ready #ks_sidebar .nav-link:hover {
-    background:
-        linear-gradient(
-            180deg,
-            var(--ks-sidebar-tab-hover-top) 0%,
-            var(--ks-sidebar-tab-hover-bottom) 100%
-        );
-    border-color: rgba(142, 221, 214, .16);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .058),
-        0 7px 20px rgba(4, 18, 22, .095);
-    color: #fbfdfd;
-    transform: translateY(-1px);
+    background: var(--ks-sidebar-item-hover);
+    border-color: var(--ks-sidebar-item-hover-border);
+    color: #ffffff;
+    transform: translateX(1px);
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content a:focus-visible,
 body.ks-design-ready #ks_sidebar .nav-link:focus-visible {
-    outline: 2px solid rgba(127, 218, 210, .72);
+    outline: 2px solid rgba(151, 235, 228, .78);
     outline-offset: 2px;
-    border-color: rgba(142, 221, 214, .20);
 }
 
-/* Ativo: mesmo material, apenas mais luminoso e com trilho teal discreto. */
 body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a,
 body.ks-design-ready #ks_sidebar .nav-item.active .nav-link,
 body.ks-design-ready #ks_sidebar .nav-link.active {
-    background:
-        linear-gradient(
-            180deg,
-            var(--ks-sidebar-tab-active-top) 0%,
-            var(--ks-sidebar-tab-active-bottom) 100%
-        );
-    border-color: rgba(142, 221, 214, .25);
-    box-shadow:
-        inset 2px 0 0 var(--ks-sidebar-glass-accent),
-        inset 0 1px 0 rgba(255, 255, 255, .072),
-        0 8px 22px rgba(4, 18, 22, .11);
+    background: var(--ks-sidebar-item-active);
+    border-color: var(--ks-sidebar-item-active-border);
     color: #ffffff;
+    box-shadow: inset 2px 0 0 var(--ks-sidebar-glass-accent);
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-icon,
@@ -191,69 +180,46 @@ body.ks-design-ready #ks_sidebar .nav-link svg {
 body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a .ks-nav-icon,
 body.ks-design-ready #ks_sidebar .nav-item.active .ks-nav-icon,
 body.ks-design-ready #ks_sidebar .nav-link.active .ks-nav-icon {
-    color: rgba(194, 241, 236, .98);
+    color: rgba(214, 249, 246, .98);
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-logout {
     margin-top: 10px;
     padding-top: 10px;
-    border-top-color: rgba(255, 255, 255, .070);
+    border-top-color: rgba(255, 255, 255, .10);
 }
 
 @media (max-width: 820px) {
     html body.ks-design-ready #ks_sidebar {
-        background: var(--ks-sidebar-glass-bg-mobile);
-        background-image: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, .026) 0%,
-            rgba(255, 255, 255, .006) 24%,
-            rgba(0, 0, 0, .014) 100%
-        );
+        background:
+            linear-gradient(
+                180deg,
+                var(--ks-sidebar-glass-panel-mobile-top) 0%,
+                rgba(88, 180, 172, .16) 34%,
+                var(--ks-sidebar-glass-panel-mobile-bottom) 100%
+            );
         box-shadow:
-            inset -1px 0 0 rgba(255, 255, 255, .05),
-            inset 0 1px 0 rgba(255, 255, 255, .025),
-            16px 0 38px rgba(4, 18, 22, .24);
-        -webkit-backdrop-filter: blur(22px) saturate(116%);
-        backdrop-filter: blur(22px) saturate(116%);
-    }
-
-    body.ks-design-ready #ks_sidebar .header-welcome {
-        background: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, .048) 0%,
-            rgba(255, 255, 255, .018) 100%
-        );
+            inset 0 1px 0 rgba(255, 255, 255, .16),
+            inset -1px 0 0 rgba(255, 255, 255, .10),
+            16px 0 38px rgba(4, 18, 22, .22);
+        -webkit-backdrop-filter: blur(24px) saturate(122%);
+        backdrop-filter: blur(24px) saturate(122%);
     }
 
     body.ks-design-ready #ks_sidebar .dropdown-content,
     body.ks-design-ready #ks_sidebar .nav-list {
-        gap: 8px;
+        gap: 5px;
     }
 
     body.ks-design-ready #ks_sidebar .dropdown-content a,
     body.ks-design-ready #ks_sidebar .nav-link {
-        min-height: 50px;
-        background:
-            linear-gradient(
-                180deg,
-                rgba(255, 255, 255, .060) 0%,
-                rgba(255, 255, 255, .022) 100%
-            );
-        border-color: rgba(255, 255, 255, .090);
-        -webkit-backdrop-filter: blur(12px) saturate(114%);
-        backdrop-filter: blur(12px) saturate(114%);
+        min-height: 48px;
+        background: rgba(255, 255, 255, .018);
     }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     html body.ks-design-ready #ks_sidebar {
-        background: rgb(17, 52, 59);
-        background-image: none;
-    }
-
-    body.ks-design-ready #ks_sidebar .dropdown-content a,
-    body.ks-design-ready #ks_sidebar .nav-link,
-    body.ks-design-ready #ks_sidebar .header-welcome {
-        background: rgba(255, 255, 255, .055);
+        background: rgba(58, 123, 130, .88);
     }
 }
