@@ -2,6 +2,7 @@ const fs = require('fs');
 const assert = require('assert');
 
 const sql = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql', 'utf8');
+const rateSql = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RATE_LIMIT_20260912.sql', 'utf8');
 const edge = fs.readFileSync('supabase/functions/agendamento-publico/index.ts', 'utf8');
 const portal = fs.readFileSync('agendamento/agendamento-publico.js', 'utf8');
 const html = fs.readFileSync('agendamento/index.html', 'utf8');
@@ -30,12 +31,25 @@ assert(sql.includes('disponibilidade_agendamento_online') && sql.includes('bloqu
   'transação deve revalidar publicação, jornada e bloqueios dentro do banco');
 assert(sql.includes('kinesys_agendamento_online_feriado'), 'transação deve revalidar feriados');
 
+assert(rateSql.includes('agendamento_online_rate_limit'), 'migration deve criar armazenamento mínimo para rate limit público');
+assert(rateSql.includes('kinesys_consumir_limite_agendamento_online'), 'migration deve criar consumo atômico do rate limit');
+assert(rateSql.includes('enable row level security') && rateSql.includes('revoke all on table public.agendamento_online_rate_limit from public, anon, authenticated'),
+  'rate limit não pode ficar exposto a anon/authenticated');
+assert(rateSql.includes('revoke all on function public.kinesys_consumir_limite_agendamento_online') && rateSql.includes('to service_role'),
+  'consumo do rate limit deve ser exclusivo da fronteira de servidor');
+
 assert(edge.includes('body.acao === "reservar"'), 'Edge pública deve possuir ação explícita de reserva');
 assert(edge.includes('supabase.rpc("kinesys_criar_agendamento_online"'), 'Edge deve delegar gravação à transação atômica');
 assert(!edge.includes('.from("pacientes").insert') && !edge.includes('.from("agendamentos").insert'),
   'Edge pública não deve gravar tabelas diretamente');
 assert(edge.includes('MAX_BODY_CHARS'), 'Edge deve limitar tamanho da solicitação pública');
 assert(edge.includes('HORARIO_INDISPONIVEL') && edge.includes('23P01'), 'conflito concorrente deve virar resposta 409 compreensível');
+assert(edge.includes('reservaDentroDoLimite') && edge.includes('kinesys_consumir_limite_agendamento_online'),
+  'reserva pública deve consumir rate limit no servidor antes da transação');
+assert(edge.includes('LIMITE_EXCEDIDO') && edge.includes('429'),
+  'excesso de tentativas deve retornar HTTP 429 identificável pelo portal');
+assert(edge.includes('crypto.subtle.sign("HMAC"'),
+  'rate limit deve persistir somente chave HMAC opaca, nunca o IP em claro');
 
 assert(portal.includes("acao: 'reservar'"), 'portal deve confirmar pela ação pública de reserva');
 assert(portal.includes('uuidSolicitacao'), 'portal deve reutilizar um request UUID em retentativas');
