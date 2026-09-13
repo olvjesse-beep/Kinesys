@@ -1,0 +1,43 @@
+name: Temporary Online Slot Consistency
+
+on:
+  push:
+    branches: [feature/agendamento-online-v1]
+    paths:
+      - '.github/workflows/temp-online-slot-consistency.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/agendamento-online-v1
+          fetch-depth: 0
+      - name: Align public slot availability with database exclusion constraint
+        shell: powershell
+        run: |
+          $path = 'supabase/functions/agendamento-publico/index.ts'
+          $content = [System.IO.File]::ReadAllText($path)
+
+          $oldConst = 'const OCUPA_HORARIO = new Set(["pre_agendado", "agendado", "confirmado", "em_recepcao"]);' + [Environment]::NewLine
+          if (-not $content.Contains($oldConst)) { throw 'Expected OCUPA_HORARIO declaration was not found.' }
+          $content = $content.Replace($oldConst, '')
+
+          $oldFilter = 'const ocupados: Array<[number, number]> = (agRes.data || []).filter((a) => a.data === diaISO && OCUPA_HORARIO.has(String(a.status)))'
+          $newFilter = 'const ocupados: Array<[number, number]> = (agRes.data || []).filter((a) => a.data === diaISO)'
+          if (-not $content.Contains($oldFilter)) { throw 'Expected occupied-slot filter was not found.' }
+          $content = $content.Replace($oldFilter, $newFilter)
+
+          [System.IO.File]::WriteAllText($path, $content, (New-Object System.Text.UTF8Encoding($false)))
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $path
+          git rm .github/workflows/temp-online-slot-consistency.yml
+          git diff --cached --check
+          git commit -m 'fix: alinhar slots públicos à constraint da agenda'
+          git push origin HEAD:feature/agendamento-online-v1
