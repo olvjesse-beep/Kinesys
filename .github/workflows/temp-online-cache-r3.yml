@@ -21,28 +21,19 @@ jobs:
           fetch-depth: 0
 
       - name: Bump online cache chain
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-
-          $files = @(
-            'src/admin/access_admin-1.0.0.js',
-            'src/admin/configuracoes_agendamento_online-1.0.0.js',
-            'index.html'
-          )
-
-          foreach ($file in $files) {
-            $content = Get-Content $file -Raw
-            $content = $content.Replace('20260913-online-r2', '20260913-online-r3')
-            Set-Content -Path $file -Value $content -Encoding UTF8 -NoNewline
-          }
+          set -euo pipefail
+          sed -i 's/20260913-online-r2/20260913-online-r3/g' src/admin/access_admin-1.0.0.js
+          sed -i 's/20260913-online-r2/20260913-online-r3/g' src/admin/configuracoes_agendamento_online-1.0.0.js
+          sed -i 's/20260913-online-r2/20260913-online-r3/g' index.html
 
           git rm .github/workflows/temp-online-cache-r3.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/admin/access_admin-1.0.0.js src/admin/configuracoes_agendamento_online-1.0.0.js index.html
 
-          if (-not (git diff --cached --quiet)) {
+          if ! git diff --cached --quiet; then
             git commit -m 'fix: invalidate online scheduling config cache'
             git push origin HEAD:fix/agendamento-online-cache-r3
-          }
+          fi
