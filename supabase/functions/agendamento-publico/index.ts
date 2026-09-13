@@ -4,7 +4,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-const OCUPA_HORARIO = new Set(["pre_agendado", "agendado", "confirmado", "em_recepcao"]);
 const MAX_HORIZONTE_DIAS = 90;
 const MAX_SLOTS_RESPOSTA = 500;
 const MAX_BODY_CHARS = 12000;
@@ -169,7 +168,7 @@ async function slotsPublicos(slug: string, profissionalId: string, procedimentoI
     }
     const janelas = intersectar(reais as Janela[], publicados.filter((h) => Number(h.dia_semana) === diaSemana) as Janela[]);
     if (!janelas.length) continue;
-    const ocupados: Array<[number, number]> = (agRes.data || []).filter((a) => a.data === diaISO && OCUPA_HORARIO.has(String(a.status)))
+    const ocupados: Array<[number, number]> = (agRes.data || []).filter((a) => a.data === diaISO)
       .map((a) => [horaParaMinutos(horaCurta(a.hora_inicio)), horaParaMinutos(horaCurta(a.hora_fim))]);
     for (const b of (bloqRes.data || []).filter((x) => x.data === diaISO && (!x.profissional_id || String(x.profissional_id) === String(profissionalId)))) {
       if (b.hora_inicio && b.hora_fim) ocupados.push([horaParaMinutos(horaCurta(b.hora_inicio)), horaParaMinutos(horaCurta(b.hora_fim))]);
