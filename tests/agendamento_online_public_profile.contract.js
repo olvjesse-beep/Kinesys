@@ -8,8 +8,10 @@ const addon = fs.readFileSync('src/admin/configuracoes_agendamento_online_perfil
 const addonCss = fs.readFileSync('styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css', 'utf8');
 const layout = fs.readFileSync('src/admin/configuracoes_agendamento_online_layout-1.0.0.js', 'utf8');
 const layoutCss = fs.readFileSync('styles/configuracoes_agendamento_online_layout-1.0.0.css', 'utf8');
+const glassCss = fs.readFileSync('styles/navigation_glass-1.0.0.css', 'utf8');
 const bootstrap = fs.readFileSync('src/admin/access_admin-1.0.0.js', 'utf8');
 const rootHtml = fs.readFileSync('index.html', 'utf8');
+const htaccess = fs.readFileSync('.htaccess', 'utf8');
 
 assert(migration.includes('slug_publico text'), 'configuração deve possuir slug público por clínica');
 assert(migration.includes('mensagem_confirmacao text not null'), 'mensagem pós-agendamento deve ser persistida');
@@ -44,33 +46,58 @@ assert(addon.includes("from('agendamento_online_profissionais_config')"),
 assert(!addon.includes("from('agendamentos')") && !addon.includes("from('pacientes')"),
   'editor de perfil público não deve tocar agendamentos ou pacientes');
 
-assert(layout.includes("{ id: 'geral'") && layout.includes("{ id: 'profissional'") && layout.includes("{ id: 'servicos'") && layout.includes("{ id: 'horarios'"),
-  'configuração deve usar divulgação progressiva em quatro tarefas claras');
+assert(layout.includes("{ id: 'geral'") && layout.includes("{ id: 'profissional'") && layout.includes("{ id: 'servicos'") && layout.includes("{ id: 'horarios'") && layout.includes("{ id: 'ausencias'"),
+  'Configurações > Agenda deve usar cinco tarefas claras');
+assert(layout.includes("sections: ['agenda_procedimentos', 'ks_online_sec_procedimentos']"),
+  'Serviços deve reunir cadastro interno e publicação online no mesmo contexto');
+assert(layout.includes("sections: ['agenda_horarios', 'ks_online_sec_horarios']"),
+  'Horários deve reunir jornada interna e disponibilidade online');
+assert(layout.includes("sections: ['agenda_bloqueios']"),
+  'Ausências e bloqueios devem ficar em Configurações > Agenda');
+assert(layout.includes("KineSysScreenLoader.ensure('tela_agenda')"),
+  'hub administrativo deve carregar o bundle da Agenda sem navegar para a tela operacional');
+assert(layout.includes("tab.textContent = 'Agenda'"),
+  'aba administrativa principal deve se chamar Agenda');
+assert(layout.includes("document.querySelector('#tela_agenda .ks-agenda-config-wrap')"),
+  'Agenda operacional não deve manter um segundo menu de configurações concorrente');
 assert(layout.includes("sessionStorage.setItem(STORAGE_KEY"),
   'etapa atual da configuração deve permanecer estável durante a sessão');
 assert(layout.includes("role=\"tablist\"") && layout.includes('aria-selected'),
   'navegação interna deve preservar semântica acessível de tabs');
-assert(layoutCss.includes('.ks-online-layout-nav'), 'layout destilado deve possuir navegação operacional própria');
+
+assert(layoutCss.includes('.ks-online-layout-nav'), 'workspace deve possuir navegação operacional própria');
+assert(layoutCss.includes('repeat(5, minmax(0, 1fr))'),
+  'desktop deve distribuir as cinco tarefas sem cards gigantes');
 assert(layoutCss.includes('grid-template-columns: 112px 112px'),
-  'horários HH:MM não devem desperdiçar largura de desktop');
-assert(layoutCss.includes('.ks-online-week') && layoutCss.includes('repeat(2, minmax(0, 1fr))'),
-  'semana deve usar duas colunas no desktop para reduzir varredura vertical');
+  'horários HH:MM online não devem desperdiçar largura de desktop');
+assert(layoutCss.includes('.ks-config-agenda-native'),
+  'configurações nativas da Agenda devem receber tratamento visual dentro do hub');
+assert(layoutCss.includes('#ks_config_panel_online .ks-week-row'),
+  'jornada interna deve permanecer legível depois de movida para Configurações');
 assert(layoutCss.includes('@media (max-width: 700px)') && layoutCss.includes('overflow-x: auto'),
   'navegação de tarefas deve adaptar-se a celular sem esmagar rótulos');
 assert(layoutCss.includes('@media (max-width: 430px)'),
   'horários e ações devem possuir tratamento específico para celulares estreitos');
-assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout deve usar apenas tokens do KDS');
+assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout administrativo deve usar apenas tokens do KDS');
+
+assert(glassCss.includes('backdrop-filter: blur(18px)') && glassCss.includes('-webkit-backdrop-filter: blur(18px)'),
+  'menu lateral deve possuir glass real com fallback WebKit');
+assert(glassCss.includes('rgba(21, 56, 64') && glassCss.includes('rgba(23, 59, 69'),
+  'glass deve preservar a família de cor petróleo atual');
+assert(glassCss.includes('@supports not'), 'glass deve possuir fallback para navegadores sem backdrop-filter');
 
 assert(bootstrap.includes('configuracoes_agendamento_online_perfil_publico-1.0.0.js'),
   'bootstrap deve carregar o módulo V2 de perfil público');
 assert(bootstrap.includes('configuracoes_agendamento_online_layout-1.0.0.js'),
-  'bootstrap deve carregar o layout destilado depois do perfil público');
-assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v5'"),
-  'módulo V2 deve possuir revisão explícita de cache');
-assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-online-v5'"),
-  'layout destilado deve possuir revisão explícita de cache');
+  'bootstrap deve carregar o workspace administrativo depois do perfil público');
+assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v6'"),
+  'módulo V2 deve manter a revisão efetivamente publicada');
+assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-online-v6'"),
+  'workspace deve manter a revisão efetivamente publicada');
 assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
-  'HTML principal mantém o bootstrap estável; atualização forçada revalida o módulo administrativo');
+  'HTML legado preserva a referência estável atualmente versionada');
+assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v6'),
+  'servidor deve substituir a referência legada pela revisão administrativa atual');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
