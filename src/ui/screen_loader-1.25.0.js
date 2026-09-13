@@ -59,7 +59,7 @@
                 'src/finance/pendencias_financeiras-1.19.0.js?v=20260901-r2',
                 'src/finance/descontos_financeiros-1.20.0.js?v=20260909-r2',
                 'src/finance/balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
-                'src/admin/analise_admin-1.19.0.js?v=20260901-r1',
+                'src/admin/analise_admin-1.19.0.js?v=20260901-r2',
                 'src/finance/financeiro_workspace-1.20.1.js?v=20260901-r1',
                 'src/finance/financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1'
             ])
