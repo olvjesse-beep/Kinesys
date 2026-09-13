@@ -3,6 +3,7 @@ name: Agendamento Online Structure Contract
 on:
   pull_request:
     paths:
+      - 'index.html'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_*.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js'
@@ -25,6 +26,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_*.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js'
