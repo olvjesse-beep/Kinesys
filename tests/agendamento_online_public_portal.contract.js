@@ -23,6 +23,16 @@ assert(css.includes('font-size:16px'), 'campos mobile devem manter 16px para leg
 assert(css.includes('var(--kds-font-body)'), 'portal deve reutilizar a escala tipográfica oficial do KDS');
 assert(css.includes('grid-template-columns:minmax(0,1fr) minmax(360px,430px)'),
   'desktop deve manter perfil do profissional e agenda em duas colunas proporcionais');
+assert(css.includes('@media (max-width:820px)') && css.includes('.ks-public-booking-panel{order:1') && css.includes('.ks-public-profile-panel{order:2'),
+  'em tablet/celular a ação de agendar deve vir antes do perfil longo do profissional');
+assert(css.includes('@media (max-width:620px)') && css.includes('.ks-public-form{grid-template-columns:1fr}'),
+  'formulário público deve refluír para uma coluna no celular');
+assert(css.includes('@media (max-width:430px)') && css.includes('flex-wrap:wrap') && css.includes('.ks-public-clinic{width:100%'),
+  'cabeçalho deve refluír sem colisão em celulares estreitos');
+assert(css.includes('html,body{max-width:100%;overflow-x:hidden}'),
+  'portal não deve criar rolagem horizontal acidental');
+assert(css.includes('.ks-public-selection strong,.ks-public-selection small{white-space:normal'),
+  'resumo do horário não deve truncar informações essenciais no celular');
 assert(!/#[0-9a-f]{3,8}\b/i.test(css), 'portal deve usar tokens do KDS, sem cores locais arbitrárias');
 
 assert(js.includes("const ETAPAS=['profissional','procedimento','horario','dados']"),
