@@ -10,9 +10,12 @@ const mobileGridCss=fs.readFileSync('styles/agenda_mobile_grid-1.0.0.css','utf8'
 const htaccess=fs.readFileSync('.htaccess','utf8');
 
 assert.ok(loader.indexOf('src/agenda/agenda-1.20.0.js')<loader.indexOf('src/agenda/agenda_lifecycle-1.0.0.js'),'Agenda lifecycle must load after the Agenda module');
-assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js\?v=20260913-mobile-r2/,'Agenda lifecycle must use the current mobile cache revision');
+assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js\?v=20260913-grid-r19/,'Agenda lifecycle must use the current mobile grid cache revision');
 assert.match(loader,/styles\/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda mobile CSS must be part of the lazy Agenda bundle');
-assert.match(loader,/ASSET_REVISION=['"]20260913-agenda-mobile-r16['"]/,'screen loader must keep the published Agenda mobile asset revision');
+assert.match(loader,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r19/,'deterministic mobile grid CSS must be part of the official Agenda bundle');
+assert.ok(loader.indexOf('styles/agenda_referencia-1.20.0.css')<loader.indexOf('styles/agenda_mobile-1.0.0.css'),'Agenda mobile layer must load after the reference stylesheet');
+assert.ok(loader.indexOf('styles/agenda_mobile-1.0.0.css')<loader.indexOf('styles/agenda_mobile_grid-1.0.0.css'),'deterministic mobile grid correction must load last in the Agenda style bundle');
+assert.match(loader,/ASSET_REVISION=['"]20260913-agenda-grid-r19['"]/,'screen loader must force the current Agenda grid asset revision');
 
 assert.match(lifecycle,/function activate\(/,'Agenda lifecycle must expose activate');
 assert.match(lifecycle,/function suspend\(/,'Agenda lifecycle must expose suspend');
@@ -28,7 +31,7 @@ assert.match(lifecycle,/document\.visibilityState!==['"]visible['"]/,'Agenda vis
 assert.match(lifecycle,/iniciarRelogioAgenda=iniciarRelogioAgendaLifecycle/,'Agenda lifecycle must replace only the visual clock starter');
 
 assert.match(lifecycle,/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda lifecycle fallback must point to the current mobile stylesheet');
-assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'Agenda lifecycle must load the deterministic mobile grid correction');
+assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'Agenda lifecycle fallback may keep the prior grid URL because the official bundle now owns r19 delivery');
 assert.match(lifecycle,/function garantirLinkEstilo\(/,'Agenda lifecycle must use one idempotent stylesheet loader');
 assert.match(lifecycle,/src\.split\('\?'\)\[0\]/,'Agenda lifecycle stylesheet loader must avoid duplicate versions of the same stylesheet');
 assert.match(lifecycle,/function sincronizarEstadoVisualAgenda\(/,'Agenda lifecycle must synchronize the global shell after lazy activation');
@@ -57,9 +60,9 @@ assert.match(mobileGridCss,/agenda-dia-cabecalho[\s\S]*width:160px!important/,'w
 assert.match(mobileGridCss,/:has\(\[data-agenda-periodo="dia"\]\[aria-pressed="true"\]\)[\s\S]*grid-template-columns:58px minmax\(0,1fr\)!important/,'day view must remain fluid and use the full viewport');
 
 assert.match(htaccess,/screen_loader-1\.25\.0\.js/,'screen loader must be revalidated in production');
-assert.match(htaccess,/kinesys_delivery_agenda_grid_r18/,'Safari cache reset must use a fresh one-time Agenda grid revision');
-assert.match(htaccess,/agenda_mobile_grid-1\.0\.0\.css/,'deterministic mobile grid stylesheet must be revalidated in production');
-assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'server fallback must directly inject the current deterministic mobile grid stylesheet');
+assert.match(htaccess,/kinesys_delivery_agenda_grid_r19/,'Safari cache reset must use the current one-time Agenda grid revision');
+assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260913-agenda-grid-r19/,'server fallback must deliver the current screen loader URL');
+assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r19/,'server fallback must directly inject the current deterministic mobile grid stylesheet');
 
 const syncStart=agenda.indexOf('function configurarSincronizacaoConfiavelAgenda()');
 const syncEnd=agenda.indexOf('async function inicializarAgenda()',syncStart);
@@ -68,4 +71,4 @@ const syncBlock=agenda.slice(syncStart,syncEnd);
 assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact in Phase 2A');
 assert.doesNotMatch(lifecycle,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'visual lifecycle must not interfere with reliable pending sync');
 
-console.log('Agenda lifecycle/mobile contract OK: deterministic readable day tracks, horizontal swipe, sticky time axis, fluid day view, touch targets and synchronized shell.');
+console.log('Agenda lifecycle/mobile contract OK: official bundle loads the deterministic grid last, with readable day tracks, horizontal swipe, sticky time axis and fresh Safari delivery.');
