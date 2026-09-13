@@ -16,6 +16,7 @@ assert.match(lifecycle,/kinesys:tela-ativada/,'Agenda lifecycle must react to sc
 assert.match(lifecycle,/kinesys:tela-desativada/,'Agenda lifecycle must react to screen suspension');
 assert.match(lifecycle,/clearInterval\(relogioTimer\)/,'Agenda visual timer must stop when screen is suspended');
 assert.match(lifecycle,/resizeObserver\.disconnect\(\)/,'Agenda ResizeObserver must disconnect while inactive');
+assert.match(lifecycle,/mutationObserver\.disconnect\(\)/,'Agenda MutationObserver must disconnect while inactive');
 assert.match(lifecycle,/removeEventListener\('visibilitychange',aoVisibilityChange\)/,'Agenda visibility listener must be removed while inactive');
 assert.match(lifecycle,/removeEventListener\('resize',aoResize\)/,'Agenda resize listener must be removed while inactive');
 assert.match(lifecycle,/document\.visibilityState!==['"]visible['"]/,'Agenda visual work must remain suspended while document is hidden');
@@ -26,6 +27,9 @@ assert.match(lifecycle,/function sincronizarEstadoVisualAgenda\(/,'Agenda lifecy
 assert.match(lifecycle,/document\.body\.dataset\.tela=['"]tela_agenda['"]/,'Agenda activation must synchronize body[data-tela]');
 assert.match(lifecycle,/ks_page_title[\s\S]*textContent=['"]Agenda['"]/,'Agenda activation must repair the global page title after async lazy navigation');
 assert.match(lifecycle,/ks_page_subtitle[\s\S]*Semana de atendimento e disponibilidade/,'Agenda activation must repair the global page subtitle');
+assert.match(lifecycle,/function alinharHojeNaGradeMobile\(/,'Agenda lifecycle must expose mobile today alignment internally');
+assert.match(lifecycle,/agenda-dia-cabecalho\.hoje/,'mobile weekly view must locate the current day header');
+assert.match(lifecycle,/scroll\.scrollLeft=Math\.max\(0,alvo\)/,'mobile weekly view must center today without changing the Agenda data model');
 
 const syncStart=agenda.indexOf('function configurarSincronizacaoConfiavelAgenda()');
 const syncEnd=agenda.indexOf('async function inicializarAgenda()',syncStart);
@@ -34,4 +38,4 @@ const syncBlock=agenda.slice(syncStart,syncEnd);
 assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact in Phase 2A');
 assert.doesNotMatch(lifecycle,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'visual lifecycle must not interfere with reliable pending sync');
 
-console.log('Agenda Lifecycle: visual work suspends correctly, mobile style loads lazily, and the global shell synchronizes after Agenda activation.');
+console.log('Agenda Lifecycle: visual work suspends correctly, mobile style loads lazily, shell synchronizes, and today is centered after mobile render.');
