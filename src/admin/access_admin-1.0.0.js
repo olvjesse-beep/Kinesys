@@ -8,7 +8,7 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20260912-r1';
+    const ONLINE_CONFIG_REVISION='20260913-online-r2';
     let alvoAtual=null;
     let busy=false;
 

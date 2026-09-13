@@ -38,8 +38,10 @@ assert(js.includes('Para abrir o portal, publique pelo menos um procedimento.'),
   'portal ativo deve exigir ao menos um procedimento publicado');
 assert(js.includes('Para abrir o portal, publique pelo menos um período para um profissional publicado.'),
   'portal ativo deve exigir disponibilidade de profissional efetivamente publicado');
-assert(js.includes('não possui profissional publicado habilitado'),
-  'procedimento restrito deve exigir ao menos um profissional publicado compatível');
+assert(js.includes('não possui profissional publicado com horário online compatível'),
+  'procedimento restrito deve exigir profissional publicado com disponibilidade online');
+assert(js.includes('profissionaisComHorarios'),
+  'validação administrativa deve cruzar procedimento com profissional que possui período publicado');
 assert(js.includes('const anterior = state.profissionalSelecionado') && js.includes('evento.target.value = anterior'),
   'troca de profissional não deve descartar intervalos inválidos ainda em edição');
 assert(js.includes("await salvarConfiguracaoPortal(client, { ...cfg, ativo: false })") &&

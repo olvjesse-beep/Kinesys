@@ -106,17 +106,25 @@ async function catalogoPublico(slug: string) {
   const [profRes, procRes, dispRes] = await Promise.all([
     supabase.from("equipe").select("id,nome,tipo,agendamento_online_ordem").eq("clinica_id", clinica.id).eq("ativo", true).eq("aparece_na_agenda", true).eq("agendamento_online_ativo", true).order("agendamento_online_ordem", { ascending: true }).order("nome", { ascending: true }),
     supabase.from("procedimentos").select("id,nome,duracao_minutos,valor,profissionais_ids").eq("clinica_id", clinica.id).eq("ativo", true).eq("agendamento_online_ativo", true).order("nome"),
-    supabase.from("disponibilidade_agendamento_online").select("profissional_id").eq("clinica_id", clinica.id).eq("ativo", true).limit(1),
+    supabase.from("disponibilidade_agendamento_online").select("profissional_id").eq("clinica_id", clinica.id).eq("ativo", true),
   ]);
   for (const r of [profRes, procRes, dispRes]) if (r.error) throw r.error;
-  const profissionais = (profRes.data || []).map((p) => ({ id: texto(p.id, 120), nome: texto(p.nome, 120), tipo: texto(p.tipo || "Profissional", 80).replaceAll("_", " ") }));
+  const idsComDisponibilidade = new Set((dispRes.data || []).map((d) => String(d.profissional_id || "")));
+  const profissionais = (profRes.data || [])
+    .filter((p) => idsComDisponibilidade.has(String(p.id)))
+    .map((p) => ({ id: texto(p.id, 120), nome: texto(p.nome, 120), tipo: texto(p.tipo || "Profissional", 80).replaceAll("_", " ") }));
   const idsProf = new Set(profissionais.map((p) => p.id));
-  const procedimentos = (procRes.data || []).map((p) => ({
-    id: texto(p.id, 80), nome: texto(p.nome, 120), duracao_minutos: Math.max(5, Math.min(480, Number(p.duracao_minutos) || 30)),
-    valor: config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
-    profissionais_ids: Array.isArray(p.profissionais_ids) ? p.profissionais_ids.map(String).filter((id: string) => idsProf.has(id)) : [],
-  }));
-  if (!profissionais.length || !procedimentos.length || !(dispRes.data || []).length) return fechado;
+  const procedimentos = (procRes.data || []).flatMap((p) => {
+    const vinculadosOriginais = Array.isArray(p.profissionais_ids) ? p.profissionais_ids.map(String) : [];
+    const vinculadosPublicos = vinculadosOriginais.filter((id: string) => idsProf.has(id));
+    if (vinculadosOriginais.length && !vinculadosPublicos.length) return [];
+    return [{
+      id: texto(p.id, 80), nome: texto(p.nome, 120), duracao_minutos: Math.max(5, Math.min(480, Number(p.duracao_minutos) || 30)),
+      valor: config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
+      profissionais_ids: vinculadosPublicos,
+    }];
+  });
+  if (!profissionais.length || !procedimentos.length) return fechado;
   return {
     encontrado: true, aberto: true,
     clinica: { nome: texto(clinica.nome, 100), slug: texto(clinica.slug, 80) },

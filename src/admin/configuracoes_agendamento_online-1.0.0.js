@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20260912-r1';
+    const ASSET_REVISION = '20260913-online-r2';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const DIAS = Object.freeze([
         { valor: 1, nome: 'Segunda-feira' },
@@ -292,7 +292,11 @@
         });
 
         document.getElementById('ks_online_profissional_horarios')?.addEventListener('change', evento => {
-            capturarHorariosProfissionalAtual();
+            const anterior = state.profissionalSelecionado;
+            if (!capturarHorariosProfissionalAtual()) {
+                evento.target.value = anterior;
+                return;
+            }
             state.profissionalSelecionado = String(evento.target.value || '');
             renderizarHorariosProfissional();
         });
@@ -305,12 +309,14 @@
             }
             const remover = evento.target.closest('[data-remover-intervalo]');
             if (remover) {
+                const card = remover.closest('[data-dia-card]');
                 remover.closest('.ks-online-time-row')?.remove();
+                capturarHorariosProfissionalAtual();
                 marcarSujo();
-                atualizarEstadoDia(remover.closest('[data-dia-card]'));
+                atualizarEstadoDia(card);
             }
         });
-        document.getElementById('ks_online_horarios')?.addEventListener('change', marcarSujo);
+        document.getElementById('ks_online_horarios')?.addEventListener('change', () => { capturarHorariosProfissionalAtual(); marcarSujo(); });
         document.getElementById('ks_online_salvar')?.addEventListener('click', salvarTudo);
     }
 
@@ -530,6 +536,7 @@
         const wrapper = document.createElement('div');
         wrapper.innerHTML = markupIntervalo(dia, {}, lista.children.length);
         lista.appendChild(wrapper.firstElementChild);
+        capturarHorariosProfissionalAtual();
         atualizarEstadoDia(card);
         marcarSujo();
         lista.lastElementChild?.querySelector('[data-hora-inicio]')?.focus();
@@ -594,12 +601,27 @@
         if (procEl) procEl.textContent = `${procCount} publicado${procCount === 1 ? '' : 's'}`;
     }
 
+    function estadoPublicacaoAtual() {
+        const profissionais = state.profissionais.filter(p => p.agendamento_online_ativo);
+        const profissionaisIds = new Set(profissionais.map(p => String(p.id)));
+        const horarios = state.disponibilidadeEditada.filter(x => profissionaisIds.has(String(x.profissional_id)));
+        const profissionaisComHorarios = new Set(horarios.map(x => String(x.profissional_id)));
+        const procedimentos = state.procedimentos.filter(p => p.agendamento_online_ativo);
+        const procedimentoIncompativel = procedimentos.find(p => {
+            const vinculados = Array.isArray(p.profissionais_ids) ? p.profissionais_ids.map(String) : [];
+            if (!vinculados.length) return profissionaisComHorarios.size === 0;
+            return !vinculados.some(id => profissionaisComHorarios.has(id));
+        }) || null;
+        return { profissionais, profissionaisIds, profissionaisComHorarios, procedimentos, procedimentoIncompativel, horarios };
+    }
+
     function atualizarResumoPublicacao() {
         const ativo = !!document.getElementById('ks_online_ativo')?.checked;
-        const profCount = state.profissionais.filter(p => p.agendamento_online_ativo).length;
-        const procCount = state.procedimentos.filter(p => p.agendamento_online_ativo).length;
-        const horarios = state.disponibilidadeEditada.length;
-        const completo = profCount > 0 && procCount > 0 && horarios > 0;
+        const publicacao = estadoPublicacaoAtual();
+        const profCount = publicacao.profissionais.length;
+        const procCount = publicacao.procedimentos.length;
+        const horarios = publicacao.horarios.length;
+        const completo = profCount > 0 && procCount > 0 && horarios > 0 && !publicacao.procedimentoIncompativel;
         const badge = document.getElementById('ks_online_badge');
         const help = document.getElementById('ks_online_ativo_help');
         const summary = document.getElementById('ks_online_save_summary');
@@ -632,14 +654,22 @@
         if (!cfg.descricao_publica) return { ok: false, msg: 'Informe o texto de apresentação do agendamento online.', id: 'ks_online_descricao' };
         if (!cfg.mensagem_fechado) return { ok: false, msg: 'Informe a mensagem exibida quando o portal estiver fechado.', id: 'ks_online_mensagem_fechado' };
         if (!cfg.ativo) return { ok: true };
-        if (!state.profissionais.some(p => p.agendamento_online_ativo)) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um profissional.', id: 'ks_online_sec_profissionais' };
-        if (!state.procedimentos.some(p => p.agendamento_online_ativo)) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um procedimento.', id: 'ks_online_sec_procedimentos' };
-        if (!state.disponibilidadeEditada.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um período de atendimento.', id: 'ks_online_sec_horarios' };
+        const publicacao = estadoPublicacaoAtual();
+        if (!publicacao.profissionais.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um profissional.', id: 'ks_online_sec_profissionais' };
+        if (!publicacao.procedimentos.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um procedimento.', id: 'ks_online_sec_procedimentos' };
+        if (publicacao.procedimentoIncompativel) return { ok: false, msg: `O procedimento “${publicacao.procedimentoIncompativel.nome || 'selecionado'}” não possui profissional publicado com horário online compatível.`, id: 'ks_online_sec_procedimentos' };
+        if (!publicacao.horarios.length) return { ok: false, msg: 'Para abrir o portal, publique pelo menos um período para um profissional publicado.', id: 'ks_online_sec_horarios' };
         return { ok: true };
     }
 
     function chaveHorario(x) {
         return [String(x.profissional_id), Number(x.dia_semana), String(x.hora_inicio).slice(0, 5), String(x.hora_fim).slice(0, 5)].join('|');
+    }
+
+    async function salvarConfiguracaoPortal(client, cfg) {
+        const { error } = await client.from('configuracoes_agendamento_online')
+            .upsert(cfg, { onConflict: 'clinica_id' });
+        if (error) throw error;
     }
 
     async function salvarTudo() {
@@ -662,9 +692,9 @@
         if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
         setStatus('Salvando configuração…', 'neutro');
         try {
-            const { error: cfgError } = await client.from('configuracoes_agendamento_online')
-                .upsert(cfg, { onConflict: 'clinica_id' });
-            if (cfgError) throw cfgError;
+            // Fail-safe: alterações estruturais persistem com o portal fechado.
+            // A ativação volta somente depois de todas as dependências salvarem.
+            await salvarConfiguracaoPortal(client, { ...cfg, ativo: false });
 
             for (const p of state.profissionais) {
                 if (!!p.agendamento_online_ativo === !!p._onlineOriginal) continue;
@@ -705,6 +735,8 @@
                     .delete().in('id', removerIds).eq('clinica_id', state.clinicaId);
                 if (error) throw error;
             }
+
+            if (cfg.ativo) await salvarConfiguracaoPortal(client, cfg);
 
             setStatus(cfg.ativo ? 'Configuração salva. O portal está preparado para aceitar agendamentos.' : 'Configuração salva. O portal continua fechado.', 'sucesso');
             if (typeof window.mostrarToastKineSys === 'function') {
