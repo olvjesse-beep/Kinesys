@@ -31,7 +31,7 @@ assert.match(lifecycle,/document\.visibilityState!==['"]visible['"]/,'Agenda vis
 assert.match(lifecycle,/iniciarRelogioAgenda=iniciarRelogioAgendaLifecycle/,'Agenda lifecycle must replace only the visual clock starter');
 
 assert.match(lifecycle,/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda lifecycle fallback must point to the current mobile stylesheet');
-assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'Agenda lifecycle fallback may keep the prior grid URL because the official bundle now owns r19 delivery');
+assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'Agenda lifecycle fallback may keep the prior grid URL because the official bundle owns delivery');
 assert.match(lifecycle,/function garantirLinkEstilo\(/,'Agenda lifecycle must use one idempotent stylesheet loader');
 assert.match(lifecycle,/src\.split\('\?'\)\[0\]/,'Agenda lifecycle stylesheet loader must avoid duplicate versions of the same stylesheet');
 assert.match(lifecycle,/function sincronizarEstadoVisualAgenda\(/,'Agenda lifecycle must synchronize the global shell after lazy activation');
@@ -52,23 +52,32 @@ assert.match(mobileCss,/#modal_agendamento \.actions[\s\S]*position:sticky/,'mob
 assert.match(mobileCss,/env\(safe-area-inset-bottom\)/,'mobile Agenda must respect the iPhone bottom safe area');
 
 assert.match(mobileGridCss,/@media \(max-width:760px\)/,'deterministic grid fix must remain mobile-only');
-assert.match(mobileGridCss,/grid-template-columns:58px repeat\(var\(--kds-agenda-runtime-day-count\),160px\)!important/,'weekly mobile view must force readable fixed day tracks');
+assert.match(mobileGridCss,/grid-template-columns:58px repeat\(var\(--kds-agenda-runtime-day-count\),160px\)!important/,'weekly mobile view must keep readable day tracks');
+assert.match(mobileGridCss,/--kds-agenda-slot-height:8px!important/,'mobile temporal scale must use 8px per 10-minute slot');
+assert.match(mobileGridCss,/grid-template-rows:46px repeat\(var\(--kds-agenda-runtime-slot-count\),8px\)!important/,'mobile grid rows must preserve the compact 48px-per-hour scale');
+assert.match(mobileGridCss,/max-height:none!important/,'mobile grid must expose the useful working-day range instead of trapping it in a tall nested scroller');
+assert.match(mobileGridCss,/overflow-y:hidden!important/,'mobile page scrolling must own the vertical axis');
 assert.match(mobileGridCss,/width:max-content!important/,'weekly mobile grid must grow beyond the viewport instead of squeezing');
 assert.match(mobileGridCss,/overflow-x:auto!important/,'weekly mobile grid container must remain horizontally scrollable');
 assert.match(mobileGridCss,/agenda-hora-eixo[\s\S]*position:sticky!important[\s\S]*left:0!important/,'hour axis must remain fixed while swiping days');
-assert.match(mobileGridCss,/agenda-dia-cabecalho[\s\S]*width:160px!important/,'weekly day headers must preserve the readable track width');
+assert.match(mobileGridCss,/agenda-compromisso[\s\S]*min-height:0!important/,'appointment cards must follow their real duration instead of forcing a tall minimum');
 assert.match(mobileGridCss,/:has\(\[data-agenda-periodo="dia"\]\[aria-pressed="true"\]\)[\s\S]*grid-template-columns:58px minmax\(0,1fr\)!important/,'day view must remain fluid and use the full viewport');
 
+/* A faixa vertical é adaptativa: usa janelas do profissional e os agendamentos reais. */
+assert.match(agenda,/function limitesHorariosGrade\(dias, profissionalId\)/,'Agenda must retain the adaptive working-range calculator');
+assert.match(agenda,/janelasAgendaPara\(d\.diaSemana, profissionalId\)/,'working range must derive from the selected professional schedule');
+assert.match(agenda,/const limites = limitesHorariosGrade\(dias, profissionalFiltro\)/,'weekly rendering must apply the selected professional adaptive range');
+
 assert.match(htaccess,/screen_loader-1\.25\.0\.js/,'screen loader must be revalidated in production');
-assert.match(htaccess,/kinesys_delivery_agenda_grid_r19/,'Safari cache reset must use the current one-time Agenda grid revision');
-assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260913-agenda-grid-r19/,'server fallback must deliver the current screen loader URL');
-assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r19/,'server fallback must directly inject the current deterministic mobile grid stylesheet');
+assert.match(htaccess,/kinesys_delivery_agenda_density_r20/,'Safari cache reset must use the fresh mobile density revision');
+assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260913-agenda-grid-r19/,'server fallback must keep the current screen loader URL');
+assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-density-r20/,'server fallback must directly inject the fresh compact mobile grid stylesheet');
 
 const syncStart=agenda.indexOf('function configurarSincronizacaoConfiavelAgenda()');
 const syncEnd=agenda.indexOf('async function inicializarAgenda()',syncStart);
 assert.ok(syncStart>=0&&syncEnd>syncStart,'reliable Agenda sync block must exist');
 const syncBlock=agenda.slice(syncStart,syncEnd);
-assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact in Phase 2A');
+assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact');
 assert.doesNotMatch(lifecycle,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'visual lifecycle must not interfere with reliable pending sync');
 
-console.log('Agenda lifecycle/mobile contract OK: official bundle loads the deterministic grid last, with readable day tracks, horizontal swipe, sticky time axis and fresh Safari delivery.');
+console.log('Agenda lifecycle/mobile contract OK: 48px/hour mobile density, adaptive professional working range, readable appointments, horizontal day swipe and fresh Safari delivery.');

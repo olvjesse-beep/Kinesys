@@ -1,6 +1,7 @@
 /* KineSys — Agenda Mobile Grid 1.0.0
- * Correção determinística de legibilidade no iPhone/Safari.
- * Mantém a lógica da Agenda intacta: altera apenas geometria, toque e overflow.
+ * Mobile-first: escala temporal compacta, horários adaptativos e swipe horizontal.
+ * Mantém a lógica da Agenda intacta; o runtime continua definindo a faixa útil
+ * a partir das janelas do profissional/escopo selecionado e dos agendamentos.
  */
 
 @media (max-width:760px){
@@ -9,8 +10,10 @@
     display:block!important;
     width:100%!important;
     max-width:100%!important;
+    max-height:none!important;
+    height:auto!important;
     overflow-x:auto!important;
-    overflow-y:auto!important;
+    overflow-y:hidden!important;
     -webkit-overflow-scrolling:touch!important;
     overscroll-behavior-x:contain!important;
     touch-action:pan-x pan-y!important;
@@ -18,14 +21,21 @@
     scrollbar-gutter:auto!important;
   }
 
-  /* Semana mobile: não comprimir dias. O usuário vê ~2 dias e desliza. */
+  /*
+   * Escala temporal mobile:
+   * o motor trabalha em passos de 10 min; 8px por passo = 48px por hora.
+   * Isso mantém duração proporcional sem transformar 1h em um bloco gigante.
+   */
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-semana-grade{
     --kds-agenda-hour-axis-width:58px!important;
+    --kds-agenda-header-height:46px!important;
+    --kds-agenda-slot-height:8px!important;
     display:grid!important;
     width:max-content!important;
     min-width:max-content!important;
     max-width:none!important;
     grid-template-columns:58px repeat(var(--kds-agenda-runtime-day-count),160px)!important;
+    grid-template-rows:46px repeat(var(--kds-agenda-runtime-slot-count),8px)!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-dia-cabecalho,
@@ -34,6 +44,11 @@
     min-width:160px!important;
     max-width:160px!important;
     box-sizing:border-box!important;
+  }
+
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-celula,
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-hora-eixo{
+    min-height:0!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-hora-eixo,
@@ -59,32 +74,63 @@
     position:sticky!important;
     left:0!important;
     z-index:20!important;
+    padding:0 6px 0 0!important;
+    overflow:visible!important;
     background:#FAFBFB!important;
+    font-size:12px!important;
+    line-height:1!important;
+  }
+
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-hora-eixo.hora-cheia{
+    z-index:22!important;
+    overflow:visible!important;
+    font-weight:800!important;
+  }
+
+  /* Subslots de 10 min continuam existindo para duração/posicionamento,
+     mas não desenham seis linhas pesadas a cada hora. */
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-celula.subhora,
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-hora-eixo.subhora{
+    border-top-width:0!important;
+    border-top-style:none!important;
+  }
+
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-celula.meia-hora,
+  body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-hora-eixo.meia-hora{
+    border-top:1px dashed #E8EFED!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-dia-cabecalho{
-    padding:7px 8px!important;
+    min-height:46px!important;
+    padding:5px 8px!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-dia-cabecalho .dia-semana{
-    font-size:14px!important;
-    line-height:1.15!important;
+    font-size:13px!important;
+    line-height:1.1!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-dia-cabecalho .dia-data{
-    font-size:16px!important;
-    line-height:1.15!important;
+    margin-top:1px!important;
+    font-size:15px!important;
+    line-height:1.1!important;
   }
 
+  /* Atendimento compacto: a altura vem da duração real do evento. */
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-compromisso{
-    padding:5px 7px!important;
-    min-height:30px!important;
+    height:100%!important;
+    min-height:0!important;
+    padding:0 4px!important;
+    overflow:hidden!important;
+    border-radius:4px!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-compromisso .paciente{
-    gap:6px!important;
-    font-size:14px!important;
-    line-height:1.2!important;
+    height:100%!important;
+    min-height:0!important;
+    gap:3px!important;
+    font-size:13px!important;
+    line-height:1.05!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-compromisso .agenda-paciente-nome{
@@ -97,19 +143,20 @@
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-pagamento-icone,
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel .agenda-cobranca-icone{
-    width:24px!important;
-    height:24px!important;
-    min-width:24px!important;
-    flex-basis:24px!important;
-    font-size:14px!important;
+    width:16px!important;
+    height:16px!important;
+    min-width:16px!important;
+    flex-basis:16px!important;
+    font-size:11px!important;
   }
 
-  /* Visão Dia: volta a ocupar toda a largura disponível. */
+  /* Visão Dia: ocupa a largura toda, mantendo a mesma escala temporal compacta. */
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-semana-grade{
     width:100%!important;
     min-width:100%!important;
     max-width:100%!important;
     grid-template-columns:58px minmax(0,1fr)!important;
+    grid-template-rows:46px repeat(var(--kds-agenda-runtime-slot-count),8px)!important;
   }
 
   body.ks-design-ready[data-tela="tela_agenda"] #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-dia-cabecalho,
