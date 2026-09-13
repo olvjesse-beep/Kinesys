@@ -1,0 +1,207 @@
+/* ========================================================================== 
+   KineSys — Liquid Glass System v1
+   Impeccable / Operate mode
+   Material sistêmico para superfícies interativas e camadas elevadas.
+   Regra: glass comunica hierarquia/material; conteúdo clínico continua legível.
+   ========================================================================== */
+
+body.ks-design-ready{
+  --kds-glass-surface:rgba(255,255,255,.72);
+  --kds-glass-surface-strong:rgba(255,255,255,.88);
+  --kds-glass-surface-soft:rgba(255,255,255,.52);
+  --kds-glass-surface-subtle:rgba(255,255,255,.36);
+  --kds-glass-teal:rgba(30,117,111,.17);
+  --kds-glass-teal-strong:rgba(30,117,111,.82);
+  --kds-glass-petrol:rgba(23,59,69,.14);
+  --kds-glass-edge:rgba(255,255,255,.78);
+  --kds-glass-edge-soft:rgba(255,255,255,.44);
+  --kds-glass-line:rgba(23,59,69,.13);
+  --kds-glass-highlight:rgba(255,255,255,.92);
+  --kds-glass-shadow:0 14px 34px rgba(23,59,69,.10);
+  --kds-glass-shadow-float:0 20px 48px rgba(13,38,43,.16);
+  --kds-glass-filter:blur(16px) saturate(135%) contrast(103%);
+  --kds-glass-filter-soft:blur(10px) saturate(120%) contrast(102%);
+  --kds-glass-duration:180ms;
+
+  background:
+    radial-gradient(78rem 34rem at 0% -8%,rgba(42,167,157,.11),transparent 55%),
+    radial-gradient(64rem 30rem at 100% 8%,rgba(23,59,69,.075),transparent 58%),
+    var(--kds-bg);
+}
+
+body.ks-design-ready:not([data-tela="tela_login"])>.container{background:transparent}
+
+body.ks-design-ready ::selection{background:rgba(42,167,157,.24);color:var(--kds-text)}
+body.ks-design-ready :where(input,textarea){caret-color:var(--kds-accent)}
+body.ks-design-ready *{scrollbar-color:rgba(30,117,111,.42) transparent}
+body.ks-design-ready *::-webkit-scrollbar{width:9px;height:9px}
+body.ks-design-ready *::-webkit-scrollbar-track{background:transparent}
+body.ks-design-ready *::-webkit-scrollbar-thumb{background:rgba(30,117,111,.28);border:2px solid transparent;border-radius:999px;background-clip:padding-box}
+body.ks-design-ready *::-webkit-scrollbar-thumb:hover{background-color:rgba(30,117,111,.42)}
+
+/* Shell */
+body.ks-design-ready .ks-topbar{
+  background:rgba(248,251,250,.76);
+  border-bottom:1px solid rgba(255,255,255,.72);
+  box-shadow:0 10px 26px rgba(23,59,69,.055);
+  -webkit-backdrop-filter:var(--kds-glass-filter);
+  backdrop-filter:var(--kds-glass-filter);
+}
+body.ks-design-ready .ks-topbar::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(42,167,157,.28),transparent);
+}
+body.ks-design-ready .ks-version{
+  background:rgba(255,255,255,.50);border-color:rgba(23,59,69,.10);
+  -webkit-backdrop-filter:blur(8px) saturate(118%);backdrop-filter:blur(8px) saturate(118%);
+}
+
+/* Cards/painéis */
+body.ks-design-ready .card{
+  background:var(--kds-glass-surface-strong);
+  border-color:rgba(255,255,255,.70);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.88);
+  -webkit-backdrop-filter:var(--kds-glass-filter-soft);
+  backdrop-filter:var(--kds-glass-filter-soft);
+}
+body.ks-design-ready:is([data-tela="tela_avaliacao"],[data-tela="tela_evolucao"],[data-tela="tela_relatorio"]) .card{
+  background:rgba(255,255,255,.94);
+  border-color:rgba(23,59,69,.09);
+  -webkit-backdrop-filter:blur(7px) saturate(112%);
+  backdrop-filter:blur(7px) saturate(112%);
+}
+body.ks-design-ready :is(.ks-home-stats,.finance-analysis-kpis,.finance-balance-stats,.finance-expense-admin-stats){
+  background:rgba(255,255,255,.78);border-color:rgba(255,255,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.82);
+  -webkit-backdrop-filter:var(--kds-glass-filter-soft);backdrop-filter:var(--kds-glass-filter-soft);
+}
+
+/* Buttons */
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger){
+  position:relative;overflow:hidden;border-radius:10px;
+  transition:background var(--kds-glass-duration) ease,border-color var(--kds-glass-duration) ease,color var(--kds-glass-duration) ease,box-shadow var(--kds-glass-duration) ease,transform 120ms ease;
+  -webkit-backdrop-filter:blur(10px) saturate(125%);backdrop-filter:blur(10px) saturate(125%);
+}
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger)::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 48%);opacity:.72;
+}
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger)>*{position:relative;z-index:1}
+body.ks-design-ready .btn-primary{
+  color:#fff;background:linear-gradient(180deg,rgba(46,139,132,.90),rgba(22,101,96,.86));
+  border-color:rgba(198,248,242,.46);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 7px 18px rgba(23,95,90,.16);
+}
+body.ks-design-ready .btn-primary:hover{
+  background:linear-gradient(180deg,rgba(53,153,145,.94),rgba(25,112,106,.90));
+  border-color:rgba(217,255,251,.58);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 9px 22px rgba(23,95,90,.19);
+}
+body.ks-design-ready .btn-primary:active{transform:translateY(1px)}
+body.ks-design-ready :is(.btn-secondary,.btn-nav){
+  color:var(--kds-text-secondary);background:rgba(255,255,255,.64);border-color:rgba(255,255,255,.76);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.88);
+}
+body.ks-design-ready :is(.btn-secondary,.btn-nav):hover{color:var(--kds-accent-hover);background:rgba(255,255,255,.82);border-color:rgba(42,167,157,.24)}
+body.ks-design-ready :is(.btn-secondary,.btn-nav):active{transform:translateY(1px)}
+body.ks-design-ready .btn-danger{color:var(--kds-danger);background:rgba(255,247,247,.72);border-color:rgba(165,59,51,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.82)}
+body.ks-design-ready .btn-danger:hover{background:rgba(255,242,241,.90);border-color:rgba(165,59,51,.28)}
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger):focus-visible{outline:3px solid var(--kds-focus-ring);outline-offset:2px}
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger):disabled,
+body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger)[aria-disabled="true"]{opacity:.50;transform:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.ks-design-ready :is(.btn-menu,.ks-mobile-menu){
+  background:rgba(255,255,255,.68);border:1px solid rgba(255,255,255,.80);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.92);
+  -webkit-backdrop-filter:blur(12px) saturate(125%);backdrop-filter:blur(12px) saturate(125%);
+}
+
+/* Form controls */
+body.ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),select,textarea){
+  background:rgba(255,255,255,.74);border-color:rgba(23,59,69,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.86);
+  -webkit-backdrop-filter:blur(8px) saturate(118%);backdrop-filter:blur(8px) saturate(118%);
+}
+body.ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),select,textarea):hover:not(:disabled):not([readonly]){background:rgba(255,255,255,.84);border-color:rgba(30,117,111,.24)}
+body.ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),select,textarea):focus{
+  background:rgba(255,255,255,.94);border-color:rgba(42,167,157,.62);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 3px var(--kds-focus-halo);
+}
+body.ks-design-ready :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),select,textarea):disabled{background:rgba(241,245,244,.72);-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* Tabs / segmented */
+body.ks-design-ready [role="tablist"]{
+  background:rgba(255,255,255,.46);border-color:rgba(255,255,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.76);
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+body.ks-design-ready [role="tab"]{transition:background var(--kds-glass-duration) ease,border-color var(--kds-glass-duration) ease,color var(--kds-glass-duration) ease}
+body.ks-design-ready [role="tab"][aria-selected="true"]{background:rgba(255,255,255,.82);border-color:rgba(255,255,255,.88);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+
+/* Elevated layers */
+body.ks-design-ready :is(.modal-box,.ks-dialog){
+  background:rgba(250,252,251,.88);border-color:rgba(255,255,255,.82);box-shadow:var(--kds-glass-shadow-float);
+  -webkit-backdrop-filter:blur(22px) saturate(138%) contrast(103%);backdrop-filter:blur(22px) saturate(138%) contrast(103%);
+}
+body.ks-design-ready :is(.modal-overlay,.ks-dialog-overlay){background:rgba(13,38,43,.30);-webkit-backdrop-filter:blur(3px) saturate(108%);backdrop-filter:blur(3px) saturate(108%)}
+body.ks-design-ready .ks-toast{
+  background:rgba(250,252,251,.86);border-color:rgba(255,255,255,.82);box-shadow:0 14px 34px rgba(13,38,43,.14);
+  -webkit-backdrop-filter:blur(16px) saturate(130%);backdrop-filter:blur(16px) saturate(130%);
+}
+
+/* Login */
+body.ks-design-ready[data-tela="tela_login"]{
+  background:radial-gradient(56rem 36rem at 12% 8%,rgba(42,167,157,.30),transparent 58%),radial-gradient(50rem 34rem at 88% 12%,rgba(145,210,190,.15),transparent 60%),linear-gradient(145deg,#103B45 0%,#174E55 46%,#0E343E 100%);
+}
+body.ks-design-ready #tela_login{position:relative}
+body.ks-design-ready #tela_login .ks-access-shell{
+  background:rgba(255,255,255,.20);border:1px solid rgba(235,255,252,.28);border-radius:22px;
+  box-shadow:0 28px 70px rgba(5,29,35,.24);
+  -webkit-backdrop-filter:blur(20px) saturate(138%) contrast(103%);backdrop-filter:blur(20px) saturate(138%) contrast(103%);
+}
+body.ks-design-ready #tela_login .ks-access-intro{
+  position:relative;overflow:hidden;
+  background:radial-gradient(80% 44% at 14% 0%,rgba(255,255,255,.18),transparent 62%),linear-gradient(155deg,rgba(38,132,132,.50),rgba(8,55,65,.70));
+  border-right:1px solid rgba(230,255,252,.16);color:#f4fbf9;
+}
+body.ks-design-ready #tela_login .ks-access-intro::after{
+  content:"";position:absolute;inset:1px;pointer-events:none;border:1px solid rgba(255,255,255,.08);border-radius:20px 0 0 20px;
+}
+body.ks-design-ready #tela_login .ks-access-panel{background:rgba(249,252,251,.78);-webkit-backdrop-filter:blur(16px) saturate(125%);backdrop-filter:blur(16px) saturate(125%)}
+body.ks-design-ready #tela_login .ks-access-tabs{
+  background:rgba(255,255,255,.42);border-color:rgba(255,255,255,.70);box-shadow:inset 0 1px 0 rgba(255,255,255,.86);
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+body.ks-design-ready #tela_login .ks-access-tabs button{background:transparent;border-color:transparent;box-shadow:none}
+body.ks-design-ready #tela_login .ks-access-tabs button[aria-selected="true"]{background:rgba(255,255,255,.84);border-color:rgba(255,255,255,.92);box-shadow:inset 0 1px 0 #fff}
+body.ks-design-ready #tela_login :is(input,select){background:rgba(255,255,255,.76);border-color:rgba(23,59,69,.13)}
+body.ks-design-ready #tela_login .ks-access-password button,
+body.ks-design-ready #tela_login :is(.ks-access-help button,.ks-access-back){color:var(--kds-accent-hover)}
+body.ks-design-ready #tela_login .ks-fisio-painel-item,
+body.ks-design-ready #tela_login .ks-fisio-painel-vazio{
+  background:rgba(255,255,255,.56);border-color:rgba(255,255,255,.76);
+  -webkit-backdrop-filter:blur(8px) saturate(116%);backdrop-filter:blur(8px) saturate(116%);
+}
+
+@media(max-width:820px){
+  body.ks-design-ready{
+    --kds-glass-surface:rgba(255,255,255,.80);
+    --kds-glass-surface-strong:rgba(255,255,255,.92);
+    --kds-glass-filter:blur(12px) saturate(126%) contrast(102%);
+    --kds-glass-filter-soft:blur(8px) saturate(116%);
+  }
+  body.ks-design-ready .ks-topbar{background:rgba(248,251,250,.86)}
+  body.ks-design-ready #tela_login .ks-access-shell{border-radius:18px;background:rgba(255,255,255,.16);box-shadow:0 20px 48px rgba(5,29,35,.22)}
+  body.ks-design-ready #tela_login .ks-access-intro{border-right:0;border-bottom:1px solid rgba(230,255,252,.15)}
+  body.ks-design-ready #tela_login .ks-access-intro::after{border-radius:17px 17px 0 0}
+  body.ks-design-ready #tela_login .ks-access-panel{background:rgba(249,252,251,.88)}
+}
+
+@media(prefers-reduced-motion:reduce){body.ks-design-ready :is(.btn-primary,.btn-secondary,.btn-nav,.btn-danger,[role="tab"]){transition:none}}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  body.ks-design-ready .ks-topbar,
+  body.ks-design-ready .card,
+  body.ks-design-ready :is(.modal-box,.ks-dialog,.ks-toast),
+  body.ks-design-ready #tela_login .ks-access-panel{background:rgba(250,252,251,.97)}
+  body.ks-design-ready #tela_login .ks-access-shell{background:rgba(255,255,255,.94)}
+}
