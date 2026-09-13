@@ -1,8 +1,7 @@
 /* KineSys — Sidebar Glass Premium
-   Refinamento visual do menu lateral com material único, petróleo translúcido,
-   baixa variação cromática e contraste controlado. Esta camada possui
-   especificidade suficiente para prevalecer sobre design_polish.css sem
-   recorrer a !important. */
+   Material único no painel + glass individual em cada aba.
+   Mantém identidade petróleo/teal e prevalece sobre design_polish.css
+   sem !important. */
 
 :root {
     --ks-sidebar-glass-bg: rgba(13, 43, 50, .82);
@@ -15,10 +14,14 @@
     --ks-sidebar-glass-muted: rgba(204, 220, 222, .68);
     --ks-sidebar-glass-icon: rgba(151, 221, 214, .90);
     --ks-sidebar-glass-section: rgba(214, 229, 231, .50);
-    --ks-sidebar-glass-hover: rgba(255, 255, 255, .045);
-    --ks-sidebar-glass-hover-border: rgba(255, 255, 255, .060);
-    --ks-sidebar-glass-active: rgba(91, 177, 168, .115);
-    --ks-sidebar-glass-active-border: rgba(142, 221, 214, .15);
+    --ks-sidebar-tab-top: rgba(255, 255, 255, .058);
+    --ks-sidebar-tab-bottom: rgba(255, 255, 255, .022);
+    --ks-sidebar-tab-border: rgba(255, 255, 255, .085);
+    --ks-sidebar-tab-shadow: rgba(4, 18, 22, .075);
+    --ks-sidebar-tab-hover-top: rgba(255, 255, 255, .082);
+    --ks-sidebar-tab-hover-bottom: rgba(127, 218, 210, .040);
+    --ks-sidebar-tab-active-top: rgba(127, 218, 210, .145);
+    --ks-sidebar-tab-active-bottom: rgba(255, 255, 255, .045);
     --ks-sidebar-glass-accent: rgba(127, 218, 210, .90);
 }
 
@@ -53,14 +56,18 @@ body.ks-design-ready #ks_sidebar .header-brand p {
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome {
-    background: rgba(255, 255, 255, .032);
-    border-color: rgba(255, 255, 255, .085);
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, .050) 0%,
+        rgba(255, 255, 255, .020) 100%
+    );
+    border-color: rgba(255, 255, 255, .095);
     border-radius: 16px;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .028),
-        0 8px 22px rgba(0, 0, 0, .055);
-    -webkit-backdrop-filter: blur(14px) saturate(112%);
-    backdrop-filter: blur(14px) saturate(112%);
+        inset 0 1px 0 rgba(255, 255, 255, .040),
+        0 8px 22px rgba(0, 0, 0, .060);
+    -webkit-backdrop-filter: blur(14px) saturate(114%);
+    backdrop-filter: blur(14px) saturate(114%);
 }
 
 body.ks-design-ready #ks_sidebar .header-welcome strong,
@@ -97,40 +104,80 @@ body.ks-design-ready #ks_sidebar :is(
 
 body.ks-design-ready #ks_sidebar .dropdown-content,
 body.ks-design-ready #ks_sidebar .nav-list {
-    gap: 2px;
+    gap: 7px;
 }
 
+body.ks-design-ready #ks_sidebar .dropdown-content li,
+body.ks-design-ready #ks_sidebar .nav-item {
+    margin: 0;
+}
+
+/* Cada item é uma lâmina de vidro independente. */
 body.ks-design-ready #ks_sidebar .dropdown-content a,
 body.ks-design-ready #ks_sidebar .nav-link {
-    min-height: 46px;
-    border: 1px solid transparent;
-    border-radius: 12px;
-    background: transparent;
+    min-height: 48px;
+    border: 1px solid var(--ks-sidebar-tab-border);
+    border-radius: 14px;
+    background:
+        linear-gradient(
+            180deg,
+            var(--ks-sidebar-tab-top) 0%,
+            var(--ks-sidebar-tab-bottom) 100%
+        );
     color: var(--ks-sidebar-glass-text);
-    box-shadow: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .040),
+        inset 0 -1px 0 rgba(255, 255, 255, .012),
+        0 5px 16px var(--ks-sidebar-tab-shadow);
+    -webkit-backdrop-filter: blur(13px) saturate(116%);
+    backdrop-filter: blur(13px) saturate(116%);
     transition:
-        background-color .16s ease,
-        border-color .16s ease,
-        color .16s ease,
-        transform .16s ease;
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease,
+        color .18s ease,
+        transform .18s ease;
 }
 
 body.ks-design-ready #ks_sidebar .dropdown-content a:hover,
 body.ks-design-ready #ks_sidebar .nav-link:hover {
-    background: var(--ks-sidebar-glass-hover);
-    border-color: var(--ks-sidebar-glass-hover-border);
-    transform: translateX(1px);
+    background:
+        linear-gradient(
+            180deg,
+            var(--ks-sidebar-tab-hover-top) 0%,
+            var(--ks-sidebar-tab-hover-bottom) 100%
+        );
+    border-color: rgba(142, 221, 214, .16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .058),
+        0 7px 20px rgba(4, 18, 22, .095);
+    color: #fbfdfd;
+    transform: translateY(-1px);
 }
 
+body.ks-design-ready #ks_sidebar .dropdown-content a:focus-visible,
+body.ks-design-ready #ks_sidebar .nav-link:focus-visible {
+    outline: 2px solid rgba(127, 218, 210, .72);
+    outline-offset: 2px;
+    border-color: rgba(142, 221, 214, .20);
+}
+
+/* Ativo: mesmo material, apenas mais luminoso e com trilho teal discreto. */
 body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a,
 body.ks-design-ready #ks_sidebar .nav-item.active .nav-link,
 body.ks-design-ready #ks_sidebar .nav-link.active {
-    background: var(--ks-sidebar-glass-active);
-    border-color: var(--ks-sidebar-glass-active-border);
+    background:
+        linear-gradient(
+            180deg,
+            var(--ks-sidebar-tab-active-top) 0%,
+            var(--ks-sidebar-tab-active-bottom) 100%
+        );
+    border-color: rgba(142, 221, 214, .25);
     box-shadow:
         inset 2px 0 0 var(--ks-sidebar-glass-accent),
-        inset 0 1px 0 rgba(255, 255, 255, .028);
-    color: #fbfdfd;
+        inset 0 1px 0 rgba(255, 255, 255, .072),
+        0 8px 22px rgba(4, 18, 22, .11);
+    color: #ffffff;
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-icon,
@@ -138,13 +185,19 @@ body.ks-design-ready #ks_sidebar .dropdown-content a i,
 body.ks-design-ready #ks_sidebar .nav-link i,
 body.ks-design-ready #ks_sidebar .nav-link svg {
     color: var(--ks-sidebar-glass-icon);
-    opacity: .95;
+    opacity: .96;
+}
+
+body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a .ks-nav-icon,
+body.ks-design-ready #ks_sidebar .nav-item.active .ks-nav-icon,
+body.ks-design-ready #ks_sidebar .nav-link.active .ks-nav-icon {
+    color: rgba(194, 241, 236, .98);
 }
 
 body.ks-design-ready #ks_sidebar .ks-nav-logout {
     margin-top: 10px;
     padding-top: 10px;
-    border-top-color: rgba(255, 255, 255, .075);
+    border-top-color: rgba(255, 255, 255, .070);
 }
 
 @media (max-width: 820px) {
@@ -165,12 +218,30 @@ body.ks-design-ready #ks_sidebar .ks-nav-logout {
     }
 
     body.ks-design-ready #ks_sidebar .header-welcome {
-        background: rgba(255, 255, 255, .028);
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, .048) 0%,
+            rgba(255, 255, 255, .018) 100%
+        );
+    }
+
+    body.ks-design-ready #ks_sidebar .dropdown-content,
+    body.ks-design-ready #ks_sidebar .nav-list {
+        gap: 8px;
     }
 
     body.ks-design-ready #ks_sidebar .dropdown-content a,
     body.ks-design-ready #ks_sidebar .nav-link {
-        min-height: 48px;
+        min-height: 50px;
+        background:
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, .060) 0%,
+                rgba(255, 255, 255, .022) 100%
+            );
+        border-color: rgba(255, 255, 255, .090);
+        -webkit-backdrop-filter: blur(12px) saturate(114%);
+        backdrop-filter: blur(12px) saturate(114%);
     }
 }
 
@@ -178,5 +249,11 @@ body.ks-design-ready #ks_sidebar .ks-nav-logout {
     html body.ks-design-ready #ks_sidebar {
         background: rgb(17, 52, 59);
         background-image: none;
+    }
+
+    body.ks-design-ready #ks_sidebar .dropdown-content a,
+    body.ks-design-ready #ks_sidebar .nav-link,
+    body.ks-design-ready #ks_sidebar .header-welcome {
+        background: rgba(255, 255, 255, .055);
     }
 }
