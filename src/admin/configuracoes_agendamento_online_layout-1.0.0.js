@@ -55,6 +55,37 @@
         </div>`;
     }
 
+    function nomeProfissionalSelecionado() {
+        const select = document.getElementById('ks_online_profissional_horarios');
+        const option = select?.selectedOptions?.[0];
+        return String(option?.textContent || '').trim() || 'Selecione um profissional';
+    }
+
+    function contextoMarkup(stageId) {
+        return `<div class="ks-online-layout-context" data-online-context="${stageId}">
+            <div>
+                <span>Profissional selecionado</span>
+                <strong data-online-context-name>${nomeProfissionalSelecionado()}</strong>
+            </div>
+            <button type="button" class="btn-secondary" data-online-trocar-profissional>Trocar profissional</button>
+        </div>`;
+    }
+
+    function garantirContextos() {
+        ['servicos', 'horarios'].forEach(stageId => {
+            const stage = STAGES.find(item => item.id === stageId);
+            const section = document.getElementById(stage?.sections?.[0]);
+            if (!section || section.querySelector(`[data-online-context="${stageId}"]`)) return;
+            section.insertAdjacentHTML('afterbegin', contextoMarkup(stageId));
+        });
+        atualizarContextos();
+    }
+
+    function atualizarContextos() {
+        const nome = nomeProfissionalSelecionado();
+        document.querySelectorAll('[data-online-context-name]').forEach(el => { el.textContent = nome; });
+    }
+
     function mostrarStage(stageId, { focus = false } = {}) {
         const stage = STAGES.find(item => item.id === stageId) || STAGES[0];
         currentStage = stage.id;
@@ -73,6 +104,7 @@
             if (active && focus) button.focus({ preventScroll: true });
         });
 
+        atualizarContextos();
         try { sessionStorage.setItem(STORAGE_KEY, stage.id); } catch (_) {}
     }
 
@@ -96,6 +128,14 @@
             if (event.key === 'End') next = buttons.length - 1;
             mostrarStage(buttons[next].dataset.onlineStage, { focus: true });
         });
+
+        shell.addEventListener('click', event => {
+            if (!event.target.closest('[data-online-trocar-profissional]')) return;
+            mostrarStage('profissional');
+            setTimeout(() => document.getElementById('ks_online_profissional_horarios')?.focus(), 0);
+        });
+
+        document.getElementById('ks_online_profissional_horarios')?.addEventListener('change', atualizarContextos);
     }
 
     function montar() {
@@ -118,6 +158,7 @@
             if (section) section.dataset.onlineStageSection = stage.id;
         }));
 
+        garantirContextos();
         ligarEventos(shell);
         mounted = true;
         mostrarStage(carregarStageSalvo());
