@@ -1,4 +1,16 @@
 /* KineSys — Agendamento online V2: identidade pública e perfil por profissional */
+
+/* O título é um destino de foco programático da SPA, não um controle interativo.
+   Mantemos o foco sem desenhar o contorno nativo que parece uma borda de campo. */
+#tela_configuracoes.ks-config-hub-ready .ks-config-hub-header,
+#tela_configuracoes.ks-config-hub-ready .ks-config-hub-header > div,
+#tela_configuracoes.ks-config-hub-ready .ks-config-hub-header h1,
+#tela_configuracoes.ks-config-hub-ready .ks-config-hub-header h1:focus,
+#tela_configuracoes.ks-config-hub-ready .ks-config-hub-header h1:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 .ks-online-v2-link-grid,
 .ks-online-v2-profile-grid {
     display: grid;
