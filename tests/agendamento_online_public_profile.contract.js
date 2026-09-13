@@ -9,6 +9,8 @@ const addonCss = fs.readFileSync('styles/configuracoes_agendamento_online_perfil
 const layout = fs.readFileSync('src/admin/configuracoes_agendamento_online_layout-1.0.0.js', 'utf8');
 const layoutCss = fs.readFileSync('styles/configuracoes_agendamento_online_layout-1.0.0.css', 'utf8');
 const glassCss = fs.readFileSync('styles/navigation_glass-1.0.0.css', 'utf8');
+const designNavigation = fs.readFileSync('styles/design_navigation.css', 'utf8');
+const designSystem = fs.readFileSync('src/core/design_system-1.20.1.js', 'utf8');
 const bootstrap = fs.readFileSync('src/admin/access_admin-1.0.0.js', 'utf8');
 const rootHtml = fs.readFileSync('index.html', 'utf8');
 const htaccess = fs.readFileSync('.htaccess', 'utf8');
@@ -80,11 +82,45 @@ assert(layoutCss.includes('@media (max-width: 430px)'),
   'horários e ações devem possuir tratamento específico para celulares estreitos');
 assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout administrativo deve usar apenas tokens do KDS');
 
-assert(glassCss.includes('backdrop-filter: blur(18px)') && glassCss.includes('-webkit-backdrop-filter: blur(18px)'),
-  'menu lateral deve possuir glass real com fallback WebKit');
-assert(glassCss.includes('rgba(21, 56, 64') && glassCss.includes('rgba(23, 59, 69'),
-  'glass deve preservar a família de cor petróleo atual');
+assert(glassCss.includes('position: fixed') && !glassCss.includes('position: relative'),
+  'camada glass não pode anular o position fixed estrutural do sidebar');
+assert(glassCss.includes('backdrop-filter: blur(30px)') && glassCss.includes('-webkit-backdrop-filter: blur(30px)'),
+  'painel desktop deve manter blur real com suporte WebKit');
+assert(glassCss.includes('rgba(10, 63, 72') && glassCss.includes('rgba(6, 47, 56'),
+  'liquid glass deve preservar a família petróleo/teal sem ficar branco ou lavado');
+assert(glassCss.includes('background: transparent') && glassCss.includes('box-shadow: none'),
+  'itens internos devem permanecer flat e deixar o material glass no painel inteiro');
 assert(glassCss.includes('@supports not'), 'glass deve possuir fallback para navegadores sem backdrop-filter');
+
+assert(designNavigation.includes('width:min(86vw,360px)') && designNavigation.includes('max-width:calc(100vw - 44px)'),
+  'drawer mobile deve usar largura previsível sem ocupar ou ultrapassar a viewport inteira');
+assert(designNavigation.includes('height:100svh') && designNavigation.includes('height:100dvh'),
+  'drawer mobile deve acompanhar a viewport útil do Safari/iPhone');
+assert(designNavigation.includes('transform:translate3d(-104%,0,0)') && designNavigation.includes('transform:translate3d(0,0,0)'),
+  'drawer deve ter estados fechado e aberto completos, sem posição intermediária');
+assert(designNavigation.includes('visibility:hidden') && designNavigation.includes('pointer-events:none'),
+  'estado fechado deve sincronizar visibilidade e interação');
+assert(designNavigation.includes('.ks-nav-backdrop') && designNavigation.includes('opacity:0') && designNavigation.includes('pointer-events:none'),
+  'backdrop deve permanecer montado e alternar por estado visual/interação');
+assert(!designNavigation.includes('body.ks-design-ready.ks-nav-open .ks-nav-backdrop{display:block}'),
+  'drawer não deve depender de display toggle no backdrop durante restauração do Safari');
+assert(designNavigation.includes('env(safe-area-inset-top)') && designNavigation.includes('env(safe-area-inset-bottom)'),
+  'drawer deve respeitar safe areas do iPhone');
+assert(!designNavigation.includes('html.ks-nav-open body.ks-design-ready #ks_sidebar'),
+  'estado visual do drawer deve ter uma única fonte de verdade no body');
+
+assert(designSystem.includes('KineSysMobileDrawerHardening_v1300'),
+  'design system deve instalar o hardening do drawer mobile existente');
+assert(designSystem.includes("window.addEventListener('pageshow',reset)") && designSystem.includes("window.addEventListener('popstate',reset)"),
+  'drawer deve normalizar estado após bfcache e histórico do Safari');
+assert(designSystem.includes("window.addEventListener('orientationchange'") && designSystem.includes("window.addEventListener('resize'"),
+  'drawer deve normalizar estado após rotação e mudança de breakpoint');
+assert(designSystem.includes("document.documentElement.classList.toggle('ks-nav-open'") && designSystem.includes("document.body.classList.toggle('ks-nav-open'"),
+  'hardening deve limpar estado residual tanto do html quanto do body');
+assert(designSystem.includes('sidebar.inert=!shouldOpen'),
+  'sidebar fechado deve sair da navegação por foco no mobile');
+assert(designSystem.includes('list.scrollTop=0'),
+  'cada abertura deve começar no topo e não reutilizar scroll parcial restaurado pelo Safari');
 
 assert(bootstrap.includes('configuracoes_agendamento_online_perfil_publico-1.0.0.js'),
   'bootstrap deve carregar o módulo V2 de perfil público');
@@ -101,23 +137,27 @@ assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agen
 assert(!rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
   'HTML raiz não pode depender da revisão histórica do bootstrap');
 assert(rootHtml.includes('styles/design_navigation.css?v=20260913-glass-r3'),
-  'HTML raiz deve versionar diretamente a folha estrutural da navegação');
+  'HTML raiz deve manter referência conhecida da folha estrutural antes da substituição de entrega');
 assert(rootHtml.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r3'),
-  'HTML raiz deve carregar diretamente o efeito glass sem depender de JavaScript ou mod_substitute');
+  'HTML raiz deve manter referência conhecida do glass antes da substituição de entrega');
+assert(rootHtml.includes('src/core/design_system-1.20.1.js?v=20260910-phase4e-r1'),
+  'HTML raiz deve manter referência conhecida do design system antes da substituição de entrega');
 assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1'),
   'servidor deve manter fallback de compatibilidade para HTML legado');
-assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css'),
-  'servidor deve revalidar explicitamente o estilo glass da navegação');
-assert(htaccess.includes('design_navigation\\.css'),
-  'servidor deve revalidar a folha estrutural da navegação junto com o glass');
+assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css') && htaccess.includes('design_navigation\\.css'),
+  'servidor deve revalidar as folhas estrutural e glass da navegação');
+assert(htaccess.includes('design_system-1\\.20\\.1\\.js'),
+  'servidor deve revalidar o JavaScript do drawer mobile');
 assert(htaccess.includes('Header always set Clear-Site-Data "\\"cache\\""'),
-  'entrega deve limpar somente o cache uma vez para remover bootstrap legado');
+  'entrega deve limpar somente o cache uma vez para remover assets antigos');
 assert(!htaccess.includes('Clear-Site-Data "\\"cookies\\"') && !htaccess.includes('Clear-Site-Data "\\"storage\\"'),
   'reset de entrega não pode limpar sessão, cookies ou armazenamento local');
-assert(htaccess.includes('kinesys_delivery_config_agenda_r2_seen=1') && htaccess.includes('env=!kinesys_delivery_config_agenda_r2_seen'),
-  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão');
-assert(htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r2'),
-  'resposta HTML deve possuir fallback explícito para carregar o glass com revisão nova');
+assert(htaccess.includes('kinesys_delivery_mobile_drawer_r9_seen=1') && htaccess.includes('env=!kinesys_delivery_mobile_drawer_r9_seen'),
+  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão do drawer');
+assert(htaccess.includes('src/core/design_system-1.20.1.js?v=20260913-drawer-r9'),
+  'resposta HTML deve entregar revisão inequívoca do lifecycle mobile');
+assert(htaccess.includes('styles/design_navigation.css?v=20260913-drawer-r9') && htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-drawer-r9'),
+  'resposta HTML deve entregar revisões inequívocas da estrutura e do liquid glass');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
