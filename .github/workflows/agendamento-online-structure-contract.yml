@@ -6,6 +6,7 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
@@ -14,6 +15,7 @@ on:
       - 'tests/agendamento_online_structure.contract.js'
       - 'tests/agendamento_online_admin_config.contract.js'
       - 'tests/agendamento_online_public_portal.contract.js'
+      - 'tests/agendamento_online_booking.contract.js'
       - '.github/workflows/agendamento-online-structure-contract.yml'
   push:
     branches: [main]
@@ -21,6 +23,7 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
@@ -29,6 +32,7 @@ on:
       - 'tests/agendamento_online_structure.contract.js'
       - 'tests/agendamento_online_admin_config.contract.js'
       - 'tests/agendamento_online_public_portal.contract.js'
+      - 'tests/agendamento_online_booking.contract.js'
       - '.github/workflows/agendamento-online-structure-contract.yml'
 
 jobs:
@@ -48,6 +52,9 @@ jobs:
       - name: Public scheduling portal contract
         shell: cmd
         run: node tests\agendamento_online_public_portal.contract.js
+      - name: Atomic online booking contract
+        shell: cmd
+        run: node tests\agendamento_online_booking.contract.js
       - name: JavaScript syntax
         shell: cmd
-        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico.js && node --check tests\agendamento_online_public_portal.contract.js
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_booking.contract.js
