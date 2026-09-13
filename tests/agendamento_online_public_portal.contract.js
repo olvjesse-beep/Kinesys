@@ -17,14 +17,16 @@ assert(html.includes('ks_public_profile_insurances') && html.includes('Convênio
 assert(html.includes('agendamento-publico-v2.js?v=20260913-v3'),
   'portal deve carregar explicitamente o controller V2');
 
-assert(css.includes('env(safe-area-inset-bottom)'), 'portal deve proteger safe-area no celular');
+assert(css.includes('env(safe-area-inset-bottom)'), 'portal deve proteger safe-area inferior no celular');
+assert(css.includes('env(safe-area-inset-left)') && css.includes('env(safe-area-inset-right)'),
+  'portal deve proteger as laterais do notch também em orientação paisagem');
 assert(css.includes('min-height:44px') || css.includes('min-height: 44px'), 'controles touch devem manter alvo confortável');
 assert(css.includes('font-size:16px'), 'campos mobile devem manter 16px para legibilidade e evitar zoom automático');
 assert(css.includes('var(--kds-font-body)'), 'portal deve reutilizar a escala tipográfica oficial do KDS');
 assert(css.includes('grid-template-columns:minmax(0,1fr) minmax(360px,430px)'),
   'desktop deve manter perfil do profissional e agenda em duas colunas proporcionais');
-assert(css.includes('@media (max-width:820px)') && css.includes('.ks-public-booking-panel{order:1') && css.includes('.ks-public-profile-panel{order:2'),
-  'em tablet/celular a ação de agendar deve vir antes do perfil longo do profissional');
+assert(css.includes('@media (max-width:900px)') && css.includes('.ks-public-booking-panel{order:1') && css.includes('.ks-public-profile-panel{order:2'),
+  'em tablet/celular inclusive paisagem a ação de agendar deve vir antes do perfil longo do profissional');
 assert(css.includes('@media (max-width:620px)') && css.includes('.ks-public-form{grid-template-columns:1fr}'),
   'formulário público deve refluír para uma coluna no celular');
 assert(css.includes('@media (max-width:430px)') && css.includes('flex-wrap:wrap') && css.includes('.ks-public-clinic{width:100%'),
