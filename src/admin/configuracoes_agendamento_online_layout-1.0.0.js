@@ -261,7 +261,6 @@
         if (!refs) return false;
 
         garantirCSS(STYLE_PATH, ASSET_REVISION);
-        garantirCSS(GLASS_STYLE_PATH, '20260913-glass-r1');
         ajustarHubConfiguracoes();
         removerConfiguracaoDaAgendaOperacional();
 
@@ -302,6 +301,7 @@
         return false;
     }
 
+    garantirCSS(GLASS_STYLE_PATH, '20260913-glass-r1');
     removerConfiguracaoDaAgendaOperacional();
     document.addEventListener('kinesys:tela-ativada', removerConfiguracaoDaAgendaOperacional);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onOpen, { once: true });
