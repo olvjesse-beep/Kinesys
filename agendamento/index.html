@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#F4F7F6">
+  <title>Agendamento online</title>
+  <link rel="stylesheet" href="../styles/design_tokens.css?v=20260912-online-r1">
+  <link rel="stylesheet" href="./agendamento-publico.css?v=20260912-r1">
+</head>
+<body>
+  <main class="ks-public-page" id="ks_public_app">
+    <header class="ks-public-header">
+      <a class="ks-public-brand" href="../" aria-label="KineSys">
+        <span class="ks-public-brand-name">KINE<span>SYS</span></span>
+        <small>Agendamento online</small>
+      </a>
+      <div id="ks_public_clinica" class="ks-public-clinic" aria-live="polite"></div>
+    </header>
+
+    <section id="ks_public_loading" class="ks-public-state" aria-live="polite">
+      <div class="ks-public-loader" aria-hidden="true"></div>
+      <h1>Carregando agenda</h1>
+      <p>Consultando os horários disponíveis da clínica.</p>
+    </section>
+
+    <section id="ks_public_closed" class="ks-public-state" hidden>
+      <div class="ks-public-state-mark" aria-hidden="true">×</div>
+      <h1 id="ks_public_closed_title">Agendamento online indisponível</h1>
+      <p id="ks_public_closed_message">Entre em contato com a clínica para agendar.</p>
+    </section>
+
+    <section id="ks_public_error" class="ks-public-state" hidden>
+      <div class="ks-public-state-mark" aria-hidden="true">!</div>
+      <h1>Não foi possível abrir a agenda</h1>
+      <p id="ks_public_error_message">Verifique sua conexão e tente novamente.</p>
+      <button type="button" class="ks-public-btn ks-public-btn-primary" id="ks_public_retry">Tentar novamente</button>
+    </section>
+
+    <div id="ks_public_flow" class="ks-public-flow" hidden>
+      <div class="ks-public-intro">
+        <h1 id="ks_public_title">Agende seu atendimento</h1>
+        <p id="ks_public_description"></p>
+      </div>
+
+      <nav class="ks-public-progress" aria-label="Etapas do agendamento">
+        <button type="button" data-progress="procedimento" aria-current="step"><span>1</span><strong>Atendimento</strong></button>
+        <button type="button" data-progress="profissional" disabled><span>2</span><strong>Profissional</strong></button>
+        <button type="button" data-progress="horario" disabled><span>3</span><strong>Horário</strong></button>
+      </nav>
+
+      <section class="ks-public-step" id="ks_public_step_procedimento" data-step="procedimento">
+        <div class="ks-public-step-head">
+          <h2>Qual atendimento você procura?</h2>
+          <p>Escolha um serviço para ver os profissionais disponíveis.</p>
+        </div>
+        <div id="ks_public_procedimentos" class="ks-public-options"></div>
+      </section>
+
+      <section class="ks-public-step" id="ks_public_step_profissional" data-step="profissional" hidden>
+        <button type="button" class="ks-public-back" data-voltar="procedimento">← Trocar atendimento</button>
+        <div class="ks-public-step-head">
+          <h2>Escolha o profissional</h2>
+          <p>Mostramos somente profissionais publicados pela clínica para esse atendimento.</p>
+        </div>
+        <div id="ks_public_profissionais" class="ks-public-options"></div>
+      </section>
+
+      <section class="ks-public-step" id="ks_public_step_horario" data-step="horario" hidden>
+        <button type="button" class="ks-public-back" data-voltar="profissional">← Trocar profissional</button>
+        <div class="ks-public-step-head">
+          <h2>Escolha a data e o horário</h2>
+          <p id="ks_public_slot_context">Os horários abaixo já consideram a duração do atendimento e a agenda do profissional.</p>
+        </div>
+        <div id="ks_public_slots_loading" class="ks-public-inline-state" hidden>
+          <div class="ks-public-loader" aria-hidden="true"></div><span>Consultando horários livres…</span>
+        </div>
+        <div id="ks_public_sem_horarios" class="ks-public-empty" hidden>
+          <strong>Nenhum horário disponível agora</strong>
+          <span>Tente outro profissional ou volte mais tarde.</span>
+        </div>
+        <div id="ks_public_datas" class="ks-public-dates" role="list"></div>
+        <div id="ks_public_horarios_area" class="ks-public-times-area" hidden>
+          <h3 id="ks_public_data_escolhida"></h3>
+          <div id="ks_public_horarios" class="ks-public-times"></div>
+        </div>
+      </section>
+
+      <aside id="ks_public_selection" class="ks-public-selection" hidden aria-live="polite">
+        <div>
+          <span>Horário selecionado</span>
+          <strong id="ks_public_selection_title"></strong>
+          <small id="ks_public_selection_meta"></small>
+        </div>
+        <button type="button" class="ks-public-btn ks-public-btn-primary" disabled aria-disabled="true">Confirmação em preparação</button>
+      </aside>
+    </div>
+  </main>
+
+  <script src="./agendamento-publico.js?v=20260912-r1" defer></script>
+</body>
+</html>
