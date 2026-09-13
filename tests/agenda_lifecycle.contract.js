@@ -9,7 +9,9 @@ const mobileCss=fs.readFileSync('styles/agenda_mobile-1.0.0.css','utf8');
 const htaccess=fs.readFileSync('.htaccess','utf8');
 
 assert.ok(loader.indexOf('src/agenda/agenda-1.20.0.js')<loader.indexOf('src/agenda/agenda_lifecycle-1.0.0.js'),'Agenda lifecycle must load after the Agenda module');
-assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js/,'Agenda lifecycle must remain lazy with the Agenda bundle');
+assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js\?v=20260913-mobile-r2/,'Agenda lifecycle must use the current mobile cache revision');
+assert.match(loader,/styles\/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda mobile CSS must be part of the lazy Agenda bundle');
+assert.match(loader,/ASSET_REVISION=['"]20260913-agenda-mobile-r16['"]/,'screen loader must force a fresh Agenda mobile asset revision');
 
 assert.match(lifecycle,/function activate\(/,'Agenda lifecycle must expose activate');
 assert.match(lifecycle,/function suspend\(/,'Agenda lifecycle must expose suspend');
@@ -24,7 +26,8 @@ assert.match(lifecycle,/removeEventListener\('resize',aoResize\)/,'Agenda resize
 assert.match(lifecycle,/document\.visibilityState!==['"]visible['"]/,'Agenda visual work must remain suspended while document is hidden');
 assert.match(lifecycle,/iniciarRelogioAgenda=iniciarRelogioAgendaLifecycle/,'Agenda lifecycle must replace only the visual clock starter');
 
-assert.match(lifecycle,/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r1/,'Agenda lifecycle must load the dedicated mobile stylesheet');
+assert.match(lifecycle,/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda lifecycle fallback must point to the current mobile stylesheet');
+assert.match(lifecycle,/link\[href\*=["']styles\/agenda_mobile-1\.0\.0\.css["']\]/,'Agenda lifecycle must not duplicate a stylesheet already loaded by the screen bundle');
 assert.match(lifecycle,/function sincronizarEstadoVisualAgenda\(/,'Agenda lifecycle must synchronize the global shell after lazy activation');
 assert.match(lifecycle,/document\.body\.dataset\.tela=['"]tela_agenda['"]/,'Agenda activation must synchronize body[data-tela]');
 assert.match(lifecycle,/ks_page_title[\s\S]*textContent=['"]Agenda['"]/,'Agenda activation must repair the global page title after async lazy navigation');
@@ -46,8 +49,10 @@ assert.match(mobileCss,/font-size:16px/,'mobile form fields must avoid iOS zoom 
 assert.doesNotMatch(mobileCss,/font-size:(?:11|12)px/,'Agenda mobile must not reintroduce unreadable microtype');
 assert.match(mobileCss,/#modal_agendamento \.actions[\s\S]*position:sticky/,'mobile appointment actions must remain reachable while the modal scrolls');
 assert.match(mobileCss,/env\(safe-area-inset-bottom\)/,'mobile Agenda must respect the iPhone bottom safe area');
-assert.match(htaccess,/agenda_lifecycle-1\.0\.0\.js/,'Agenda lifecycle must remain revalidated in production');
-assert.match(htaccess,/agenda_mobile-1\.0\.0\.css/,'Agenda mobile stylesheet must remain revalidated in production');
+assert.match(htaccess,/screen_loader-1\.25\.0\.js/,'screen loader must be revalidated in production');
+assert.match(htaccess,/kinesys_delivery_agenda_mobile_r16/,'Safari cache reset must use a new one-time Agenda mobile revision');
+assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260913-agenda-mobile-r16/,'server fallback must deliver an unequivocally fresh screen loader URL');
+assert.match(htaccess,/styles\/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'server fallback must directly inject the current Agenda mobile stylesheet');
 
 const syncStart=agenda.indexOf('function configurarSincronizacaoConfiavelAgenda()');
 const syncEnd=agenda.indexOf('async function inicializarAgenda()',syncStart);
@@ -56,4 +61,4 @@ const syncBlock=agenda.slice(syncStart,syncEnd);
 assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact in Phase 2A');
 assert.doesNotMatch(lifecycle,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'visual lifecycle must not interfere with reliable pending sync');
 
-console.log('Agenda lifecycle/mobile contract OK: readable weekly swipe, fluid day view, sticky time axis, touch targets, iPhone-safe modal and synchronized shell.');
+console.log('Agenda lifecycle/mobile contract OK: bundle delivery, Safari cache revision, readable weekly swipe, fluid day view, sticky time axis, touch targets, iPhone-safe modal and synchronized shell.');

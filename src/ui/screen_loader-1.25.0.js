@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.4-phase4d';
-    const ASSET_REVISION='20260912-runtime-r1';
+    const ASSET_REVISION='20260913-agenda-mobile-r16';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -67,11 +67,12 @@
         tela_agenda:Object.freeze({
             id:'agenda',
             styles:Object.freeze([
-                'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1'
+                'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1',
+                'styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2'
             ]),
             scripts:Object.freeze([
                 'src/agenda/agenda-1.20.0.js?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
-                'src/agenda/agenda_lifecycle-1.0.0.js?v=20260911-phase2a-r1'
+                'src/agenda/agenda_lifecycle-1.0.0.js?v=20260913-mobile-r2'
             ])
         })
     });
