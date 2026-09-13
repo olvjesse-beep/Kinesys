@@ -26,7 +26,8 @@ assert(edge.includes('config?.ativo') || edge.includes('config.ativo'), 'frontei
 assert(edge.includes('agendamento_online_ativo'), 'fronteira pública deve respeitar publicação explícita');
 assert(edge.includes('disponibilidade_agendamento_online'), 'slots devem respeitar somente períodos publicados online');
 assert(edge.includes('bloqueios_agenda'), 'slots devem respeitar bloqueios da Agenda');
-assert(edge.includes('OCUPA_HORARIO'), 'slots devem respeitar apenas status que ocupam horário na consulta pública');
+assert(edge.includes('.neq("status", "cancelado")') && !edge.includes('OCUPA_HORARIO'),
+  'slots públicos devem tratar todo agendamento não cancelado como indisponível, igual à constraint final');
 assert(edge.includes('feriadoAgenda'), 'slots devem respeitar feriados da Agenda consolidada');
 assert(!edge.includes('.from("pacientes")') && !edge.includes(".from('pacientes')"),
   'Edge pública não deve ler cadastro de pacientes para o navegador');
