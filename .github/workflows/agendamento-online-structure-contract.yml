@@ -8,6 +8,7 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RATE_LIMIT_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
@@ -26,6 +27,7 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql'
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RATE_LIMIT_20260912.sql'
+      - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
@@ -59,4 +61,4 @@ jobs:
         run: node tests\agendamento_online_booking.contract.js
       - name: JavaScript syntax
         shell: cmd
-        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_booking.contract.js
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico.js && node --check tests\agendamento_online_structure.contract.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_booking.contract.js
