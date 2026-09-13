@@ -177,20 +177,38 @@
         abrir(botao.dataset.equipeRedefinir);
     }
 
+    function telaConfiguracoesAtiva(){
+        return !!document.getElementById('tela_configuracoes')?.classList.contains('ativa');
+    }
+
+    function prepararEntradaAgendaConfiguracoes(){
+        try{sessionStorage.setItem('kinesys_config_tab','online');}catch(_){}
+    }
+
+    function ativarConfiguracoesAgenda(){
+        if(!telaConfiguracoesAtiva()||!ehMaster())return false;
+        prepararEntradaAgendaConfiguracoes();
+        const configuracoes=window.KineSysConfiguracoesAgendaOnline;
+        configuracoes?.onOpen?.();
+        configuracoes?.abrirAba?.('online');
+        window.KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.();
+        return !!configuracoes;
+    }
+
     function carregarLayoutAgendaOnline(){
         if(window.KineSysConfiguracoesAgendaOnlineLayout){
-            window.KineSysConfiguracoesAgendaOnlineLayout.onOpen?.();
+            ativarConfiguracoesAgenda();
             return;
         }
         const existente=document.querySelector(`script[src^="${ONLINE_LAYOUT_SCRIPT}"]`);
         if(existente){
-            existente.addEventListener('load',()=>window.KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.(),{once:true});
+            existente.addEventListener('load',ativarConfiguracoesAgenda,{once:true});
             return;
         }
         const script=document.createElement('script');
         script.src=`${ONLINE_LAYOUT_SCRIPT}?v=${ONLINE_LAYOUT_REVISION}`;
         script.async=false;
-        script.addEventListener('load',()=>window.KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.());
+        script.addEventListener('load',ativarConfiguracoesAgenda);
         document.body.appendChild(script);
     }
 
@@ -216,8 +234,12 @@
             carregarPerfilPublicoAgendaOnline();
             return;
         }
-        if(document.querySelector(`script[src^="${ONLINE_CONFIG_SCRIPT}"]`)){
-            carregarPerfilPublicoAgendaOnline();
+        const existente=document.querySelector(`script[src^="${ONLINE_CONFIG_SCRIPT}"]`);
+        if(existente){
+            existente.addEventListener('load',()=>{
+                carregarPerfilPublicoAgendaOnline();
+                ativarConfiguracoesAgenda();
+            },{once:true});
             return;
         }
         const script=document.createElement('script');
@@ -225,28 +247,33 @@
         script.async=false;
         script.addEventListener('load',()=>{
             carregarPerfilPublicoAgendaOnline();
-            const tela=document.getElementById('tela_configuracoes');
-            if(tela?.classList.contains('ativa'))window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
+            ativarConfiguracoesAgenda();
         });
         document.body.appendChild(script);
     }
 
     function encaminharAberturaConfiguracoes(event){
         if(!event.target?.closest?.('#menu_configuracoes a'))return;
+        prepararEntradaAgendaConfiguracoes();
         carregarConfiguracoesAgendaOnline();
-        setTimeout(()=>window.KineSysConfiguracoesAgendaOnline?.onOpen?.(),0);
+        setTimeout(()=>{
+            ativarConfiguracoesAgenda();
+            if(!window.KineSysConfiguracoesAgendaOnlineLayout)carregarPerfilPublicoAgendaOnline();
+        },0);
     }
 
     function observarConfiguracoesAtivas(){
         const tela=document.getElementById('tela_configuracoes');
         if(!tela)return;
+        let estavaAtiva=tela.classList.contains('ativa');
         const observer=new MutationObserver(()=>{
-            if(tela.classList.contains('ativa')){
+            const estaAtiva=tela.classList.contains('ativa');
+            if(estaAtiva&&!estavaAtiva){
+                prepararEntradaAgendaConfiguracoes();
                 carregarConfiguracoesAgendaOnline();
-                carregarPerfilPublicoAgendaOnline();
-                window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
-                window.KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.();
+                setTimeout(ativarConfiguracoesAgenda,0);
             }
+            estavaAtiva=estaAtiva;
         });
         observer.observe(tela,{attributes:true,attributeFilter:['class']});
     }
