@@ -106,6 +106,8 @@ assert(!designNavigation.includes('body.ks-design-ready.ks-nav-open .ks-nav-back
   'drawer não deve depender de display toggle no backdrop durante restauração do Safari');
 assert(designNavigation.includes('env(safe-area-inset-top)') && designNavigation.includes('env(safe-area-inset-bottom)'),
   'drawer deve respeitar safe areas do iPhone');
+assert(!designNavigation.includes('html.ks-nav-open body.ks-design-ready #ks_sidebar'),
+  'estado visual do drawer deve ter uma única fonte de verdade no body');
 
 assert(designSystem.includes('KineSysMobileDrawerHardening_v1300'),
   'design system deve instalar o hardening do drawer mobile existente');
@@ -114,7 +116,7 @@ assert(designSystem.includes("window.addEventListener('pageshow',reset)") && des
 assert(designSystem.includes("window.addEventListener('orientationchange'") && designSystem.includes("window.addEventListener('resize'"),
   'drawer deve normalizar estado após rotação e mudança de breakpoint');
 assert(designSystem.includes("document.documentElement.classList.toggle('ks-nav-open'") && designSystem.includes("document.body.classList.toggle('ks-nav-open'"),
-  'estado visual e scroll lock do drawer devem ser sincronizados no documento');
+  'hardening deve limpar estado residual tanto do html quanto do body');
 assert(designSystem.includes('sidebar.inert=!shouldOpen'),
   'sidebar fechado deve sair da navegação por foco no mobile');
 assert(designSystem.includes('list.scrollTop=0'),
@@ -135,23 +137,27 @@ assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agen
 assert(!rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
   'HTML raiz não pode depender da revisão histórica do bootstrap');
 assert(rootHtml.includes('styles/design_navigation.css?v=20260913-glass-r3'),
-  'HTML raiz deve versionar diretamente a folha estrutural da navegação');
+  'HTML raiz deve manter referência conhecida da folha estrutural antes da substituição de entrega');
 assert(rootHtml.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r3'),
-  'HTML raiz deve carregar diretamente o efeito glass sem depender de JavaScript ou mod_substitute');
+  'HTML raiz deve manter referência conhecida do glass antes da substituição de entrega');
+assert(rootHtml.includes('src/core/design_system-1.20.1.js?v=20260910-phase4e-r1'),
+  'HTML raiz deve manter referência conhecida do design system antes da substituição de entrega');
 assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1'),
   'servidor deve manter fallback de compatibilidade para HTML legado');
-assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css'),
-  'servidor deve revalidar explicitamente o estilo glass da navegação');
-assert(htaccess.includes('design_navigation\\.css'),
-  'servidor deve revalidar a folha estrutural da navegação junto com o glass');
+assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css') && htaccess.includes('design_navigation\\.css'),
+  'servidor deve revalidar as folhas estrutural e glass da navegação');
+assert(htaccess.includes('design_system-1\\.20\\.1\\.js'),
+  'servidor deve revalidar o JavaScript do drawer mobile');
 assert(htaccess.includes('Header always set Clear-Site-Data "\\"cache\\""'),
-  'entrega deve limpar somente o cache uma vez para remover bootstrap legado');
+  'entrega deve limpar somente o cache uma vez para remover assets antigos');
 assert(!htaccess.includes('Clear-Site-Data "\\"cookies\\"') && !htaccess.includes('Clear-Site-Data "\\"storage\\"'),
   'reset de entrega não pode limpar sessão, cookies ou armazenamento local');
-assert(htaccess.includes('kinesys_delivery_config_agenda_r2_seen=1') && htaccess.includes('env=!kinesys_delivery_config_agenda_r2_seen'),
-  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão');
-assert(htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r2'),
-  'resposta HTML deve possuir fallback explícito para carregar o glass com revisão nova');
+assert(htaccess.includes('kinesys_delivery_mobile_drawer_r9_seen=1') && htaccess.includes('env=!kinesys_delivery_mobile_drawer_r9_seen'),
+  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão do drawer');
+assert(htaccess.includes('src/core/design_system-1.20.1.js?v=20260913-drawer-r9'),
+  'resposta HTML deve entregar revisão inequívoca do lifecycle mobile');
+assert(htaccess.includes('styles/design_navigation.css?v=20260913-drawer-r9') && htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-drawer-r9'),
+  'resposta HTML deve entregar revisões inequívocas da estrutura e do liquid glass');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
