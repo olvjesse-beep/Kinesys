@@ -2,6 +2,7 @@ const fs = require('fs');
 const assert = require('assert');
 
 const migration = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_CONFIGURACAO_ADMIN_20260912.sql', 'utf8');
+const hardening = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql', 'utf8');
 const js = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const css = fs.readFileSync('styles/configuracoes_agendamento_online-1.0.0.css', 'utf8');
 const adminBootstrap = fs.readFileSync('src/admin/access_admin-1.0.0.js', 'utf8');
@@ -14,6 +15,8 @@ assert(migration.includes('add column if not exists agendamento_online_ordem int
   'ordem pública de profissionais deve ser explícita');
 assert(!/grant\s+[^;]+\s+to\s+anon\b/i.test(migration),
   'configuração administrativa não pode conceder acesso de tabela a anon');
+assert((hardening.match(/in \('MASTER', 'MASTER_FEM'\)/g) || []).length >= 4,
+  'publicação semanal deve permanecer gravável somente pela administração');
 
 assert(js.includes("from('configuracoes_agendamento_online')"),
   'aba deve persistir configuração administrativa no Supabase');
@@ -33,8 +36,15 @@ assert(js.includes('Para abrir o portal, publique pelo menos um profissional.'),
   'portal ativo deve exigir ao menos um profissional publicado');
 assert(js.includes('Para abrir o portal, publique pelo menos um procedimento.'),
   'portal ativo deve exigir ao menos um procedimento publicado');
-assert(js.includes('Para abrir o portal, publique pelo menos um período de atendimento.'),
-  'portal ativo deve exigir disponibilidade publicada');
+assert(js.includes('Para abrir o portal, publique pelo menos um período para um profissional publicado.'),
+  'portal ativo deve exigir disponibilidade de profissional efetivamente publicado');
+assert(js.includes('não possui profissional publicado habilitado'),
+  'procedimento restrito deve exigir ao menos um profissional publicado compatível');
+assert(js.includes('const anterior = state.profissionalSelecionado') && js.includes('evento.target.value = anterior'),
+  'troca de profissional não deve descartar intervalos inválidos ainda em edição');
+assert(js.includes("await salvarConfiguracaoPortal(client, { ...cfg, ativo: false })") &&
+       js.includes('if (cfg.ativo) await salvarConfiguracaoPortal(client, cfg)'),
+  'salvamento deve fechar o portal antes das dependências e reativar somente ao final');
 assert(js.includes('window.KineSysConfiguracoesAgendaOnline'),
   'módulo deve expor contrato estável para abertura/refresh');
 assert(!js.includes('setInterval('),
