@@ -84,10 +84,14 @@ assert(!/#[0-9a-f]{3,8}\b/i.test(layoutCss), 'layout administrativo deve usar ap
 
 assert(glassCss.includes('position: fixed') && !glassCss.includes('position: relative'),
   'camada glass não pode anular o position fixed estrutural do sidebar');
-assert(glassCss.includes('backdrop-filter: blur(30px)') && glassCss.includes('-webkit-backdrop-filter: blur(30px)'),
-  'painel desktop deve manter blur real com suporte WebKit');
-assert(glassCss.includes('rgba(10, 63, 72') && glassCss.includes('rgba(6, 47, 56'),
-  'liquid glass deve preservar a família petróleo/teal sem ficar branco ou lavado');
+assert(glassCss.includes('backdrop-filter: blur(14px) saturate(155%) contrast(105%)') && glassCss.includes('-webkit-backdrop-filter: blur(14px) saturate(155%) contrast(105%)'),
+  'clear liquid glass deve usar blur moderado e preservar transparência óptica com suporte WebKit');
+assert(glassCss.includes('--ks-clear-glass-base: rgba(7, 61, 70, .46)') && glassCss.includes('--ks-clear-glass-base-deep: rgba(5, 46, 56, .54)'),
+  'clear liquid glass deve preservar a família petróleo/teal com transparência real');
+assert(glassCss.includes('radial-gradient') && glassCss.includes('--ks-clear-glass-specular') && glassCss.includes('border-right: 1px solid var(--ks-clear-glass-edge)'),
+  'material deve construir profundidade por reflexão especular e borda óptica, não por névoa branca');
+assert(glassCss.includes('backdrop-filter: blur(12px) saturate(158%) contrast(106%)'),
+  'mobile deve usar blur ainda mais contido para manter leitura do fundo através do vidro');
 assert(glassCss.includes('background: transparent') && glassCss.includes('box-shadow: none'),
   'itens internos devem permanecer flat e deixar o material glass no painel inteiro');
 assert(glassCss.includes('@supports not'), 'glass deve possuir fallback para navegadores sem backdrop-filter');
@@ -152,12 +156,14 @@ assert(htaccess.includes('Header always set Clear-Site-Data "\\"cache\\""'),
   'entrega deve limpar somente o cache uma vez para remover assets antigos');
 assert(!htaccess.includes('Clear-Site-Data "\\"cookies\\"') && !htaccess.includes('Clear-Site-Data "\\"storage\\"'),
   'reset de entrega não pode limpar sessão, cookies ou armazenamento local');
-assert(htaccess.includes('kinesys_delivery_mobile_drawer_r9_seen=1') && htaccess.includes('env=!kinesys_delivery_mobile_drawer_r9_seen'),
-  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão do drawer');
+assert(htaccess.includes('kinesys_delivery_clear_glass_r10_seen=1') && htaccess.includes('env=!kinesys_delivery_clear_glass_r10_seen'),
+  'limpeza de cache deve ser protegida para ocorrer apenas na primeira abertura da revisão visual');
 assert(htaccess.includes('src/core/design_system-1.20.1.js?v=20260913-drawer-r9'),
-  'resposta HTML deve entregar revisão inequívoca do lifecycle mobile');
-assert(htaccess.includes('styles/design_navigation.css?v=20260913-drawer-r9') && htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-drawer-r9'),
-  'resposta HTML deve entregar revisões inequívocas da estrutura e do liquid glass');
+  'resposta HTML deve manter a revisão estável do lifecycle mobile');
+assert(htaccess.includes('styles/design_navigation.css?v=20260913-drawer-r9'),
+  'resposta HTML deve manter a revisão estável da estrutura do drawer');
+assert(htaccess.includes('styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10'),
+  'resposta HTML deve entregar revisão inequívoca do clear liquid glass');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
