@@ -12,6 +12,7 @@ on:
       - 'styles/design_liquid_glass-1.0.0.css'
       - 'styles/navigation_glass-1.0.0.css'
       - 'styles/login_access-1.18.0.css'
+      - 'tests/system_liquid_glass.contract.js'
       - '.github/workflows/impeccable-detail-audit.yml'
   push:
     paths:
@@ -24,6 +25,7 @@ on:
       - 'styles/design_liquid_glass-1.0.0.css'
       - 'styles/navigation_glass-1.0.0.css'
       - 'styles/login_access-1.18.0.css'
+      - 'tests/system_liquid_glass.contract.js'
       - '.github/workflows/impeccable-detail-audit.yml'
   workflow_dispatch:
 
@@ -43,6 +45,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      - name: System Liquid Glass contract
+        run: node tests/system_liquid_glass.contract.js
 
       - name: Measure KineSys visual findings
         shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
