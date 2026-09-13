@@ -8,11 +8,11 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20260913-online-v6';
+    const ONLINE_CONFIG_REVISION='20260913-config-agenda-r1';
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
-    const ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v6';
+    const ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agenda-r1';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
-    const ONLINE_LAYOUT_REVISION='20260913-online-v6';
+    const ONLINE_LAYOUT_REVISION='20260913-config-agenda-r1';
     let alvoAtual=null;
     let busy=false;
 
