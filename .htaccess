@@ -39,3 +39,5 @@
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
 # kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
 # styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
+
+# Deploy trigger 2026-09-13 18:56 BRT — força sincronização Hostinger sem alterar runtime.
