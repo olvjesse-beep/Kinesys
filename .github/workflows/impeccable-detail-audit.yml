@@ -1,6 +1,12 @@
 name: Impeccable detailed visual audit
 
 on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'styles/**'
+      - 'DESIGN.md'
+      - '.github/workflows/impeccable-detail-audit.yml'
   push:
     paths:
       - '.github/workflows/impeccable-detail-audit.yml'
@@ -35,6 +41,9 @@ jobs:
             styles/design_components.css \
             styles/design_responsive.css \
             styles/design_screens.css \
+            styles/login_access-1.18.0.css \
+            styles/navigation_glass-1.0.0.css \
+            styles/liquid_glass_system-1.0.0.css \
             styles/avaliacao_experiencia-1.22.0.css \
             > .impeccable-detail.json 2>.impeccable-detail.err
           code=$?
