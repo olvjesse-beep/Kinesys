@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20260913-online-r2';
+    const ASSET_REVISION = '20260913-online-r3';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const DIAS = Object.freeze([
         { valor: 1, nome: 'Segunda-feira' },
