@@ -1,16 +1,15 @@
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css)$">
+  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|navigation_glass-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
   </FilesMatch>
 </IfModule>
 
-# O index legado ainda referencia access_admin com ?v=20260913-online-v4.
-# Enquanto o HTML principal não muda de URL, alguns caches de borda podem continuar
-# entregando o bootstrap antigo mesmo após Ctrl+F5. Substituímos somente essa revisão
-# na resposta HTML para gerar uma URL nova e inequívoca, sem tocar no DOM ou na lógica.
+# O index legado mantém uma referência estável do bootstrap administrativo.
+# Substituímos a revisão somente na resposta HTML para que mudanças do hub
+# Configurações > Agenda recebam uma URL inequívoca sem reescrever o index inteiro.
 <IfModule mod_substitute.c>
   AddOutputFilterByType SUBSTITUTE text/html
-  Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-online-v6|ni"
+  Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1|ni"
 </IfModule>
