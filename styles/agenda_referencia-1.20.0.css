@@ -1,10 +1,447 @@
-/* KineSys Agenda 1.20 — camada de compatibilidade.
+/* KineSys Agenda 1.20 — workspace operacional refinado.
  *
- * O layout, espaçamento, densidade, grade temporal e responsividade da Agenda
- * pertencem exclusivamente a styles/design_agenda.css.
- *
- * Este arquivo permanece registrado no bundle lazy para preservar o contrato
- * histórico do Screen Loader, mas não redefine geometria nem cores. Isso evita
- * que uma folha carregada depois do Design System reverta a Agenda para o
- * layout antigo, largo e com quebra de toolbar.
+ * Esta folha é carregada por último no bundle da Agenda e funciona como camada
+ * de composição sobre design_agenda.css. Não altera IDs, regras de negócio,
+ * funções, Supabase, status, financeiro ou contratos. O objetivo é reduzir a
+ * aparência de "card dentro de card", organizar a toolbar e melhorar leitura
+ * e toque em desktop/tablet/mobile sem duplicar a Agenda.
  */
+
+body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda {
+  max-width:1600px;
+  padding-top:18px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Superfície operacional única
+   -------------------------------------------------------------------------- */
+body.ks-design-ready #agenda_painel .agenda-card-semanal {
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  border:1px solid #DCE6E4;
+  border-radius:14px;
+  background:#FFFFFF;
+  box-shadow:0 8px 28px rgba(23,59,69,.055);
+}
+
+body.ks-design-ready #agenda_painel .agenda-visoes {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-height:54px;
+  padding:9px 14px;
+  margin:0;
+  border-bottom:1px solid #E3EAE8;
+  background:rgba(247,250,249,.92);
+}
+
+body.ks-design-ready #agenda_painel .agenda-visoes .btn-secondary {
+  min-height:36px;
+  padding:7px 11px;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:#607479;
+  box-shadow:none;
+  font-size:13.5px;
+  font-weight:680;
+}
+
+body.ks-design-ready #agenda_painel .agenda-visoes .btn-secondary:hover {
+  border-color:#D5E2DF;
+  background:#FFFFFF;
+  color:#1E756F;
+}
+
+body.ks-design-ready #agenda_painel .agenda-visoes .btn-secondary[aria-pressed="true"] {
+  border-color:#C8DEDA;
+  background:#FFFFFF;
+  color:#195F5A;
+  box-shadow:0 1px 2px rgba(23,59,69,.045);
+}
+
+body.ks-design-ready #agenda_painel #agenda_agora_relogio {
+  margin-left:auto;
+  color:#718286;
+}
+
+/* --------------------------------------------------------------------------
+   2. Toolbar: navegação + filtros + ação principal
+   -------------------------------------------------------------------------- */
+body.ks-design-ready #agenda_painel .agenda-toolbar-semanal {
+  display:grid;
+  grid-template-columns:minmax(360px,1fr) minmax(520px,auto);
+  align-items:end;
+  gap:18px;
+  margin:0;
+  padding:15px 16px 14px;
+  border-bottom:1px solid #E6ECEA;
+  background:#FFFFFF;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-nav {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-nav>button {
+  min-width:36px;
+  height:36px;
+  padding:0 9px;
+  border-color:#D7E1DF;
+  border-radius:8px;
+  background:#FFFFFF;
+  box-shadow:none;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-nav>button:hover {
+  border-color:#ABCFC9;
+  background:#F4FAF8;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-nav .btn-hoje-agenda {
+  padding-inline:12px;
+  color:#1E756F;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-nav>div:not(.agenda-periodo-segmentado) {
+  min-width:0;
+  margin-left:5px;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-rotulo {
+  margin-bottom:2px;
+  color:#8A999C;
+  font-size:11px;
+  font-weight:760;
+  letter-spacing:.06em;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-titulo {
+  overflow:hidden;
+  color:#24474E;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:15px;
+  font-weight:720;
+}
+
+body.ks-design-ready #agenda_painel .agenda-periodo-segmentado {
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:2px;
+  margin-left:auto;
+  padding:3px;
+  border:1px solid #DCE6E4;
+  border-radius:9px;
+  background:#F4F7F6;
+}
+
+body.ks-design-ready #agenda_painel .agenda-periodo-segmentado button {
+  min-height:30px;
+  padding:5px 10px;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:#75888C;
+  box-shadow:none;
+  font-size:12.5px;
+  font-weight:700;
+}
+
+body.ks-design-ready #agenda_painel .agenda-periodo-segmentado button.active,
+body.ks-design-ready #agenda_painel .agenda-periodo-segmentado button[aria-pressed="true"] {
+  background:#FFFFFF;
+  color:#1D625D;
+  box-shadow:0 1px 2px rgba(23,59,69,.06);
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros {
+  display:grid;
+  grid-template-columns:142px minmax(210px,280px) max-content max-content;
+  align-items:end;
+  justify-content:end;
+  gap:8px;
+  min-width:0;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.input-group {
+  margin:0;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros .input-group label {
+  margin-bottom:5px;
+  color:#657A7F;
+  font-size:12px;
+  font-weight:680;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros :where(input:not([type="checkbox"]):not([type="radio"]),select) {
+  height:38px;
+  min-height:38px;
+  border-color:#D5E0DE;
+  border-radius:8px;
+  background:#FFFFFF;
+  font-size:13.5px;
+}
+
+body.ks-design-ready #agenda_painel .agenda-escopo-acesso {
+  margin-top:3px;
+  color:#8A999C;
+  font-size:11.5px;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn,
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment {
+  height:38px;
+  min-height:38px;
+  margin:22px 0 0;
+  padding-inline:13px;
+  border-radius:8px;
+  font-size:13px;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn {
+  border-color:#D7E2E0;
+  background:#FFFFFF;
+  color:#607479;
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment {
+  background:#1E756F;
+  border-color:#1E756F;
+  box-shadow:0 4px 12px rgba(30,117,111,.14);
+}
+
+body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment:hover {
+  background:#17645F;
+  border-color:#17645F;
+}
+
+/* --------------------------------------------------------------------------
+   3. Feedback + grade temporal
+   -------------------------------------------------------------------------- */
+body.ks-design-ready #agenda_painel #agenda_feedback {
+  margin:0;
+  padding:0 16px;
+}
+
+body.ks-design-ready #agenda_painel #agenda_feedback:not(:empty) {
+  padding-top:9px;
+  padding-bottom:9px;
+  border-bottom:1px solid #E6ECEA;
+  background:#FBFCFC;
+}
+
+body.ks-design-ready #agenda_painel .agenda-grade-scroll {
+  width:100%;
+  max-height:min(70vh,780px);
+  overflow:auto;
+  border:0;
+  border-radius:0;
+  background:#FFFFFF;
+  scrollbar-gutter:stable;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-grade {
+  background:#FFFFFF;
+}
+
+body.ks-design-ready #agenda_painel .agenda-semana-grade .agenda-canto,
+body.ks-design-ready #agenda_painel .agenda-semana-grade .agenda-dia-cabecalho {
+  background:rgba(249,251,250,.96);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+
+body.ks-design-ready #agenda_painel .agenda-dia-cabecalho {
+  border-left-color:#E7ECEB;
+  border-bottom-color:#DDE6E4;
+}
+
+body.ks-design-ready #agenda_painel .agenda-dia-cabecalho.hoje {
+  background:#F0F8F6;
+  border-bottom:2px solid #49A89F;
+}
+
+body.ks-design-ready #agenda_painel .agenda-dia-cabecalho .dia-semana {
+  color:#74868A;
+  font-weight:650;
+}
+
+body.ks-design-ready #agenda_painel .agenda-dia-cabecalho .dia-data {
+  color:#24474E;
+  font-weight:780;
+}
+
+body.ks-design-ready #agenda_painel .agenda-hora-eixo {
+  border-top-color:#E9EEED;
+  border-right-color:#DDE6E4;
+  background:#FAFBFB;
+  color:#8A999C;
+  font-weight:650;
+}
+
+body.ks-design-ready #agenda_painel .agenda-celula {
+  border-top-color:#EDF1F0;
+  border-left-color:#EDF1F0;
+  background:#FCFDFD;
+}
+
+body.ks-design-ready #agenda_painel .agenda-celula.meia-hora {
+  border-top-color:#F2F5F4;
+}
+
+body.ks-design-ready #agenda_painel .agenda-celula.atendimento {
+  background:#FFFFFF;
+}
+
+body.ks-design-ready #agenda_painel .agenda-celula.atendimento:hover {
+  background:#F4FAF8;
+  box-shadow:inset 0 0 0 1px #B7DAD4;
+}
+
+body.ks-design-ready #agenda_painel .agenda-vazio {
+  margin:14px;
+  padding:30px 20px;
+  border-color:#D9E3E1;
+  border-radius:10px;
+  background:#FAFCFB;
+}
+
+/* --------------------------------------------------------------------------
+   4. Tablet
+   -------------------------------------------------------------------------- */
+@media (max-width:1280px) {
+  body.ks-design-ready #agenda_painel .agenda-toolbar-semanal {
+    grid-template-columns:1fr;
+    gap:13px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros {
+    grid-template-columns:142px minmax(220px,1fr) max-content max-content;
+    justify-content:stretch;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Mobile: prioridade para ação e leitura, sem cards gigantes
+   -------------------------------------------------------------------------- */
+@media (max-width:820px) {
+  body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda {
+    padding-top:10px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-card-semanal {
+    border-radius:12px;
+    box-shadow:0 4px 16px rgba(23,59,69,.045);
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-visoes {
+    min-height:0;
+    padding:8px 9px;
+    gap:4px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-visoes::-webkit-scrollbar {
+    display:none;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-visoes .btn-secondary {
+    flex:0 0 auto;
+    min-height:34px;
+    padding:6px 9px;
+    border-radius:8px;
+    font-size:12.5px;
+  }
+
+  body.ks-design-ready #agenda_painel #agenda_agora_relogio {
+    margin-left:0;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-semanal {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:11px;
+    padding:12px 10px 11px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-nav {
+    display:grid;
+    grid-template-columns:36px auto 36px minmax(0,1fr) auto;
+    gap:5px;
+    width:100%;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-nav>button {
+    min-width:36px;
+    height:36px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-nav .btn-hoje-agenda {
+    padding-inline:8px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-nav>div:not(.agenda-periodo-segmentado) {
+    margin-left:2px;
+    align-self:center;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-rotulo {
+    display:none;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-semana-titulo {
+    font-size:13px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-periodo-segmentado {
+    margin-left:0;
+    align-self:center;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros {
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:8px;
+    width:100%;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn,
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment {
+    width:100%;
+    margin:0;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment {
+    grid-column:1/-1;
+    order:-1;
+    min-height:42px;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn {
+    grid-column:1/-1;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-grade-scroll {
+    max-height:68vh;
+    overscroll-behavior:contain;
+  }
+}
+
+@media (max-width:560px) {
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros {
+    grid-template-columns:1fr;
+  }
+
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn,
+  body.ks-design-ready #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment {
+    grid-column:auto;
+  }
+}
