@@ -1,0 +1,429 @@
+/* KineSys — Agendamento online: layout operacional destilado 1.0.0
+   Progressive disclosure: uma tarefa por vez, densidade proporcional ao conteúdo. */
+
+#tela_configuracoes.ks-config-hub-ready {
+    max-width: 1120px;
+}
+
+#ks_config_panel_online .ks-online-shell.ks-online-distilled {
+    --ks-online-short: 220px;
+    --ks-online-medium: 360px;
+}
+
+.ks-online-distilled .ks-online-topline {
+    margin-bottom: 10px;
+}
+
+.ks-online-distilled .ks-online-topline p {
+    max-width: 62ch;
+}
+
+/* Navegação de tarefa: reduz a página longa a quatro contextos claros. */
+.ks-online-layout-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    width: min(720px, 100%);
+    margin: 0 0 16px;
+    padding: 4px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface-soft);
+}
+
+.ks-online-layout-nav button {
+    min-height: 42px;
+    margin: 0;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: var(--kds-radius-sm);
+    background: transparent;
+    color: var(--kds-text-secondary);
+    font: 700 var(--kds-font-label)/var(--kds-leading-ui) var(--kds-font-family-ui);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.ks-online-layout-nav button:hover {
+    background: var(--kds-surface);
+    color: var(--kds-text);
+}
+
+.ks-online-layout-nav button[aria-selected="true"] {
+    background: var(--kds-surface);
+    color: var(--kds-accent-hover);
+    box-shadow: var(--kds-shadow-control);
+}
+
+.ks-online-layout-nav button:focus-visible {
+    outline: 2px solid var(--kds-focus-line);
+    outline-offset: 2px;
+}
+
+.ks-online-distilled .ks-online-surface {
+    display: block;
+}
+
+/* O conteúdo deixa de parecer uma pilha de cards. */
+.ks-online-distilled .ks-online-section {
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--kds-line-soft);
+    border-radius: 0;
+    background: transparent;
+}
+
+.ks-online-distilled .ks-online-section:first-of-type {
+    border-top: 0;
+    padding-top: 4px;
+}
+
+.ks-online-distilled .ks-online-section-head {
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.ks-online-distilled .ks-online-section-head > div:first-child {
+    max-width: 66ch;
+}
+
+.ks-online-distilled .ks-online-section h3 {
+    font-size: var(--kds-font-body);
+}
+
+.ks-online-distilled .ks-online-section-head p,
+.ks-online-distilled .ks-online-v2-help,
+.ks-online-distilled .ks-online-choice small,
+.ks-online-distilled .ks-switch-row small {
+    color: var(--kds-muted);
+}
+
+/* Contexto único para serviços/horários: não repete o seletor, mas deixa claro quem está sendo editado. */
+.ks-online-layout-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 9px 10px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    background: var(--kds-surface-soft);
+}
+
+.ks-online-layout-context > div {
+    min-width: 0;
+}
+
+.ks-online-layout-context span {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--kds-muted);
+    font-size: var(--kds-font-metadata);
+    line-height: var(--kds-leading-ui);
+}
+
+.ks-online-layout-context strong {
+    display: block;
+    overflow: hidden;
+    color: var(--kds-text);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ks-online-layout-context .btn-secondary {
+    flex: 0 0 auto;
+    min-height: 40px;
+    margin: 0;
+    padding: 7px 10px;
+    white-space: nowrap;
+}
+
+/* Geral: campos curtos deixam de ocupar a largura inteira. */
+.ks-online-distilled #ks_online_sec_publicacao .ks-online-fields-2 {
+    grid-template-columns: minmax(280px, 1fr) var(--ks-online-short);
+    column-gap: 14px;
+    row-gap: 12px;
+}
+
+.ks-online-distilled #ks_online_sec_publicacao #ks_online_horizonte,
+.ks-online-distilled #ks_online_sec_publicacao #ks_online_antecedencia {
+    max-width: var(--ks-online-short);
+}
+
+.ks-online-distilled #ks_online_sec_publicacao .ks-switch-row-master {
+    width: min(420px, 100%);
+    justify-self: end;
+}
+
+.ks-online-distilled #ks_online_sec_publicacao .ks-online-field-wide textarea {
+    max-width: 760px;
+}
+
+.ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-link-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 12px;
+}
+
+.ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-4 {
+    grid-column: span 4;
+}
+
+.ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-8 {
+    grid-column: span 8;
+}
+
+.ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-12 {
+    grid-column: 1 / -1;
+}
+
+.ks-online-distilled #ks_online_v2_nome_publico {
+    max-width: var(--ks-online-medium);
+}
+
+.ks-online-distilled #ks_online_v2_slug {
+    max-width: 260px;
+}
+
+.ks-online-distilled #ks_online_v2_telefone {
+    max-width: 220px;
+}
+
+.ks-online-distilled #ks_online_v2_mensagem_confirmacao {
+    max-width: 760px;
+    min-height: 104px;
+}
+
+.ks-online-distilled .ks-online-v2-linkbox {
+    padding: 10px;
+    border-color: var(--kds-line);
+    background: var(--kds-surface-soft);
+}
+
+/* Profissionais e serviços: listas densas, sem cards por item. */
+.ks-online-distilled .ks-online-choice-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 22px;
+}
+
+.ks-online-distilled .ks-online-choice {
+    min-height: 46px;
+    padding: 6px 0;
+}
+
+.ks-online-distilled .ks-online-choice:nth-child(-n+2) {
+    border-top: 0;
+}
+
+.ks-online-distilled .ks-online-count {
+    min-height: 26px;
+}
+
+/* Workspace do profissional: seletor vira contexto principal. */
+.ks-online-distilled .ks-online-v2-workspace-head {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    align-items: center;
+    gap: 20px;
+}
+
+.ks-online-distilled .ks-online-v2-selector-slot select {
+    min-height: 42px;
+}
+
+.ks-online-distilled .ks-online-v2-profile-editor {
+    margin-top: 12px;
+    padding-top: 14px;
+}
+
+.ks-online-distilled .ks-online-v2-profile-grid {
+    column-gap: 14px;
+    row-gap: 12px;
+}
+
+.ks-online-distilled #ks_online_v2_titulo_prof {
+    max-width: var(--ks-online-medium);
+}
+
+.ks-online-distilled #ks_online_v2_foto_url {
+    max-width: 520px;
+}
+
+.ks-online-distilled #ks_online_v2_apresentacao,
+.ks-online-distilled #ks_online_v2_formacao,
+.ks-online-distilled #ks_online_v2_local {
+    min-height: 78px;
+}
+
+.ks-online-distilled .ks-online-v2-actions {
+    padding-top: 4px;
+}
+
+/* Horários: grade semanal compacta e proporcional a HH:MM. */
+.ks-online-distilled .ks-online-week {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.ks-online-distilled .ks-online-day {
+    border-radius: var(--kds-radius-sm);
+}
+
+.ks-online-distilled .ks-online-day-head {
+    min-height: 48px;
+    padding: 7px 9px;
+}
+
+.ks-online-distilled .ks-online-add-time {
+    min-height: 38px;
+    padding-inline: 9px;
+}
+
+.ks-online-distilled .ks-online-time-row {
+    grid-template-columns: 112px 112px minmax(74px, auto);
+    align-items: end;
+    justify-content: start;
+    gap: 7px;
+    padding: 8px 9px;
+}
+
+.ks-online-distilled .ks-online-time-row label {
+    width: 112px;
+}
+
+.ks-online-distilled .ks-online-time-row input[type="time"] {
+    width: 112px;
+    min-height: 40px;
+    padding: 7px 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ks-online-distilled .ks-online-remove-time {
+    grid-column: auto;
+    min-height: 40px;
+    width: auto;
+    padding: 7px 10px;
+}
+
+/* Salvar fica disponível sem virar uma faixa pesada. */
+.ks-online-distilled .ks-online-savebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+}
+
+.ks-online-distilled .ks-online-savebar .btn-primary {
+    width: auto;
+    min-width: 164px;
+}
+
+@media (max-width: 900px) {
+    .ks-online-distilled #ks_online_sec_publicacao .ks-online-fields-2 {
+        grid-template-columns: minmax(0, 1fr) 210px;
+    }
+
+    .ks-online-distilled .ks-online-week {
+        grid-template-columns: 1fr;
+    }
+
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-4,
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-8 {
+        grid-column: span 6;
+    }
+
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-linkbox,
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-12 {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    .ks-online-layout-nav {
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+        scroll-snap-type: x proximity;
+    }
+
+    .ks-online-layout-nav button {
+        flex: 0 0 auto;
+        min-width: 118px;
+        min-height: 44px;
+        scroll-snap-align: start;
+    }
+
+    .ks-online-layout-context {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ks-online-layout-context strong {
+        white-space: normal;
+    }
+
+    .ks-online-layout-context .btn-secondary {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .ks-online-distilled #ks_online_sec_publicacao .ks-online-fields-2,
+    .ks-online-distilled .ks-online-v2-workspace-head,
+    .ks-online-distilled .ks-online-choice-list {
+        grid-template-columns: 1fr;
+    }
+
+    .ks-online-distilled #ks_online_sec_publicacao .ks-switch-row-master {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-4,
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-8,
+    .ks-online-distilled #ks_online_sec_identidade_publica .ks-online-v2-span-12 {
+        grid-column: 1 / -1;
+    }
+
+    .ks-online-distilled .ks-online-choice:nth-child(2) {
+        border-top: 1px solid var(--kds-line-soft);
+    }
+
+    .ks-online-distilled .ks-online-savebar {
+        grid-template-columns: 1fr;
+    }
+
+    .ks-online-distilled .ks-online-savebar .btn-primary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 430px) {
+    .ks-online-distilled .ks-online-section {
+        padding: 14px 0;
+    }
+
+    .ks-online-distilled .ks-online-time-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .ks-online-distilled .ks-online-time-row label,
+    .ks-online-distilled .ks-online-time-row input[type="time"] {
+        width: 100%;
+    }
+
+    .ks-online-distilled .ks-online-remove-time {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .ks-online-distilled .ks-online-v2-copy,
+    .ks-online-distilled .ks-online-v2-save {
+        min-height: 46px;
+    }
+}

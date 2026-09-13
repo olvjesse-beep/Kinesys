@@ -6,9 +6,11 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_*.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js'
+      - 'src/admin/configuracoes_agendamento_online_layout-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
       - 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css'
+      - 'styles/configuracoes_agendamento_online_layout-1.0.0.css'
       - 'agendamento/**'
       - 'supabase/functions/agendamento-publico/**'
       - 'supabase/functions/agendamento-publico-perfil/**'
@@ -24,9 +26,11 @@ on:
       - 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_*.sql'
       - 'src/admin/configuracoes_agendamento_online-1.0.0.js'
       - 'src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js'
+      - 'src/admin/configuracoes_agendamento_online_layout-1.0.0.js'
       - 'src/admin/access_admin-1.0.0.js'
       - 'styles/configuracoes_agendamento_online-1.0.0.css'
       - 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css'
+      - 'styles/configuracoes_agendamento_online_layout-1.0.0.css'
       - 'agendamento/**'
       - 'supabase/functions/agendamento-publico/**'
       - 'supabase/functions/agendamento-publico-perfil/**'
@@ -62,4 +66,4 @@ jobs:
         run: node tests\agendamento_online_booking.contract.js
       - name: JavaScript syntax
         shell: cmd
-        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\configuracoes_agendamento_online_perfil_publico-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico-v2.js && node --check tests\agendamento_online_structure.contract.js && node --check tests\agendamento_online_admin_config.contract.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_public_profile.contract.js && node --check tests\agendamento_online_booking.contract.js
+        run: node --check src\admin\configuracoes_agendamento_online-1.0.0.js && node --check src\admin\configuracoes_agendamento_online_perfil_publico-1.0.0.js && node --check src\admin\configuracoes_agendamento_online_layout-1.0.0.js && node --check src\admin\access_admin-1.0.0.js && node --check agendamento\agendamento-publico-v2.js && node --check tests\agendamento_online_structure.contract.js && node --check tests\agendamento_online_admin_config.contract.js && node --check tests\agendamento_online_public_portal.contract.js && node --check tests\agendamento_online_public_profile.contract.js && node --check tests\agendamento_online_booking.contract.js
