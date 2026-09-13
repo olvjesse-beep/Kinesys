@@ -35,3 +35,5 @@ jobs:
           git add index.html agendamento/index.html src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js supabase/functions/agendamento-publico-perfil/index.ts
           git commit -m "feat: finalizar identidade publica do agendamento online v2"
           git push origin HEAD:feature/agendamento-online-v2-perfil-publico
+
+# retry after normalizing CRLF
