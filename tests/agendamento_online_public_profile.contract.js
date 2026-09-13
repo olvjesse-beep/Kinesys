@@ -55,6 +55,8 @@ assert(addonCss.includes('grid-template-columns: 1fr'), 'grids V2 devem colapsar
 assert(addonCss.includes('font-size: 16px'), 'campos móveis do V2 devem manter 16px');
 assert(addonCss.includes('min-height: 48px'), 'ações móveis principais devem manter alvo de toque ampliado');
 assert(addonCss.includes('overflow-wrap: anywhere'), 'textos configuráveis longos não devem causar overflow horizontal');
+assert(addonCss.includes('.ks-config-hub-header h1:focus') && addonCss.includes('outline: none !important'),
+  'título não interativo de Configurações não deve exibir contorno nativo de foco como uma borda visual');
 assert(!/#[0-9a-f]{3,8}\b/i.test(addonCss), 'CSS V2 deve usar exclusivamente tokens KDS');
 
 console.log('agendamento_online_public_profile.contract: OK');
