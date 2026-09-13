@@ -4,7 +4,7 @@
 # por navegador nesta revisão. Clear-Site-Data usa somente "cache": cookies,
 # sessão e localStorage permanecem intactos.
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|design_liquid_glass-1\.0\.1\.css)$">
+  <FilesMatch "^(index\.html|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
@@ -32,7 +32,7 @@
   Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
   Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11|ni"
   Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.1.css?v=20260913-system-glass-r12\"></head>|ni"
+  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"></head>|ni"
 </IfModule>
 
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
