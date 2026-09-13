@@ -13,6 +13,14 @@ alter table public.agendamento_online_rate_limit enable row level security;
 revoke all on table public.agendamento_online_rate_limit from public, anon, authenticated;
 grant select, insert, update, delete on table public.agendamento_online_rate_limit to service_role;
 
+drop policy if exists ks_agendamento_online_rate_limit_deny_client on public.agendamento_online_rate_limit;
+create policy ks_agendamento_online_rate_limit_deny_client
+on public.agendamento_online_rate_limit
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
 create index if not exists agendamento_online_rate_limit_atualizado_idx
   on public.agendamento_online_rate_limit (atualizado_em);
 
