@@ -96,10 +96,16 @@ assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agend
   'perfil público deve usar revisão inequívoca do novo hub');
 assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-config-agenda-r1'"),
   'workspace deve usar revisão inequívoca do novo hub');
-assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
-  'HTML legado preserva a referência estável atualmente versionada');
+assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r3'),
+  'HTML raiz deve carregar diretamente a revisão atual do bootstrap administrativo');
+assert(!rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
+  'HTML raiz não pode depender da revisão histórica do bootstrap');
+assert(rootHtml.includes('styles/design_navigation.css?v=20260913-glass-r3'),
+  'HTML raiz deve versionar diretamente a folha estrutural da navegação');
+assert(rootHtml.includes('styles/navigation_glass-1.0.0.css?v=20260913-glass-r3'),
+  'HTML raiz deve carregar diretamente o efeito glass sem depender de JavaScript ou mod_substitute');
 assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1'),
-  'servidor deve substituir a referência legada pela revisão do novo hub');
+  'servidor deve manter fallback de compatibilidade para HTML legado');
 assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css'),
   'servidor deve revalidar explicitamente o estilo glass da navegação');
 assert(htaccess.includes('design_navigation\\.css'),

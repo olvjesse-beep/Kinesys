@@ -1,5 +1,0 @@
-KineSys deploy check
-source=github-main
-base=a9047e3d6e21e6d3c1319d74e5cfdcf2d24fe580
-generated=2026-09-13
-purpose=verify Hostinger automatic deployment after config agenda/glass merge
