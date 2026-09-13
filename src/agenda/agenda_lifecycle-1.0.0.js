@@ -7,7 +7,7 @@
 
     const VERSION='1.0.0';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
-    const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r1';
+    const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     let relogioTimer=null;
     let resizeObserver=null;
     let mutationObserver=null;
@@ -20,7 +20,7 @@
     }
 
     function garantirEstiloMobileAgenda(){
-        if(document.getElementById(MOBILE_STYLE_ID))return;
+        if(document.getElementById(MOBILE_STYLE_ID)||document.querySelector('link[href*="styles/agenda_mobile-1.0.0.css"]'))return;
         const link=document.createElement('link');
         link.id=MOBILE_STYLE_ID;
         link.rel='stylesheet';
