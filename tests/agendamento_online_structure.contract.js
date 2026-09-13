@@ -3,8 +3,10 @@ const assert = require('assert');
 
 const migrationPath = 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql';
 const indexMigrationPath = 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_INDICE_PROFISSIONAL_20260912.sql';
+const hardeningPath = 'SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_HARDENING_20260913.sql';
 const sql = fs.readFileSync(migrationPath, 'utf8');
 const indexSql = fs.readFileSync(indexMigrationPath, 'utf8');
+const hardeningSql = fs.readFileSync(hardeningPath, 'utf8');
 
 assert(sql.includes('add column if not exists agendamento_online_ativo boolean not null default false'),
   'procedimentos deve permanecer fechado para agendamento online por padrão');
@@ -54,5 +56,16 @@ assert(indexSql.includes('create index if not exists idx_disponibilidade_agendam
   'FK profissional da disponibilidade online deve ter índice de cobertura');
 assert(indexSql.includes('on public.disponibilidade_agendamento_online (profissional_id)'),
   'índice de cobertura deve iniciar por profissional_id');
+
+assert(hardeningSql.includes('ks_agendamento_online_disponibilidade_insert') &&
+       hardeningSql.includes('ks_agendamento_online_disponibilidade_update') &&
+       hardeningSql.includes('ks_agendamento_online_disponibilidade_delete'),
+  'hardening deve cobrir todas as operações de escrita da disponibilidade online');
+assert((hardeningSql.match(/in \('MASTER', 'MASTER_FEM'\)/g) || []).length >= 4,
+  'escrita de disponibilidade online deve permanecer administrativa no banco');
+assert(hardeningSql.includes('ks_agendamento_online_rate_limit_deny_client') &&
+       hardeningSql.includes('to anon, authenticated') &&
+       hardeningSql.includes('using (false)') && hardeningSql.includes('with check (false)'),
+  'rate limit público deve negar acesso direto aos clientes');
 
 console.log('agendamento_online_structure.contract: OK');
