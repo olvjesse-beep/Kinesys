@@ -50,8 +50,11 @@ assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4')
   'HTML principal deve invalidar o cache do bootstrap administrativo');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
+assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
+assert(addonCss.includes('grid-template-columns: 1fr'), 'grids V2 devem colapsar para uma coluna no celular');
 assert(addonCss.includes('font-size: 16px'), 'campos móveis do V2 devem manter 16px');
-assert(addonCss.includes('min-height: 44px'), 'ações móveis devem manter alvo de toque de 44px');
+assert(addonCss.includes('min-height: 48px'), 'ações móveis principais devem manter alvo de toque ampliado');
+assert(addonCss.includes('overflow-wrap: anywhere'), 'textos configuráveis longos não devem causar overflow horizontal');
 assert(!/#[0-9a-f]{3,8}\b/i.test(addonCss), 'CSS V2 deve usar exclusivamente tokens KDS');
 
 console.log('agendamento_online_public_profile.contract: OK');
