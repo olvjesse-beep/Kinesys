@@ -20,6 +20,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
+
 jobs:
   contract:
     runs-on: [self-hosted, Windows, X64]
@@ -29,4 +33,4 @@ jobs:
         with:
           node-version: '22'
       - name: Validate system Liquid Glass contract
-        run: node tests\liquid_glass_system.contract.js
+        run: node tests/liquid_glass_system.contract.js
