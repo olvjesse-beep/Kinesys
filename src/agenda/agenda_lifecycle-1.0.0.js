@@ -59,9 +59,13 @@
         if(typeof atualizarMarcadorAgoraAgenda==='function')atualizarMarcadorAgoraAgenda();
     }
 
+    function tentarAlinharHoje(){
+        if(alinharHojePendente&&alinharHojeNaGradeMobile())alinharHojePendente=false;
+    }
+
     function sincronizarGradeRenderizada(){
         atualizarSeAtiva();
-        if(alinharHojePendente&&alinharHojeNaGradeMobile())alinharHojePendente=false;
+        tentarAlinharHoje();
     }
 
     function aoVisibilityChange(){atualizarSeAtiva();}
@@ -69,14 +73,14 @@
 
     function observarGrade(){
         const grade=document.getElementById('agenda_semana_grade');
-        if(!resizeObserver&&grade&&typeof ResizeObserver!=='undefined'){
+        if(!grade)return;
+        if(!resizeObserver&&typeof ResizeObserver!=='undefined'){
             resizeObserver=new ResizeObserver(()=>sincronizarGradeRenderizada());
             resizeObserver.observe(grade);
         }
-        const painel=document.getElementById('agenda_painel');
-        if(!mutationObserver&&painel&&typeof MutationObserver!=='undefined'){
-            mutationObserver=new MutationObserver(()=>sincronizarGradeRenderizada());
-            mutationObserver.observe(painel,{childList:true,subtree:true});
+        if(!mutationObserver&&typeof MutationObserver!=='undefined'){
+            mutationObserver=new MutationObserver(()=>tentarAlinharHoje());
+            mutationObserver.observe(grade,{childList:true,subtree:true});
         }
     }
 
