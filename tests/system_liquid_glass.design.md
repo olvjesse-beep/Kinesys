@@ -1,0 +1,1 @@
+System Liquid Glass r12 is documented in DESIGN_SYSTEM/ETAPA_15_PRODUCAO/SYSTEM_LIQUID_GLASS_R12.md. This marker keeps the visual rollout traceable beside its automated contract.
