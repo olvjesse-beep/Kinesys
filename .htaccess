@@ -13,11 +13,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_mobile_drawer_r9=1" kinesys_delivery_mobile_drawer_r9_seen=1
+  SetEnvIf Cookie "kinesys_delivery_clear_glass_r10=1" kinesys_delivery_clear_glass_r10_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_mobile_drawer_r9_seen
-      Header always set Set-Cookie "kinesys_delivery_mobile_drawer_r9=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_mobile_drawer_r9_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_clear_glass_r10_seen
+      Header always set Set-Cookie "kinesys_delivery_clear_glass_r10=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_clear_glass_r10_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -29,6 +29,6 @@
   Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1|ni"
   Substitute "s|src/core/design_system-1.20.1.js?v=20260910-phase4e-r1|src/core/design_system-1.20.1.js?v=20260913-drawer-r9|ni"
   Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
-  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-drawer-r9|ni"
-  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-drawer-r9\">|ni"
+  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10|ni"
+  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10\">|ni"
 </IfModule>
