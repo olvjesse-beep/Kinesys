@@ -98,6 +98,49 @@
     color: var(--kds-muted);
 }
 
+/* Contexto único para serviços/horários: não repete o seletor, mas deixa claro quem está sendo editado. */
+.ks-online-layout-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 9px 10px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-sm);
+    background: var(--kds-surface-soft);
+}
+
+.ks-online-layout-context > div {
+    min-width: 0;
+}
+
+.ks-online-layout-context span {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--kds-muted);
+    font-size: var(--kds-font-metadata);
+    line-height: var(--kds-leading-ui);
+}
+
+.ks-online-layout-context strong {
+    display: block;
+    overflow: hidden;
+    color: var(--kds-text);
+    font-size: var(--kds-font-content);
+    line-height: var(--kds-leading-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ks-online-layout-context .btn-secondary {
+    flex: 0 0 auto;
+    min-height: 40px;
+    margin: 0;
+    padding: 7px 10px;
+    white-space: nowrap;
+}
+
 /* Geral: campos curtos deixam de ocupar a largura inteira. */
 .ks-online-distilled #ks_online_sec_publicacao .ks-online-fields-2 {
     grid-template-columns: minmax(280px, 1fr) var(--ks-online-short);
@@ -312,6 +355,21 @@
         min-width: 118px;
         min-height: 44px;
         scroll-snap-align: start;
+    }
+
+    .ks-online-layout-context {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ks-online-layout-context strong {
+        white-space: normal;
+    }
+
+    .ks-online-layout-context .btn-secondary {
+        width: 100%;
+        min-height: 44px;
     }
 
     .ks-online-distilled #ks_online_sec_publicacao .ks-online-fields-2,
