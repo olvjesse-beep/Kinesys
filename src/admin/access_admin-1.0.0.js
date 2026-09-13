@@ -8,7 +8,9 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20260913-online-r3';
+    const ONLINE_CONFIG_REVISION='20260913-online-v4';
+    const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
+    const ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v4';
     let alvoAtual=null;
     let busy=false;
 
@@ -173,13 +175,29 @@
         abrir(botao.dataset.equipeRedefinir);
     }
 
+    function carregarPerfilPublicoAgendaOnline(){
+        if(window.KineSysConfiguracoesAgendaOnlinePerfilPublico)return;
+        if(document.querySelector(`script[src^="${ONLINE_PROFILE_CONFIG_SCRIPT}"]`))return;
+        const script=document.createElement('script');
+        script.src=`${ONLINE_PROFILE_CONFIG_SCRIPT}?v=${ONLINE_PROFILE_CONFIG_REVISION}`;
+        script.async=false;
+        document.body.appendChild(script);
+    }
+
     function carregarConfiguracoesAgendaOnline(){
-        if(window.KineSysConfiguracoesAgendaOnline)return;
-        if(document.querySelector(`script[src^="${ONLINE_CONFIG_SCRIPT}"]`))return;
+        if(window.KineSysConfiguracoesAgendaOnline){
+            carregarPerfilPublicoAgendaOnline();
+            return;
+        }
+        if(document.querySelector(`script[src^="${ONLINE_CONFIG_SCRIPT}"]`)){
+            carregarPerfilPublicoAgendaOnline();
+            return;
+        }
         const script=document.createElement('script');
         script.src=`${ONLINE_CONFIG_SCRIPT}?v=${ONLINE_CONFIG_REVISION}`;
         script.async=false;
         script.addEventListener('load',()=>{
+            carregarPerfilPublicoAgendaOnline();
             const tela=document.getElementById('tela_configuracoes');
             if(tela?.classList.contains('ativa'))window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
         });
@@ -198,6 +216,7 @@
         const observer=new MutationObserver(()=>{
             if(tela.classList.contains('ativa')){
                 carregarConfiguracoesAgendaOnline();
+                carregarPerfilPublicoAgendaOnline();
                 window.KineSysConfiguracoesAgendaOnline?.onOpen?.();
             }
         });
