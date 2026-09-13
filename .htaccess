@@ -14,11 +14,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_agenda_grid_r18=1" kinesys_delivery_agenda_grid_r18_seen=1
+  SetEnvIf Cookie "kinesys_delivery_agenda_grid_r19=1" kinesys_delivery_agenda_grid_r19_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_grid_r18_seen
-      Header always set Set-Cookie "kinesys_delivery_agenda_grid_r18=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_grid_r18_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_grid_r19_seen
+      Header always set Set-Cookie "kinesys_delivery_agenda_grid_r19=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_grid_r19_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -31,13 +31,13 @@
   Substitute "s|src/core/design_system-1.20.1.js?v=20260910-phase4e-r1|src/core/design_system-1.20.1.js?v=20260913-drawer-r9|ni"
   Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
   Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260913-agenda-mobile-r16|ni"
+  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260913-agenda-grid-r19|ni"
   Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r11\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r18\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"></head>|ni"
+  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r19\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"></head>|ni"
 </IfModule>
 
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
 # kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
 # styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
 
-# Deploy trigger 2026-09-13 19:34 BRT — Agenda mobile grid r18.
+# Deploy trigger 2026-09-13 19:47 BRT — Agenda mobile bundle order r19.
