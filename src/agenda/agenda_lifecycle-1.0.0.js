@@ -10,7 +10,9 @@
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r1';
     let relogioTimer=null;
     let resizeObserver=null;
+    let mutationObserver=null;
     let listenersAtivos=false;
+    let alinharHojePendente=false;
     let destruido=false;
 
     function telaAgendaAtiva(){
@@ -39,26 +41,50 @@
         });
     }
 
+    function alinharHojeNaGradeMobile(){
+        if(!window.matchMedia?.('(max-width: 760px)').matches)return true;
+        const scroll=document.querySelector('#agenda_painel .agenda-grade-scroll');
+        if(!scroll)return false;
+        const modoDia=!!document.querySelector('#agenda_painel [data-agenda-periodo="dia"][aria-pressed="true"]');
+        if(modoDia){scroll.scrollLeft=0;return true;}
+        const hoje=document.querySelector('#agenda_painel .agenda-dia-cabecalho.hoje');
+        if(!hoje)return false;
+        const alvo=hoje.offsetLeft-((scroll.clientWidth-hoje.offsetWidth)/2);
+        scroll.scrollLeft=Math.max(0,alvo);
+        return true;
+    }
+
     function atualizarSeAtiva(){
         if(destruido||!telaAgendaAtiva()||document.visibilityState!=='visible')return;
         if(typeof atualizarMarcadorAgoraAgenda==='function')atualizarMarcadorAgoraAgenda();
+    }
+
+    function sincronizarGradeRenderizada(){
+        atualizarSeAtiva();
+        if(alinharHojePendente&&alinharHojeNaGradeMobile())alinharHojePendente=false;
     }
 
     function aoVisibilityChange(){atualizarSeAtiva();}
     function aoResize(){atualizarSeAtiva();}
 
     function observarGrade(){
-        if(resizeObserver||typeof ResizeObserver==='undefined')return;
         const grade=document.getElementById('agenda_semana_grade');
-        if(!grade)return;
-        resizeObserver=new ResizeObserver(()=>atualizarSeAtiva());
-        resizeObserver.observe(grade);
+        if(!resizeObserver&&grade&&typeof ResizeObserver!=='undefined'){
+            resizeObserver=new ResizeObserver(()=>sincronizarGradeRenderizada());
+            resizeObserver.observe(grade);
+        }
+        const painel=document.getElementById('agenda_painel');
+        if(!mutationObserver&&painel&&typeof MutationObserver!=='undefined'){
+            mutationObserver=new MutationObserver(()=>sincronizarGradeRenderizada());
+            mutationObserver.observe(painel,{childList:true,subtree:true});
+        }
     }
 
     function activate(){
         if(destruido||!telaAgendaAtiva())return false;
         garantirEstiloMobileAgenda();
         sincronizarEstadoVisualAgenda();
+        alinharHojePendente=true;
         atualizarSeAtiva();
         if(!listenersAtivos){
             document.addEventListener('visibilitychange',aoVisibilityChange);
@@ -69,12 +95,15 @@
             relogioTimer=setInterval(atualizarSeAtiva,30000);
         }
         observarGrade();
+        requestAnimationFrame(()=>sincronizarGradeRenderizada());
         return true;
     }
 
     function suspend(){
         if(relogioTimer){clearInterval(relogioTimer);relogioTimer=null;}
         if(resizeObserver){resizeObserver.disconnect();resizeObserver=null;}
+        if(mutationObserver){mutationObserver.disconnect();mutationObserver=null;}
+        alinharHojePendente=false;
         if(listenersAtivos){
             document.removeEventListener('visibilitychange',aoVisibilityChange);
             window.removeEventListener('resize',aoResize);
@@ -118,7 +147,7 @@
             return Object.freeze({
                 active:telaAgendaAtiva(),
                 timer:!!relogioTimer,
-                observer:!!resizeObserver,
+                observer:!!resizeObserver||!!mutationObserver,
                 listeners:listenersAtivos,
                 destroyed:destruido
             });
