@@ -90,14 +90,18 @@ assert(bootstrap.includes('configuracoes_agendamento_online_perfil_publico-1.0.0
   'bootstrap deve carregar o módulo V2 de perfil público');
 assert(bootstrap.includes('configuracoes_agendamento_online_layout-1.0.0.js'),
   'bootstrap deve carregar o workspace administrativo depois do perfil público');
-assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-online-v6'"),
-  'módulo V2 deve manter a revisão efetivamente publicada');
-assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-online-v6'"),
-  'workspace deve manter a revisão efetivamente publicada');
+assert(bootstrap.includes("ONLINE_CONFIG_REVISION='20260913-config-agenda-r1'"),
+  'configuração base deve usar revisão inequívoca do novo hub');
+assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agenda-r1'"),
+  'perfil público deve usar revisão inequívoca do novo hub');
+assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-config-agenda-r1'"),
+  'workspace deve usar revisão inequívoca do novo hub');
 assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
   'HTML legado preserva a referência estável atualmente versionada');
-assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v6'),
-  'servidor deve substituir a referência legada pela revisão administrativa atual');
+assert(htaccess.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1'),
+  'servidor deve substituir a referência legada pela revisão do novo hub');
+assert(htaccess.includes('navigation_glass-1\\.0\\.0\\.css'),
+  'servidor deve revalidar explicitamente o estilo glass da navegação');
 
 assert(addonCss.includes('@media (max-width: 620px)'), 'perfil administrativo deve refluír para celular');
 assert(addonCss.includes('@media (max-width: 430px)'), 'perfil administrativo deve tratar celulares estreitos explicitamente');
