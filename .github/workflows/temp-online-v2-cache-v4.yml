@@ -1,0 +1,32 @@
+name: Temporary Online V2 Cache V4
+
+on:
+  push:
+    branches:
+      - feature/agendamento-online-v2-perfil-publico
+    paths:
+      - .github/workflows/temp-online-v2-cache-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump admin cache and remove temporary workflow
+        shell: cmd
+        run: |
+          node -e "const fs=require('fs');const p='index.html';let s=fs.readFileSync(p,'utf8');const a='src/admin/access_admin-1.0.0.js?v=20260913-online-r3';const b='src/admin/access_admin-1.0.0.js?v=20260913-online-v4';if(!s.includes(a))throw new Error('cache r3 nao encontrado');fs.writeFileSync(p,s.replace(a,b),'utf8');"
+          git rm .github/workflows/temp-online-v2-cache-v4.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: invalidate online v2 admin cache"
+          git push origin HEAD:feature/agendamento-online-v2-perfil-publico
