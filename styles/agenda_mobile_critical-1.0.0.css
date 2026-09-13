@@ -5,7 +5,6 @@
  */
 
 @media (max-width:760px){
-  /* A página controla o eixo vertical; a grade controla apenas o swipe entre dias. */
   #tela_agenda #agenda_painel .agenda-grade-scroll{
     display:block!important;
     width:100%!important;
@@ -13,6 +12,8 @@
     height:auto!important;
     max-height:none!important;
     min-height:0!important;
+    margin-left:0!important;
+    padding-left:0!important;
     overflow-x:auto!important;
     overflow-y:visible!important;
     -webkit-overflow-scrolling:touch!important;
@@ -20,48 +21,50 @@
     overscroll-behavior-y:auto!important;
     touch-action:pan-x pan-y!important;
     scrollbar-gutter:auto!important;
+    scroll-snap-type:x proximity;
   }
 
   /*
    * Escala temporal mobile oficial:
-   * 10 min = 8px
-   * 30 min = 24px
-   * 60 min = 48px
+   * 10 min = 7px
+   * 30 min = 21px
+   * 60 min = 42px
    * O intervalo exibido continua sendo calculado pelo JS a partir da jornada
    * do profissional selecionado + agendamentos reais.
    */
   #tela_agenda #agenda_painel .agenda-semana-grade{
-    --kds-agenda-slot-height:8px!important;
-    --kds-agenda-header-height:44px!important;
-    --kds-agenda-hour-axis-width:64px!important;
+    --kds-agenda-slot-height:7px!important;
+    --kds-agenda-header-height:38px!important;
+    --kds-agenda-hour-axis-width:60px!important;
     display:grid!important;
     width:max-content!important;
     min-width:max-content!important;
     max-width:none!important;
     height:auto!important;
     min-height:0!important;
-    grid-template-columns:64px repeat(var(--kds-agenda-runtime-day-count),145px)!important;
-    grid-template-rows:44px repeat(var(--kds-agenda-runtime-slot-count),8px)!important;
+    margin-left:0!important;
+    grid-template-columns:60px repeat(var(--kds-agenda-runtime-day-count),124px)!important;
+    grid-template-rows:38px repeat(var(--kds-agenda-runtime-slot-count),7px)!important;
     align-items:stretch!important;
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho,
   #tela_agenda #agenda_painel .agenda-celula{
-    width:145px!important;
-    min-width:145px!important;
-    max-width:145px!important;
+    width:124px!important;
+    min-width:124px!important;
+    max-width:124px!important;
     box-sizing:border-box!important;
+    scroll-snap-align:start;
   }
 
   #tela_agenda #agenda_painel .agenda-hora-eixo,
   #tela_agenda #agenda_painel .agenda-canto{
-    width:64px!important;
-    min-width:64px!important;
-    max-width:64px!important;
+    width:60px!important;
+    min-width:60px!important;
+    max-width:60px!important;
     box-sizing:border-box!important;
   }
 
-  /* Nenhuma célula legada pode voltar a inflar um slot de 10 minutos. */
   #tela_agenda #agenda_painel .agenda-celula,
   #tela_agenda #agenda_painel .agenda-hora-eixo{
     min-height:0!important;
@@ -71,11 +74,7 @@
     border-top:0!important;
   }
 
-  /*
-   * Grade visual simplificada:
-   * subdivisões de 10 e 30 minutos continuam existindo para posicionamento,
-   * mas não desenham linhas. Apenas a hora cheia ganha uma divisória suave.
-   */
+  /* Subdivisões de 10 e 30 minutos continuam no cálculo, mas não poluem visualmente. */
   #tela_agenda #agenda_painel .agenda-celula.subhora,
   #tela_agenda #agenda_painel .agenda-hora-eixo.subhora,
   #tela_agenda #agenda_painel .agenda-celula.meia-hora,
@@ -85,7 +84,7 @@
 
   #tela_agenda #agenda_painel .agenda-celula.hora-cheia,
   #tela_agenda #agenda_painel .agenda-hora-eixo.hora-cheia{
-    border-top:1px solid #DCE7E4!important;
+    border-top:1px solid #D7E4E0!important;
   }
 
   #tela_agenda #agenda_painel .agenda-hora-eixo{
@@ -95,16 +94,20 @@
     display:flex!important;
     justify-content:flex-end!important;
     align-items:flex-start!important;
-    padding:1px 8px 0 6px!important;
+    padding:0 8px 0 4px!important;
     overflow:visible!important;
     white-space:nowrap!important;
     text-align:right!important;
-    background:#FAFBFB!important;
-    color:#5E7378!important;
+    background:#F8FBFA!important;
+    color:#5F7479!important;
     font-size:14px!important;
     line-height:1!important;
     font-weight:700!important;
-    border-right:1px solid #DDE8E5!important;
+    border-right:1px solid #DBE6E3!important;
+  }
+
+  #tela_agenda #agenda_painel .agenda-hora-eixo.hora-cheia{
+    padding-top:1px!important;
   }
 
   #tela_agenda #agenda_painel .agenda-semana-grade .agenda-canto,
@@ -119,22 +122,23 @@
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho{
-    min-height:44px!important;
-    height:44px!important;
-    padding:4px 5px!important;
+    min-height:38px!important;
+    height:38px!important;
+    padding:3px 4px!important;
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho .dia-semana{
-    font-size:13px!important;
-    line-height:1.05!important;
+    font-size:12px!important;
+    line-height:1!important;
+    font-weight:700!important;
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho .dia-data{
-    font-size:14px!important;
-    line-height:1.1!important;
+    font-size:13px!important;
+    line-height:1.05!important;
+    font-weight:800!important;
   }
 
-  /* Atendimento respeita exatamente a duração temporal do grid. */
   #tela_agenda #agenda_painel .agenda-celula.agendado{
     min-height:0!important;
     padding:1px!important;
@@ -143,8 +147,8 @@
   #tela_agenda #agenda_painel .agenda-compromisso{
     height:100%!important;
     min-height:0!important;
-    padding:2px 4px!important;
-    border-radius:4px!important;
+    padding:3px 5px!important;
+    border-radius:8px!important;
     overflow:hidden!important;
     align-items:center!important;
   }
@@ -153,7 +157,7 @@
     width:100%!important;
     min-width:0!important;
     gap:3px!important;
-    font-size:13px!important;
+    font-size:12.5px!important;
     line-height:1.05!important;
   }
 
@@ -164,6 +168,8 @@
     overflow:hidden!important;
     text-overflow:ellipsis!important;
     white-space:nowrap!important;
+    font-size:12.5px!important;
+    line-height:1.05!important;
   }
 
   #tela_agenda #agenda_painel .agenda-pagamento-icone,
@@ -175,12 +181,11 @@
     font-size:11px!important;
   }
 
-  /* Visão de um único dia continua fluida e ocupa o viewport. */
   #tela_agenda #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-semana-grade{
     width:100%!important;
     min-width:100%!important;
     max-width:100%!important;
-    grid-template-columns:64px minmax(0,1fr)!important;
+    grid-template-columns:60px minmax(0,1fr)!important;
   }
 
   #tela_agenda #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-dia-cabecalho,
@@ -193,25 +198,25 @@
 
 @media (max-width:430px){
   #tela_agenda #agenda_painel .agenda-semana-grade{
-    --kds-agenda-hour-axis-width:64px!important;
-    grid-template-columns:64px repeat(var(--kds-agenda-runtime-day-count),142px)!important;
+    --kds-agenda-hour-axis-width:58px!important;
+    grid-template-columns:58px repeat(var(--kds-agenda-runtime-day-count),122px)!important;
   }
 
   #tela_agenda #agenda_painel .agenda-dia-cabecalho,
   #tela_agenda #agenda_painel .agenda-celula{
-    width:142px!important;
-    min-width:142px!important;
-    max-width:142px!important;
+    width:122px!important;
+    min-width:122px!important;
+    max-width:122px!important;
   }
 
   #tela_agenda #agenda_painel .agenda-hora-eixo,
   #tela_agenda #agenda_painel .agenda-canto{
-    width:64px!important;
-    min-width:64px!important;
-    max-width:64px!important;
+    width:58px!important;
+    min-width:58px!important;
+    max-width:58px!important;
   }
 
   #tela_agenda #agenda_painel:has([data-agenda-periodo="dia"][aria-pressed="true"]) .agenda-semana-grade{
-    grid-template-columns:64px minmax(0,1fr)!important;
+    grid-template-columns:58px minmax(0,1fr)!important;
   }
 }
