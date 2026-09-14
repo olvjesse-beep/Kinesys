@@ -1,0 +1,263 @@
+/* KineSys — Novo Agendamento mobile clean 1.0.0-r43
+ * Direção visual escolhida no Product Design: essencial, limpa e direta.
+ * Somente apresentação; não altera contratos ou regras de agendamento.
+ */
+
+@media (min-width:761px){
+  #modal_agendamento .ks-agendamento-disclosure{
+    display:block;
+    margin:0;
+    padding:0;
+    border:0;
+    background:transparent;
+  }
+  #modal_agendamento .ks-agendamento-disclosure>summary{display:none}
+  #modal_agendamento .ks-agendamento-disclosure-body{display:contents}
+  #modal_agendamento .ks-agendamento-clean-subtitle{display:none}
+}
+
+@media (max-width:760px){
+  #modal_agendamento .agenda-appointment-modal{
+    width:min(520px,calc(100vw - 12px));
+    max-width:520px;
+    max-height:calc(100dvh - 10px);
+    margin:5px auto;
+    padding:20px 16px calc(14px + env(safe-area-inset-bottom));
+    border-radius:22px;
+    background:var(--kds-surface);
+  }
+
+  #modal_agendamento .agenda-appointment-modal>h2{
+    margin:0 42px 2px 0;
+    color:var(--kds-text);
+    font-size:22px;
+    line-height:1.2;
+    font-weight:820;
+    letter-spacing:-.01em;
+  }
+
+  #modal_agendamento .ks-agendamento-clean-subtitle{
+    margin:0 42px 18px 0;
+    color:var(--kds-muted);
+    font-size:14px;
+    line-height:1.4;
+    font-weight:550;
+  }
+
+  #modal_agendamento .modal-fechar{
+    width:40px;
+    height:40px;
+    min-width:40px;
+    min-height:40px;
+  }
+
+  #modal_agendamento .agenda-patient-search{
+    margin-bottom:14px;
+  }
+
+  #modal_agendamento .input-group{
+    margin-bottom:12px;
+  }
+
+  #modal_agendamento .input-group>label,
+  #modal_agendamento .kds-group-label{
+    margin-bottom:6px;
+    color:var(--kds-text);
+    font-size:14px;
+    line-height:1.3;
+    font-weight:760;
+  }
+
+  #modal_agendamento input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  #modal_agendamento select,
+  #modal_agendamento textarea{
+    min-height:48px;
+    border-radius:11px;
+    font-size:16px;
+  }
+
+  #modal_agendamento textarea{
+    min-height:84px;
+  }
+
+  #modal_agendamento .field-help{
+    margin-top:5px;
+    font-size:13px;
+    line-height:1.4;
+  }
+
+  #modal_agendamento .ks-agendamento-prof-proc{
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+
+  #modal_agendamento .ks-agendamento-date-time{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:10px!important;
+  }
+
+  #modal_agendamento .ks-agendamento-date-time>.input-group{
+    margin-bottom:12px;
+  }
+
+  #modal_agendamento .ks-agendamento-extra{
+    margin:0 0 12px;
+  }
+
+  #modal_agendamento .agenda-extra-toggle{
+    padding:11px 12px;
+    border-radius:12px;
+    background:var(--kds-surface-soft);
+  }
+
+  #modal_agendamento .agenda-extra-toggle strong{
+    font-size:14px;
+  }
+
+  #modal_agendamento .agenda-extra-time{
+    border-radius:12px;
+  }
+
+  #modal_agendamento .ks-agendamento-status{
+    margin:4px 0 10px!important;
+    padding:12px 0 0;
+    border-top:1px solid var(--kds-line-soft);
+  }
+
+  #modal_agendamento .ks-agendamento-observacoes{
+    margin-top:2px;
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure{
+    margin:10px 0 0;
+    overflow:hidden;
+    border:1px solid var(--kds-line-soft);
+    border-radius:14px;
+    background:var(--kds-surface-soft);
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure>summary{
+    min-height:62px;
+    padding:12px 14px;
+    cursor:pointer;
+    color:var(--kds-text);
+    font-size:14px;
+    line-height:1.3;
+    font-weight:760;
+    list-style-position:inside;
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure>summary::marker{
+    color:var(--kds-accent);
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure-texts{
+    display:inline-flex;
+    width:calc(100% - 24px);
+    vertical-align:middle;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure-texts strong{
+    color:var(--kds-text);
+    font-size:14px;
+    line-height:1.3;
+    font-weight:790;
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure-texts small{
+    overflow:hidden;
+    color:var(--kds-muted);
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:13px;
+    line-height:1.35;
+    font-weight:550;
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure[open]>summary{
+    border-bottom:1px solid var(--kds-line-soft);
+    background:var(--kds-surface);
+  }
+
+  #modal_agendamento .ks-agendamento-disclosure-body{
+    padding:12px 14px 4px;
+    background:var(--kds-surface);
+  }
+
+  #modal_agendamento #ag_recorrencia_bloco{
+    margin:0;
+    padding:0;
+    border:0;
+  }
+
+  #modal_agendamento #ag_recorrencia_bloco>label{
+    display:none;
+  }
+
+  #modal_agendamento #ag_recorrencia_bloco .agenda-recurrencia-grid,
+  #modal_agendamento #ag_recorrencia_bloco .agenda-recurrencia-fim{
+    margin-top:0;
+    grid-template-columns:1fr!important;
+  }
+
+  #modal_agendamento .ks-agendamento-pacote-conteudo{
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+  }
+
+  #modal_agendamento .ks-agendamento-pacote-conteudo>label{
+    display:none;
+  }
+
+  #modal_agendamento .ks-agendamento-pacote-conteudo>.btn-secondary{
+    width:100%;
+    min-height:44px;
+    margin-top:8px;
+  }
+
+  #modal_agendamento .agenda-package-summary,
+  #modal_agendamento .agenda-recorrencia-resumo{
+    border-radius:10px;
+  }
+
+  #modal_agendamento .ks-agendamento-actions-clean{
+    grid-template-columns:1fr!important;
+    gap:8px;
+  }
+
+  #modal_agendamento .ks-agendamento-actions-clean .ks-agendamento-confirmar{
+    order:1;
+    min-height:52px;
+    font-weight:800;
+  }
+
+  #modal_agendamento .ks-agendamento-actions-clean .ks-agendamento-lista-espera{
+    order:2;
+    min-height:44px;
+    border-color:transparent;
+    background:transparent;
+    color:var(--kds-accent);
+  }
+
+  #modal_agendamento .ks-agendamento-actions-clean .ks-agendamento-cancelar{
+    order:3;
+    min-height:44px;
+    border-color:transparent;
+    background:transparent;
+    color:var(--kds-muted);
+  }
+
+  #modal_agendamento .agenda-modal-feedback:empty{
+    display:none;
+  }
+}
+
+@media (max-width:390px){
+  #modal_agendamento .ks-agendamento-date-time{
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+}
