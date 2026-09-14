@@ -5,11 +5,14 @@
 (function instalarAgendaLifecycle(){
     'use strict';
 
-    const VERSION='1.0.0';
+    const VERSION='1.0.0-r30';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
     const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r18';
+    const MOBILE_ORDER_STYLE_ID='ks_agenda_mobile_order_style';
+    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20260914-order-r30';
+    const origensMobile=new Map();
     let relogioTimer=null;
     let resizeObserver=null;
     let mutationObserver=null;
@@ -34,6 +37,73 @@
     function garantirEstiloMobileAgenda(){
         garantirLinkEstilo(MOBILE_STYLE_ID,MOBILE_STYLE_SRC,'kinesysAgendaMobile');
         garantirLinkEstilo(MOBILE_GRID_STYLE_ID,MOBILE_GRID_STYLE_SRC,'kinesysAgendaMobileGrid');
+        garantirLinkEstilo(MOBILE_ORDER_STYLE_ID,MOBILE_ORDER_STYLE_SRC,'kinesysAgendaMobileOrder');
+    }
+
+    function registrarOrigemMobile(no){
+        if(!no||origensMobile.has(no)||!no.parentNode)return;
+        const marcador=document.createComment('ks-agenda-mobile-origin');
+        no.parentNode.insertBefore(marcador,no);
+        origensMobile.set(no,marcador);
+    }
+
+    function restaurarOrdemDesktopAgenda(){
+        Array.from(origensMobile.entries()).reverse().forEach(([no,marcador])=>{
+            if(marcador.parentNode){
+                marcador.parentNode.insertBefore(no,marcador.nextSibling);
+                marcador.remove();
+            }
+        });
+        origensMobile.clear();
+        document.getElementById('ks_agenda_mobile_order')?.remove();
+    }
+
+    function sincronizarSubtelaMobile(){
+        const host=document.getElementById('ks_agenda_mobile_order');
+        const painel=document.getElementById('agenda_painel');
+        if(!host||!painel)return;
+        const oculto=painel.hidden||getComputedStyle(painel).display==='none';
+        host.dataset.subtela=oculto?'lista':'semana';
+    }
+
+    function organizarControlesMobileAgenda(){
+        const mobile=!!window.matchMedia?.('(max-width: 760px)').matches;
+        if(!mobile){
+            restaurarOrdemDesktopAgenda();
+            return true;
+        }
+
+        const tabs=document.getElementById('ks_agenda_controls');
+        const painel=document.getElementById('agenda_painel');
+        const card=painel?.querySelector('.agenda-card-semanal');
+        if(!tabs||!painel||!card)return false;
+
+        let host=document.getElementById('ks_agenda_mobile_order');
+        if(!host){
+            host=document.createElement('div');
+            host.id='ks_agenda_mobile_order';
+            host.className='ks-agenda-mobile-order';
+            tabs.parentNode?.insertBefore(host,tabs);
+        }
+
+        const visoes=painel.querySelector('.agenda-visoes');
+        const novo=painel.querySelector('.ks-new-appointment');
+        const nav=painel.querySelector('.agenda-semana-nav');
+        const periodo=painel.querySelector('.agenda-periodo-segmentado');
+        const historico=painel.querySelector('.agenda-audit-btn');
+        const feedback=document.getElementById('agenda_feedback');
+        const nos=[visoes,novo,nav,periodo,historico,tabs,feedback].filter(Boolean);
+
+        nos.forEach(registrarOrigemMobile);
+        nos.forEach(no=>host.appendChild(no));
+
+        if(!tabs.dataset.ksAgendaMobileModeListener){
+            tabs.addEventListener('click',()=>requestAnimationFrame(sincronizarSubtelaMobile));
+            tabs.dataset.ksAgendaMobileModeListener='1';
+        }
+
+        sincronizarSubtelaMobile();
+        return true;
     }
 
     function sincronizarEstadoVisualAgenda(){
@@ -76,7 +146,10 @@
     }
 
     function aoVisibilityChange(){atualizarSeAtiva();}
-    function aoResize(){atualizarSeAtiva();}
+    function aoResize(){
+        organizarControlesMobileAgenda();
+        atualizarSeAtiva();
+    }
 
     function observarGrade(){
         const grade=document.getElementById('agenda_semana_grade');
@@ -95,6 +168,7 @@
         if(destruido||!telaAgendaAtiva())return false;
         garantirEstiloMobileAgenda();
         sincronizarEstadoVisualAgenda();
+        organizarControlesMobileAgenda();
         alinharHojePendente=true;
         atualizarSeAtiva();
         if(!listenersAtivos){
@@ -106,7 +180,10 @@
             relogioTimer=setInterval(atualizarSeAtiva,30000);
         }
         observarGrade();
-        requestAnimationFrame(()=>sincronizarGradeRenderizada());
+        requestAnimationFrame(()=>{
+            organizarControlesMobileAgenda();
+            sincronizarGradeRenderizada();
+        });
         return true;
     }
 
@@ -125,6 +202,7 @@
 
     function destroy(){
         suspend();
+        restaurarOrdemDesktopAgenda();
         destruido=true;
         document.removeEventListener('kinesys:tela-ativada',aoTelaAtivada);
         document.removeEventListener('kinesys:tela-desativada',aoTelaDesativada);
@@ -160,6 +238,7 @@
                 timer:!!relogioTimer,
                 observer:!!resizeObserver||!!mutationObserver,
                 listeners:listenersAtivos,
+                mobileOrder:!!document.getElementById('ks_agenda_mobile_order'),
                 destroyed:destruido
             });
         }
