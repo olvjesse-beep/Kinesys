@@ -1,6 +1,6 @@
-/* KineSys — Agenda Mobile Order 1.0.0 / compatibility r32
- * Compatibilidade para o host criado pelo lifecycle.
- * Nunca esconde os containers originais quando o host não existe.
+/* KineSys — Agenda Mobile Order 1.0.0 / cleanup r33
+ * Compatibilidade para o host criado pelo lifecycle e fallback visual.
+ * Remove os controles redundantes mesmo antes da limpeza física do DOM.
  */
 
 @media (max-width:760px){
@@ -20,11 +20,64 @@
   #tela_agenda #ks_agenda_mobile_order .agenda-visoes{order:10!important;}
   #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{order:20!important;}
   #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav{order:30!important;}
+  #tela_agenda #ks_agenda_mobile_order .agenda-periodo-segmentado{order:35!important;}
   #tela_agenda #ks_agenda_mobile_order .agenda-audit-btn{order:40!important;}
   #tela_agenda #ks_agenda_mobile_order #ks_agenda_controls{order:50!important;}
   #tela_agenda #ks_agenda_mobile_order #agenda_feedback{order:60!important;}
 
+  /* Fallback: o lifecycle r33 remove estes nós fisicamente. */
+  #tela_agenda .agenda-semana-nav > .btn-hoje-agenda,
+  #tela_agenda #ks_agenda_controls > .ks-segmented > button[data-agenda-view="agenda_painel"]:not([data-ks-agenda-waitlist-toggle="1"]){
+    display:none!important;
+  }
+
+  /* Navegação da data sem o botão Hoje. */
+  #tela_agenda .agenda-semana-nav{
+    grid-template-columns:42px minmax(0,1fr) 42px!important;
+    grid-template-rows:42px auto!important;
+  }
+
+  #tela_agenda .agenda-semana-nav > button:first-of-type{
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+
+  #tela_agenda .agenda-semana-nav > button:last-of-type{
+    grid-column:3!important;
+    grid-row:1!important;
+  }
+
+  #tela_agenda .agenda-semana-nav > div:not(.agenda-periodo-segmentado){
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+
+  #tela_agenda .agenda-semana-nav > .agenda-periodo-segmentado{
+    grid-column:1 / -1!important;
+    grid-row:2!important;
+  }
+
+  /* O seletor inferior deixa de ser Semana/Lista e vira uma única ação contextual. */
+  #tela_agenda #ks_agenda_controls > .ks-segmented{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+
+  #tela_agenda #ks_agenda_controls > .ks-segmented > button[data-ks-agenda-waitlist-toggle="1"],
+  #tela_agenda #ks_agenda_controls > .ks-segmented > button[data-agenda-view="agenda_lista_espera"]{
+    width:100%!important;
+    grid-column:1!important;
+  }
+
   #tela_agenda #ks_agenda_mobile_order[data-subtela="lista"] > :not(#ks_agenda_controls){
     display:none!important;
+  }
+}
+
+@media (max-width:390px){
+  #tela_agenda .agenda-semana-nav{
+    grid-template-columns:38px minmax(0,1fr) 38px!important;
+    grid-template-rows:38px auto!important;
   }
 }
