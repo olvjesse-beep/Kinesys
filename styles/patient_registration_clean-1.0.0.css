@@ -1,0 +1,349 @@
+/* KineSys — Cadastro de Pacientes Clean 1.0.0-r47
+ * Hierarquia visual e progressive disclosure sem alterar IDs, contratos ou persistência.
+ */
+
+#tela_cadastro{
+  max-width:980px;
+}
+
+#tela_cadastro .patient-registration-card{
+  padding:0;
+  overflow:hidden;
+  border:1px solid var(--kds-line);
+  border-radius:18px;
+  background:var(--kds-surface);
+  box-shadow:none;
+}
+
+#tela_cadastro .patient-registration-header{
+  display:block;
+  margin:0;
+  padding:24px 26px 20px;
+  border-bottom:1px solid var(--kds-line-soft);
+  background:linear-gradient(180deg,var(--kds-surface) 0%,var(--kds-surface-soft) 100%);
+}
+
+#tela_cadastro .patient-registration-header h2{
+  margin:0;
+  color:var(--kds-text);
+  font-size:24px;
+  line-height:1.2;
+  font-weight:780;
+  letter-spacing:-.02em;
+}
+
+#tela_cadastro .patient-registration-subtitle{
+  max-width:64ch;
+  margin:6px 0 0;
+  color:var(--kds-muted);
+  font-size:14px;
+  line-height:1.5;
+}
+
+#tela_cadastro .patient-registration-layout{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin:0;
+  padding:18px 20px 4px;
+}
+
+#tela_cadastro .patient-registration-section,
+#tela_cadastro .patient-registration-disclosure{
+  min-width:0;
+  margin:0;
+  border:1px solid var(--kds-line-soft);
+  border-radius:14px;
+  background:var(--kds-surface);
+  overflow:hidden;
+}
+
+#tela_cadastro .patient-registration-section-head{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  padding:14px 16px 10px;
+}
+
+#tela_cadastro .patient-registration-step{
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  flex:0 0 26px;
+  border-radius:999px;
+  background:var(--kds-accent-soft);
+  color:var(--kds-accent);
+  font-size:12px;
+  font-weight:800;
+}
+
+#tela_cadastro .patient-registration-section-head h3,
+#tela_cadastro .patient-registration-disclosure-title{
+  margin:0;
+  color:var(--kds-text);
+  font-size:15px;
+  line-height:1.3;
+  font-weight:760;
+}
+
+#tela_cadastro .patient-registration-section-head p,
+#tela_cadastro .patient-registration-disclosure-copy{
+  margin:3px 0 0;
+  color:var(--kds-muted);
+  font-size:13px;
+  line-height:1.4;
+  font-weight:500;
+}
+
+#tela_cadastro .patient-registration-fields{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:0 12px;
+  padding:2px 16px 6px;
+}
+
+#tela_cadastro .patient-registration-fields>.input-group,
+#tela_cadastro .patient-registration-fields>.grid-2{
+  min-width:0;
+}
+
+#tela_cadastro .patient-registration-fields .patient-registration-wide{
+  grid-column:1/-1;
+}
+
+#tela_cadastro .patient-registration-fields .grid-2{
+  grid-template-columns:minmax(0,1fr) minmax(0,.62fr);
+  gap:10px;
+  margin:0;
+}
+
+#tela_cadastro .patient-registration-fields input,
+#tela_cadastro .patient-registration-fields select{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#tela_cadastro .patient-registration-responsible{
+  background:var(--kds-surface-soft);
+}
+
+#tela_cadastro .patient-registration-responsible .cadastro-dependente-toggle{
+  margin:0;
+  padding:12px 16px 14px;
+}
+
+#tela_cadastro .patient-registration-responsible .cad-dependente-check{
+  min-height:52px;
+  margin:0;
+  padding:12px 13px;
+  border:1px solid var(--kds-line);
+  border-radius:11px;
+  background:var(--kds-surface);
+}
+
+#tela_cadastro .patient-registration-responsible .cad-dependente-check strong{
+  color:var(--kds-text);
+  font-size:14px;
+}
+
+#tela_cadastro .patient-registration-responsible .cad-dependente-check small{
+  margin-top:3px;
+  color:var(--kds-muted);
+  font-size:12px;
+  line-height:1.4;
+}
+
+#tela_cadastro .patient-registration-responsible .cad-responsavel-card{
+  margin:0 16px 16px;
+  border-radius:12px;
+  box-shadow:none;
+}
+
+#tela_cadastro .patient-registration-disclosure>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  min-height:64px;
+  padding:12px 16px;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+}
+
+#tela_cadastro .patient-registration-disclosure>summary::-webkit-details-marker{
+  display:none;
+}
+
+#tela_cadastro .patient-registration-disclosure>summary::after{
+  content:'+';
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  border-radius:999px;
+  background:var(--kds-surface-soft);
+  color:var(--kds-accent);
+  font-size:20px;
+  line-height:1;
+  font-weight:500;
+}
+
+#tela_cadastro .patient-registration-disclosure[open]>summary{
+  border-bottom:1px solid var(--kds-line-soft);
+}
+
+#tela_cadastro .patient-registration-disclosure[open]>summary::after{
+  content:'−';
+}
+
+#tela_cadastro .patient-registration-disclosure-body{
+  padding:12px 16px 4px;
+}
+
+#tela_cadastro .patient-registration-disclosure-body .patient-registration-fields{
+  padding:0;
+}
+
+#tela_cadastro .patient-registration-address .patient-registration-fields{
+  grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);
+}
+
+#tela_cadastro .patient-registration-address #cad_cep_status:not(:empty){
+  display:block;
+  margin-top:5px;
+}
+
+#tela_cadastro .patient-registration-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:9px;
+  margin:0;
+  padding:16px 20px 20px;
+  border-top:1px solid var(--kds-line-soft);
+  background:var(--kds-surface);
+}
+
+#tela_cadastro .patient-registration-actions button{
+  min-height:46px;
+}
+
+#tela_cadastro #btn_salvar_iniciar_avaliacao{
+  min-width:220px;
+}
+
+#tela_cadastro #cad_idade[readonly]{
+  color:var(--kds-text-secondary)!important;
+  background:var(--kds-surface-soft)!important;
+  border-style:dashed;
+}
+
+#tela_cadastro #cad_nome{
+  font-weight:650;
+}
+
+@media (max-width:700px){
+  #tela_cadastro{
+    padding-top:10px;
+  }
+
+  #tela_cadastro .patient-registration-card{
+    border-radius:16px;
+  }
+
+  #tela_cadastro .patient-registration-header{
+    padding:19px 16px 16px;
+  }
+
+  #tela_cadastro .patient-registration-header h2{
+    font-size:21px;
+  }
+
+  #tela_cadastro .patient-registration-layout{
+    gap:10px;
+    padding:12px 10px 2px;
+  }
+
+  #tela_cadastro .patient-registration-section-head{
+    padding:13px 13px 9px;
+  }
+
+  #tela_cadastro .patient-registration-fields,
+  #tela_cadastro .patient-registration-address .patient-registration-fields{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:0;
+    padding:2px 13px 4px;
+  }
+
+  #tela_cadastro .patient-registration-fields .grid-2{
+    grid-template-columns:minmax(0,1fr) minmax(0,.56fr)!important;
+    gap:8px!important;
+  }
+
+  #tela_cadastro .patient-registration-disclosure>summary{
+    min-height:60px;
+    padding:11px 13px;
+  }
+
+  #tela_cadastro .patient-registration-disclosure-body{
+    padding:11px 13px 3px;
+  }
+
+  #tela_cadastro .patient-registration-disclosure-body .patient-registration-fields{
+    padding:0;
+  }
+
+  #tela_cadastro .patient-registration-responsible .cadastro-dependente-toggle{
+    padding:10px 13px 13px;
+  }
+
+  #tela_cadastro .patient-registration-responsible .cad-responsavel-card{
+    margin:0 13px 13px;
+  }
+
+  #tela_cadastro input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  #tela_cadastro select{
+    min-height:48px;
+    font-size:16px;
+  }
+
+  #tela_cadastro #cad_nascimento{
+    min-width:0;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+
+  #tela_cadastro .patient-registration-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+    padding:13px 10px calc(15px + env(safe-area-inset-bottom));
+  }
+
+  #tela_cadastro .patient-registration-actions button{
+    width:100%;
+    min-width:0;
+  }
+
+  #tela_cadastro #btn_salvar_iniciar_avaliacao{
+    order:1;
+    min-height:50px;
+  }
+
+  #tela_cadastro #btn_salvar_cadastro{
+    order:2;
+    background:transparent;
+  }
+}
+
+@media (max-width:390px){
+  #tela_cadastro .patient-registration-fields .grid-2{
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+}
