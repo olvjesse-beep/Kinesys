@@ -1,12 +1,12 @@
-/* KineSys — Agenda Mobile Cleanup 1.0.0 / r35
- * Remove no mobile controles redundantes da Agenda diretamente no DOM entregue
+/* KineSys — Agenda Mobile Cleanup 1.0.0 / r36
+ * Remove no mobile os controles superiores redundantes da Agenda diretamente no DOM entregue
  * e reposiciona ações secundárias para depois da grade semanal.
  * Carregado de forma eager pelo shell de produção; independe do Screen Loader.
  */
 (function instalarAgendaMobileCleanup(){
     'use strict';
 
-    const VERSION='1.0.0-r35';
+    const VERSION='1.0.0-r36';
     const MEDIA='(max-width: 760px)';
     let observer=null;
     let raf=0;
@@ -21,12 +21,12 @@
         style.id='ks_agenda_mobile_cleanup_style';
         style.textContent=`
 @media (max-width:760px){
-  #tela_agenda .agenda-semana-nav>.btn-hoje-agenda{display:none!important;}
+  #tela_agenda .agenda-semana-nav,
+  #tela_agenda .agenda-periodo-segmentado{
+    display:none!important;
+  }
+
   #tela_agenda #ks_agenda_controls>.ks-segmented>button[data-agenda-view="agenda_painel"]:not([data-ks-agenda-waitlist-toggle="1"]){display:none!important;}
-  #tela_agenda .agenda-semana-nav{grid-template-columns:42px minmax(0,1fr) 42px!important;}
-  #tela_agenda .agenda-semana-nav>button:first-of-type{grid-column:1!important;}
-  #tela_agenda .agenda-semana-nav>button:last-of-type{grid-column:3!important;}
-  #tela_agenda .agenda-semana-nav>div:not(.agenda-periodo-segmentado){grid-column:2!important;}
 
   #tela_agenda #ks_agenda_mobile_post_grid{
     display:flex!important;
@@ -110,15 +110,19 @@
   #tela_agenda #ks_agenda_mobile_post_grid[data-subtela="lista"] .agenda-audit-btn{
     display:none!important;
   }
-}
-@media (max-width:390px){
-  #tela_agenda .agenda-semana-nav{grid-template-columns:38px minmax(0,1fr) 38px!important;}
 }`;
         document.head.appendChild(style);
     }
 
     function estadoListaAtiva(){
         return !!document.getElementById('agenda_lista_espera')?.classList.contains('ativa');
+    }
+
+    function removerControlesSuperiores(){
+        if(!mobile())return false;
+        document.querySelectorAll('#tela_agenda .agenda-semana-nav, #tela_agenda .agenda-periodo-segmentado')
+            .forEach(elemento=>elemento.remove());
+        return true;
     }
 
     function prepararAlternadorLista(){
@@ -183,7 +187,7 @@
     function limpar(){
         if(!mobile())return false;
         garantirEstilo();
-        document.querySelectorAll('#tela_agenda .agenda-semana-nav>.btn-hoje-agenda').forEach(botao=>botao.remove());
+        removerControlesSuperiores();
         prepararAlternadorLista();
         reposicionarAcoesPosAgenda();
         const tela=document.getElementById('tela_agenda');
@@ -236,7 +240,8 @@
             const host=document.getElementById('ks_agenda_mobile_post_grid');
             return Object.freeze({
                 mobile:mobile(),
-                todayPresent:!!document.querySelector('#tela_agenda .agenda-semana-nav>.btn-hoje-agenda'),
+                topNavigationPresent:!!document.querySelector('#tela_agenda .agenda-semana-nav'),
+                periodSelectorPresent:!!document.querySelector('#tela_agenda .agenda-periodo-segmentado'),
                 redundantWeekPresent:!!document.querySelector('#ks_agenda_controls>.ks-segmented>button[data-agenda-view="agenda_painel"]:not([data-ks-agenda-waitlist-toggle="1"])'),
                 waitlistTogglePresent:!!document.querySelector('#ks_agenda_controls [data-ks-agenda-waitlist-toggle="1"]'),
                 postGridHostPresent:!!host,
