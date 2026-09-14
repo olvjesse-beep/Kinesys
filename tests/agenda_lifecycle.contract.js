@@ -7,15 +7,18 @@ const lifecycle=fs.readFileSync('src/agenda/agenda_lifecycle-1.0.0.js','utf8');
 const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 const mobileCss=fs.readFileSync('styles/agenda_mobile-1.0.0.css','utf8');
 const mobileGridCss=fs.readFileSync('styles/agenda_mobile_grid-1.0.0.css','utf8');
+const mobileOrderCss=fs.readFileSync('styles/agenda_mobile_order-1.0.0.css','utf8');
 const htaccess=fs.readFileSync('.htaccess','utf8');
 
 assert.ok(loader.indexOf('src/agenda/agenda-1.20.0.js')<loader.indexOf('src/agenda/agenda_lifecycle-1.0.0.js'),'Agenda lifecycle must load after the Agenda module');
-assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js\?v=20260913-grid-r19/,'Agenda lifecycle must use the current mobile grid cache revision');
+assert.match(loader,/src\/agenda\/agenda_lifecycle-1\.0\.0\.js\?v=20260914-postgrid-r37/,'Agenda lifecycle must use the current post-grid cache revision');
 assert.match(loader,/styles\/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda mobile CSS must be part of the lazy Agenda bundle');
 assert.match(loader,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r19/,'deterministic mobile grid CSS must be part of the official Agenda bundle');
+assert.match(loader,/styles\/agenda_mobile_order-1\.0\.0\.css\?v=20260914-postgrid-r37/,'Agenda mobile order CSS must use the current post-grid revision');
 assert.ok(loader.indexOf('styles/agenda_referencia-1.20.0.css')<loader.indexOf('styles/agenda_mobile-1.0.0.css'),'Agenda mobile layer must load after the reference stylesheet');
-assert.ok(loader.indexOf('styles/agenda_mobile-1.0.0.css')<loader.indexOf('styles/agenda_mobile_grid-1.0.0.css'),'deterministic mobile grid correction must load last in the Agenda style bundle');
-assert.match(loader,/ASSET_REVISION=['"]20260913-agenda-grid-r19['"]/,'screen loader must force the current Agenda grid asset revision');
+assert.ok(loader.indexOf('styles/agenda_mobile-1.0.0.css')<loader.indexOf('styles/agenda_mobile_grid-1.0.0.css'),'deterministic mobile grid correction must load after the base mobile layer');
+assert.ok(loader.indexOf('styles/agenda_mobile_grid-1.0.0.css')<loader.indexOf('styles/agenda_mobile_order-1.0.0.css'),'mobile order fallback must load after the grid stylesheet');
+assert.match(loader,/ASSET_REVISION=['"]20260914-agenda-postgrid-r37['"]/,'screen loader must force the current Agenda post-grid asset revision');
 
 assert.match(lifecycle,/function activate\(/,'Agenda lifecycle must expose activate');
 assert.match(lifecycle,/function suspend\(/,'Agenda lifecycle must expose suspend');
@@ -31,7 +34,8 @@ assert.match(lifecycle,/document\.visibilityState!==['"]visible['"]/,'Agenda vis
 assert.match(lifecycle,/iniciarRelogioAgenda=iniciarRelogioAgendaLifecycle/,'Agenda lifecycle must replace only the visual clock starter');
 
 assert.match(lifecycle,/agenda_mobile-1\.0\.0\.css\?v=20260913-mobile-r2/,'Agenda lifecycle fallback must point to the current mobile stylesheet');
-assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r18/,'Agenda lifecycle fallback may keep the prior grid URL because the official bundle owns delivery');
+assert.match(lifecycle,/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-grid-r19/,'Agenda lifecycle fallback must point to the current mobile grid stylesheet');
+assert.match(lifecycle,/agenda_mobile_order-1\.0\.0\.css\?v=20260914-postgrid-r37/,'Agenda lifecycle fallback must point to the current post-grid stylesheet');
 assert.match(lifecycle,/function garantirLinkEstilo\(/,'Agenda lifecycle must use one idempotent stylesheet loader');
 assert.match(lifecycle,/src\.split\('\?'\)\[0\]/,'Agenda lifecycle stylesheet loader must avoid duplicate versions of the same stylesheet');
 assert.match(lifecycle,/function sincronizarEstadoVisualAgenda\(/,'Agenda lifecycle must synchronize the global shell after lazy activation');
@@ -41,6 +45,20 @@ assert.match(lifecycle,/ks_page_subtitle[\s\S]*Semana de atendimento e disponibi
 assert.match(lifecycle,/function alinharHojeNaGradeMobile\(/,'Agenda lifecycle must expose mobile today alignment internally');
 assert.match(lifecycle,/agenda-dia-cabecalho\.hoje/,'mobile weekly view must locate the current day header');
 assert.match(lifecycle,/scroll\.scrollLeft=Math\.max\(0,alvo\)/,'mobile weekly view must center today without changing the Agenda data model');
+
+/* Contrato visual r37: os controles superiores não podem voltar ao topo. */
+assert.match(lifecycle,/function removerControlesSuperioresMobileAgenda\(/,'lifecycle must own removal of obsolete top navigation');
+assert.match(lifecycle,/const nav=document\.querySelector\('#tela_agenda \.agenda-semana-nav'\)/,'lifecycle must target the real static weekly navigation node');
+assert.match(lifecycle,/nav\.remove\(\)/,'weekly navigation must be physically removed from the mobile DOM flow');
+assert.match(lifecycle,/function garantirHostPosGrade\(/,'lifecycle must own the post-grid host');
+assert.match(lifecycle,/painel\.insertAdjacentElement\('afterend',host\)/,'post-grid host must be placed immediately after agenda_painel');
+assert.match(lifecycle,/hostPosGrade\.appendChild\(tabs\)/,'waitlist control must move to the post-grid host');
+assert.match(lifecycle,/hostPosGrade\.appendChild\(historico\)/,'status history must move to the post-grid host');
+assert.doesNotMatch(lifecycle,/\[visoes,novo,nav,periodo,historico,tabs,feedback\]/,'legacy top-order array must not return');
+assert.match(mobileOrderCss,/\.agenda-semana-nav,[\s\S]*\.agenda-periodo-segmentado[\s\S]*display:none!important/,'CSS fallback must hide obsolete top controls on mobile');
+assert.match(mobileOrderCss,/#ks_agenda_mobile_post_grid[\s\S]*display:flex!important/,'CSS must style the post-grid action host');
+assert.match(mobileOrderCss,/#ks_agenda_mobile_post_grid #ks_agenda_controls[\s\S]*order:10!important/,'waitlist action must precede history after the grid');
+assert.match(mobileOrderCss,/#ks_agenda_mobile_post_grid \.agenda-audit-btn[\s\S]*order:20!important/,'history action must follow waitlist after the grid');
 
 assert.match(mobileCss,/@media \(max-width:760px\)/,'mobile Agenda layer must remain scoped to the official 760px breakpoint');
 assert.match(mobileCss,/@media \(max-width:430px\)/,'narrow-phone refinement must use the official 430px breakpoint');
@@ -61,7 +79,7 @@ assert.match(mobileGridCss,/width:max-content!important/,'weekly mobile grid mus
 assert.match(mobileGridCss,/overflow-x:auto!important/,'weekly mobile grid container must remain horizontally scrollable');
 assert.match(mobileGridCss,/agenda-hora-eixo[\s\S]*position:sticky!important[\s\S]*left:0!important/,'hour axis must remain fixed while swiping days');
 assert.match(mobileGridCss,/agenda-compromisso[\s\S]*min-height:0!important/,'appointment cards must follow their real duration instead of forcing a tall minimum');
-assert.match(mobileGridCss,/:has\(\[data-agenda-periodo="dia"\]\[aria-pressed="true"\]\)[\s\S]*grid-template-columns:58px minmax\(0,1fr\)!important/,'day view must remain fluid and use the full viewport');
+assert.match(mobileGridCss,/:has\(\[data-agenda-periodo="dia"\]\[aria-pressed="true"\]\)[\s\S]*grid-template-columns:58px minmax\(0,1fr\)!important/,'day view styling may remain available without exposing the removed mobile toggle');
 
 /* A faixa vertical é adaptativa: usa janelas do profissional e os agendamentos reais. */
 assert.match(agenda,/function limitesHorariosGrade\(dias, profissionalId\)/,'Agenda must retain the adaptive working-range calculator');
@@ -69,9 +87,10 @@ assert.match(agenda,/janelasAgendaPara\(d\.diaSemana, profissionalId\)/,'working
 assert.match(agenda,/const limites = limitesHorariosGrade\(dias, profissionalFiltro\)/,'weekly rendering must apply the selected professional adaptive range');
 
 assert.match(htaccess,/screen_loader-1\.25\.0\.js/,'screen loader must be revalidated in production');
-assert.match(htaccess,/kinesys_delivery_agenda_density_r20/,'Safari cache reset must use the fresh mobile density revision');
-assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260913-agenda-grid-r19/,'server fallback must keep the current screen loader URL');
-assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-density-r20/,'server fallback must directly inject the fresh compact mobile grid stylesheet');
+assert.match(htaccess,/kinesys_delivery_agenda_runtime_r37/,'Safari cache reset must use the fresh official runtime revision');
+assert.match(htaccess,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260914-agenda-postgrid-r37/,'server fallback must deliver the current screen loader URL');
+assert.match(htaccess,/styles\/agenda_mobile_grid-1\.0\.0\.css\?v=20260913-density-r20/,'server fallback must keep the compact mobile grid stylesheet');
+assert.match(htaccess,/styles\/agenda_mobile_order-1\.0\.0\.css\?v=20260914-postgrid-r37/,'server fallback must deliver the post-grid order stylesheet');
 
 const syncStart=agenda.indexOf('function configurarSincronizacaoConfiavelAgenda()');
 const syncEnd=agenda.indexOf('async function inicializarAgenda()',syncStart);
@@ -80,4 +99,4 @@ const syncBlock=agenda.slice(syncStart,syncEnd);
 assert.match(syncBlock,/agendaSyncTimer\s*=\s*setInterval/,'reliable pending sync timer must remain intact');
 assert.doesNotMatch(lifecycle,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'visual lifecycle must not interfere with reliable pending sync');
 
-console.log('Agenda lifecycle/mobile contract OK: 48px/hour mobile density, adaptive professional working range, readable appointments, horizontal day swipe and fresh Safari delivery.');
+console.log('Agenda lifecycle/mobile contract OK: official r37 runtime removes obsolete top controls and moves waitlist/history after the grid without changing clinical or scheduling logic.');
