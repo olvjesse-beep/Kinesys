@@ -43,7 +43,9 @@
                 'src/clinical/clinical_region_loader-1.0.0.js?v=20260911-phase3c-r1'
             ]),
             afterLoad(){
-                if(typeof window.atualizarMotorClinico3KineSys==='function')window.atualizarMotorClinico3KineSys(true);
+                if(typeof window.atualizarMotorClinico3KineSys==='function'){
+                    window.atualizarMotorClinico3KineSys(true);
+                }
             }
         }),
         tela_financeiro:Object.freeze({
@@ -84,15 +86,26 @@
         const href=urlAbsoluta(src);
         if(estilos.has(href))return estilos.get(href);
         const existente=Array.from(document.querySelectorAll('link[rel="stylesheet"][href]')).find(link=>link.href===href);
-        if(existente){const pronta=Promise.resolve(existente);estilos.set(href,pronta);return pronta;}
+        if(existente){
+            const pronta=Promise.resolve(existente);
+            estilos.set(href,pronta);
+            return pronta;
+        }
         const reservado=Array.from(document.querySelectorAll('link[rel="stylesheet"][data-kinesys-lazy-href]')).find(link=>{
             const reservadoSrc=link.dataset.kinesysLazyHref||'';
             return reservadoSrc&&urlAbsoluta(reservadoSrc)===href;
         });
         if(reservado){
             const promessa=new Promise((resolve,reject)=>{
-                const aoCarregar=()=>{reservado.removeEventListener('error',aoErro);resolve(reservado);};
-                const aoErro=()=>{reservado.removeEventListener('load',aoCarregar);reservado.removeAttribute('href');reject(new Error('Falha ao carregar estilo: '+src));};
+                const aoCarregar=()=>{
+                    reservado.removeEventListener('error',aoErro);
+                    resolve(reservado);
+                };
+                const aoErro=()=>{
+                    reservado.removeEventListener('load',aoCarregar);
+                    reservado.removeAttribute('href');
+                    reject(new Error('Falha ao carregar estilo: '+src));
+                };
                 reservado.addEventListener('load',aoCarregar,{once:true});
                 reservado.addEventListener('error',aoErro,{once:true});
                 reservado.dataset.kinesysLazy='1';
@@ -118,7 +131,11 @@
         const href=urlAbsoluta(src);
         if(carregamentos.has(href))return carregamentos.get(href);
         const existente=Array.from(document.scripts).find(script=>script.src===href);
-        if(existente){const pronta=Promise.resolve(existente);carregamentos.set(href,pronta);return pronta;}
+        if(existente){
+            const pronta=Promise.resolve(existente);
+            carregamentos.set(href,pronta);
+            return pronta;
+        }
         const promessa=new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             script.src=href;script.async=false;script.dataset.kinesysLazy='1';
@@ -131,7 +148,9 @@
         return promessa;
     }
 
-    async function carregarScriptsEmOrdem(lista){for(const src of lista)await carregarScript(src);}
+    async function carregarScriptsEmOrdem(lista){
+        for(const src of lista)await carregarScript(src);
+    }
 
     function carregarFragmento(idTela,bundle){
         if(!bundle?.fragment)return Promise.resolve(null);
@@ -139,6 +158,7 @@
         if(!alvo)return Promise.reject(new Error('Tela não encontrada para montagem: '+idTela));
         if(alvo.dataset.kinesysFragmentState==='mounted')return Promise.resolve(alvo);
         if(fragmentos.has(bundle.id))return fragmentos.get(bundle.id);
+
         alvo.dataset.kinesysFragmentState='loading';
         const promessa=(async()=>{
             const fragmentUrl=urlAbsoluta(bundle.fragment);
@@ -153,12 +173,17 @@
             alvo.replaceChildren(template.content.cloneNode(true));
             alvo.dataset.kinesysFragmentState='mounted';
             return alvo;
-        })().catch(error=>{alvo.dataset.kinesysFragmentState='error';fragmentos.delete(bundle.id);throw error;});
+        })().catch(error=>{
+            alvo.dataset.kinesysFragmentState='error';
+            fragmentos.delete(bundle.id);
+            throw error;
+        });
         fragmentos.set(bundle.id,promessa);
         return promessa;
     }
 
     function bundleDaTela(idTela){return BUNDLES[idTela]||null;}
+
     function podeCarregarTela(idTela){
         if(idTela==='tela_login')return true;
         if(typeof usuarioLogado!=='undefined'&&!usuarioLogado)return false;
@@ -171,16 +196,22 @@
         if(!bundle)return true;
         if(bundles.get(bundle.id)==='loaded')return true;
         if(bundles.get(bundle.id) instanceof Promise)return bundles.get(bundle.id);
+
         const promessa=(async()=>{
             const estilosProntos=Promise.all(bundle.styles.map(carregarEstilo));
             await carregarFragmento(idTela,bundle);
             await Promise.all([estilosProntos,carregarScriptsEmOrdem(bundle.scripts)]);
-            if(bundle.fragment)document.dispatchEvent(new CustomEvent('kinesys:tela-dom-pronta',{detail:{id:idTela,bundle:bundle.id,fragmento:bundle.fragment,versao:VERSION}}));
+            if(bundle.fragment){
+                document.dispatchEvent(new CustomEvent('kinesys:tela-dom-pronta',{detail:{id:idTela,bundle:bundle.id,fragmento:bundle.fragment,versao:VERSION}}));
+            }
             bundle.afterLoad?.();
             bundles.set(bundle.id,'loaded');
             document.dispatchEvent(new CustomEvent('kinesys:tela-modulos-prontos',{detail:{id:idTela,bundle:bundle.id,versao:VERSION}}));
             return true;
-        })().catch(error=>{bundles.delete(bundle.id);throw error;});
+        })().catch(error=>{
+            bundles.delete(bundle.id);
+            throw error;
+        });
         bundles.set(bundle.id,promessa);
         return promessa;
     }
@@ -205,24 +236,31 @@
     function instalarNavegacaoSobDemanda(){
         const original=window.navegarPara;
         if(typeof original!=='function'||original.__kinesysScreenLoader)return;
+
         const sobDemanda=function(idTela,contextoEdicao=false){
             const id=String(idTela||'');
             const bundle=bundleDaTela(id);
             const revisao=++revisaoNavegacao;
+
             if(!bundle||!podeCarregarTela(id)){
                 const resultado=original.apply(this,arguments);
                 notificarCicloVida();
                 return resultado;
             }
+
             const tela=document.getElementById(id);
             tela?.setAttribute('aria-busy','true');
             document.body.classList.add('kinesys-carregando-tela');
+
             return garantirTela(id).then(()=>{
                 if(revisao!==revisaoNavegacao)return false;
                 const resultado=original.call(this,id,contextoEdicao);
                 notificarCicloVida();
                 return resultado;
-            }).catch(error=>{if(revisao===revisaoNavegacao)feedbackFalha(id,error);return false;}).finally(()=>{
+            }).catch(error=>{
+                if(revisao===revisaoNavegacao)feedbackFalha(id,error);
+                return false;
+            }).finally(()=>{
                 tela?.removeAttribute('aria-busy');
                 if(revisao===revisaoNavegacao)document.body.classList.remove('kinesys-carregando-tela');
             });
