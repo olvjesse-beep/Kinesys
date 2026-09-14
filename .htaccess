@@ -4,7 +4,7 @@
 # por navegador nesta revisão. Clear-Site-Data usa somente "cache": cookies,
 # sessão e localStorage permanecem intactos.
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|screen_loader-1\.25\.0\.js|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|patient_form_helpers_core-1\.0\.0\.js|patient_registration_clean-1\.0\.0\.css|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile_cleanup-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css|agenda_mobile_grid-1\.0\.0\.css|agenda_mobile_critical-1\.0\.0\.css|agenda_mobile_controls-1\.0\.0\.css|agenda_mobile_order-1\.0\.0\.css|agenda_profissional_picker-1\.0\.0\.js|agenda_profissional_picker-1\.0\.0\.css|agenda_new_appointment_clean-1\.0\.0\.js|agenda_new_appointment_clean-1\.0\.0\.css)$">
+  <FilesMatch "^(index\.html|screen_loader-1\.25\.0\.js|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|patient_form_helpers_core-1\.0\.0\.js|patient_registration_clean-1\.0\.0\.css|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|navigation_glass_final-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile_cleanup-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css|agenda_mobile_grid-1\.0\.0\.css|agenda_mobile_critical-1\.0\.0\.css|agenda_mobile_controls-1\.0\.0\.css|agenda_mobile_order-1\.0\.0\.css|agenda_profissional_picker-1\.0\.0\.js|agenda_profissional_picker-1\.0\.0\.css|agenda_new_appointment_clean-1\.0\.0\.js|agenda_new_appointment_clean-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
@@ -14,11 +14,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_sidebar_glass_r48=1" kinesys_delivery_sidebar_glass_r48_seen=1
+  SetEnvIf Cookie "kinesys_delivery_sidebar_clear_glass_r49=1" kinesys_delivery_sidebar_clear_glass_r49_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_sidebar_glass_r48_seen
-      Header always set Set-Cookie "kinesys_delivery_sidebar_glass_r48=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_sidebar_glass_r48_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_sidebar_clear_glass_r49_seen
+      Header always set Set-Cookie "kinesys_delivery_sidebar_clear_glass_r49=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_sidebar_clear_glass_r49_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -45,7 +45,7 @@
   Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-new-appointment-clean-r43|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
   Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-repeat-until-r44|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
   Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260914-iphone-glass-r48\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r32\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_order-1.0.0.css?v=20260914-postgrid-r41\"><link rel=\"stylesheet\" href=\"styles/agenda_profissional_picker-1.0.0.css?v=20260914-r42\"><link rel=\"stylesheet\" href=\"styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r46\"></head>|ni"
+  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r32\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_order-1.0.0.css?v=20260914-postgrid-r41\"><link rel=\"stylesheet\" href=\"styles/agenda_profissional_picker-1.0.0.css?v=20260914-r42\"><link rel=\"stylesheet\" href=\"styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r46\"><link rel=\"stylesheet\" href=\"styles/navigation_glass_final-1.0.0.css?v=20260914-r49\"></head>|ni"
   Substitute "s|</body>|<script src=\"src/agenda/agenda_mobile_cleanup-1.0.0.js?v=20260914-r36\"></script></body>|ni"
 </IfModule>
 
@@ -53,4 +53,4 @@
 # kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
 # styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
 
-# Deploy trigger 2026-09-14 — Sidebar vivid iPhone liquid glass r48.
+# Deploy trigger 2026-09-14 — Sidebar clear iPhone liquid glass r49.
