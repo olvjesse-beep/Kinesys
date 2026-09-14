@@ -1,57 +1,31 @@
-# KineSys — entrega segura do hub Configurações > Agenda, navegação/drawer mobile,
-# Agenda mobile, cadastro de pacientes e camada sistêmica Liquid Glass.
-# Mantém os assets críticos revalidáveis e força apenas uma limpeza de cache
-# por navegador nesta revisão. Clear-Site-Data usa somente "cache": cookies,
-# sessão e localStorage permanecem intactos.
+# KineSys — isolamento de produção por host (r51)
+# IMPORTANTE: este arquivo pode ser herdado por outros hosts do mesmo plano.
+# Todas as regras de entrega do KineSys ficam limitadas a app.fisiofixfisioterapia.com.
+# O site comercial www.fisiofixfisioterapia.com não deve receber CSS, JS, headers
+# de cache ou qualquer transformação HTML do software de gestão.
+
+<IfModule mod_setenvif.c>
+  SetEnvIfNoCase Host "^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$" KINESYS_APP_HOST=1
+</IfModule>
+
+# Assets críticos do KineSys: revalidar somente no host do aplicativo.
 <IfModule mod_headers.c>
   <FilesMatch "^(index\.html|screen_loader-1\.25\.0\.js|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|patient_form_helpers_core-1\.0\.0\.js|patient_registration_clean-1\.0\.0\.css|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|navigation_glass_final-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile_cleanup-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css|agenda_mobile_grid-1\.0\.0\.css|agenda_mobile_critical-1\.0\.0\.css|agenda_mobile_controls-1\.0\.0\.css|agenda_mobile_order-1\.0\.0\.css|agenda_profissional_picker-1\.0\.0\.js|agenda_profissional_picker-1\.0\.0\.css|agenda_new_appointment_clean-1\.0\.0\.js|agenda_new_appointment_clean-1\.0\.0\.css)$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-    Header set Pragma "no-cache"
-    Header set Expires "0"
+    Header set Cache-Control "no-cache, no-store, must-revalidate" env=KINESYS_APP_HOST
+    Header set Pragma "no-cache" env=KINESYS_APP_HOST
+    Header set Expires "0" env=KINESYS_APP_HOST
   </FilesMatch>
 </IfModule>
 
-# Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
-# limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
-<IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_sidebar_direct_glass_r50=1" kinesys_delivery_sidebar_direct_glass_r50_seen=1
-  <IfModule mod_headers.c>
-    <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_sidebar_direct_glass_r50_seen
-      Header always set Set-Cookie "kinesys_delivery_sidebar_direct_glass_r50=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_sidebar_direct_glass_r50_seen
-    </Files>
-  </IfModule>
-</IfModule>
+# INCIDENTE r51:
+# O bloco antigo de mod_substitute transformava TODO text/html alcançado por este
+# .htaccess. Em hospedagem compartilhada por www + app, isso podia injetar estilos
+# e scripts do KineSys no site comercial. Ele foi removido por completo.
+#
+# O KineSys já possui index.html e screen_loader próprios; a entrega não deve
+# depender de reescrita genérica de </head>, </body> ou URLs em HTML de terceiros.
+#
+# Também removemos Clear-Site-Data/Set-Cookie globais do index.html para que o
+# domínio comercial não tenha seu cache alterado por revisões do aplicativo.
 
-# Fallback para hosts com mod_substitute disponível. A fonte de verdade continua
-# sendo os módulos oficiais carregados pelo index/screen_loader.
-<IfModule mod_substitute.c>
-  AddOutputFilterByType SUBSTITUTE text/html
-  Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1|ni"
-  Substitute "s|src/core/design_system-1.20.1.js?v=20260910-phase4e-r1|src/core/design_system-1.20.1.js?v=20260914-agenda-cleanup-r34|ni"
-  Substitute "s|src/patient/patient_form_helpers_core-1.0.0.js?v=20260911-phase4q-r1|src/patient/patient_form_helpers_core-1.0.0.js?v=20260914-patient-clean-r47|ni"
-  Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
-  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260914-direct-glass-r50|ni"
-  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260914-iphone-glass-r32|styles/navigation_glass-1.0.0.css?v=20260914-direct-glass-r50|ni"
-  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260914-iphone-glass-r48|styles/navigation_glass-1.0.0.css?v=20260914-direct-glass-r50|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-controls-r29|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-order-r30|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-order-r31|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-cleanup-r33|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-cleanup-r34|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r37|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r40|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-prof-picker-r42|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-new-appointment-clean-r43|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-repeat-until-r44|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-date-ios-r46|ni"
-  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260914-direct-glass-r50\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r32\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_order-1.0.0.css?v=20260914-postgrid-r41\"><link rel=\"stylesheet\" href=\"styles/agenda_profissional_picker-1.0.0.css?v=20260914-r42\"><link rel=\"stylesheet\" href=\"styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r46\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260914-direct-glass-r50\"></head>|ni"
-  Substitute "s|</body>|<script src=\"src/agenda/agenda_mobile_cleanup-1.0.0.js?v=20260914-r36\"></script></body>|ni"
-</IfModule>
-
-# Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
-# kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
-# styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
-
-# Deploy trigger 2026-09-14 — Sidebar KineSys Liquid Glass r50.
+# Deploy trigger 2026-09-14 — isolamento app/www r51.
