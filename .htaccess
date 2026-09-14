@@ -1,15 +1,32 @@
-# KineSys — isolamento de produção por host (r51)
-# IMPORTANTE: este arquivo pode ser herdado por outros hosts do mesmo plano.
-# Todas as regras de entrega do KineSys ficam limitadas a app.fisiofixfisioterapia.com.
-# O site comercial www.fisiofixfisioterapia.com não deve receber CSS, JS, headers
-# de cache ou qualquer transformação HTML do software de gestão.
+# KineSys — isolamento de produção por host (r52)
+# O software de gestão só pode ser servido em app.fisiofixfisioterapia.com.
+# O domínio comercial (fisiofixfisioterapia.com e www) recebe uma página
+# institucional separada enquanto o site original é restaurado no hosting.
 
 <IfModule mod_setenvif.c>
   SetEnvIfNoCase Host "^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$" KINESYS_APP_HOST=1
 </IfModule>
 
-# Assets críticos do KineSys: revalidar somente no host do aplicativo.
+# EMERGÊNCIA r52 — impedir que o login do KineSys apareça no domínio comercial.
+# Como www/root e app estão atualmente compartilhando o mesmo document root,
+# roteamos qualquer requisição que NÃO seja do host app para um HTML institucional
+# autocontido. A URL pública permanece no domínio comercial.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} !^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$ [NC]
+  RewriteCond %{REQUEST_URI} !^/site-publico/index\.html$ [NC]
+  RewriteRule ^ site-publico/index.html [L]
+</IfModule>
+
+# O site institucional emergencial não deve ficar preso em cache durante a recuperação.
 <IfModule mod_headers.c>
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate" env=!KINESYS_APP_HOST
+    Header set Pragma "no-cache" env=!KINESYS_APP_HOST
+    Header set Expires "0" env=!KINESYS_APP_HOST
+  </Files>
+
+  # Assets críticos do KineSys: revalidar somente no host do aplicativo.
   <FilesMatch "^(index\.html|screen_loader-1\.25\.0\.js|access_admin-1\.0\.0\.js|design_system-1\.20\.1\.js|patient_form_helpers_core-1\.0\.0\.js|patient_registration_clean-1\.0\.0\.css|configuracoes_agendamento_online.*\.js|configuracoes_agendamento_online.*\.css|design_navigation\.css|navigation_glass-1\.0\.0\.css|navigation_glass_final-1\.0\.0\.css|design_liquid_glass-1\.0\.0\.css|agenda_lifecycle-1\.0\.0\.js|agenda_mobile_cleanup-1\.0\.0\.js|agenda_mobile-1\.0\.0\.css|agenda_mobile_grid-1\.0\.0\.css|agenda_mobile_critical-1\.0\.0\.css|agenda_mobile_controls-1\.0\.0\.css|agenda_mobile_order-1\.0\.0\.css|agenda_profissional_picker-1\.0\.0\.js|agenda_profissional_picker-1\.0\.0\.css|agenda_new_appointment_clean-1\.0\.0\.js|agenda_new_appointment_clean-1\.0\.0\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate" env=KINESYS_APP_HOST
     Header set Pragma "no-cache" env=KINESYS_APP_HOST
@@ -17,15 +34,7 @@
   </FilesMatch>
 </IfModule>
 
-# INCIDENTE r51:
-# O bloco antigo de mod_substitute transformava TODO text/html alcançado por este
-# .htaccess. Em hospedagem compartilhada por www + app, isso podia injetar estilos
-# e scripts do KineSys no site comercial. Ele foi removido por completo.
-#
-# O KineSys já possui index.html e screen_loader próprios; a entrega não deve
-# depender de reescrita genérica de </head>, </body> ou URLs em HTML de terceiros.
-#
-# Também removemos Clear-Site-Data/Set-Cookie globais do index.html para que o
-# domínio comercial não tenha seu cache alterado por revisões do aplicativo.
+# Não usar mod_substitute neste arquivo. O bloco antigo transformava todo text/html
+# alcançado pelo hosting compartilhado e foi a origem da interferência entre app/www.
 
-# Deploy trigger 2026-09-14 — isolamento app/www r51.
+# Deploy trigger 2026-09-14 — host routing app/www r52.
