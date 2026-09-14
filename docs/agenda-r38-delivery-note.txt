@@ -1,1 +1,0 @@
-Agenda mobile r38 delivery fix: the real index.html Screen Loader URL must change directly, because relying on .htaccess substitution does not reliably invalidate Safari/iOS cache. The one-shot workflow updates that exact URL on main and removes itself in the same commit.
