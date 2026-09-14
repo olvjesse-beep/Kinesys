@@ -2,261 +2,236 @@
 @import url("./design_liquid_glass-1.0.0.css?v=20260913-system-glass-r13");
 @import url("./agenda_mobile_controls-1.0.0.css?v=20260913-controls-r27");
 
-/* KineSys — Sidebar iPhone-like Liquid Glass 1.0.0-r48
-   Direção Product Design: vidro mais vivo, translúcido e legível, preservando
-   a paleta petróleo/verde do KineSys e todo o shell funcional do drawer. */
+/* KineSys — Sidebar Clear Liquid Glass 1.0.0-r50
+ * Fonte visual diretamente carregada pelo index.html.
+ * Usa alta especificidade para não ser apagada por design_polish/design_experience.
+ * Somente apresentação: não altera navegação, rotas ou permissões.
+ */
 
-:root {
-    --ks-sidebar-liquid-tint: rgba(26, 139, 143, .40);
-    --ks-sidebar-liquid-tint-mid: rgba(14, 111, 119, .42);
-    --ks-sidebar-liquid-tint-deep: rgba(5, 70, 80, .58);
-    --ks-sidebar-liquid-border: rgba(239, 255, 253, .50);
-    --ks-sidebar-liquid-border-soft: rgba(255, 255, 255, .24);
-    --ks-sidebar-liquid-highlight: rgba(255, 255, 255, .56);
-    --ks-sidebar-liquid-highlight-soft: rgba(216, 255, 250, .22);
-    --ks-sidebar-liquid-shadow: rgba(1, 23, 29, .24);
-    --ks-sidebar-liquid-shadow-deep: rgba(1, 20, 25, .13);
-
-    --ks-sidebar-liquid-text: rgba(251, 255, 255, .99);
-    --ks-sidebar-liquid-muted: rgba(230, 248, 246, .89);
-    --ks-sidebar-liquid-section: rgba(217, 246, 243, .80);
-    --ks-sidebar-liquid-icon: rgba(210, 255, 249, 1);
-    --ks-sidebar-liquid-accent: rgba(126, 241, 229, 1);
-
-    --ks-sidebar-item-hover: rgba(255, 255, 255, .105);
-    --ks-sidebar-item-focus: rgba(255, 255, 255, .14);
-    --ks-sidebar-item-active: rgba(248, 255, 254, .18);
+:root{
+  --ks-nav-glass-ink:#123d43;
+  --ks-nav-glass-ink-strong:#092f35;
+  --ks-nav-glass-muted:rgba(18,65,70,.72);
+  --ks-nav-glass-section:rgba(18,82,84,.67);
+  --ks-nav-glass-accent:#168d84;
+  --ks-nav-glass-accent-soft:#55bdb4;
 }
 
-html body.ks-design-ready #ks_sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    isolation: isolate;
-    background-color: rgba(8, 82, 91, .38);
+/* A superfície deixa de ser um bloco teal e passa a ser uma lâmina clara. */
+html body.ks-design-ready #ks_sidebar#ks_sidebar{
+  isolation:isolate!important;
+  background-color:rgba(228,247,245,.70)!important;
+  background-image:
+    radial-gradient(150% 60% at -10% -8%,rgba(255,255,255,.98) 0%,rgba(255,255,255,.58) 26%,rgba(255,255,255,0) 58%),
+    radial-gradient(88% 38% at 108% 16%,rgba(58,190,181,.24) 0%,rgba(58,190,181,.07) 42%,rgba(58,190,181,0) 74%),
+    linear-gradient(132deg,rgba(255,255,255,.58) 0%,rgba(255,255,255,.13) 24%,rgba(255,255,255,0) 48%),
+    linear-gradient(180deg,rgba(192,234,230,.42) 0%,rgba(139,214,208,.28) 48%,rgba(90,181,180,.20) 100%)!important;
+  background-blend-mode:screen,normal,soft-light,normal!important;
+  border:0!important;
+  border-right:1px solid rgba(255,255,255,.90)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 1px 0 0 rgba(255,255,255,.78),
+    inset -1px 0 0 rgba(255,255,255,.46),
+    inset 0 -1px 0 rgba(31,105,108,.08),
+    14px 0 38px rgba(18,61,66,.14),
+    1px 0 10px rgba(255,255,255,.26)!important;
+  -webkit-backdrop-filter:blur(34px) saturate(172%) brightness(1.07)!important;
+  backdrop-filter:blur(34px) saturate(172%) brightness(1.07)!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar::before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  pointer-events:none!important;
+  opacity:1!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.19) 5%,rgba(255,255,255,0) 15%),
+    radial-gradient(102% 31% at 18% 0%,rgba(255,255,255,.72) 0%,rgba(255,255,255,.20) 27%,rgba(255,255,255,0) 66%),
+    radial-gradient(58% 24% at 90% 12%,rgba(67,193,184,.20) 0%,rgba(67,193,184,.04) 48%,rgba(67,193,184,0) 78%)!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar::after{
+  content:""!important;
+  position:absolute!important;
+  inset:1px!important;
+  z-index:0!important;
+  pointer-events:none!important;
+  border:1px solid rgba(255,255,255,.60)!important;
+  border-top-color:rgba(255,255,255,.96)!important;
+  border-left-color:rgba(255,255,255,.82)!important;
+  border-right-color:rgba(255,255,255,.38)!important;
+  border-radius:inherit!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.78),inset 0 -1px 0 rgba(28,104,105,.06)!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar > *{
+  position:relative!important;
+  z-index:1!important;
+}
+
+/* Marca e identidade no vidro claro. */
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-brand h1{
+  color:var(--ks-nav-glass-ink-strong)!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.68)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-brand h1 span{
+  color:var(--ks-nav-glass-accent)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-brand p{
+  color:var(--ks-nav-glass-muted)!important;
+}
+
+/* Card do usuário: segunda lâmina de vidro, não bloco colorido. */
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome{
+  padding:10px 11px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.34) 100%)!important;
+  border:1px solid rgba(255,255,255,.84)!important;
+  border-bottom-color:rgba(45,139,137,.18)!important;
+  border-radius:17px!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 0 rgba(34,117,117,.06),
+    0 9px 22px rgba(26,80,83,.08)!important;
+  color:var(--ks-nav-glass-ink)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(150%)!important;
+  backdrop-filter:blur(18px) saturate(150%)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome strong,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome #lbl_usuario_logado{
+  color:var(--ks-nav-glass-ink-strong)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome small,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome p,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .header-welcome span:not(#lbl_usuario_logado){
+  color:var(--ks-nav-glass-muted)!important;
+}
+
+/* Seções e itens: contraste limpo, sem aparência desaturada. */
+html body.ks-design-ready #ks_sidebar#ks_sidebar :is(.menu-section-title,.nav-section-title,.sidebar-section-title,.dropdown-label,.ks-nav-label){
+  color:var(--ks-nav-glass-section)!important;
+  font-weight:720!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content a,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link{
+  border:1px solid transparent!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.06)!important;
+  color:var(--ks-nav-glass-ink)!important;
+  text-shadow:none!important;
+  box-shadow:none!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .ks-nav-icon,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content a i,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link i,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link svg{
+  color:var(--ks-nav-glass-accent)!important;
+  opacity:1!important;
+  filter:none!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content a:hover,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link:hover{
+  background:rgba(255,255,255,.42)!important;
+  border-color:rgba(255,255,255,.72)!important;
+  color:var(--ks-nav-glass-ink-strong)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.80)!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content a:focus-visible,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link:focus-visible{
+  outline:2px solid rgba(22,141,132,.48)!important;
+  outline-offset:1px!important;
+  background:rgba(255,255,255,.50)!important;
+  border-color:rgba(255,255,255,.82)!important;
+}
+
+/* Item ativo: lâmina branca elevada com acento verde. */
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content li.ks-active a,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-item.active .nav-link,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link.active{
+  background:linear-gradient(180deg,rgba(255,255,255,.78) 0%,rgba(255,255,255,.50) 100%)!important;
+  border:1px solid rgba(255,255,255,.92)!important;
+  color:var(--ks-nav-glass-ink-strong)!important;
+  box-shadow:
+    inset 3px 0 0 var(--ks-nav-glass-accent),
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 7px 18px rgba(24,87,88,.10)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(150%)!important;
+  backdrop-filter:blur(14px) saturate(150%)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .dropdown-content li.ks-active a .ks-nav-icon,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-item.active .ks-nav-icon,
+html body.ks-design-ready #ks_sidebar#ks_sidebar .nav-link.active .ks-nav-icon{
+  color:var(--ks-nav-glass-accent)!important;
+}
+
+html body.ks-design-ready #ks_sidebar#ks_sidebar .ks-nav-logout{
+  border-top-color:rgba(22,92,94,.14)!important;
+}
+html body.ks-design-ready #ks_sidebar#ks_sidebar .ks-nav-logout a{
+  color:#8c4d49!important;
+}
+
+/* Drawer móvel: mais translúcido porque existe conteúdo real atrás. */
+html body.ks-design-ready .ks-nav-backdrop{
+  background:rgba(18,48,52,.14)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(108%)!important;
+  backdrop-filter:blur(5px) saturate(108%)!important;
+}
+
+@media(max-width:820px){
+  html body.ks-design-ready #ks_sidebar#ks_sidebar{
+    border-radius:0 30px 30px 0!important;
+    background-color:rgba(231,249,247,.58)!important;
     background-image:
-        radial-gradient(140% 58% at 6% -7%, rgba(255, 255, 255, .32) 0%, rgba(226, 255, 251, .13) 22%, rgba(255, 255, 255, 0) 52%),
-        linear-gradient(132deg, rgba(255, 255, 255, .20) 0%, rgba(255, 255, 255, .065) 12%, rgba(255, 255, 255, 0) 31%),
-        linear-gradient(180deg, var(--ks-sidebar-liquid-tint) 0%, var(--ks-sidebar-liquid-tint-mid) 42%, var(--ks-sidebar-liquid-tint-deep) 100%);
-    background-blend-mode: screen, soft-light, normal;
-    border-right: 1px solid var(--ks-sidebar-liquid-border);
+      radial-gradient(145% 60% at -8% -7%,rgba(255,255,255,.98) 0%,rgba(255,255,255,.48) 26%,rgba(255,255,255,0) 59%),
+      radial-gradient(82% 34% at 106% 17%,rgba(56,190,181,.22) 0%,rgba(56,190,181,.06) 44%,rgba(56,190,181,0) 75%),
+      linear-gradient(180deg,rgba(190,235,231,.36) 0%,rgba(124,210,204,.23) 49%,rgba(63,165,168,.18) 100%)!important;
+    border-right:1px solid rgba(255,255,255,.94)!important;
     box-shadow:
-        inset 0 1px 0 var(--ks-sidebar-liquid-highlight),
-        inset 1px 0 0 rgba(255, 255, 255, .26),
-        inset -1px 0 0 var(--ks-sidebar-liquid-border-soft),
-        inset 0 -1px 0 rgba(255, 255, 255, .08),
-        0 0 0 1px rgba(242, 255, 254, .07),
-        18px 0 44px var(--ks-sidebar-liquid-shadow),
-        0 14px 34px var(--ks-sidebar-liquid-shadow-deep);
-    -webkit-backdrop-filter: blur(25px) saturate(176%) brightness(1.075) contrast(1.035);
-    backdrop-filter: blur(25px) saturate(176%) brightness(1.075) contrast(1.035);
+      inset 0 1px 0 rgba(255,255,255,.98),
+      inset 1px 0 0 rgba(255,255,255,.82),
+      inset -1px 0 0 rgba(255,255,255,.48),
+      22px 0 52px rgba(13,58,63,.16)!important;
+    -webkit-backdrop-filter:blur(38px) saturate(180%) brightness(1.06)!important;
+    backdrop-filter:blur(38px) saturate(180%) brightness(1.06)!important;
+  }
 }
 
-html body.ks-design-ready #ks_sidebar::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: .98;
-    background:
-        radial-gradient(108% 39% at 15% 0%, rgba(255, 255, 255, .38) 0%, rgba(247, 255, 254, .15) 20%, rgba(255, 255, 255, 0) 52%),
-        radial-gradient(68% 27% at 86% 15%, rgba(113, 243, 230, .23) 0%, rgba(104, 238, 226, .08) 36%, rgba(104, 238, 226, 0) 72%),
-        linear-gradient(90deg, rgba(255, 255, 255, .17) 0%, rgba(255, 255, 255, .045) 8%, rgba(255, 255, 255, 0) 17%);
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  html body.ks-design-ready #ks_sidebar#ks_sidebar{
+    background:#d8efed!important;
+    background-image:none!important;
+  }
 }
 
-html body.ks-design-ready #ks_sidebar::after {
-    content: "";
-    position: absolute;
-    inset: 1px;
-    z-index: 0;
-    pointer-events: none;
-    border-radius: inherit;
-    border: 1px solid rgba(247, 255, 254, .13);
-    border-top-color: rgba(255, 255, 255, .29);
-    border-left-color: rgba(255, 255, 255, .21);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .14),
-        inset 0 -1px 0 rgba(4, 55, 62, .11);
+@media(prefers-reduced-transparency:reduce){
+  html body.ks-design-ready #ks_sidebar#ks_sidebar{
+    background:#dcefed!important;
+    background-image:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  html body.ks-design-ready .ks-nav-backdrop{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
 }
 
-body.ks-design-ready #ks_sidebar > * { position: relative; z-index: 1; }
-
-body.ks-design-ready #ks_sidebar .header-brand::before {
-    background: linear-gradient(180deg, rgba(203, 255, 249, 1), var(--ks-sidebar-liquid-accent));
-    box-shadow: 0 0 18px rgba(126, 241, 229, .34);
-}
-body.ks-design-ready #ks_sidebar .header-brand h1 {
-    color: var(--ks-sidebar-liquid-text);
-    letter-spacing: -.02em;
-    text-shadow: 0 1px 0 rgba(0, 24, 29, .18);
-}
-body.ks-design-ready #ks_sidebar .header-brand h1 span { color: rgba(180, 255, 247, 1); }
-body.ks-design-ready #ks_sidebar .header-brand p { color: var(--ks-sidebar-liquid-muted); }
-
-body.ks-design-ready #ks_sidebar .header-welcome {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, .145) 0%, rgba(255, 255, 255, .060) 100%);
-    border: 1px solid rgba(247, 255, 254, .26);
-    border-radius: 18px;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .22),
-        inset 0 -1px 0 rgba(255, 255, 255, .035),
-        0 10px 24px rgba(1, 23, 29, .10);
-    -webkit-backdrop-filter: blur(16px) saturate(146%) brightness(1.05);
-    backdrop-filter: blur(16px) saturate(146%) brightness(1.05);
-}
-
-body.ks-design-ready #ks_sidebar .header-welcome strong,
-body.ks-design-ready #ks_sidebar .header-welcome #lbl_usuario_logado { color: var(--ks-sidebar-liquid-text); }
-body.ks-design-ready #ks_sidebar .header-welcome small,
-body.ks-design-ready #ks_sidebar .header-welcome p,
-body.ks-design-ready #ks_sidebar .header-welcome span:not(#lbl_usuario_logado) { color: var(--ks-sidebar-liquid-muted); }
-body.ks-design-ready #ks_sidebar .ks-user-kicker { color: var(--ks-sidebar-liquid-section); }
-
-body.ks-design-ready #ks_sidebar :is(.menu-section-title,.nav-section-title,.sidebar-section-title,.dropdown-label,.ks-nav-label) {
-    color: var(--ks-sidebar-liquid-section);
-    font-weight: 760;
-    letter-spacing: -.01em;
-}
-body.ks-design-ready #ks_sidebar :is(.menu-group,.nav-group,.dropdown-block) { background: transparent; border: 0; box-shadow: none; }
-body.ks-design-ready #ks_sidebar .dropdown-content,
-body.ks-design-ready #ks_sidebar .nav-list { gap: 3px; }
-body.ks-design-ready #ks_sidebar .dropdown-content li,
-body.ks-design-ready #ks_sidebar .nav-item { margin: 0; }
-
-body.ks-design-ready #ks_sidebar .dropdown-content a,
-body.ks-design-ready #ks_sidebar .nav-link {
-    min-height: 46px;
-    border: 1px solid transparent;
-    border-radius: 13px;
-    background: rgba(255, 255, 255, .018);
-    color: var(--ks-sidebar-liquid-text);
-    box-shadow: none;
-    text-shadow: 0 1px 0 rgba(0, 22, 27, .15);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    transition: background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
-}
-body.ks-design-ready #ks_sidebar .dropdown-content a:hover,
-body.ks-design-ready #ks_sidebar .nav-link:hover {
-    background: var(--ks-sidebar-item-hover);
-    border-color: rgba(255, 255, 255, .12);
-    color: #fff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
-    transform: translateX(1px);
-}
-body.ks-design-ready #ks_sidebar .dropdown-content a:focus-visible,
-body.ks-design-ready #ks_sidebar .nav-link:focus-visible {
-    outline: 2px solid rgba(175, 255, 247, .88);
-    outline-offset: 1px;
-    background: var(--ks-sidebar-item-focus);
-    border-color: rgba(235, 255, 253, .22);
-}
-body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a,
-body.ks-design-ready #ks_sidebar .nav-item.active .nav-link,
-body.ks-design-ready #ks_sidebar .nav-link.active {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, .19) 0%, rgba(245, 255, 253, .105) 100%);
-    border-color: rgba(244, 255, 253, .22);
-    color: #fff;
-    box-shadow:
-        inset 3px 0 0 var(--ks-sidebar-liquid-accent),
-        inset 0 1px 0 rgba(255, 255, 255, .18),
-        0 7px 18px rgba(1, 30, 35, .075);
-}
-
-body.ks-design-ready #ks_sidebar .ks-nav-icon,
-body.ks-design-ready #ks_sidebar .dropdown-content a i,
-body.ks-design-ready #ks_sidebar .nav-link i,
-body.ks-design-ready #ks_sidebar .nav-link svg {
-    color: var(--ks-sidebar-liquid-icon);
-    opacity: 1;
-    filter: drop-shadow(0 1px 1px rgba(0, 28, 33, .12));
-}
-body.ks-design-ready #ks_sidebar .dropdown-content li.ks-active a .ks-nav-icon,
-body.ks-design-ready #ks_sidebar .nav-item.active .ks-nav-icon,
-body.ks-design-ready #ks_sidebar .nav-link.active .ks-nav-icon { color: rgba(239, 255, 252, 1); }
-
-body.ks-design-ready #ks_sidebar .ks-nav-logout {
-    margin-top: 9px;
-    padding-top: 9px;
-    border-top-color: rgba(255, 255, 255, .16);
-}
-body.ks-design-ready #ks_sidebar .ks-nav-logout a { color: rgba(255, 221, 217, .97); }
-body.ks-design-ready #ks_sidebar .ks-nav-logout a:hover {
-    background: rgba(255, 128, 118, .12);
-    border-color: rgba(255, 210, 205, .14);
-    color: #fff0ed;
-}
-
-body.ks-design-ready .ks-nav-backdrop {
-    background: rgba(5, 29, 34, .31);
-    -webkit-backdrop-filter: blur(7px) saturate(112%);
-    backdrop-filter: blur(7px) saturate(112%);
-}
-
-@media (max-width: 820px) {
-    html body.ks-design-ready #ks_sidebar {
-        position: fixed;
-        inset: 0 auto 0 0;
-        border-radius: 0 30px 30px 0;
-        background-color: rgba(7, 87, 95, .36);
-        background-image:
-            radial-gradient(138% 53% at 4% -4%, rgba(255, 255, 255, .36) 0%, rgba(226, 255, 251, .14) 23%, rgba(255, 255, 255, 0) 55%),
-            linear-gradient(132deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .070) 13%, rgba(255, 255, 255, 0) 32%),
-            linear-gradient(180deg, rgba(34, 151, 152, .44) 0%, rgba(15, 115, 121, .42) 40%, rgba(5, 69, 79, .57) 100%);
-        background-blend-mode: screen, soft-light, normal;
-        border-right: 1px solid rgba(241, 255, 253, .52);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, .58),
-            inset 1px 0 0 rgba(255, 255, 255, .28),
-            inset -1px 0 0 rgba(255, 255, 255, .22),
-            inset 0 -1px 0 rgba(255, 255, 255, .08),
-            22px 0 52px rgba(1, 21, 27, .25),
-            0 14px 34px rgba(1, 21, 27, .12);
-        -webkit-backdrop-filter: blur(30px) saturate(186%) brightness(1.085) contrast(1.035);
-        backdrop-filter: blur(30px) saturate(186%) brightness(1.085) contrast(1.035);
-    }
-    body.ks-design-ready #ks_sidebar .header-welcome {
-        background: linear-gradient(180deg, rgba(255, 255, 255, .155) 0%, rgba(255, 255, 255, .065) 100%);
-    }
-    body.ks-design-ready #ks_sidebar .dropdown-content a,
-    body.ks-design-ready #ks_sidebar .nav-link {
-        min-height: 48px;
-        background: rgba(255, 255, 255, .020);
-    }
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    html body.ks-design-ready #ks_sidebar {
-        background: linear-gradient(180deg, rgba(41, 150, 151, .96) 0%, rgba(19, 110, 117, .96) 44%, rgba(6, 67, 77, .98) 100%);
-    }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-    html body.ks-design-ready #ks_sidebar {
-        background: linear-gradient(180deg, rgba(34, 139, 143, .97) 0%, rgba(15, 105, 113, .98) 44%, rgba(6, 65, 75, .99) 100%);
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-    body.ks-design-ready .ks-nav-backdrop {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-}
-
-/* Acessibilidade: live regions continuam disponíveis a tecnologias assistivas,
-   mas nunca participam visualmente do layout. */
+/* Live regions continuam acessíveis sem ocupar espaço visual. */
 body.ks-design-ready .kds-visually-hidden,
-body.ks-design-ready #ks_route_status.kds-visually-hidden {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    clip: rect(0, 0, 0, 0) !important;
-    clip-path: inset(50%) !important;
-    white-space: nowrap !important;
-    border: 0 !important;
+body.ks-design-ready #ks_route_status.kds-visually-hidden{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+  border:0!important;
 }
