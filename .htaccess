@@ -14,11 +14,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_agenda_cleanup_r34=1" kinesys_delivery_agenda_cleanup_r34_seen=1
+  SetEnvIf Cookie "kinesys_delivery_agenda_postgrid_r35=1" kinesys_delivery_agenda_postgrid_r35_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_cleanup_r34_seen
-      Header always set Set-Cookie "kinesys_delivery_agenda_cleanup_r34=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_cleanup_r34_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_postgrid_r35_seen
+      Header always set Set-Cookie "kinesys_delivery_agenda_postgrid_r35=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_postgrid_r35_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -38,11 +38,11 @@
   Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-cleanup-r33|src/ui/screen_loader-1.25.0.js?v=20260914-agenda-cleanup-r34|ni"
   Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260914-iphone-glass-r32\">|ni"
   Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r32\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_order-1.0.0.css?v=20260914-order-r33\"></head>|ni"
-  Substitute "s|</body>|<script src=\"src/agenda/agenda_mobile_cleanup-1.0.0.js?v=20260914-r34\"></script></body>|ni"
+  Substitute "s|</body>|<script src=\"src/agenda/agenda_mobile_cleanup-1.0.0.js?v=20260914-r35\"></script></body>|ni"
 </IfModule>
 
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
 # kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
 # styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
 
-# Deploy trigger 2026-09-14 — Agenda mobile eager cleanup r34.
+# Deploy trigger 2026-09-14 — Agenda mobile post-grid actions r35.
