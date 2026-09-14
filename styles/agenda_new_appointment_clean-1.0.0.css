@@ -1,4 +1,4 @@
-/* KineSys — Novo Agendamento mobile clean 1.0.0-r45
+/* KineSys — Novo Agendamento mobile clean 1.0.0-r46
  * Direção visual escolhida no Product Design: essencial, limpa e direta.
  * Somente apresentação; não altera contratos ou regras de agendamento.
  */
@@ -241,8 +241,8 @@
     font-size:15px;
   }
 
-  #modal_agendamento #ag_recorrencia_data_limite_grupo,
-  #modal_agendamento #ag_recorrencia_data_limite{
+  #modal_agendamento #ag_recorrencia_data_limite_grupo{
+    display:block!important;
     min-width:0!important;
     width:100%!important;
     max-width:100%!important;
@@ -250,10 +250,51 @@
     inline-size:100%!important;
     max-inline-size:100%!important;
     box-sizing:border-box!important;
+    overflow:hidden!important;
+    contain:inline-size;
   }
 
   #modal_agendamento #ag_recorrencia_data_limite{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    display:block!important;
+    min-width:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-inline-size:0!important;
+    inline-size:100%!important;
+    max-inline-size:100%!important;
+    height:48px!important;
+    min-height:48px!important;
+    padding:0 12px!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+    font-size:16px!important;
+    line-height:1.2!important;
+    text-align:left!important;
+  }
+
+  #modal_agendamento #ag_recorrencia_data_limite::-webkit-date-and-time-value{
     display:block;
+    min-width:0;
+    width:100%;
+    max-width:100%;
+    margin:0;
+    padding:0;
+    text-align:left;
+  }
+
+  #modal_agendamento #ag_recorrencia_data_limite::-webkit-datetime-edit{
+    min-width:0;
+    max-width:100%;
+    padding:0;
+    overflow:hidden;
+  }
+
+  #modal_agendamento #ag_recorrencia_data_limite::-webkit-calendar-picker-indicator{
+    margin:0;
+    padding:4px;
   }
 
   #modal_agendamento .ks-agendamento-pacote-conteudo{
