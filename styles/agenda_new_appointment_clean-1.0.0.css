@@ -1,4 +1,4 @@
-/* KineSys — Novo Agendamento mobile clean 1.0.0-r43
+/* KineSys — Novo Agendamento mobile clean 1.0.0-r44
  * Direção visual escolhida no Product Design: essencial, limpa e direta.
  * Somente apresentação; não altera contratos ou regras de agendamento.
  */
@@ -182,14 +182,22 @@
   }
 
   #modal_agendamento .ks-agendamento-disclosure-body{
+    min-width:0;
+    width:100%;
+    max-width:100%;
     padding:12px 14px 4px;
+    box-sizing:border-box;
     background:var(--kds-surface);
   }
 
   #modal_agendamento #ag_recorrencia_bloco{
+    min-width:0;
+    width:100%;
+    max-width:100%;
     margin:0;
     padding:0;
     border:0;
+    box-sizing:border-box;
   }
 
   #modal_agendamento #ag_recorrencia_bloco>label{
@@ -198,8 +206,31 @@
 
   #modal_agendamento #ag_recorrencia_bloco .agenda-recurrencia-grid,
   #modal_agendamento #ag_recorrencia_bloco .agenda-recurrencia-fim{
+    min-width:0;
+    width:100%;
+    max-width:100%;
     margin-top:0;
-    grid-template-columns:1fr!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    box-sizing:border-box;
+  }
+
+  #modal_agendamento #ag_recorrencia_bloco .agenda-recurrencia-fim>*{
+    min-width:0;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+
+  #modal_agendamento #ag_recorrencia_data_limite_grupo,
+  #modal_agendamento #ag_recorrencia_data_limite{
+    min-width:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+
+  #modal_agendamento #ag_recorrencia_data_limite{
+    display:block;
   }
 
   #modal_agendamento .ks-agendamento-pacote-conteudo{
