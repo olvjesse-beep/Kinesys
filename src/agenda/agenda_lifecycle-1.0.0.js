@@ -5,19 +5,22 @@
 (function instalarAgendaLifecycle(){
     'use strict';
 
-    const VERSION='1.0.0-r37';
+    const VERSION='1.0.0-r41';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
     const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r19';
     const MOBILE_ORDER_STYLE_ID='ks_agenda_mobile_order_style';
-    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20260914-postgrid-r37';
+    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20260914-postgrid-r41';
     const origensMobile=new Map();
     let relogioTimer=null;
     let resizeObserver=null;
     let mutationObserver=null;
+    let structureObserver=null;
     let listenersAtivos=false;
     let alinharHojePendente=false;
+    let organizacaoMobilePendente=false;
+    let organizandoMobile=false;
     let destruido=false;
 
     function telaAgendaAtiva(){
@@ -112,6 +115,18 @@
         return true;
     }
 
+    function garantirHostTopo(tela,painel){
+        if(!tela||!painel)return null;
+        let host=document.getElementById('ks_agenda_mobile_order');
+        if(!host){
+            host=document.createElement('div');
+            host.id='ks_agenda_mobile_order';
+            host.className='ks-agenda-mobile-order';
+        }
+        if(host.parentElement!==tela||host.nextElementSibling!==painel)tela.insertBefore(host,painel);
+        return host;
+    }
+
     function garantirHostPosGrade(painel){
         if(!painel)return null;
         let host=document.getElementById('ks_agenda_mobile_post_grid');
@@ -146,45 +161,66 @@
     }
 
     function organizarControlesMobileAgenda(){
-        const mobile=modoMobileAgenda();
-        if(!mobile){
-            restaurarOrdemDesktopAgenda();
-            return true;
-        }
+        if(organizandoMobile)return true;
+        organizandoMobile=true;
+        try{
+            const mobile=modoMobileAgenda();
+            if(!mobile){
+                restaurarOrdemDesktopAgenda();
+                return true;
+            }
 
-        removerControlesSuperioresMobileAgenda();
+            removerControlesSuperioresMobileAgenda();
 
-        const tabs=document.getElementById('ks_agenda_controls');
-        const painel=document.getElementById('agenda_painel');
-        const card=painel?.querySelector('.agenda-card-semanal');
-        if(!tabs||!painel||!card){
+            const tela=document.getElementById('tela_agenda');
+            const tabs=document.getElementById('ks_agenda_controls');
+            const painel=document.getElementById('agenda_painel');
+            const card=painel?.querySelector('.agenda-card-semanal');
+            if(!tela||!tabs||!painel||!card){
+                sincronizarSubtelaMobile();
+                return false;
+            }
+
+            const hostTopo=garantirHostTopo(tela,painel);
+            const hostPosGrade=garantirHostPosGrade(painel);
+            const visoes=painel.querySelector('.agenda-visoes')||document.querySelector('#ks_agenda_mobile_order .agenda-visoes');
+            const novo=painel.querySelector('.ks-new-appointment')||document.querySelector('#ks_agenda_mobile_order .ks-new-appointment');
+            const historico=document.querySelector('#tela_agenda .agenda-audit-btn');
+
+            [visoes,novo,tabs,historico].filter(Boolean).forEach(registrarOrigemMobile);
+
+            if(hostTopo){
+                if(visoes&&visoes.parentElement!==hostTopo)hostTopo.appendChild(visoes);
+                if(novo&&novo.parentElement!==hostTopo)hostTopo.appendChild(novo);
+            }
+
+            if(hostPosGrade){
+                if(tabs.parentElement!==hostPosGrade)hostPosGrade.appendChild(tabs);
+                if(historico&&historico.parentElement!==hostPosGrade)hostPosGrade.appendChild(historico);
+            }
+
             sincronizarSubtelaMobile();
-            return false;
+            return true;
+        }finally{
+            organizandoMobile=false;
         }
+    }
 
-        let hostTopo=document.getElementById('ks_agenda_mobile_order');
-        if(!hostTopo){
-            hostTopo=document.createElement('div');
-            hostTopo.id='ks_agenda_mobile_order';
-            hostTopo.className='ks-agenda-mobile-order';
-            tabs.parentNode?.insertBefore(hostTopo,tabs);
-        }
-        const hostPosGrade=garantirHostPosGrade(painel);
+    function agendarOrganizacaoMobile(){
+        if(organizacaoMobilePendente||destruido||!modoMobileAgenda())return;
+        organizacaoMobilePendente=true;
+        requestAnimationFrame(()=>{
+            organizacaoMobilePendente=false;
+            if(telaAgendaAtiva())organizarControlesMobileAgenda();
+        });
+    }
 
-        const visoes=painel.querySelector('.agenda-visoes');
-        const novo=painel.querySelector('.ks-new-appointment');
-        const historico=document.querySelector('#tela_agenda .agenda-audit-btn');
-        const feedback=document.getElementById('agenda_feedback');
-
-        [visoes,novo,feedback,tabs,historico].filter(Boolean).forEach(registrarOrigemMobile);
-        [visoes,novo,feedback].filter(Boolean).forEach(no=>hostTopo.appendChild(no));
-        if(hostPosGrade){
-            if(tabs.parentElement!==hostPosGrade)hostPosGrade.appendChild(tabs);
-            if(historico&&historico.parentElement!==hostPosGrade)hostPosGrade.appendChild(historico);
-        }
-
-        sincronizarSubtelaMobile();
-        return true;
+    function observarEstruturaMobileAgenda(){
+        if(structureObserver||typeof MutationObserver==='undefined')return;
+        const tela=document.getElementById('tela_agenda');
+        if(!tela)return;
+        structureObserver=new MutationObserver(()=>agendarOrganizacaoMobile());
+        structureObserver.observe(tela,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
     }
 
     function sincronizarEstadoVisualAgenda(){
@@ -248,6 +284,7 @@
         garantirEstiloMobileAgenda();
         sincronizarEstadoVisualAgenda();
         organizarControlesMobileAgenda();
+        observarEstruturaMobileAgenda();
         alinharHojePendente=true;
         atualizarSeAtiva();
         if(!listenersAtivos){
@@ -268,7 +305,9 @@
         if(relogioTimer){clearInterval(relogioTimer);relogioTimer=null;}
         if(resizeObserver){resizeObserver.disconnect();resizeObserver=null;}
         if(mutationObserver){mutationObserver.disconnect();mutationObserver=null;}
+        if(structureObserver){structureObserver.disconnect();structureObserver=null;}
         alinharHojePendente=false;
+        organizacaoMobilePendente=false;
         if(listenersAtivos){
             document.removeEventListener('visibilitychange',aoVisibilityChange);
             window.removeEventListener('resize',aoResize);
@@ -300,6 +339,7 @@
         if(modoMobileAgenda()){
             removerControlesSuperioresMobileAgenda();
             organizarControlesMobileAgenda();
+            observarEstruturaMobileAgenda();
         }
     });
 
@@ -309,17 +349,24 @@
         suspend,
         destroy,
         status(){
+            const topo=document.getElementById('ks_agenda_mobile_order');
             const pos=document.getElementById('ks_agenda_mobile_post_grid');
+            const visoes=document.querySelector('#tela_agenda .agenda-visoes');
+            const novo=document.querySelector('#tela_agenda .ks-new-appointment');
+            const tabs=document.getElementById('ks_agenda_controls');
+            const historico=document.querySelector('#tela_agenda .agenda-audit-btn');
             return Object.freeze({
                 active:telaAgendaAtiva(),
                 timer:!!relogioTimer,
-                observer:!!resizeObserver||!!mutationObserver,
+                observer:!!resizeObserver||!!mutationObserver||!!structureObserver,
                 listeners:listenersAtivos,
-                mobileOrder:!!document.getElementById('ks_agenda_mobile_order'),
+                mobileOrder:!!topo,
                 postGrid:!!pos,
                 topNavigationRemoved:modoMobileAgenda()&&!document.querySelector('#tela_agenda .agenda-semana-nav'),
-                waitlistAfterAgenda:!!pos?.contains(document.getElementById('ks_agenda_controls')),
-                historyAfterAgenda:!!pos?.contains(document.querySelector('#tela_agenda .agenda-audit-btn')),
+                clinicProfessionalOnTop:!!topo&&topo.contains(visoes),
+                newAppointmentOnTop:!!topo&&topo.contains(novo),
+                waitlistAfterAgenda:!!pos&&pos.contains(tabs),
+                historyAfterAgenda:!!pos&&pos.contains(historico),
                 destroyed:destruido
             });
         }
