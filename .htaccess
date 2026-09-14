@@ -14,11 +14,11 @@
 # Safari/iOS pode restaurar assets antigos pelo cache/bfcache. Nesta revisão
 # limpamos somente o cache uma vez e gravamos um cookie técnico para não repetir.
 <IfModule mod_setenvif.c>
-  SetEnvIf Cookie "kinesys_delivery_agenda_controls_r27=1" kinesys_delivery_agenda_controls_r27_seen=1
+  SetEnvIf Cookie "kinesys_delivery_agenda_critic_r28=1" kinesys_delivery_agenda_critic_r28_seen=1
   <IfModule mod_headers.c>
     <Files "index.html">
-      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_controls_r27_seen
-      Header always set Set-Cookie "kinesys_delivery_agenda_controls_r27=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_controls_r27_seen
+      Header always set Clear-Site-Data "\"cache\"" env=!kinesys_delivery_agenda_critic_r28_seen
+      Header always set Set-Cookie "kinesys_delivery_agenda_critic_r28=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure" env=!kinesys_delivery_agenda_critic_r28_seen
     </Files>
   </IfModule>
 </IfModule>
@@ -30,14 +30,14 @@
   Substitute "s|src/admin/access_admin-1.0.0.js?v=20260913-online-v4|src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r1|ni"
   Substitute "s|src/core/design_system-1.20.1.js?v=20260910-phase4e-r1|src/core/design_system-1.20.1.js?v=20260913-drawer-r9|ni"
   Substitute "s|styles/design_navigation.css?v=20260913-glass-r3|styles/design_navigation.css?v=20260913-drawer-r9|ni"
-  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r27|ni"
-  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260913-agenda-controls-r27|ni"
-  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r27\">|ni"
-  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260913-controls-r27\"></head>|ni"
+  Substitute "s|styles/navigation_glass-1.0.0.css?v=20260913-glass-r3|styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r28|ni"
+  Substitute "s|src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1|src/ui/screen_loader-1.25.0.js?v=20260913-agenda-controls-r28|ni"
+  Substitute "s|<link rel=\"stylesheet\" href=\"styles/design_navigation.css\">|<link rel=\"stylesheet\" href=\"styles/design_navigation.css?v=20260913-drawer-r9\"><link rel=\"stylesheet\" href=\"styles/navigation_glass-1.0.0.css?v=20260913-iphone-glass-r28\">|ni"
+  Substitute "s|</head>|<link rel=\"stylesheet\" href=\"styles/agenda_mobile_critical-1.0.0.css?v=20260913-agenda-critical-r24\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_grid-1.0.0.css?v=20260913-density-r20\"><link rel=\"stylesheet\" href=\"styles/design_liquid_glass-1.0.0.css?v=20260913-system-glass-r12\"><link rel=\"stylesheet\" href=\"styles/agenda_mobile_controls-1.0.0.css?v=20260913-controls-r28\"></head>|ni"
 </IfModule>
 
 # Compatibilidade temporária com o contrato visual r10; sem efeito de runtime.
 # kinesys_delivery_clear_glass_r10_seen=1 env=!kinesys_delivery_clear_glass_r10_seen
 # styles/navigation_glass-1.0.0.css?v=20260913-clear-glass-r10
 
-# Deploy trigger 2026-09-13 — Agenda mobile controls redesign r27.
+# Deploy trigger 2026-09-13 — Agenda mobile critic redesign r28.

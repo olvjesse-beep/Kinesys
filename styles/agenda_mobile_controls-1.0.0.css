@@ -1,14 +1,12 @@
 /* KineSys — Agenda Mobile Controls 1.0.0
- * Redesign mobile da faixa de controles da Agenda.
+ * Critic r28: hierarquia, densidade e agrupamento coerente no mobile.
  * Preserva IDs, handlers, regras de negócio, Supabase e geometria da grade.
  */
 
 @media (max-width:760px){
-  /* Navegação de subtela: um segmented control real, sem cartões soltos. */
+  /* Navegação de subtela: um único segmented control. */
   #tela_agenda #ks_agenda_controls{
-    display:flex!important;
-    align-items:center!important;
-    justify-content:flex-start!important;
+    display:block!important;
     width:100%!important;
     margin:0 0 10px!important;
     padding:0!important;
@@ -17,24 +15,24 @@
   #tela_agenda #ks_agenda_controls>.ks-segmented{
     display:grid!important;
     grid-template-columns:1fr 1fr!important;
-    width:min(100%,290px)!important;
+    width:100%!important;
     gap:2px!important;
     padding:3px!important;
-    border:1px solid rgba(91,126,129,.16)!important;
+    border:1px solid rgba(82,118,122,.15)!important;
     border-radius:12px!important;
-    background:rgba(236,244,242,.78)!important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.72)!important;
+    background:rgba(235,243,242,.82)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.78)!important;
   }
 
   #tela_agenda #ks_agenda_controls>.ks-segmented button{
-    min-height:36px!important;
-    padding:6px 10px!important;
+    min-height:40px!important;
+    padding:7px 10px!important;
     border:0!important;
     border-radius:9px!important;
     background:transparent!important;
-    color:#667B80!important;
+    color:#6A7F83!important;
     box-shadow:none!important;
-    font-size:13px!important;
+    font-size:13.5px!important;
     line-height:1!important;
     font-weight:760!important;
     white-space:nowrap!important;
@@ -43,113 +41,88 @@
   #tela_agenda #ks_agenda_controls>.ks-segmented button.active{
     background:#FFFFFF!important;
     color:#173F49!important;
-    box-shadow:0 1px 2px rgba(16,55,64,.07), inset 0 0 0 1px rgba(33,111,105,.08)!important;
+    box-shadow:0 1px 3px rgba(19,55,64,.08), inset 0 0 0 1px rgba(33,111,105,.07)!important;
   }
 
   #tela_agenda #ks_agenda_controls>.ks-agenda-config-wrap{display:none!important;}
 
-  /* Uma única superfície visual organiza todo o contexto da agenda. */
+  /* Uma superfície principal, sem cardização interna concorrente. */
   #tela_agenda #agenda_painel .agenda-card-semanal{
     display:block!important;
+    width:100%!important;
     margin:0!important;
-    padding:10px!important;
-    border:1px solid rgba(91,126,129,.15)!important;
+    padding:12px!important;
+    border:1px solid rgba(82,118,122,.14)!important;
     border-radius:16px!important;
-    background:rgba(255,255,255,.58)!important;
-    box-shadow:0 6px 18px rgba(20,59,68,.035), inset 0 1px 0 rgba(255,255,255,.74)!important;
+    background:rgba(255,255,255,.62)!important;
+    box-shadow:0 8px 24px rgba(20,59,68,.035), inset 0 1px 0 rgba(255,255,255,.82)!important;
     overflow:visible!important;
-    -webkit-backdrop-filter:blur(8px) saturate(112%)!important;
-    backdrop-filter:blur(8px) saturate(112%)!important;
+    -webkit-backdrop-filter:blur(9px) saturate(112%)!important;
+    backdrop-filter:blur(9px) saturate(112%)!important;
   }
 
-  /* Contexto: Clínica / Profissional + horário atual. */
+  /* Nível 1: contexto da agenda. O relógio mobile é redundante com o sistema. */
   #tela_agenda #agenda_painel .agenda-visoes{
     display:grid!important;
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr) 92px!important;
-    align-items:center!important;
-    gap:6px!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:2px!important;
+    width:100%!important;
     min-height:0!important;
     margin:0!important;
-    padding:0 0 9px!important;
-    border:0!important;
-    border-bottom:1px solid rgba(91,126,129,.10)!important;
-    background:transparent!important;
-    overflow:visible!important;
+    padding:3px!important;
+    border:1px solid rgba(82,118,122,.14)!important;
+    border-radius:11px!important;
+    background:#EDF3F2!important;
+    overflow:hidden!important;
   }
 
   #tela_agenda #agenda_painel .agenda-visoes #agenda_visao_clinica,
   #tela_agenda #agenda_painel .agenda-visoes #agenda_visao_profissional{
-    min-width:0!important;
     width:100%!important;
-    min-height:40px!important;
-    height:40px!important;
+    min-width:0!important;
+    min-height:38px!important;
+    height:38px!important;
     margin:0!important;
-    padding:0 8px!important;
-    border:1px solid rgba(91,126,129,.18)!important;
-    border-radius:10px!important;
-    background:rgba(255,255,255,.66)!important;
-    color:#516A70!important;
+    padding:0 10px!important;
+    border:0!important;
+    border-radius:8px!important;
+    background:transparent!important;
+    color:#61777C!important;
     box-shadow:none!important;
     font-size:0!important;
     line-height:1!important;
-    font-weight:760!important;
+    font-weight:780!important;
     white-space:nowrap!important;
   }
 
-  #tela_agenda #agenda_painel #agenda_visao_clinica::after{
-    content:"Clínica";
-    font-size:13px!important;
-  }
-
-  #tela_agenda #agenda_painel #agenda_visao_profissional::after{
-    content:"Profissional";
-    font-size:13px!important;
-  }
+  #tela_agenda #agenda_painel #agenda_visao_clinica::after{content:"Clínica";font-size:13.5px!important;}
+  #tela_agenda #agenda_painel #agenda_visao_profissional::after{content:"Profissional";font-size:13.5px!important;}
 
   #tela_agenda #agenda_painel .agenda-visoes :is(#agenda_visao_clinica,#agenda_visao_profissional)[aria-pressed="true"]{
-    border-color:#1D5B64!important;
     background:#214F58!important;
     color:#FFFFFF!important;
-    box-shadow:0 3px 9px rgba(23,63,73,.12)!important;
+    box-shadow:0 2px 5px rgba(23,63,73,.12)!important;
   }
 
-  #tela_agenda #agenda_painel #agenda_agora_relogio{
-    min-width:0!important;
-    width:92px!important;
-    max-width:92px!important;
-    min-height:40px!important;
-    height:40px!important;
-    margin:0!important;
-    padding:4px 6px!important;
-    border:1px solid rgba(58,128,119,.14)!important;
-    border-radius:10px!important;
-    background:rgba(241,248,247,.78)!important;
-    color:#3A8178!important;
-    box-shadow:none!important;
-    font-size:10px!important;
-    line-height:1.05!important;
-    font-weight:720!important;
-    white-space:normal!important;
-    text-align:center!important;
-  }
+  #tela_agenda #agenda_painel #agenda_agora_relogio{display:none!important;}
 
-  /* Toolbar semanal: uma barra, sem pilha de cartões. */
+  /* Nível 2: tempo. Uma barra semanal e um toggle curto. */
   #tela_agenda #agenda_painel .agenda-toolbar-semanal{
     display:flex!important;
     flex-direction:column!important;
     gap:8px!important;
     margin:0!important;
-    padding:9px 0 0!important;
+    padding:10px 0 0!important;
     border:0!important;
     background:transparent!important;
   }
 
   #tela_agenda #agenda_painel .agenda-semana-nav{
     display:grid!important;
-    grid-template-columns:38px 56px minmax(0,1fr) 38px!important;
-    grid-template-rows:38px 30px!important;
+    grid-template-columns:40px 54px minmax(0,1fr) 40px!important;
+    grid-template-rows:40px 30px!important;
     align-items:center!important;
-    gap:5px!important;
+    gap:6px!important;
     width:100%!important;
     min-width:0!important;
     margin:0!important;
@@ -159,15 +132,15 @@
   }
 
   #tela_agenda #agenda_painel .agenda-semana-nav>button{
-    width:38px!important;
-    min-width:38px!important;
-    height:38px!important;
-    min-height:38px!important;
+    width:40px!important;
+    min-width:40px!important;
+    height:40px!important;
+    min-height:40px!important;
     margin:0!important;
     padding:0!important;
-    border:1px solid rgba(88,123,126,.16)!important;
+    border:1px solid rgba(82,118,122,.16)!important;
     border-radius:9px!important;
-    background:rgba(255,255,255,.78)!important;
+    background:rgba(255,255,255,.82)!important;
     color:#244A53!important;
     box-shadow:none!important;
     font-size:13px!important;
@@ -179,9 +152,8 @@
   #tela_agenda #agenda_painel .agenda-semana-nav>.btn-hoje-agenda{
     grid-column:2!important;
     grid-row:1!important;
-    width:56px!important;
-    min-width:56px!important;
-    padding-inline:6px!important;
+    width:54px!important;
+    min-width:54px!important;
     color:#1D6F68!important;
   }
   #tela_agenda #agenda_painel .agenda-semana-nav>button:nth-child(3){grid-column:4!important;grid-row:1!important;}
@@ -213,13 +185,13 @@
     justify-self:start!important;
     display:grid!important;
     grid-template-columns:1fr 1fr!important;
-    width:126px!important;
-    min-width:126px!important;
+    width:128px!important;
+    min-width:128px!important;
     height:30px!important;
     margin:0!important;
     padding:2px!important;
     gap:2px!important;
-    border:1px solid rgba(91,126,129,.13)!important;
+    border:1px solid rgba(82,118,122,.13)!important;
     border-radius:9px!important;
     background:#EEF3F2!important;
   }
@@ -227,14 +199,15 @@
   #tela_agenda #agenda_painel .agenda-periodo-segmentado button{
     min-height:24px!important;
     height:24px!important;
-    padding:2px 7px!important;
+    padding:2px 8px!important;
     border:0!important;
     border-radius:7px!important;
     background:transparent!important;
-    color:#6D8185!important;
+    color:#708388!important;
     box-shadow:none!important;
     font-size:11.5px!important;
     font-weight:760!important;
+    white-space:nowrap!important;
   }
 
   #tela_agenda #agenda_painel .agenda-periodo-segmentado button[aria-pressed="true"],
@@ -244,63 +217,59 @@
     box-shadow:0 1px 2px rgba(23,59,69,.07)!important;
   }
 
-  /* Filtros em linhas horizontais: rótulo curto + controle. */
+  /* Nível 3: filtros em duas colunas, evitando campos gigantes empilhados. */
   #tela_agenda #agenda_painel .agenda-toolbar-filtros{
     display:grid!important;
-    grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr)!important;
-    gap:7px!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:8px!important;
     width:100%!important;
     margin:0!important;
-    padding:8px 0 0!important;
-    border-top:1px solid rgba(91,126,129,.10)!important;
+    padding:10px 0 0!important;
+    border-top:1px solid rgba(82,118,122,.10)!important;
   }
 
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group{
-    grid-column:1 / -1!important;
-    display:grid!important;
-    grid-template-columns:62px minmax(0,1fr)!important;
-    align-items:center!important;
-    gap:8px!important;
+    grid-column:auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:4px!important;
     width:100%!important;
     min-width:0!important;
     margin:0!important;
   }
 
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group>label{
-    margin:0!important;
+    margin:0 0 0 2px!important;
     color:#657A7F!important;
-    font-size:12px!important;
+    font-size:10.5px!important;
     line-height:1!important;
     font-weight:760!important;
+    letter-spacing:.01em!important;
   }
 
-  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group:first-child>label{
-    font-size:0!important;
-  }
-  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group:first-child>label::after{
-    content:"Data";
-    font-size:12px!important;
-  }
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group:first-child>label{font-size:0!important;}
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.input-group:first-child>label::after{content:"Ir para";font-size:10.5px!important;}
 
   #tela_agenda #agenda_painel .agenda-toolbar-filtros :where(input:not([type="checkbox"]):not([type="radio"]),select){
     display:block!important;
     width:100%!important;
     min-width:0!important;
-    min-height:42px!important;
-    height:42px!important;
+    min-height:40px!important;
+    height:40px!important;
     margin:0!important;
-    padding:7px 11px!important;
-    border:1px solid rgba(93,130,133,.18)!important;
-    border-radius:10px!important;
-    background:rgba(255,255,255,.80)!important;
+    padding:7px 10px!important;
+    border:1px solid rgba(82,118,122,.17)!important;
+    border-radius:9px!important;
+    background:rgba(255,255,255,.84)!important;
     color:#244A53!important;
     box-shadow:none!important;
-    font-size:13.5px!important;
+    font-size:12.5px!important;
     line-height:1.1!important;
   }
 
   #tela_agenda #agenda_painel .agenda-escopo-acesso{display:none!important;}
 
+  /* Ações: secundária discreta, primária dominante. */
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn,
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment{
     min-height:42px!important;
@@ -308,46 +277,33 @@
     margin:0!important;
     padding:0 10px!important;
     border-radius:10px!important;
-    font-size:0!important;
     line-height:1!important;
-    font-weight:760!important;
+    font-weight:780!important;
   }
 
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn{
     grid-column:1!important;
-    border:1px solid rgba(92,128,131,.16)!important;
-    background:rgba(255,255,255,.76)!important;
+    border:1px solid rgba(82,118,122,.16)!important;
+    background:rgba(255,255,255,.78)!important;
     color:#526D72!important;
     box-shadow:none!important;
-  }
-  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn::after{
-    content:"Histórico";
     font-size:12.5px!important;
   }
 
   #tela_agenda #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment{
     grid-column:2!important;
     border:1px solid #1E756F!important;
-    background:linear-gradient(180deg,#2C8A83 0%,#1E756F 100%)!important;
+    background:linear-gradient(180deg,#2B8A83 0%,#1E756F 100%)!important;
     color:#FFFFFF!important;
-    box-shadow:0 4px 10px rgba(30,117,111,.13)!important;
-  }
-  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment::after{
-    content:"Novo agendamento";
+    box-shadow:0 4px 12px rgba(30,117,111,.14)!important;
     font-size:12.5px!important;
   }
 
-  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn[hidden] + .ks-new-appointment{
-    grid-column:1 / -1!important;
-  }
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn[hidden] + .ks-new-appointment{grid-column:1 / -1!important;}
 
-  #tela_agenda #agenda_painel #agenda_feedback{
-    min-height:0!important;
-    margin:0!important;
-    padding:0!important;
-  }
+  #tela_agenda #agenda_painel #agenda_feedback{min-height:0!important;margin:0!important;padding:0!important;}
   #tela_agenda #agenda_painel #agenda_feedback:not(:empty){
-    margin:7px 0 0!important;
+    margin:8px 0 0!important;
     padding:7px 9px!important;
     border-radius:8px!important;
     background:rgba(248,251,250,.92)!important;
@@ -356,23 +312,8 @@
 }
 
 @media (max-width:390px){
-  #tela_agenda #agenda_painel .agenda-visoes{
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
-  }
-  #tela_agenda #agenda_painel #agenda_agora_relogio{
-    grid-column:1 / -1!important;
-    justify-self:end!important;
-    width:auto!important;
-    max-width:none!important;
-    min-height:28px!important;
-    height:28px!important;
-    padding:3px 8px!important;
-    border-radius:999px!important;
-    font-size:10px!important;
-    white-space:nowrap!important;
-  }
   #tela_agenda #agenda_painel .agenda-semana-nav{
-    grid-template-columns:36px 54px minmax(0,1fr) 36px!important;
+    grid-template-columns:36px 50px minmax(0,1fr) 36px!important;
   }
   #tela_agenda #agenda_painel .agenda-semana-nav>button{
     width:36px!important;
@@ -381,8 +322,15 @@
     min-height:36px!important;
   }
   #tela_agenda #agenda_painel .agenda-semana-nav>.btn-hoje-agenda{
-    width:54px!important;
-    min-width:54px!important;
+    width:50px!important;
+    min-width:50px!important;
   }
   #tela_agenda #agenda_painel .agenda-semana-titulo{font-size:12px!important;}
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros{
+    grid-template-columns:1fr!important;
+  }
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.agenda-audit-btn,
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros>.ks-new-appointment{
+    grid-column:1!important;
+  }
 }
