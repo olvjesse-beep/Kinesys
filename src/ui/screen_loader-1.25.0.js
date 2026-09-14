@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.4-phase4d';
-    const ASSET_REVISION='20260913-agenda-controls-r26';
+    const VERSION='1.25.5-agenda-order-r30';
+    const ASSET_REVISION='20260914-agenda-order-r30';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -70,11 +70,12 @@
                 'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1',
                 'styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2',
                 'styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r19',
-                'styles/agenda_mobile_controls-1.0.0.css?v=20260913-controls-r26'
+                'styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r29',
+                'styles/agenda_mobile_order-1.0.0.css?v=20260914-order-r30'
             ]),
             scripts:Object.freeze([
                 'src/agenda/agenda-1.20.0.js?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
-                'src/agenda/agenda_lifecycle-1.0.0.js?v=20260913-grid-r19'
+                'src/agenda/agenda_lifecycle-1.0.0.js?v=20260914-order-r30'
             ])
         })
     });
