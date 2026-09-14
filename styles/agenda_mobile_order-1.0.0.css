@@ -1,10 +1,11 @@
-/* KineSys — Agenda Mobile Order 1.0.0 / post-grid r37
+/* KineSys — Agenda Mobile Order 1.0.0 / post-grid r41
  * O lifecycle é a fonte de verdade da ordem mobile.
- * Este arquivo fornece fallback visual determinístico para a mesma estrutura.
+ * Ordem canônica: Clínica/Profissional -> Novo agendamento -> grade -> Lista de espera -> Histórico.
  */
 
 @media (max-width:760px){
   #tela_agenda #ks_agenda_mobile_order{
+    order:10!important;
     display:flex!important;
     flex-direction:column!important;
     align-items:stretch!important;
@@ -19,15 +20,16 @@
 
   #tela_agenda #ks_agenda_mobile_order .agenda-visoes{order:10!important;}
   #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{order:20!important;}
-  #tela_agenda #ks_agenda_mobile_order #agenda_feedback{order:30!important;}
 
-  /* Estes controles não pertencem ao topo no mobile. */
+  /* Navegação superior e Semana/Dia não pertencem à composição mobile aprovada. */
   #tela_agenda .agenda-semana-nav,
   #tela_agenda .agenda-periodo-segmentado{
     display:none!important;
   }
 
+  /* A grade semanal já usa order:70 no contrato mobile. Este host deve vir depois dela. */
   #tela_agenda #ks_agenda_mobile_post_grid{
+    order:80!important;
     display:flex!important;
     flex-direction:column!important;
     align-items:stretch!important;
