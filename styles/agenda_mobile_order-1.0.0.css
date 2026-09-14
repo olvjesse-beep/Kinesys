@@ -1,0 +1,162 @@
+/* KineSys — Agenda Mobile Order 1.0.0
+ * Ordena somente os controles mobile da Agenda.
+ * Preserva IDs, handlers, Supabase, regras de negócio e geometria da grade.
+ */
+
+@media (max-width:760px){
+  #tela_agenda #ks_agenda_mobile_order{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    width:100%!important;
+    margin:0 0 12px!important;
+    padding:12px!important;
+    border:1px solid rgba(82,118,122,.14)!important;
+    border-radius:18px!important;
+    background:rgba(246,250,249,.62)!important;
+    box-shadow:0 8px 20px rgba(20,59,68,.035), inset 0 1px 0 rgba(255,255,255,.78)!important;
+    -webkit-backdrop-filter:blur(8px) saturate(112%)!important;
+    backdrop-filter:blur(8px) saturate(112%)!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-visoes{
+    order:1!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{
+    order:2!important;
+    width:100%!important;
+    min-height:46px!important;
+    height:46px!important;
+    margin:0!important;
+    border-radius:12px!important;
+    font-size:13.5px!important;
+    font-weight:780!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav{
+    order:3!important;
+    display:grid!important;
+    grid-template-columns:42px 64px minmax(0,1fr) 42px!important;
+    grid-template-rows:42px!important;
+    gap:8px!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button{
+    width:42px!important;
+    min-width:42px!important;
+    height:42px!important;
+    min-height:42px!important;
+    border-radius:11px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>.btn-hoje-agenda{
+    width:64px!important;
+    min-width:64px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-titulo{
+    font-size:14px!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-periodo-segmentado{
+    order:4!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+    min-width:0!important;
+    height:44px!important;
+    margin:0!important;
+    padding:3px!important;
+    gap:3px!important;
+    border:1px solid rgba(82,118,122,.14)!important;
+    border-radius:12px!important;
+    background:#EEF3F2!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-periodo-segmentado button{
+    width:100%!important;
+    min-height:38px!important;
+    height:38px!important;
+    border-radius:9px!important;
+    font-size:13px!important;
+    font-weight:760!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-audit-btn{
+    order:5!important;
+    width:100%!important;
+    min-height:44px!important;
+    height:44px!important;
+    margin:0!important;
+    border-radius:12px!important;
+    font-size:13px!important;
+    font-weight:760!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order #ks_agenda_controls{
+    order:6!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order #ks_agenda_controls>.ks-segmented{
+    width:100%!important;
+    max-width:none!important;
+    min-height:44px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order #agenda_feedback{
+    order:7!important;
+  }
+
+  #tela_agenda #agenda_painel .agenda-toolbar-semanal,
+  #tela_agenda #agenda_painel .agenda-toolbar-filtros{
+    display:none!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order[data-subtela="lista"] > :not(#ks_agenda_controls){
+    display:none!important;
+  }
+}
+
+@media (max-width:390px){
+  #tela_agenda #ks_agenda_mobile_order{
+    gap:8px!important;
+    padding:10px!important;
+    border-radius:16px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav{
+    grid-template-columns:38px 58px minmax(0,1fr) 38px!important;
+    grid-template-rows:38px!important;
+    gap:6px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button{
+    width:38px!important;
+    min-width:38px!important;
+    height:38px!important;
+    min-height:38px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>.btn-hoje-agenda{
+    width:58px!important;
+    min-width:58px!important;
+  }
+
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-titulo{
+    font-size:12.5px!important;
+  }
+}
