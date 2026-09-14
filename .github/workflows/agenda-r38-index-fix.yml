@@ -1,0 +1,46 @@
+name: Agenda r38 index cache fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/agenda-r38-index-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update real Screen Loader URL in index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'src/ui/screen_loader-1.25.0.js?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1&runtime_cache=20260912-r1'
+          new = 'src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r38'
+          if old not in s:
+              raise SystemExit('Expected old Screen Loader URL was not found in index.html')
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one old Screen Loader URL, found {s.count(old)}')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Commit index and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/agenda-r38-index-fix.yml
+          git commit -m 'fix: update Agenda Screen Loader source URL r38'
+          git push origin HEAD:main
