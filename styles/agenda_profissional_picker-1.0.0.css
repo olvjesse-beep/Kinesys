@@ -1,0 +1,146 @@
+/* KineSys — Agenda Professional Picker 1.0.0 / r42 */
+@media (max-width:760px){
+  body.ks-agenda-prof-picker-open{overflow:hidden!important;}
+
+  .ks-agenda-prof-picker-overlay{
+    position:fixed!important;
+    inset:0!important;
+    z-index:12000!important;
+    display:flex!important;
+    align-items:flex-end!important;
+    justify-content:center!important;
+    padding:14px!important;
+    background:rgba(11,31,36,.28)!important;
+    -webkit-backdrop-filter:blur(10px) saturate(.88)!important;
+    backdrop-filter:blur(10px) saturate(.88)!important;
+  }
+
+  .ks-agenda-prof-picker-overlay[hidden]{display:none!important;}
+
+  .ks-agenda-prof-picker-card{
+    width:min(100%,520px)!important;
+    max-height:min(78dvh,680px)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.72)!important;
+    border-radius:24px!important;
+    background:rgba(249,252,251,.94)!important;
+    box-shadow:0 24px 70px rgba(9,35,42,.28),inset 0 1px 0 rgba(255,255,255,.9)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.08)!important;
+    backdrop-filter:blur(18px) saturate(1.08)!important;
+  }
+
+  .ks-agenda-prof-picker-head{
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    gap:14px!important;
+    padding:20px 18px 14px!important;
+    border-bottom:1px solid rgba(72,105,110,.12)!important;
+  }
+
+  .ks-agenda-prof-picker-head h3{
+    margin:0!important;
+    color:#173F49!important;
+    font-size:18px!important;
+    line-height:1.2!important;
+    font-weight:800!important;
+  }
+
+  .ks-agenda-prof-picker-head p{
+    margin:5px 0 0!important;
+    color:#6B7F83!important;
+    font-size:13px!important;
+    line-height:1.35!important;
+  }
+
+  .ks-agenda-prof-picker-close{
+    flex:0 0 38px!important;
+    width:38px!important;
+    height:38px!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid rgba(72,105,110,.12)!important;
+    border-radius:12px!important;
+    background:rgba(255,255,255,.76)!important;
+    color:#315A62!important;
+    box-shadow:none!important;
+    font-size:26px!important;
+    line-height:1!important;
+    font-weight:400!important;
+  }
+
+  .ks-agenda-prof-picker-list{
+    display:flex!important;
+    flex-direction:column!important;
+    gap:8px!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px))!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  .ks-agenda-prof-picker-option{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 28px!important;
+    align-items:center!important;
+    gap:12px!important;
+    width:100%!important;
+    min-height:52px!important;
+    margin:0!important;
+    padding:10px 12px 10px 15px!important;
+    border:1px solid rgba(72,105,110,.13)!important;
+    border-radius:14px!important;
+    background:rgba(255,255,255,.72)!important;
+    color:#31545C!important;
+    box-shadow:none!important;
+    text-align:left!important;
+    font-size:14px!important;
+    line-height:1.25!important;
+    font-weight:700!important;
+  }
+
+  .ks-agenda-prof-picker-option[aria-pressed="true"]{
+    border-color:rgba(30,117,111,.34)!important;
+    background:rgba(229,243,240,.96)!important;
+    color:#185E59!important;
+    box-shadow:0 5px 14px rgba(30,117,111,.08)!important;
+  }
+
+  .ks-agenda-prof-picker-option:focus-visible{
+    outline:3px solid rgba(44,138,131,.24)!important;
+    outline-offset:2px!important;
+  }
+
+  .ks-agenda-prof-picker-option-text{
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .ks-agenda-prof-picker-check{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:28px!important;
+    height:28px!important;
+    border-radius:999px!important;
+    background:rgba(30,117,111,.1)!important;
+    color:#1E756F!important;
+    font-size:15px!important;
+    font-weight:900!important;
+  }
+
+  .ks-agenda-prof-picker-empty{
+    padding:18px 14px!important;
+    border:1px dashed rgba(72,105,110,.18)!important;
+    border-radius:14px!important;
+    color:#708388!important;
+    background:rgba(255,255,255,.58)!important;
+    text-align:center!important;
+    font-size:13px!important;
+    line-height:1.4!important;
+  }
+}
