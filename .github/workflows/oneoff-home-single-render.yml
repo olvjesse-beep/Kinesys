@@ -1,0 +1,65 @@
+name: One-off Home Single Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oneoff-home-single-render.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\\PROGRA~1\\Git\\bin\\bash.exe --noprofile --norc -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remover segundo disparo do Meu dia
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+
+          const corePath='src/core/script-1.18.0.js';
+          let core=fs.readFileSync(corePath,'utf8');
+          const homeStart=core.indexOf("if (idTela === 'tela_home') {");
+          if(homeStart<0) throw new Error('Bloco tela_home não encontrado');
+          const homeEnd=core.indexOf('\n    }',homeStart);
+          if(homeEnd<0) throw new Error('Fim do bloco tela_home não encontrado');
+          const bloco=core.slice(homeStart,homeEnd+6);
+          const chamada=/\n\s*carregarPainelFisioterapeuta\(\);/;
+          if(!chamada.test(bloco)) throw new Error('Segundo disparo carregarPainelFisioterapeuta não encontrado no bloco da Home');
+          const blocoNovo=bloco.replace(chamada,'');
+          core=core.slice(0,homeStart)+blocoNovo+core.slice(homeEnd+6);
+          fs.writeFileSync(corePath,core,'utf8');
+
+          const indexPath='index.html';
+          let html=fs.readFileSync(indexPath,'utf8');
+          const coreAsset='src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1';
+          if(!html.includes(coreAsset)) throw new Error('URL atual do core não encontrada no index');
+          html=html.replace(coreAsset,coreAsset+'&meu_dia_single_render=20260915-r8');
+          fs.writeFileSync(indexPath,html,'utf8');
+
+          const test=`'use strict';\nconst fs=require('fs');\nconst assert=require('assert');\nconst core=fs.readFileSync('src/core/script-1.18.0.js','utf8');\nconst html=fs.readFileSync('index.html','utf8');\nconst a=core.indexOf("if (idTela === 'tela_home') {");\nconst b=core.indexOf('\\n    }',a);\nassert.ok(a>=0&&b>a,'bloco tela_home deve existir');\nconst nav=core.slice(a,b+6);\nassert.doesNotMatch(nav,/carregarPainelFisioterapeuta\\(\\);/,'navegação Home não pode disparar um segundo Meu dia');\nassert.match(html,/script-1\\.18\\.0\\.js\\?v=20260910-hma-perf-r3[^\"']*meu_dia_single_render=20260915-r8/,'core corrigido deve ter cache-buster novo');\nconsole.log('Home single render contract: OK');\n`;
+          fs.writeFileSync('tests/home_single_render.contract.js',test,'utf8');
+          NODE
+
+          node --check src/core/script-1.18.0.js
+          node --check tests/home_single_render.contract.js
+          node tests/home_single_render.contract.js
+          git diff --check
+
+      - name: Publicar correção
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/core/script-1.18.0.js index.html tests/home_single_render.contract.js
+          git commit -m 'fix(home): impedir segundo disparo do Meu dia clínico'
+          git push origin HEAD:main
