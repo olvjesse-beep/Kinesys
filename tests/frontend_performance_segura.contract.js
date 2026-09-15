@@ -20,7 +20,8 @@ assert.match(chartSource, /pacientesSalvosEmCurso = Promise\.resolve\(carregar\(
 assert.doesNotMatch(chartSource, /PACIENTES_SALVOS.*TTL|pacientesSalvos.*ttl/i, 'conteúdo clínico completo não pode ganhar cache temporal');
 
 assert.match(browseSource, /KINESYS_BUSCA_PACIENTE_DEBOUNCE_MS = 320/, 'a busca de pacientes deve usar debounce curto e previsível');
-assert.match(browseSource, /DOMContentLoaded', instalarDebounceBuscaPacientesKineSys/, 'o debounce deve envolver a implementação final após scripts defer');
+assert.match(browseSource, /KINESYS_BUSCA_PACIENTE_INSTALACAO_MS = 700/, 'o debounce deve ser instalado após a reaplicação tardia do Design System');
+assert.match(browseSource, /DOMContentLoaded', agendarDebounceBuscaPacientesKineSys/, 'o debounce deve ser agendado após scripts defer');
 assert.match(browseSource, /window\.filtrarPacientesSalvos = debounced;/, 'a busca pública deve ser envolvida sem alterar o renderizador original');
 assert.match(browseSource, /debounced\.__kinesysOriginal = original;/, 'o renderizador original deve permanecer explicitamente preservado');
 
@@ -71,6 +72,7 @@ async function testarCoalescimentoClinico() {
 
 async function testarDebounceBusca() {
     let handlerDOMContentLoaded = null;
+    let instalarAposDesign = null;
     let chamadas = 0;
     const document = {
         readyState: 'loading',
@@ -80,12 +82,19 @@ async function testarDebounceBusca() {
         getElementById() { return { value:'ana' }; }
     };
     const window = {};
+    const timer = (callback, ms) => {
+        if (ms === 700) {
+            instalarAposDesign = callback;
+            return 700;
+        }
+        return setTimeout(callback, ms);
+    };
     const context = {
         console,
         Promise,
         window,
         document,
-        setTimeout,
+        setTimeout: timer,
         clearTimeout,
         escapeHTML: value => String(value),
         obterPacientesBasicos: async () => []
@@ -100,6 +109,8 @@ async function testarDebounceBusca() {
         return `resultado:${valor}`;
     };
     handlerDOMContentLoaded();
+    assert.strictEqual(typeof instalarAposDesign, 'function', 'a instalação deve ocorrer somente após a janela de bootstrap do Design System');
+    instalarAposDesign();
 
     const p1 = window.filtrarPacientesSalvos('a');
     const p2 = window.filtrarPacientesSalvos('an');
