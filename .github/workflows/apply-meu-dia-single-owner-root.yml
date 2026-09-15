@@ -12,12 +12,19 @@ permissions:
 
 jobs:
   apply:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/meu-dia-single-owner-root
           fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Apply root fix
         run: python tools/apply_meu_dia_single_owner_root.py
@@ -30,6 +37,7 @@ jobs:
           node --check src/home/home_fisioterapeuta_util-1.24.0.js
           node --check src/home/home_profissional_polish-1.0.0.js
           node --check src/core/script-1.18.0.js
+          git diff --check
 
       - name: Commit root fix and remove temporary tools
         run: |
