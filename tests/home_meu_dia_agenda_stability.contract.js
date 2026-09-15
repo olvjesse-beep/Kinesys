@@ -4,49 +4,50 @@ const assert=require('assert');
 
 const home=fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
 const resume=fs.readFileSync('src/core/operational_resume_refresh-1.0.0.js','utf8');
+const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
 
 assert.match(home,/function perfilAtualEquivale\(perfilInicial\)/,
   'Meu dia deve comparar identidade estável do perfil, não referência do objeto de sessão');
 assert.match(home,/perfilId===atualId&&clinicaId===atualClinicaId/,
   'A identidade estável deve preservar perfil e clínica');
-assert.doesNotMatch(home,/usuarioLogado:null\)!==perfilInicial/,
-  'Meu dia não pode descartar a Agenda apenas porque usuarioLogado foi reidratado em outro objeto');
-assert.match(home,/if\(!perfilAtualEquivale\(perfilInicial\)\) return '';/,
-  'Resposta da Agenda deve ser descartada somente quando a identidade lógica da sessão mudar');
-assert.match(home,/String\(contexto\?\.perfil_id\|\|''\)!==perfilId/,
-  'Validação segura do perfil devolvido pelo backend deve continuar ativa');
-assert.match(home,/String\(contexto\?\.clinica_id\|\|''\)!==clinicaId/,
-  'Validação segura da clínica devolvida pelo backend deve continuar ativa');
-assert.match(home,/let cargaPainelFisioterapeutaEmAndamento = null;/,
-  'Meu dia deve controlar carregamentos concorrentes');
+assert.match(home,/let painelFisioterapeutaInicializado = false;/,
+  'Meu dia deve conhecer se a fotografia inicial já foi carregada');
+assert.match(home,/let revisaoCargaPainelFisioterapeuta = 0;/,
+  'Meu dia deve possuir geração própria para descartar respostas antigas');
+assert.match(home,/function aplicarSnapshotPainelFisioterapeuta\(/,
+  'Renderização do Meu dia deve ser centralizada em um único commit visual');
+assert.match(home,/document\.createDocumentFragment\(\)/,
+  'Meu dia deve montar a fotografia fora do DOM antes de publicá-la');
+assert.match(home,/lista\.replaceChildren\(fragmento\)/,
+  'A fotografia final deve substituir a lista de forma atômica');
+assert.doesNotMatch(home,/timeline\.forEach\(item=>lista\.appendChild/,
+  'Meu dia não pode anexar a timeline diretamente linha a linha no DOM');
+assert.match(home,/function atualizarPainelFisioterapeuta\(opcoes=\{\}\)/,
+  'Atualização real deve possuir uma única função dona');
 assert.match(home,/if\(cargaPainelFisioterapeutaEmAndamento\)return cargaPainelFisioterapeutaEmAndamento/,
   'Chamadas simultâneas devem compartilhar a mesma carga em andamento');
-assert.match(home,/window\.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaCoalescido/,
-  'API pública do Home deve usar o carregamento coalescido');
+assert.match(home,/function garantirPainelFisioterapeuta\(\)/,
+  'Retorno à Home deve apenas garantir a fotografia inicial');
+assert.match(home,/if\(painelFisioterapeutaInicializado\)return Promise\.resolve\(true\)/,
+  'Voltar para a Home não deve gerar nova consulta se a fotografia já existe');
+assert.match(home,/if\(id==='tela_agenda'\)[\s\S]*atualizarPainelFisioterapeuta\(\{motivo:'agenda'\}\)/,
+  'Entrar na Agenda deve ser o gatilho operacional de atualização do Meu dia');
+assert.match(home,/original\.removeAttribute\('onclick'\)/,
+  'Botão Atualizar deve deixar de usar o handler legado inline');
+assert.match(home,/original\.addEventListener\('click',\(\)=>atualizarPainelFisioterapeuta\(\{motivo:'manual'\}\)\)/,
+  'Botão Atualizar deve forçar a fonte única diretamente');
+assert.match(home,/window\.KineSysMeuDiaClinico=Object\.freeze/,
+  'Meu dia deve expor uma única API pública explícita');
+assert.match(home,/window\.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta/,
+  'Nome legado chamado pelo núcleo deve ser somente um alias de ensure, não uma segunda atualização');
 
-assert.match(resume,/function normalizarMeuDiaClinico\(\)/,
-  'Retorno da Agenda deve possuir normalização idempotente do Meu dia');
-assert.match(resume,/const agendamentoId=String\(linha\?\.dataset\?\.agendamentoId\|\|''\)\.trim\(\)/,
-  'Deduplicação deve usar a identidade estável do agendamento');
-assert.match(resume,/if\(vistos\.has\(chave\)\)linha\.remove\(\)/,
-  'Uma segunda representação do mesmo agendamento deve ser removida');
-assert.match(resume,/if\(cards\.length>1\)cards\.slice\(1\)\.forEach\(card=>card\.remove\(\)\)/,
-  'O Home não pode manter dois cards Meu dia com o mesmo ID');
-assert.match(resume,/if\(meuDiaEmCurso\)return meuDiaEmCurso/,
-  'O hotfix deve compartilhar uma atualização em andamento ao voltar da Agenda');
-assert.match(resume,/protegido\.__kinesysMeuDiaIdempotente=true/,
-  'Wrapper do Meu dia deve ser instalado apenas uma vez');
-assert.match(resume,/function observarMeuDiaClinico\(\)/,
-  'Meu dia deve observar alterações tardias no DOM depois do carregamento principal');
-assert.match(resume,/new MutationObserver\(mudancas=>/,
-  'Proteção deve reagir a inserções assíncronas que ocorram depois da primeira renderização');
-assert.match(resume,/observadorMeuDia\.observe\(lista,\{childList:true\}\)/,
-  'Observador deve acompanhar inclusões e remoções na lista do Meu dia');
-assert.match(resume,/if\(mudouFilhos\)normalizarMeuDiaClinico\(\)/,
-  'Qualquer segunda finalização que anexe linhas deve disparar deduplicação imediata');
-assert.match(resume,/observadorMeuDia\?\.disconnect\(\)/,
-  'Observador deve ser desconectado de forma explícita no ciclo de vida');
-assert.match(resume,/document\.addEventListener\('kinesys:tela-ativada',aoTelaAtivadaMeuDia\)/,
-  'Proteção deve ser reaplicada no lifecycle oficial ao retornar para a Home');
+assert.match(core,/if \(idTela === 'tela_home'\)[\s\S]*carregarPainelFisioterapeuta\(\)/,
+  'Núcleo legado ainda pode chamar a API histórica ao navegar para Home');
+assert.doesNotMatch(resume,/carregarPainelFisioterapeuta/,
+  'Resume refresh não pode ser um segundo dono do Meu dia');
+assert.doesNotMatch(resume,/normalizarMeuDiaClinico|observarMeuDiaClinico|MutationObserver/,
+  'Resume refresh não pode corrigir DOM do Meu dia por observador ou deduplicação posterior');
+assert.doesNotMatch(resume,/painel_fisio_lista|card_painel_fisioterapeuta/,
+  'Resume refresh não deve tocar no DOM do Meu dia');
 
-console.log('Meu dia clínico / Agenda stability contract: OK');
+console.log('Meu dia clínico: fonte única, refresh pela Agenda e renderização atômica OK');
