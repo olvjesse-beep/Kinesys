@@ -1,0 +1,176 @@
+name: One-off Meu Dia core cleanup
+
+on:
+  push:
+    branches:
+      - fix/meu-dia-core-clean-20260915
+    paths:
+      - '.github/workflows/oneoff-meu-dia-core-clean.yml'
+      - 'src/core/script-1.18.0.js'
+      - 'src/home/home_fisioterapeuta_util-1.24.0.js'
+      - 'index.html'
+      - 'tests/home_meu_dia_agenda_stability.contract.js'
+      - 'tests/operational_resume_refresh.contract.js'
+      - 'tests/access_agenda_home4h.contract.js'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/meu-dia-core-clean-20260915
+          fetch-depth: 0
+
+      - name: Remove legacy Meu Dia owner and bump runtime assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          core_path=Path('src/core/script-1.18.0.js')
+          core=core_path.read_text(encoding='utf-8')
+
+          old_home="""    if (idTela === 'tela_home') {
+                  renderizarPacientesRecentesHome();
+                  popularSelectCRM();
+                  renderizarPendenciasClinicas();
+                  carregarPainelFisioterapeuta();
+              }
+          """
+          new_home="""    if (idTela === 'tela_home') {
+                  renderizarPacientesRecentesHome();
+                  popularSelectCRM();
+                  renderizarPendenciasClinicas();
+                  if (window.KineSysMeuDiaClinico?.ensure) {
+                      Promise.resolve(window.KineSysMeuDiaClinico.ensure())
+                          .catch(err => console.warn('KineSys Meu Dia:', err));
+                  }
+              }
+          """
+          if old_home not in core:
+              raise SystemExit('Bloco Home esperado não encontrado no core; abortando sem alteração.')
+          core=core.replace(old_home,new_home,1)
+
+          pattern=r'async function carregarPainelFisioterapeuta\(\)\{.*?\}(?=async function renderizarPendenciasClinicas\(\)\{)'
+          core, count=re.subn(pattern,'',core,count=1,flags=re.S)
+          if count != 1:
+              raise SystemExit(f'Esperava remover 1 carregador legado; removidos={count}.')
+          core_path.write_text(core,encoding='utf-8')
+
+          home_path=Path('src/home/home_fisioterapeuta_util-1.24.0.js')
+          home=home_path.read_text(encoding='utf-8')
+          home=home.replace("    // Compatibilidade com o núcleo legado: navegarPara('tela_home') ainda chama\n    // este nome. Ele agora apenas garante a primeira carga; retornar para a Home\n    // não dispara nova consulta. Atualizações reais pertencem à Agenda ou ao botão.\n    window.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta;\n",'')
+          if 'window.carregarPainelFisioterapeuta=' in home:
+              raise SystemExit('Alias legado ainda existe no módulo Meu Dia.')
+          home_path.write_text(home,encoding='utf-8')
+
+          index_path=Path('index.html')
+          html=index_path.read_text(encoding='utf-8')
+          html=html.replace('src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1',
+                            'src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1&meu_dia_owner=20260915-r2')
+          html=html.replace('src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1',
+                            'src/home/home_fisioterapeuta_util-1.24.0.js?v=20260915-single-owner-r2')
+          html=html.replace('src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5',
+                            'src/core/operational_resume_refresh-1.0.0.js?v=20260915-agenda-only-r2')
+          html=html.replace(' class="btn-secondary" onclick="carregarPainelFisioterapeuta()">Atualizar</button>',
+                            ' class="btn-secondary">Atualizar</button>')
+          if 'onclick="carregarPainelFisioterapeuta()"' in html:
+              raise SystemExit('HTML ainda chama o carregador legado.')
+          index_path.write_text(html,encoding='utf-8')
+
+          stability=Path('tests/home_meu_dia_agenda_stability.contract.js')
+          stability.write_text(r'''\'use strict\';
+          const fs=require(\'fs\');
+          const assert=require(\'assert\');
+
+          const home=fs.readFileSync(\'src/home/home_fisioterapeuta_util-1.24.0.js\',\'utf8\');
+          const resume=fs.readFileSync(\'src/core/operational_resume_refresh-1.0.0.js\',\'utf8\');
+          const core=fs.readFileSync(\'src/core/script-1.18.0.js\',\'utf8\');
+          const html=fs.readFileSync(\'index.html\',\'utf8\');
+
+          assert.match(home,/function aplicarSnapshotPainelFisioterapeuta\\(/,
+            \'Renderização do Meu dia deve ter um único commit visual\');
+          assert.match(home,/document\\.createDocumentFragment\\(\\)/,
+            \'Meu dia deve montar a fotografia fora do DOM\');
+          assert.match(home,/lista\\.replaceChildren\\(fragmento\\)/,
+            \'Fotografia final deve substituir a lista atomicamente\');
+          assert.doesNotMatch(home,/timeline\\.forEach\\(item=>lista\\.appendChild/,
+            \'Meu dia não pode anexar a timeline diretamente no DOM\');
+          assert.match(home,/function atualizarPainelFisioterapeuta\\(opcoes=\\{\\}\\)/,
+            \'Atualização real deve possuir um único dono\');
+          assert.match(home,/if\\(cargaPainelFisioterapeutaEmAndamento\\)return cargaPainelFisioterapeutaEmAndamento/,
+            \'Chamadas simultâneas devem compartilhar a mesma Promise\');
+          assert.match(home,/if\\(painelFisioterapeutaInicializado\\)return Promise\\.resolve\\(true\\)/,
+            \'Voltar para Home deve reutilizar a fotografia já carregada\');
+          assert.match(home,/if\\(id===\'tela_agenda\'\\)[\\s\\S]*atualizarPainelFisioterapeuta\\(\\{motivo:\'agenda\'\\}\\)/,
+            \'Entrar na Agenda deve atualizar a fotografia do Meu dia\');
+          assert.match(home,/window\\.KineSysMeuDiaClinico=Object\\.freeze/,
+            \'Meu dia deve expor uma única API pública\');
+          assert.doesNotMatch(home,/window\\.carregarPainelFisioterapeuta=/,
+            \'Módulo real não deve recriar o nome legado\');
+
+          assert.doesNotMatch(core,/async function carregarPainelFisioterapeuta\\(\\)/,
+            \'Core não pode conter uma segunda implementação do Meu dia\');
+          assert.match(core,/window\\.KineSysMeuDiaClinico\\?\\.ensure/,
+            \'Core deve delegar a entrada da Home ao dono real do Meu dia\');
+          assert.doesNotMatch(core,/carregarPainelFisioterapeuta\\(\\)/,
+            \'Core não pode chamar o carregador histórico\');
+          assert.doesNotMatch(resume,/carregarPainelFisioterapeuta|KineSysMeuDiaClinico/,
+            \'Resume refresh não pode ser segundo dono do Meu dia\');
+          assert.doesNotMatch(resume,/normalizarMeuDiaClinico|observarMeuDiaClinico|MutationObserver/,
+            \'Resume refresh não pode corrigir o DOM do Meu dia\');
+
+          assert.match(html,/home_fisioterapeuta_util-1\\.24\\.0\\.js\\?v=20260915-single-owner-r2/,
+            \'HTML deve usar uma URL nova para invalidar o carregador antigo\');
+          assert.match(html,/script-1\\.18\\.0\\.js\\?[^\"\']*meu_dia_owner=20260915-r2/,
+            \'Core limpo deve possuir revisão de asset própria\');
+          assert.doesNotMatch(html,/onclick=\"carregarPainelFisioterapeuta\\(\\)\"/,
+            \'HTML não pode chamar API legada do Meu dia\');
+
+          console.log(\'Meu dia clínico: dono único físico + snapshot atômico + assets novos OK\');
+          ''',encoding='utf-8')
+
+          op=Path('tests/operational_resume_refresh.contract.js')
+          text=op.read_text(encoding='utf-8')
+          text=text.replace("assert.match(homeFisio,/window\\.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta/,'compatibilidade histórica deve apenas garantir a carga inicial');",
+                            "assert.doesNotMatch(homeFisio,/window\\.carregarPainelFisioterapeuta=/,'Meu Dia não deve manter API global legada');")
+          op.write_text(text,encoding='utf-8')
+
+          access=Path('tests/access_agenda_home4h.contract.js')
+          text=access.read_text(encoding='utf-8')
+          text=text.replace('src\\/core\\/script-1\\.18\\.0\\.js\\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1/',
+                            'src\\/core\\/script-1\\.18\\.0\\.js\\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1&meu_dia_owner=20260915-r2/')
+          text=text.replace('src\\/home\\/home_fisioterapeuta_util-1\\.24\\.0\\.js\\?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1/',
+                            'src\\/home\\/home_fisioterapeuta_util-1\\.24\\.0\\.js\\?v=20260915-single-owner-r2/')
+          access.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Validate cleanup
+        shell: bash
+        run: |
+          node --check src/core/script-1.18.0.js
+          node --check src/home/home_fisioterapeuta_util-1.24.0.js
+          node --check tests/home_meu_dia_agenda_stability.contract.js
+          node tests/home_meu_dia_agenda_stability.contract.js
+          node tests/operational_resume_refresh.contract.js
+          node tests/access_agenda_home4h.contract.js
+          git diff --check
+
+      - name: Commit generated cleanup
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No cleanup changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/core/script-1.18.0.js src/home/home_fisioterapeuta_util-1.24.0.js index.html tests/home_meu_dia_agenda_stability.contract.js tests/operational_resume_refresh.contract.js tests/access_agenda_home4h.contract.js
+          git commit -m 'Remove legacy Meu Dia loader from core and bump assets'
+          git push origin HEAD:fix/meu-dia-core-clean-20260915
