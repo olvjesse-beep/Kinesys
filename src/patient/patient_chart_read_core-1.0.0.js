@@ -5,6 +5,7 @@
 'use strict';
 
 const pacientesCompletosEmCurso = new Map();
+let pacientesSalvosEmCurso = null;
 
 function instanteRegistroClinico(registro) {
     const candidatos = [
@@ -87,32 +88,43 @@ async function obterPacienteCompletoPorId(id) {
 }
 
 async function obterPacientesSalvos() {
-    const locais = lerPacientesLocaisComSeguranca();
-    if (_supabase) {
-        try {
-            const { data, error } = await _supabase
-                .from('pacientes')
-                .select('*, avaliacoes(*), evolucoes(*)');
+    // Home, busca e painéis podem solicitar a mesma leitura clínica no mesmo
+    // instante. Compartilhar somente a requisição em andamento reduz round-trips
+    // sem manter cache temporal: a próxima leitura, depois de concluída, continua
+    // indo à fonte atual e preserva exatamente a semântica clínica existente.
+    if (pacientesSalvosEmCurso) return pacientesSalvosEmCurso;
 
-            if (!error && Array.isArray(data)) {
-                const cloud = data.map(normalizarPacienteDoBanco);
-                const locaisPorId = new Map(locais.map(p => [String(p.id), p]));
-                const resultado = cloud.map(p => {
-                    const local = locaisPorId.get(String(p.id));
-                    if (local) locaisPorId.delete(String(p.id));
-                    return mesclarPacienteCloudLocal(p, local);
-                });
-                // O Supabase é a fonte principal, mas um prontuário criado
-                // durante uma falha de conexão não desaparece da tela antes
-                // da migração assistida.
-                locaisPorId.forEach(local => resultado.push(normalizarPacienteDoBanco({ ...local, __dadosLocaisPendentes: true })));
-                return resultado;
+    const carregar = async () => {
+        const locais = lerPacientesLocaisComSeguranca();
+        if (_supabase) {
+            try {
+                const { data, error } = await _supabase
+                    .from('pacientes')
+                    .select('*, avaliacoes(*), evolucoes(*)');
+
+                if (!error && Array.isArray(data)) {
+                    const cloud = data.map(normalizarPacienteDoBanco);
+                    const locaisPorId = new Map(locais.map(p => [String(p.id), p]));
+                    const resultado = cloud.map(p => {
+                        const local = locaisPorId.get(String(p.id));
+                        if (local) locaisPorId.delete(String(p.id));
+                        return mesclarPacienteCloudLocal(p, local);
+                    });
+                    // O Supabase é a fonte principal, mas um prontuário criado
+                    // durante uma falha de conexão não desaparece da tela antes
+                    // da migração assistida.
+                    locaisPorId.forEach(local => resultado.push(normalizarPacienteDoBanco({ ...local, __dadosLocaisPendentes: true })));
+                    return resultado;
+                }
+            } catch (err) {
+                console.warn("⚠️ Conexão com a nuvem falhou. Carregando dados locais preservados...", err);
             }
-        } catch (err) {
-            console.warn("⚠️ Conexão com a nuvem falhou. Carregando dados locais preservados...", err);
         }
-    }
-    return locais.map(p => normalizarPacienteDoBanco({ ...p, __dadosLocaisPendentes: true }));
+        return locais.map(p => normalizarPacienteDoBanco({ ...p, __dadosLocaisPendentes: true }));
+    };
+
+    pacientesSalvosEmCurso = Promise.resolve(carregar()).finally(() => { pacientesSalvosEmCurso = null; });
+    return pacientesSalvosEmCurso;
 }
 
 // Compatibilidade explícita com consumidores históricos que acessam as APIs via window.
