@@ -32,16 +32,23 @@ jobs:
           node --check src/home/home_detalhes-1.18.5.js
           node --check src/home/home_profissional_dashboard-1.0.0.js
           node --check src/home/home_profissional_polish-1.0.0.js
+          node --check src/agenda/agenda_notificacoes_core-1.20.1.js
           node --check src/core/operational_resume_refresh-1.0.0.js
           node --check src/core/script-1.18.0.js
           node --check tests/fisio_home_patient_self_service.contract.js
           node --check tests/home_atendimentos_24h.contract.js
+          node --check tests/home_meu_dia_agenda_stability.contract.js
+          node --check tests/performance_leitura_segura.contract.js
           node --check tests/professional_home_focus.contract.js
           node --check tests/professional_home_polish.contract.js
           node tests/fisio_home_patient_self_service.contract.js
           node tests/home_atendimentos_24h.contract.js
+          node tests/home_meu_dia_agenda_stability.contract.js
+          node tests/performance_leitura_segura.contract.js
           node tests/professional_home_focus.contract.js
           node tests/professional_home_polish.contract.js
+          node tests/access_agenda_home4h.contract.js
+          node tests/home_lifecycle.contract.js
           node tests/agenda_editar_atendimento.contract.js
           node tests/screen_loader.contract.js
           node tests/data_loading.contract.js
