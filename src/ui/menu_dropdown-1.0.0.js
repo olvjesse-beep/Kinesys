@@ -55,6 +55,8 @@
         toggleMenu(true);
     }
 
+    window.fecharMenu=fecharMenu;
+
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('menuToggle');
         const dropdown = document.getElementById('dropdownContent');

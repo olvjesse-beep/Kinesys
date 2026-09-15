@@ -82,6 +82,7 @@
             check:'<path d="m5 12 4 4L19 6"/>',
             warning:'<path d="M12 3 2 21h20z"/><path d="M12 9v5M12 18h.01"/>',
             search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+            bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
             menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
             settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H6v-2.6h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V5h2.6v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v2.6H21a1.7 1.7 0 0 0-1.6 1z"/>'
         };
@@ -207,7 +208,7 @@
     function criarTopbar(){
         const container=document.querySelector('body > .container'); if(!container||document.getElementById('ks_topbar'))return;
         const top=document.createElement('div');top.id='ks_topbar';top.className='ks-topbar';
-        top.innerHTML=`<div class="ks-page-heading"><span id="ks_page_kicker">KINESYS</span><h1 id="ks_page_title">Visão geral</h1><p id="ks_page_subtitle"></p></div><div class="ks-topbar-actions"><div class="ks-notificacoes" id="ks_notificacoes_wrapper" hidden><button type="button" class="ks-notificacoes-btn" id="ks_notificacoes_btn" aria-label="Avisos da Agenda" title="Avisos da Agenda" onclick="alternarPainelNotificacoes()">🔔<span id="ks_notificacoes_badge" class="ks-notificacoes-badge" hidden>0</span></button><div id="ks_notificacoes_painel" class="ks-notificacoes-painel" hidden><div class="ks-notificacoes-head"><strong>Avisos da Agenda</strong><button type="button" onclick="marcarTodasNotificacoesAgendaLidas()">Marcar como lidas</button></div><div id="ks_notificacoes_lista" class="ks-notificacao-lista"><div class="ks-notificacao-vazia">Nenhum aviso novo.</div></div></div></div><button type="button" class="ks-mobile-menu" id="ks_mobile_menu" aria-label="Abrir menu">${icon('menu')}</button><span class="ks-version">v${APP_VERSION}</span></div>`;
+        top.innerHTML=`<div class="ks-page-heading"><span id="ks_page_kicker">KINESYS</span><h1 id="ks_page_title">Visão geral</h1><p id="ks_page_subtitle"></p></div><div class="ks-topbar-actions"><div class="ks-notificacoes" id="ks_notificacoes_wrapper" hidden><button type="button" class="ks-notificacoes-btn" id="ks_notificacoes_btn" aria-label="Avisos da Agenda" title="Avisos da Agenda" onclick="alternarPainelNotificacoes()">${icon('bell')}<span id="ks_notificacoes_badge" class="ks-notificacoes-badge" hidden>0</span></button><div id="ks_notificacoes_painel" class="ks-notificacoes-painel" hidden><div class="ks-notificacoes-head"><strong>Avisos da Agenda</strong><button type="button" onclick="marcarTodasNotificacoesAgendaLidas()">Marcar como lidas</button></div><div id="ks_notificacoes_lista" class="ks-notificacao-lista"><div class="ks-notificacao-vazia">Nenhum aviso novo.</div></div></div></div><button type="button" class="ks-mobile-menu" id="ks_mobile_menu" aria-label="Abrir menu">${icon('menu')}</button><span class="ks-version">v${APP_VERSION}</span></div>`;
         const ctx=document.createElement('div');ctx.id='ks_patient_context';ctx.className='ks-patient-context';ctx.hidden=true;
         ctx.innerHTML=`<div class="ks-patient-main"><span class="ks-patient-avatar">P</span><div><strong id="ks_patient_name"></strong><span id="ks_patient_meta"></span></div></div><nav class="ks-patient-tabs" aria-label="Atalhos do prontuário"><button data-patient-target="tela_buscar">Resumo</button><button data-patient-target="tela_avaliacao">Avaliação</button><button data-patient-target="tela_evolucao">Evolução</button><button data-patient-target="tela_midias">Documentos</button><button data-patient-target="tela_relatorio">Relatórios</button><button data-patient-target="tela_financeiro">Financeiro</button></nav><div class="ks-patient-actions"><button type="button" class="ks-patient-change" aria-label="Trocar paciente">${icon('user')}<span>Trocar paciente</span></button><button type="button" class="ks-patient-clear" aria-label="Fechar prontuário e ficar sem paciente selecionado" title="Fechar prontuário">${icon('close')}</button></div>`;
         container.insertBefore(ctx,container.firstChild);container.insertBefore(top,ctx);
@@ -463,7 +464,6 @@
         const d=document.getElementById('ks_home_date');if(d)d.textContent=new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'2-digit',month:'long'}).format(new Date());
         const g=document.getElementById('ks_home_greeting'); if(g&&((typeof usuarioLogado!=='undefined')?usuarioLogado:null))g.textContent=`Olá, ${(((typeof usuarioLogado!=='undefined')?usuarioLogado:null).nome||'').split(' ')[0]||'equipe'}`;
         const agendaBtn=document.querySelector('#ks_home_hero [data-tela="tela_agenda"]');if(agendaBtn&&typeof window.telaPermitida==='function')agendaBtn.hidden=!window.telaPermitida('tela_agenda');
-        if(typeof window.carregarAtendimentosHojeDetalhes==='function')await window.carregarAtendimentosHojeDetalhes();
     }
 
     /* -------------------------- Prontuário / paciente workspace -------------------------- */
@@ -540,6 +540,12 @@
     }
 
     /* -------------------------- Agenda -------------------------- */
+    function fecharConfiguracoesAgendaAoClicarFora(event){
+        const wrap=document.querySelector('#ks_agenda_controls .ks-agenda-config-wrap');
+        const menu=document.getElementById('ks_agenda_config_menu');
+        if(wrap&&menu&&!wrap.contains(event.target))menu.hidden=true;
+    }
+    document.addEventListener('click',fecharConfiguracoesAgendaAoClicarFora);
     function prepararAgenda(){
         const tela=document.getElementById('tela_agenda');if(!tela||document.getElementById('ks_agenda_controls'))return;
         const painel=tela.querySelector('#agenda_painel');if(!painel)return;
@@ -547,7 +553,7 @@
         ctl.innerHTML=`<div class="ks-segmented"><button class="active" data-agenda-view="agenda_painel">Semana</button><button data-agenda-view="agenda_lista_espera">Lista de espera</button></div><div class="ks-agenda-config-wrap"><button type="button" class="btn-secondary" id="ks_agenda_config_btn">Configurações</button><div class="ks-agenda-config-menu" id="ks_agenda_config_menu" hidden><button data-agenda-view="agenda_procedimentos">Procedimentos</button><button data-agenda-view="agenda_horarios">Horários de atendimento</button><button data-agenda-view="agenda_bloqueios">Bloqueios e folgas</button></div></div>`;
         tela.insertBefore(ctl,painel);
         ctl.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{if(typeof window.irParaSubtelaAgenda==='function')window.irParaSubtelaAgenda(b.dataset.agendaView);if(b.dataset.agendaView==='agenda_horarios'&&typeof window.carregarEditorGradeSemanal==='function')window.carregarEditorGradeSemanal();ctl.querySelectorAll('.ks-segmented button').forEach(x=>x.classList.toggle('active',x.dataset.agendaView===b.dataset.agendaView));document.getElementById('ks_agenda_config_menu').hidden=true;}));
-        const cfg=ctl.querySelector('#ks_agenda_config_btn'),menu=ctl.querySelector('#ks_agenda_config_menu');cfg.onclick=()=>menu.hidden=!menu.hidden;document.addEventListener('click',e=>{if(!ctl.querySelector('.ks-agenda-config-wrap').contains(e.target))menu.hidden=true;});
+        const cfg=ctl.querySelector('#ks_agenda_config_btn'),menu=ctl.querySelector('#ks_agenda_config_menu');cfg.onclick=()=>menu.hidden=!menu.hidden;
     }
 
     /* -------------------------- Mídias -------------------------- */

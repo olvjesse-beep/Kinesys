@@ -10,6 +10,9 @@ on:
       - 'src/agenda/agenda-1.20.0.js'
       - 'src/home/home_fisioterapeuta_util-1.24.0.js'
       - 'tests/operational_resume_refresh.contract.js'
+      - 'tests/meu_dia_lifecycle.contract.js'
+      - 'src/home/home_profissional_polish-1.0.0.js'
+      - 'src/home/home_profissional_dashboard-1.0.0.js'
       - '.github/workflows/operational-resume-refresh-contract.yml'
   push:
     branches: [main]
@@ -20,6 +23,9 @@ on:
       - 'src/agenda/agenda-1.20.0.js'
       - 'src/home/home_fisioterapeuta_util-1.24.0.js'
       - 'tests/operational_resume_refresh.contract.js'
+      - 'tests/meu_dia_lifecycle.contract.js'
+      - 'src/home/home_profissional_polish-1.0.0.js'
+      - 'src/home/home_profissional_dashboard-1.0.0.js'
       - '.github/workflows/operational-resume-refresh-contract.yml'
   workflow_dispatch:
 
@@ -47,5 +53,9 @@ jobs:
           node --check tests/operational_resume_refresh.contract.js
       - name: Resume refresh contract
         run: node tests/operational_resume_refresh.contract.js
+      - name: Meu Dia lifecycle regression
+        run: |
+          node tests/meu_dia_lifecycle.contract.js
+          node tests/home_return_queries.contract.js
       - name: Diff hygiene
         run: git diff --check

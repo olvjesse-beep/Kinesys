@@ -250,10 +250,7 @@
         renderizarPendencias(pendencias||[]);
     }
 
-    function aoAtivarTela(e){if(e.detail?.id==='tela_home')setTimeout(atualizar,40);}
-    document.addEventListener('kinesys:tela-ativada',aoAtivarTela);
-    document.addEventListener('DOMContentLoaded',()=>setTimeout(atualizar,180));
-    setTimeout(()=>{if(document.readyState!=='loading'&&document.getElementById('tela_home')?.classList.contains('ativa'))atualizar();},900);
-
+    document.addEventListener('kinesys:meu-dia-atualizado',atualizar);
+    document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_login')refreshToken++;});
     window.KineSysProfessionalHome={refresh:atualizar,limitesMesAtual};
 })();
