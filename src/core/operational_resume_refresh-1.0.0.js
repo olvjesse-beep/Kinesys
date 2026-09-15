@@ -7,7 +7,7 @@
 (function instalarOperationalResumeRefresh(){
     'use strict';
 
-    const VERSION='1.0.1-meu-dia-idempotente';
+    const VERSION='1.0.2-meu-dia-observer';
     const MIN_AUSENCIA_MS=1500;
     const TELAS_REVALIDAVEIS=new Set(['tela_agenda','tela_home']);
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
@@ -19,6 +19,8 @@
     let refreshEmCurso=null;
     let destruido=false;
     let meuDiaEmCurso=null;
+    let observadorMeuDia=null;
+    let listaMeuDiaObservada=null;
 
     function telaAtual(){
         try {
@@ -62,18 +64,12 @@
     }
 
     function normalizarMeuDiaClinico(){
-        // O Home é estático e deve possuir apenas um card. Se algum ciclo antigo de
-        // montagem deixou um segundo nó com o mesmo ID, preserve o primeiro e remova
-        // somente a cópia redundante.
         const cards=Array.from(document.querySelectorAll('#card_painel_fisioterapeuta'));
         if(cards.length>1)cards.slice(1).forEach(card=>card.remove());
         const card=cards[0]||null;
         const lista=card?.querySelector('#painel_fisio_lista')||document.getElementById('painel_fisio_lista');
         if(!lista)return false;
 
-        // A identidade do agendamento é a chave de idempotência. Horários livres não
-        // possuem ID, então usam início+faixa. Isso impede que voltar da Agenda some
-        // novamente a mesma linha já representada no Meu Dia.
         const vistos=new Set();
         Array.from(lista.querySelectorAll('.ks-fisio-day-row')).forEach(linha=>{
             const chave=chaveLinhaMeuDia(linha);
@@ -101,7 +97,24 @@
         return true;
     }
 
+    function observarMeuDiaClinico(){
+        const lista=document.getElementById('painel_fisio_lista');
+        if(!lista||typeof MutationObserver==='undefined')return false;
+        if(observadorMeuDia&&listaMeuDiaObservada===lista)return true;
+        observadorMeuDia?.disconnect();
+        listaMeuDiaObservada=lista;
+        observadorMeuDia=new MutationObserver(mudancas=>{
+            if(destruido)return;
+            const mudouFilhos=mudancas.some(m=>m.type==='childList'&&(m.addedNodes.length||m.removedNodes.length));
+            if(mudouFilhos)normalizarMeuDiaClinico();
+        });
+        observadorMeuDia.observe(lista,{childList:true});
+        normalizarMeuDiaClinico();
+        return true;
+    }
+
     function instalarProtecaoMeuDia(){
+        observarMeuDiaClinico();
         const atual=window.carregarPainelFisioterapeuta;
         if(typeof atual!=='function'||atual.__kinesysMeuDiaIdempotente)return false;
         const original=atual;
@@ -109,6 +122,7 @@
             if(meuDiaEmCurso)return meuDiaEmCurso;
             meuDiaEmCurso=Promise.resolve(original.apply(this,args))
                 .then(resultado=>{
+                    observarMeuDiaClinico();
                     normalizarMeuDiaClinico();
                     return resultado;
                 })
@@ -129,8 +143,6 @@
             ausenteDesde=Date.now();
             telaAoAusentar=tela;
         }
-        // O lifecycle visual da Agenda já sabe parar relógio/observer/listeners.
-        // A sincronização confiável de pendências permanece independente.
         if(tela==='tela_agenda')window.KineSysAgendaLifecycle?.suspend?.();
     }
 
@@ -159,6 +171,7 @@
             await window.KineSysProfessionalHome.refresh();
             atualizou=true;
         }
+        observarMeuDiaClinico();
         normalizarMeuDiaClinico();
         window.KineSysProfessionalHomePolish?.refresh?.();
         return atualizou;
@@ -171,7 +184,6 @@
     async function processarRetorno(){
         if(destruido||document.visibilityState!=='visible'||!ausenteDesde)return false;
         const inicioAusencia=ausenteDesde;
-        const telaAnterior=telaAoAusentar;
         ausenteDesde=0;
         telaAoAusentar='';
 
@@ -214,14 +226,19 @@
     function aoTelaAtivadaMeuDia(event){
         if(event.detail?.id!=='tela_home')return;
         instalarProtecaoMeuDia();
-        // O carregamento principal ocorre no navegarPara. Este passe apenas garante
-        // idempotência visual depois dos demais listeners de ativação da Home.
-        setTimeout(normalizarMeuDiaClinico,0);
+        observarMeuDiaClinico();
+        setTimeout(()=>{
+            observarMeuDiaClinico();
+            normalizarMeuDiaClinico();
+        },0);
     }
 
     function destroy(){
         if(destruido)return true;
         destruido=true;
+        observadorMeuDia?.disconnect();
+        observadorMeuDia=null;
+        listaMeuDiaObservada=null;
         document.removeEventListener('visibilitychange',aoVisibilityChange);
         document.removeEventListener('kinesys:tela-ativada',aoTelaAtivadaMeuDia);
         window.removeEventListener('blur',aoBlur);
@@ -234,6 +251,7 @@
 
     garantirHomeProfissionalFocada();
     instalarProtecaoMeuDia();
+    observarMeuDiaClinico();
     document.addEventListener('visibilitychange',aoVisibilityChange);
     document.addEventListener('kinesys:tela-ativada',aoTelaAtivadaMeuDia);
     window.addEventListener('blur',aoBlur,{passive:true});
@@ -245,12 +263,14 @@
         version:VERSION,
         refresh:processarRetorno,
         normalizeMeuDia:normalizarMeuDiaClinico,
+        observeMeuDia:observarMeuDiaClinico,
         destroy,
         status(){
             return Object.freeze({
                 away:!!ausenteDesde,
                 awayScreen:telaAoAusentar,
                 refreshing:!!refreshEmCurso,
+                observingMeuDia:!!observadorMeuDia,
                 currentScreen:telaAtual()
             });
         }
