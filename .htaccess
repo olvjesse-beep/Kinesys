@@ -16,6 +16,17 @@
   RewriteCond %{HTTP_HOST} !^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$ [NC]
   RewriteCond %{REQUEST_URI} !^/site-publico/index\.html$ [NC]
   RewriteRule ^ site-publico/index.html [L]
+
+  # O HTML ainda referencia a URL histórica do módulo Meu Dia. Depois da
+  # consolidação single-owner, clientes que já tinham essa URL em cache podiam
+  # continuar executando o carregador antigo. Redirecionamos somente esse asset,
+  # somente no host do app, para uma URL de revisão nova do MESMO arquivo real.
+  # Não há lógica clínica, renderização ou deduplicação aqui: é apenas invalidação
+  # explícita de asset até o próximo bump do index.html.
+  RewriteCond %{HTTP_HOST} ^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$ [NC]
+  RewriteCond %{REQUEST_URI} ^/src/home/home_fisioterapeuta_util-1\.24\.0\.js$ [NC]
+  RewriteCond %{QUERY_STRING} !(^|&)single_owner=20260915-r2(&|$) [NC]
+  RewriteRule ^src/home/home_fisioterapeuta_util-1\.24\.0\.js$ /src/home/home_fisioterapeuta_util-1.24.0.js?single_owner=20260915-r2 [R=302,L,NE]
 </IfModule>
 
 # O site institucional emergencial não deve ficar preso em cache durante a recuperação.
@@ -32,6 +43,10 @@
     Header set Pragma "no-cache" env=KINESYS_APP_HOST
     Header set Expires "0" env=KINESYS_APP_HOST
   </FilesMatch>
+
+  <Files "home_fisioterapeuta_util-1.24.0.js">
+    Header set X-KineSys-Home-Asset "single-owner-r2" env=KINESYS_APP_HOST
+  </Files>
 </IfModule>
 
 # Não usar mod_substitute neste arquivo. O bloco antigo transformava todo text/html
