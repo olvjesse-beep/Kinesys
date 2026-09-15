@@ -36,6 +36,16 @@ assert.match(resume,/if\(meuDiaEmCurso\)return meuDiaEmCurso/,
   'O hotfix deve compartilhar uma atualização em andamento ao voltar da Agenda');
 assert.match(resume,/protegido\.__kinesysMeuDiaIdempotente=true/,
   'Wrapper do Meu dia deve ser instalado apenas uma vez');
+assert.match(resume,/function observarMeuDiaClinico\(\)/,
+  'Meu dia deve observar alterações tardias no DOM depois do carregamento principal');
+assert.match(resume,/new MutationObserver\(mudancas=>/,
+  'Proteção deve reagir a inserções assíncronas que ocorram depois da primeira renderização');
+assert.match(resume,/observadorMeuDia\.observe\(lista,\{childList:true\}\)/,
+  'Observador deve acompanhar inclusões e remoções na lista do Meu dia');
+assert.match(resume,/if\(mudouFilhos\)normalizarMeuDiaClinico\(\)/,
+  'Qualquer segunda finalização que anexe linhas deve disparar deduplicação imediata');
+assert.match(resume,/observadorMeuDia\?\.disconnect\(\)/,
+  'Observador deve ser desconectado de forma explícita no ciclo de vida');
 assert.match(resume,/document\.addEventListener\('kinesys:tela-ativada',aoTelaAtivadaMeuDia\)/,
   'Proteção deve ser reaplicada no lifecycle oficial ao retornar para a Home');
 
