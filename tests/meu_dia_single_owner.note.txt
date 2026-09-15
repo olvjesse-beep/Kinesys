@@ -1,7 +1,0 @@
-Meu Dia Clínico — arquitetura consolidada em 2026-09-15
-
-Fonte única: src/home/home_fisioterapeuta_util-1.24.0.js
-Atualizações reais: carga inicial, entrada na Agenda e botão Atualizar.
-Retorno para a Home: apenas reutiliza a fotografia já carregada.
-Operational resume refresh: somente Agenda; não toca no Meu Dia.
-Renderização: montagem fora do DOM e replaceChildren atômico.
