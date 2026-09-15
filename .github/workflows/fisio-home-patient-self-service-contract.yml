@@ -39,6 +39,7 @@ jobs:
           node --check tests/home_atendimentos_24h.contract.js
           node --check tests/home_meu_dia_agenda_stability.contract.js
           node --check tests/performance_leitura_segura.contract.js
+          node --check tests/no_business_data_performance_migration.contract.js
           node --check tests/cache_revalidation_meu_dia.contract.js
           node --check tests/professional_home_focus.contract.js
           node --check tests/professional_home_polish.contract.js
@@ -46,6 +47,7 @@ jobs:
           node tests/home_atendimentos_24h.contract.js
           node tests/home_meu_dia_agenda_stability.contract.js
           node tests/performance_leitura_segura.contract.js
+          node tests/no_business_data_performance_migration.contract.js
           node tests/cache_revalidation_meu_dia.contract.js
           node tests/professional_home_focus.contract.js
           node tests/professional_home_polish.contract.js
