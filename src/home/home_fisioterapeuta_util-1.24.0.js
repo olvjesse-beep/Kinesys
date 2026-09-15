@@ -1,8 +1,8 @@
 /* ============================================================================
    KineSys — Home do fisioterapeuta: Meu dia clínico v1.24.0
-   - Widget compacto e expansível
-   - Sequência clínica por paciente + família de procedimento
-   - Agenda continua sendo a fonte de verdade para sessões realizadas
+   - Único dono do carregamento e da renderização do Meu Dia Clínico
+   - Carga inicial leve + atualização ao entrar na Agenda + atualização manual
+   - Renderização atômica: uma carga produz uma única substituição da lista
    ============================================================================ */
 (function(){
     'use strict';
@@ -12,6 +12,9 @@
     const JANELA_HOME_MINUTOS = 4 * 60;
     let contextoAgendaHomeFisioterapeuta = null;
     let cargaPainelFisioterapeutaEmAndamento = null;
+    let painelFisioterapeutaInicializado = false;
+    let revisaoCargaPainelFisioterapeuta = 0;
+    let ultimoMotivoCargaPainelFisioterapeuta = '';
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
@@ -19,9 +22,6 @@
         return tipo==='FISIOTERAPEUTA' || tipo==='PROFISSIONAL';
     }
 
-    // O objeto usuarioLogado pode ser reidratado durante o carregamento sem que a
-    // sessão clínica tenha mudado. Comparar a referência do objeto fazia o Home
-    // descartar uma resposta válida da Agenda. A identidade estável é perfil+clínica.
     function perfilAtualEquivale(perfilInicial){
         const atual=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
         if(!perfilInicial||!atual)return perfilInicial===atual;
@@ -157,12 +157,12 @@
     }
 
     function registroVinculadoAoAgendamento(registro,agendamentoId){
-    const id=String(agendamentoId||'');
-    const vinculo=String(registro?.agendamentoId||registro?.agendamento_id||'');
-    return !!id && !!vinculo && id===vinculo;
-}
+        const id=String(agendamentoId||'');
+        const vinculo=String(registro?.agendamentoId||registro?.agendamento_id||'');
+        return !!id && !!vinculo && id===vinculo;
+    }
 
-function contextoClinico(paciente,agendamento,hoje,sequencia){
+    function contextoClinico(paciente,agendamento,hoje,sequencia){
         const avaliacoes=avaliacoesFinalizadas(paciente);
         const temAvaliacao=avaliacoes.length>0;
         const avaliacaoHoje=avaliacoes.some(a=>registroVinculadoAoAgendamento(a,agendamento?.id));
@@ -344,7 +344,16 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         let actions=header.querySelector('.ks-fisio-header-actions');
         if(!actions){actions=document.createElement('div');actions.className='ks-fisio-header-actions';header.appendChild(actions);}
         const original=Array.from(header.children).find(el=>el.tagName==='BUTTON');
-        if(original){original.textContent='Atualizar';actions.appendChild(original);}
+        if(original){
+            original.textContent='Atualizar';
+            original.onclick=null;
+            original.removeAttribute('onclick');
+            if(!original.dataset.ksMeuDiaManual){
+                original.dataset.ksMeuDiaManual='1';
+                original.addEventListener('click',()=>atualizarPainelFisioterapeuta({motivo:'manual'}));
+            }
+            actions.appendChild(original);
+        }
         let agenda=actions.querySelector('[data-ks-fisio-agenda]');
         if(!agenda){agenda=criarBotao('Agenda','btn-secondary',()=>{if(typeof navegarPara==='function')navegarPara('tela_agenda');});agenda.dataset.ksFisioAgenda='1';actions.prepend(agenda);}
         const toggle=actions.querySelector('[data-ks-fisio-toggle]');
@@ -389,9 +398,6 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         const actions=document.createElement('div');actions.className='ks-fisio-day-actions';row.append(time,content,actions);return row;
     }
 
-
-    // Mantido como contrato de compatibilidade do Home. A janela de 4 horas é
-    // cronológica; este helper não limita nem reordena os itens exibidos.
     function pontuacaoPrioridade(item){
         const classe=String(item?.situacao?.classe||'');
         if(classe==='is-current') return 0;
@@ -441,23 +447,50 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         return String(proprio?.id||'');
     }
 
-    async function carregarPainelFisioterapeutaUtil(){
+    function resumoTimeline(itens,livres,emAtendimento,concluidos,registrosPendentes){
+        const partes=['Próximas 4 horas',`${itens.length} atendimento(s)`,`${livres.length} horário(s) livre(s)`];
+        if(emAtendimento)partes.push(`${emAtendimento} em atendimento`);
+        if(concluidos)partes.push(`${concluidos} concluído(s)`);
+        if(registrosPendentes)partes.push(`${registrosPendentes} registro(s) pendente(s)`);
+        return partes.join(' · ');
+    }
+
+    function aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes}){
+        const fragmento=document.createDocumentFragment();
+        if(!timeline.length){
+            const empty=document.createElement('div');
+            empty.className='ks-fisio-painel-vazio';
+            empty.textContent='Não há atividade clínica disponível nesta janela. Abra a Agenda para consultar outros horários.';
+            fragmento.appendChild(empty);
+            resumo.textContent='Próximas 4 horas · sem atendimentos ou horários disponíveis na sua jornada.';
+        } else {
+            timeline.forEach(item=>fragmento.appendChild(item.tipo==='livre'?montarLinhaLivre(item.intervalo):montarLinha(item)));
+            resumo.textContent=resumoTimeline(itens,livres,emAtendimento,concluidos,registrosPendentes);
+        }
+        prepararCabecalho(card,timeline.length);
+        lista.replaceChildren(fragmento);
+    }
+
+    async function carregarPainelFisioterapeutaUtil({motivo='manual'}={}){
+        const revisao=++revisaoCargaPainelFisioterapeuta;
+        ultimoMotivoCargaPainelFisioterapeuta=String(motivo||'manual');
         const card=document.getElementById('card_painel_fisioterapeuta');
-        if(!card)return;
-        const eh=perfilFisioterapeuta();card.hidden=!eh;if(!eh)return;
-        prepararCabecalho(card,0);
+        if(!card)return false;
+        const eh=perfilFisioterapeuta();card.hidden=!eh;if(!eh)return false;
+        prepararCabecalho(card,Number(card.dataset.ksTotal||0));
         const resumo=document.getElementById('painel_fisio_resumo'),lista=document.getElementById('painel_fisio_lista');
-        if(!resumo||!lista)return;
-        lista.replaceChildren();resumo.textContent='Organizando as próximas 4 horas…';
-        if(typeof _supabase==='undefined'||!_supabase){resumo.textContent='Não foi possível acessar sua agenda agora.';return;}
+        if(!resumo||!lista)return false;
+        if(!painelFisioterapeutaInicializado)resumo.textContent='Organizando as próximas 4 horas…';
+        if(typeof _supabase==='undefined'||!_supabase){resumo.textContent='Não foi possível acessar sua agenda agora.';return false;}
 
         const perfilInicial=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
         let profissionalId='';
         try{profissionalId=await resolverProfissionalHomeFisioterapeuta(perfilInicial);}catch(_){
-            if(perfilAtualEquivale(perfilInicial))resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';return;
+            if(revisao===revisaoCargaPainelFisioterapeuta&&perfilAtualEquivale(perfilInicial))resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';
+            return false;
         }
-        if(!perfilAtualEquivale(perfilInicial))return;
-        if(!profissionalId){resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';return;}
+        if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
+        if(!profissionalId){resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';return false;}
 
         const agora=instanteHomeBrasilia(),hoje=agora.data,inicioJanela=agora.minutos,fimJanela=Math.min(24*60,inicioJanela+JANELA_HOME_MINUTOS);
         let consulta=await _supabase.from('agendamentos')
@@ -468,7 +501,8 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
                 .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome)')
                 .eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
         }
-        if(consulta.error){resumo.textContent='Não foi possível carregar seus atendimentos agora.';return;}
+        if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
+        if(consulta.error){resumo.textContent='Não foi possível carregar seus atendimentos agora.';return false;}
 
         const atendimentosHoje=consulta.data||[];
         const atendimentos=atendimentosHoje.filter(a=>{
@@ -478,8 +512,11 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
             return termino>inicioJanela&&inicio<fimJanela;
         });
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
+        if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
         const mapaPacientes=new Map((pacientes||[]).map(p=>[String(p.id||''),p]));
         const historico=await carregarHistoricoAgenda(atendimentos,hoje,profissionalId);
+        if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
+
         let concluidos=0,registrosPendentes=0,emAtendimento=0;
         const itens=atendimentos.map(a=>{
             const status=String(a.status||'').toLowerCase();if(STATUS_CONCLUIDOS.has(status))concluidos++;
@@ -495,26 +532,53 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         });
         const livres=intervalosLivresHome(hoje,profissionalId,inicioJanela,fimJanela,atendimentosHoje).map(x=>({tipo:'livre',inicio:x.inicio,intervalo:x}));
         const timeline=[...itens,...livres].sort((a,b)=>a.inicio-b.inicio||(a.tipo==='atendimento'?-1:1));
-        prepararCabecalho(card,timeline.length);
+        if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
-        if(!timeline.length){
-            resumo.textContent='Próximas 4 horas · sem atendimentos ou horários disponíveis na sua jornada.';
-            const empty=document.createElement('div');empty.className='ks-fisio-painel-vazio';empty.textContent='Não há atividade clínica disponível nesta janela. Abra a Agenda para consultar outros horários.';lista.appendChild(empty);return;
-        }
-        timeline.forEach(item=>lista.appendChild(item.tipo==='livre'?montarLinhaLivre(item.intervalo):montarLinha(item)));
-        const partes=['Próximas 4 horas',`${itens.length} atendimento(s)`,`${livres.length} horário(s) livre(s)`];
-        if(emAtendimento)partes.push(`${emAtendimento} em atendimento`);
-        if(concluidos)partes.push(`${concluidos} concluído(s)`);
-        if(registrosPendentes)partes.push(`${registrosPendentes} registro(s) pendente(s)`);
-        resumo.textContent=partes.join(' · ');
+        aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes});
+        painelFisioterapeutaInicializado=true;
+        return true;
     }
 
-    function carregarPainelFisioterapeutaCoalescido(){
+    function atualizarPainelFisioterapeuta(opcoes={}){
         if(cargaPainelFisioterapeutaEmAndamento)return cargaPainelFisioterapeutaEmAndamento;
-        cargaPainelFisioterapeutaEmAndamento=Promise.resolve(carregarPainelFisioterapeutaUtil())
+        cargaPainelFisioterapeutaEmAndamento=Promise.resolve(carregarPainelFisioterapeutaUtil(opcoes))
             .finally(()=>{cargaPainelFisioterapeutaEmAndamento=null;});
         return cargaPainelFisioterapeutaEmAndamento;
     }
 
-    window.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaCoalescido;
+    function garantirPainelFisioterapeuta(){
+        if(painelFisioterapeutaInicializado)return Promise.resolve(true);
+        return atualizarPainelFisioterapeuta({motivo:'inicial'});
+    }
+
+    function aoAtivarTelaMeuDia(event){
+        const id=String(event?.detail?.id||'');
+        if(id==='tela_home'){
+            garantirPainelFisioterapeuta();
+            return;
+        }
+        if(id==='tela_agenda'){
+            atualizarPainelFisioterapeuta({motivo:'agenda'}).catch(()=>false);
+        }
+    }
+
+    document.addEventListener('kinesys:tela-ativada',aoAtivarTelaMeuDia);
+
+    window.KineSysMeuDiaClinico=Object.freeze({
+        refresh:atualizarPainelFisioterapeuta,
+        ensure:garantirPainelFisioterapeuta,
+        status(){
+            return Object.freeze({
+                initialized:painelFisioterapeutaInicializado,
+                loading:!!cargaPainelFisioterapeutaEmAndamento,
+                revision:revisaoCargaPainelFisioterapeuta,
+                lastReason:ultimoMotivoCargaPainelFisioterapeuta
+            });
+        }
+    });
+
+    // Compatibilidade com o núcleo legado: navegarPara('tela_home') ainda chama
+    // este nome. Ele agora apenas garante a primeira carga; retornar para a Home
+    // não dispara nova consulta. Atualizações reais pertencem à Agenda ou ao botão.
+    window.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta;
 })();
