@@ -14,8 +14,13 @@ assert.match(polish,/ks-fisio-header-actions/,'pendências deve integrar o grupo
 assert.match(polish,/ks-prof-greeting-clean/,'saudação deve receber tratamento visual sem outline indevido');
 assert.match(polish,/MutationObserver/,'polish deve acompanhar recomposição da Home sem polling');
 assert.doesNotMatch(polish,/setInterval\s*\(/,'polish não pode criar polling');
+assert.match(polish,/function removerDuplicatasMeuDia\(/,'polish deve impedir repetição visual do Meu dia clínico');
+assert.match(polish,/dataset\.agendamentoId/,'deduplicação deve priorizar o ID real do agendamento');
+assert.match(polish,/\.ks-fisio-day-row/,'deduplicação deve atuar somente nas linhas do Meu dia clínico');
+assert.match(polish,/for\(let i=linhas\.length-1;i>=0;i--\)/,'deduplicação deve preservar a linha mais recente quando houver concorrência de renderização');
 assert.match(bootstrap,/home_profissional_polish-1\.0\.0\.js/,'bootstrap deve carregar o polish da Home profissional');
 assert.match(bootstrap,/PROFESSIONAL_HOME_ASSET_VERSION/,'assets da Home profissional devem ter cache-buster explícito');
+assert.match(bootstrap,/20260915-home-dedupe-r6/,'bootstrap deve invalidar o cache para entregar o guard de deduplicação');
 assert.match(css,/:has\(#ks_home_recent_count\)/,'CSS deve ocultar defensivamente o card legado de cadastros');
 assert.match(css,/\.ks-prof-home-active \.ks-home-overview\{display:none!important\}/,'Home profissional deve ocultar estruturalmente o overview operacional legado');
 assert.match(css,/@media\(max-width:620px\)[\s\S]*#ks_home_hero\{display:none!important\}/,'telefone deve remover o hero redundante e liberar espaço vertical');
