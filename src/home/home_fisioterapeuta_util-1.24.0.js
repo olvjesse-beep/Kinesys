@@ -15,6 +15,8 @@
     let painelFisioterapeutaInicializado = false;
     let revisaoCargaPainelFisioterapeuta = 0;
     let ultimoMotivoCargaPainelFisioterapeuta = '';
+    let cargaInicialSolicitada = false;
+    let totalRenderizacoes = 0;
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
@@ -469,6 +471,7 @@
         }
         prepararCabecalho(card,timeline.length);
         lista.replaceChildren(fragmento);
+        totalRenderizacoes++;
     }
 
     async function carregarPainelFisioterapeutaUtil({motivo='manual'}={}){
@@ -536,23 +539,35 @@
 
         aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes});
         painelFisioterapeutaInicializado=true;
+        document.dispatchEvent(new CustomEvent('kinesys:meu-dia-atualizado'));
         return true;
     }
 
     function atualizarPainelFisioterapeuta(opcoes={}){
-        if(cargaPainelFisioterapeutaEmAndamento)return cargaPainelFisioterapeutaEmAndamento;
-        cargaPainelFisioterapeutaEmAndamento=Promise.resolve(carregarPainelFisioterapeutaUtil(opcoes))
-            .finally(()=>{cargaPainelFisioterapeutaEmAndamento=null;});
-        return cargaPainelFisioterapeutaEmAndamento;
+        if(cargaPainelFisioterapeutaEmAndamento&&opcoes.motivo!=='agenda')return cargaPainelFisioterapeutaEmAndamento;
+        const carga=Promise.resolve(carregarPainelFisioterapeutaUtil(opcoes))
+            .finally(()=>{if(cargaPainelFisioterapeutaEmAndamento===carga)cargaPainelFisioterapeutaEmAndamento=null;});
+        cargaPainelFisioterapeutaEmAndamento=carga;
+        return carga;
     }
 
     function garantirPainelFisioterapeuta(){
-        if(painelFisioterapeutaInicializado)return Promise.resolve(true);
+        if(cargaInicialSolicitada)return cargaPainelFisioterapeutaEmAndamento||Promise.resolve(painelFisioterapeutaInicializado);
+        if(!perfilFisioterapeuta())return Promise.resolve(false);
+        cargaInicialSolicitada=true;
         return atualizarPainelFisioterapeuta({motivo:'inicial'});
     }
 
     function aoAtivarTelaMeuDia(event){
         const id=String(event?.detail?.id||'');
+        if(id==='tela_login'){
+            revisaoCargaPainelFisioterapeuta++;
+            cargaInicialSolicitada=false;
+            cargaPainelFisioterapeutaEmAndamento=null;
+            painelFisioterapeutaInicializado=false;
+            contextoAgendaHomeFisioterapeuta=null;
+            return;
+        }
         if(id==='tela_home'){
             garantirPainelFisioterapeuta();
             return;
@@ -565,11 +580,13 @@
     document.addEventListener('kinesys:tela-ativada',aoAtivarTelaMeuDia);
 
     window.KineSysMeuDiaClinico=Object.freeze({
+        version:'1.25.0-single-owner',
         refresh:atualizarPainelFisioterapeuta,
         ensure:garantirPainelFisioterapeuta,
         status(){
             return Object.freeze({
                 initialized:painelFisioterapeutaInicializado,
+                renders:totalRenderizacoes,
                 loading:!!cargaPainelFisioterapeutaEmAndamento,
                 revision:revisaoCargaPainelFisioterapeuta,
                 lastReason:ultimoMotivoCargaPainelFisioterapeuta
@@ -577,8 +594,9 @@
         }
     });
 
-    // Compatibilidade com o núcleo legado: navegarPara('tela_home') ainda chama
-    // este nome. Ele agora apenas garante a primeira carga; retornar para a Home
-    // não dispara nova consulta. Atualizações reais pertencem à Agenda ou ao botão.
-    window.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta;
+    function iniciarMeuDia(){
+        if(document.getElementById('tela_home')?.classList.contains('ativa'))garantirPainelFisioterapeuta();
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarMeuDia,{once:true});
+    else iniciarMeuDia();
 })();

@@ -19,7 +19,7 @@ assert.match(resolver, /\.rpc\('kinesys_contexto_agenda'\)/, 'Home deve resolver
 assert.match(resolver, /contexto\?\.perfil_id/, 'Home deve validar perfil retornado');
 assert.match(resolver, /contexto\?\.clinica_id/, 'Home deve validar clínica retornada');
 
-const carregar = bloco(home,'async function carregarPainelFisioterapeutaUtil','window.carregarPainelFisioterapeuta=');
+const carregar = bloco(home,'async function carregarPainelFisioterapeutaUtil','function atualizarPainelFisioterapeuta(');
 assert.doesNotMatch(carregar,/carregarProfissionaisAgenda/, 'Home não pode depender do carregamento lazy da Agenda');
 assert.doesNotMatch(carregar,/profissionalAgendaRestritoAtualId/, 'Home não pode depender do cache interno da Agenda');
 assert.match(carregar,/resolverProfissionalHomeFisioterapeuta/, 'Home deve usar resolvedor próprio e leve');

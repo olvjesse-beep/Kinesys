@@ -395,17 +395,6 @@ function prepararHomeCompacta(){
     }
 }
 
-if(typeof navegarPara==='function'&&!navegarPara.__homeDetalhesWrapped){
-    const base=navegarPara;
-    const wrapped=function(idTela,...args){const r=base.call(this,idTela,...args);setTimeout(()=>{
-        prepararHomeCompacta();configurarCardsHomeDetalhes();
-        if(idTela==='tela_home'){fecharPendenciasHome(false);carregarAtendimentosHojeDetalhes();carregarPacientesRecentesDetalhes();}
-        if(idTela==='tela_home_atendimentos')carregarAtendimentosHojeDetalhes(false);
-        if(idTela==='tela_home_pendencias')carregarPendenciasClinicasDetalhes(false);
-        if(idTela==='tela_home_recentes')carregarPacientesRecentesDetalhes(false);
-    },0);return r;};wrapped.__homeDetalhesWrapped=true;navegarPara=wrapped;
-}
-
 window.carregarAtendimentosHojeDetalhes=carregarAtendimentosHojeDetalhes;
 window.renderizarAtendimentosHojeDetalhes=renderizarAtendimentosHojeDetalhes;
 window.carregarPendenciasClinicasDetalhes=carregarPendenciasClinicasDetalhes;
@@ -413,42 +402,29 @@ window.renderizarPendenciasClinicasDetalhes=renderizarPendenciasClinicasDetalhes
 window.carregarPacientesRecentesDetalhes=carregarPacientesRecentesDetalhes;
 window.renderizarPacientesRecentesDetalhes=renderizarPacientesRecentesDetalhes;
 
+let homeDetalhesInicializada=false;
 function inicializarHomeDetalhes(){
+    if(homeDetalhesInicializada||!escopoHomeAtual())return;
+    homeDetalhesInicializada=true;
     prepararHomeCompacta();configurarCardsHomeDetalhes();
-    if(document.getElementById('tela_home')?.classList.contains('ativa')){
-        carregarAtendimentosHojeDetalhes();
-        carregarPendenciasClinicasDetalhes(false).catch(()=>{});
-        carregarPacientesRecentesDetalhes(false).catch(()=>{});
-    }
-}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(inicializarHomeDetalhes,80));
-setTimeout(()=>{if(document.readyState!=='loading')inicializarHomeDetalhes();},700);
-let homeDetalhesRefreshTimer=null;
-
-function homeDetalhesTelaAtiva(){
-    return !!document.getElementById('tela_home')?.classList.contains('ativa');
-}
-function executarRefreshPeriodicoHome(){
-    if(document.visibilityState!=='visible'||!homeDetalhesTelaAtiva())return;
+    popularSelectCRM();renderizarPendenciasClinicas();
     carregarAtendimentosHojeDetalhes();
-    carregarPacientesRecentesDetalhes();
+    carregarPacientesRecentesDetalhes(false).catch(()=>{});
 }
-function ativarLifecycleHomeDetalhes(){
-    if(!homeDetalhesTelaAtiva())return;
-    if(!homeDetalhesRefreshTimer)homeDetalhesRefreshTimer=setInterval(executarRefreshPeriodicoHome,60000);
-}
-function suspenderLifecycleHomeDetalhes(){
-    if(homeDetalhesRefreshTimer){clearInterval(homeDetalhesRefreshTimer);homeDetalhesRefreshTimer=null;}
-    fecharAtendimentosHome(false);
-    fecharPendenciasHome(false);
-}
-function aoTelaAtivadaHomeDetalhes(event){
-    if(event.detail?.id==='tela_home')ativarLifecycleHomeDetalhes();
-}
-function aoTelaDesativadaHomeDetalhes(event){
-    if(event.detail?.id==='tela_home')suspenderLifecycleHomeDetalhes();
-}
+document.addEventListener('kinesys:tela-ativada',event=>{
+    const id=event.detail?.id;
+    if(id==='tela_login'){homeDetalhesInicializada=false;return;}
+    if(id==='tela_home')inicializarHomeDetalhes();
+    if(id==='tela_home_atendimentos')carregarAtendimentosHojeDetalhes(false);
+    if(id==='tela_home_pendencias')carregarPendenciasClinicasDetalhes(false);
+    if(id==='tela_home_recentes')carregarPacientesRecentesDetalhes(false);
+});
+document.addEventListener('kinesys:tela-desativada',event=>{
+    if(event.detail?.id==='tela_home'){fecharAtendimentosHome(false);fecharPendenciasHome(false);}
+});
 
-document.addEventListener('kinesys:tela-ativada',aoTelaAtivadaHomeDetalhes);
-document.addEventListener('kinesys:tela-desativada',aoTelaDesativadaHomeDetalhes);
-if(document.readyState!=='loading'&&homeDetalhesTelaAtiva())ativarLifecycleHomeDetalhes();
+function iniciarHomeDetalhesVisivel(){
+    if(document.getElementById('tela_home')?.classList.contains('ativa'))inicializarHomeDetalhes();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarHomeDetalhesVisivel,{once:true});
+else iniciarHomeDetalhesVisivel();

@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="styles/design_experience.css?v=20260909-ux-r1">
     <link rel="stylesheet" href="styles/home_fisioterapeuta_util-1.24.0.css?v=20260909-r1&home4h=20260910-r1">
     <link rel="stylesheet" href="styles/lightglass_pearl-1.0.1.css?v=20260915-petrol-r2">
+    <link rel="stylesheet" href="styles/home_profissional_dashboard-1.0.0.css?v=20260915-home-dedupe-r8">
 </head>
 <body>
 
@@ -122,7 +123,7 @@
         <!-- TELA HOME -->
         <section id="tela_home" class="tela">
             <div class="card ks-fisio-painel" id="card_painel_fisioterapeuta" hidden>
-                <div class="card-header"><div><span class="eyebrow">PAINEL DO ATENDIMENTO</span><h2 id="painel_fisio_titulo">Minha agenda de hoje</h2></div><button type="button" class="btn-secondary" onclick="carregarPainelFisioterapeuta()">Atualizar</button></div>
+                <div class="card-header"><div><span class="eyebrow">PAINEL DO ATENDIMENTO</span><h2 id="painel_fisio_titulo">Minha agenda de hoje</h2></div><button type="button" class="btn-secondary" onclick="KineSysMeuDiaClinico.refresh()">Atualizar</button></div>
                 <div id="painel_fisio_resumo" class="kds-u-text-muted kds-u-fs-meta">Carregando sua rotina…</div>
                 <div id="painel_fisio_lista" class="ks-fisio-painel-lista"></div>
             </div>
@@ -1537,7 +1538,7 @@
     <script defer src="src/core/kinesys_data_cache-1.0.0.js?v=20260911-cache-r1"></script>
     <script defer src="src/patient/patient_data_normalization_core-1.0.0.js?v=20260911-phase4p-r1"></script>
     <script defer src="src/patient/patient_index_cache_core-1.0.0.js?v=20260911-phase4i-r1"></script>
-    <script defer src="src/ui/menu_dropdown-1.0.0.js?v=20260911-phase4a-r1"></script>
+    <script defer src="src/ui/menu_dropdown-1.0.0.js?v=20260911-phase4a-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/core/operation_guard-1.0.0.js?v=20260911-phase4b-r1"></script>
     <script defer src="src/core/html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>
     <script defer src="src/core/cadastro_validacoes_core-1.0.0.js?v=20260911-phase4e-r1"></script>
@@ -1551,19 +1552,19 @@
     <script defer src="src/admin/team_management_core-1.0.0.js?v=20260911-phase4o-r1"></script>
     <script defer src="src/auth/login_ui_helpers_core-1.0.0.js?v=20260911-phase4r-r1"></script>
     <script defer src="src/reports/report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1"></script>
-    <script defer src="src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1"></script>
+    <script defer src="src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/patient/patient_deletion_core-1.0.0.js?v=20260911-phase4m-r1"></script>
     <script defer src="src/patient/patient_chart_read_core-1.0.0.js?v=20260911-phase4j-r1"></script>
     <script defer src="src/patient/patient_registration_core-1.0.0.js?v=20260911-phase4n-r1"></script>
-    <script defer src="src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r40"></script>
+    <script defer src="src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r40&meudia=20260915-owner-r1"></script>
     <script defer src="src/finance/financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="src/finance/credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="src/core/mensagens_config.js?v=20260910-phase4f-r1"></script>
     <script defer src="src/agenda/agenda_notificacoes_core-1.20.1.js?v=20260910-phase4b-r1"></script>
     <script defer src="src/patient/prontuario_export.js?v=20260910-phase4e-r1"></script>
-    <script defer src="src/core/design_system-1.20.1.js?v=20260910-phase4e-r1"></script>
+    <script defer src="src/core/design_system-1.20.1.js?v=20260910-phase4e-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/ui/ui_refinement.js"></script>
-    <script defer src="src/home/home_detalhes-1.18.5.js"></script>
+    <script defer src="src/home/home_detalhes-1.18.5.js?meudia=20260915-owner-r1"></script>
     <script defer src="src/core/data_governance.js?v=1.17.0-evaluation"></script>
 
     <div id="engine_info_modal" class="engine-info-modal" hidden onclick="if(event.target===this) fecharInfoMotorClinico()">
@@ -1577,8 +1578,9 @@
     <script defer src="src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r3"></script>
     <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20260911-pending-r1"></script>
     <script defer src="src/ui/ui_experience.js?v=20260909-ux-r1"></script>
-    <script defer src="src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1"></script>
-    <script defer src="src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5"></script>
+    <script defer src="src/home/home_profissional_dashboard-1.0.0.js?v=20260915-meudia-owner-r1&meudia=20260915-owner-r1"></script>
+    <script defer src="src/home/home_profissional_polish-1.0.0.js?v=20260915-meudia-owner-r1&meudia=20260915-owner-r1"></script>
+    <script defer src="src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1&meudia=20260915-owner-r1"></script>
+    <script defer src="src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5&meudia=20260915-owner-r1"></script>
 </body>
 </html>
-

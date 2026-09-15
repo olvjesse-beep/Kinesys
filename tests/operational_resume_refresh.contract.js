@@ -27,7 +27,7 @@ assert.doesNotMatch(runtime,/agendaSyncTimer|sincronizarAgendamentosPendentes/,'
 assert.match(agendaLifecycle,/function suspend\(/,'Agenda lifecycle precisa manter API de suspensão');
 assert.match(agendaLifecycle,/function activate\(/,'Agenda lifecycle precisa manter API de ativação');
 assert.match(homeFisio,/window\.KineSysMeuDiaClinico=Object\.freeze/,'Meu Dia deve possuir API própria fora do resume refresh');
-assert.match(homeFisio,/window\.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta/,'compatibilidade histórica deve apenas garantir a carga inicial');
+assert.doesNotMatch(homeFisio,/window\.carregarPainelFisioterapeuta/,'carregador global legado deve ser removido');
 
 const homeTag='src/home/home_fisioterapeuta_util-1.24.0.js';
 const resumeTag='src/core/operational_resume_refresh-1.0.0.js';

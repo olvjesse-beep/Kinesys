@@ -1,24 +1,15 @@
-const fs = require('fs');
-const assert = require('assert');
-
-const index = fs.readFileSync('index.html', 'utf8');
-const screenLoader = fs.readFileSync('src/ui/screen_loader-1.25.0.js', 'utf8');
-const resume = fs.readFileSync('src/core/operational_resume_refresh-1.0.0.js', 'utf8');
-const htaccess = fs.readFileSync('.htaccess', 'utf8');
-
-assert(index.includes('src/ui/screen_loader-1.25.0.js') && index.includes('runtime_cache=20260912-r1'),
-  'index.html deve manter a referência base do screen loader para compatibilidade de entrega');
-assert(htaccess.includes('src/ui/screen_loader-1.25.0.js?v=20260913-agenda-mobile-r16'),
-  'servidor deve substituir a referência base por uma URL inequívoca da revisão mobile atual');
-assert(index.includes('src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5'),
-  'index.html deve invalidar o cache do operational resume atual');
-assert(screenLoader.includes("const ASSET_REVISION='20260913-agenda-mobile-r16';"),
-  'screen loader deve possuir a revisão global atual dos assets sob demanda');
-assert(screenLoader.includes("searchParams.set('ksv',ASSET_REVISION)"),
-  'screen loader deve anexar a revisão global a fragments, scripts e styles');
-assert(screenLoader.includes("cache:'no-cache'"),
-  'fragmentos sob demanda devem revalidar com o servidor');
-assert(resume.includes("const PROFESSIONAL_HOME_ASSET_VERSION='20260912-home-mobile-r5';"),
-  'Home profissional deve usar a mesma revisão publicada pelo bootstrap operacional');
-
-console.log('runtime_asset_cache.contract: OK');
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8');
+const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
+const resume=fs.readFileSync('src/core/operational_resume_refresh-1.0.0.js','utf8');
+const htaccess=fs.readFileSync('.htaccess','utf8');
+const paths=['src/core/script-1.18.0.js','src/core/design_system-1.20.1.js','src/core/operational_resume_refresh-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/home/home_detalhes-1.18.5.js','src/ui/menu_dropdown-1.0.0.js','src/ui/screen_loader-1.25.0.js'];
+for(const path of paths){const tag=index.split('\n').find(l=>l.includes('src="'+path+'?'));assert(tag&&tag.includes('meudia=20260915-owner-r1'),'Changed runtime must have explicit release version: '+path);}
+for(const path of ['src/home/home_profissional_dashboard-1.0.0.js','src/home/home_profissional_polish-1.0.0.js'])assert.equal(index.split(path).length-1,1,'Home module must load exactly once in index');
+assert(!resume.includes('createElement'),'resume cannot dynamically inject Home assets');
+assert(!/^\s*(?:Substitute|AddOutputFilterByType)\s/m.test(htaccess),'server must not rewrite HTML versions');
+assert(loader.includes("searchParams.set('ksv',ASSET_REVISION)"));
+assert(loader.includes("cache:'no-cache'"));
+assert(/const ASSET_REVISION='[^']+'/.test(loader));
+console.log('PASS: explicit eager release versions; single static Home bootstrap; lazy revision preserved; no HTML rewriting.');

@@ -262,7 +262,7 @@ for(const file of eagerSharedScripts){
 assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css/,'CSS da integração Agenda/Financeiro deve continuar eager');
 assert.match(html,/styles\/design_agenda\.css/,'CSS estrutural compartilhado da Agenda deve continuar eager nesta fase');
 assert.match(app,/iniciarNotificacoesAgenda/,'bootstrap global deve continuar iniciando notificações após login');
-assert.match(loader,/VERSION='1\.25\.4-phase4d'/,'Screen Loader deve identificar a Fase 4D');
+assert.match(loader,/VERSION='1\.25\.10-agenda-repeat-until-r44'/,'Screen Loader deve preservar a revisão atual da Agenda');
 assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=[^\"']+/,'index deve manter cache-buster explícito do Screen Loader');
 
 const agendaModule=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
