@@ -9,120 +9,59 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   contract:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: '22'
 
-      - name: Aplicar correção estrutural do Meu dia
-        if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          import subprocess
-
-          core_path = Path('src/core/script-1.18.0.js')
-          core = core_path.read_text(encoding='utf-8')
-
-          call = "        carregarPainelFisioterapeuta();\n"
-          if call not in core:
-              raise SystemExit('Chamada legada do Meu dia não encontrada no core')
-          core = core.replace(call, '', 1)
-
-          start = core.find('async function carregarPainelFisioterapeuta(){')
-          end = core.find('async function renderizarPendenciasClinicas(){', start)
-          if start < 0 or end < 0:
-              raise SystemExit('Implementação legada do Meu dia não encontrada no core')
-          core = core[:start] + core[end:]
-          core_path.write_text(core, encoding='utf-8')
-
-          index_path = Path('index.html')
-          html = index_path.read_text(encoding='utf-8')
-          replacements = [
-              (
-                  'src/core/script-1.18.0.js?v=20260910-hma-perf-r3&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1',
-                  'src/core/script-1.18.0.js?v=20260915-meu-dia-single-owner-r7'
-              ),
-              (
-                  'src/home/home_fisioterapeuta_util-1.24.0.js?v=20260910-r3&fisio_home=20260910-r1&home4h=20260910-r1',
-                  'src/home/home_fisioterapeuta_util-1.24.0.js?v=20260915-meu-dia-single-owner-r7'
-              ),
-              (
-                  'src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5',
-                  'src/core/operational_resume_refresh-1.0.0.js?v=20260915-agenda-only-r7'
-              )
-          ]
-          for old, new in replacements:
-              if old not in html:
-                  raise SystemExit('Asset antigo não encontrado no index: ' + old)
-              html = html.replace(old, new, 1)
-          index_path.write_text(html, encoding='utf-8')
-
-          clean_polish = subprocess.check_output([
-              'git', 'show',
-              'd32d20c1560d8f7068f2fd1c04fc7707abc420a0:src/home/home_profissional_polish-1.0.0.js'
-          ], text=True)
-          Path('src/home/home_profissional_polish-1.0.0.js').write_text(clean_polish, encoding='utf-8')
-
-          home = Path('src/home/home_fisioterapeuta_util-1.24.0.js').read_text(encoding='utf-8')
-          resume = Path('src/core/operational_resume_refresh-1.0.0.js').read_text(encoding='utf-8')
-          polish = Path('src/home/home_profissional_polish-1.0.0.js').read_text(encoding='utf-8')
-
-          if 'async function carregarPainelFisioterapeuta(){' in core:
-              raise SystemExit('Core ainda possui segunda implementação do Meu dia')
-          home_start = core.find("if (idTela === 'tela_home') {")
-          home_end = core.find('\n    }', home_start)
-          home_nav = core[home_start:home_end + 6] if home_start >= 0 and home_end >= 0 else ''
-          if 'carregarPainelFisioterapeuta(' in home_nav:
-              raise SystemExit('Navegação da Home ainda dispara carregador legado')
-          if 'window.carregarPainelFisioterapeuta=garantirPainelFisioterapeuta' not in home:
-              raise SystemExit('Módulo Home não é o dono público do Meu dia')
-          if 'lista.replaceChildren(fragmento)' not in home:
-              raise SystemExit('Renderização atômica do Meu dia foi perdida')
-          if "id==='tela_agenda'" not in home or "atualizarPainelFisioterapeuta({motivo:'agenda'})" not in home:
-              raise SystemExit('Entrada na Agenda não atualiza a fotografia do Meu dia')
-          for forbidden in ('revalidarMeuDiaClinico', 'normalizeMeuDia', 'observeMeuDia'):
-              if forbidden in resume:
-                  raise SystemExit('Resume voltou a controlar Meu dia: ' + forbidden)
-          for forbidden in ('removerDuplicatasMeuDia', 'chaveLinhaMeuDia', 'ksMeuDiaDeduplicado'):
-              if forbidden in polish:
-                  raise SystemExit('Polish ainda contém hotfix de deduplicação: ' + forbidden)
-          for required in (
-              'script-1.18.0.js?v=20260915-meu-dia-single-owner-r7',
-              'home_fisioterapeuta_util-1.24.0.js?v=20260915-meu-dia-single-owner-r7',
-              'operational_resume_refresh-1.0.0.js?v=20260915-agenda-only-r7'
-          ):
-              if required not in html:
-                  raise SystemExit('Cache-buster ausente: ' + required)
-
-          print('Meu dia single-owner: estrutura validada')
-          PY
-
-          node --check src/core/script-1.18.0.js
-          node --check src/home/home_fisioterapeuta_util-1.24.0.js
-          node --check src/home/home_profissional_polish-1.0.0.js
-          node --check src/core/operational_resume_refresh-1.0.0.js
-          git diff --check
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/core/script-1.18.0.js src/home/home_profissional_polish-1.0.0.js index.html
-          git commit -m 'fix(home): tornar Meu dia clínico fonte única no runtime'
-          git push origin HEAD:main
-
-      - name: Validar estado atual
-        shell: bash
+      - name: Validate physiotherapist home and patient self-service
         run: |
           set -euo pipefail
           node --check src/home/home_fisioterapeuta_util-1.24.0.js
+          node --check src/home/home_detalhes-1.18.5.js
+          node --check src/home/home_profissional_dashboard-1.0.0.js
           node --check src/home/home_profissional_polish-1.0.0.js
+          node --check src/agenda/agenda_notificacoes_core-1.20.1.js
           node --check src/core/operational_resume_refresh-1.0.0.js
           node --check src/core/script-1.18.0.js
+          node --check src/patient/patient_chart_read_core-1.0.0.js
+          node --check src/patient/patient_records_browse_core-1.0.0.js
+          node --check tests/fisio_home_patient_self_service.contract.js
+          node --check tests/home_atendimentos_24h.contract.js
+          node --check tests/home_meu_dia_agenda_stability.contract.js
+          node --check tests/performance_leitura_segura.contract.js
+          node --check tests/no_business_data_performance_migration.contract.js
+          node --check tests/cache_revalidation_meu_dia.contract.js
+          node --check tests/frontend_performance_segura.contract.js
+          node --check tests/professional_home_focus.contract.js
+          node --check tests/professional_home_polish.contract.js
+          node tests/fisio_home_patient_self_service.contract.js
+          node tests/home_atendimentos_24h.contract.js
+          node tests/home_meu_dia_agenda_stability.contract.js
+          node tests/performance_leitura_segura.contract.js
+          node tests/no_business_data_performance_migration.contract.js
+          node tests/cache_revalidation_meu_dia.contract.js
+          node tests/frontend_performance_segura.contract.js
+          node tests/professional_home_focus.contract.js
+          node tests/professional_home_polish.contract.js
+          node tests/access_agenda_home4h.contract.js
+          node tests/home_lifecycle.contract.js
+          node tests/agenda_editar_atendimento.contract.js
+          node tests/screen_loader.contract.js
+          node tests/data_loading.contract.js
+          node tests/operational_data_loading.contract.js
+          node tests/prontuario_export_lazy.contract.js
+          node tests/mensagens_config_bootstrap.contract.js
+          node tests/clinical_reasoning_shoulder_elbow.regression.js
           git diff --check
