@@ -6,6 +6,7 @@
 'use strict';
 
 const KINESYS_BUSCA_PACIENTE_DEBOUNCE_MS = 320;
+const KINESYS_BUSCA_PACIENTE_INSTALACAO_MS = 700;
 let filtroPacientesSalvosTimer = null;
 let filtroPacientesSalvosFila = [];
 
@@ -54,6 +55,13 @@ function instalarDebounceBuscaPacientesKineSys() {
     return true;
 }
 
+function agendarDebounceBuscaPacientesKineSys() {
+    // O Design System agenda sua preparação final logo após DOMContentLoaded e
+    // também mantém uma reaplicação de segurança em 500 ms. Instalar depois disso
+    // evita que o wrapper seja sobrescrito, sem interferir no bootstrap do app.
+    setTimeout(instalarDebounceBuscaPacientesKineSys, KINESYS_BUSCA_PACIENTE_INSTALACAO_MS);
+}
+
 async function renderizarPacientesRecentesHome() {
     const container = document.getElementById('lista_pacientes_recentes');
     if (!container) return;
@@ -87,11 +95,8 @@ window.filtrarPacientesSalvos = filtrarPacientesSalvos;
 window.renderizarPacientesRecentesHome = renderizarPacientesRecentesHome;
 window.instalarDebounceBuscaPacientesKineSys = instalarDebounceBuscaPacientesKineSys;
 
-// O Design System redefine o renderizador de busca depois deste módulo. O listener
-// roda após todos os scripts defer, então envolve a implementação final sem mudar
-// seu contrato; apenas agrupa digitações consecutivas em uma única renderização.
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', instalarDebounceBuscaPacientesKineSys, { once:true });
+    document.addEventListener('DOMContentLoaded', agendarDebounceBuscaPacientesKineSys, { once:true });
 } else {
-    setTimeout(instalarDebounceBuscaPacientesKineSys, 0);
+    agendarDebounceBuscaPacientesKineSys();
 }
