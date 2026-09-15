@@ -1,6 +1,6 @@
-/* KineSys — polish da Home profissional v1.0.1
+/* KineSys — polish da Home profissional v1.0.2
  * Ajusta composição visual sem alterar contratos clínicos ou consultas.
- * Inclui guarda defensiva contra duplicação visual do Meu dia clínico.
+ * Inclui guarda defensiva contra duplicação visual e estrutural do Meu dia clínico.
  */
 (function(){
     'use strict';
@@ -45,18 +45,56 @@
         return chave==='||'?'':`visual:${chave}`;
     }
 
-    function removerDuplicatasMeuDia(home){
-        const lista=home?.querySelector('#painel_fisio_lista');
-        if(!lista)return 0;
-        const linhas=Array.from(lista.children).filter(el=>el.matches?.('.ks-fisio-day-row'));
-        if(linhas.length<2)return 0;
-        const vistos=new Set();
+    function consolidarEstruturaMeuDia(home){
+        const listas=Array.from(home?.querySelectorAll('[id="painel_fisio_lista"]')||[]);
+        if(!listas.length)return {lista:null,removidos:0};
+        const principal=listas[0];
         let removidos=0;
 
-        // Percorre do fim para o início para preservar a versão mais recente
-        // quando outro módulo inserir novamente a mesma linha no DOM.
-        for(let i=linhas.length-1;i>=0;i--){
-            const linha=linhas[i];
+        if(listas.length>1){
+            const vistos=new Set(Array.from(principal.children).map(chaveLinhaMeuDia).filter(Boolean));
+            listas.slice(1).forEach(extra=>{
+                Array.from(extra.children).forEach(no=>{
+                    if(no.matches?.('.ks-fisio-day-row')){
+                        const chave=chaveLinhaMeuDia(no);
+                        if(chave&&vistos.has(chave)){
+                            no.remove();
+                            removidos++;
+                            return;
+                        }
+                        if(chave)vistos.add(chave);
+                    }
+                    principal.appendChild(no);
+                });
+                extra.remove();
+                removidos++;
+            });
+        }
+
+        const cards=Array.from(home?.querySelectorAll('[id="card_painel_fisioterapeuta"]')||[]);
+        if(cards.length>1){
+            const principalCard=cards[0];
+            cards.slice(1).forEach(card=>{
+                if(card.contains(principal))return;
+                card.remove();
+                removidos++;
+            });
+            principalCard.dataset.ksMeuDiaEstruturaUnica='1';
+        }
+        return {lista:principal,removidos};
+    }
+
+    function removerDuplicatasMeuDia(home){
+        const estrutura=consolidarEstruturaMeuDia(home);
+        const lista=estrutura.lista;
+        if(!lista)return estrutura.removidos;
+        const linhas=Array.from(lista.children).filter(el=>el.matches?.('.ks-fisio-day-row'));
+        const vistos=new Set();
+        let removidos=estrutura.removidos;
+
+        // Preserva a primeira versão: ela é a renderização canônica feita pelo
+        // módulo Meu Dia; qualquer escrita tardia repetida é descartada.
+        for(const linha of linhas){
             const chave=chaveLinhaMeuDia(linha);
             if(!chave)continue;
             if(vistos.has(chave)){
@@ -72,6 +110,7 @@
             if(painel){
                 painel.dataset.ksMeuDiaDeduplicado='1';
                 painel.dataset.ksMeuDiaDeduplicadoEm=String(Date.now());
+                painel.dataset.ksMeuDiaRemovidos=String(removidos);
             }
         }
         return removidos;
@@ -140,5 +179,9 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(iniciar,0),{once:true});
     else setTimeout(iniciar,0);
 
-    window.KineSysProfessionalHomePolish=Object.freeze({refresh:aplicar,dedupe(){const home=document.getElementById('tela_home');return home?removerDuplicatasMeuDia(home):0;}});
+    window.KineSysProfessionalHomePolish=Object.freeze({
+        version:'1.0.2-structural-dedupe',
+        refresh:aplicar,
+        dedupe(){const home=document.getElementById('tela_home');return home?removerDuplicatasMeuDia(home):0;}
+    });
 })();
