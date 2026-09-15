@@ -1,5 +1,6 @@
-/* KineSys — polish da Home profissional v1.0.0
+/* KineSys — polish da Home profissional v1.0.1
  * Ajusta composição visual sem alterar contratos clínicos ou consultas.
+ * Inclui guarda defensiva contra duplicação visual do Meu dia clínico.
  */
 (function(){
     'use strict';
@@ -32,6 +33,48 @@
                 if(card){card.hidden=true;card.dataset.profHomeLegacyHidden='1';}
             }
         });
+    }
+
+    function chaveLinhaMeuDia(linha){
+        const agendamentoId=String(linha?.dataset?.agendamentoId||'').trim();
+        if(agendamentoId)return `agendamento:${agendamentoId}`;
+        const hora=String(linha?.querySelector('.ks-fisio-day-time strong')?.textContent||'').trim();
+        const paciente=String(linha?.querySelector('.ks-fisio-day-patient-name')?.textContent||'').trim();
+        const categoria=String(linha?.querySelector('.ks-fisio-day-category')?.textContent||'').trim();
+        const chave=`${hora}|${paciente}|${categoria}`;
+        return chave==='||'?'':`visual:${chave}`;
+    }
+
+    function removerDuplicatasMeuDia(home){
+        const lista=home?.querySelector('#painel_fisio_lista');
+        if(!lista)return 0;
+        const linhas=Array.from(lista.children).filter(el=>el.matches?.('.ks-fisio-day-row'));
+        if(linhas.length<2)return 0;
+        const vistos=new Set();
+        let removidos=0;
+
+        // Percorre do fim para o início para preservar a versão mais recente
+        // quando outro módulo inserir novamente a mesma linha no DOM.
+        for(let i=linhas.length-1;i>=0;i--){
+            const linha=linhas[i];
+            const chave=chaveLinhaMeuDia(linha);
+            if(!chave)continue;
+            if(vistos.has(chave)){
+                linha.remove();
+                removidos++;
+            }else{
+                vistos.add(chave);
+            }
+        }
+
+        if(removidos){
+            const painel=home.querySelector('#card_painel_fisioterapeuta');
+            if(painel){
+                painel.dataset.ksMeuDiaDeduplicado='1';
+                painel.dataset.ksMeuDiaDeduplicadoEm=String(Date.now());
+            }
+        }
+        return removidos;
     }
 
     function normalizarPendencias(){
@@ -74,6 +117,7 @@
         if(!home||!ehProfissional())return;
         home.classList.add('ks-prof-home-active','ks-prof-home-polished');
         esconderCardCadastros24h(home);
+        removerDuplicatasMeuDia(home);
         normalizarPendencias();
         limparSaudacao(home);
     }
@@ -96,5 +140,5 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(iniciar,0),{once:true});
     else setTimeout(iniciar,0);
 
-    window.KineSysProfessionalHomePolish=Object.freeze({refresh:aplicar});
+    window.KineSysProfessionalHomePolish=Object.freeze({refresh:aplicar,dedupe(){const home=document.getElementById('tela_home');return home?removerDuplicatasMeuDia(home):0;}});
 })();
