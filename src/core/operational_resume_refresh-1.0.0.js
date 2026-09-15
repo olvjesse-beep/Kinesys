@@ -2,11 +2,12 @@
  * Revalida dados operacionais ao retornar ao navegador sem criar polling novo.
  * Agenda: força leitura fresca dos agendamentos da semana.
  * Home: atualiza o Meu Dia Clínico do fisioterapeuta e o painel profissional focado.
+ * Protege o Meu Dia contra renderização/linhas duplicadas após navegação Agenda -> Home.
  */
 (function instalarOperationalResumeRefresh(){
     'use strict';
 
-    const VERSION='1.0.0';
+    const VERSION='1.0.1-meu-dia-idempotente';
     const MIN_AUSENCIA_MS=1500;
     const TELAS_REVALIDAVEIS=new Set(['tela_agenda','tela_home']);
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
@@ -17,6 +18,7 @@
     let telaAoAusentar='';
     let refreshEmCurso=null;
     let destruido=false;
+    let meuDiaEmCurso=null;
 
     function telaAtual(){
         try {
@@ -50,6 +52,75 @@
         carregarScriptUmaVez(PROFESSIONAL_HOME_POLISH,'KineSysProfessionalHomePolish');
     }
 
+    function chaveLinhaMeuDia(linha){
+        const agendamentoId=String(linha?.dataset?.agendamentoId||'').trim();
+        if(agendamentoId)return `agendamento:${agendamentoId}`;
+        if(!linha?.classList?.contains('is-free'))return '';
+        const inicio=String(linha.querySelector('.ks-fisio-day-time strong')?.textContent||'').trim();
+        const faixa=String(linha.querySelector('.ks-fisio-day-category')?.textContent||'').trim();
+        return inicio||faixa ? `livre:${inicio}|${faixa}` : '';
+    }
+
+    function normalizarMeuDiaClinico(){
+        // O Home é estático e deve possuir apenas um card. Se algum ciclo antigo de
+        // montagem deixou um segundo nó com o mesmo ID, preserve o primeiro e remova
+        // somente a cópia redundante.
+        const cards=Array.from(document.querySelectorAll('#card_painel_fisioterapeuta'));
+        if(cards.length>1)cards.slice(1).forEach(card=>card.remove());
+        const card=cards[0]||null;
+        const lista=card?.querySelector('#painel_fisio_lista')||document.getElementById('painel_fisio_lista');
+        if(!lista)return false;
+
+        // A identidade do agendamento é a chave de idempotência. Horários livres não
+        // possuem ID, então usam início+faixa. Isso impede que voltar da Agenda some
+        // novamente a mesma linha já representada no Meu Dia.
+        const vistos=new Set();
+        Array.from(lista.querySelectorAll('.ks-fisio-day-row')).forEach(linha=>{
+            const chave=chaveLinhaMeuDia(linha);
+            if(!chave)return;
+            if(vistos.has(chave))linha.remove();
+            else vistos.add(chave);
+        });
+
+        const linhas=Array.from(lista.querySelectorAll('.ks-fisio-day-row'));
+        const atendimentos=linhas.filter(linha=>!!String(linha.dataset?.agendamentoId||'').trim());
+        const livres=linhas.filter(linha=>linha.classList.contains('is-free'));
+        const emAtendimento=atendimentos.filter(linha=>linha.classList.contains('is-current')).length;
+        const concluidos=atendimentos.filter(linha=>linha.classList.contains('is-done')).length;
+        const registrosPendentes=atendimentos.filter(linha=>linha.classList.contains('has-record-pending')).length;
+        const resumo=card?.querySelector('#painel_fisio_resumo')||document.getElementById('painel_fisio_resumo');
+
+        if(resumo&&linhas.length&&String(resumo.textContent||'').includes('Próximas 4 horas')){
+            const partes=['Próximas 4 horas',`${atendimentos.length} atendimento(s)`,`${livres.length} horário(s) livre(s)`];
+            if(emAtendimento)partes.push(`${emAtendimento} em atendimento`);
+            if(concluidos)partes.push(`${concluidos} concluído(s)`);
+            if(registrosPendentes)partes.push(`${registrosPendentes} registro(s) pendente(s)`);
+            resumo.textContent=partes.join(' · ');
+        }
+        if(card)card.dataset.ksTotal=String(linhas.length);
+        return true;
+    }
+
+    function instalarProtecaoMeuDia(){
+        const atual=window.carregarPainelFisioterapeuta;
+        if(typeof atual!=='function'||atual.__kinesysMeuDiaIdempotente)return false;
+        const original=atual;
+        const protegido=function(...args){
+            if(meuDiaEmCurso)return meuDiaEmCurso;
+            meuDiaEmCurso=Promise.resolve(original.apply(this,args))
+                .then(resultado=>{
+                    normalizarMeuDiaClinico();
+                    return resultado;
+                })
+                .finally(()=>{meuDiaEmCurso=null;});
+            return meuDiaEmCurso;
+        };
+        protegido.__kinesysMeuDiaIdempotente=true;
+        protegido.__kinesysOriginal=original;
+        window.carregarPainelFisioterapeuta=protegido;
+        return true;
+    }
+
     function marcarAusencia(){
         if(destruido)return;
         const tela=telaAtual();
@@ -79,6 +150,7 @@
 
     async function revalidarMeuDiaClinico(){
         let atualizou=false;
+        instalarProtecaoMeuDia();
         if(typeof carregarPainelFisioterapeuta==='function'){
             await carregarPainelFisioterapeuta();
             atualizou=true;
@@ -87,6 +159,7 @@
             await window.KineSysProfessionalHome.refresh();
             atualizou=true;
         }
+        normalizarMeuDiaClinico();
         window.KineSysProfessionalHomePolish?.refresh?.();
         return atualizou;
     }
@@ -138,10 +211,19 @@
     function aoPageHide(){marcarAusencia();}
     function aoPageShow(event){if(event.persisted)processarRetorno();}
 
+    function aoTelaAtivadaMeuDia(event){
+        if(event.detail?.id!=='tela_home')return;
+        instalarProtecaoMeuDia();
+        // O carregamento principal ocorre no navegarPara. Este passe apenas garante
+        // idempotência visual depois dos demais listeners de ativação da Home.
+        setTimeout(normalizarMeuDiaClinico,0);
+    }
+
     function destroy(){
         if(destruido)return true;
         destruido=true;
         document.removeEventListener('visibilitychange',aoVisibilityChange);
+        document.removeEventListener('kinesys:tela-ativada',aoTelaAtivadaMeuDia);
         window.removeEventListener('blur',aoBlur);
         window.removeEventListener('focus',aoFocus);
         window.removeEventListener('pagehide',aoPageHide);
@@ -151,7 +233,9 @@
     }
 
     garantirHomeProfissionalFocada();
+    instalarProtecaoMeuDia();
     document.addEventListener('visibilitychange',aoVisibilityChange);
+    document.addEventListener('kinesys:tela-ativada',aoTelaAtivadaMeuDia);
     window.addEventListener('blur',aoBlur,{passive:true});
     window.addEventListener('focus',aoFocus,{passive:true});
     window.addEventListener('pagehide',aoPageHide,{passive:true});
@@ -160,6 +244,7 @@
     window.KineSysOperationalResumeRefresh=Object.freeze({
         version:VERSION,
         refresh:processarRetorno,
+        normalizeMeuDia:normalizarMeuDiaClinico,
         destroy,
         status(){
             return Object.freeze({
