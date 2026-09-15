@@ -12,13 +12,13 @@
 (function instalarOperationalResumeRefresh(){
     'use strict';
 
-    const VERSION='1.2.0-home-single-render';
+    const VERSION='1.2.1-home-structural-dedupe';
     const MIN_AUSENCIA_MS=1500;
     const TELA_REVALIDAVEL='tela_agenda';
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
     const PROFESSIONAL_HOME_STYLE='styles/home_profissional_dashboard-1.0.0.css';
     const PROFESSIONAL_HOME_POLISH='src/home/home_profissional_polish-1.0.0.js';
-    const PROFESSIONAL_HOME_ASSET_VERSION='20260915-home-dedupe-r6';
+    const PROFESSIONAL_HOME_ASSET_VERSION='20260915-home-dedupe-r8';
     let ausenteDesde=0;
     let telaAoAusentar='';
     let refreshEmCurso=null;
