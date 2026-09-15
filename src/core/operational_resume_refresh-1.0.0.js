@@ -2,11 +2,17 @@
  * Revalida somente a Agenda ao retornar ao navegador.
  * O Meu Dia Clínico possui ciclo de vida próprio em home_fisioterapeuta_util-1.24.0.js
  * e não deve ser recarregado, observado ou normalizado por este módulo.
+ *
+ * Compatibilidade de bootstrap:
+ * o núcleo legado ainda contém uma chamada direta a carregarPainelFisioterapeuta()
+ * dentro de navegarPara('tela_home'). Enquanto essa chamada existir no core,
+ * ela é neutralizada aqui quando o módulo Meu Dia já está instalado. Assim existe
+ * um único dono da carga inicial: KineSysMeuDiaClinico.
  */
 (function instalarOperationalResumeRefresh(){
     'use strict';
 
-    const VERSION='1.1.1-home-dedupe-guard';
+    const VERSION='1.2.0-home-single-render';
     const MIN_AUSENCIA_MS=1500;
     const TELA_REVALIDAVEL='tela_agenda';
     const PROFESSIONAL_HOME_SCRIPT='src/home/home_profissional_dashboard-1.0.0.js';
@@ -17,6 +23,7 @@
     let telaAoAusentar='';
     let refreshEmCurso=null;
     let destruido=false;
+    let navegarParaOriginal=null;
 
     function telaAtual(){
         try {
@@ -48,6 +55,45 @@
         }
         carregarScriptUmaVez(PROFESSIONAL_HOME_SCRIPT,'KineSysProfessionalHome');
         carregarScriptUmaVez(PROFESSIONAL_HOME_POLISH,'KineSysProfessionalHomePolish');
+    }
+
+    function instalarGuardaFonteUnicaMeuDia(){
+        if(typeof window.navegarPara!=='function')return false;
+        if(window.navegarPara.__ksMeuDiaFonteUnica)return true;
+
+        const original=window.navegarPara;
+        navegarParaOriginal=original;
+
+        function navegarSemSegundaCargaMeuDia(idTela,...args){
+            const alvo=String(idTela||'');
+            const meuDia=window.KineSysMeuDiaClinico;
+            const carregadorAtual=window.carregarPainelFisioterapeuta;
+
+            // O módulo novo já escuta kinesys:tela-ativada e garante a carga da Home.
+            // Neutralizamos apenas a chamada legada interna de navegarPara enquanto
+            // o núcleo executa. Demais telas e o botão Atualizar permanecem intactos.
+            if(alvo==='tela_home' && meuDia && typeof carregadorAtual==='function'){
+                const noopMeuDia=()=>Promise.resolve(true);
+                window.carregarPainelFisioterapeuta=noopMeuDia;
+                try {
+                    return original.call(this,idTela,...args);
+                } finally {
+                    window.carregarPainelFisioterapeuta=carregadorAtual;
+                }
+            }
+            return original.call(this,idTela,...args);
+        }
+
+        Object.defineProperty(navegarSemSegundaCargaMeuDia,'__ksMeuDiaFonteUnica',{value:true});
+        window.navegarPara=navegarSemSegundaCargaMeuDia;
+        return true;
+    }
+
+    function restaurarNavegacaoOriginal(){
+        if(navegarParaOriginal && window.navegarPara?.__ksMeuDiaFonteUnica){
+            window.navegarPara=navegarParaOriginal;
+        }
+        navegarParaOriginal=null;
     }
 
     function marcarAusencia(){
@@ -127,11 +173,13 @@
         window.removeEventListener('focus',aoFocus);
         window.removeEventListener('pagehide',aoPageHide);
         window.removeEventListener('pageshow',aoPageShow);
+        restaurarNavegacaoOriginal();
         reativarAgendaSemReload();
         return true;
     }
 
     garantirHomeProfissionalFocada();
+    instalarGuardaFonteUnicaMeuDia();
     document.addEventListener('visibilitychange',aoVisibilityChange);
     window.addEventListener('blur',aoBlur,{passive:true});
     window.addEventListener('focus',aoFocus,{passive:true});
@@ -142,12 +190,14 @@
         version:VERSION,
         refresh:processarRetorno,
         destroy,
+        singleRenderGuard:instalarGuardaFonteUnicaMeuDia,
         status(){
             return Object.freeze({
                 away:!!ausenteDesde,
                 awayScreen:telaAoAusentar,
                 refreshing:!!refreshEmCurso,
-                currentScreen:telaAtual()
+                currentScreen:telaAtual(),
+                homeSingleRenderGuard:!!window.navegarPara?.__ksMeuDiaFonteUnica
             });
         }
     });
