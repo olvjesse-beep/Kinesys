@@ -11,11 +11,25 @@
     const STATUS_AUSENCIA = new Set(['falta_justificada','falta_nao_justificada','faltou']);
     const JANELA_HOME_MINUTOS = 4 * 60;
     let contextoAgendaHomeFisioterapeuta = null;
+    let cargaPainelFisioterapeutaEmAndamento = null;
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
         const tipo=String(u?.tipo || '').toUpperCase();
         return tipo==='FISIOTERAPEUTA' || tipo==='PROFISSIONAL';
+    }
+
+    // O objeto usuarioLogado pode ser reidratado durante o carregamento sem que a
+    // sessão clínica tenha mudado. Comparar a referência do objeto fazia o Home
+    // descartar uma resposta válida da Agenda. A identidade estável é perfil+clínica.
+    function perfilAtualEquivale(perfilInicial){
+        const atual=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
+        if(!perfilInicial||!atual)return perfilInicial===atual;
+        const perfilId=String(perfilInicial?.id||'').trim();
+        const atualId=String(atual?.id||'').trim();
+        const clinicaId=String(perfilInicial?.clinica_id||'').trim();
+        const atualClinicaId=String(atual?.clinica_id||'').trim();
+        return !!perfilId&&perfilId===atualId&&clinicaId===atualClinicaId;
     }
 
     function dataLocalISO(data=new Date()){
@@ -419,7 +433,7 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         const {data:contexto,error}=await _supabase.rpc('kinesys_contexto_agenda');
         if(error) throw error;
         contextoAgendaHomeFisioterapeuta=contexto||null;
-        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial) return '';
+        if(!perfilAtualEquivale(perfilInicial)) return '';
         if(String(contexto?.perfil_id||'')!==perfilId) throw new Error('A sessão mudou. Entre novamente.');
         if(clinicaId && String(contexto?.clinica_id||'')!==clinicaId) throw new Error('A clínica da sessão mudou. Entre novamente.');
         const profissionais=Array.isArray(contexto?.profissionais) ? contexto.profissionais : [];
@@ -440,9 +454,9 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         const perfilInicial=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
         let profissionalId='';
         try{profissionalId=await resolverProfissionalHomeFisioterapeuta(perfilInicial);}catch(_){
-            if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)===perfilInicial)resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';return;
+            if(perfilAtualEquivale(perfilInicial))resumo.textContent='Não foi possível verificar seu vínculo com a agenda.';return;
         }
-        if((typeof usuarioLogado!=='undefined'?usuarioLogado:null)!==perfilInicial)return;
+        if(!perfilAtualEquivale(perfilInicial))return;
         if(!profissionalId){resumo.textContent='Vincule seu perfil a um profissional da agenda para ver o seu dia clínico.';return;}
 
         const agora=instanteHomeBrasilia(),hoje=agora.data,inicioJanela=agora.minutos,fimJanela=Math.min(24*60,inicioJanela+JANELA_HOME_MINUTOS);
@@ -495,5 +509,12 @@ function contextoClinico(paciente,agendamento,hoje,sequencia){
         resumo.textContent=partes.join(' · ');
     }
 
-    window.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaUtil;
+    function carregarPainelFisioterapeutaCoalescido(){
+        if(cargaPainelFisioterapeutaEmAndamento)return cargaPainelFisioterapeutaEmAndamento;
+        cargaPainelFisioterapeutaEmAndamento=Promise.resolve(carregarPainelFisioterapeutaUtil())
+            .finally(()=>{cargaPainelFisioterapeutaEmAndamento=null;});
+        return cargaPainelFisioterapeutaEmAndamento;
+    }
+
+    window.carregarPainelFisioterapeuta=carregarPainelFisioterapeutaCoalescido;
 })();

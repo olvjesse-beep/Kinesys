@@ -8,6 +8,9 @@
 let agendaNotificacoesCache = [];
 let agendaNotificacoesTimer = null;
 let agendaNotificacoesPrimeiraCarga = true;
+let agendaNotificacoesEmCarga = null;
+let agendaNotificacoesUltimaCargaEm = 0;
+const AGENDA_NOTIFICACOES_CACHE_MS = 15000;
 const AGENDA_NOTIFICACOES_PENDENTES_KEY = 'kinesys_notificacoes_pendentes_v1';
 
 function lerNotificacoesPendentesAgenda() {
@@ -86,40 +89,58 @@ function renderizarIndicadorNotificacoesAgenda() {
 }
 if (typeof window !== 'undefined') window.renderizarIndicadorNotificacoesAgenda = renderizarIndicadorNotificacoesAgenda;
 
-async function carregarNotificacoesAgenda({ avisar = true } = {}) {
+async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}) {
     if (!usuarioPodeReceberNotificacoesAgenda() || !_supabase) {
         agendaNotificacoesCache = [];
+        agendaNotificacoesUltimaCargaEm = 0;
         renderizarIndicadorNotificacoesAgenda();
         return [];
     }
-    const ident = identidadeNotificacoesAgenda();
-    const resultados = [];
-    const vistos = new Set();
-    const adicionar = rows => (rows || []).forEach(n => { const k = n.id || n.origem_chave; if (!vistos.has(k)) { vistos.add(k); resultados.push(n); } });
-    try {
-        if (ident.id) {
-            const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_profissional_id', ident.id).order('criada_em', { ascending:false }).limit(20);
-            if (r.error) throw r.error; adicionar(r.data);
-        }
-        if (ident.email) {
-            const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_email', ident.email).order('criada_em', { ascending:false }).limit(20);
-            if (r.error) throw r.error; adicionar(r.data);
-        }
-        resultados.sort((a,b) => String(b.criada_em || '').localeCompare(String(a.criada_em || '')));
-        const antes = agendaNotificacoesCache.filter(n => !n.lida).length;
-        agendaNotificacoesCache = resultados.slice(0,20);
+
+    // Home, cabeçalho e timer podem pedir a mesma leitura quase ao mesmo tempo.
+    // Compartilhamos a requisição em andamento e, em leituras silenciosas, usamos
+    // por poucos segundos o cache já exibido. Isso reduz round-trips sem atrasar
+    // o polling normal de 60 s nem alterar o conteúdo das notificações.
+    if (agendaNotificacoesEmCarga) return agendaNotificacoesEmCarga;
+    const agoraMs = Date.now();
+    if (!forcar && !avisar && agendaNotificacoesUltimaCargaEm && (agoraMs - agendaNotificacoesUltimaCargaEm) < AGENDA_NOTIFICACOES_CACHE_MS) {
         renderizarIndicadorNotificacoesAgenda();
-        const agora = agendaNotificacoesCache.filter(n => !n.lida).length;
-        if (avisar && agora > 0 && (agendaNotificacoesPrimeiraCarga || agora > antes) && typeof mostrarToastKineSys === 'function') {
-            mostrarToastKineSys(agora === 1 ? 'Você tem 1 novo aviso da Agenda.' : `Você tem ${agora} avisos não lidos da Agenda.`, 'aviso', 5200);
-        }
-        agendaNotificacoesPrimeiraCarga = false;
         return agendaNotificacoesCache;
-    } catch (error) {
-        if (!erroSchemaNotificacoesAgenda(error)) console.warn('Agenda: falha ao carregar notificações internas.', error);
-        renderizarIndicadorNotificacoesAgenda();
-        return [];
     }
+
+    agendaNotificacoesEmCarga=(async()=>{
+        const ident = identidadeNotificacoesAgenda();
+        const resultados = [];
+        const vistos = new Set();
+        const adicionar = rows => (rows || []).forEach(n => { const k = n.id || n.origem_chave; if (!vistos.has(k)) { vistos.add(k); resultados.push(n); } });
+        try {
+            if (ident.id) {
+                const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_profissional_id', ident.id).order('criada_em', { ascending:false }).limit(20);
+                if (r.error) throw r.error; adicionar(r.data);
+            }
+            if (ident.email) {
+                const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_email', ident.email).order('criada_em', { ascending:false }).limit(20);
+                if (r.error) throw r.error; adicionar(r.data);
+            }
+            resultados.sort((a,b) => String(b.criada_em || '').localeCompare(String(a.criada_em || '')));
+            const antes = agendaNotificacoesCache.filter(n => !n.lida).length;
+            agendaNotificacoesCache = resultados.slice(0,20);
+            agendaNotificacoesUltimaCargaEm = Date.now();
+            renderizarIndicadorNotificacoesAgenda();
+            const agora = agendaNotificacoesCache.filter(n => !n.lida).length;
+            if (avisar && agora > 0 && (agendaNotificacoesPrimeiraCarga || agora > antes) && typeof mostrarToastKineSys === 'function') {
+                mostrarToastKineSys(agora === 1 ? 'Você tem 1 novo aviso da Agenda.' : `Você tem ${agora} avisos não lidos da Agenda.`, 'aviso', 5200);
+            }
+            agendaNotificacoesPrimeiraCarga = false;
+            return agendaNotificacoesCache;
+        } catch (error) {
+            if (!erroSchemaNotificacoesAgenda(error)) console.warn('Agenda: falha ao carregar notificações internas.', error);
+            renderizarIndicadorNotificacoesAgenda();
+            return [];
+        }
+    })().finally(()=>{agendaNotificacoesEmCarga=null;});
+
+    return agendaNotificacoesEmCarga;
 }
 
 function alternarPainelNotificacoes() {
@@ -190,6 +211,8 @@ function pararNotificacoesAgenda() {
     if (agendaNotificacoesTimer) clearInterval(agendaNotificacoesTimer);
     agendaNotificacoesTimer = null;
     agendaNotificacoesCache = [];
+    agendaNotificacoesEmCarga = null;
+    agendaNotificacoesUltimaCargaEm = 0;
     renderizarIndicadorNotificacoesAgenda();
 }
 if (typeof window !== 'undefined') window.pararNotificacoesAgenda = pararNotificacoesAgenda;
@@ -199,4 +222,3 @@ document.addEventListener('click', e => {
     const painel = document.getElementById('ks_notificacoes_painel');
     if (wrap && painel && !painel.hidden && !wrap.contains(e.target)) painel.hidden = true;
 });
-
