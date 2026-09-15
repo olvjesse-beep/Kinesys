@@ -5,6 +5,10 @@
  */
 'use strict';
 
+const KINESYS_BUSCA_PACIENTE_DEBOUNCE_MS = 320;
+let filtroPacientesSalvosTimer = null;
+let filtroPacientesSalvosFila = [];
+
 async function renderizarTabelaProntuarios(filtro = "") {
     if (typeof window.renderProntuarioCardsKineSys === 'function') {
         return window.renderProntuarioCardsKineSys(filtro);
@@ -14,6 +18,40 @@ async function renderizarTabelaProntuarios(filtro = "") {
 
 function filtrarPacientesSalvos() {
     return renderizarTabelaProntuarios(document.getElementById('input_busca_paciente')?.value || '');
+}
+
+function instalarDebounceBuscaPacientesKineSys() {
+    const original = window.filtrarPacientesSalvos;
+    if (typeof original !== 'function' || original.__kinesysDebounceBuscaPaciente) return false;
+
+    let ultimoContexto = window;
+    let ultimosArgumentos = [];
+    const debounced = function(...args) {
+        ultimoContexto = this;
+        ultimosArgumentos = args;
+        if (filtroPacientesSalvosTimer) clearTimeout(filtroPacientesSalvosTimer);
+
+        const promessa = new Promise((resolve, reject) => {
+            filtroPacientesSalvosFila.push({ resolve, reject });
+        });
+
+        filtroPacientesSalvosTimer = setTimeout(async () => {
+            filtroPacientesSalvosTimer = null;
+            const fila = filtroPacientesSalvosFila.splice(0);
+            try {
+                const resultado = await original.apply(ultimoContexto, ultimosArgumentos);
+                fila.forEach(item => item.resolve(resultado));
+            } catch (erro) {
+                fila.forEach(item => item.reject(erro));
+            }
+        }, KINESYS_BUSCA_PACIENTE_DEBOUNCE_MS);
+
+        return promessa;
+    };
+    debounced.__kinesysDebounceBuscaPaciente = true;
+    debounced.__kinesysOriginal = original;
+    window.filtrarPacientesSalvos = debounced;
+    return true;
 }
 
 async function renderizarPacientesRecentesHome() {
@@ -47,3 +85,13 @@ async function renderizarPacientesRecentesHome() {
 window.renderizarTabelaProntuarios = renderizarTabelaProntuarios;
 window.filtrarPacientesSalvos = filtrarPacientesSalvos;
 window.renderizarPacientesRecentesHome = renderizarPacientesRecentesHome;
+window.instalarDebounceBuscaPacientesKineSys = instalarDebounceBuscaPacientesKineSys;
+
+// O Design System redefine o renderizador de busca depois deste módulo. O listener
+// roda após todos os scripts defer, então envolve a implementação final sem mudar
+// seu contrato; apenas agrupa digitações consecutivas em uma única renderização.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', instalarDebounceBuscaPacientesKineSys, { once:true });
+} else {
+    setTimeout(instalarDebounceBuscaPacientesKineSys, 0);
+}
