@@ -804,7 +804,7 @@
             <div id="financeiro_painel_paciente">
             <div id="financeiro_conteudo">
                 <div class="finance-patient-workspace">
-                    <div class="finance-patient-context"><div><span>Conta do paciente</span><strong id="financeiro_paciente_contexto_nome">Busque um paciente para começar</strong></div><div class="finance-patient-actions"><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalNovoPlano()" hidden>Criar plano</button><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirCriarAtendimento()" hidden>Atendimento unitário</button><button type="button" class="btn-primary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalPagamento()" hidden>Registrar recebimento</button><button type="button" id="financeiro_fechar_paciente" class="btn-secondary" onclick="KineSysFinanceiro.fecharPaciente()" hidden>Fechar</button></div></div>
+                    <div class="finance-patient-context"><div><span>Conta do paciente</span><strong id="financeiro_paciente_contexto_nome">Busque um paciente para começar</strong></div><div class="finance-patient-actions"><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalNovoPlano()" hidden>Contratar pacote</button><button type="button" class="btn-secondary" data-fin-requer-paciente data-fin-patient-action onclick="abrirCriarAtendimento()" hidden>Atendimento unitário</button><button type="button" class="btn-primary" data-fin-requer-paciente data-fin-patient-action onclick="abrirModalPagamento()" hidden>Registrar recebimento</button><button type="button" id="financeiro_fechar_paciente" class="btn-secondary" onclick="KineSysFinanceiro.fecharPaciente()" hidden>Fechar</button></div></div>
                     <div class="finance-patient-fields">
                         <div class="input-group kds-u-m-0 finance-patient-search"><label for="financeiro_paciente_busca">Localizar paciente</label><input id="financeiro_paciente_busca" type="search" placeholder="Nome, CPF, telefone ou número" autocomplete="off" aria-controls="financeiro_paciente_sugestoes"><div id="financeiro_paciente_sugestoes" class="finance-patient-suggestions" hidden></div></div>
                         <select id="financeiro_paciente_select" class="finance-patient-native-select" onchange="carregarFinanceiroPaciente()" aria-hidden="true" tabindex="-1"><option value="">-- Selecione um paciente --</option></select>
@@ -1277,7 +1277,7 @@
                 </div>
                 <div class="input-group">
                     <label for="proc_valor">Valor (opcional)</label>
-                    <input type="number" id="proc_valor" min="0" step="0.01" placeholder="R$">
+                    <input type="number" id="proc_valor" min="0" step="0.01" placeholder="R$"><label for="proc_sessoes_pacote">Sessões por contratação</label><input type="number" id="proc_sessoes_pacote" min="1" step="1" value="1"><small>1 para individual. O valor acima é o total da contratação.</small>
                 </div>
             </div>
             <div class="input-group">
@@ -1457,7 +1457,7 @@
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="fin_plano_titulo">
             <button class="modal-fechar" onclick="fecharModal('modal_fin_plano')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="fin_plano_titulo">Novo plano de atendimento</h2>
-            <input type="hidden" id="fin_plano_operacao">
+            <input type="hidden" id="fin_plano_operacao"><input type="hidden" id="fin_plano_contrato_id"><label><input type="checkbox" id="fin_plano_personalizar" onchange="alternarPersonalizacaoContrato()"> Personalizar condições (opcional)</label>
             <p id="fin_plano_contexto" class="field-help" hidden></p>
             <div class="input-group"><label for="fin_plano_nome">Nome do plano</label><input id="fin_plano_nome" placeholder="Ex.: Pacote de fisioterapia — 10 sessões"></div>
             <div class="grid-2">
@@ -1556,8 +1556,8 @@
     <script defer src="src/patient/patient_deletion_core-1.0.0.js?v=20260911-phase4m-r1"></script>
     <script defer src="src/patient/patient_chart_read_core-1.0.0.js?v=20260911-phase4j-r1"></script>
     <script defer src="src/patient/patient_registration_core-1.0.0.js?v=20260911-phase4n-r1"></script>
-    <script defer src="src/ui/screen_loader-1.25.0.js?v=20260914-agenda-postgrid-r40&meudia=20260915-owner-r1"></script>
-    <script defer src="src/finance/financeiro-1.19.0.js?v=20260904-integracao-r1"></script>
+    <script defer src="src/ui/screen_loader-1.25.0.js?v=20260916-contratos-r1"></script>
+    <script defer src="src/finance/financeiro-1.19.0.js?v=20260916-contratos-r1"></script>
     <script defer src="src/finance/credito_cliente-1.19.0.js?v=20260904-integracao-r1"></script>
     <script defer src="src/core/mensagens_config.js?v=20260910-phase4f-r1"></script>
     <script defer src="src/agenda/agenda_notificacoes_core-1.20.1.js?v=20260910-phase4b-r1"></script>
@@ -1576,7 +1576,7 @@
     </div>
     <script defer src="src/auth/login_access-1.18.0.js?v=20260910-access-r1"></script>
     <script defer src="src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r3"></script>
-    <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20260911-pending-r1"></script>
+    <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20260916-contratos-r1"></script>
     <script defer src="src/ui/ui_experience.js?v=20260909-ux-r1"></script>
     <script defer src="src/home/home_profissional_dashboard-1.0.0.js?v=20260915-meudia-owner-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/home/home_profissional_polish-1.0.0.js?v=20260915-meudia-owner-r1&meudia=20260915-owner-r1"></script>
@@ -1584,3 +1584,5 @@
     <script defer src="src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5&meudia=20260915-owner-r1"></script>
 </body>
 </html>
+
+

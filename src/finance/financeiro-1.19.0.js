@@ -124,10 +124,8 @@ async function obterMapaPagamentoAgendamentos(agendamentosBase = []) {
     const planoIds = [...new Set(base.map(a => String(a.plano_id || '')).filter(Boolean))];
     if (!planoIds.length) return resultado;
 
-    let planos = lerFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS).filter(p => planoIds.includes(String(p.id || '')));
-    let pagamentos = lerFinanceiroLocal(FINANCEIRO_LOCAL_PAGAMENTOS)
-        .filter(p => planoIds.includes(String(p.plano_id || '')))
-        .filter(p => !pagamentoEstaMarcadoParaExclusao(p));
+    let planos = [];
+    let pagamentos = [];
     let todosAgendamentos = [...base];
     let pagamentosVerificados = !_supabase;
     let agendaCompletaVerificada = !_supabase;
@@ -142,14 +140,14 @@ async function obterMapaPagamentoAgendamentos(agendamentosBase = []) {
             const r = await _supabase.from('planos_atendimento')
                 .select('id,paciente_id,procedimento_id,sessoes_contratadas,valor_final,status')
                 .in('id', planoIds);
-            if (!r.error) planos = mesclarRegistrosFinanceiros(r.data || [], planos);
+            if (!r.error) planos = r.data || [];
         } catch (_) {}
         try {
             const r = await _supabase.from('pagamentos')
                 .select('id,plano_id,paciente_id,valor,data_pagamento,criado_em')
                 .in('plano_id', planoIds);
             if (!r.error) {
-                pagamentos = mesclarRegistrosFinanceiros(r.data || [], pagamentos).filter(p => !pagamentoEstaMarcadoParaExclusao(p));
+                pagamentos = r.data || [];
                 pagamentosVerificados = true;
             }
         } catch (_) {}
@@ -340,7 +338,7 @@ function mensagemFinanceiro(texto = '', tipo = '') {
     el.textContent = texto;
 }
 
-function lerFinanceiroLocal(chave) {
+function lerRascunhoFinanceiroLocal(chave) {
     try {
         const dados = JSON.parse(localStorage.getItem(chave) || '[]');
         return Array.isArray(dados) ? dados : [];
@@ -350,7 +348,14 @@ function lerFinanceiroLocal(chave) {
     }
 }
 
+function lerFinanceiroLocal(chave) {
+    // Rascunhos anteriores ficam preservados para revisão, sem participar do livro confirmado.
+    if ([FINANCEIRO_LOCAL_PLANOS, FINANCEIRO_LOCAL_PAGAMENTOS, FINANCEIRO_LOCAL_PAGAMENTOS_EXCLUIDOS, FINANCEIRO_LOCAL_VINCULOS_AGENDA].includes(chave)) return [];
+    return lerRascunhoFinanceiroLocal(chave);
+}
+
 function gravarFinanceiroLocal(chave, registros) {
+    if ([FINANCEIRO_LOCAL_PLANOS, FINANCEIRO_LOCAL_PAGAMENTOS, FINANCEIRO_LOCAL_PAGAMENTOS_EXCLUIDOS, FINANCEIRO_LOCAL_VINCULOS_AGENDA].includes(chave)) return false;
     try {
         localStorage.setItem(chave, JSON.stringify(Array.isArray(registros) ? registros : []));
         return true;
@@ -361,6 +366,7 @@ function gravarFinanceiroLocal(chave, registros) {
 }
 
 function salvarRegistroFinanceiroLocal(chave, registro) {
+    if ([FINANCEIRO_LOCAL_PLANOS, FINANCEIRO_LOCAL_PAGAMENTOS].includes(chave)) throw new Error('Reconecte para confirmar a operação financeira. Nenhum contrato ou pagamento foi criado.');
     const lista = lerFinanceiroLocal(chave);
     const idx = lista.findIndex(x => String(x.id || '') === String(registro.id || '') || (registro.operacao_id && x.operacao_id === registro.operacao_id));
     const novo = { ...registro, __local: true, __pending_sync: true };
@@ -418,24 +424,6 @@ function removerMarcacaoExclusaoPagamento(id) {
     gravarFinanceiroLocal(FINANCEIRO_LOCAL_PAGAMENTOS_EXCLUIDOS, lista);
 }
 
-async function sincronizarExclusoesPagamentosLocais(pacienteId = '') {
-    if (!_supabase) return false;
-    const pendentes = obterExclusoesPagamentosPendentes(pacienteId);
-    let ok = true;
-    for (const exclusao of pendentes) {
-        try {
-            const { error } = await _supabase.from('pagamentos').delete().eq('id', exclusao.id);
-            if (error) throw error;
-            removerMarcacaoExclusaoPagamento(exclusao.id);
-        } catch (err) {
-            ok = false;
-            if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
-            console.warn('Financeiro: exclusão de pagamento aguardando sincronização.', err);
-            break;
-        }
-    }
-    return ok;
-}
 
 function limparMetadadosFinanceiroLocal(registro) {
     const copia = { ...registro };
@@ -497,32 +485,9 @@ function atualizarStatusVinculoAgendaLocal(agendamentoId, status) {
 }
 
 function enriquecerAgendamentosComVinculoLocal(registros = []) {
-    const mapa = new Map(lerFinanceiroLocal(FINANCEIRO_LOCAL_VINCULOS_AGENDA).map(x => [String(x.agendamento_id || ''), x]));
-    return (registros || []).map(a => {
-        const local = mapa.get(String(a.id || ''));
-        if (!local || a.plano_id) return a;
-        return { ...a, plano_id: local.plano_id, __plano_vinculo_local: true };
-    });
+    return registros; // Vínculo confirmado no servidor é a única fonte de direitos.
 }
 
-async function sincronizarVinculosAgendaLocais(pacienteId='') {
-    if (!_supabase || !financeiroVinculoAgendaDisponivel) return false;
-    const pendentes = obterVinculosAgendaLocaisPaciente(pacienteId).filter(x => x.__pending_sync);
-    let ok = true;
-    for (const vinculo of pendentes) {
-        try {
-            const { error } = await _supabase.from('agendamentos').update({ plano_id: vinculo.plano_id }).eq('id', vinculo.agendamento_id);
-            if (error) throw error;
-            removerVinculoAgendaLocal(vinculo.agendamento_id);
-        } catch (err) {
-            ok = false;
-            if (/plano_id|schema cache|does not exist|column/i.test(String(err?.message || err || ''))) financeiroVinculoAgendaDisponivel = false;
-            console.warn('Financeiro: vínculo Agenda/Pacote continua local.', err);
-            break;
-        }
-    }
-    return ok;
-}
 
 function enriquecerPlanoProcedimento(plano) {
     if (!plano || plano.procedimentos?.nome) return plano;
@@ -552,48 +517,10 @@ function serializarFormasPagamento(containerId) {
 }
 
 async function sincronizarFinanceiroLocalPaciente(pacienteId) {
-    if (!_supabase || !pacienteId) return false;
-    let houveFalha = false;
-
-    // Exclusões têm prioridade para impedir que um lançamento apagado reapareça
-    // quando a conexão com a nuvem for restabelecida.
-    const exclusoesOk = await sincronizarExclusoesPagamentosLocais(pacienteId);
-    if (!exclusoesOk && obterExclusoesPagamentosPendentes(pacienteId).length) houveFalha = true;
-
-    const planosPendentes = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PLANOS, pacienteId).filter(x => x.__pending_sync);
-    for (const plano of planosPendentes) {
-        try {
-            const row = limparMetadadosFinanceiroLocal(plano);
-            const { error } = await _supabase.from('planos_atendimento').upsert([row], { onConflict: 'id' });
-            if (error && !erroFinanceiroDuplicidade(error)) throw error;
-            removerRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS, plano.id, plano.operacao_id);
-        } catch (err) {
-            houveFalha = true;
-            if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
-            console.warn('Financeiro: plano local aguardando sincronização.', err);
-            break;
-        }
-    }
-
-    if (!houveFalha) {
-        const exclusoesPendentes = obterExclusoesPagamentosPendentes(pacienteId);
-        const pagamentosPendentes = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PAGAMENTOS, pacienteId).filter(x => x.__pending_sync && !pagamentoEstaMarcadoParaExclusao(x, exclusoesPendentes));
-        for (const pagamento of pagamentosPendentes) {
-            try {
-                const row = limparMetadadosFinanceiroLocal(pagamento);
-                const { error } = await _supabase.from('pagamentos').upsert([row], { onConflict: 'id' });
-                if (error && !erroFinanceiroDuplicidade(error)) throw error;
-                removerRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PAGAMENTOS, pagamento.id, pagamento.operacao_id);
-            } catch (err) {
-                houveFalha = true;
-                if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
-                console.warn('Financeiro: pagamento local aguardando sincronização.', err);
-                break;
-            }
-        }
-    }
-    if (!houveFalha) await sincronizarVinculosAgendaLocais(pacienteId);
-    return !houveFalha;
+    const pendentes = [FINANCEIRO_LOCAL_PLANOS, FINANCEIRO_LOCAL_PAGAMENTOS, FINANCEIRO_LOCAL_PAGAMENTOS_EXCLUIDOS, FINANCEIRO_LOCAL_VINCULOS_AGENDA]
+        .some(chave => lerRascunhoFinanceiroLocal(chave).some(x=>String(x.paciente_id)===String(pacienteId)));
+    if (pendentes) console.warn('Há rascunhos financeiros antigos preservados para revisão. Eles não geram direitos nem sobrescrevem contratos.');
+    return !pendentes;
 }
 
 async function inicializarFinanceiro(preSelecionado = '') {
@@ -626,12 +553,12 @@ async function popularPacientesFinanceiro(preSelecionado = '') {
 async function carregarProcedimentosFinanceiro() {
     if (!_supabase) return;
     try {
-        const { data, error } = await _supabase.from('procedimentos').select('id,nome,valor,ativo').order('nome');
+        const { data, error } = await _supabase.from('procedimentos').select('id,nome,valor,ativo,sessoes_pacote').order('nome');
         if (error) throw error;
         financeiroProcedimentosCache = data || [];
         const sel = document.getElementById('fin_plano_procedimento');
         if (sel) sel.innerHTML = '<option value="">Sem procedimento específico</option>' + financeiroProcedimentosCache
-            .filter(x=>x.ativo !== false).map(x=>`<option value="${x.id}" data-valor="${Number(x.valor||0)}">${escapeHTML(x.nome)}</option>`).join('');
+            .filter(x=>x.ativo !== false).map(x=>`<option value="${x.id}" data-valor="${Number(x.valor||0)}" data-sessoes="${Number(x.sessoes_pacote)||1}">${escapeHTML(x.nome)}</option>`).join('');
     } catch (err) {
         console.warn('Financeiro: não foi possível carregar procedimentos.', err);
     }
@@ -681,8 +608,8 @@ async function carregarFinanceiroPaciente() {
 
     if (!_supabase) {
         const exclusoesPendentes = obterExclusoesPagamentosPendentes(pacienteId);
-        financeiroPlanosCache = planosLocais.map(enriquecerPlanoProcedimento);
-        financeiroPagamentosCache = pagamentosLocais.filter(p => !pagamentoEstaMarcadoParaExclusao(p, exclusoesPendentes));
+        financeiroPlanosCache = [];
+        financeiroPagamentosCache = [];
         financeiroAgendamentosCache = [];
         renderizarFinanceiroPaciente();
         mensagemFinanceiro('Nuvem indisponível: os dados financeiros deste atendimento estão sendo mantidos neste computador.', 'aviso');
@@ -706,9 +633,8 @@ async function carregarFinanceiroPaciente() {
         else if (!erroPlanos) financeiroTabelaDisponivel = true;
 
         const exclusoesPendentes = obterExclusoesPagamentosPendentes(pacienteId);
-        financeiroPlanosCache = mesclarRegistrosFinanceiros(erroPlanos ? [] : (planosR.data || []), planosLocais).map(enriquecerPlanoProcedimento);
-        financeiroPagamentosCache = mesclarRegistrosFinanceiros(erroPagamentos ? [] : (pagamentosR.data || []), pagamentosLocais)
-            .filter(p => !pagamentoEstaMarcadoParaExclusao(p, exclusoesPendentes));
+        financeiroPlanosCache = (erroPlanos ? [] : (planosR.data || [])).map(enriquecerPlanoProcedimento);
+        financeiroPagamentosCache = erroPagamentos ? [] : (pagamentosR.data || []);
         financeiroAgendamentosCache = agendaR.error ? enriquecerAgendamentosComVinculoLocal([]) : enriquecerAgendamentosComVinculoLocal(agendaR.data || []);
         renderizarFinanceiroPaciente();
 
@@ -717,9 +643,9 @@ async function carregarFinanceiroPaciente() {
         if (erroPagamentos) falhas.push('pagamentos na nuvem');
         if (agendaR.error && !/plano_id/i.test(String(agendaR.error?.message || ''))) falhas.push('vínculo com a agenda');
         if (falhas.length) {
-            mensagemFinanceiro(`Não foi possível atualizar ${falhas.join(' e ')}. O que for lançado agora será preservado localmente e sincronizado quando possível.`, 'aviso');
+            mensagemFinanceiro(`Não foi possível atualizar ${falhas.join(' e ')}. Reconecte para confirmar operações financeiras.`, 'aviso');
         } else if (planosLocais.length || pagamentosLocais.length) {
-            mensagemFinanceiro('Há registros locais aguardando sincronização com a nuvem.', 'aviso');
+            mensagemFinanceiro('Há rascunhos antigos preservados neste computador para revisão; eles não alteram o saldo confirmado.', 'aviso');
         } else {
             mensagemFinanceiro('');
         }
@@ -727,11 +653,11 @@ async function carregarFinanceiroPaciente() {
         console.error('Financeiro:', err);
         if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
         const exclusoesPendentes = obterExclusoesPagamentosPendentes(pacienteId);
-        financeiroPlanosCache = planosLocais.map(enriquecerPlanoProcedimento);
-        financeiroPagamentosCache = pagamentosLocais.filter(p => !pagamentoEstaMarcadoParaExclusao(p, exclusoesPendentes));
+        financeiroPlanosCache = [];
+        financeiroPagamentosCache = [];
         financeiroAgendamentosCache = [];
         renderizarFinanceiroPaciente();
-        mensagemFinanceiro(`Não foi possível acessar o financeiro na nuvem. Novos registros serão preservados localmente. ${err?.message || ''}`.trim(), 'aviso');
+        mensagemFinanceiro(`Não foi possível acessar o financeiro na nuvem. Reconecte antes de confirmar operações. ${err?.message || ''}`.trim(), 'aviso');
     }
 }
 
@@ -742,8 +668,8 @@ function metricasPlano(plano) {
     const consumidas = vinculados.filter(a=>financeiroStatusConsomeSessao(a.status)).length;
     const agendadas = vinculados.filter(a=>financeiroStatusReservaAgenda(a.status)).length;
     const contratadas = Math.max(0, Number(plano.sessoes_contratadas)||0);
-    const restantes = Math.max(0, contratadas - consumidas);
-    const disponiveisVinculo = Math.max(0, contratadas - consumidas - agendadas);
+    const restantes = plano.status === 'ativo' ? Math.max(0, contratadas - consumidas) : 0;
+    const disponiveisVinculo = plano.status === 'ativo' ? Math.max(0, contratadas - consumidas - agendadas) : 0;
     const pagos = financeiroPagamentosCache.filter(p=>String(p.plano_id)===String(plano.id)).reduce((s,p)=>s+Number(p.valor||0),0);
     const valorFinal = Number(plano.valor_final || 0);
     const saldo = Math.max(0, valorFinal - pagos);
@@ -782,7 +708,7 @@ function renderizarFinanceiroPaciente() {
                 <div class="finance-progress"><i style="width:${pct}%"></i></div>
                 <div class="finance-money-line"><span>Pagamento <b>${escapeHTML(rotuloPagamentoPlano(m))}</b></span><span>Pago <b>${moedaBR(m.pagos)}</b></span><span>Saldo <b>${moedaBR(m.saldo)}</b></span>${(()=>{const d=financeiroDescontosPlano(plano);return d.total>0?`<span>Desconto <b>${moedaBR(d.total)}</b>${d.pacote>0?` · pacote ${moedaBR(d.pacote)}`:''}${d.cortesia>0?` · cortesia ${moedaBR(d.cortesia)}`:''}${d.naoClassificado>0?` · histórico não classificado ${moedaBR(d.naoClassificado)}`:''}</span>`:''})()}${plano.forma_pagamento_prevista?`<span>Forma prevista <b>${escapeHTML(plano.forma_pagamento_prevista)}</b></span>`:''}</div>
                 ${plano.observacoes?`<p class="finance-note">${escapeHTML(plano.observacoes)}</p>`:''}
-                <div class="finance-plan-actions"><button type="button" onclick="abrirModalPagamento('${escapeHTML(plano.id)}')">+ Pagamento</button>${plano.status==='ativo'&&m.disponiveisVinculo>0&&financeiroPreAgendamentosSemCobertura(plano).length?`<button type="button" onclick="vincularPreAgendamentosAoPlanoFinanceiro('${escapeHTML(plano.id)}')">Vincular pré-agendamentos</button>`:''}${!ehAtendimentoUnitario(plano)&&(plano.status==='concluido'||(plano.status!=='cancelado'&&m.contratadas>0&&m.restantes===0))?`<button type="button" onclick="abrirRenovacaoPlanoFinanceiro('${escapeHTML(plano.id)}')">Renovar plano</button>`:''}${plano.status==='ativo'&&m.restantes>0?`<button type="button" onclick="encerrarPlanoFinanceiro('${escapeHTML(plano.id)}')">${ehAtendimentoUnitario(plano)?'Encerrar atendimento':'Encerrar plano'}</button>`:''}</div>
+                <div class="finance-plan-actions">${plano.status==='ativo'?`<button type="button" onclick="personalizarContratoFinanceiro('${escapeHTML(plano.id)}')">Personalizar</button>${plano.personalizacao?`<button type="button" onclick="removerPersonalizacaoFinanceiro('${escapeHTML(plano.id)}')">Excluir personalização</button>`:''}`:''}<button type="button" onclick="abrirModalPagamento('${escapeHTML(plano.id)}')">+ Pagamento</button>${plano.status==='ativo'&&m.disponiveisVinculo>0&&financeiroPreAgendamentosSemCobertura(plano).length?`<button type="button" onclick="vincularPreAgendamentosAoPlanoFinanceiro('${escapeHTML(plano.id)}')">Vincular pré-agendamentos</button>`:''}${!ehAtendimentoUnitario(plano)&&(plano.status==='concluido'||(plano.status!=='cancelado'&&m.contratadas>0&&m.restantes===0))?`<button type="button" onclick="abrirRenovacaoPlanoFinanceiro('${escapeHTML(plano.id)}')">Renovar plano</button>`:''}${plano.status==='ativo'&&m.restantes>0?`<button type="button" onclick="encerrarPlanoFinanceiro('${escapeHTML(plano.id)}')">Cancelar contratação</button>`:''}</div>
             </article>`;
         }).join('');
     }
@@ -811,11 +737,21 @@ function calcularValorFinalPlano() {
 }
 
 function aoSelecionarProcedimentoPlano() {
-    const sel=document.getElementById('fin_plano_procedimento');
-    const valor=Number(sel?.selectedOptions?.[0]?.dataset?.valor||0);
-    const tabela=document.getElementById('fin_plano_valor_tabela');
-    if(tabela && !tabela.value && valor>0) tabela.value=valor.toFixed(2).replace('.',',');
+    const opt=document.getElementById('fin_plano_procedimento')?.selectedOptions?.[0];
+    const contratoId=document.getElementById('fin_plano_contrato_id')?.value;
+    const original=financeiroPlanosCache.find(p=>String(p.id)===String(contratoId))?.condicoes_originais;
+    if (!document.getElementById('fin_plano_personalizar')?.checked) {
+        document.getElementById('fin_plano_sessoes').value=String(Number(original?.sessoes??opt?.dataset.sessoes)||1);
+        document.getElementById('fin_plano_valor_tabela').value=Number(original?.valor??opt?.dataset.valor??0).toFixed(2).replace('.',',');
+        document.getElementById('fin_plano_desconto_pacote').value=String(original?.desconto_pacote||0).replace('.',',');
+        document.getElementById('fin_plano_desconto_cortesia').value=String(original?.desconto_cortesia||0).replace('.',',');
+    }
     calcularValorFinalPlano();
+}
+function alternarPersonalizacaoContrato() {
+    const personalizar=!!document.getElementById('fin_plano_personalizar')?.checked;
+    ['fin_plano_sessoes','fin_plano_valor_tabela','fin_plano_desconto_pacote','fin_plano_desconto_cortesia'].forEach(id=>{document.getElementById(id).disabled=!personalizar;});
+    aoSelecionarProcedimentoPlano();
 }
 
 function configurarCabecalhoModalPlanoFinanceiro(modo='novo', plano=null) {
@@ -840,6 +776,9 @@ function abrirModalNovoPlano() {
     const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
     if(!pacienteId){alert('Selecione um paciente antes de criar o plano.');return;}
     financeiroPlanoRenovacaoOrigemId='';
+    document.getElementById('fin_plano_contrato_id').value='';
+    document.getElementById('fin_plano_procedimento').disabled=false;
+    document.getElementById('fin_plano_personalizar').checked=false;
     configurarCabecalhoModalPlanoFinanceiro('novo');
     document.getElementById('fin_plano_operacao').value=gerarOperacaoFinanceiraId('plano');
     document.getElementById('fin_plano_nome').value='';
@@ -852,6 +791,7 @@ function abrirModalNovoPlano() {
     document.getElementById('fin_plano_parcelas').value='1';
     document.getElementById('fin_plano_observacoes').value='';
     calcularValorFinalPlano();
+    alternarPersonalizacaoContrato();
     abrirModal('modal_fin_plano');
 }
 
@@ -866,6 +806,7 @@ async function abrirRenovacaoPlanoFinanceiro(planoId) {
         return;
     }
 
+    abrirModalNovoPlano();
     financeiroPlanoRenovacaoOrigemId=String(plano.id);
     configurarCabecalhoModalPlanoFinanceiro('renovar',plano);
     document.getElementById('fin_plano_operacao').value=gerarOperacaoFinanceiraId('renovacao');
@@ -895,83 +836,57 @@ async function abrirRenovacaoPlanoFinanceiro(planoId) {
     definirFormasPagamentoSelecionadas('fin_plano_forma',formas.length?formas:['PIX']);
     document.getElementById('fin_plano_parcelas').value=String(Math.max(1,Number(plano.parcelas)||1));
     document.getElementById('fin_plano_observacoes').value=plano.observacoes||'';
-    calcularValorFinalPlano();
+    document.getElementById('fin_plano_personalizar').checked=false;
+    alternarPersonalizacaoContrato();
     abrirModal('modal_fin_plano');
 }
 
 async function salvarPlanoFinanceiro() {
-    if(!financeiroPodeEditar()) { alert('Seu perfil não possui permissão para salvar planos.'); return false; }
-    const renovacaoDe=financeiroPlanoRenovacaoOrigemId||'';
-    const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
-    const sessoes=parseInt(document.getElementById('fin_plano_sessoes')?.value||'0',10);
-    const nome=document.getElementById('fin_plano_nome')?.value.trim()||'Plano de atendimento';
-    const valorTabela=Math.max(0,numeroFinanceiro(document.getElementById('fin_plano_valor_tabela')?.value));
-    const descontoPacote=Math.max(0,numeroFinanceiro(document.getElementById('fin_plano_desconto_pacote')?.value));
-    const descontoCortesia=Math.max(0,numeroFinanceiro(document.getElementById('fin_plano_desconto_cortesia')?.value));
-    const desconto=descontoPacote+descontoCortesia;
-    const valorFinal=Math.max(0,valorTabela-desconto);
-    const formas=serializarFormasPagamento('fin_plano_forma');
-    if(desconto>valorTabela+0.009){alert('A soma do desconto por pacote e do desconto por cortesia não pode ser maior que o valor de tabela.');return false;}
-    if(!pacienteId){alert('Selecione o paciente.');return false;}
-    if(!sessoes||sessoes<1){alert('Informe a quantidade de sessões contratadas.');return false;}
-    if(!formas){alert('Selecione pelo menos uma forma de pagamento prevista.');return false;}
-
-    const row={
-        id:gerarUUIDFinanceiro(),
-        paciente_id:pacienteId,
-        procedimento_id:document.getElementById('fin_plano_procedimento')?.value||null,
-        nome,
-        sessoes_contratadas:sessoes,
-        valor_tabela:valorTabela,
-        desconto_valor:desconto,
-        desconto_pacote:descontoPacote,
-        desconto_cortesia:descontoCortesia,
-        valor_final:valorFinal,
-        forma_pagamento_prevista:formas,
-        parcelas:Math.max(1,parseInt(document.getElementById('fin_plano_parcelas')?.value||'1',10)||1),
-        observacoes:document.getElementById('fin_plano_observacoes')?.value.trim()||null,
-        status:'ativo',
-        criado_por:usuarioLogado?.nome||'Desconhecido',
-        criado_em:new Date().toISOString(),
-        operacao_id:document.getElementById('fin_plano_operacao')?.value||gerarOperacaoFinanceiraId('plano')
-    };
-
-    let salvoNaNuvem=false;
-    let erroNuvem=null;
-    if(_supabase){
-        try{
-            const {error}=await _supabase.from('planos_atendimento').insert([row]);
-            if(error && !erroFinanceiroDuplicidade(error)) throw error;
-            salvoNaNuvem=true;
-            financeiroTabelaDisponivel=true;
-        }catch(err){
-            erroNuvem=err;
-            if(erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel=false;
-            console.error('Financeiro: falha ao salvar plano na nuvem.',err);
-        }
-    }
-
-    if(!salvoNaNuvem){
-        try{ salvarRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS,row); }
-        catch(err){ alert(`Não foi possível salvar o plano. ${err?.message||''}`); return false; }
-    }
-
-    fecharModal('modal_fin_plano');
-    financeiroPlanoRenovacaoOrigemId='';
-    if(renovacaoDe && typeof reconciliarPlanoFinanceiroPorConsumo==='function') {
-        try { await reconciliarPlanoFinanceiroPorConsumo(renovacaoDe,{origem:'renovacao'}); } catch(err) { console.warn('Financeiro: não foi possível reconciliar o plano anterior após a renovação.',err); }
-    }
-    await carregarFinanceiroPaciente();
-    if(salvoNaNuvem) mensagemFinanceiro(renovacaoDe?'Plano renovado. Novo ciclo ativo e disponível para vincular na Agenda.':'Plano salvo com sucesso.', 'sucesso');
-    else mensagemFinanceiro(renovacaoDe?'Renovação criada neste computador. O novo ciclo já pode ser usado localmente e será sincronizado automaticamente.':`Plano salvo neste computador${erroNuvem ? ' porque a nuvem não respondeu' : ''}. Ele será sincronizado automaticamente quando a conexão/estrutura financeira estiver disponível.`, 'aviso');
-    if (renovacaoDe) {
-        const novoPlano = financeiroPlanosCache.find(p=>String(p.id)===String(row.id)) || {...row,__pending_sync:!salvoNaNuvem};
-        const candidatos = financeiroPreAgendamentosSemCobertura(novoPlano);
-        if (candidatos.length) {
-            await vincularPreAgendamentosAoPlanoFinanceiro(row.id,{plano:novoPlano,planoNaNuvem:salvoNaNuvem,confirmar:true});
-        }
-    }
-    return true;
+    if(!financeiroPodeEditar() || !_supabase) return false;
+    const btn=document.getElementById('fin_plano_salvar_btn');
+    if(btn.disabled)return false;
+    const contratoId=document.getElementById('fin_plano_contrato_id').value;
+    const personalizar=document.getElementById('fin_plano_personalizar').checked;
+    const personalizacao=personalizar?{
+        sessoes:Number(document.getElementById('fin_plano_sessoes').value),
+        valor:numeroFinanceiro(document.getElementById('fin_plano_valor_tabela').value),
+        desconto_pacote:numeroFinanceiro(document.getElementById('fin_plano_desconto_pacote').value),
+        desconto_cortesia:numeroFinanceiro(document.getElementById('fin_plano_desconto_cortesia').value)
+    }:null;
+    btn.disabled=true;
+    try {
+        const args=contratoId?{p_plano_id:contratoId,p_acao:personalizar?'personalizar':'remover_personalizacao',p_personalizacao:personalizacao,p_motivo:'Alteração das condições pelo financeiro'}:{
+            p_paciente_id:document.getElementById('financeiro_paciente_select').value,
+            p_procedimento_id:document.getElementById('fin_plano_procedimento').value,
+            p_operacao_id:document.getElementById('fin_plano_operacao').value,p_personalizacao:personalizacao,
+            p_detalhes:{nome:document.getElementById('fin_plano_nome').value,forma:serializarFormasPagamento('fin_plano_forma'),parcelas:Number(document.getElementById('fin_plano_parcelas').value)||1,observacoes:document.getElementById('fin_plano_observacoes').value}
+        };
+        const {error}=await _supabase.rpc(contratoId?'kinesys_alterar_contrato':'kinesys_contratar_pacote',args);
+        if(error)throw error;
+        fecharModal('modal_fin_plano');await carregarFinanceiroPaciente();
+        mensagemFinanceiro('Contratação confirmada. As condições e o histórico foram preservados.','sucesso');return true;
+    } catch(err) {alert('Não foi possível confirmar a contratação: '+(err.message||err));return false;}
+    finally {btn.disabled=false;}
+}
+function personalizarContratoFinanceiro(id) {
+    const pl=financeiroPlanosCache.find(p=>String(p.id)===String(id)); if(!pl)return;
+    abrirModalNovoPlano();
+    document.getElementById('fin_plano_contrato_id').value=id;
+    document.getElementById('fin_plano_procedimento').disabled=true;
+    document.getElementById('fin_plano_procedimento').value=pl.procedimento_id;
+    document.getElementById('fin_plano_personalizar').checked=true;
+    alternarPersonalizacaoContrato();
+    document.getElementById('fin_plano_sessoes').value=pl.sessoes_contratadas;
+    document.getElementById('fin_plano_valor_tabela').value=Number(pl.valor_tabela).toFixed(2).replace('.',',');
+    document.getElementById('fin_plano_desconto_pacote').value=Number(pl.desconto_pacote||0).toFixed(2).replace('.',',');
+    document.getElementById('fin_plano_desconto_cortesia').value=Number(pl.desconto_cortesia||0).toFixed(2).replace('.',',');
+    document.getElementById('fin_plano_titulo').textContent='Personalizar contratação existente';
+    calcularValorFinalPlano();
+}
+async function removerPersonalizacaoFinanceiro(id) {
+    if(!await confirmarKineSys('Restaurar as condições originais deste contrato, mantendo a contratação?',{titulo:'Excluir personalização',confirmar:'Restaurar condições'}))return;
+    const {error}=await _supabase.rpc('kinesys_alterar_contrato',{p_plano_id:id,p_acao:'remover_personalizacao',p_motivo:'Exclusão de personalização pelo financeiro'});
+    if(error){alert(error.message);return;}await carregarFinanceiroPaciente();
 }
 
 async function vincularPreAgendamentosAoPlanoFinanceiro(planoId, opcoes = {}) {
@@ -1036,6 +951,10 @@ async function vincularPreAgendamentosAoPlanoFinanceiro(planoId, opcoes = {}) {
 }
 
 function abrirModalPagamento(planoId='') {
+    const agCampo=document.getElementById('fin_pag_agendamento_id');if(agCampo)agCampo.value='';
+    const grupoPlano=document.getElementById('fin_pag_plano_grupo');if(grupoPlano)grupoPlano.hidden=false;
+    ['fin_pag_valores_agendamento','fin_pag_contexto_agendamento'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true;});
+
     const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
     if(!pacienteId){alert('Selecione o paciente.');return;}
     const ativos=financeiroPlanosCache.filter(p=>p.status!=='cancelado');
@@ -1107,88 +1026,16 @@ async function salvarPagamentoFinanceiro() {
 }
 
 async function excluirPagamentoFinanceiro(id) {
-    if (!financeiroPodeEditar()) { alert('Seu perfil não possui permissão para excluir pagamentos.'); return false; }
-    const pagamento = financeiroPagamentosCache.find(p => String(p.id) === String(id));
-    if (!pagamento) { alert('Este lançamento não foi encontrado. Atualize o financeiro e tente novamente.'); return false; }
-
-    const plano = financeiroPlanosCache.find(p => String(p.id) === String(pagamento.plano_id));
-    const data = pagamento.data_pagamento
-        ? new Date(pagamento.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')
-        : 'data não informada';
-    const pergunta = `Apagar este pagamento de ${moedaBR(pagamento.valor)} (${data})${plano?.nome ? ` do plano “${plano.nome}”` : ''}?\n\nO total pago e o saldo do paciente serão recalculados. O lançamento poderá ser feito novamente depois.`;
-    if (!(await confirmarKineSys(pergunta, { titulo: 'Apagar pagamento', confirmar: 'Apagar pagamento', destrutivo: true }))) return false;
-
-    const local = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PAGAMENTOS, pagamento.paciente_id || financeiroPacienteAtualId)
-        .find(p => String(p.id) === String(id));
-    const apenasLocal = !!local?.__pending_sync || (!!pagamento.__pending_sync && !pagamento.__synced);
-
-    // Remove qualquer cópia local imediatamente para evitar duplicidade visual.
-    removerRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PAGAMENTOS, pagamento.id, pagamento.operacao_id || '');
-
-    let excluidoNaNuvem = false;
-    let exclusaoPendente = false;
-    let erroNuvem = null;
-
-    if (!apenasLocal) {
-        if (_supabase) {
-            try {
-                const { error } = await _supabase.from('pagamentos').delete().eq('id', pagamento.id);
-                if (error) throw error;
-                excluidoNaNuvem = true;
-                removerMarcacaoExclusaoPagamento(pagamento.id);
-            } catch (err) {
-                erroNuvem = err;
-                try {
-                    marcarPagamentoParaExclusao(pagamento);
-                    exclusaoPendente = true;
-                } catch (localErr) {
-                    console.error('Financeiro: não foi possível preservar a exclusão.', localErr);
-                    alert(`Não foi possível apagar o pagamento com segurança. ${localErr?.message || ''}`);
-                    await carregarFinanceiroPaciente();
-                    return false;
-                }
-                if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
-                console.warn('Financeiro: exclusão ficará pendente de sincronização.', err);
-            }
-        } else {
-            try {
-                marcarPagamentoParaExclusao(pagamento);
-                exclusaoPendente = true;
-            } catch (err) {
-                alert(`Não foi possível apagar o pagamento com segurança. ${err?.message || ''}`);
-                await carregarFinanceiroPaciente();
-                return false;
-            }
-        }
-    }
-
-    // Pagamentos exclusivamente locais nunca chegaram à nuvem: basta removê-los.
-    if (apenasLocal) removerMarcacaoExclusaoPagamento(pagamento.id);
-
-    await carregarFinanceiroPaciente();
-    if (apenasLocal || excluidoNaNuvem) {
-        mensagemFinanceiro('Pagamento apagado. Total pago e saldo recalculados.', 'sucesso');
-    } else if (exclusaoPendente) {
-        mensagemFinanceiro(`Pagamento retirado da tela e marcado para exclusão na nuvem${erroNuvem ? ' assim que a conexão estiver disponível' : ''}. Total e saldo já foram recalculados neste computador.`, 'aviso');
-    }
-    return true;
+    if(window.KineSysFinanceiro?.estornarPagamento) return window.KineSysFinanceiro.estornarPagamento(id);
+    alert('Aguarde o carregamento do financeiro para registrar um estorno auditável.');
+    return false;
 }
 
 async function encerrarPlanoFinanceiro(id) {
-    if(!financeiroPodeEditar()) return;
-    const plano=financeiroPlanosCache.find(p=>String(p.id)===String(id));
-    if(!plano)return;
-    if(!(await confirmarKineSys(`Encerrar o plano "${plano.nome}"? Os registros e pagamentos serão preservados.`, {titulo:'Encerrar plano', confirmar:'Encerrar plano'})))return;
-
-    const local = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PLANOS, plano.paciente_id).find(p=>String(p.id)===String(id));
-    if(local){
-        salvarRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS,{...local,status:'concluido',encerrado_em:new Date().toISOString(),encerramento_automatico:false});
-    } else if(_supabase){
-        let r=await _supabase.from('planos_atendimento').update({status:'concluido',encerrado_em:new Date().toISOString(),encerramento_automatico:false}).eq('id',id);
-        if(r.error && /encerramento_automatico|schema cache|column .* does not exist/i.test(String(r.error.message||''))) r=await _supabase.from('planos_atendimento').update({status:'concluido',encerrado_em:new Date().toISOString()}).eq('id',id);
-        if(r.error) throw r.error;
-    }
-    await carregarFinanceiroPaciente();
+    if(!financeiroPodeEditar() || !_supabase)return;
+    if(!await confirmarKineSys('Cancelar a contratação e liberar as reservas? Pagamentos e histórico serão preservados. O cancelamento não estorna dinheiro.',{titulo:'Cancelar contratação',confirmar:'Cancelar contratação'}))return;
+    const {error}=await _supabase.rpc('kinesys_alterar_contrato',{p_plano_id:id,p_acao:'cancelar',p_motivo:'Cancelamento solicitado no financeiro'});
+    if(error){alert(error.message);return;}await carregarFinanceiroPaciente();
 }
 
 async function obterPlanosAtivosPaciente(pacienteId, procedimentoId='') {
@@ -1232,23 +1079,8 @@ async function obterPlanosAtivosPaciente(pacienteId, procedimentoId='') {
         }
     }
 
-    // Inclui qualquer vínculo de Agenda ainda preservado localmente. Isso é
-    // necessário para saber não só o que já foi consumido, mas também quantas
-    // sessões do pacote já estão reservadas no futuro.
-    if(!agendamentosVinculados.length) {
-        agendamentosVinculados = obterVinculosAgendaLocaisPaciente(pacienteId)
-            .map(v=>({id:v.agendamento_id,plano_id:v.plano_id,status:v.status,procedimento_id:v.procedimento_id||null}));
-    } else {
-        const existentes = new Set(agendamentosVinculados.map(a=>String(a.id||'')));
-        obterVinculosAgendaLocaisPaciente(pacienteId).forEach(v=>{
-            if(!existentes.has(String(v.agendamento_id||''))) agendamentosVinculados.push({id:v.agendamento_id,plano_id:v.plano_id,status:v.status,procedimento_id:v.procedimento_id||null});
-        });
-    }
-
-    planosLocais = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PLANOS, pacienteId)
-        .filter(p => String(p.status || 'ativo') === 'ativo');
     const idsNuvem = new Set(planosNuvem.map(p=>String(p.id)));
-    const mesclados = mesclarRegistrosFinanceiros(planosNuvem, planosLocais);
+    const mesclados = planosNuvem;
     const consumidasPorPlano={}, reservadasPorPlano={};
     (agendamentosVinculados||[]).forEach(a=>{
         if(!a.plano_id) return;
@@ -1276,42 +1108,9 @@ async function obterPlanosAtivosPaciente(pacienteId, procedimentoId='') {
         .filter(p=>p.sessoes_disponiveis_vinculo>0);
 }
 
-async function reconciliarPlanoFinanceiroPorConsumo(planoId, contexto = {}) {
-    if(!planoId)return;
-
-    const localPlano = lerFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS).find(p=>String(p.id)===String(planoId));
-    if(localPlano){
-        const consumidas = lerFinanceiroLocal(FINANCEIRO_LOCAL_VINCULOS_AGENDA)
-            .filter(v=>String(v.plano_id)===String(planoId) && financeiroStatusConsomeSessao(v.status)).length;
-        const contratadas = Number(localPlano.sessoes_contratadas||0);
-        if(consumidas >= contratadas && String(localPlano.status||'ativo')==='ativo') {
-            salvarRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS,{...localPlano,status:'concluido',encerrado_em:new Date().toISOString(),encerramento_automatico:true});
-        } else if(consumidas < contratadas && String(localPlano.status)==='concluido' && localPlano.encerramento_automatico===true) {
-            salvarRegistroFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS,{...localPlano,status:'ativo',encerrado_em:null,encerramento_automatico:false});
-        }
-    }
-
-    if(!_supabase||!financeiroTabelaDisponivel)return;
-    try{
-        let planoR = await _supabase.from('planos_atendimento').select('id,sessoes_contratadas,status,encerramento_automatico').eq('id',planoId).maybeSingle();
-        let suportaMarcador = true;
-        if(planoR.error && /encerramento_automatico|schema cache|column .* does not exist/i.test(String(planoR.error.message||''))) {
-            suportaMarcador = false;
-            planoR = await _supabase.from('planos_atendimento').select('id,sessoes_contratadas,status').eq('id',planoId).maybeSingle();
-        }
-        const agendaR = await _supabase.from('agendamentos').select('id,status').eq('plano_id',planoId).in('status',Array.from(FINANCEIRO_STATUS_CONSOME_SESSAO));
-        const plano = planoR.data;
-        if(planoR.error||agendaR.error||!plano)return;
-        const consumidas = (agendaR.data||[]).length;
-        const contratadas = Number(plano.sessoes_contratadas||0);
-        if(consumidas >= contratadas && String(plano.status||'ativo')==='ativo') {
-            let dados={status:'concluido',encerrado_em:new Date().toISOString()};
-            if(suportaMarcador) dados.encerramento_automatico=true;
-            await _supabase.from('planos_atendimento').update(dados).eq('id',planoId);
-        } else if(consumidas < contratadas && String(plano.status)==='concluido' && suportaMarcador && plano.encerramento_automatico===true) {
-            await _supabase.from('planos_atendimento').update({status:'ativo',encerrado_em:null,encerramento_automatico:false}).eq('id',planoId);
-        }
-    }catch(err){console.warn('Não foi possível reconciliar o plano automaticamente:',err);}
+async function reconciliarPlanoFinanceiroPorConsumo(planoId) {
+    // O trigger transacional do banco é o único responsável pelo encerramento.
+    return !!planoId;
 }
 
 async function verificarEncerramentoAutomaticoPlano(planoId) {
@@ -1592,3 +1391,4 @@ async function salvarAtendimentoUnitario() {
 
 // Ponte de compatibilidade: expõe somente leitura para o módulo 1.19.0.
 window.kinesysObterEstadoFinanceiro=()=>({planos:financeiroPlanosCache,pagamentos:financeiroPagamentosCache,agendamentos:financeiroAgendamentosCache,metricas:metricasPlano,supabase:_supabase,pacienteId:financeiroPacienteAtualId});
+

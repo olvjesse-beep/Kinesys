@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const local=new Map(),nodes=new Map();
+const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',disabled:false,checked:false,textContent:'',selectedOptions:[{dataset:{valor:'234',sessoes:'10'}}]});return nodes.get(id);};
+const ctx=vm.createContext({console,window:{},localStorage:{getItem:k=>local.get(k)||null,setItem:(k,v)=>local.set(k,v)},document:{getElementById:node,querySelectorAll:()=>[],addEventListener(){}},_supabase:null,usuarioLogado:{tipo:'MASTER'},alert(){},crypto:require('node:crypto').webcrypto});
+vm.runInContext(fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8'),ctx);
+local.set('kinesys_financeiro_planos_v1112',JSON.stringify([{id:'orphan',status:'ativo',sessoes_contratadas:99}]));
+assert.equal(vm.runInContext('lerFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS).length',ctx),0);
+assert.equal(vm.runInContext('lerRascunhoFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS).length',ctx),1);
+assert.equal(vm.runInContext('gravarFinanceiroLocal(FINANCEIRO_LOCAL_PLANOS,[])',ctx),false);
+assert.equal(JSON.parse(local.get('kinesys_financeiro_planos_v1112')).length,1);
+vm.runInContext('alternarPersonalizacaoContrato()',ctx);
+assert.equal(node('fin_plano_sessoes').value,'10');assert.equal(node('fin_plano_valor_tabela').value,'234,00');assert.equal(node('fin_plano_sessoes').disabled,true);
+node('fin_plano_personalizar').checked=true;node('fin_plano_sessoes').value='6';vm.runInContext('alternarPersonalizacaoContrato()',ctx);assert.equal(node('fin_plano_sessoes').value,'6');
+vm.runInContext("financeiroAgendamentosCache=[{id:'a',plano_id:'p',status:'agendado'}]",ctx);
+let m=vm.runInContext("metricasPlano({id:'p',status:'ativo',sessoes_contratadas:10})",ctx);assert.equal(m.restantes,10);assert.equal(m.disponiveisVinculo,9);assert.equal(m.consumidas,0);
+vm.runInContext("financeiroAgendamentosCache[0].status='atendido'",ctx);m=vm.runInContext("metricasPlano({id:'p',status:'ativo',sessoes_contratadas:10})",ctx);assert.equal(m.restantes,9);assert.equal(m.consumidas,1);
+m=vm.runInContext("metricasPlano({id:'p',status:'cancelado',sessoes_contratadas:10})",ctx);assert.equal(m.restantes,0);assert.equal(m.disponiveisVinculo,0);
+ctx.obterPlanosAtivosPaciente('paciente').then(pl=>{assert.equal(pl.length,0);console.log('PASS: padrões, personalização, reserva/consumo, cancelamento e quarentena sem perda dos rascunhos.');});

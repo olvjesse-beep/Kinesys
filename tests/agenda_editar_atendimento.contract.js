@@ -88,8 +88,8 @@ assert.match(editar, /await renderizarPainelAgenda\(\)/,'Agenda deve atualizar a
 assert.match(editar, /await abrirDetalheAgendamento\(id\)/,'Detalhe deve reabrir no mesmo atendimento atualizado');
 
 // Cache-busting: garante que o navegador realmente recebe a versão nova, mantendo Agenda lazy.
-assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,'index deve invalidar cache do Screen Loader');
-assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3/,'Screen Loader deve invalidar cache da Agenda');
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260916-contratos-r1/,'index deve invalidar cache do Screen Loader');
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260916-contratos-r1/,'Screen Loader deve invalidar cache da Agenda');
 assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve continuar fora do bootstrap');
 
 // Smoke dinâmico do UPDATE: prova mesmo id, quatro campos e nenhuma criação.

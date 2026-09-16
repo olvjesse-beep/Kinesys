@@ -127,6 +127,19 @@
             if(r.error||!r.data){alert('Agendamento não encontrado. Atualize o Financeiro e tente novamente.');return;}
             a=r.data;
         }
+        if(a.plano_id) {
+            const contrato=await _supabase.from('planos_atendimento').select('id,sessoes_contratadas').eq('id',a.plano_id).single();
+            if(contrato.error){alert(contrato.error.message);return;}
+            if(Number(contrato.data.sessoes_contratadas)>1) {
+                fecharModal('modal_detalhe_agendamento');
+                if(typeof navegarPara==='function')navegarPara('tela_financeiro');
+                if(typeof popularPacientesFinanceiro==='function')await popularPacientesFinanceiro(a.paciente_id);
+                await carregarFinanceiroPaciente();
+                contextoPagamentoAgendamento=null;
+                const campo=document.getElementById('fin_pag_agendamento_id');if(campo)campo.value='';
+                abrirModalPagamento(a.plano_id);return;
+            }
+        }
         const prep=await _supabase.rpc('kinesys_preparar_cobranca_agendamento',{p_agendamento_id:id});
         if(prep.error){alert('Não foi possível preparar a cobrança: '+(prep.error.message||prep.error));return;}
         if(prep.data?.baixada_em){alert('Esta pendência já foi removida. Atualize o Financeiro.');return;}
@@ -196,12 +209,12 @@
         const seq=++historicoAtendimentosSeq;
         const pacienteId=typeof financeiroPacienteAtualId!=='undefined'?financeiroPacienteAtualId:'';const lista=document.getElementById('financeiro_planos_lista');if(!pacienteId||!lista||!_supabase)return;
         lista.querySelector('#fin_historico_agendamentos')?.remove();
-        const [cr,pag]=await Promise.all([_supabase.from('cobrancas_agendamento').select('*').eq('paciente_id',pacienteId).order('data_agendamento',{ascending:false}),_supabase.from('pagamentos').select('id,agendamento_id,valor,forma_pagamento,parcelas,data_pagamento,tipo').eq('paciente_id',pacienteId).not('agendamento_id','is',null).order('data_pagamento',{ascending:false})]);
+        const [cr,pag]=await Promise.all([_supabase.from('cobrancas_agendamento').select('*').eq('paciente_id',pacienteId).order('data_agendamento',{ascending:false}),_supabase.from('pagamentos').select('id,agendamento_id,valor,forma_pagamento,parcelas,data_pagamento,tipo,estorno_de,cobranca_agendamento_id').eq('paciente_id',pacienteId).not('agendamento_id','is',null).order('data_pagamento',{ascending:false})]);
         if(seq!==historicoAtendimentosSeq||cr.error||pag.error)return;lista.querySelector('#fin_historico_agendamentos')?.remove();const pagamentos=pag.data||[];
-        const cobrancas=cr.data||[],baixadas=cobrancas.filter(c=>!!c.baixada_em),ativas=cobrancas.filter(c=>!c.baixada_em);
+        const cobrancas=cr.data||[],baixadas=cobrancas.filter(c=>!!c.baixada_em),ativas=cobrancas.filter(c=>!c.baixada_em&&c.origem!=='plano');
         const cards=ativas.map(c=>{
             const ps=pagamentos.filter(p=>String(p.agendamento_id)===String(c.agendamento_id)),pago=ps.reduce((s,p)=>s+Number(p.valor||0),0),pend=Math.max(0,Number(c.valor_devido)-pago),status=pend<=0?'PAGO':pago>0?'PARCIAL':'PENDENTE';
-            const podeBaixar=pend>0&&ps.length===0&&c.origem!=='plano';
+            const podeBaixar=pend>0&&pago===0&&!ps.some(p=>p.tipo!=='estorno'&&!ps.some(e=>e.estorno_de===p.id&&Number(e.valor)===-Number(p.valor)))&&c.origem!=='plano';
             const acoes=pend>0?`<div class="fin-ag-history-actions"><button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(c.agendamento_id)}')">Quitar</button>${podeBaixar?`<button type="button" class="btn-secondary fin-ag-remove-pending" onclick="abrirBaixaPendenciaAgendamentoFinanceiro('${esc(c.agendamento_id)}')">Remover pendência</button>`:''}</div>`:'';
             return `<article class="fin-ag-history-card"><header><div><strong>${esc(c.procedimento_nome||'Atendimento')}</strong><span>${new Date(c.data_agendamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${esc(c.profissional_nome||'')}</span></div><b class="${status.toLowerCase()}">${status}</b></header><p>Original ${fmt(c.valor_original)} · desconto ${fmt(c.desconto_valor)} · devido ${fmt(c.valor_devido)} · pago ${fmt(pago)} · pendente <strong>${fmt(pend)}</strong></p>${ps.length?`<ul>${ps.map(p=>`<li>${new Date(p.data_pagamento+'T00:00:00').toLocaleDateString('pt-BR')} · ${fmt(p.valor)} · ${esc(p.forma_pagamento)}${p.forma_pagamento==='Cartão de crédito'?` · ${p.parcelas||1}x`:''}${p.tipo==='estorno'?' · estorno':''}</li>`).join('')}</ul>`:'<small>Nenhum pagamento lançado.</small>'}${acoes}</article>`;
         }).join('');
@@ -214,3 +227,4 @@
     document.addEventListener('DOMContentLoaded',()=>{instalarCamposPagamentoAgendamento();instalarModalBaixaPendencia();},{once:true});
     if(document.readyState!=='loading'){instalarCamposPagamentoAgendamento();instalarModalBaixaPendencia();}
 })();
+

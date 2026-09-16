@@ -14,8 +14,8 @@ const sql=sqlBase+'\n'+sqlGuard;
 assert.match(js,/>Quitar<\/button>/,'Histórico deve oferecer Quitar quando existe saldo pendente');
 assert.match(js,/abrirPagamentoAgendamentoIntegrado\('\$\{esc\(c\.agendamento_id\)\}'\)/,'Quitar deve reutilizar o pagamento canônico por agendamento');
 assert.match(js,/>Remover pendência<\/button>/,'Cobrança unitária sem pagamento deve oferecer remoção da pendência');
-assert.match(js,/podeBaixar=pend>0&&ps\.length===0&&c\.origem!=='plano'/,'Remoção deve ficar indisponível após qualquer pagamento e para pacote');
-assert.match(js,/cobrancas\.filter\(c=>!c\.baixada_em\)/,'Cobranças baixadas não devem continuar na lista de pendências ativas');
+assert.match(js,/podeBaixar=pend>0&&pago===0.*estorno_de.*c\.origem!=='plano'/,'Remoção exige ausência de recebimento válido e protege o pacote');
+assert.match(js,/cobrancas\.filter\(c=>!c\.baixada_em&&c\.origem!=='plano'\)/,'Cobranças baixadas não devem continuar na lista de pendências ativas');
 assert.match(js,/kinesys_baixar_cobranca_agendamento/,'Frontend deve usar a RPC auditável de baixa');
 assert.match(js,/id="fin_ag_baixa_tipo"/,'Baixa deve registrar tipo/motivo');
 assert.match(js,/id="fin_ag_baixa_motivo"/,'Baixa deve exigir justificativa');
@@ -43,7 +43,8 @@ assert.doesNotMatch(js,/from\('cobrancas_agendamento'\)\.delete\(/,'Frontend nã
 assert.match(css,/\.fin-ag-history-actions/,'Ações de quitação/baixa devem possuir layout próprio');
 assert.match(css,/\.fin-ag-writeoff-dialog/,'Baixa deve usar diálogo visual dedicado');
 assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css\?v=20260911-pending-r1/,'CSS deve ter cache bust da correção');
-assert.match(html,/src\/finance\/financeiro_agendamento-1\.21\.0\.js\?v=20260911-pending-r1/,'JS deve ter cache bust da correção');
-assert.match(loader,/const VERSION\s*=\s*['"]1\.25\.4-phase4d['"]/,'Versão pública contratual do Screen Loader deve permanecer intacta');
+assert.match(html,/src\/finance\/financeiro_agendamento-1\.21\.0\.js\?v=20260916-contratos-r1/,'JS deve ter cache bust da correção');
+assert.match(loader,/const VERSION\s*=\s*['"]1\.25\.10-agenda-repeat-until-r44['"]/,'Versão pública atual do Screen Loader deve permanecer intacta');
 
 console.log('Financeiro pending appointment contract: OK');
+
