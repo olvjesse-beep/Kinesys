@@ -453,24 +453,9 @@ function obterVinculoAgendaLocal(agendamentoId) {
     return lerFinanceiroLocal(FINANCEIRO_LOCAL_VINCULOS_AGENDA).find(x => String(x.agendamento_id || '') === String(agendamentoId || '')) || null;
 }
 
-function salvarVinculoAgendaLocal(agendamentoId, planoId, pacienteId, procedimentoId='', status='agendado') {
-    if (!agendamentoId || !planoId) return null;
-    const lista = lerFinanceiroLocal(FINANCEIRO_LOCAL_VINCULOS_AGENDA);
-    const idx = lista.findIndex(x => String(x.agendamento_id || '') === String(agendamentoId));
-    const row = {
-        agendamento_id: agendamentoId,
-        plano_id: planoId,
-        paciente_id: pacienteId || '',
-        procedimento_id: procedimentoId || null,
-        status: status || 'agendado',
-        __local: true,
-        __pending_sync: true,
-        atualizado_em: new Date().toISOString()
-    };
-    if (idx >= 0) lista[idx] = { ...lista[idx], ...row };
-    else lista.push(row);
-    if (!gravarFinanceiroLocal(FINANCEIRO_LOCAL_VINCULOS_AGENDA, lista)) throw new Error('Não foi possível preservar o vínculo do pacote neste computador.');
-    return row;
+function salvarVinculoAgendaLocal() {
+    // Chamadores antigos podem notificar uma edição já confirmada. Não há cópia financeira local.
+    return null;
 }
 
 function removerVinculoAgendaLocal(agendamentoId) {
