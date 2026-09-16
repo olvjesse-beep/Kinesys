@@ -1181,6 +1181,7 @@ function abrirModalProcedimento(id) {
         document.getElementById('proc_nome').value = p.nome;
         document.getElementById('proc_duracao').value = p.duracao_minutos;
         document.getElementById('proc_valor').value = p.valor ?? '';
+        document.getElementById('proc_sessoes_pacote').value = p.sessoes_pacote || 1;
         (p.profissionais_ids || []).forEach(pid => {
             const chk = document.querySelector(`.proc-prof-check[value="${pid}"]`);
             if (chk) chk.checked = true;
@@ -1190,6 +1191,7 @@ function abrirModalProcedimento(id) {
         document.getElementById('proc_nome').value = '';
         document.getElementById('proc_duracao').value = '';
         document.getElementById('proc_valor').value = '';
+        document.getElementById('proc_sessoes_pacote').value = 1;
     }
     abrirModal('modal_procedimento');
 }
@@ -1205,7 +1207,9 @@ async function salvarProcedimento() {
     if (!nome) { alert('⚠️ Informe o nome do procedimento.'); return; }
     if (!duracao || duracao < 5) { alert('⚠️ Informe uma duração válida (mínimo 5 minutos).'); return; }
 
-    const registro = { nome, duracao_minutos: duracao, valor, profissionais_ids: profissionaisIds };
+    const sessoes_pacote=Number(document.getElementById('proc_sessoes_pacote').value);
+    if(!Number.isInteger(sessoes_pacote)||sessoes_pacote<1){alert('Informe uma quantidade válida de sessões.');return;}
+    const registro = { nome, duracao_minutos: duracao, valor, profissionais_ids: profissionaisIds, sessoes_pacote };
 
     try {
         let error;
@@ -3221,7 +3225,7 @@ async function abrirDetalheAgendamento(id) {
     if (a.confirmado_pelo_paciente === true) respostaTexto = '✅ Paciente confirmou presença';
     else if (a.confirmado_pelo_paciente === false) respostaTexto = '⚠️ Paciente avisou que não vai poder ir';
     let planos = [];
-    if (typeof obterPlanosAtivosPaciente === 'function') planos = await obterPlanosAtivosPaciente(a.paciente_id, a.procedimento_id);
+    if (typeof obterPlanosAtivosPaciente === 'function') planos = await obterPlanosAtivosPaciente(a.paciente_id);
     const planosVinculaveis = planos.filter(p=>p.__vinculavel || p.__vinculavel_nuvem || p.__vinculavel_local || String(p.id)===String(a.plano_id||''));
     const atualPresente = a.plano_id && planosVinculaveis.some(p=>String(p.id)===String(a.plano_id));
     const optionsPlano = `<option value="">Sem pacote vinculado</option>` +
@@ -3334,42 +3338,20 @@ async function reagendarAgendamentoAtual() {
 }
 
 async function vincularPlanoAgendamentoAtual() {
-    if (!usuarioEhAdministradorAgenda()) return;
-    if (!agendamentoDetalheAtualId) return;
-    const planoId = document.getElementById('detalhe_plano_select')?.value || null;
-    const a = agendaAgendamentosSemanaCache.find(x=>x.id===agendamentoDetalheAtualId) || agendaAgendamentosDoDiaCache.find(x=>x.id===agendamentoDetalheAtualId);
-    if (!a) return;
+    if(!usuarioEhAdministradorAgenda()||!agendamentoDetalheAtualId)return;
+    const planoId=document.getElementById('detalhe_plano_select')?.value||null;
     try {
-        if (!planoId) {
-            if (typeof removerVinculoAgendaLocal === 'function') removerVinculoAgendaLocal(agendamentoDetalheAtualId);
+        if(!planoId) {
             const {error}=await _supabase.from('agendamentos').update({plano_id:null}).eq('id',agendamentoDetalheAtualId);
-            if(error && !/plano_id|schema cache|column .* does not exist/i.test(String(error.message||''))) throw error;
-            a.plano_id=null;
+            if(error)throw error;
         } else {
-            const validacao = typeof validarPlanoParaAgendamento === 'function'
-                ? await validarPlanoParaAgendamento(planoId, a.paciente_id, a.procedimento_id)
-                : {ok:true,modo:'local'};
-            if(!validacao.ok) throw new Error(validacao.mensagem || 'Pacote indisponível.');
-            let gravadoNuvem=false;
-            if(validacao.modo==='nuvem') {
-                const {error}=await _supabase.from('agendamentos').update({plano_id:planoId}).eq('id',agendamentoDetalheAtualId);
-                if(!error) gravadoNuvem=true;
-                else if(!/plano_id|schema cache|column .* does not exist/i.test(String(error.message||''))) throw error;
-            }
-            if(gravadoNuvem) {
-                if(typeof removerVinculoAgendaLocal==='function') removerVinculoAgendaLocal(agendamentoDetalheAtualId);
-            } else if(typeof salvarVinculoAgendaLocal==='function') {
-                salvarVinculoAgendaLocal(agendamentoDetalheAtualId, planoId, a.paciente_id, a.procedimento_id, a.status || 'agendado');
-            }
-            a.plano_id=planoId;
+            const {error}=await _supabase.rpc('kinesys_vincular_contrato',{p_agendamento_id:agendamentoDetalheAtualId,p_plano_id:planoId});
+            if(error)throw error;
         }
-        invalidarCacheAgendaSemana();
-        fecharModal('modal_detalhe_agendamento');
-        await renderizarPainelAgenda();
+        if(typeof removerVinculoAgendaLocal==='function')removerVinculoAgendaLocal(agendamentoDetalheAtualId);
+        invalidarCacheAgendaSemana();fecharModal('modal_detalhe_agendamento');await renderizarPainelAgenda();
         if(typeof atualizarFinanceiroAposAgenda==='function')await atualizarFinanceiroAposAgenda();
-    } catch(err) {
-        alert('Não foi possível vincular o pacote.\n\n'+(err.message||err));
-    }
+    }catch(err){alert('Não foi possível vincular a contratação: '+(err.message||err));}
 }
 
 async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
@@ -4016,3 +3998,4 @@ async function irParaHorarioAtualAgenda() {
     if (linha) linha.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'});
     else mostrarFeedbackAgenda('O horário atual está fora da faixa de horários exibida na grade de hoje.', 'info');
 }
+
