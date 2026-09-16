@@ -602,15 +602,6 @@ if (document.readyState === 'loading') {
     inicializarEventosDomAgenda();
 }
 
-function fecharModal(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('ativa');
-}
-function abrirModal(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('ativa');
-}
-
 function irParaSubtelaAgenda(id) {
     if (!usuarioPodeVerAgendaClinicaToda() && id !== 'agenda_painel') return;
     if (!usuarioEhAdministradorAgenda() && ['agenda_procedimentos','agenda_horarios','agenda_bloqueios'].includes(id)) return;
