@@ -66,7 +66,7 @@
     C('cervical_posop_complicacao',118,'Complicação pós-operatória cervical — excluir',{urgente:true,bancoId:null,minScore:4.2,termos:['depois da cirurgia cervical piorou a fraqueza','cirurgia cervical e febre','cirurgia cervical com secrecao','disfagia piorando depois da cirurgia cervical'],perguntas:['Após a cirurgia houve nova fraqueza/dormência, febre, secreção, disfagia progressiva ou dor desproporcional?'],objetivos:['Comparar déficit atual ao estado pré/pós-operatório imediato','Priorizar contato com equipe cirúrgica/avaliação médica quando houver deterioração neurológica ou sinais de complicação']}),
     C('instabilidade_craniocervical',115,'Instabilidade Craniocervical — hipótese de segurança',{urgente:false,minScore:3.6,termos:['instabilidade no pescoco','artrite reumatoide e pescoco instavel','ehlers danlos e pescoco instavel','pescoco parece sair do lugar'],perguntas:['Há trauma importante, doença inflamatória/tecido conjuntivo ou cirurgia cervical alta?','Existem sintomas neurológicos, sensação de instabilidade ou apreensão incompatíveis com quadro mecânico simples?'],objetivos:['Priorizar história/fatores de risco e exame neurológico','Evitar confiar em teste ligamentar isolado para autorizar manipulação']}),
     C('pos_operatorio_cervical',108,'Pós-operatório Cervical — artrodese / discectomia / descompressão',{minScore:2.8,termos:['artrodese cervical','discectomia cervical','cirurgia cervical','pos operatorio cervical','descompressao cervical'],perguntas:['Qual procedimento, data, níveis e restrições atuais?','Como estão dor, função e déficit neurológico em relação ao pré-operatório?'],objetivos:['Respeitar restrições do cirurgião e fase de consolidação','Quantificar função, ADM/tolerância e estado neurológico sem progressão automática por tempo']}),
-    C('radiculopatia_cervical',104,'Radiculopatia Cervical — cluster de exame',{minScore:3.0,termos:['formigamento no braco','formigamento na mao','dormencia no braco','choque descendo pelo braco','dor do pescoco ate a mao','fraqueza no braco'],perguntas:['A dor/parestesia segue distribuição consistente e é modificada pela cervical?','Há alteração de miótomo, dermátomo ou reflexo concordante?'],objetivos:['Mapear dermátomos, miótomos e reflexos','Interpretar Spurling, distração, ULTT e rotação cervical em conjunto, não isoladamente','Comparar com neuropatias periféricas e dor de ombro/cotovelo/punho']}),
+    C('radiculopatia_cervical',104,'Radiculopatia Cervical — cluster de exame',{minScore:3.0,termos:['formigamento no braco','formigamento na mao','dormencia no braco','choque descendo pelo braco','dor do pescoco ate a mao','dor na cervical irradiando para mao','dor cervical irradiando para mao','irradiacao para a mao','fraqueza no braco'],perguntas:['A dor/parestesia segue distribuição consistente e é modificada pela cervical?','Há alteração de miótomo, dermátomo ou reflexo concordante?'],objetivos:['Mapear dermátomos, miótomos e reflexos','Interpretar Spurling, distração, ULTT e rotação cervical em conjunto, não isoladamente','Comparar com neuropatias periféricas e dor de ombro/cotovelo/punho']}),
     C('dor_cervical_padrao_irradiado',100,'Dor Cervical com Padrão Irradiado — sem confirmação radicular',{minScore:2.8,termos:['dor do pescoco para o ombro','dor do pescoco para escapula','dor do pescoco para o braco','pescoco irradia'],perguntas:['A dor irradiada é modificada pela cervical sem déficit sensitivo/motor/reflexo?'],objetivos:['Reproduzir/modificar a dor com movimento cervical de forma graduada','Manter exame neurológico para não perder radiculopatia emergente']}),
     C('dor_cervical_coordenacao_movimento',98,'Dor Cervical com Déficit de Coordenação do Movimento / pós-trauma',{minScore:3.0,termos:['whiplash','chicote cervical','batida de carro','acidente de carro','dor cervical apos acidente'],perguntas:['O quadro começou após aceleração-desaceleração e persistem intolerância ao movimento, fadiga ou alteração de controle?','Há tontura, hipersensibilidade, sintomas de concussão ou sinais de segurança que mudam a prioridade?'],objetivos:['Excluir lesão estrutural/vascular/neurológica antes de classificar whiplash','Avaliar ROM, resistência/controle cervical, função e sintomas sensório-motores conforme irritabilidade']}),
     C('cefaleia_cervicogenica',96,'Cefaleia Cervicogênica — investigar relação causal',{minScore:3.0,termos:['dor de cabeca que comeca no pescoco','dor da nuca para a testa','cefaleia ao virar o pescoco','dor de cabeca piora mexendo o pescoco'],perguntas:['A cefaleia familiar começa/é reproduzida pela cervical e existe limitação concordante?','Há características migranosas ou red flags que expliquem melhor a cefaleia?'],objetivos:['Caracterizar a cefaleia antes dos testes cervicais','Avaliar ADM cervical e CFRT quando seguro, buscando reprodução da cefaleia familiar','Diferenciar de migrânea, tipo tensão, neuralgia occipital e causas secundárias']}),
@@ -139,11 +139,11 @@
     const esfincter=/(?:urgencia urinaria|retencao urinaria|incontinencia urinaria|perdeu controle da urina|alteracao intestinal nova)/.test(t)&&!negado(t,'urgencia urinaria|retencao urinaria|incontinencia|alteracao intestinal')&&!esfincterCronicoEstavel;
     const dominiosMielo=contar([destreza,marcha,tratoLongo,bilateralMulti,esfincter]);
 
-    const parestesiaNegada=negado(t,'formig\\w*|dormen\\w*|adormec\\w*|amortec\\w*|choque');
-    const neuroDistal=/(?:formig|dormen|adormec|amortec|choque).{0,70}(?:braco|antebraco|mao|dedo|polegar|indicador|medio|anelar|mindinho)|(?:braco|antebraco|mao|dedo|polegar|indicador|medio|anelar|mindinho).{0,70}(?:formig|dormen|adormec|amortec|choque)/.test(t)&&!parestesiaNegada;
+    const parestesiaNegada=negado(t,'formig\\w*|dormen\\w*|adormec\\w*|amortec\\w*|parestes\\w*|choque');
+    const neuroDistal=/(?:formig|dormen|adormec|amortec|parestes|choque).{0,70}(?:braco|antebraco|mao|dedo|polegar|indicador|medio|anelar|mindinho)|(?:braco|antebraco|mao|dedo|polegar|indicador|medio|anelar|mindinho).{0,70}(?:formig|dormen|adormec|amortec|parestes|choque)/.test(t)&&!parestesiaNegada;
     const fraquezaDistal=/(?:fraqueza|perdeu forca|sem forca).{0,55}(?:braco|mao|dedo|triceps|biceps)|(?:braco|mao).{0,55}(?:fraqueza|perdeu forca)/.test(t)&&!negado(t,'fraqueza|perdeu forca|sem forca');
-    const cervicalModula=/(?:virar|viro|vira|virou|mexer|mexo|mexe|inclinar|inclino|estender|estendo|olhar|olho).{0,30}(?:pescoco|cabeca).{0,70}(?:piora|melhora|aumenta|reduz|formig|choque|braco|mao)|(?:pescoco|cervical).{0,55}(?:piora|melhora|reproduz).{0,55}(?:braco|mao|formig|choque)/.test(t);
-    const cervicalNaoModula=/(?:mexer|virar|inclinar).{0,30}(?:pescoco|cabeca).{0,35}(?:nao muda|nao piora|nao reproduz|sem efeito)/.test(t);
+    const cervicalNaoModula=/(?:mexer|virar|inclinar|movimento).{0,30}(?:pescoco|cabeca|cervical).{0,35}(?:nao muda|nao piora|nao reproduz|sem efeito)|(?:pescoco|cervical).{0,35}(?:nao muda|nao piora|nao reproduz|sem efeito)/.test(t);
+    const cervicalModula=!cervicalNaoModula&&/(?:virar|viro|vira|virou|mexer|mexo|mexe|inclinar|inclino|estender|estendo|olhar|olho).{0,30}(?:pescoco|cabeca).{0,70}(?:piora|melhora|aumenta|reduz|formig|choque|braco|mao)|(?:pescoco|cervical).{0,55}(?:piora|melhora|reproduz).{0,55}(?:braco|mao|formig|choque)/.test(t);
     const irradiacao=/(?:dor|sintoma).{0,20}(?:sai|parte|vem).{0,20}(?:pescoco|nuca).{0,80}(?:escapula|ombro|braco|antebraco|mao)|(?:pescoco|cervical).{0,45}(?:irradia|desce|vai).{0,55}(?:escapula|ombro|braco|mao)/.test(t);
     const medianoDistal=/(?:polegar|indicador|medio).{0,55}(?:dormen|formig)|(?:dormen|formig).{0,55}(?:polegar|indicador|medio)/.test(t)&&/(?:noite|madrugada|dirig|celular|sacud)/.test(t)&&!cervicalModula;
     const ulnarDistal=/(?:anelar|mindinho|quarto|quinto).{0,55}(?:dormen|formig)|(?:dormen|formig).{0,55}(?:anelar|mindinho|quarto|quinto)/.test(t)&&/(?:cotovelo.{0,20}(?:dobrad|dobro|flex)|(?:apoio|apoia|apoiado).{0,20}cotovelo|guidao|palma)/.test(t)&&!cervicalModula;
@@ -201,9 +201,11 @@
       if(historiaRemotaResolvida){score=-5;hits=[];}
     }
     if(cond.id==='radiculopatia_cervical'){
+      if(/radiculopatia cervical|sinais radiculares|comprometimento radicular/.test(t)&&!negado(t,'radiculopatia|radicular'))add(3.5,'suspeita radicular descrita na HMA');
       if(temCervical&&neuroDistal&&cervicalModula)add(5.2,'sintoma distal neurológico modulado pela cervical');
       else if(temCervical&&(neuroDistal||fraquezaDistal))add(3.2,'cervical + sintoma neurológico distal');
-      if(medianoDistal||ulnarDistal||ombroLocal)score-=4.5;
+      else if(temCervical&&irradiacao)add(2.2,'dor cervical irradiada para membro superior — confirmar com exame neurológico');
+      if((medianoDistal||ulnarDistal||ombroLocal)&&!cervicalModula)score-=4.5;
       if(parestesiaNegada&&!fraquezaDistal)score-=3;
       if(cervicalNaoModula&&(medianoDistal||ulnarDistal))score-=3;
     }
@@ -252,7 +254,7 @@
 
   function planoCervicalEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
-    const t=n(hma()),tem=arr(plano.regioes).some(r=>r.id==='cervical')||/(pescoco|cervical|nuca|whiplash|chicote cervical|artrodese cervical|discectomia cervical)/.test(t);if(!tem)return plano;
+    const t=n(hma()),tem=arr(plano.regioes).some(r=>r.id==='cervical');if(!tem)return plano;
     const c=contexto(),texto=textoContexto(c),fortes=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=Number(x.cond.minScore||2.2)).slice(0,10);
     const especialistas=fortes.map(x=>hipotese(x.cond,x)),existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='cervical'),base=arr(plano.hipoteses).filter(h=>h.regiaoId==='cervical'),mapa=new Map();
     [...especialistas,...base].forEach(h=>{const k=h.motor31?.condicaoId||h.id||n(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
@@ -266,21 +268,22 @@
     plano.exame.triagemCefaleiaCervical={ativa:temCefaleia,principio:'Cefaleia associada a dor cervical exige primeiro triagem de causas secundárias e fenótipo da cefaleia. Relação cervical causal só ganha força quando a cefaleia familiar é reproduzida/modulada pela cervical.',perguntas:[BASE_PERGUNTAS[5],BASE_PERGUNTAS[10],BASE_PERGUNTAS[11]],criterios:['início e padrão da cefaleia','sinais neurológicos/sistêmicos','fenótipo migranoso/tensional','reprodução cervical da cefaleia familiar']};
     const motor={versao:VERSION,regiao:'cervical',frasesReconhecidas:uniq(fortes.flatMap(x=>x.hits)),perguntas,condicoes:plano.exame.familiasCervical,correlacaoMembroSuperiorCervical:plano.exame.correlacaoMembroSuperiorCervical,triagemCefaleiaCervical:plano.exame.triagemCefaleiaCervical,aviso:'Prioridade de investigação. Segurança, neurologia e diferenciação regional precedem rótulos anatômicos; cefaleia/tontura não são cervicogênicas por associação temporal isolada.'};
     plano.motores31={...(plano.motores31||{}),cervical:motor};if(!plano.motor31)plano.motor31=motor;
-    const itens=uniq([...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.essencial)),...objetivos,...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.complementar))]).slice(0,14).map((texto,i)=>({texto,tipo:tipoObjetivo(texto),hipoteses:fortes.slice(0,4).map(x=>x.cond.rotulo),prioridade:12-i/100,motor31:true,regiaoMotor31:'cervical'})),tm=new Map();
+    const mapaItens=new Map();
+    fortes.forEach(x=>{
+      const matriz=MATRIZ_EXAME[x.cond.id]||{};
+      [...arr(matriz.essencial),...arr(x.cond.objetivos),...arr(matriz.complementar)].forEach(texto=>{
+        const chave=n(texto);if(!chave)return;
+        if(!mapaItens.has(chave))mapaItens.set(chave,{texto,hipoteses:[]});
+        mapaItens.get(chave).hipoteses.push(x.cond.rotulo);
+      });
+    });
+    const itens=[...mapaItens.values()].slice(0,14).map((x,i)=>({texto:x.texto,tipo:tipoObjetivo(x.texto),hipoteses:uniq(x.hipoteses),prioridade:12-i/100,motor31:true,regiaoMotor31:'cervical'})),tm=new Map();
     [...itens,...arr(plano.exame.testesPrioritarios)].forEach(x=>{const k=n(x.texto);if(k&&!tm.has(k))tm.set(k,x);});plano.exame.testesPrioritarios=[...tm.values()].slice(0,temMS||temCefaleia?22:17);plano.exame.analises=agrupar(plano.exame.testesPrioritarios);plano.lacunas=uniq([...arr(plano.lacunas),...perguntas.slice(0,7).map(q=>`Cervical: ${q}`)]).slice(0,22);return plano;
   }
-
-  const esc=(v='')=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-  function render(plano){
-    const host=document.getElementById('ks31_cervical_interview');if(!host)return;const m=plano?.motores31?.cervical||(plano?.motor31?.regiao==='cervical'?plano.motor31:null);if(!m){host.hidden=true;host.innerHTML='';return;}host.hidden=false;const matriz=arr(plano?.exame?.matrizCervical).slice(0,7),cross=m.correlacaoMembroSuperiorCervical,head=m.triagemCefaleiaCervical,sig=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,12),mx:matriz.map(x=>x.id),x:!!cross?.ativa,h:!!head?.ativa});if(host.dataset.ks31Signature===sig)return;host.dataset.ks31Signature=sig;
-    host.innerHTML=`<header><div><span>Motor 3.1 · Coluna Cervical</span><strong>Segurança, neurologia, cefaleia e diferenciação regional antes do rótulo</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header>${cross?.ativa?`<div class="ks31-cross-region"><strong>Cervical ↔ membro superior</strong><p>${esc(cross.principio)}</p></div>`:''}${head?.ativa?`<div class="ks31-cross-region"><strong>Cervical ↔ cefaleia/tontura</strong><p>${esc(head.principio)}</p></div>`:''}<div class="ks31-question-grid">${m.perguntas.slice(0,12).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>O motor não confirma diagnóstico por palavra-chave. Em cervical, piora neurológica, trauma relevante, padrão vascular, infecção, neoplasia e mielopatia têm prioridade sobre testes ortopédicos.</footer>`;
-  }
-  function garantirUI(){const etapa=document.getElementById('subtela_mapeamento');if(etapa&&!document.getElementById('ks31_cervical_interview')){const el=document.createElement('section');el.id='ks31_cervical_interview';el.className='ks31-cervical-interview';el.hidden=true;const o=document.getElementById('ks31_shoulder_interview'),p=document.getElementById('ks30_exam_plan');if(o)o.insertAdjacentElement('beforebegin',el);else if(p)p.insertAdjacentElement('afterend',el);else etapa.insertAdjacentElement('afterbegin',el);}}
 
   window.enriquecerPlanoCervicalKineSys=planoCervicalEspecialista;
   const anterior=window.enriquecerPlanoCotoveloKineSys;
   if(typeof anterior==='function'&&!anterior.__kinesysCervicalBridge){const ponte=function(plano){let p=anterior(plano)||plano;return planoCervicalEspecialista(p)||p;};ponte.__kinesysCervicalBridge=true;ponte.__original=anterior;window.enriquecerPlanoCotoveloKineSys=ponte;}
   window.KineSysMotor31Cervical={version:VERSION,condicoes:CONDICOES,perguntasBase:BASE_PERGUNTAS,referencias:REFERENCIAS,enriquecer:planoCervicalEspecialista};
-  document.addEventListener('kinesys:motor3-plano-atualizado',()=>{garantirUI();const p=window.KineSysMotorClinico3?.ultimoPlano;if(p)render(p);});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',garantirUI,{once:true});else garantirUI();
 })();
+
