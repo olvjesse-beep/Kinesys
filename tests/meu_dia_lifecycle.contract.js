@@ -41,7 +41,6 @@ function fixture(){
   const slow=fixture();let release;slow.setGate(new Promise(r=>release=r));slow.activate('tela_home');slow.activate('tela_agenda');slow.activate('tela_home');release();await slow.settle();assert.equal(slow.counts().writes,1,'stale initial response cannot overwrite Agenda snapshot');
   const failure=fixture();failure.setFail(true);failure.activate('tela_home');await failure.settle();const failed=failure.counts();failure.activate('tela_home');await failure.settle();assert.deepEqual(failure.counts(),failed,'Home navigation is not an implicit retry');failure.setFail(false);await failure.ctx.KineSysMeuDiaClinico.refresh();assert.equal(failure.counts().writes,1,'manual refresh recovers');
   const core=read('src/core/script-1.18.0.js'),resume=read('src/core/operational_resume_refresh-1.0.0.js'),polish=read('src/home/home_profissional_polish-1.0.0.js');
-  const dashboard=read('src/home/home_profissional_dashboard-1.0.0.js');
   for(const s of [core,resume,polish])assert.doesNotMatch(s,/carregarPainelFisioterapeuta|painel_fisio_lista|KineSysMeuDiaClinico/);
   assert.doesNotMatch(resume,/navegarPara|MutationObserver|setInterval/);assert.doesNotMatch(polish,/MutationObserver|setTimeout|dedupe|removerDuplicatas/);
   assert.match(source,/lista\.replaceChildren\(fragmento\)/);assert.doesNotMatch(source,/window\.carregarPainelFisioterapeuta/);
@@ -51,7 +50,8 @@ function fixture(){
   assert.match(source,/function pontosEvolucaoPaciente\(paciente\)/,'patient evolution chart derives its series from the selected patient only');
   assert.match(source,/av\?\.evaInicial\?\?av\?\.eva_inicial/,'evolution analysis preserves the initial assessment EVA');
   assert.match(source,/evolucoesPaciente\(paciente\)\.forEach/,'evolution analysis includes recorded follow-up EVA values');
-  assert.match(dashboard,/id='ks_prof_home_support'|id="ks_prof_home_support"|apoio\.id='ks_prof_home_support'/,'professional Home keeps a dedicated support column');
+  const dashboard=read('src/home/home_profissional_dashboard-1.0.0.js');
+  assert.match(dashboard,/apoio\.id='ks_prof_home_support'/,'professional Home keeps a dedicated support column');
   assert.match(dashboard,/ks-prof-priorities-card/,'professional Home keeps priorities beside the clinical day');
   const menu=read('src/ui/menu_dropdown-1.0.0.js');vm.runInContext(menu,f.ctx);assert.equal(typeof f.ctx.fecharMenu,'function');assert.doesNotThrow(()=>f.ctx.fecharMenu());
   const design=read('src/core/design_system-1.20.1.js');const handler=design.slice(design.indexOf('    function fecharConfiguracoesAgendaAoClicarFora'),design.indexOf("    document.addEventListener('click',fecharConfiguracoesAgendaAoClicarFora)"));vm.runInContext(handler,f.ctx);assert.doesNotThrow(()=>f.ctx.fecharConfiguracoesAgendaAoClicarFora({target:new Element()}),'removed Agenda controls do not throw null.contains');
