@@ -564,6 +564,14 @@
   color:#fff!important;
 }
 #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-record-done{color:#baf3d7!important}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-painel-vazio{
+  margin:18px 0!important;
+  padding:22px!important;
+  border:1px dashed rgba(226,255,250,.28)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.055)!important;
+  color:rgba(241,255,253,.82)!important;
+}
 
 .ks-fisio-evolution-dialog{
   width:min(760px,calc(100vw - 28px));

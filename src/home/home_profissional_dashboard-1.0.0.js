@@ -53,6 +53,8 @@
         if(recente){recente.hidden=true;recente.dataset.profHomeLegacyHidden='1';}
         const pend=document.getElementById('card_pendencias_clinicas');
         if(pend){pend.hidden=true;pend.dataset.profHomeLegacyHidden='1';}
+        const crm=document.getElementById('card_crm');
+        if(crm){crm.hidden=true;crm.dataset.profHomeLegacyHidden='1';}
         home.querySelectorAll('.card').forEach(card=>{
             if(card.id==='card_painel_fisioterapeuta'||card.id==='ks_prof_home_workspace')return;
             const texto=String(card.querySelector('h2')?.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -88,11 +90,13 @@
         esconderCardsLegados();
         const hero=document.getElementById('ks_home_hero');
         const eyebrow=hero?.querySelector('.ks-eyebrow');
+        const dataHero=document.getElementById('ks_home_date');
         const agendaHero=hero?.querySelector('.ks-home-primary');
         if(eyebrow){
             if(!eyebrow.dataset.profHomeOriginal)eyebrow.dataset.profHomeOriginal=eyebrow.textContent||'PAINEL OPERACIONAL';
             eyebrow.textContent='ÂNCORA CLÍNICA';
         }
+        if(dataHero)dataHero.textContent=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date());
         if(agendaHero){agendaHero.hidden=true;agendaHero.dataset.profHomeHidden='1';}
 
         const header=painel.querySelector('.card-header');
