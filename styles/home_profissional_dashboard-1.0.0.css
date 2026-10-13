@@ -88,6 +88,262 @@
   .ks-prof-home-active #card_crm{margin-top:0}
 }
 
+/* Home profissional — direção Âncora clínica (Product Design, 2026-10-13). */
+#tela_home.ks-prof-home-active{
+  max-width:1500px;
+}
+#tela_home.ks-prof-home-active .ks-home-hero{
+  padding:10px 4px 22px;
+  margin:0 0 22px;
+}
+#tela_home.ks-prof-home-active .ks-home-hero .ks-eyebrow{
+  color:var(--kds-muted);
+  letter-spacing:.04em;
+}
+#tela_home.ks-prof-home-active .ks-home-hero h2{
+  font-size:clamp(2rem,3vw,2.8rem)!important;
+  letter-spacing:-.045em;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-focus{
+  display:grid;
+  grid-template-columns:minmax(280px,.68fr) minmax(620px,1.55fr);
+  align-items:stretch;
+  gap:18px;
+  margin:0 0 18px;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support{
+  display:grid;
+  align-content:start;
+  gap:12px;
+  min-width:0;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support>.ks-prof-home-module{
+  width:100%;
+  min-width:0;
+  margin:0!important;
+  border:1px solid rgba(215,228,229,.92)!important;
+  border-radius:18px!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:0 15px 34px rgba(15,65,68,.065)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(120%);
+  backdrop-filter:blur(16px) saturate(120%);
+  overflow:hidden;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-title,
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-head{
+  padding:18px 18px 10px;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-title strong,
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-head strong{
+  color:var(--kds-petrol-deep);
+  font-size:1.08rem;
+  letter-spacing:-.018em;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-title em{
+  margin-top:3px;
+  color:var(--kds-muted);
+  font-size:.76rem;
+  font-style:normal;
+}
+.ks-prof-priorities-list{display:grid;padding:0 14px 14px}
+.ks-prof-priority-item{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) 16px;
+  align-items:center;
+  gap:10px;
+  min-height:43px;
+  padding:5px 4px;
+  border:0;
+  border-bottom:1px solid var(--kds-line-soft);
+  background:transparent;
+  color:var(--kds-text-secondary);
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.ks-prof-priority-item:last-child{border-bottom:0}
+.ks-prof-priority-item:hover,.ks-prof-priority-item:focus-visible{color:var(--kds-accent);background:var(--kds-accent-soft);outline:0}
+.ks-prof-priority-item strong{
+  display:grid;
+  place-items:center;
+  width:29px;
+  height:29px;
+  border-radius:999px;
+  background:#e7f3f1;
+  color:var(--kds-petrol-deep);
+  font-size:.78rem;
+}
+.ks-prof-priority-item:first-child strong{background:#f9e9de;color:#9a5028}
+.ks-prof-priority-item span{font-size:.8rem;font-weight:650}
+.ks-prof-priority-item i{color:#8ca0a3;font-size:1.15rem;font-style:normal;text-align:center}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-notification-list{padding:0 14px 14px}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-notification-item{
+  min-height:50px;
+  padding:8px 4px;
+  border:0;
+  border-bottom:1px solid var(--kds-line-soft);
+  border-radius:0;
+  background:transparent;
+}
+#tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-month-card .ks-prof-module-sub{padding:0 18px 16px}
+#tela_home.ks-prof-home-active .ks-prof-home-workspace{display:contents}
+
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta.ks-fisio-util-compact{
+  align-self:stretch;
+  width:100%!important;
+  min-width:0;
+  margin:0!important;
+  border:1px solid rgba(109,222,209,.74)!important;
+  border-radius:20px!important;
+  background:
+    linear-gradient(145deg,rgba(35,119,115,.96),rgba(9,77,80,.98))!important;
+  box-shadow:0 20px 48px rgba(8,61,64,.22),inset 0 1px rgba(255,255,255,.2)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(135%);
+  backdrop-filter:blur(20px) saturate(135%);
+  color:#f4fffd;
+  overflow:hidden;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta.ks-fisio-util-compact>.card-header{
+  align-items:flex-start!important;
+  padding:27px 28px 14px!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .eyebrow{
+  color:rgba(235,255,251,.78)!important;
+  font-size:.72rem!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta #painel_fisio_titulo{
+  color:#fff!important;
+  font-size:clamp(1.65rem,2.3vw,2.18rem)!important;
+  letter-spacing:-.035em!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-header-actions{gap:7px}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-header-actions>button{
+  min-height:39px!important;
+  padding:7px 12px!important;
+  border:1px solid rgba(226,255,250,.3)!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.075)!important;
+  color:#f7fffd!important;
+  box-shadow:none!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-header-actions>button:hover,
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-header-actions>button:focus-visible{
+  border-color:rgba(235,255,252,.68)!important;
+  background:rgba(255,255,255,.14)!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta #ks_prof_pendencias_btn.has-pending{
+  border-color:#f0caa9!important;
+  background:#fff3e9!important;
+  color:#6f4529!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta #painel_fisio_resumo{
+  margin:0 28px!important;
+  padding:0 0 18px!important;
+  border-bottom:1px solid rgba(224,255,250,.22)!important;
+  background:transparent!important;
+  color:rgba(235,255,251,.8)!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-painel-lista{
+  display:block!important;
+  padding:0 28px 18px!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row{
+  grid-template-columns:82px minmax(0,1fr) auto;
+  min-height:116px;
+  gap:15px;
+  padding:18px 0;
+  border:0!important;
+  border-bottom:1px solid rgba(224,255,250,.2)!important;
+  border-radius:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  opacity:1;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row:last-child{border-bottom:0!important}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-time{padding-right:12px;border-right:1px solid rgba(224,255,250,.42)}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-time>strong,
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-patient-name{color:#fff!important}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-status,
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-category{color:rgba(241,255,253,.9)!important}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-detail{color:rgba(230,249,246,.72)!important}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{max-width:255px}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions button{
+  min-height:40px!important;
+  padding:7px 11px!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions .ks-fisio-analysis-btn{
+  border:1px solid rgba(226,255,250,.38)!important;
+  background:rgba(255,255,255,.07)!important;
+  color:#f5fffd!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions .btn-primary{
+  border:1px solid rgba(140,249,233,.7)!important;
+  background:linear-gradient(180deg,#24a99e,#15887f)!important;
+  color:#fff!important;
+}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-record-done{color:#baf3d7!important}
+
+.ks-fisio-evolution-dialog{
+  width:min(760px,calc(100vw - 28px));
+  max-height:min(86vh,760px);
+  padding:0;
+  border:1px solid rgba(205,224,223,.95);
+  border-radius:20px;
+  background:rgba(250,253,253,.97);
+  color:var(--kds-text);
+  box-shadow:0 26px 80px rgba(11,42,45,.28);
+  overflow:auto;
+}
+.ks-fisio-evolution-dialog::backdrop{background:rgba(9,35,38,.52);backdrop-filter:blur(5px)}
+.ks-fisio-evolution-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px 16px;border-bottom:1px solid var(--kds-line-soft)}
+.ks-fisio-evolution-head span{color:var(--kds-accent);font-size:.7rem;font-weight:760;letter-spacing:.07em}
+.ks-fisio-evolution-head h2{margin:3px 0 2px;color:var(--kds-petrol-deep);font-size:1.42rem;letter-spacing:-.025em}
+.ks-fisio-evolution-head p{margin:0;color:var(--kds-muted);font-size:.82rem}
+.ks-fisio-evolution-head button{display:grid;place-items:center;width:42px;height:42px;padding:0;border:1px solid var(--kds-line);border-radius:11px;background:#fff;color:var(--kds-text-secondary);font-size:1.3rem;cursor:pointer}
+.ks-fisio-evolution-body{display:grid;gap:18px;padding:20px 24px 24px}
+.ks-fisio-evolution-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ks-fisio-evolution-summary>span{display:grid;gap:4px;padding:12px 14px;border:1px solid var(--kds-line-soft);border-radius:12px;background:#fff}
+.ks-fisio-evolution-summary small{color:var(--kds-muted);font-size:.72rem}
+.ks-fisio-evolution-summary strong{color:var(--kds-petrol-deep);font-size:.92rem}
+.ks-fisio-evolution-chart{display:block;width:100%;height:auto;border:1px solid var(--kds-line-soft);border-radius:14px;background:#fff}
+.ks-fisio-chart-grid line{stroke:#e2eceb;stroke-width:1}
+.ks-fisio-chart-grid text,.ks-fisio-chart-point text{fill:#6f8588;font-size:11px;font-family:inherit}
+.ks-fisio-chart-line{fill:none;stroke:#168d83;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.ks-fisio-chart-point circle{fill:#fff;stroke:#168d83;stroke-width:4}
+.ks-fisio-evolution-legend{display:flex;align-items:center;justify-content:space-between;gap:14px;color:var(--kds-muted);font-size:.76rem}
+.ks-fisio-evolution-legend span{display:flex;align-items:center;gap:7px;color:var(--kds-text-secondary);font-weight:680}
+.ks-fisio-evolution-legend i{width:9px;height:9px;border-radius:999px;background:#168d83}
+.ks-fisio-evolution-empty{display:grid;gap:6px;padding:34px 22px;border:1px dashed var(--kds-line);border-radius:14px;background:var(--kds-surface-soft);text-align:center}
+.ks-fisio-evolution-empty strong{color:var(--kds-petrol-deep)}
+.ks-fisio-evolution-empty span{color:var(--kds-muted);font-size:.82rem}
+
+@media(max-width:1180px){
+  #tela_home.ks-prof-home-active .ks-prof-home-focus{grid-template-columns:minmax(250px,.7fr) minmax(500px,1.4fr)}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row{grid-template-columns:70px minmax(0,1fr)}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{grid-column:2;justify-content:flex-start;max-width:none}
+}
+@media(max-width:900px){
+  #tela_home.ks-prof-home-active .ks-prof-home-focus{grid-template-columns:minmax(0,1fr)}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta{grid-row:1}
+  #tela_home.ks-prof-home-active .ks-prof-home-support{grid-row:2}
+}
+@media(max-width:620px){
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta.ks-fisio-util-compact>.card-header{padding:18px 16px 12px!important}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta #painel_fisio_resumo{margin:0 16px!important;padding-bottom:13px!important}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-painel-lista{padding:0 16px 12px!important}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row{grid-template-columns:1fr;min-height:0;padding:15px 0}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-time{display:flex;padding-right:0;border-right:0}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{grid-column:1}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions button{flex:1 1 145px}
+  .ks-fisio-evolution-summary{grid-template-columns:1fr}
+  .ks-fisio-evolution-body{padding:16px}
+  .ks-fisio-evolution-legend{align-items:flex-start;flex-direction:column}
+}
+
 /* Home profissional — polish mobile r5 (hierarquia, densidade e toque). */
 @media(max-width:620px){
   .ks-prof-home-active{--ks-prof-gap:8px}
@@ -355,3 +611,5 @@
   .ks-prof-home-active .ks-prof-module-title{padding-left:13px!important;padding-right:13px!important}
   .ks-prof-home-active .ks-prof-module-sub{padding-left:13px!important;padding-right:13px!important}
 }
+
+
