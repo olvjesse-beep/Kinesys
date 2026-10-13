@@ -38,6 +38,9 @@
     storageSet('kinesys_paciente_contexto','');
     let contextoRevisao = 0;
     let buscaRevisao = 0;
+    let paginaProntuarios = 1;
+    let filtroProntuariosAtivo = "";
+    let pacientesProntuariosCarregados = null;
     function identidadePaciente(){
         const u=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
         return u?[u.auth_user_id,u.id,u.tipo,u.clinica_id].join('|'):'';
@@ -247,7 +250,7 @@
             if(window.innerWidth>820&&document.body.classList.contains('ks-nav-open')) setNavOpen(false);
         },{passive:true});
         ctx.querySelector('.ks-patient-change').onclick=async()=>{if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);await definirPacienteContexto('');window.navegarPara('tela_buscar');setTimeout(()=>{const busca=document.getElementById('input_busca_paciente');busca?.focus();busca?.scrollIntoView({block:'center',behavior:'smooth'});},60);};
-        ctx.querySelector('.ks-patient-clear').onclick=async()=>{if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);await definirPacienteContexto('');const tela=document.querySelector('.tela.ativa')?.id||'';const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};const sel=document.getElementById(ids[tela]||'');if(sel){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}));setTimeout(()=>sel.focus(),30);}};
+        ctx.querySelector('.ks-patient-clear').onclick=async()=>{if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);await definirPacienteContexto('');const tela=document.querySelector('.tela.ativa')?.id||'';const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};const sel=document.getElementById(ids[tela]||'');if(sel){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}));const campo=document.getElementById(sel.id+'_busca')||sel;setTimeout(()=>campo.focus(),30);}};
         ctx.querySelectorAll('[data-patient-target]').forEach(btn=>btn.addEventListener('click',()=>abrirPacienteNaTela(btn.dataset.patientTarget)));
         setTimeout(()=>{ if(typeof window.renderizarIndicadorNotificacoesAgenda==='function') window.renderizarIndicadorNotificacoesAgenda(); },0);
     }
@@ -266,6 +269,7 @@
         const mobileMenu=document.getElementById('ks_mobile_menu'); if(mobileMenu) mobileMenu.setAttribute('aria-expanded','false');
         if(id==='tela_home')setTimeout(atualizarHomeOperacional,80);
         if(id==='tela_buscar'){
+            pacientesProntuariosCarregados=null;
             // A tela Pacientes inicia sempre sem prontuário ativo. O contexto
             // só nasce após uma escolha explícita no resultado da busca.
             limparSelecaoPaciente();
@@ -317,7 +321,7 @@
         atualizarSeletoresContexto(tela,p);
         if(!p||!telaAtendimento){ctx.hidden=true;return;}
         ctx.hidden=false;ctx.querySelector('#ks_patient_name').textContent=p.nome||'Paciente';
-        const meta=[]; const idade=(typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade)||''; if(idade)meta.push(String(idade).replace(/\s*anos?/i,'')+' anos');if(p.profissao)meta.push(p.profissao);const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):(p.avaliacoes||[]);if(avs.length)meta.push(`${avs.length} avaliação(ões)`);ctx.querySelector('#ks_patient_meta').textContent=meta.join(' · ')||'Prontuário ativo';ctx.querySelector('.ks-patient-avatar').textContent=(p.nome||'P').trim().charAt(0).toUpperCase();
+        const meta=[]; const idade=(typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade)||''; if(idade)meta.push(String(idade).replace(/\s*anos?/i,'')+' anos');if(p.profissao)meta.push(p.profissao);const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):(p.avaliacoes||[]);if(avs.length)meta.push(`${avs.length} ${avs.length===1?'avaliação':'avaliações'}`);ctx.querySelector('#ks_patient_meta').textContent=meta.join(' · ')||'Prontuário ativo';ctx.querySelector('.ks-patient-avatar').textContent=(p.nome||'P').trim().charAt(0).toUpperCase();
         ctx.querySelectorAll('[data-patient-target]').forEach(b=>{b.hidden=typeof window.telaPermitida==='function'&&!window.telaPermitida(b.dataset.patientTarget);});
     }
     async function selecionarPacienteControle(idControle, pacienteId, disparar=true){
@@ -446,7 +450,7 @@
     }
     function escutarSeletoresPaciente(){
         sincronizarIdentidadeContexto();
-        PACIENTE_SELECTS.forEach(id=>{const el=document.getElementById(id);if(!el||el.dataset.ksContextListener)return;el.dataset.ksContextListener='1';el.addEventListener('change',()=>{if(el.value)definirPacienteContexto(el.value);});});
+        PACIENTE_SELECTS.forEach(id=>{const el=document.getElementById(id);if(!el||el.dataset.ksContextListener)return;el.dataset.ksContextListener='1';el.addEventListener('change',()=>definirPacienteContexto(el.value));});
     }
 
     /* -------------------------- Home operacional -------------------------- */
@@ -472,6 +476,8 @@
         const card=tela.querySelector('.card');if(!card)return;card.classList.add('ks-prontuario-search-card');const cardTitle=card.querySelector('.card-header h2');if(cardTitle)cardTitle.textContent='Pacientes cadastrados';
         const resumo=document.createElement('div');resumo.id='ks_prontuario_resumo';resumo.className='ks-prontuario-resumo';resumo.hidden=true;card.parentNode.insertBefore(resumo,card);
         const cards=document.createElement('div');cards.id='ks_prontuario_cards';cards.className='ks-prontuario-cards';card.appendChild(cards);
+        const paginacao=document.createElement('nav');paginacao.id='ks_prontuario_paginacao';paginacao.className='ks-prontuario-paginacao';paginacao.setAttribute('aria-label','Páginas de pacientes');card.appendChild(paginacao);
+        paginacao.addEventListener('click',event=>{const botao=event.target.closest('button[data-pagina]');if(!botao||botao.disabled)return;paginaProntuarios=Number(botao.dataset.pagina)||1;renderProntuarioCards(filtroProntuariosAtivo);});
         vincularAcoesProntuario();
 
         const input=document.getElementById('input_busca_paciente');if(input){input.placeholder='Buscar por nome, CPF ou telefone…';const grp=input.closest('.input-group');if(grp)grp.classList.add('ks-search-field');}
@@ -480,17 +486,26 @@
         const c=document.getElementById('ks_prontuario_cards');if(!c||typeof window.obterPacientesSalvos!=='function')return;
         const revisao=++buscaRevisao;
         const q=String(filtro!==undefined?filtro:document.getElementById('input_busca_paciente')?.value||'').trim().toLowerCase();
-        if(!q){c.innerHTML='<div class="ks-empty">Digite o nome, CPF ou telefone e selecione um paciente.</div>';return;}
+        if(q!==filtroProntuariosAtivo){filtroProntuariosAtivo=q;paginaProntuarios=1;}
         try{
-            const lista=await window.obterPacientesSalvos();if(revisao!==buscaRevisao)return;
+            const lista=pacientesProntuariosCarregados||await window.obterPacientesSalvos();if(revisao!==buscaRevisao)return;pacientesProntuariosCarregados=lista;
             const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
             const digitos=q.replace(/\D/g,'');
-            const itens=(lista||[]).filter(p=>norm(p.nome).includes(norm(q))||(digitos.length>0&&(String(p.cpf||'').replace(/\D/g,'').includes(digitos)||String(p.telefone||'').replace(/\D/g,'').includes(digitos))));
-            if(!itens.length){c.innerHTML='<div class="ks-empty">Nenhum paciente encontrado.</div>';return;}
-            c.innerHTML=itens.map(p=>{
+            const itens=(lista||[]).filter(p=>!q||norm(p.nome).includes(norm(q))||(digitos.length>0&&(String(p.cpf||'').replace(/\D/g,'').includes(digitos)||String(p.telefone||'').replace(/\D/g,'').includes(digitos)))).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base'}));
+            const paginacao=document.getElementById('ks_prontuario_paginacao');
+            if(!itens.length){c.innerHTML='<div class="ks-empty">Nenhum paciente encontrado.</div>';if(paginacao)paginacao.hidden=true;return;}
+            const totalPaginas=Math.ceil(itens.length/10);paginaProntuarios=Math.min(Math.max(1,paginaProntuarios),totalPaginas);
+            const inicio=(paginaProntuarios-1)*10;
+            const paginaItens=itens.slice(inicio,inicio+10);
+            c.innerHTML=paginaItens.map(p=>{
                 const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):p.avaliacoes||[];const ev=p.evolucoes||[];const av=avs[avs.length-1];const ult=ev.slice().sort((a,b)=>String(b.data||b.dataHoraISO||'').localeCompare(String(a.data||a.dataHoraISO||'')))[0];const id=escapeHTMLDS(p.id);const idade=typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade;
-                return `<article class="ks-patient-card ${String(p.id)===String(pacienteContextoId)?'active':''}"><button type="button" class="ks-patient-card-main" data-ks-patient-action="selecionar" data-patient-id="${id}"><span class="ks-patient-initial">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><span class="ks-patient-card-copy"><strong>${escapeHTMLDS(p.nome||'Paciente')}</strong><small>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||''].filter(Boolean).join(' · ')||'Cadastro administrativo')}</small><em>${av?`${avs.length} avaliação(ões)`:'Sem avaliação finalizada'}${ult?` · Última evolução ${escapeHTMLDS(ult.data||'')}`:''}</em></span></button><div class="ks-patient-card-actions"><button type="button" data-ks-patient-action="evolucao" data-patient-id="${id}">Evolução</button><button type="button" data-ks-patient-action="documentos" data-patient-id="${id}">Documentos</button><button type="button" data-ks-patient-action="prontuario" data-patient-id="${id}">PDF</button><button type="button" class="ks-more" data-ks-patient-action="editar" data-patient-id="${id}">Editar</button></div></article>`;
+                const contagemAvaliacoes=`${avs.length} ${avs.length===1?'avaliação':'avaliações'}`;
+                return `<article class="ks-patient-card ${String(p.id)===String(pacienteContextoId)?'active':''}"><button type="button" class="ks-patient-card-main" data-ks-patient-action="selecionar" data-patient-id="${id}"><span class="ks-patient-initial">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><span class="ks-patient-card-copy"><strong>${escapeHTMLDS(p.nome||'Paciente')}</strong><small>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||''].filter(Boolean).join(' · ')||'Cadastro administrativo')}</small><em>${av?contagemAvaliacoes:'Sem avaliação finalizada'}${ult?` · Última evolução ${escapeHTMLDS(ult.data||'')}`:''}</em></span></button><div class="ks-patient-card-actions"><button type="button" data-ks-patient-action="evolucao" data-patient-id="${id}">Evolução</button><button type="button" data-ks-patient-action="documentos" data-patient-id="${id}">Documentos</button><button type="button" data-ks-patient-action="prontuario" data-patient-id="${id}">Exportar PDF</button><button type="button" class="ks-more" data-ks-patient-action="editar" data-patient-id="${id}">Editar</button></div></article>`;
             }).join('');
+            if(paginacao){
+                paginacao.hidden=false;
+                paginacao.innerHTML='<span>Mostrando '+(inicio+1)+'–'+Math.min(inicio+10,itens.length)+' de '+itens.length+' pacientes</span><div><button type="button" data-pagina="'+(paginaProntuarios-1)+'" aria-label="Página anterior" '+(paginaProntuarios===1?'disabled':'')+'>‹</button><span>Página '+paginaProntuarios+' de '+totalPaginas+'</span><button type="button" data-pagina="'+(paginaProntuarios+1)+'" aria-label="Próxima página" '+(paginaProntuarios===totalPaginas?'disabled':'')+'>›</button></div>';
+            }
         }catch(e){if(revisao===buscaRevisao)c.innerHTML='<div class="ks-empty">Não foi possível carregar os pacientes.</div>';}
     }
     window.renderProntuarioCards=renderProntuarioCards;
@@ -512,14 +527,73 @@
         window.filtrarPacientesSalvos=function(){const v=document.getElementById('input_busca_paciente')?.value||'';return renderProntuarioCards(v);};
     }
 
+    function prepararBuscasPaciente(){
+        ['evo_paciente_select','rel_paciente_select','midia_paciente_select'].forEach(id=>{
+            const select=document.getElementById(id);
+            if(!select||select.dataset.ksBuscaInstalada)return;
+            select.dataset.ksBuscaInstalada='1';
+            const group=select.closest('.input-group');if(!group)return;
+            const label=group.querySelector('label[for="'+id+'"]');
+            const box=document.createElement('div');box.className='ks-patient-picker';
+            const input=document.createElement('input');input.type='search';input.id=id+'_busca';input.className='ks-patient-picker-input';input.placeholder='Digite o nome do paciente';input.autocomplete='off';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');
+            const list=document.createElement('div');list.className='ks-patient-picker-options';list.id=id+'_sugestoes';list.setAttribute('role','listbox');list.hidden=true;input.setAttribute('aria-controls',list.id);
+            if(label)label.htmlFor=input.id;
+            select.parentNode.insertBefore(box,select);box.append(input,list,select);select.classList.add('ks-patient-source-select');select.hidden=true;select.style.display='none';select.tabIndex=-1;select.setAttribute('aria-hidden','true');
+            const normalizar=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+            const nomeOpcao=option=>String(option?.textContent||'').replace(/\s*\(CPF:.*\)\s*$/i,'').trim();
+            const opcoes=()=>Array.from(select.options).filter(option=>option.value).sort((a,b)=>nomeOpcao(a).localeCompare(nomeOpcao(b),'pt-BR',{sensitivity:'base'}));
+            const fechar=()=>{list.hidden=true;input.setAttribute('aria-expanded','false');};
+            const escolher=option=>{select.value=option.value;input.value=nomeOpcao(option);fechar();select.dispatchEvent(new Event('change',{bubbles:true}));};
+            const mostrar=()=>{const busca=normalizar(input.value);const itens=opcoes().filter(option=>!busca||normalizar(nomeOpcao(option)).includes(busca)).slice(0,20);list.replaceChildren();if(!itens.length){const empty=document.createElement('span');empty.className='ks-patient-picker-empty';empty.textContent='Nenhum paciente encontrado';list.append(empty);}else itens.forEach(option=>{const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.textContent=nomeOpcao(option);button.addEventListener('mousedown',event=>event.preventDefault());button.addEventListener('click',()=>escolher(option));list.append(button);});list.hidden=false;input.setAttribute('aria-expanded','true');};
+            const sincronizar=()=>{const option=select.selectedOptions[0];input.value=option&&option.value?nomeOpcao(option):'';fechar();};
+            input.addEventListener('focus',mostrar);
+            input.addEventListener('input',()=>{if(select.value&&normalizar(nomeOpcao(select.selectedOptions[0]))!==normalizar(input.value)){const digitado=input.value;select.value='';select.dispatchEvent(new Event('change',{bubbles:true}));input.value=digitado;}mostrar();});
+            input.addEventListener('keydown',event=>{if(event.key==='Escape'){fechar();return;}if(event.key==='ArrowDown'){event.preventDefault();if(list.hidden)mostrar();list.querySelector('button')?.focus();}if(event.key==='Enter'&&!list.hidden){event.preventDefault();const first=list.querySelector('button');if(first)first.click();}});
+            list.addEventListener('keydown',event=>{if(event.key==='Escape'){fechar();input.focus();}else if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();const buttons=Array.from(list.querySelectorAll('button'));const index=buttons.indexOf(document.activeElement);buttons[Math.max(0,Math.min(buttons.length-1,index+(event.key==='ArrowDown'?1:-1)))]?.focus();}});
+            document.addEventListener('click',event=>{if(!box.contains(event.target))fechar();});
+            select.addEventListener('change',sincronizar);
+            new MutationObserver(sincronizar).observe(select,{childList:true,subtree:true});
+            sincronizar();
+        });
+    }
+
     /* -------------------------- Evolução -------------------------- */
     function prepararEvolucao(){
         const tela=document.getElementById('tela_evolucao');if(!tela||tela.dataset.ksPrepared)return;tela.dataset.ksPrepared='1';
         const data=document.getElementById('evo_data');if(data&&!data.value)data.value=new Date().toISOString().slice(0,10);
         const principal=tela.querySelector(':scope > .card');if(principal){
             principal.classList.add('ks-evo-main');const nested=principal.querySelectorAll(':scope > .card');
-            if(nested[0]){nested[0].classList.add('ks-evo-section','ks-evo-state');const checks=nested[0].querySelector('.checkbox-group');const mud=nested[0].querySelector('.input-group');if(checks&&mud&&!nested[0].querySelector('.ks-evo-compact-details')){const det=document.createElement('details');det.className='ks-evo-compact-details';det.innerHTML='<summary>Mudanças, intercorrências e segurança</summary><div class="ks-evo-compact-body"></div>';const body=det.querySelector('.ks-evo-compact-body');body.append(checks,mud);nested[0].appendChild(det);}}
+            if(nested[0])nested[0].classList.add('ks-evo-section','ks-evo-state');
             if(nested[1]){nested[1].classList.add('ks-evo-section','ks-evo-load');if(!nested[1].closest('.ks-evo-load-details')){const det=document.createElement('details');det.className='ks-evo-compact-details ks-evo-load-details';det.innerHTML='<summary>Resposta à carga e parâmetros da sessão</summary><div class="ks-evo-compact-body"></div>';const body=det.querySelector('.ks-evo-compact-body');nested[1].parentNode.insertBefore(det,nested[1]);body.appendChild(nested[1]);}}
+        }
+        if(principal&&!principal.querySelector('.ks-evo-workspace-top')){
+            const titulo=principal.querySelector(':scope > .card-header h2');if(titulo)titulo.textContent='Registro guiado por sessão';
+            const cabecalho=principal.querySelector(':scope > .card-header');if(cabecalho&&!cabecalho.querySelector('.ks-evo-intro')){const intro=document.createElement('p');intro.className='ks-evo-intro';intro.textContent='Registre a evolução clínica de forma estruturada e objetiva.';cabecalho.append(intro);}
+            const dados=principal.querySelector(':scope > .grid-2');
+            const duplicar=principal.querySelector(':scope > .actions');
+            const estado=principal.querySelector(':scope > .ks-evo-state');
+            const eva=principal.querySelector(':scope > .input-group:has(#eva_slider_evo)');
+            const flags=estado?.querySelector('.checkbox-group');
+            const carga=principal.querySelector(':scope > .ks-evo-load-details');
+            const relato=principal.querySelector(':scope > .input-group:has(#evo_relato)');
+            if(dados&&estado&&eva&&carga&&relato){
+                const topo=document.createElement('div');topo.className='ks-evo-workspace-top';topo.append(dados);if(cabecalho)principal.before(cabecalho,topo);else principal.before(topo);
+                const vitais=document.createElement('div');vitais.className='ks-evo-workspace-vitals';const vitaisTitulo=document.createElement('div');vitaisTitulo.className='ks-evo-vitals-heading';vitaisTitulo.innerHTML='<h3>Como o paciente está hoje?</h3><p>Compare com a sessão anterior e registre a percepção geral e a dor.</p>';estado.classList.add('ks-evo-status-card');eva.classList.add('ks-evo-eva-card');vitais.append(vitaisTitulo,estado,eva);
+                const detalhes=document.createElement('div');detalhes.className='ks-evo-workspace-details';
+                const apoio=document.createElement('div');apoio.className='ks-evo-workspace-support';
+                const apoioTitulo=document.createElement('div');apoioTitulo.className='ks-evo-details-heading';
+                apoioTitulo.innerHTML='<h3>Mudanças, intercorrências e segurança</h3><p>Registre apenas o que mudou desde a última sessão.</p>';
+                const campos=document.createElement('div');campos.className='ks-evo-change-fields';
+                campos.innerHTML='<div class="input-group"><label for="evo_novo_exame_texto">Novo exame ou laudo</label><textarea id="evo_novo_exame_texto" rows="2" placeholder="Exame, data e achado relevante, se houver."></textarea></div><div class="input-group"><label for="evo_intercorrencia_texto">Nova intercorrência</label><textarea id="evo_intercorrencia_texto" rows="2" placeholder="Descreva o ocorrido e a conduta, se houver."></textarea></div><div class="input-group"><label for="evo_medicacao_texto">Mudança de medicação</label><textarea id="evo_medicacao_texto" rows="2" placeholder="Medicamento e alteração relatada, se houver."></textarea></div><div class="input-group"><label for="evo_alerta_texto">Novo sinal de alerta</label><textarea id="evo_alerta_texto" rows="2" placeholder="Descreva o sinal e a orientação adotada, se houver."></textarea></div>';
+                if(flags){flags.style.display='none';apoio.append(flags);}
+                carga.style.display='none';
+                apoio.append(apoioTitulo,campos,carga);
+                detalhes.append(apoio,relato);relato.classList.add('ks-evo-narrative-card');
+                const rodape=principal.querySelector('#btn_salvar_evolucao')?.closest('.actions');
+                const duplicarBotao=duplicar?.querySelector('button');if(duplicarBotao){duplicarBotao.textContent='Duplicar última sessão';if(rodape){rodape.prepend(duplicarBotao);duplicar?.remove();}}
+                estado.querySelectorAll('.evo-status-grid .checkbox-pill span').forEach(span=>{span.textContent=span.textContent.replace(/[↗→↘]/g,'').trim();});
+                const excecao=principal.querySelector('#bloco_excecao_sem_avaliacao');(excecao||topo).after(vitais,detalhes);if(cabecalho){const historico=document.createElement('button');historico.type='button';historico.className='btn-secondary ks-evo-history-action';historico.textContent='Ver histórico deste paciente';historico.addEventListener('click',()=>{const card=tela.querySelector(':scope > .ks-collapsible-card');if(card){card.classList.add('ks-expanded');card.scrollIntoView({behavior:'smooth',block:'start'});}});if(rodape)rodape.prepend(historico);else cabecalho.append(historico);}const salvar=principal.querySelector('#btn_salvar_evolucao');if(salvar){salvar.textContent='Salvar evolução';rodape?.append(salvar);}
+            }
         }
         const hist=tela.querySelectorAll(':scope > .card');[...hist].slice(1).forEach((card,i)=>{card.classList.add('ks-collapsible-card');const head=card.querySelector('.card-header');if(head&&!head.querySelector('.ks-collapse-toggle')){const btn=document.createElement('button');btn.type='button';btn.className='ks-collapse-toggle';btn.innerHTML=`${i===0?'Histórico de sessões':'Linha do tempo completa'} ${icon('chevron')}`;btn.onclick=()=>card.classList.toggle('ks-expanded');head.innerHTML='';head.appendChild(btn);}});
     }
@@ -568,10 +642,12 @@
     function prepararEquipe(){
         const tela=document.getElementById('tela_equipe');if(!tela||document.getElementById('ks_team_drawer'))return;const cards=tela.querySelectorAll(':scope > .card');if(cards.length<2)return;const form=cards[0],lista=cards[1];
         const hero=document.createElement('div');hero.className='ks-team-hero';hero.innerHTML=`<div><span class="ks-eyebrow">ACESSOS E PERFIS</span><h2>Usuários e acessos</h2><p>Gerencie perfis, permissões e quem pode aparecer como profissional na Agenda.</p></div><button type="button" class="btn-primary" id="ks_new_team">+ Novo usuário</button>`;tela.insertBefore(hero,form);
-        const drawer=document.createElement('div');drawer.id='ks_team_drawer';drawer.className='ks-drawer-overlay';drawer.hidden=true;const panel=document.createElement('div');panel.className='ks-drawer';panel.innerHTML=`<div class="ks-drawer-head"><div><span class="ks-eyebrow" id="ks_team_drawer_eyebrow">NOVO ACESSO</span><h2 id="ks_team_drawer_title">Cadastrar usuário</h2></div><button type="button" class="ks-drawer-close">${icon('close')}</button></div>`;form.classList.add('ks-team-form');form.querySelector('.card-header')?.remove();panel.appendChild(form);drawer.appendChild(panel);document.body.appendChild(drawer);
-        const abrir=(modo='novo')=>{const editando=modo==='editar';const eye=panel.querySelector('#ks_team_drawer_eyebrow'),title=panel.querySelector('#ks_team_drawer_title');if(eye)eye.textContent=editando?'EDITAR ACESSO':'NOVO ACESSO';if(title)title.textContent=editando?'Editar usuário':'Cadastrar usuário';drawer.hidden=false;form.scrollTop=0;requestAnimationFrame(()=>drawer.classList.add('ativa'));setTimeout(()=>document.getElementById('eq_nome')?.focus(),40);};
+        const drawer=document.createElement('div');drawer.id='ks_team_drawer';drawer.className='ks-drawer-overlay';drawer.hidden=true;const panel=document.createElement('div');panel.className='ks-drawer';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','ks_team_drawer_title');panel.innerHTML=`<div class="ks-drawer-head"><div><span class="ks-eyebrow" id="ks_team_drawer_eyebrow">NOVO ACESSO</span><h2 id="ks_team_drawer_title">Cadastrar usuário</h2></div><button type="button" class="ks-drawer-close" aria-label="Fechar cadastro de usuário">${icon('close')}</button></div>`;form.classList.add('ks-team-form');form.querySelector('.card-header')?.remove();panel.appendChild(form);drawer.appendChild(panel);document.body.appendChild(drawer);
+        let focoAnteriorDrawer=null;
+        const abrir=(modo='novo')=>{const editando=modo==='editar';const eye=panel.querySelector('#ks_team_drawer_eyebrow'),title=panel.querySelector('#ks_team_drawer_title');if(eye)eye.textContent=editando?'EDITAR ACESSO':'NOVO ACESSO';if(title)title.textContent=editando?'Editar usuário':'Cadastrar usuário';focoAnteriorDrawer=document.activeElement instanceof HTMLElement?document.activeElement:null;drawer.hidden=false;form.scrollTop=0;requestAnimationFrame(()=>drawer.classList.add('ativa'));setTimeout(()=>document.getElementById('eq_nome')?.focus({preventScroll:true}),40);};
         document.getElementById('ks_new_team').onclick=()=>{if(typeof window.limparFormularioEquipe==='function')window.limparFormularioEquipe();abrir('novo');};
-        function fechar(){drawer.classList.remove('ativa');setTimeout(()=>drawer.hidden=true,170);}panel.querySelector('.ks-drawer-close').onclick=fechar;drawer.addEventListener('click',e=>{if(e.target===drawer)fechar();});
+        function fechar(){drawer.classList.remove('ativa');setTimeout(()=>{drawer.hidden=true;if(focoAnteriorDrawer?.isConnected)focoAnteriorDrawer.focus({preventScroll:true});},170);}panel.querySelector('.ks-drawer-close').onclick=fechar;drawer.addEventListener('click',e=>{if(e.target===drawer)fechar();});
+        drawer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();fechar();return;}if(e.key!=='Tab')return;const itens=Array.from(panel.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(el=>el.getClientRects().length);if(!itens.length)return;const primeiro=itens[0],ultimo=itens[itens.length-1];if(e.shiftKey&&document.activeElement===primeiro){e.preventDefault();ultimo.focus();}else if(!e.shiftKey&&document.activeElement===ultimo){e.preventDefault();primeiro.focus();}});
         const actions=form.querySelector('.actions');if(actions&&!actions.querySelector('.ks-team-cancel')){const b=document.createElement('button');b.type='button';b.className='btn-secondary ks-team-cancel';b.textContent='Cancelar';b.onclick=fechar;actions.insertBefore(b,actions.firstChild);}
         const sel=form.querySelector('#eq_tipo_registro');if(sel){const grp=sel.closest('.input-group');const label=grp?.querySelector('label');if(label)label.textContent='Profissão / registro profissional';}
         window.addEventListener('kinesys:equipe-editar',()=>abrir('editar'));
@@ -611,7 +687,7 @@
     function limparTitulosEmoji(){document.querySelectorAll('.card-header h2,.finance-hero h2,.midia-hero-head h2').forEach(h=>{h.textContent=h.textContent.replace(/^[^\p{L}\p{N}]+/u,'').trim();});}
 
     function prepararTudo(){
-        ensureFeedback();prepararSidebar();criarTopbar();prepararHome();prepararProntuarios();prepararCadastro();preparEvolucaoSafe();prepararRelatorio();prepararAgenda();prepararMidias();prepararFinanceiro();prepararEquipe();limparTitulosEmoji();wrapNavegacao();wrapProntuarioRender();wrapAberturaPaciente();escutarSeletoresPaciente();
+        ensureFeedback();prepararSidebar();criarTopbar();prepararHome();prepararProntuarios();prepararCadastro();preparEvolucaoSafe();prepararRelatorio();prepararAgenda();prepararMidias();prepararBuscasPaciente();prepararFinanceiro();prepararEquipe();limparTitulosEmoji();wrapNavegacao();wrapProntuarioRender();wrapAberturaPaciente();escutarSeletoresPaciente();
         const ativo=document.querySelector('.tela.ativa')?.id||'tela_login';atualizarPaginaAtiva(ativo);atualizarContextoVisual();
         const role=document.getElementById('ks_sidebar_role');if(role&&((typeof usuarioLogado!=='undefined')?usuarioLogado:null)&&typeof window.rotuloPerfil==='function')role.textContent=window.rotuloPerfil(((typeof usuarioLogado!=='undefined')?usuarioLogado:null).tipo);
         document.body.classList.add('ks-design-ready');atualizarGruposNav();
@@ -624,10 +700,13 @@
 
     // Reage ao lifecycle oficial em vez de manter polling global permanente.
     function sincronizarDesignDinamico(){
+        const telaAtivada=arguments[0]?.detail?.id||'';
+        if(telaAtivada) atualizarPaginaAtiva(telaAtivada);
         const role=document.getElementById('ks_sidebar_role');
         const usuario=(typeof usuarioLogado!=='undefined')?usuarioLogado:null;
         if(role&&usuario&&typeof window.rotuloPerfil==='function') role.textContent=window.rotuloPerfil(usuario.tipo);
         escutarSeletoresPaciente();
+        prepararBuscasPaciente();
         atualizarGruposNav();
     }
     document.addEventListener('kinesys:tela-ativada',sincronizarDesignDinamico);
@@ -899,3 +978,4 @@
   }
   setTimeout(reset,650);
 })();
+

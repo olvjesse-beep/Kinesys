@@ -382,3 +382,166 @@ body.ks-design-ready .ks-prontuario-actions .ks-patient-delete:hover{
   #tela_relatorio .ks-report-editor{padding:18px!important}
   #tela_relatorio .ks-report-placeholder{min-height:260px!important;padding:28px 12px!important}
 }
+
+
+/* KineSys: registro guiado por sessão, busca e paginação */
+body.ks-design-ready #tela_evolucao.tela.ativa{max-width:1220px!important;display:flex;flex-direction:column;gap:16px;padding-top:18px!important}
+body.ks-design-ready #tela_evolucao>.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 2px;padding:0!important;border:0!important;background:transparent!important}
+body.ks-design-ready #tela_evolucao>.card-header h2{margin:0;color:#123b4d;font-size:clamp(22px,2vw,28px)!important;line-height:1.2!important}
+body.ks-design-ready #tela_evolucao .ks-evo-intro{margin:4px 0 0;color:#62808b;font-size:14px}
+body.ks-design-ready #tela_evolucao .ks-evo-history-action{flex:none;min-height:44px}
+body.ks-design-ready #tela_evolucao>.ks-evo-workspace-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:start;gap:18px;padding:20px;border:1px solid #dce9e7;border-radius:14px;background:#fff}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.grid-2{display:contents!important}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-top .input-group{margin:0!important;min-width:0}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions{align-self:start!important;margin:24px 0 0!important;padding:0!important}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions button{min-height:44px;white-space:nowrap}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-top input,
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-top .ks-patient-picker-input{min-height:45px}
+body.ks-design-ready #tela_evolucao .ks-evo-main{display:flex;flex-direction:column;gap:16px;max-width:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+body.ks-design-ready #tela_evolucao .ks-evo-main>.resumo-paciente,
+body.ks-design-ready #tela_evolucao .ks-evo-main>[id^="banner_"],
+body.ks-design-ready #tela_evolucao .ks-evo-main>#bloco_excecao_sem_avaliacao{margin:0!important}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals,
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-details{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:22px;row-gap:16px;padding:20px;border:1px solid #dce9e7;border-radius:14px;background:#fff}
+body.ks-design-ready #tela_evolucao .ks-evo-vitals-heading{grid-column:1/-1;padding-bottom:13px;border-bottom:1px solid #e5eeec}
+body.ks-design-ready #tela_evolucao :is(.ks-evo-vitals-heading,.ks-evo-details-heading) h3{margin:0 0 5px;color:#173d50;font-size:17px;font-weight:750}
+body.ks-design-ready #tela_evolucao :is(.ks-evo-vitals-heading,.ks-evo-details-heading) p{margin:0;color:#63818d;font-size:13px;line-height:1.45}
+body.ks-design-ready #tela_evolucao .ks-evo-status-card{margin:0!important;padding:0 20px 0 0!important;border:0!important;border-right:1px solid #e5eeec!important;border-radius:0!important;background:transparent!important}
+body.ks-design-ready #tela_evolucao .ks-evo-eva-card{min-width:0;margin:0!important;padding:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-status-card>.card-header{margin:0 0 15px!important;padding:0!important;border:0!important}
+body.ks-design-ready #tela_evolucao .ks-evo-status-card>.card-header h2,
+body.ks-design-ready #tela_evolucao .ks-evo-eva-card>label{font-size:13px!important;color:#244c5a!important;font-weight:750!important}
+body.ks-design-ready #tela_evolucao .evo-status-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:9px!important;margin:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-status-card .evo-status-grid .checkbox-pill,html body.ks-design-ready #tela_evolucao .ks-evo-status-card .evo-status-grid .checkbox-pill:has(input:checked){height:44px!important;min-height:44px!important;display:flex;align-items:center;justify-content:center;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:inherit!important}
+body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill span{display:inline-flex!important;align-items:center;justify-content:center;min-width:106px;height:42px;margin:0!important;padding:0 14px!important;border:1px solid #cfe1df!important;border-radius:999px!important;background:#fff!important;color:#4f6970!important;box-shadow:none!important}
+body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill input[value="melhor"]:checked+span{background:#247a60!important;border-color:#247a60!important;color:#fff!important}
+body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill input[value="igual"]:checked+span{background:#1b8b88!important;border-color:#1b8b88!important;color:#fff!important}
+body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill input[value="pior"]:checked+span{background:#b85a4b!important;border-color:#b85a4b!important;color:#fff!important}
+body.ks-design-ready #tela_evolucao .eva-container{margin:9px 0 0!important;padding:10px 12px!important;min-height:46px;border:1px solid #dce9e7!important;border-radius:10px!important;background:#f6faf9!important}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-support{min-width:0;padding-right:20px;border-right:1px solid #e5eeec}
+body.ks-design-ready #tela_evolucao .ks-evo-workspace-support>.ks-evo-details-heading{margin-bottom:14px}
+body.ks-design-ready #tela_evolucao .ks-evo-compact-details{margin:0 0 10px!important;border:1px solid #d8e8e6!important;border-radius:10px!important;background:#f6fbfa!important;overflow:hidden!important}
+body.ks-design-ready #tela_evolucao .ks-evo-compact-details>summary{min-height:48px;padding:12px 14px!important;color:#184452!important;font-weight:750!important}
+body.ks-design-ready #tela_evolucao .ks-evo-compact-body{padding:0 14px 14px!important}
+body.ks-design-ready #tela_evolucao .ks-evo-narrative-card{margin:0!important;min-width:0;padding:0!important}
+body.ks-design-ready #tela_evolucao .ks-evo-narrative-card>label{font-size:17px!important;line-height:1.35!important;color:#173d50!important;font-weight:750!important}
+body.ks-design-ready #tela_evolucao .ks-evo-narrative-card textarea{min-height:236px!important;resize:vertical}
+body.ks-design-ready #tela_evolucao .ks-evo-main>.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0!important;padding:12px 16px!important;border:1px solid #dce9e7;border-radius:13px;background:#fff}
+body.ks-design-ready #tela_evolucao .ks-evo-main>.actions .btn-primary{min-width:190px;min-height:44px}
+body.ks-design-ready #tela_buscar .ks-prontuario-paginacao{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding:13px 2px 0;border-top:1px solid #e2eeeb;color:#607a83;font-size:13px}
+body.ks-design-ready #tela_buscar .ks-prontuario-paginacao[hidden]{display:none!important}
+body.ks-design-ready #tela_buscar .ks-prontuario-paginacao>div{display:flex;align-items:center;gap:12px}
+body.ks-design-ready #tela_buscar .ks-prontuario-paginacao button{width:34px;height:34px;border:1px solid #cfe1df;border-radius:9px;background:#fff;color:#15515b;font-size:24px;line-height:1;cursor:pointer}
+body.ks-design-ready #tela_buscar .ks-prontuario-paginacao button:disabled{opacity:.35;cursor:default}
+.ks-patient-picker{position:relative;min-width:0}
+.ks-patient-picker-input{width:100%;min-height:44px;padding:10px 13px;border:1px solid #d3e2e0;border-radius:9px;background:#fff;color:#183f4a;font:inherit}
+.ks-patient-picker-input:focus{outline:2px solid #8bd1c9;outline-offset:1px}
+.ks-patient-source-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(50%)!important}
+.ks-patient-picker-options{position:absolute;z-index:50;top:calc(100% + 5px);left:0;right:0;max-height:260px;overflow-y:auto;padding:5px;border:1px solid #cfe1df;border-radius:10px;background:#fff;box-shadow:0 12px 30px rgba(17,59,70,.15)}
+.ks-patient-picker-options[hidden]{display:none!important}
+.ks-patient-picker-options button{display:block;width:100%;padding:10px 12px;border:0;border-radius:6px;background:#fff;color:#19434f;text-align:left;font:inherit;cursor:pointer}
+.ks-patient-picker-options button:hover,.ks-patient-picker-options button:focus{background:#eaf7f4;outline:none}
+.ks-patient-picker-empty{display:block;padding:10px 12px;color:#6f858c}
+@media(max-width:900px){body.ks-design-ready #tela_evolucao>.ks-evo-workspace-top{grid-template-columns:1fr 1fr}body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions{grid-column:1/-1;justify-content:flex-start;margin-top:0!important}body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals,body.ks-design-ready #tela_evolucao .ks-evo-workspace-details{grid-template-columns:1fr}body.ks-design-ready #tela_evolucao .ks-evo-status-card,body.ks-design-ready #tela_evolucao .ks-evo-workspace-support{padding-right:0!important;border-right:0!important;border-bottom:1px solid #e5eeec!important;padding-bottom:16px!important}}
+@media(max-width:600px){body.ks-design-ready #tela_evolucao>.card-header{flex-direction:column}body.ks-design-ready #tela_evolucao>.ks-evo-workspace-top{grid-template-columns:1fr}body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions{grid-column:auto}body.ks-design-ready #tela_buscar .ks-prontuario-paginacao{flex-direction:column;align-items:stretch}body.ks-design-ready #tela_buscar .ks-prontuario-paginacao>div{justify-content:space-between}}
+
+/* Ajustes finais verificados na tela de Evolução */
+html body.ks-design-ready #tela_evolucao.tela{max-width:1250px!important;width:100%!important;margin-left:auto!important;margin-right:auto!important}
+html body.ks-design-ready #tela_evolucao>.card-header{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;align-items:center!important;row-gap:0!important}
+html body.ks-design-ready #tela_evolucao>.card-header h2{grid-column:1;grid-row:1;outline:0!important}
+html body.ks-design-ready #tela_evolucao>.card-header .ks-evo-intro{grid-column:1;grid-row:2}
+html body.ks-design-ready #tela_evolucao>.card-header .ks-evo-history-action{grid-column:2;grid-row:1/3;align-self:center}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-status-card{grid-column:auto!important;grid-row:auto!important;width:auto!important;min-width:0!important;margin:0!important;padding:0 20px 0 0!important;border:0!important;border-right:1px solid #e5eeec!important;border-radius:0!important;background:transparent!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-eva-card{grid-column:auto!important;grid-row:auto!important;width:auto!important;min-width:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals .evo-status-grid{width:100%!important}
+@media(max-width:900px){html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-status-card{grid-column:1!important;padding:0 0 16px!important;border-right:0!important;border-bottom:1px solid #e5eeec!important}html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-eva-card{grid-column:1!important}html body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions{grid-column:1/-1!important;align-self:start!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}}
+@media(max-width:600px){html body.ks-design-ready #tela_evolucao>.card-header{grid-template-columns:1fr!important}html body.ks-design-ready #tela_evolucao>.card-header .ks-evo-history-action{grid-column:1;grid-row:3;justify-self:start}}
+
+/* Evolução: superfície única, campos clínicos sem molduras decorativas */
+html body.ks-design-ready #tela_evolucao.tela.ativa{max-width:1250px!important;width:calc(100% - 32px)!important;margin:16px auto 32px!important;padding:28px 32px 32px!important;gap:26px!important;background:#fff!important;border:0!important;border-radius:18px!important;box-shadow:0 10px 36px rgba(21,65,69,.06)!important;box-sizing:border-box!important}
+html body.ks-design-ready #tela_evolucao>.ks-evo-workspace-top,html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals,html body.ks-design-ready #tela_evolucao .ks-evo-workspace-details,html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions{background:#fff!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-main{gap:26px!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-vitals-heading{padding:0!important;border:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-status-card,html body.ks-design-ready #tela_evolucao .ks-evo-workspace-support{border:0!important;padding:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-compact-details{border:0!important;border-radius:0!important;background:#fff!important;margin:0!important;overflow:visible!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-compact-details>summary{padding:4px 0!important;min-height:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-compact-body{padding:10px 0 0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-details{align-items:start;row-gap:22px!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-top{align-items:start!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-top>.actions{align-self:end!important;margin:0!important}
+html body.ks-design-ready #tela_evolucao .eva-container{background:#fff!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-status-card .evo-status-grid .checkbox-pill span{border:1px solid #cfe1df!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-change-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+html body.ks-design-ready #tela_evolucao .ks-evo-change-fields .input-group{min-width:0;margin:0!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-change-fields textarea{box-sizing:border-box;width:100%;min-height:86px;resize:vertical;background:#fff}
+html body.ks-design-ready #tela_evolucao .ks-evo-workspace-details .ks-evo-narrative-card textarea{min-height:270px!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions{justify-content:flex-end!important}
+html body.ks-design-ready #tela_evolucao :is(.resumo-paciente,.evo-session-card,.evo-history-card){box-shadow:none!important}
+@media(max-width:900px){html body.ks-design-ready #tela_evolucao.tela.ativa{width:calc(100% - 24px)!important;padding:24px!important}html body.ks-design-ready #tela_evolucao .ks-evo-workspace-vitals>.ks-evo-status-card,html body.ks-design-ready #tela_evolucao .ks-evo-workspace-support{border:0!important;padding:0!important}}
+@media(max-width:600px){html body.ks-design-ready #tela_evolucao.tela.ativa{width:calc(100% - 16px)!important;padding:20px 16px!important;gap:22px!important}html body.ks-design-ready #tela_evolucao .ks-evo-change-fields{grid-template-columns:1fr}html body.ks-design-ready #tela_evolucao .evo-status-grid{gap:4px!important}html body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill span{min-width:0!important;width:100%!important;padding:0 8px!important}}
+
+/* Evolução: ações reunidas e alinhadas no rodapé */
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:10px!important;padding-top:8px!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions #btn_salvar_evolucao{margin-left:auto!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions .ks-evo-history-action{min-height:44px}
+@media(max-width:600px){html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions{flex-direction:column!important;align-items:stretch!important}html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>button{width:100%!important;margin-left:0!important}}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>button{min-height:48px!important;box-sizing:border-box}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>.ks-evo-history-action,html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>button[onclick="duplicarUltimaEvolucao()"]{min-height:48px!important;height:48px!important}
+html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>#btn_salvar_evolucao{background:#187f79!important;background-color:#187f79!important;border-color:#187f79!important;color:#fff!important}
+
+/* Correções visuais globais sem alterar regras de negócio. */
+@keyframes ks-app-boot-failsafe{to{visibility:visible}}
+html body.ks-app-booting{visibility:hidden!important;animation:ks-app-boot-failsafe 0s 3s forwards}
+html body.ks-design-ready .tela:not(.ativa){display:none!important}
+html body.ks-design-ready :is(button,.btn-primary,.btn-secondary,.btn-nav){min-height:44px;box-sizing:border-box}
+html body.ks-design-ready .modal-fechar{width:44px!important;height:44px!important;display:grid!important;place-items:center!important}
+html body.ks-design-ready #autosave_status{max-width:min(360px,calc(100vw - 32px));bottom:18px!important;right:18px!important;z-index:1900!important}
+html body.ks-design-ready #tela_avaliacao .ks-action-bar{position:static!important;inset:auto!important;margin-top:18px!important}
+html body.ks-design-ready #tela_avaliacao{padding-bottom:42px!important}
+html body.ks-design-ready #tela_buscar .ks-prontuario-paginacao button{width:44px!important;height:44px!important}
+html body.ks-design-ready #tela_buscar .ks-patient-card-actions button{min-height:44px!important;padding:9px 12px!important}
+html body.ks-design-ready #tela_relatorio .checkbox-pill{border-radius:10px!important}
+html body.ks-design-ready #tela_relatorio .checkbox-pill input{display:inline-block!important;position:static!important;appearance:auto!important;flex:0 0 18px!important;width:18px!important;height:18px!important;opacity:1!important;margin:0 8px 0 0!important;accent-color:var(--kds-accent)!important}
+html body.ks-design-ready #tela_relatorio .checkbox-pill span{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--kds-text-subtle)!important;text-align:left!important}
+html body.ks-design-ready #tela_relatorio .ks-report-layout{align-items:start!important}
+html body.ks-design-ready #tela_relatorio .ks-report-preview:empty{min-height:180px!important}
+html body.ks-design-ready #tela_agenda .agenda-semana-nav>button,
+html body.ks-design-ready #tela_agenda .agenda-periodo-segmentado button{min-height:44px!important}
+html body.ks-design-ready #tela_agenda .agenda-grade-scroll{min-height:420px}
+html body.ks-design-ready #tela_agenda .agenda-vazio{min-height:180px;display:grid;place-items:center;text-align:center}
+html body.ks-design-ready #tela_agenda [role="button"]:focus-visible{outline:3px solid rgba(42,167,157,.28)!important;outline-offset:-3px!important}
+html body.ks-design-ready #modal_detalhe_agendamento .modal-box{min-height:0!important;padding-bottom:20px!important}
+html body.ks-design-ready #modal_detalhe_agendamento .modal-actions{margin-top:18px!important;padding-top:14px!important}
+html body.ks-design-ready #modal_detalhe_agendamento #agenda_cancelar_proprio{color:#a2342a!important;border-color:#d9aaa5!important;background:#fff8f7!important}
+
+/* Camadas sobrepostas: contrato visual único KineSys. */
+html body.ks-design-ready :is(.modal-box,.ks-dialog,.ks-drawer,.ks-eval-dialog-card,.ks-context-dialog,.ks-investigation-dialog,.ks-agenda-prof-picker-card,.ks-home-modal,.ks-prof-pending-dialog){
+  color:var(--kds-text);
+  font-family:var(--kds-font-family,"Segoe UI Variable","Segoe UI",sans-serif)!important;
+  box-sizing:border-box;
+}
+html body.ks-design-ready :is(.modal-overlay,.ks-dialog-overlay,.ks-drawer-overlay,.ks-eval-dialog-backdrop,.ks-investigation-overlay,.ks-agenda-prof-picker-overlay){
+  overscroll-behavior:contain;
+}
+html body.ks-modal-open{overflow:hidden!important}
+html body.ks-design-ready :is(.modal-fechar,.ks-dialog-x,.ks-drawer-close,.ks-eval-dialog-close,.ks-context-close,.ks-investigation-close,.ks-agenda-prof-picker-close,.ks-home-pending-head button,.ks-prof-dialog-head button){
+  flex:0 0 44px!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  min-height:44px!important;
+  box-sizing:border-box!important;
+}
+html body.ks-design-ready :is(.modal-fechar,.ks-dialog-x,.ks-drawer-close,.ks-eval-dialog-close,.ks-context-close,.ks-investigation-close,.ks-agenda-prof-picker-close,.ks-home-pending-head button,.ks-prof-dialog-head button):focus-visible{
+  outline:3px solid rgba(42,167,157,.28)!important;
+  outline-offset:2px!important;
+}
+html body.ks-design-ready .ks-prontuario-export-modal{position:relative;display:flex;flex-direction:column;max-height:min(720px,calc(100dvh - 32px));overflow:auto}
+html body.ks-design-ready .ks-prontuario-export-modal>.modal-fechar{position:absolute;top:18px;right:20px;float:none}
+html body.ks-design-ready .ks-prontuario-export-modal>h2{padding-right:52px}
+@media(max-width:620px){
+  html body.ks-design-ready .modal-overlay{padding:8px!important;align-items:flex-end}
+  html body.ks-design-ready .modal-box{width:100%!important;max-height:calc(100dvh - 16px)!important;border-radius:18px 18px 10px 10px!important;padding:22px 18px!important}
+  html body.ks-design-ready .ks-prontuario-export-modal>.modal-fechar{top:12px;right:12px}
+}
+

@@ -136,12 +136,32 @@
 }
 
 #tela_cadastro .patient-registration-responsible .cad-dependente-check{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
   min-height:52px;
   margin:0;
   padding:12px 13px;
   border:1px solid var(--kds-line);
   border-radius:11px;
   background:var(--kds-surface);
+}
+
+#tela_cadastro .patient-registration-responsible .cad-dependente-check input[type="checkbox"]{
+  flex:0 0 18px;
+  width:18px;
+  min-width:18px;
+  max-width:18px;
+  height:18px;
+  margin:2px 0 0;
+}
+
+#tela_cadastro .patient-registration-responsible .cad-dependente-check>span{
+  display:flex;
+  min-width:0;
+  flex:1 1 auto;
+  flex-direction:column;
+  gap:3px;
 }
 
 #tela_cadastro .patient-registration-responsible .cad-dependente-check strong{
@@ -347,3 +367,5 @@
     gap:0!important;
   }
 }
+
+

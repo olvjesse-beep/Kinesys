@@ -20,10 +20,17 @@
                 </div>
 
             <div class="clinical-progress-wrap" aria-label="Etapas da avaliação">
-                <div class="clinical-progress" role="tablist">
-                    <button type="button" class="step active" id="step_indicador_1" role="tab" aria-controls="subtela_triagem" aria-selected="true" onclick="navegarAvaliacaoEtapaKineSys('subtela_triagem')"><span class="step-number">1</span><span>Anamnese</span></button>
-                    <button type="button" class="step" id="step_indicador_2" role="tab" aria-controls="subtela_mapeamento" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_mapeamento')"><span class="step-number">2</span><span>Exame clínico</span></button>
-                    <button type="button" class="step" id="step_indicador_3" role="tab" aria-controls="subtela_diagnostico" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_diagnostico')"><span class="step-number">3</span><span>Síntese</span></button>
+                <div class="ks-eval-progress-row">
+                    <div class="clinical-progress" role="tablist">
+                        <button type="button" class="step active" id="step_indicador_1" role="tab" aria-controls="subtela_triagem" aria-selected="true" onclick="navegarAvaliacaoEtapaKineSys('subtela_triagem')"><span class="step-number">1</span><span>Anamnese</span></button>
+                        <button type="button" class="step" id="step_indicador_2" role="tab" aria-controls="subtela_mapeamento" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_mapeamento')"><span class="step-number">2</span><span>Exame clínico</span></button>
+                        <button type="button" class="step" id="step_indicador_3" role="tab" aria-controls="subtela_diagnostico" aria-selected="false" onclick="navegarAvaliacaoEtapaKineSys('subtela_diagnostico')"><span class="step-number">3</span><span>Relatório</span></button>
+                    </div>
+                    <div class="input-group clinical-datetime-card kds-u-m-0">
+                        <label for="avaliacao_realizado_em">Data e hora *</label>
+                        <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="Este horário inicia a janela fixa de 24 h para eventuais correções. O horário de salvamento é registrado separadamente.">
+                        <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">Este horário inicia a janela fixa de 24 h para eventuais correções. O horário em que o registro for salvo é carimbado separadamente.</small>
+                    </div>
                 </div>
             </div>
 
@@ -50,61 +57,58 @@
             </div>
 
             <div id="subtela_triagem" class="subtela ativa clinical-focus-ui" role="tabpanel" aria-labelledby="step_indicador_1">
-                <div class="clinical-primary-shell kds-u-pos-relative kds-u-z-10 kds-u-ov-visible">
-                    <div class="clinical-topbar">
-                        <div class="clinical-section-heading clinical-section-heading--plain">
-                            <div>
-                                <h2>Avaliação clínica</h2>
+                <div class="hma-cards-layout ks-eval-stage-one-workspace" aria-label="Avaliação clínica, história e Radar KineSys">
+                    <div class="ks-eval-stage-one-main">
+                        <div class="clinical-primary-shell kds-u-pos-relative kds-u-z-10 kds-u-ov-visible">
+                            <div class="clinical-topbar">
+                                <div class="clinical-section-heading clinical-section-heading--plain">
+                                    <div>
+                                        <h2>Avaliação clínica</h2>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="input-group clinical-datetime-card kds-u-m-0">
-                            <label for="avaliacao_realizado_em">Data e hora *</label>
-                            <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="Este horário inicia a janela fixa de 24 h para eventuais correções. O horário de salvamento é registrado separadamente.">
-                            <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">Este horário inicia a janela fixa de 24 h para eventuais correções. O horário em que o registro for salvo é carimbado separadamente.</small>
-                        </div>
-                    </div>
-                    <div id="avaliacao_registros_paciente" class="kds-u-m-0-0-14px kds-u-p-12px-14px kds-u-border-1px-solid-dde8e4 kds-u-br-10px kds-u-bg-soft-panel" style="display:none;"></div>
-                    <div class="patient-strip patient-strip-cards">
-                        <div class="input-group patient-plain-field"><label for="paciente_nome">Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
-                        <div class="input-group patient-plain-field patient-age"><label for="paciente_idade">Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
-                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label for="paciente_ocupacao">Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
-                        <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label for="paciente_esporte">Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
-                    </div>
-
-                    <!-- Campos antigos de trajeto mantidos ocultos somente por compatibilidade técnica.
-                         O trajeto clínico passa a ser interpretado a partir da própria HMA. -->
-                    <div class="hma-legacy-trajectory" hidden aria-hidden="true">
-                        <input type="text" id="paciente_origem_irradiacao" tabindex="-1">
-                        <input type="text" id="paciente_irradiacao" tabindex="-1">
-                        <div id="analise_irradiacao_clinica" class="analise-irradiacao-compacta"></div>
-                    </div>
-
-                    <!-- Compatibilidade com registros antigos: o Motor 2.5 não usa "tipo de dor" como entrada de priorização. -->
-                    <select id="paciente_tipo_dor" hidden aria-hidden="true" tabindex="-1"><option value="">Não informado</option><option value="mecanica">Mecânica</option><option value="inflamatoria">Inflamatória</option><option value="neuropatica">Neuropática</option><option value="mista">Mista / não bem definida</option></select>
-                </div>
-
-                <div class="hma-cards-layout" aria-label="História clínica e Radar KineSys">
-                    <section class="card hma-card hma-entry-card" aria-labelledby="hma_card_titulo">
-                        <div class="card-header hma-card-header">
-                            <div class="hma-heading-copy">
-                                <span class="hma-kicker">História clínica</span>
-                                <h2 id="hma_card_titulo">História da Moléstia Atual <span class="hma-title-acronym">(HMA)</span></h2>
-                                <p>Registre o relato livre do paciente; o Radar organiza os achados sem substituir o exame.</p>
+                            <div id="avaliacao_registros_paciente" class="kds-u-m-0-0-14px kds-u-p-12px-14px kds-u-border-1px-solid-dde8e4 kds-u-br-10px kds-u-bg-soft-panel" style="display:none;"></div>
+                            <div class="patient-strip patient-strip-cards">
+                                <div class="input-group patient-plain-field"><label for="paciente_nome">Nome</label><input type="text" id="paciente_nome" placeholder="Nome do paciente"></div>
+                                <div class="input-group patient-plain-field patient-age"><label for="paciente_idade">Idade</label><input type="number" id="paciente_idade" placeholder="35"></div>
+                                <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-100"><label for="paciente_ocupacao">Profissão</label><input type="text" id="paciente_ocupacao" placeholder="Ex: Dentista" autocomplete="off"><div id="sugestao_box_profissao" class="box-sugestoes"></div></div>
+                                <div class="input-group patient-plain-field kds-u-pos-relative kds-u-z-99"><label for="paciente_esporte">Atividade física</label><input type="text" id="paciente_esporte" placeholder="Ex: Corrida" autocomplete="off"><div id="sugestao_box_esporte" class="box-sugestoes"></div></div>
                             </div>
-                        </div>
-                        <div class="input-group hma-principal">
-                            <label for="paciente_hma"><span>Relato clínico</span><small>Texto livre</small></label>
-                            <textarea id="paciente_hma" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
-                            <div id="sugestoes_hma_tempo_real" class="hma-live-suggestions" aria-live="polite" hidden></div>
+
+                            <!-- Campos antigos de trajeto mantidos ocultos somente por compatibilidade técnica.
+                                 O trajeto clínico passa a ser interpretado a partir da própria HMA. -->
+                            <div class="hma-legacy-trajectory" hidden aria-hidden="true">
+                                <input type="text" id="paciente_origem_irradiacao" tabindex="-1">
+                                <input type="text" id="paciente_irradiacao" tabindex="-1">
+                                <div id="analise_irradiacao_clinica" class="analise-irradiacao-compacta"></div>
+                            </div>
+
+                            <!-- Compatibilidade com registros antigos: o Motor 2.5 não usa "tipo de dor" como entrada de priorização. -->
+                            <select id="paciente_tipo_dor" hidden aria-hidden="true" tabindex="-1"><option value="">Não informado</option><option value="mecanica">Mecânica</option><option value="inflamatoria">Inflamatória</option><option value="neuropatica">Neuropática</option><option value="mista">Mista / não bem definida</option></select>
                         </div>
 
-                    </section>
+                        <section class="card hma-card hma-entry-card" aria-labelledby="hma_card_titulo">
+                            <div class="card-header hma-card-header">
+                                <div class="hma-heading-copy">
+                                    <span class="hma-kicker">História clínica</span>
+                                    <h2 id="hma_card_titulo">História da Moléstia Atual <span class="hma-title-acronym">(HMA)</span></h2>
+                                    <p>Registre o relato livre do paciente; o Radar organiza os achados sem substituir o exame.</p>
+                                </div>
+                            </div>
+                            <div class="input-group hma-principal">
+                                <label for="paciente_hma"><span>Relato clínico</span><small>Texto livre</small></label>
+                                <textarea id="paciente_hma" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
+                                <div id="sugestoes_hma_tempo_real" class="hma-live-suggestions" aria-live="polite" hidden></div>
+                            </div>
+
+                        </section>
+                    </div>
 
                     <section class="card hma-card hma-radar-card" aria-labelledby="hma_radar_card_titulo">
                         <div class="card-header hma-card-header">
                             <div class="hma-heading-copy">
                                 <span class="hma-kicker">Apoio à decisão</span>
-                                <h2 id="hma_radar_card_titulo"><span class="hma-title-main">Radar KineSys</span> <span class="hma-title-separator">—</span> <span class="hma-title-secondary">Sínteses e sugestões</span></h2>
+                                <h2 id="hma_radar_card_titulo"><span class="hma-title-main">Radar KineSys</span> <span class="hma-title-separator">—</span> <span class="hma-title-secondary">Hipóteses e direção do exame</span></h2>
                                 <p>Leitura estruturada da HMA para destacar hipóteses, diferenciais e pontos a confirmar.</p>
                             </div>
                         </div>
@@ -113,6 +117,13 @@
                             <div id="ks20_hma_insights"></div>
                             <small>Revise e confirme os achados durante o exame. O radar não estabelece diagnóstico.</small>
                         </section>
+                        <div class="ks-eval-radar-guide" aria-label="Como o Radar KineSys apoia a avaliação">
+                            <div class="ks-eval-radar-guide-item"><span aria-hidden="true">01</span><div><strong>Identificar padrões clínicos</strong><small>Analisa o relato e destaca padrões relevantes da queixa atual.</small></div></div>
+                            <div class="ks-eval-radar-guide-item"><span aria-hidden="true">02</span><div><strong>Sugerir diferenciais</strong><small>Apresenta hipóteses e diferenciais a explorar no exame físico.</small></div></div>
+                            <div class="ks-eval-radar-guide-item"><span aria-hidden="true">03</span><div><strong>Direcionar o exame</strong><small>Indica os testes que merecem confirmação na etapa clínica.</small></div></div>
+                            <div class="ks-eval-radar-guide-item"><span aria-hidden="true">04</span><div><strong>Manter o foco clínico</strong><small>As sugestões apoiam, mas não substituem o julgamento profissional.</small></div></div>
+                            <div class="ks-eval-radar-waiting" role="status"><strong>Aguardando o relato da HMA</strong><small>Preencha a História da Moléstia Atual para que o Radar apresente hipóteses e direcione o exame.</small></div>
+                        </div>
                         <p class="hma-radar-helper">As sínteses são atualizadas a partir da HMA e devem ser confirmadas durante o exame físico.</p>
                     </section>
                 </div>
@@ -160,6 +171,24 @@
                     </details>
 
                     <details class="clinical-disclosure">
+                        <summary><span>Exames de imagem</span><small>Registre somente exames disponíveis ou informados pelo paciente</small></summary>
+                        <div class="disclosure-body">
+                            <div class="input-group">
+                                <label for="exames_imagem_descricao">Exame, data e achados relevantes</label>
+                                <textarea id="exames_imagem_descricao" rows="3" placeholder="Ex.: RM cervical (05/2026): redução do espaço C6–C7. Um exame por linha."></textarea>
+                                <small>Descreva o achado do laudo ou o relato do paciente; o exame de imagem, isoladamente, não confirma a hipótese clínica.</small>
+                            </div>
+                            <div class="input-group">
+                                <label for="exames_imagem_fonte">Origem da informação</label>
+                                <select id="exames_imagem_fonte">
+                                    <option value="relato_paciente">Relato do paciente</option>
+                                    <option value="laudo_conferido">Laudo ou exame conferido</option>
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="clinical-disclosure">
                         <summary><span>Exposição ocupacional</span><small>Detalhar somente quando houver relação potencial com o quadro</small></summary>
                         <div class="disclosure-body">
                             <p class="helper-text">A profissão gera contexto; o Radar considera apenas exposições confirmadas.</p>
@@ -201,7 +230,7 @@
                         <div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
                     </details>
 
-                    <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para Exame direcionado ➔</button></div>
+                    <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para exame clínico</button></div>
                 </div>
             </div>
 
@@ -209,13 +238,13 @@
                 <div class="cluster-focus-toolbar">
                     <div>
                         <div class="eyebrow">DIREÇÃO CLÍNICA</div>
-                        <strong>Escolha o foco da investigação</strong>
+                        <strong>Exame orientado pela anamnese</strong>
                     </div>
                     <button type="button" class="cluster-info-link" onclick="abrirInfoMotorClinico()" title="Sobre o motor clínico">ⓘ Sobre o motor</button>
                 </div>
                 <div class="region-strip">
-                    <div class="ks-region-strip-label"><strong>Regiões relevantes</strong><span>Selecione uma ou mais áreas para organizar o exame.</span></div>
-                    <button type="button" class="btn-secondary" onclick="abrirRegioesAvaliacaoKineSys(this)">Selecionar regiões</button>
+                    <div class="ks-region-strip-label"><strong>Regiões definidas pelo Radar KineSys</strong><span>A anamnese seleciona automaticamente as áreas relevantes.</span></div>
+                    <button type="button" class="btn-secondary" onclick="abrirRegioesAvaliacaoKineSys(this)">Ajustar regiões</button>
                     <div id="ks-regions-selected" aria-label="Regiões selecionadas"></div>
                     <div class="checkbox-group region-chips" id="grupo_regioes_mapeamento" hidden></div>
                 </div>
@@ -223,19 +252,19 @@
                 <div id="container_clusters_regioes"></div>
                 <div class="cluster-focus-actions">
                     <button class="btn-secondary" onclick="irParaSubtela('subtela_triagem')">◀ Voltar à Anamnese</button>
-                    <button class="btn-primary" onclick="avancarParaDiagnostico()">Ver resumo e laudo ➔</button>
+                    <button class="btn-primary" onclick="avancarParaDiagnostico()">Ver relatório</button>
                 </div>
             </div>
 
             <div id="subtela_diagnostico" class="subtela" role="tabpanel" aria-labelledby="step_indicador_3">
-                <div class="card" id="card_alertas_consolidados">
+                <div class="card" id="card_alertas_consolidados" hidden style="display:none !important">
                     <div class="card-header">
                         <h2>Segurança e alertas</h2>
                     </div>
                     <p class="kds-u-fs-meta kds-u-text-muted kds-u-mt-neg-10px">Reúne as pistas de segurança que precisam ser revisadas antes do resumo. Alertas não são diagnósticos: indicam uma decisão clínica a registrar.</p>
                     <div id="container_alertas_consolidados"></div>
                 </div>
-                <div class="card">
+                <div class="card" hidden style="display:none !important">
                     <div class="card-header">
                         <h2>Resumo da direção clínica</h2>
                     </div>
@@ -244,18 +273,20 @@
 
 
                 <div class="card" id="ks-laudo-card">
-                    <div class="card-header"><h2>Laudo clínico-funcional</h2></div>
+                    <div class="card-header"><h2>Relatório fisioterapêutico</h2></div>
                     <p id="ks-laudo-status" role="status"></p>
-                    <label for="ks-laudo-texto">Texto para revisão e conclusão do fisioterapeuta</label>
-                    <textarea id="ks-laudo-texto" rows="16" spellcheck="true"></textarea>
+                    <label for="ks-laudo-texto">Revise e ajuste o relatório antes de finalizar</label>
+                    <textarea id="ks-laudo-texto" rows="22" spellcheck="true"></textarea>
                     <label class="ks-laudo-review"><input type="checkbox" id="ks-laudo-revisado"> Revisei o conteúdo e registrei minha conclusão clínica.</label>
                     <div class="ks-laudo-actions">
+                        <button type="button" class="btn-secondary" onclick="irParaSubtela('subtela_mapeamento')">◀ Voltar ao exame</button>
                         <button type="button" class="btn-secondary" id="ks-laudo-atualizar">Atualizar base da avaliação</button>
                         <button type="button" class="btn-secondary" id="ks-laudo-copiar">Copiar texto</button>
-                        <button type="button" class="btn-primary" onclick="salvarAvaliacaoAtual(false)">Salvar rascunho</button>
+                        <button type="button" class="btn-secondary" onclick="salvarAvaliacaoAtual(false)">Salvar rascunho</button>
+                        <button type="button" class="btn-primary" onclick="salvarAvaliacaoAtual(true)">Finalizar e salvar avaliação</button>
                     </div>
                 </div>
-                <div class="card" id="card_restricoes_posop">
+                <div class="card" id="card_restricoes_posop" hidden style="display:none !important">
                     <div class="card-header"><h2>Restrições pós-operatórias atuais</h2></div>
                     <p class="clinical-note">Use este bloco quando houver cirurgia/procedimento recente. As restrições ficam persistentes nas evoluções até serem atualizadas em nova avaliação/reavaliação.</p>
                     <label class="checkbox-pill kds-u-mb-12px"><input type="checkbox" id="posop_ativo" onchange="atualizarVisibilidadeRestricoesPosOp()"><span>Paciente em fase pós-operatória com restrições ativas</span></label>
@@ -283,10 +314,6 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="actions kds-u-jc-between">
-                        <button class="btn-secondary" onclick="irParaSubtela('subtela_mapeamento')">◀ Voltar ao Exame direcionado</button>
-                        <button class="btn-primary" onclick="salvarAvaliacaoAtual(true)">Finalizar e salvar avaliação</button>
-                    </div>
-                </div>
             </div>
+
+

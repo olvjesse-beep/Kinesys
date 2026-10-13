@@ -197,7 +197,7 @@
 
   function planoCotoveloEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
-    const textoHma=norm(hmaTexto());const temCotovelo=arr(plano.regioes).some(r=>r.id==='cotovelo')||/cotovelo|epicond|olecran|fossa cubital|antebraco/.test(textoHma);if(!temCotovelo)return plano;
+    const textoHma=norm(hmaTexto());const temCotovelo=arr(plano.regioes).some(r=>r.id==='cotovelo');if(!temCotovelo)return plano;
     const c=contexto();const texto=textoContexto(c);const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);let fortes=avaliadas.filter(x=>{if(x.cond.id==='cotovelo_lateral'||x.cond.id==='cotovelo_medial')return x.evidenciaForte&&x.score>=2.5;return x.hits.length||x.score>=2.5;}).slice(0,7);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x));const existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='cotovelo');const cotoveloBase=arr(plano.hipoteses).filter(h=>h.regiaoId==='cotovelo');const mapa=new Map();
     [...especialistas,...cotoveloBase].forEach(h=>{const k=norm(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
@@ -211,15 +211,8 @@
     const objetivosExame=uniq([...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.essencial)),...objetivos,...fortes.flatMap(x=>arr(MATRIZ_EXAME[x.cond.id]?.complementar))]).slice(0,10);const extras=objetivosExame.map((o,i)=>({texto:o,tipo:classificarObjetivo(o),hipoteses:fortes.slice(0,3).map(x=>x.cond.rotulo),prioridade:11.5-i/100,motor31:true,regiaoMotor31:'cotovelo'}));const testeMap=new Map();const combinados=temOmbro?[...extras.slice(0,8),...arr(plano.exame.testesPrioritarios)]:[...extras,...arr(plano.exame.testesPrioritarios)];combinados.forEach(t=>{const k=norm(t.texto);if(k&&!testeMap.has(k))testeMap.set(k,t);});plano.exame.testesPrioritarios=Array.from(testeMap.values()).slice(0,temOmbro?18:14);plano.exame.analises=agrupar(plano.exame.testesPrioritarios);plano.lacunas=uniq([...arr(plano.lacunas),...perguntas.slice(0,6).map(q=>`Cotovelo: ${q}`)]).slice(0,16);return plano;
   }
 
-  function esc(v=''){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
-  function renderPerguntas(plano){
-    const host=document.getElementById('ks31_elbow_interview');if(!host)return;const m=plano?.motores31?.cotovelo||(plano?.motor31?.regiao==='cotovelo'?plano.motor31:null);if(!m){host.hidden=true;host.innerHTML='';return;}host.hidden=false;const matriz=arr(plano?.exame?.matrizCotovelo).slice(0,5);const cross=m?.correlacaoOmbroCotovelo;const assinatura=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,10),mx:matriz.map(x=>x.id),cross:!!cross?.ativa});if(host.dataset.ks31Signature===assinatura)return;host.dataset.ks31Signature=assinatura;
-    host.innerHTML=`<header><div><span>Motor 3.1 · Cotovelo</span><strong>Diferenciar origem local, ombro e componente cervical/neural</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header>${cross?.ativa?`<div class="ks31-cross-region"><strong>Integração ombro ↔ cotovelo</strong><p>${esc(cross.principio)}</p></div>`:''}<div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>A localização da dor não define sozinha a origem. Compare reprodução do sintoma pelo ombro, carga local do cotovelo/punho e triagem cervical/neural.</footer>`;
-  }
-  function garantirUI(){const etapa2=document.getElementById('subtela_mapeamento');if(etapa2&&!document.getElementById('ks31_elbow_interview')){const el=document.createElement('section');el.id='ks31_elbow_interview';el.className='ks31-elbow-interview';el.hidden=true;const ombro=document.getElementById('ks31_shoulder_interview');const p=document.getElementById('ks30_exam_plan');if(ombro)ombro.insertAdjacentElement('afterend',el);else if(p)p.insertAdjacentElement('afterend',el);else etapa2.insertAdjacentElement('afterbegin',el);}}
-
   window.enriquecerPlanoCotoveloKineSys=planoCotoveloEspecialista;
   window.KineSysMotor31Cotovelo={version:VERSION,condicoes:CONDICOES,perguntasBase:BASE_PERGUNTAS,referencias:REFERENCIAS,enriquecer:planoCotoveloEspecialista};
-  document.addEventListener('kinesys:motor3-plano-atualizado',()=>{garantirUI();const p=window.KineSysMotorClinico3?.ultimoPlano;if(p)renderPerguntas(p);});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',garantirUI,{once:true});else garantirUI();
 })();
+
+

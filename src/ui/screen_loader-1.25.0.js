@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.10-agenda-repeat-until-r44';
-    const ASSET_REVISION='20260914-agenda-repeat-until-r44';
+    const VERSION='1.25.12-evaluation-option3-r2';
+    const ASSET_REVISION='20261013-evaluation-option3-r2';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -17,13 +17,13 @@
     const BUNDLES=Object.freeze({
         tela_avaliacao:Object.freeze({
             id:'avaliacao',
-            fragment:'screens/tela_avaliacao.html?v=20260910-phase2c-r1',
+            fragment:'screens/tela_avaliacao.html?v=20261013-evaluation-option3-r2',
             styles:Object.freeze([
-                'styles/design_clinical.css?v=1.19.0-hma-layout-r14',
+                'styles/design_clinical.css?v=20261012-visual-harmony-r1',
                 'styles/design_clinical_direction-1.17.0.css',
                 'styles/design_evaluation_workspace-1.18.0.css',
                 'styles/design_evaluation_context-1.18.3.css',
-                'styles/avaliacao_experiencia-1.22.0.css?v=20260904-tabs-r1',
+                'styles/avaliacao_experiencia-1.22.0.css?v=20261013-evaluation-option3-r2',
                 'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
                 'styles/radar_clinico_focus-3.0.0.css?v=20260910-r1',
                 'styles/dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
@@ -34,13 +34,13 @@
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
-                'src/clinical/clinical_engine-1.17.0.js',
-                'src/clinical/evaluation_workspace-1.17.0.js',
+                'src/clinical/clinical_engine-1.17.0.js?v=20261012-visual-harmony-r4',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261011-relatorio-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js',
-                'src/clinical/avaliacao_experiencia-1.22.0.js?v=20260904-tabs-r1',
-                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20260910-perf-r2',
-                'src/clinical/clinical_region_loader-1.0.0.js?v=20260911-phase3c-r1'
+                'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
+                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261011-radar-funil-r6',
+                'src/clinical/clinical_region_loader-1.0.0.js?v=20261012-exame-testes-r1'
             ]),
             afterLoad(){
                 if(typeof window.atualizarMotorClinico3KineSys==='function'){
@@ -67,7 +67,7 @@
         tela_agenda:Object.freeze({
             id:'agenda',
             styles:Object.freeze([
-                'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1',
+                'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1&layout=20261012-r6a',
                 'styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2',
                 'styles/agenda_mobile_grid-1.0.0.css?v=20260913-grid-r19',
                 'styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r29',
@@ -76,7 +76,7 @@
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
             scripts:Object.freeze([
-                'src/agenda/agenda-1.20.0.js?v=20260916-contratos-r2',
+                'src/agenda/agenda-1.20.0.js?v=20261012-visual-harmony-r4&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
                 'src/agenda/agenda_lifecycle-1.0.0.js?v=20260914-postgrid-r41'
@@ -284,3 +284,4 @@
         current(){return document.querySelector('.tela.ativa')?.id||telaAtiva||'';}
     });
 })();
+

@@ -35,11 +35,18 @@
       "interpretacao": "A hipótese de radiculopatia deve combinar sintomas radiculares com exame neurológico e/ou neurodinâmico concordante. Evite usar 'hérnia de disco' como sinônimo de radiculopatia sem correlação clínica e, quando necessário, imagem.",
       "palavrasChaveHMA": [
         "ciatica",
+        "lombociatalgia",
+        "dor lombar irradiada",
+        "dor de coluna que irradia para perna",
+        "dor na coluna que irradia para perna",
         "dor descendo pela perna",
+        "dor ate o pe",
         "formigamento na perna",
+        "formigamento ate o pe",
         "dormencia no pe",
         "fraqueza na perna",
-        "choque na perna"
+        "choque na perna",
+        "choque ate o pe"
       ],
       "mecanismoPreferido": [
         "insidioso",
@@ -350,3 +357,5 @@
   ]
 };
 })();
+
+

@@ -27,6 +27,21 @@
             .filter(id=>id && typeof BANCO_MAPEAMENTO_CLINICO !== 'undefined' && BANCO_MAPEAMENTO_CLINICO[id]);
     }
 
+    function regioesComAchadosRegistrados(){
+        if(typeof BANCO_MAPEAMENTO_CLINICO==='undefined')return[];
+        const resultadosValidos=new Set(['positivo','negativo','inconclusivo','nao_realizado','nao_aplicavel']);
+        const contextoAtual=String(window.fingerprintContextoExameKineSys?.()||'');
+        return Object.keys(BANCO_MAPEAMENTO_CLINICO).filter(id=>{
+            const estado=window.obterEstadoRegiao?.(id);
+            const pertenceAoContexto=contextoAtual&&String(estado?.exameContextFingerprint||'')===contextoAtual;
+            return pertenceAoContexto&&Object.entries(estado?.resultados||{}).some(([chave,valor])=>!chave.startsWith('redflag::')&&resultadosValidos.has(valor));
+        });
+    }
+
+    function regioesParaSintese(){
+        return [...new Set([...regioesSelecionadas(),...regioesComAchadosRegistrados()])];
+    }
+
     function normalizarEstadoRegiao(e){
         if(!e) return e;
         if(!e.modoDirecao) e.modoDirecao = e.incertezaClinicaAceita ? 'indeterminado' : (e.incertezaEspecifica ? 'fenotipo' : 'auto');
@@ -41,6 +56,7 @@
         if(!e.hipoteseOrigem) e.hipoteseOrigem = '';
         if(!e.achadosSnapshot || typeof e.achadosSnapshot !== 'object') e.achadosSnapshot = {};
         if(!e.redflagsSnapshot || typeof e.redflagsSnapshot !== 'object') e.redflagsSnapshot = {};
+        if(!Array.isArray(e.hipotesesDescartadas)) e.hipotesesDescartadas = [];
         if(!e.ferramentaScrollPendente) e.ferramentaScrollPendente = '';
         if(typeof e.ferramentaBusca!=='string') e.ferramentaBusca='';
         return e;
@@ -78,6 +94,7 @@
         const teste=(item.testes||[])[indice]||'', estavel=chaveAchadoEstavel232(grupo,item,teste), legado=`${grupo}::${item.id}::${indice}`;
         if(valor){estado.resultados[estavel]=valor;estado.resultados[legado]=valor;}
         else{delete estado.resultados[estavel];delete estado.resultados[legado];}
+        estado.exameContextFingerprint=String(window.fingerprintContextoExameKineSys?.()||'');
         estado.achadosSnapshot[estavel]={itemId:item.id,grupo,texto:teste,indiceOriginal:indice,atualizadoEm:new Date().toISOString()};
     }
     function valorRedFlag232(estado,idRegiao,texto,indice){
@@ -634,7 +651,11 @@
 
     function selecionarDirecaoHipotese(idRegiao,c){
         const e=window.obterEstadoRegiao(idRegiao);
-        e.modoDirecao='hipotese';e.hipotesePrincipalAtiva=chaveHipoteseKineSys(c);e.hipoteseOrigem='manual';e.idClusterSuspeitaEscolhido=c.grupo==='cluster'?c.item.id:null;e.diferencialAtivo=null;e.incertezaClinicaAceita=false;e.incertezaEspecifica=false;e.fenotipoOperacional=null;
+        const chave=chaveHipoteseKineSys(c);
+        const estavaDescartada=e.hipotesesDescartadas.includes(chave);
+        e.hipotesesDescartadas=e.hipotesesDescartadas.filter(item=>item!==chave);
+        if(estavaDescartada)window.KineSysMotorClinico3?.adicionarHipotese?.(`${idRegiao}|${c.grupo}|${c.item.id}`);
+        e.modoDirecao='hipotese';e.hipotesePrincipalAtiva=chave;e.hipoteseOrigem='manual';e.idClusterSuspeitaEscolhido=c.grupo==='cluster'?c.item.id:null;e.diferencialAtivo=null;e.incertezaClinicaAceita=false;e.incertezaEspecifica=false;e.fenotipoOperacional=null;
         renderizarMapeamentoRegioes();agendarAutosaveKineSys();
     }
 
@@ -680,6 +701,15 @@
         return [...(reg?.clusters||[]).map(item=>({grupo:'cluster',item})),...(reg?.diferenciais||[]).map(item=>({grupo:'diferencial',item}))];
     }
     function ferramentaPorChave232(idRegiao,key){return catalogoRegiao232(idRegiao).find(c=>chaveFerramenta232(c.grupo,c.item)===key)||null;}
+    function descartarHipoteseRegional232(idRegiao,candidato){
+        const estado=window.obterEstadoRegiao(idRegiao),chave=chaveHipoteseKineSys(candidato);
+        if(!estado.hipotesesDescartadas.includes(chave))estado.hipotesesDescartadas.push(chave);
+        if(estado.hipotesePrincipalAtiva===chave){
+            estado.hipotesePrincipalAtiva=null;estado.hipoteseOrigem='';estado.idClusterSuspeitaEscolhido=null;estado.modoDirecao='auto';
+        }
+        window.KineSysMotorClinico3?.descartarHipotese?.(`${idRegiao}|${candidato.grupo}|${candidato.item.id}`);
+        agendarAutosaveKineSys();renderizarMapeamentoRegioes();
+    }
     function marcarFerramentaInvestigada232(estado,grupo,item){
         const key=chaveFerramenta232(grupo,item);
         if(!estado.ferramentasInvestigadas.includes(key))estado.ferramentasInvestigadas.push(key);
@@ -735,7 +765,7 @@
             const teste=item.testes[i],atual=valorAchado232(estado,grupo,item,i)||'';
             const linha=document.createElement('div');linha.className='teste-linha';const span=document.createElement('span');span.textContent=teste;
             const select=document.createElement('select');select.className='teste-resultado-select';select.dataset.regiao=idRegiao;select.dataset.grupo=grupo;select.dataset.item=item.id;select.dataset.indice=i;
-            [['','— Registrar achado —'],['positivo','Compatível'],['negativo','Não compatível'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(v===atual)o.selected=true;select.appendChild(o);});
+            [['','— Registrar achado —'],['positivo','Positivo'],['negativo','Negativo'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(v===atual)o.selected=true;select.appendChild(o);});
             atualizarClasseSelectResultado(select);
             select.addEventListener('change',()=>{gravarAchado232(estado,grupo,item,i,select.value);marcarFerramentaInvestigada232(estado,grupo,item);atualizarDirecaoPeloExame232(idRegiao,grupo,item);atualizarClasseSelectResultado(select);agendarAutosaveKineSys();renderizarMapeamentoRegioes();});
             linha.append(span,select);div.appendChild(linha);
@@ -856,7 +886,7 @@
     function textoStatusModal232(status){return status==='positivo'?'Achados compatíveis registrados':status==='negativo'?'Achados atuais não sustentam este eixo':status==='inconclusivo'?'Resultado inconclusivo':'Ainda sem dados suficientes';}
     function criarResultadoModal232(idRegiao,entry,index){
         const estado=window.obterEstadoRegiao(idRegiao),atual=valorAchado232(estado,entry.grupo,entry.item,index)||'',select=document.createElement('select');select.className='ks-modal-result';select.setAttribute('aria-label','Resultado do achado '+(index+1));
-        [['','— Registrar achado —'],['positivo','Compatível'],['negativo','Não compatível'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;o.selected=v===atual;select.appendChild(o);});
+        [['','— Registrar achado —'],['positivo','Positivo'],['negativo','Negativo'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;o.selected=v===atual;select.appendChild(o);});
         atualizarClasseSelectResultado(select);select.addEventListener('change',()=>{gravarAchado232(estado,entry.grupo,entry.item,index,select.value);marcarFerramentaInvestigada232(estado,entry.grupo,entry.item);atualizarDirecaoPeloExame232(idRegiao,entry.grupo,entry.item);agendarAutosaveKineSys();renderizarMapeamentoRegioes();renderizarModalInvestigacao232();});
         return select;
     }
@@ -866,7 +896,7 @@
         const list=document.createElement('div');list.className='ks-modal-test-list';visiveis.forEach(i=>{const row=document.createElement('div');row.className='ks-modal-test-row';const text=document.createElement('span');text.textContent=testes[i];row.append(text,criarResultadoModal232(idRegiao,entry,i));list.appendChild(row);});holder.appendChild(list);
         if(ordem.length>4){const more=document.createElement('button');more.type='button';more.className='ks-modal-inline-action';more.textContent=modalInvestigacao232.mostrarTodosTestes?'Mostrar somente os prioritários':`Ver todos os ${testes.length} achados`;more.addEventListener('click',()=>{modalInvestigacao232.mostrarTodosTestes=!modalInvestigacao232.mostrarTodosTestes;renderizarModalInvestigacao232();});holder.appendChild(more);}
         const status=statusHipoteseKineSys(idRegiao,entry),ver=document.createElement('div');ver.className='ks-modal-status '+status;ver.textContent=textoStatusModal232(status);holder.appendChild(ver);
-        const actions=document.createElement('div');actions.className='ks-modal-item-actions';const choose=document.createElement('button');choose.type='button';choose.className='btn-primary';choose.textContent='Usar como eixo de investigação';choose.addEventListener('click',()=>{selecionarDirecaoHipotese(idRegiao,entry);fecharModalInvestigacao232();});actions.appendChild(choose);holder.appendChild(actions);
+        const actions=document.createElement('div');actions.className='ks-modal-item-actions';const choose=document.createElement('button');choose.type='button';choose.className='btn-primary';choose.textContent='Aprovar hipótese';choose.addEventListener('click',()=>{selecionarDirecaoHipotese(idRegiao,entry);fecharModalInvestigacao232();});actions.appendChild(choose);holder.appendChild(actions);
     }
     function renderizarModalInvestigacao232(){
         const scrollLista=document.querySelector('#ks-investigation-modal-root .ks-investigation-list')?.scrollTop||0;
@@ -898,24 +928,58 @@
         configs.forEach(([cat,label,count])=>{const b=document.createElement('button');b.type='button';b.className='ks-investigation-action';b.disabled=!count;b.innerHTML=`<span>${escapeHTML(label)}</span><small>${count?`${count} opção(ões)`:'Sem itens disponíveis'}</small><b> abrir</b>`;b.addEventListener('click',()=>abrirModalInvestigacao232(idRegiao,cat,b));grid.appendChild(b);});wrap.appendChild(grid);return wrap;
     }
 
+    function construirHipotesesSugeridas232(idRegiao,contexto,estado){
+        const descartadas=new Set(estado.hipotesesDescartadas||[]);
+        const ordenadas=ordenarHipotesesRegiaoKineSys(idRegiao,contexto).filter(c=>!descartadas.has(chaveHipoteseKineSys(c)));
+        const catalogo=catalogoRegiao232(idRegiao);
+        const ativa=estado.hipotesePrincipalAtiva?catalogo.find(c=>chaveHipoteseKineSys(c)===estado.hipotesePrincipalAtiva):null;
+        // A etapa 2 deve preservar a ordem clínica definida pelo Radar na HMA.
+        // O classificador regional permanece como complemento, sem substituir o funil.
+        const idsRadar=(window.KineSysMotorClinico3?.ultimoPlano?.hipoteses||[])
+            .filter(h=>h?.regiaoId===idRegiao).map(h=>h.id);
+        const sugeridasRadar=idsRadar.map(id=>catalogo.find(c=>c.item.id===id)).filter(Boolean)
+            .filter(c=>!descartadas.has(chaveHipoteseKineSys(c)));
+        const candidatos=[...(ativa?[ativa]:[]),...sugeridasRadar,...ordenadas].filter((c,i,t)=>t.findIndex(x=>chaveHipoteseKineSys(x)===chaveHipoteseKineSys(c))===i).slice(0,4);
+        const secao=document.createElement('section');secao.className='ks-suggested-hypotheses';
+        const cabecalho=document.createElement('div');cabecalho.className='ks-investigation-actions-head';
+        cabecalho.innerHTML='<div><span class="ks-kicker">SUGESTÕES DO RADAR KINESYS</span><strong>Hipóteses e testes indicados pela anamnese</strong><p>Registre cada achado como positivo, negativo ou inconclusivo. O relatório é atualizado a partir destes resultados.</p></div>';
+        secao.appendChild(cabecalho);
+        if(!candidatos.length){
+            const vazio=document.createElement('div');vazio.className='ks-exam-empty';vazio.innerHTML='<strong>Nenhuma hipótese automática disponível</strong><span>Adicione uma hipótese do banco clínico para continuar a investigação.</span>';secao.appendChild(vazio);
+        }
+        candidatos.forEach(candidato=>{
+            const chave=chaveHipoteseKineSys(candidato),status=statusHipoteseKineSys(idRegiao,candidato);
+            const expandKey=`hipotese::${chave}`,expandida=!!estado.testesExpandidos[expandKey],aprovada=estado.modoDirecao==='hipotese'&&estado.hipotesePrincipalAtiva===chave;
+            const envoltorio=document.createElement('article');envoltorio.className='differential-active ks-hypothesis-container'+(expandida?' is-expanded':'')+(aprovada?' is-approved':'');
+            const cabeca=document.createElement('div');cabeca.className='ks-hypothesis-summary';cabeca.setAttribute('role','group');
+            const identidade=document.createElement('div');identidade.className='ks-hypothesis-identity';
+            const nome=document.createElement('strong');nome.textContent=String(candidato.item.nome||'').replace(/\s*[\u2014-]\s*cluster de exame\s*$/i,'');
+            const situacao=document.createElement('span');situacao.className='ks-hypothesis-status '+status;situacao.textContent=aprovada?'Hipótese aprovada':status==='positivo'?'Achados positivos':status==='negativo'?'Achados negativos':status==='inconclusivo'?'Achados inconclusivos':'Aguardando testes';
+            identidade.append(nome,situacao);
+            const controles=document.createElement('div');controles.className='ks-hypothesis-actions';
+            const aprovar=document.createElement('button');aprovar.type='button';aprovar.className='btn-secondary';aprovar.textContent='Aprovar hipótese';aprovar.hidden=aprovada;aprovar.setAttribute('aria-pressed',String(aprovada));aprovar.addEventListener('click',evento=>{evento.stopPropagation();if(!aprovada)selecionarDirecaoHipotese(idRegiao,candidato);});
+            const descartar=document.createElement('button');descartar.type='button';descartar.className='btn-link-compacto';descartar.textContent='Descartar hipótese';descartar.addEventListener('click',evento=>{evento.stopPropagation();descartarHipoteseRegional232(idRegiao,candidato);});
+            const indicador=document.createElement('button');indicador.type='button';indicador.className='ks-hypothesis-chevron';indicador.setAttribute('aria-expanded',String(expandida));indicador.textContent=expandida?'Ocultar testes':'Ver testes';
+            controles.append(aprovar,descartar,indicador);cabeca.append(identidade,controles);
+            const alternar=()=>{estado.testesExpandidos[expandKey]=!expandida;renderizarMapeamentoRegioes();};
+            indicador.addEventListener('click',evento=>{evento.stopPropagation();alternar();});
+            cabeca.addEventListener('click',alternar);
+            envoltorio.appendChild(cabeca);
+            if(expandida){const corpo=document.createElement('div');corpo.className='ks-hypothesis-tests';corpo.appendChild(window.construirCardTestes(idRegiao,candidato.item,status,candidato.grupo));envoltorio.appendChild(corpo);}
+            secao.appendChild(envoltorio);
+        });
+        const adicionar=document.createElement('button');adicionar.type='button';adicionar.className='btn-secondary';adicionar.textContent='Adicionar hipótese';adicionar.addEventListener('click',()=>abrirModalInvestigacao232(idRegiao,'catalogo',adicionar));secao.appendChild(adicionar);
+        return secao;
+    }
+
     window.construirCardRegiao = function(idRegiao,contexto){
         const regiao=BANCO_MAPEAMENTO_CLINICO[idRegiao],estado=window.obterEstadoRegiao(idRegiao),card=document.createElement('section');card.className='cluster-region-card ks-route-region-card';
-        const header=document.createElement('div');header.className='cluster-region-header';header.innerHTML=`<div><span class="ks-kicker">REGIÃO EM INVESTIGAÇÃO</span><h2>${escapeHTML(regiao.nome)}</h2></div><span class="ks-region-mode">Exame direcionado</span>`;card.appendChild(header);
+        const header=document.createElement('div');header.className='cluster-region-header';header.innerHTML=`<div><span class="ks-kicker">REGIÃO DEFINIDA PELO RADAR</span><h2>${escapeHTML(regiao.nome)}</h2></div><span class="ks-region-mode">Radar KineSys</span>`;card.appendChild(header);
         if(mapeamentoAvaliacaoAnterior?.detalhes?.[idRegiao]){const resumo=(mapeamentoAvaliacaoAnterior.resumoPorRegiao||[]).find(r=>r.regiao===regiao.nome);const b=document.createElement('div');b.className='ks-prior-eval';b.textContent=`Última avaliação (${mapeamentoAvaliacaoAnterior.data}): ${resumo?(resumo.direcaoInvestigacao||resumo.hipotese):'resultados prévios disponíveis.'}`;card.appendChild(b);}
         const nota=construirNotaTopologiaKineSys(idRegiao,contexto);if(nota)card.appendChild(nota);
-        const cirurgia=obterCirurgiaRelacionadaRegiao(idRegiao),fen=window.inferirFenotipoOperacionalKineSys(idRegiao,contexto);
+        const cirurgia=obterCirurgiaRelacionadaRegiao(idRegiao);
         if(cirurgia){const a=document.createElement('div');a.className='ks-postop-route';a.innerHTML=`<strong>Episódio conhecido</strong><span>${escapeHTML(cirurgia)}.</span>`;card.appendChild(a);}
-        if(estado.modoDirecao==='hipotese'&&estado.hipotesePrincipalAtiva){
-            const cand=ordenarHipotesesRegiaoKineSys(idRegiao,contexto).find(c=>chaveHipoteseKineSys(c)===estado.hipotesePrincipalAtiva) || ferramentaPorChave232(idRegiao,estado.hipotesePrincipalAtiva);
-            if(cand){const chosen=document.createElement('div');chosen.className='ks-direction-chosen';const titulo=estado.hipoteseOrigem==='exame_positivo'?'EIXO SELECIONADO APÓS ACHADOS':'DIREÇÃO SELECIONADA PELO PROFISSIONAL';chosen.innerHTML=`<div><span class="ks-kicker">${titulo}</span><strong>${escapeHTML(cand.item.nome)}</strong><small class="ks-semantic-note">A seleção orienta a investigação e não estabelece diagnóstico.</small></div>`;const b=document.createElement('button');b.type='button';b.className='btn-secondary';b.textContent='Remover da Síntese';b.addEventListener('click',()=>{estado.modoDirecao=estado.rotasAtivas?.length?'rotas':'auto';estado.hipotesePrincipalAtiva=null;estado.hipoteseOrigem='';estado.idClusterSuspeitaEscolhido=null;renderizarMapeamentoRegioes();});chosen.appendChild(b);card.appendChild(chosen);}
-        }
-        card.appendChild(construirRotasRegiao(idRegiao,contexto,estado));
-        if(fen){const phen=document.createElement('div');phen.className='ks-phenotype-anchor ks-phenotype-optional';phen.innerHTML=`<span class="ks-kicker">PADRÃO OPERACIONAL SUGERIDO</span><strong>${escapeHTML(fen.nome)}</strong><p>${escapeHTML(fen.texto)}</p>`;const b=document.createElement('button');b.type='button';b.className='btn-link-compacto';b.textContent='Usar este padrão como direção';b.addEventListener('click',()=>selecionarDirecaoFenotipo(idRegiao,fen));phen.appendChild(b);card.appendChild(phen);}
-        const tools=construirFerramentasEspecificas(idRegiao,contexto,estado);if(tools)card.appendChild(tools);
-        if(!estado.rotasAtivas?.length && estado.modoDirecao!=='hipotese' && estado.modoDirecao!=='fenotipo' && estado.modoDirecao!=='indeterminado'){
-            const no=document.createElement('div');no.className='ks-no-route-choice';no.innerHTML='<strong>Sem direção específica</strong>';
-            const b=document.createElement('button');b.type='button';b.className='btn-link-compacto';b.textContent='Manter quadro indeterminado';b.addEventListener('click',()=>selecionarDirecaoIndeterminada(idRegiao));no.appendChild(b);card.appendChild(no);
-        }
+        card.appendChild(construirHipotesesSugeridas232(idRegiao,contexto,estado));
         return card;
     };
 
@@ -944,7 +1008,7 @@
     };
 
     window.avancarParaDiagnostico = function(){
-        const regioes=regioesSelecionadas(),contexto=coletarContextoClinico();
+        const regioes=regioesParaSintese(),contexto=coletarContextoClinico();
         regioes.forEach(id=>{
             const e=window.obterEstadoRegiao(id),candidatos=ordenarHipotesesRegiaoKineSys(id,contexto);
             window.registrarAuditoriaMotorKineSys(id,contexto,candidatos);
@@ -956,15 +1020,39 @@
         agendarAutosaveKineSys();window.renderizarAlertasConsolidados();renderizarSinteseDiagnostica();irParaSubtela('subtela_diagnostico');
     };
 
-    window.avancarParaMapa = function(){
+    window.aplicarRegioesDoRadarKineSys = function(plano){
+        const controles=Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input[data-regiao]'));
+        if(!controles.length)return[];
+        const selecionadas=controles.filter(input=>input.checked).map(input=>input.dataset.regiao);
+        if(selecionadas.length||controles.some(input=>input.dataset.tocadoManualmente==='true'))return selecionadas;
+        const ids=[...new Set((plano?.regioes||[]).map(regiao=>regiao?.id).filter(Boolean))]
+            .filter(id=>document.getElementById('chk_regiao_'+id));
+        ids.forEach(id=>{
+            const input=document.getElementById('chk_regiao_'+id);
+            input.checked=true;
+            input.dataset.sugeridaPelaHMA='true';
+        });
+        if(ids.length){
+            window.definirRegiaoAtivaAvaliacaoKineSys?.(ids[0]);
+            agendarAutosaveKineSys();
+        }
+        return ids;
+    };
+
+    window.avancarParaMapa = async function(){
         const nome=document.getElementById('paciente_nome')?.value.trim();
-        if(!nome){alert('Informe ao menos o nome do paciente antes de avançar para o Exame direcionado.');return;}
+        if(!nome){alert('Informe ao menos o nome do paciente antes de avançar para o Exame clínico.');return;}
         processarRadarEmTempoReal();
         const grupo=document.getElementById('grupo_regioes_mapeamento');
         if(grupo&&grupo.children.length===0) renderizarSeletorRegioes();
-        // O Motor 2.3.2 não marca regiões automaticamente. A história e a
-        // avaliação anterior aparecem como sugestões; a seleção é do profissional.
+        const plano=window.KineSysMotorClinico3?.atualizar?.(true)||window.gerarPlanoClinicoHMAKineSys?.()||null;
+        // A etapa 2 nasce diretamente do Radar: as regiões coerentes com a
+        // anamnese são ativadas antes da primeira renderização dos testes.
+        const regioesRadar=window.aplicarRegioesDoRadarKineSys(plano);
         window.sugerirRegioesPorHMA();
+        if(regioesRadar.length&&window.KineSysClinicalRegionLoader?.ensure){
+            await window.KineSysClinicalRegionLoader.ensure(regioesRadar);
+        }
         window.renderizarMapeamentoRegioes();
         irParaSubtela('subtela_mapeamento');
     };
@@ -977,15 +1065,15 @@
     };
 
     window.coletarAchadosLaudoKineSys = function(){
-        return regioesSelecionadas().flatMap(id=>catalogoRegiao232(id).map(entry=>{
+        return regioesParaSintese().flatMap(id=>catalogoRegiao232(id).map(entry=>{
             const estado=window.obterEstadoRegiao(id),a=analisarRespostasItem(estado,entry.grupo,entry.item);
             if(!a.respondidos)return null;
-            return {regiao:BANCO_MAPEAMENTO_CLINICO[id].nome,nome:entry.item.nome,status:statusHipoteseKineSys(id,entry),completo:a.respostas.length>0&&a.decisivos===a.respostas.length,achados:(entry.item.testes||[]).map((texto,i)=>({texto,resultado:a.respostas[i]||'nao_avaliado'}))};
+            return {regiaoId:id,regiao:BANCO_MAPEAMENTO_CLINICO[id].nome,id:entry.item.id,grupo:entry.grupo,nome:entry.item.nome,status:statusHipoteseKineSys(id,entry),completo:a.respostas.length>0&&a.decisivos===a.respostas.length,achados:(entry.item.testes||[]).map((texto,i)=>({texto,resultado:a.respostas[i]||'nao_avaliado'}))};
         }).filter(Boolean));
     };
 
     window.gerarSinteseMapeamento = function(){
-        const regioes=regioesSelecionadas(),contexto=coletarContextoClinico();
+        const regioes=regioesParaSintese(),contexto=coletarContextoClinico();
         const avisoDirecao='<div class="ks-clinical-support-notice" role="note"><strong>Direção clínica assistida</strong><span>O KineSys organiza achados, eixos de investigação e testes possíveis. Não confirma diagnóstico nem substitui a decisão do fisioterapeuta.</span></div>';
         let html=avisoDirecao;const resumoPorRegiao=[];
         const validacaoSeguranca=window.validarSegurancaParaFinalizacao();
@@ -1209,3 +1297,5 @@
     window.KineSysClinicalEngine231=api232;
     window.KineSysClinicalEngine23=api232; // compatibilidade com inspeções da versão 2.3
 })();
+
+

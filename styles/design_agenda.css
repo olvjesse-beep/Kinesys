@@ -386,7 +386,25 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   background:#FBFCFC;
 }
 #tela_agenda .agenda-celula.meia-hora{border-top-style:dashed;border-top-color:#F0F4F3}
+#tela_agenda{
+  --agenda-intervalo-fundo:linear-gradient(135deg,rgba(239,190,72,.34),rgba(228,160,42,.20));
+  --agenda-intervalo-linha:rgba(184,126,22,.42);
+  --agenda-intervalo-texto:#6F4B08;
+}
 #tela_agenda .agenda-celula.fora-atendimento{background:#F7F8F8}
+#tela_agenda .agenda-celula.intervalo{background:var(--agenda-intervalo-fundo);border-color:var(--agenda-intervalo-linha);color:var(--agenda-intervalo-texto);cursor:not-allowed;box-shadow:inset 0 0 0 1px rgba(255,255,255,.36)}
+#tela_agenda .agenda-intervalo-bloco{
+  display:flex;align-items:center;justify-content:center;gap:8px;align-self:stretch;
+  min-width:0;min-height:0;margin:3px 6px;padding:8px 10px;box-sizing:border-box;
+  z-index:2;pointer-events:none;overflow:hidden;border-radius:14px;
+  border:1px solid rgba(188,145,28,.42);
+  background:linear-gradient(135deg,rgba(255,249,218,.92),rgba(247,220,120,.62));
+  box-shadow:0 8px 18px rgba(161,120,18,.14),inset 0 1px 0 rgba(255,255,255,.82);
+  color:#76550b;font-size:var(--kds-font-metadata);font-weight:850;letter-spacing:.3px;text-align:center;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+#tela_agenda .agenda-intervalo-icone{position:relative;width:13px;height:13px;border:2px solid currentColor;border-radius:50%;box-sizing:border-box;opacity:.82}
+#tela_agenda .agenda-intervalo-icone::before{content:"";position:absolute;left:5px;top:-5px;width:2px;height:5px;border-radius:2px;background:currentColor;box-shadow:4px 2px 0 -1px currentColor}
 #tela_agenda .agenda-celula.atendimento{background:#fff;cursor:pointer}
 #tela_agenda .agenda-celula.atendimento:hover{background:#F1FAF7;box-shadow:inset 0 0 0 1px #9BCFC7}
 #tela_agenda .agenda-celula.bloqueado{background:#596164;color:#fff;cursor:default}
@@ -537,7 +555,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .ks-week-headers,
 #tela_agenda .ks-week-row{
   display:grid;
-  grid-template-columns:138px minmax(120px,1fr) 18px minmax(120px,1fr) 34px minmax(120px,1fr) 18px minmax(120px,1fr);
+  grid-template-columns:138px minmax(120px,1fr) 18px minmax(120px,1fr) 62px minmax(120px,1fr) 18px minmax(120px,1fr);
   gap:8px;
   align-items:center;
 }
@@ -555,7 +573,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .ks-week-row:last-child{border-bottom:0}
 #tela_agenda .ks-week-day{color:var(--kds-text);font-size:var(--kds-font-label);font-weight:820}
 #tela_agenda .ks-week-sep{color:var(--kds-faint);font-size:var(--kds-font-metadata);text-align:center}
-#tela_agenda .ks-week-break{color:var(--kds-muted);font-size:var(--kds-font-metadata);font-weight:800;text-align:center}
+#tela_agenda .ks-week-break{color:#87630F;font-size:var(--kds-font-metadata);font-weight:850;text-align:center}
 #tela_agenda .ks-professional-inherit-note{margin:12px 24px 0;padding:9px 11px;border:1px solid var(--kds-line-soft);border-radius:8px;background:#F6F8F8;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:var(--kds-leading-ui)}
 #tela_agenda .ks-week-schedule-legacy{margin:0 24px 20px;border-top:1px solid var(--kds-line-soft)}
 #tela_agenda .ks-week-schedule-legacy>summary{padding:12px 0;cursor:pointer;color:var(--kds-muted);font-size:var(--kds-font-label);font-weight:750}
@@ -1303,3 +1321,5 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     z-index:3!important;
   }
 }
+
+
