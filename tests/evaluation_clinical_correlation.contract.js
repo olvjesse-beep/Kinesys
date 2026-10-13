@@ -1,7 +1,7 @@
 const assert=require('assert');
 const fs=require('fs');
 const vm=require('vm');
-const src=fs.readFileSync('src/clinical/evaluation_workspace-1.17.0.js','utf8');
+const src=fs.readFileSync('src/clinical/evaluation_workspace-1.17.0.js','utf8').replace(/\r\n/g,'\n');
 
 assert.match(src,/KineSysMotorClinico3\?\.ultimoPlano/,'o laudo deve consumir o plano derivado da anamnese');
 assert.match(src,/ultimoPlano\|\|window\.gerarPlanoClinicoHMAKineSys\?\.\(\)/,'o laudo deve reconstruir o plano quando um rascunho restaurado ainda não populou ultimoPlano');
