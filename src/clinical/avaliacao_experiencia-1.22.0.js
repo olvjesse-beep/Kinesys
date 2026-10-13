@@ -18,12 +18,12 @@
         subtela_mapeamento: {
             number: 2,
             title: 'Exame direcionado',
-            help: 'Selecione a região e registre segurança, achados e testes do exame.'
+            help: 'Revise as regiões sugeridas pelo Radar e registre os resultados dos testes indicados.'
         },
         subtela_diagnostico: {
             number: 3,
-            title: 'Síntese clínica',
-            help: 'Revise alertas, coerência dos achados e o texto final antes de concluir.'
+            title: 'Relatório',
+            help: 'Revise o relatório fisioterapêutico final e copie o texto quando estiver pronto.'
         }
     };
 
@@ -172,22 +172,47 @@
         tela.appendChild(overlay);
 
         let returnFocus = null;
+        const focusableSelector = 'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
         function close() {
             overlay.hidden = true;
-            document.body.classList.remove('ks-eval-modal-open');
-            if (returnFocus) returnFocus.focus();
+            if (!qs('.ks-eval-dialog-backdrop:not([hidden])')) document.body.classList.remove('ks-eval-modal-open');
+            if (returnFocus && returnFocus.isConnected) requestAnimationFrame(function () { returnFocus.focus({preventScroll: true}); });
         }
         function open(trigger) {
             returnFocus = trigger;
+            qsa('.ks-eval-dialog-backdrop:not([hidden])').forEach(function (current) {
+                if (current !== overlay) current.querySelector('.ks-eval-dialog-close')?.click();
+            });
             overlay.hidden = false;
             document.body.classList.add('ks-eval-modal-open');
-            const first = qs('select, input, button', overlay);
-            if (first) first.focus();
+            requestAnimationFrame(function () {
+                const first = qs('select:not([disabled]), input:not([disabled]), .ks-eval-dialog-close, button:not([disabled])', overlay);
+                if (first) first.focus({preventScroll: true});
+            });
         }
         qs('.ks-eval-dialog-close', overlay).addEventListener('click', close);
         qs('.ks-eval-dialog-done', overlay).addEventListener('click', close);
         overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
-        overlay.addEventListener('keydown', function (event) { if (event.key === 'Escape') close(); });
+        overlay.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                close();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const items = qsa(focusableSelector, overlay).filter(function (item) { return item.getClientRects().length > 0; });
+            if (!items.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
         return {overlay: overlay, open: open, close: close};
     }
 
@@ -318,3 +343,5 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 })();
+
+
