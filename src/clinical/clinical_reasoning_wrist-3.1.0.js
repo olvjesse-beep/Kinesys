@@ -188,17 +188,10 @@
     [...itens,...arr(plano.exame.testesPrioritarios)].forEach(x=>{const k=n(x.texto);if(k&&!tm.has(k))tm.set(k,x);});plano.exame.testesPrioritarios=[...tm.values()].slice(0,(temCotovelo||temCervical)?20:15);plano.exame.analises=agrupar(plano.exame.testesPrioritarios);plano.lacunas=uniq([...arr(plano.lacunas),...perguntas.slice(0,6).map(q=>`Punho/Mão: ${q}`)]).slice(0,18);return plano;
   }
 
-  const esc=(v='')=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-  function render(plano){
-    const host=document.getElementById('ks31_wrist_interview');if(!host)return;const m=plano?.motores31?.punho_mao||(plano?.motor31?.regiao==='punho_mao'?plano.motor31:null);if(!m){host.hidden=true;host.innerHTML='';return;}host.hidden=false;const matriz=arr(plano?.exame?.matrizPunhoMao).slice(0,6),cross=m.correlacaoProximalPunhoMao,sig=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,10),mx:matriz.map(x=>x.id),x:!!cross?.ativa});if(host.dataset.ks31Signature===sig)return;host.dataset.ks31Signature=sig;
-    host.innerHTML=`<header><div><span>Motor 3.1 · Punho e Mão</span><strong>Diferenciar trauma, fonte local, neuropatia distal e origem proximal</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header>${cross?.ativa?`<div class="ks31-cross-region"><strong>Integração proximal ↔ punho/mão</strong><p>${esc(cross.principio)}</p></div>`:''}<div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>A localização do sintoma não define sozinha a origem. Segurança primeiro; depois compare carga local, distribuição neural e modulação por cotovelo/cervical.</footer>`;
-  }
-  function garantirUI(){const etapa=document.getElementById('subtela_mapeamento');if(etapa&&!document.getElementById('ks31_wrist_interview')){const el=document.createElement('section');el.id='ks31_wrist_interview';el.className='ks31-wrist-interview';el.hidden=true;const c=document.getElementById('ks31_elbow_interview'),o=document.getElementById('ks31_shoulder_interview'),p=document.getElementById('ks30_exam_plan');if(c)c.insertAdjacentElement('afterend',el);else if(o)o.insertAdjacentElement('afterend',el);else if(p)p.insertAdjacentElement('afterend',el);else etapa.insertAdjacentElement('afterbegin',el);}}
-
   window.enriquecerPlanoPunhoMaoKineSys=planoPunhoMaoEspecialista;
   const anterior=window.enriquecerPlanoCotoveloKineSys;
   if(typeof anterior==='function'&&!anterior.__kinesysWristBridge){const ponte=function(plano){let p=anterior(plano)||plano;return planoPunhoMaoEspecialista(p)||p;};ponte.__kinesysWristBridge=true;ponte.__original=anterior;window.enriquecerPlanoCotoveloKineSys=ponte;}
   window.KineSysMotor31PunhoMao={version:VERSION,condicoes:CONDICOES,perguntasBase:BASE_PERGUNTAS,referencias:REFERENCIAS,enriquecer:planoPunhoMaoEspecialista};
-  document.addEventListener('kinesys:motor3-plano-atualizado',()=>{garantirUI();const p=window.KineSysMotorClinico3?.ultimoPlano;if(p)render(p);});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',garantirUI,{once:true});else garantirUI();
 })();
+
+
