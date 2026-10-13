@@ -417,7 +417,7 @@
 
   function planoOmbroEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
-    const temOmbro=arr(plano.regioes).some(r=>r.id==='ombro')||/ombro|escapul|deltoid|braco/.test(norm(hmaTexto()));
+    const temOmbro=arr(plano.regioes).some(r=>r.id==='ombro');
     if(!temOmbro)return plano;
     const c=contexto(); const texto=textoContexto(c);
     const relatoDecubito=PADRAO_DECUBITO_OMBRO.test(norm(hmaTexto()));
@@ -480,35 +480,8 @@
     return Object.entries(g).map(([tipo,x])=>({tipo,titulo:ROT[tipo]||tipo,itens:x}));
   }
 
-  function renderPerguntas(plano){
-    const host=document.getElementById('ks31_shoulder_interview');
-    if(!host)return;
-    const m=plano?.motores31?.ombro||(plano?.motor31?.regiao==='ombro'?plano.motor31:null);
-    if(!m){host.hidden=true;host.innerHTML='';return;}
-    host.hidden=false;
-    const matriz=arr(plano?.exame?.matrizOmbro).slice(0,4);
-    const assinatura=JSON.stringify({v:VERSION,c:m.condicoes.map(x=>x.id),f:m.frasesReconhecidas,p:m.perguntas.slice(0,10),mx:matriz.map(x=>x.id)});
-    if(host.dataset.ks31Signature===assinatura)return;
-    host.dataset.ks31Signature=assinatura;
-    host.innerHTML=`<header><div><span>Motor 3.1 · Ombro</span><strong>Perguntas que refinam a hipótese antes dos testes</strong></div><small>${m.condicoes.length} família(s) em investigação</small></header><div class="ks31-question-grid">${m.perguntas.slice(0,10).map((q,i)=>`<div><b>${i+1}</b><span>${esc(q)}</span></div>`).join('')}</div>${matriz.length?`<div class="ks31-exam-matrix"><strong>Exame por finalidade</strong>${matriz.map(x=>`<details><summary>${esc(x.nome)}</summary><div><b>Essencial</b>${arr(x.essencial).map(v=>`<p>${esc(v)}</p>`).join('')}<b>Complementar</b>${arr(x.complementar).map(v=>`<p>${esc(v)}</p>`).join('')}${arr(x.evitar).length?`<b>Cautela</b>${arr(x.evitar).map(v=>`<p>${esc(v)}</p>`).join('')}`:''}</div></details>`).join('')}</div>`:''}<footer>Use as respostas para mudar a prioridade das hipóteses. Uma frase isolada do paciente não confirma estrutura ou diagnóstico.</footer>`;
-  }
-  function esc(v=''){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
-
-  function garantirUI(){
-    const etapa2=document.getElementById('subtela_mapeamento');
-    if(etapa2&&!document.getElementById('ks31_shoulder_interview')){
-      const el=document.createElement('section');el.id='ks31_shoulder_interview';el.className='ks31-shoulder-interview';el.hidden=true;
-      const p=document.getElementById('ks30_exam_plan');
-      if(p)p.insertAdjacentElement('afterend',el);else etapa2.insertAdjacentElement('afterbegin',el);
-    }
-  }
-
   window.enriquecerPlanoOmbroKineSys=planoOmbroEspecialista;
   window.KineSysMotor31Ombro={version:VERSION,condicoes:CONDICOES,perguntasBase:BASE_PERGUNTAS,enriquecer:planoOmbroEspecialista};
-  document.addEventListener('kinesys:motor3-plano-atualizado',()=>{
-    garantirUI();
-    const p=window.KineSysMotorClinico3?.ultimoPlano;
-    if(p)renderPerguntas(p);
-  });
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',garantirUI,{once:true});else garantirUI();
 })();
+
+
