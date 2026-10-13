@@ -33,7 +33,7 @@ assert(/\.ks-evo-workspace-details\{display:grid;grid-template-columns:minmax\(0
 assert(/\.ks-evo-change-fields\{display:grid;grid-template-columns:minmax\(0,1fr\)/.test(css), 'os quatro campos de mudanças precisam ficar empilhados na coluna esquerda');
 
 const resumoInicio = script.indexOf('function montarResumoEvolucaoEstruturada');
-const resumoFim = script.indexOf('\n\nfunction montarRelatoEvolucaoParaExibicao', resumoInicio);
+const resumoFim = script.search(/\r?\n\r?\nfunction montarRelatoEvolucaoParaExibicao/);
 assert(resumoInicio >= 0 && resumoFim > resumoInicio, 'função de resumo estruturado precisa ser extraível para teste');
 const sandbox = {};
 vm.runInNewContext(`${script.slice(resumoInicio, resumoFim)}\nresultado=montarResumoEvolucaoEstruturada({estadoClinico:'pior',mudancasDetalhes:{novoExame:'RM lombar com achado novo',novaIntercorrencia:'queda sem trauma',mudancaMedicacao:'analgésico ajustado',novoAlerta:'perda de força'},respostaCarga:{dorDurante:8,rpe:7}});`, sandbox);
