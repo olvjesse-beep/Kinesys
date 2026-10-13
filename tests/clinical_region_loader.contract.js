@@ -25,6 +25,11 @@ for(const file of [...regionalScripts,...regionalStyles]){
   assert.ok(!screen.includes(file),`${file} não deve permanecer no bundle base da Avaliação`);
   assert.ok(regional.includes(file),`${file} deve permanecer registrado no loader regional`);
 }
+for(const file of regionalScripts){
+  const source=fs.readFileSync(file,'utf8');
+  assert.doesNotMatch(source,/ks31_(?:shoulder|elbow|wrist|cervical)_interview/,`${file} não deve criar questionários na etapa de exame`);
+  assert.doesNotMatch(source,/ks31-question-grid/,`${file} deve manter perguntas apenas no raciocínio interno, sem painel visual`);
+}
 assert.match(regional,/const ORDEM=Object\.freeze\(\['ombro','cotovelo','punho_mao','cervical'\]\)/,'ordem histórica dos motores regionais deve ser explícita');
 assert.match(regional,/punho_mao:Object\.freeze\(\{[\s\S]*?depends:Object\.freeze\(\['cotovelo'\]\)/,'Punho/Mão deve preservar dependência atual do enriquecedor de Cotovelo');
 assert.match(regional,/cervical:Object\.freeze\(\{[\s\S]*?depends:Object\.freeze\(\['cotovelo'\]\)/,'Cervical deve preservar dependência atual do enriquecedor de Cotovelo');
@@ -36,3 +41,5 @@ assert.match(regional,/carregamentos\.has\(href\)/,'scripts regionais concorrent
 assert.match(regional,/estilos\.has\(href\)/,'estilos regionais concorrentes devem ser deduplicados');
 
 console.log('Clinical region lazy loading contract: OK');
+
+
