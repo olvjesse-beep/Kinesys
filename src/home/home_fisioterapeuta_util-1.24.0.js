@@ -376,6 +376,7 @@
     }
 
     function graficoEvolucaoSVG(pontos){
+        const escaparSVG=valor=>String(valor??'').replace(/[&<>"']/g,caractere=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[caractere]));
         const largura=640,altura=260,margem={top:20,right:24,bottom:44,left:42};
         const areaW=largura-margem.left-margem.right,areaH=altura-margem.top-margem.bottom;
         const x=i=>margem.left+(pontos.length<=1?areaW/2:(i*areaW/(pontos.length-1)));
@@ -385,7 +386,7 @@
         const passo=Math.max(1,Math.ceil(pontos.length/6));
         const marcadores=pontos.map((p,i)=>{
             const data=formatarDiaMes(p.data);
-            return `<g class="ks-fisio-chart-point"><circle cx="${x(i)}" cy="${y(p.eva)}" r="5"/><title>${data} · EVA ${p.eva}/10 · ${p.estado}</title>${i%passo===0||i===pontos.length-1?`<text x="${x(i)}" y="${altura-16}" text-anchor="middle">${data}</text>`:''}</g>`;
+            return `<g class="ks-fisio-chart-point"><circle cx="${x(i)}" cy="${y(p.eva)}" r="5"/><title>${escaparSVG(data)} · EVA ${p.eva}/10 · ${escaparSVG(p.estado)}</title>${i%passo===0||i===pontos.length-1?`<text x="${x(i)}" y="${altura-16}" text-anchor="middle">${escaparSVG(data)}</text>`:''}</g>`;
         }).join('');
         return `<svg class="ks-fisio-evolution-chart" viewBox="0 0 ${largura} ${altura}" role="img" aria-label="Gráfico da intensidade da dor ao longo do tratamento"><g class="ks-fisio-chart-grid">${linhas}</g><polyline class="ks-fisio-chart-line" points="${trilha}"/>${marcadores}</svg>`;
     }
