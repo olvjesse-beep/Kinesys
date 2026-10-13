@@ -1107,3 +1107,85 @@ body.ks-design-ready details.clinical-disclosure{box-shadow:none}#tela_avaliacao
 #tela_avaliacao .alerta-card{
   border-left-width:1px;
 }
+
+/* Hipóteses do Radar: resumo recolhido e testes sob demanda. */
+#tela_avaliacao .ks-hypothesis-container{
+  padding:0;
+  overflow:hidden;
+  transition:border-color .18s ease,background-color .18s ease;
+}
+#tela_avaliacao .ks-hypothesis-container.is-approved{
+  border-color:#8fc9bf;
+  background:#fbfefd;
+}
+#tela_avaliacao .ks-hypothesis-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  min-height:64px;
+  padding:12px 14px;
+  cursor:pointer;
+  outline:none;
+}
+#tela_avaliacao .ks-hypothesis-summary:focus-visible{
+  box-shadow:inset 0 0 0 2px #25877d;
+}
+#tela_avaliacao .ks-hypothesis-identity{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+#tela_avaliacao .ks-hypothesis-identity strong{
+  color:var(--kds-text);
+  font-size:var(--kds-font-ui);
+}
+#tela_avaliacao .ks-hypothesis-status{
+  color:var(--kds-text-subtle);
+  font-size:var(--kds-font-metadata);
+}
+#tela_avaliacao .ks-hypothesis-status.positivo{color:#237a4a}
+#tela_avaliacao .ks-hypothesis-status.inconclusivo{color:#92400e}
+#tela_avaliacao .ks-hypothesis-container.is-approved .ks-hypothesis-status{color:#17685f;font-weight:700}
+#tela_avaliacao .ks-hypothesis-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex:0 0 auto;
+}
+#tela_avaliacao .ks-hypothesis-actions .btn-primary,
+#tela_avaliacao .ks-hypothesis-actions .btn-secondary,
+#tela_avaliacao .ks-hypothesis-actions .btn-link-compacto{
+  min-height:36px;
+  padding:7px 11px;
+  white-space:nowrap;
+  font-size:var(--kds-font-metadata);
+}
+#tela_avaliacao .ks-hypothesis-chevron{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:94px;
+  min-height:44px;
+  padding:8px 11px;
+  border:1px solid #cfe1dd;
+  border-radius:9px;
+  background:#eef5f3;
+  color:#245b56;
+  font-size:var(--kds-font-metadata);
+  font-weight:700;
+  cursor:pointer;
+}
+#tela_avaliacao .ks-hypothesis-tests{
+  padding:14px;
+  border-top:1px solid #e5eeeb;
+  background:#fff;
+}
+@media(max-width:700px){
+  #tela_avaliacao .ks-hypothesis-summary{align-items:stretch;flex-direction:column}
+  #tela_avaliacao .ks-hypothesis-actions{justify-content:flex-start;flex-wrap:wrap}
+}
+
+
