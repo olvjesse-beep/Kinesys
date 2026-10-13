@@ -602,6 +602,23 @@ if (document.readyState === 'loading') {
     inicializarEventosDomAgenda();
 }
 
+function fecharModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('ativa');
+        el.setAttribute('aria-hidden','true');
+        if (!document.querySelector('.modal-overlay.ativa')) document.body.classList.remove('ks-modal-open');
+    }
+}
+function abrirModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.add('ativa');
+        el.setAttribute('aria-hidden','false');
+        document.body.classList.add('ks-modal-open');
+    }
+}
+
 function irParaSubtelaAgenda(id) {
     if (!usuarioPodeVerAgendaClinicaToda() && id !== 'agenda_painel') return;
     if (!usuarioEhAdministradorAgenda() && ['agenda_procedimentos','agenda_horarios','agenda_bloqueios'].includes(id)) return;
@@ -1288,7 +1305,7 @@ function horariosExatosDoEditor(diaSemana, profissionalId) {
 function renderizarEditorGradeSemanal(containerId, profissionalId = '') {
     const container = document.getElementById(containerId);
     if (!container) return;
-    const cab = `<div class="ks-week-headers"><span>Dia</span><span>1º período</span><span>2º período</span></div>`;
+    const cab = `<div class="ks-week-headers"><span>Dia</span><span>1º período</span><span>2º período · após intervalo</span></div>`;
     const linhas = AGENDA_DIAS_EDITOR.map(([dia,nome]) => {
         const itens = horariosExatosDoEditor(dia, profissionalId);
         const p1 = itens[0] || {};
@@ -1299,7 +1316,7 @@ function renderizarEditorGradeSemanal(containerId, profissionalId = '') {
             <input type="time" data-grade="inicio1" value="${horaCurta(p1.hora_inicio || '')}" aria-label="${nome}: início do primeiro período">
             <div class="ks-week-sep">às</div>
             <input type="time" data-grade="fim1" value="${horaCurta(p1.hora_fim || '')}" aria-label="${nome}: fim do primeiro período">
-            <div class="ks-week-break">e</div>
+            <div class="ks-week-break" title="O espaço entre os períodos será marcado como INTERVALO na agenda">intervalo</div>
             <input type="time" data-grade="inicio2" value="${horaCurta(p2.hora_inicio || '')}" aria-label="${nome}: início do segundo período">
             <div class="ks-week-sep">às</div>
             <input type="time" data-grade="fim2" value="${horaCurta(p2.hora_fim || '')}" aria-label="${nome}: fim do segundo período">
@@ -1815,6 +1832,30 @@ function minutoDentroDeJanela(minuto, janelas) {
     });
 }
 
+function intervalosEntreJanelasAgenda(janelas = []) {
+    const ordenadas = (janelas || []).map(j => ({
+        inicio: horaParaMinutos(horaCurta(j.hora_inicio)),
+        fim: horaParaMinutos(horaCurta(j.hora_fim))
+    })).filter(j => Number.isFinite(j.inicio) && Number.isFinite(j.fim) && j.fim > j.inicio)
+        .sort((a, b) => a.inicio - b.inicio || a.fim - b.fim);
+    if (ordenadas.length < 2) return [];
+
+    const intervalos = [];
+    let fimAtual = ordenadas[0].fim;
+    for (let i = 1; i < ordenadas.length; i++) {
+        const janela = ordenadas[i];
+        if (janela.inicio > fimAtual) intervalos.push({ inicio:fimAtual, fim:janela.inicio });
+        fimAtual = Math.max(fimAtual, janela.fim);
+    }
+    return intervalos;
+}
+
+function intervaloEntreJanelasAgenda(minuto, janelas = []) {
+    return intervalosEntreJanelasAgenda(janelas).find(intervalo =>
+        minuto >= intervalo.inicio && minuto < intervalo.fim
+    ) || null;
+}
+
 function bloqueioNoMinuto(minuto, bloqueios) {
     return bloqueios.find(b => {
         if (!b.hora_inicio || !b.hora_fim) return true;
@@ -2079,11 +2120,12 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             const bloqueios = bloqueiosAgendaPara(d.dataISO, profissionalFiltro);
             const dentro = minutoDentroDeJanela(minuto, janelas);
             const bloq = bloqueioNoMinuto(minuto, bloqueios);
+            const intervalo = !dentro && !bloq && !feriado ? intervaloEntreJanelasAgenda(minuto, janelas) : null;
             const cell = document.createElement('div');
             cell.dataset.dia = d.dataISO; cell.dataset.minuto = String(minuto);
             cell.style.gridColumn = String(c + 2);
             cell.style.gridRow = String(r + 2);
-            cell.className = 'agenda-celula ' + classeLinha + ' ' + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : dentro ? 'atendimento' : 'fora-atendimento');
+            cell.className = 'agenda-celula ' + classeLinha + ' ' + (feriado ? 'feriado bloqueado' : bloq ? 'bloqueado' : intervalo ? 'intervalo' : dentro ? 'atendimento' : 'fora-atendimento');
 
             const hh = minutosParaHora(minuto);
             if (feriado) {
@@ -2091,14 +2133,45 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 cell.title = `${rotuloTipoFeriadoAgenda(feriado)} — ${feriado.nome}. Agenda padrão bloqueada. Use horário extraordinário para uma exceção.`;
             } else if (bloq) {
                 const inicioBloq = !bloq.hora_inicio || horaCurta(bloq.hora_inicio) === hh;
+                cell.title = `Horário bloqueado${bloq.motivo ? ': ' + bloq.motivo : ''}. Não oferecer para pacientes.`;
                 if (inicioBloq) cell.innerHTML = `<div class="agenda-bloqueio-texto">${escapeHTML(bloq.motivo || 'Bloqueado')}</div>`;
+            } else if (intervalo) {
+                const rotuloIntervalo = `Intervalo · ${minutosParaHora(intervalo.inicio)}–${minutosParaHora(intervalo.fim)}`;
+                cell.title = `${rotuloIntervalo}. Não oferecer para pacientes.`;
             } else if (dentro) {
                 cell.addEventListener('click', () => abrirModalAgendamento(profissionalFiltro || '', d.dataISO, hh));
                 cell.title = profissionalFiltro ? `Agendar às ${hh}` : `Escolher profissional e agendar às ${hh}`;
+                cell.tabIndex = 0;
+                cell.setAttribute('role','button');
+                cell.setAttribute('aria-label',cell.title);
+                cell.addEventListener('keydown', evento => {
+                    if (evento.key !== 'Enter' && evento.key !== ' ') return;
+                    evento.preventDefault();
+                    abrirModalAgendamento(profissionalFiltro || '', d.dataISO, hh);
+                });
             }
             container.appendChild(cell);
         });
     }
+
+    // Exibe o espaço entre períodos cadastrados como uma faixa única. As
+    // células subjacentes continuam sem ação e não aceitam agendamento comum.
+    dias.forEach((d, c) => {
+        if (obterFeriadoAgenda(d.dataISO)) return;
+        intervalosEntreJanelasAgenda(janelasAgendaPara(d.diaSemana, profissionalFiltro)).forEach(intervalo => {
+            if (intervalo.fim <= limites.inicio || intervalo.inicio >= limites.fim) return;
+            const inicioVisivel = Math.max(intervalo.inicio, limites.inicio);
+            const fimVisivel = Math.min(intervalo.fim, limites.fim);
+            const bloco = document.createElement('div');
+            bloco.className = 'agenda-intervalo-bloco';
+            bloco.style.gridColumn = String(c + 2);
+            bloco.style.gridRow = `${Math.floor((inicioVisivel - limites.inicio) / passo) + 2} / span ${Math.max(1, Math.ceil((fimVisivel - inicioVisivel) / passo))}`;
+            const rotulo = `Intervalo · ${minutosParaHora(intervalo.inicio)}–${minutosParaHora(intervalo.fim)}`;
+            bloco.title = `${rotulo}. Não oferecer para pacientes.`;
+            bloco.innerHTML = `<span class="agenda-intervalo-icone" aria-hidden="true"></span><span>${escapeHTML(rotulo.toUpperCase())}</span>`;
+            container.appendChild(bloco);
+        });
+    });
 
     if (profissionalFiltro) {
         agendaAgendamentosSemanaCache.filter(a => a.profissional_id === profissionalFiltro).forEach(a => {
@@ -2120,6 +2193,14 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             overlay.style.zIndex = '3';
             overlay.addEventListener('click', () => abrirDetalheAgendamento(a.id));
             overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.procedimentos?.nome || 'Atendimento'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
+            overlay.tabIndex = 0;
+            overlay.setAttribute('role','button');
+            overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}`);
+            overlay.addEventListener('keydown', evento => {
+                if (evento.key !== 'Enter' && evento.key !== ' ') return;
+                evento.preventDefault();
+                abrirDetalheAgendamento(a.id);
+            });
             overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
             container.appendChild(overlay);
         });
@@ -2156,6 +2237,14 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 overlay.style.transform = `translateX(${faixa * 100}%)`;
                 overlay.addEventListener('click', e => { e.stopPropagation(); abrirDetalheAgendamento(a.id); });
                 overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.equipe?.nome || 'Profissional'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
+                overlay.tabIndex = 0;
+                overlay.setAttribute('role','button');
+                overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}`);
+                overlay.addEventListener('keydown', evento => {
+                    if (evento.key !== 'Enter' && evento.key !== ' ') return;
+                    evento.preventDefault();
+                    abrirDetalheAgendamento(a.id);
+                });
                 overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
                 container.appendChild(overlay);
             });
@@ -2328,12 +2417,19 @@ function atualizarInterfaceRecorrencia() {
     const tipo = document.getElementById('ag_recorrencia_tipo')?.value || 'nenhuma';
     const fimTipo = document.getElementById('ag_recorrencia_fim_tipo')?.value || 'quantidade';
     const repeticaoRegular = tipo === 'cada_7_dias' || tipo === 'dias_semana';
-    const fimTipoGrupo = document.getElementById('ag_recorrencia_fim_tipo_grupo'); if (fimTipoGrupo) fimTipoGrupo.hidden = !repeticaoRegular;
-    const diasGrupo = document.getElementById('ag_recorrencia_dias_grupo'); if (diasGrupo) diasGrupo.hidden = tipo !== 'dias_semana';
-    const fimGrupo = document.getElementById('ag_recorrencia_fim_grupo'); if (fimGrupo) fimGrupo.hidden = !repeticaoRegular;
-    const qtdGrupo = document.getElementById('ag_recorrencia_quantidade_grupo'); if (qtdGrupo) qtdGrupo.hidden = !repeticaoRegular || fimTipo !== 'quantidade';
-    const limiteGrupo = document.getElementById('ag_recorrencia_data_limite_grupo'); if (limiteGrupo) limiteGrupo.hidden = !repeticaoRegular || fimTipo !== 'data';
-    const customGrupo = document.getElementById('ag_recorrencia_custom_grupo'); if (customGrupo) customGrupo.hidden = tipo !== 'datas_especificas';
+    const alternarGrupo = (id, visivel) => {
+        const grupo = document.getElementById(id);
+        if (!grupo) return;
+        grupo.hidden = !visivel;
+        grupo.setAttribute('aria-hidden', String(!visivel));
+        grupo.querySelectorAll('input, select, button').forEach(controle => { controle.disabled = !visivel; });
+    };
+    alternarGrupo('ag_recorrencia_fim_tipo_grupo', repeticaoRegular);
+    alternarGrupo('ag_recorrencia_dias_grupo', tipo === 'dias_semana');
+    alternarGrupo('ag_recorrencia_fim_grupo', repeticaoRegular);
+    alternarGrupo('ag_recorrencia_quantidade_grupo', repeticaoRegular && fimTipo === 'quantidade');
+    alternarGrupo('ag_recorrencia_data_limite_grupo', repeticaoRegular && fimTipo === 'data');
+    alternarGrupo('ag_recorrencia_custom_grupo', tipo === 'datas_especificas');
     atualizarResumoRecorrencia();
 }
 
@@ -3989,4 +4085,5 @@ async function irParaHorarioAtualAgenda() {
     if (linha) linha.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'});
     else mostrarFeedbackAgenda('O horário atual está fora da faixa de horários exibida na grade de hoje.', 'info');
 }
+
 
