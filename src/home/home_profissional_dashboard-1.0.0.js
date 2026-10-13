@@ -64,6 +64,11 @@
 
     function restaurarCardsLegados(){
         document.querySelectorAll('[data-prof-home-legacy-hidden="1"]').forEach(el=>{el.hidden=false;delete el.dataset.profHomeLegacyHidden;});
+        const hero=document.getElementById('ks_home_hero');
+        const eyebrow=hero?.querySelector('.ks-eyebrow');
+        const agenda=hero?.querySelector('.ks-home-primary');
+        if(eyebrow?.dataset.profHomeOriginal){eyebrow.textContent=eyebrow.dataset.profHomeOriginal;delete eyebrow.dataset.profHomeOriginal;}
+        if(agenda?.dataset.profHomeHidden==='1'){agenda.hidden=false;delete agenda.dataset.profHomeHidden;}
     }
 
     function garantirEstrutura(){
@@ -81,6 +86,14 @@
         }
         home.classList.add('ks-prof-home-active');
         esconderCardsLegados();
+        const hero=document.getElementById('ks_home_hero');
+        const eyebrow=hero?.querySelector('.ks-eyebrow');
+        const agendaHero=hero?.querySelector('.ks-home-primary');
+        if(eyebrow){
+            if(!eyebrow.dataset.profHomeOriginal)eyebrow.dataset.profHomeOriginal=eyebrow.textContent||'PAINEL OPERACIONAL';
+            eyebrow.textContent='ÂNCORA CLÍNICA';
+        }
+        if(agendaHero){agendaHero.hidden=true;agendaHero.dataset.profHomeHidden='1';}
 
         const header=painel.querySelector('.card-header');
         if(header&&!document.getElementById('ks_prof_pendencias_btn')){
@@ -286,6 +299,12 @@
     }
 
     document.addEventListener('kinesys:meu-dia-atualizado',atualizar);
-    document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_login')refreshToken++;});
+    document.addEventListener('kinesys:tela-ativada',e=>{
+        if(e.detail?.id==='tela_login'){refreshToken++;return;}
+        if(e.detail?.id==='tela_home')atualizar();
+    });
+    const iniciar=()=>{if(document.getElementById('tela_home')?.classList.contains('ativa'))atualizar();};
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});
+    else iniciar();
     window.KineSysProfessionalHome={refresh:atualizar,limitesMesAtual};
 })();

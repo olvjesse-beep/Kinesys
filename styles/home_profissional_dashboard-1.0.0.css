@@ -363,7 +363,9 @@
 #tela_home.ks-prof-home-active .ks-home-hero{
   padding:10px 4px 22px;
   margin:0 0 22px;
+  border-bottom:1px solid rgba(151,184,184,.55);
 }
+#tela_home.ks-prof-home-active .ks-home-hero .ks-home-primary{display:none!important}
 #tela_home.ks-prof-home-active .ks-home-hero .ks-eyebrow{
   color:var(--kds-muted);
   letter-spacing:.04em;
@@ -380,23 +382,31 @@
   margin:0 0 18px;
 }
 #tela_home.ks-prof-home-active .ks-prof-home-support{
-  display:grid;
+  display:flex;
+  flex-direction:column;
   align-content:start;
-  gap:12px;
+  gap:0;
   min-width:0;
+  border:1px solid rgba(215,228,229,.92);
+  border-radius:18px;
+  background:rgba(255,255,255,.84);
+  box-shadow:0 15px 34px rgba(15,65,68,.065);
+  -webkit-backdrop-filter:blur(16px) saturate(120%);
+  backdrop-filter:blur(16px) saturate(120%);
+  overflow:hidden;
 }
 #tela_home.ks-prof-home-active .ks-prof-home-support>.ks-prof-home-module{
   width:100%;
   min-width:0;
   margin:0!important;
-  border:1px solid rgba(215,228,229,.92)!important;
-  border-radius:18px!important;
-  background:rgba(255,255,255,.82)!important;
-  box-shadow:0 15px 34px rgba(15,65,68,.065)!important;
-  -webkit-backdrop-filter:blur(16px) saturate(120%);
-  backdrop-filter:blur(16px) saturate(120%);
+  border:0!important;
+  border-bottom:1px solid rgba(215,228,229,.92)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
   overflow:hidden;
 }
+#tela_home.ks-prof-home-active .ks-prof-home-support>.ks-prof-home-module:last-child{border-bottom:0!important}
 #tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-title,
 #tela_home.ks-prof-home-active .ks-prof-home-support .ks-prof-module-head{
   padding:18px 18px 10px;
