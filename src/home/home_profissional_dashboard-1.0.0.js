@@ -100,7 +100,7 @@
             const btn=document.createElement('button');
             btn.type='button';btn.id='ks_prof_pendencias_btn';btn.className='ks-prof-pending-trigger';
             btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-controls','ks_prof_pendencias_dialog');
-            btn.innerHTML=`<span class="ks-prof-pending-icon" aria-hidden="true">${icone('check')}</span><span>Pendências</span><strong id="ks_prof_pendencias_badge" hidden>0</strong>`;
+            btn.innerHTML=`<span>Pendências</span><strong id="ks_prof_pendencias_badge" hidden>0</strong>`;
             btn.addEventListener('click',abrirPendencias);
             header.appendChild(btn);
         }
