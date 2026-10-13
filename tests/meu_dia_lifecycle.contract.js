@@ -44,9 +44,12 @@ function fixture(){
   for(const s of [core,resume,polish])assert.doesNotMatch(s,/carregarPainelFisioterapeuta|painel_fisio_lista|KineSysMeuDiaClinico/);
   assert.doesNotMatch(resume,/navegarPara|MutationObserver|setInterval/);assert.doesNotMatch(polish,/MutationObserver|setTimeout|dedupe|removerDuplicatas/);
   assert.match(source,/lista\.replaceChildren\(fragmento\)/);assert.doesNotMatch(source,/window\.carregarPainelFisioterapeuta/);
+  assert.match(source,/const pacienteAtual=String\(atual\?\.paciente_id\|\|''\)\.trim\(\);/,'session sequence identifies the current patient');
+  assert.match(source,/pacienteAtual && String\(r\?\.paciente_id\|\|''\)\.trim\(\)===pacienteAtual &&/,'session sequence cannot mix completed appointments from different patients');
   const menu=read('src/ui/menu_dropdown-1.0.0.js');vm.runInContext(menu,f.ctx);assert.equal(typeof f.ctx.fecharMenu,'function');assert.doesNotThrow(()=>f.ctx.fecharMenu());
   const design=read('src/core/design_system-1.20.1.js');const handler=design.slice(design.indexOf('    function fecharConfiguracoesAgendaAoClicarFora'),design.indexOf("    document.addEventListener('click',fecharConfiguracoesAgendaAoClicarFora)"));vm.runInContext(handler,f.ctx);assert.doesNotThrow(()=>f.ctx.fecharConfiguracoesAgendaAoClicarFora({target:new Element()}),'removed Agenda controls do not throw null.contains');
   const html=read('index.html');for(const path of ['src/core/script-1.18.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/core/operational_resume_refresh-1.0.0.js','src/ui/menu_dropdown-1.0.0.js','src/core/design_system-1.20.1.js','src/ui/screen_loader-1.25.0.js'])assert(html.split('\n').some(l=>l.includes(path)&&l.includes('meudia=20260915-owner-r1')),path+' must be cache-busted');
   assert.match(design,/\$\{icon\('bell'\)\}/);assert.doesNotMatch(design,/>🔔<span/);
   console.log('PASS: 20 Home → Agenda → Home cycles; manual refresh; focus/blur/pageshow; reload; delayed response; failure/retry; sole writer; menu and detached Agenda controls; asset versions; SVG notification.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
