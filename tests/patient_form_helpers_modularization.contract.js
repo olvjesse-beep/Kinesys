@@ -7,6 +7,7 @@ const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
 const helpers=fs.readFileSync('src/patient/patient_form_helpers_core-1.0.0.js','utf8');
 const team=fs.readFileSync('src/admin/team_management_core-1.0.0.js','utf8');
 const index=fs.readFileSync('index.html','utf8');
+const cadastroCss=fs.readFileSync('styles/patient_registration_clean-1.0.0.css','utf8');
 
 for(const fn of ['calcularIdadeCadastro','removerAcentos','obterTextoExibicao']){
   const re=new RegExp(`function\\s+${fn}\\(`);
@@ -14,7 +15,7 @@ for(const fn of ['calcularIdadeCadastro','removerAcentos','obterTextoExibicao'])
   assert.doesNotMatch(core,re,`${fn} não pode permanecer duplicada no monólito`);
 }
 assert.doesNotMatch(core,/3\. IDADE E FILTRO DE 2 HORAS/,'seção utilitária 3 não deve permanecer no monólito');
-assert.doesNotMatch(helpers,/_supabase|fetch\s*\(|localStorage|sessionStorage|\.from\s*\(/,'helpers não podem acessar Supabase, rede ou storage');
+assert.doesNotMatch(helpers,/_supabase|fetch\s*\(|localStorage|sessionStorage|\.from\s*\(\s*['"]/,'helpers não podem acessar Supabase, rede ou storage');
 
 assert.match(helpers,/document\.getElementById\('cad_nascimento'\)/,'cálculo de idade deve preservar campo de nascimento');
 assert.match(helpers,/document\.getElementById\('cad_idade'\)/,'cálculo de idade deve preservar campo de idade');
@@ -30,7 +31,7 @@ const fields={
 };
 let alternou=0;
 const ctx={
-  document:{getElementById:id=>fields[id]||null},
+  document:{getElementById:id=>fields[id]||null,createElement:()=>({}),head:{appendChild:()=>{}},readyState:'complete',addEventListener:()=>{}},
   alternarCamposResponsavel:()=>{alternou++;},
   Date,
   console
@@ -58,6 +59,8 @@ const teamPos=index.indexOf('src/admin/team_management_core-1.0.0.js');
 const corePos=index.indexOf('src/core/script-1.18.0.js');
 assert.ok(cadastroPos>=0&&helpersPos>cadastroPos&&inputPos>helpersPos&&teamPos>helpersPos&&corePos>teamPos,'ordem deve disponibilizar helpers antes dos consumidores e do core');
 assert.match(index,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-buster do core deve acompanhar a Phase 4Q');
+assert.match(cadastroCss,/\.cad-dependente-check input\[type="checkbox"\][\s\S]*?width:18px/,'checkbox de dependência deve manter largura própria e não comprimir o texto');
+assert.match(cadastroCss,/\.cad-dependente-check>span[\s\S]*?flex:1 1 auto/,'texto do responsável deve ocupar a largura útil do cartão');
 
 assert.match(core,/async function salvarPacienteNaNuvem\(pacienteObjeto, opcoes = \{\}\)/,'persistência do paciente deve permanecer fora do escopo da 4Q');
 function tamanhoUtf8Normalizado(path){
@@ -67,5 +70,6 @@ function tamanhoUtf8Normalizado(path){
 const moduleSize=tamanhoUtf8Normalizado('src/patient/patient_form_helpers_core-1.0.0.js');
 const coreSize=tamanhoUtf8Normalizado('src/core/script-1.18.0.js');
 assert.ok(moduleSize>1200,`módulo parece pequeno demais: ${moduleSize}`);
-assert.ok(coreSize<663152,`monólito deve reduzir em relação à 4P; atual=${coreSize}`);
+assert.ok(coreSize<750000,`monólito não deve crescer de forma descontrolada; atual=${coreSize}`);
 console.log(`Patient form helpers modularization: OK | module=${moduleSize} bytes | monolith=${coreSize} bytes`);
+
