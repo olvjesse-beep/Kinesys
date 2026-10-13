@@ -2,6 +2,8 @@ if (typeof dicionarioOcupacoesEsportes === 'undefined') {
     console.error("🚨 KineSys: 'database/ocupacoes_esportes.js' não foi carregado corretamente no HTML!");
 }
 
+if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
 /* ==========================================================================
    KINESYS - SCRIPT DEFINITIVO (ID ÚNICO E SEM DUPLICATAS) - PARTE 1 DE 4
    Auth, SPA, Filtro de Pré-Cadastro e Utilitários
@@ -302,6 +304,25 @@ function navegarPara(idTela, contextoEdicao = false) {
     const telaAlvo = document.getElementById(idTela);
     if (telaAlvo) telaAlvo.classList.add('ativa');
 
+    // Cada rota inicia no topo. Evita que a posição de uma tela anterior
+    // esconda títulos, etapas ou campos da nova tela.
+    window.scrollTo({top:0,left:0,behavior:'auto'});
+    if (document.scrollingElement) document.scrollingElement.scrollTop=0;
+    requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}));
+    const manterRotaNoTopo = () => {
+        if (document.getElementById(idTela)?.classList.contains('ativa')) {
+            window.scrollTo({top:0,left:0,behavior:'auto'});
+            if (document.scrollingElement) document.scrollingElement.scrollTop=0;
+        }
+    };
+    setTimeout(manterRotaNoTopo, 0);
+    // Em uma restauração com hash, o navegador pode tentar rolar até o ID da
+    // tela depois do primeiro frame. Reafirma o topo após a hidratação curta.
+    setTimeout(manterRotaNoTopo, 180);
+
+    // O aviso flutuante de autosave pertence exclusivamente à Avaliação.
+    if (idTela !== 'tela_avaliacao' && typeof ocultarStatusAutosaveKineSys === 'function') ocultarStatusAutosaveKineSys();
+
     // Item 11B: o Radar pertence ao ciclo de vida da Avaliação.
     // Ao sair da tela, o painel é fechado e o componente perde o estado de contexto imediatamente.
     if (idTela !== 'tela_avaliacao' && typeof fecharRadarKineSys === 'function') fecharRadarKineSys(true);
@@ -314,7 +335,7 @@ function navegarPara(idTela, contextoEdicao = false) {
 
     if (idTela === 'tela_cadastro' && !contextoEdicao) {
         pacienteAtualId = null; 
-        if (document.getElementById('titulo_tela_cadastro')) document.getElementById('titulo_tela_cadastro').innerText = "Cadastro Geral do Paciente";
+        if (document.getElementById('titulo_tela_cadastro')) document.getElementById('titulo_tela_cadastro').innerText = "Cadastro geral do paciente";
         ['cad_nome','cad_cpf','cad_nascimento','cad_idade','cad_sexo','cad_estado_civil','cad_telefone','cad_profissao','cad_responsavel_nome','cad_responsavel_parentesco','cad_responsavel_telefone','cad_cep','cad_endereco'].forEach(id => {
             if(document.getElementById(id)) document.getElementById(id).value = "";
         });
@@ -354,7 +375,7 @@ function navegarPara(idTela, contextoEdicao = false) {
         const metaAvaliacao = document.getElementById('avaliacao_registros_paciente');
         if (metaAvaliacao) { metaAvaliacao.style.display='none'; metaAvaliacao.innerHTML=''; }
         const btnSalvarRapido = document.getElementById('btn_salvar_avaliacao_rapida');
-        if (btnSalvarRapido) btnSalvarRapido.innerText = '💾 Salvar Avaliação';
+        if (btnSalvarRapido) btnSalvarRapido.innerText = 'Salvar avaliação';
         irParaSubtela('subtela_triagem');
     }
 
@@ -755,7 +776,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
 
         if (obterAvaliacoes(p).length > 0) {
             const btnSalvar = document.getElementById('btn_salvar_avaliacao_rapida');
-            if (btnSalvar) btnSalvar.innerText = avaliacaoIdEditar ? '💾 Salvar alterações da avaliação' : `💾 Registrar Reavaliação (${obterAvaliacoes(p).length}ª já registrada)`;
+            if (btnSalvar) btnSalvar.innerText = avaliacaoIdEditar ? 'Salvar alterações da avaliação' : `Registrar reavaliação (${obterAvaliacoes(p).length}ª já registrada)`;
         }
 
         // REAVALIAÇÃO PUXA OS TESTES ANTERIORES: se a avaliação mais recente
@@ -771,7 +792,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
         }
     } else {
         const btnSalvar = document.getElementById('btn_salvar_avaliacao_rapida');
-        if (btnSalvar) btnSalvar.innerText = '💾 Salvar Avaliação';
+        if (btnSalvar) btnSalvar.innerText = 'Salvar avaliação';
     }
 
     renderizarRegistrosAvaliacao(p);
@@ -829,19 +850,20 @@ async function atualizarSelectsPacientes() {
 }
 
 async function salvarEvolucaoSessao() {
-    const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId){alert('⚠️ Selecione um paciente para registrar a evolução.');return;}sincronizarSelectPacienteEvolucao(pacienteId);
-    const relatoLivre=document.getElementById('evo_relato').value.trim();if(!relatoLivre){alert('⚠️ Preencha o relato/conduta da sessão.');return;}
+    const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId){alert('Selecione um paciente para registrar a evolução.');return;}sincronizarSelectPacienteEvolucao(pacienteId);
+    const relatoLivre=document.getElementById('evo_relato').value.trim();if(!relatoLivre){alert('Preencha o relato/conduta da sessão.');return;}
     const realizadoInput=validarRealizacaoClinicaInput('evo_realizado_em');if(!realizadoInput)return;
     const estado=document.querySelector('input[name="evo_estado"]:checked')?.value||'igual';
-    const mudancas=document.getElementById('evo_mudancas')?.value.trim()||'';
-    const novoAlerta=!!document.getElementById('evo_novo_alerta')?.checked;
-    if(novoAlerta&&!mudancas){alert('⚠️ Você marcou novo sinal de alerta. Descreva o que mudou antes de salvar.');return;}
+    const mudancasDetalhes={novoExame:document.getElementById('evo_novo_exame_texto')?.value.trim()||'',novaIntercorrencia:document.getElementById('evo_intercorrencia_texto')?.value.trim()||'',mudancaMedicacao:document.getElementById('evo_medicacao_texto')?.value.trim()||'',novoAlerta:document.getElementById('evo_alerta_texto')?.value.trim()||''};
+    const novoAlerta=!!document.getElementById('evo_novo_alerta')?.checked||!!mudancasDetalhes.novoAlerta;
+    if(novoAlerta&&!mudancasDetalhes.novoAlerta){alert('Descreva o novo sinal de alerta antes de salvar.');return;}
     const pacienteAtual=await obterPacienteCompletoPorId(pacienteId);
     const registroEmEdicao=evolucaoEdicaoId?(pacienteAtual?.evolucoes||[]).find(e=>String(e.id)===String(evolucaoEdicaoId)):null;
-    if(evolucaoEdicaoId&&!registroEmEdicao){alert('⚠️ Evolução em edição não encontrada. Recarregue o histórico.');evolucaoEdicaoId=null;return;}
-    if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`🔒 O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
-    const avFinalizada=pacienteAtual?obterAvaliacaoFinalizadaMaisRecente(pacienteAtual):null;const excecao=!!document.getElementById('evo_excecao_sem_avaliacao')?.checked;const justificativaExcecao=document.getElementById('evo_justificativa_excecao')?.value.trim()||'';if(!avFinalizada&&(!excecao||justificativaExcecao.length<10)){alert('🛡️ Este paciente não possui avaliação clínica finalizada. Finalize a avaliação ou marque a exceção e registre uma justificativa clínica/operacional (mínimo 10 caracteres).');return;}const avAtual=avFinalizada||(pacienteAtual?obterAvaliacaoMaisRecente(pacienteAtual):null);const restricoesAtuais=avAtual?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias||null;
-    const dadosEstruturados={estadoClinico:estado,atendimentoSemAvaliacaoFinalizada:!avFinalizada,justificativaExcecao:!avFinalizada?justificativaExcecao:'',mudancas,novaIntercorrencia:!!document.getElementById('evo_nova_intercorrencia')?.checked,mudancaMedicacao:!!document.getElementById('evo_mudanca_medicacao')?.checked,novoExame:!!document.getElementById('evo_novo_exame')?.checked,novoAlerta,restricoesPosOperatorias:restricoesAtuais,respostaCarga:{dorDurante:valorNumeroOuNull('evo_dor_durante'),dor24h:valorNumeroOuNull('evo_dor_24h'),rpe:valorNumeroOuNull('evo_rpe'),duracaoMin:valorNumeroOuNull('evo_duracao'),resposta24h:document.getElementById('evo_resposta_24h')?.value||'',edema:document.getElementById('evo_edema')?.value||''}};
+    if(evolucaoEdicaoId&&!registroEmEdicao){alert('Evolução em edição não encontrada. Recarregue o histórico.');evolucaoEdicaoId=null;return;}
+    if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
+    const avFinalizada=pacienteAtual?obterAvaliacaoFinalizadaMaisRecente(pacienteAtual):null;const excecao=!!document.getElementById('evo_excecao_sem_avaliacao')?.checked;const justificativaExcecao=document.getElementById('evo_justificativa_excecao')?.value.trim()||'';if(!avFinalizada&&(!excecao||justificativaExcecao.length<10)){alert('Este paciente não possui avaliação clínica finalizada. Finalize a avaliação ou marque a exceção e registre uma justificativa clínica/operacional (mínimo 10 caracteres).');return;}const avAtual=avFinalizada||(pacienteAtual?obterAvaliacaoMaisRecente(pacienteAtual):null);const restricoesAtuais=avAtual?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias||null;
+    const dadosEstruturados={estadoClinico:estado,atendimentoSemAvaliacaoFinalizada:!avFinalizada,justificativaExcecao:!avFinalizada?justificativaExcecao:'',mudancasDetalhes,novaIntercorrencia:!!document.getElementById('evo_nova_intercorrencia')?.checked||!!mudancasDetalhes.novaIntercorrencia,mudancaMedicacao:!!document.getElementById('evo_mudanca_medicacao')?.checked||!!mudancasDetalhes.mudancaMedicacao,novoExame:!!document.getElementById('evo_novo_exame')?.checked||!!mudancasDetalhes.novoExame,novoAlerta,restricoesPosOperatorias:restricoesAtuais,respostaCarga:{dorDurante:valorNumeroOuNull('evo_dor_durante'),dor24h:valorNumeroOuNull('evo_dor_24h'),rpe:valorNumeroOuNull('evo_rpe'),duracaoMin:valorNumeroOuNull('evo_duracao'),resposta24h:document.getElementById('evo_resposta_24h')?.value||'',edema:document.getElementById('evo_edema')?.value||''}};
+    if(registroEmEdicao?.dadosEstruturados && Object.prototype.hasOwnProperty.call(registroEmEdicao.dadosEstruturados,'mudancas')) dadosEstruturados.mudancas=registroEmEdicao.dadosEstruturados.mudancas;
     const resumoEstruturado=montarResumoEvolucaoEstruturada(dadosEstruturados);const relatoCompleto=`${resumoEstruturado}${resumoEstruturado?'\n\n':''}${relatoLivre}`;
     const prof=metadadosProfissionalLogado(), agora=new Date();
     const realizadoEm=registroEmEdicao?obterRealizadoEmRegistro(registroEmEdicao):realizadoInput;
@@ -868,28 +890,60 @@ async function salvarEvolucaoSessao() {
     else pacienteAtual.evolucoes.push(registro);
     const sucesso=await salvarPacienteNaNuvem(pacienteAtual,{exigirRastreabilidadeClinica:true});if(!sucesso)return;
     if(registro.agendamentoId) limparAgendamentoClinicoContexto();
-    alert(registroEmEdicao?'✅ Evolução atualizada com rastreabilidade. O carimbo original de salvamento foi preservado.':'✅ Evolução registrada com data, profissional e horário de salvamento.');
+    alert(registroEmEdicao?'Evolução atualizada com rastreabilidade. O carimbo original de salvamento foi preservado.':'Evolução registrada com data, profissional e horário de salvamento.');
     cancelarEdicaoEvolucao(true);
-    ['evo_relato','evo_mudancas','evo_dor_durante','evo_dor_24h','evo_rpe','evo_duracao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});carregarHistoricoEvolucao();
+    ['evo_relato','evo_novo_exame_texto','evo_intercorrencia_texto','evo_medicacao_texto','evo_alerta_texto','evo_dor_durante','evo_dor_24h','evo_rpe','evo_duracao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});carregarHistoricoEvolucao();
 }
 
 function valorNumeroOuNull(id){const v=document.getElementById(id)?.value;return(v===''||v==null)?null:Number(v);}
-function montarResumoEvolucaoEstruturada(d){const mapa={melhor:'Melhor',igual:'Igual',pior:'Pior',retornou_basal:'retornou ao basal em até 24 h',leve_piora:'piora leve e transitória',piora_persistente:'piora persistente >24 h',melhorou:'melhorou após a sessão',sem_aumento:'sem aumento de edema',aumento_leve:'aumento leve de edema',aumento_importante:'aumento importante de edema'};const itens=[`Estado clínico: ${mapa[d.estadoClinico]||d.estadoClinico}.`];if(d.mudancas)itens.push(`Mudanças: ${d.mudancas}${/[.!?]$/.test(d.mudancas.trim())?'':'.'}`);const flags=[];if(d.novaIntercorrencia)flags.push('nova intercorrência');if(d.mudancaMedicacao)flags.push('mudança de medicação');if(d.novoExame)flags.push('novo exame/laudo');if(d.novoAlerta)flags.push('novo sinal de alerta');if(flags.length)itens.push(`Atualizações: ${flags.join(', ')}.`);const r=d.respostaCarga||{};const carga=[];if(r.dorDurante!=null)carga.push(`dor durante ${r.dorDurante}/10`);if(r.dor24h!=null)carga.push(`dor 24 h ${r.dor24h}/10`);if(r.rpe!=null)carga.push(`RPE ${r.rpe}/10`);if(r.duracaoMin!=null)carga.push(`sessão ${r.duracaoMin} min`);if(r.resposta24h)carga.push(mapa[r.resposta24h]||r.resposta24h);if(r.edema)carga.push(mapa[r.edema]||r.edema);if(carga.length)itens.push(`Resposta à carga: ${carga.join('; ')}.`);return itens.join(' ');}
+function montarResumoEvolucaoEstruturada(d={}){
+    const mapa={melhor:'Melhor',igual:'Igual',pior:'Pior',retornou_basal:'retornou ao basal em até 24 h',leve_piora:'piora leve e transitória',piora_persistente:'piora persistente >24 h',melhorou:'melhorou após a sessão',sem_aumento:'sem aumento de edema',aumento_leve:'aumento leve de edema',aumento_importante:'aumento importante de edema'};
+    const itens=[`Estado clínico: ${mapa[d.estadoClinico]||d.estadoClinico||'Não informado'}.`];
+    const detalhes=d.mudancasDetalhes||{};
+    const adicionarDetalhe=(rotulo,valor)=>{const texto=String(valor||'').trim();if(texto)itens.push(`${rotulo}: ${texto}${/[.!?]$/.test(texto)?'':'.'}`);};
+    adicionarDetalhe('Novo exame ou laudo',detalhes.novoExame);
+    adicionarDetalhe('Nova intercorrência',detalhes.novaIntercorrencia);
+    adicionarDetalhe('Mudança de medicação',detalhes.mudancaMedicacao);
+    adicionarDetalhe('Novo sinal de alerta',detalhes.novoAlerta);
+    if(d.mudancas)adicionarDetalhe('Outras mudanças',d.mudancas);
+    const flags=[];
+    if(d.novaIntercorrencia&&!detalhes.novaIntercorrencia)flags.push('nova intercorrência');
+    if(d.mudancaMedicacao&&!detalhes.mudancaMedicacao)flags.push('mudança de medicação');
+    if(d.novoExame&&!detalhes.novoExame)flags.push('novo exame/laudo');
+    if(d.novoAlerta&&!detalhes.novoAlerta)flags.push('novo sinal de alerta');
+    if(flags.length)itens.push(`Atualizações: ${flags.join(', ')}.`);
+    const r=d.respostaCarga||{},carga=[];
+    if(r.dorDurante!=null)carga.push(`dor durante ${r.dorDurante}/10`);
+    if(r.dor24h!=null)carga.push(`dor 24 h ${r.dor24h}/10`);
+    if(r.rpe!=null)carga.push(`RPE ${r.rpe}/10`);
+    if(r.duracaoMin!=null)carga.push(`sessão ${r.duracaoMin} min`);
+    if(r.resposta24h)carga.push(mapa[r.resposta24h]||r.resposta24h);
+    if(r.edema)carga.push(mapa[r.edema]||r.edema);
+    if(carga.length)itens.push(`Resposta à carga: ${carga.join('; ')}.`);
+    return itens.join(' ');
+}
+
+function montarRelatoEvolucaoParaExibicao(evolucao={}){
+    if(!evolucao.dadosEstruturados)return evolucao.relato||evolucao.relatoLivre||'';
+    const resumo=montarResumoEvolucaoEstruturada(evolucao.dadosEstruturados);
+    return [resumo,evolucao.relatoLivre||''].filter(Boolean).join('\n\n')||evolucao.relato||'';
+}
 
 function renderResumoPaciente(idContainer, p) {
     const el = document.getElementById(idContainer);
     if (!el) return;
     if (!p) { el.style.display = 'none'; el.innerHTML = ''; return; }
 
-    const statusAvaliacao = obterAvaliacaoMaisRecente(p) ? `✅ ${obterAvaliacoes(p).length} avaliação(ões) registrada(s)` : '⏳ Sem triagem/avaliação registrada';
+    const totalAvaliacoes=obterAvaliacoes(p).length;
+    const statusAvaliacao = obterAvaliacaoMaisRecente(p) ? `${totalAvaliacoes} ${totalAvaliacoes===1?'avaliação registrada':'avaliações registradas'}` : 'Sem triagem ou avaliação registrada';
     const sessoesRealizadas = Array.isArray(p.evolucoes) ? p.evolucoes.length : 0;
     el.innerHTML = `
-        <span class="resumo-item">👤 <strong>${escapeHTML(p.nome)}</strong></span>
-        <span class="resumo-item">🎂 ${escapeHTML(p.idade || 'Idade N/I')}</span>
-        <span class="resumo-item">🪪 CPF: ${escapeHTML(p.cpf || 'N/I')}</span>
-        <span class="resumo-item">💼 ${escapeHTML(p.profissao || '-')}</span>
+        <span class="resumo-item"><strong>Paciente: </strong><strong>${escapeHTML(p.nome)}</strong></span>
+        <span class="resumo-item">Idade: ${escapeHTML(p.idade || 'Idade N/I')}</span>
+        <span class="resumo-item">CPF: ${escapeHTML(p.cpf || 'N/I')}</span>
+        <span class="resumo-item">Profissão: ${escapeHTML(p.profissao || '-')}</span>
         <span class="resumo-status">${statusAvaliacao}</span>
-        <span class="resumo-status">🩺 ${sessoesRealizadas} sessão(ões) realizada(s)</span>
+        <span class="resumo-status">${sessoesRealizadas} sessão(ões) realizada(s)</span>
     `;
     el.style.display = 'flex';
 }
@@ -903,7 +957,8 @@ async function editarEvolucaoClinica(evolucaoId){
     const realizado=document.getElementById('evo_realizado_em');if(realizado){realizado.value=valorDatetimeLocalAgora(obterRealizadoEmRegistro(e));realizado.disabled=true;}
     const data=document.getElementById('evo_data');if(data){data.value=String(obterRealizadoEmRegistro(e)||e.data||'').slice(0,10);data.disabled=true;}
     const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;
-    document.getElementById('evo_relato').value=e.relatoLivre||'';document.getElementById('evo_mudancas').value=d.mudancas||'';
+    document.getElementById('evo_relato').value=e.relatoLivre||'';
+    const md=d.mudancasDetalhes||{};[['evo_novo_exame_texto',md.novoExame],['evo_intercorrencia_texto',md.novaIntercorrencia],['evo_medicacao_texto',md.mudancaMedicacao],['evo_alerta_texto',md.novoAlerta]].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});
     [['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v??'';});
     ['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=!!d[({evo_nova_intercorrencia:'novaIntercorrencia',evo_mudanca_medicacao:'mudancaMedicacao',evo_novo_exame:'novoExame',evo_novo_alerta:'novoAlerta'})[id]];});
     if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}
@@ -946,6 +1001,7 @@ async function carregarHistoricoEvolucao() {
 
     let html = "";
     p.evolucoes.slice().reverse().forEach(evo => {
+        const relatoExibicao=montarRelatoEvolucaoParaExibicao(evo);
         html += `
             <div class="kds-u-p-15px kds-u-bl-4px-solid-verde-cirurgico kds-u-bg-soft-slate kds-u-mb-15px kds-u-br-4px">
                 <div class="kds-u-jc-between kds-u-gap-12px kds-u-ai-start kds-u-mb-7px kds-u-d-flex">
@@ -956,7 +1012,7 @@ async function carregarHistoricoEvolucao() {
                     </div>
                     ${registroClinicoPodeEditar(evo)?`<button type="button" class="btn-secondary kds-u-p-6px-10px kds-u-fs-meta kds-u-ws-nowrap" onclick="editarEvolucaoClinica('${escapeHTML(evo.id)}')">✏️ Editar</button>`:`<span class="kds-u-fs-meta kds-u-text-lock kds-u-ws-nowrap">🔒 Bloqueada</span>`}
                 </div>
-                <p class="kds-u-m-0 kds-u-fs-ui kds-u-text-primary kds-u-ws-pre-wrap">${escapeHTML(evo.relato)}</p>
+                <p class="kds-u-m-0 kds-u-fs-ui kds-u-text-primary kds-u-ws-pre-wrap">${escapeHTML(relatoExibicao)}</p>
             </div>
         `;
     });
@@ -1056,7 +1112,7 @@ function irParaSubtela(idSubtela) {
     // A etapa 2 deve sempre abrir no seu cabeçalho. Sem esse reset, o foco
     // permanece no botão inferior da anamnese e o navegador pode reter a
     // posição antiga, fazendo o profissional entrar no fim do exame.
-    if (alvo) {
+    if (alvo && idSubtela !== 'subtela_triagem') {
         requestAnimationFrame(() => {
             alvo.tabIndex = -1;
             alvo.focus({preventScroll:true});
@@ -2084,9 +2140,9 @@ function coletarRestricoesPosOperatorias(){return{ativo:!!document.getElementByI
 function atualizarVisibilidadeRestricoesPosOp(){const box=document.getElementById('posop_campos');if(box)box.style.display=document.getElementById('posop_ativo')?.checked?'block':'none';}
 function preencherRestricoesPosOperatorias(d={}){const mapa={posop_ativo:!!d.ativo,posop_procedimento:d.procedimento||'',posop_data_cirurgia:d.dataCirurgia||'',posop_carga:d.statusCarga||'',posop_ortese:d.ortese||'',posop_adm:d.restricaoADM||'',posop_proibicoes:d.proibicoes||'',posop_orientacoes:d.orientacoesCirurgiao||'',posop_retorno_medico:d.retornoMedico||'',posop_protocolo:d.protocoloDisponivel||'nao_informado',posop_obs:d.observacoes||''};Object.entries(mapa).forEach(([id,v])=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v;});atualizarVisibilidadeRestricoesPosOp();}
 let clinicaEstruturadaPreservada = {};
-function coletarClinicaEstruturada(){return{...JSON.parse(JSON.stringify(clinicaEstruturadaPreservada)),restricoesPosOperatorias:coletarRestricoesPosOperatorias(),laudo:window.coletarLaudoAvaliacaoKineSys?.()||null};}
-function limparClinicaEstruturada(){clinicaEstruturadaPreservada={};window.preencherLaudoAvaliacaoKineSys?.(null);['lista_medidas_objetivas','lista_psfs','lista_outcomes','lista_objetivos_terapeuticos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});['plano_terapeutico','plano_frequencia','plano_criterios','criterios_alta','previsao_alta','posop_procedimento','posop_data_cirurgia','posop_ortese','posop_adm','posop_proibicoes','posop_orientacoes','posop_retorno_medico','posop_obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const ativo=document.getElementById('posop_ativo');if(ativo)ativo.checked=false;const carga=document.getElementById('posop_carga');if(carga)carga.value='';const prot=document.getElementById('posop_protocolo');if(prot)prot.value='nao_informado';atualizarVisibilidadeRestricoesPosOp();atualizarPSFSMedia();}
-function preencherClinicaEstruturada(d={}){limparClinicaEstruturada();clinicaEstruturadaPreservada=JSON.parse(JSON.stringify(d||{}));preencherRestricoesPosOperatorias(d.restricoesPosOperatorias||{});window.preencherLaudoAvaliacaoKineSys?.(d.laudo||null);}
+function coletarClinicaEstruturada(){return{...JSON.parse(JSON.stringify(clinicaEstruturadaPreservada)),restricoesPosOperatorias:coletarRestricoesPosOperatorias(),examesImagem:{descricao:document.getElementById('exames_imagem_descricao')?.value.trim()||'',fonte:document.getElementById('exames_imagem_fonte')?.value||'relato'},laudo:window.coletarLaudoAvaliacaoKineSys?.()||null};}
+function limparClinicaEstruturada(){clinicaEstruturadaPreservada={};window.preencherLaudoAvaliacaoKineSys?.(null);['lista_medidas_objetivas','lista_psfs','lista_outcomes','lista_objetivos_terapeuticos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});['exames_imagem_descricao','plano_terapeutico','plano_frequencia','plano_criterios','criterios_alta','previsao_alta','posop_procedimento','posop_data_cirurgia','posop_ortese','posop_adm','posop_proibicoes','posop_orientacoes','posop_retorno_medico','posop_obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const ativo=document.getElementById('posop_ativo');if(ativo)ativo.checked=false;const carga=document.getElementById('posop_carga');if(carga)carga.value='';const prot=document.getElementById('posop_protocolo');if(prot)prot.value='nao_informado';atualizarVisibilidadeRestricoesPosOp();atualizarPSFSMedia();}
+function preencherClinicaEstruturada(d={}){limparClinicaEstruturada();clinicaEstruturadaPreservada=JSON.parse(JSON.stringify(d||{}));preencherRestricoesPosOperatorias(d.restricoesPosOperatorias||{});const imagem=d.examesImagem||{};const descricao=document.getElementById('exames_imagem_descricao');if(descricao)descricao.value=imagem.descricao||'';const fonte=document.getElementById('exames_imagem_fonte');if(fonte)fonte.value=imagem.descricao?(imagem.fonte==='laudo_conferido'?'laudo_conferido':'relato'):'';window.preencherLaudoAvaliacaoKineSys?.(d.laudo||null);}
 
 function montarContextoMotorParaSalvar() {
     return {
@@ -2118,19 +2174,19 @@ function validarSegurancaParaFinalizacao() {
     return{ok:true};
 }
 async function salvarAvaliacaoAtual(finalizar=false) {
-    if(finalizar){window.renderizarLaudoAvaliacaoKineSys?.();const laudo=window.coletarLaudoAvaliacaoKineSys?.();if(laudo&&!laudo.revisado){alert('Revise o texto do laudo e marque a confirmação de revisão antes de finalizar. Você pode salvar um rascunho a qualquer momento.');return;}}
+    if(finalizar&&window.prepararFinalizacaoLaudoKineSys&&!window.prepararFinalizacaoLaudoKineSys()){alert('Revise o texto do relatório antes de finalizar.');return;}
     const nome=document.getElementById('paciente_nome')?.value.trim();
     if(!nome){alert('⚠️ Informe o nome do paciente na avaliação antes de salvar.');return;}
     const realizadoInput=validarRealizacaoClinicaInput('avaliacao_realizado_em');
     if(!realizadoInput)return;
-    if(finalizar){const v=validarSegurancaParaFinalizacao();if(!v.ok){alert('Finalização bloqueada.\n\n'+v.mensagem+'\n\nO rascunho permanece disponível.');return;}}
+    // A triagem segue visível, sem confirmação oculta obrigatória para salvar.
     let pacienteExistente=pacienteAtualId?await obterPacienteCompletoPorId(pacienteAtualId):null;
     if(!pacienteExistente&&!pacienteAtualId){const listaBasica=await obterPacientesBasicos();const duplicados=listaBasica.filter(p=>(p.nome||'').toLowerCase()===nome.toLowerCase());if(duplicados.length&&!(await confirmarKineSys(`Já existe(m) ${duplicados.length} paciente(s) chamado(s) "${nome}".\n\nSalvar como NOVO cadastro?`, {titulo:'Paciente com nome semelhante', confirmar:'Salvar como novo'})))return;}
 
     const historico=pacienteExistente?obterAvaliacoes(pacienteExistente):[];
     const registroEmEdicao=avaliacaoEdicaoId?historico.find(a=>String(a.id)===String(avaliacaoEdicaoId)):null;
     if(avaliacaoEdicaoId&&!registroEmEdicao){alert('⚠️ A avaliação em edição não foi encontrada. Reabra o prontuário.');avaliacaoEdicaoId=null;return;}
-    if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`🔒 O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
+    if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
 
     const tagsCirurgiasArr=[];document.querySelectorAll('#tags_cirurgias .tag-cirurgia').forEach(tag=>tagsCirurgiasArr.push({chave:tag.dataset.chave,texto:tag.textContent.replace('✕','').trim()}));
     const tagsMedArr=[];document.querySelectorAll('#tags_medicamentos div').forEach(tag=>tagsMedArr.push(tag.textContent.replace('✕','').trim()));
@@ -2198,6 +2254,22 @@ function chaveUsuarioRascunhoKineSys() {
     if (!usuarioLogado) return '';
     return String(usuarioLogado.id || usuarioLogado.email || `${usuarioLogado.nome || ''}::${usuarioLogado.tipo || ''}` || '').trim().toLowerCase();
 }
+function fingerprintContextoExameKineSys(campos = null) {
+    const valor = id => campos && Object.prototype.hasOwnProperty.call(campos,id)
+        ? campos[id]
+        : document.getElementById(id)?.value;
+    const material = [
+        valor('paciente_hma'),
+        valor('paciente_origem_irradiacao'),
+        valor('paciente_irradiacao'),
+        valor('paciente_idade'),
+        valor('paciente_mecanismo_lesao')
+    ].map(v=>removerAcentos(String(v||'')).replace(/\s+/g,' ').trim()).join('|');
+    let hash=2166136261>>>0;
+    for(let i=0;i<material.length;i++){hash^=material.charCodeAt(i);hash=Math.imul(hash,16777619)>>>0;}
+    return hash.toString(36);
+}
+window.fingerprintContextoExameKineSys = fingerprintContextoExameKineSys;
 function existeContextoRealParaRascunhoKineSys() {
     if (!document.getElementById('tela_avaliacao')?.classList.contains('ativa')) return false;
     const pacienteSelecionado = String(document.getElementById('select_paciente_precadastro')?.value || '').trim();
@@ -2223,7 +2295,7 @@ function coletarRascunhoKineSys() {
         const key = el.id || `${Array.from(el.classList).join('.')}:${el.value}`;
         campos[key] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
     });
-    return {versaoMotor:KINESYS_MOTOR_VERSION, salvoEm:new Date().toISOString(), pacienteAtualId, usuarioChave:chaveUsuarioRascunhoKineSys(), campos, estadoMapeamento:JSON.parse(JSON.stringify(estadoMapeamento)),clinicaEstruturada:coletarClinicaEstruturada()};
+    return {versaoMotor:KINESYS_MOTOR_VERSION, salvoEm:new Date().toISOString(), pacienteAtualId, usuarioChave:chaveUsuarioRascunhoKineSys(), contextoExameFingerprint:fingerprintContextoExameKineSys(campos), campos, estadoMapeamento:JSON.parse(JSON.stringify(estadoMapeamento)),clinicaEstruturada:coletarClinicaEstruturada()};
 }
 function atualizarStatusAutosave(texto) { const el=document.getElementById('autosave_status'); if(!el)return; el.style.display='block'; el.textContent=texto; }
 function ocultarStatusAutosaveKineSys() { const el=document.getElementById('autosave_status'); if(el)el.style.display='none'; }
@@ -2234,6 +2306,8 @@ function agendarAutosaveKineSys() {
     atualizarStatusAutosave('Alterações pendentes…');
     autosaveTimerKineSys=setTimeout(()=>{ const r=coletarRascunhoKineSys(); if(!r){ocultarStatusAutosaveKineSys();return;} try{ localStorage.setItem('kinesys_rascunho_avaliacao_v11',JSON.stringify(r)); atualizarStatusAutosave('✓ Rascunho salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})); }catch(e){ atualizarStatusAutosave('⚠ Falha ao salvar rascunho'); } },1200);
 }
+document.addEventListener('input',event=>{if(event.target?.id==='exames_imagem_descricao')agendarAutosaveKineSys();});
+document.addEventListener('change',event=>{if(event.target?.id==='exames_imagem_fonte')agendarAutosaveKineSys();});
 function limparRascunhoKineSys(){ clearTimeout(autosaveTimerKineSys); autosaveTimerKineSys=null; try{localStorage.removeItem('kinesys_rascunho_avaliacao_v11');}catch(e){} ocultarStatusAutosaveKineSys(); }
 let rascunhoKineSysAvisadoNestaSessao = '';
 let rascunhoDialogAbertoKineSys = false;
@@ -2241,6 +2315,9 @@ let rascunhoDialogAbertoKineSys = false;
 
 async function restaurarRascunhoKineSys() {
     if (rascunhoDialogAbertoKineSys) return false;
+    // Não empilha a recuperação automática sobre uma escolha clínica já aberta.
+    // O rascunho permanece intacto e volta a ser oferecido na próxima entrada.
+    if (document.querySelector('dialog[open], .ks-eval-dialog-backdrop:not([hidden]), .modal-overlay.ativa, .ks-drawer-overlay.ativa, #ks-investigation-modal-root:not([hidden])')) return false;
     let r=null; try{r=JSON.parse(localStorage.getItem('kinesys_rascunho_avaliacao_v11')||'null');}catch(e){}
     if (!r) return false;
     if (!rascunhoKineSysEhValido(r)) {
@@ -2249,7 +2326,13 @@ async function restaurarRascunhoKineSys() {
         try { localStorage.removeItem('kinesys_rascunho_avaliacao_v11'); } catch(_) {}
         return false;
     }
-    const chaveAviso = String(r.salvoEm || `${r.pacienteAtualId || ''}:${r.campos?.paciente_nome || ''}`);
+    // O horário muda a cada autosave. A chave estável impede que o mesmo
+    // rascunho volte a solicitar restauração ao reentrar na Avaliação.
+    const chaveAviso = [
+        r.usuarioChave || chaveUsuarioRascunhoKineSys(),
+        r.pacienteAtualId || r.paciente_id || r.pacienteId || '',
+        r.campos?.paciente_nome || ''
+    ].map(v=>String(v||'').trim().toLowerCase()).join('::');
     if (chaveAviso && rascunhoKineSysAvisadoNestaSessao === chaveAviso) return false;
     rascunhoDialogAbertoKineSys = true;
     const autosaveAnterior=autosaveSuspensoKineSys;
@@ -2266,6 +2349,9 @@ async function restaurarRascunhoKineSys() {
         rascunhoDialogAbertoKineSys=false;
         autosaveSuspensoKineSys=autosaveAnterior;
     }
+    // Uma decisão explícita vale para esta sessão. Cancelar preserva o rascunho,
+    // mas não volta a interromper o profissional a cada troca de tela.
+    if (chaveAviso) rascunhoKineSysAvisadoNestaSessao=chaveAviso;
     if(escolha==='descartar'){
         limparRascunhoKineSys();
         rascunhoKineSysAvisadoNestaSessao='';
@@ -2273,7 +2359,6 @@ async function restaurarRascunhoKineSys() {
         return false;
     }
     if(escolha!==true)return false;
-    rascunhoKineSysAvisadoNestaSessao = chaveAviso;
     preencherClinicaEstruturada(r.clinicaEstruturada||{});
     Object.entries(r.campos).forEach(([key,value])=>{
         let el=document.getElementById(key);
@@ -2281,7 +2366,16 @@ async function restaurarRascunhoKineSys() {
         if(!el)return; if(el.type==='checkbox'||el.type==='radio')el.checked=!!value; else el.value=value;
     });
     pacienteAtualId = r.pacienteAtualId || r.paciente_id || r.pacienteId || pacienteAtualId;
-    if(r.estadoMapeamento) estadoMapeamento=r.estadoMapeamento;
+    if(r.estadoMapeamento) {
+        estadoMapeamento=r.estadoMapeamento;
+        const fpRascunho=String(r.contextoExameFingerprint||fingerprintContextoExameKineSys(r.campos||{}));
+        Object.entries(estadoMapeamento).forEach(([id,estado])=>{
+            if(!estado||typeof estado!=='object'||estado.exameContextFingerprint)return;
+            if(r.campos?.['chk_regiao_'+id]!==true)return;
+            const possuiAchado=Object.entries(estado.resultados||{}).some(([chave,valor])=>!chave.startsWith('redflag::')&&['positivo','negativo','inconclusivo','nao_realizado','nao_aplicavel'].includes(valor));
+            if(possuiAchado)estado.exameContextFingerprint=fpRascunho;
+        });
+    }
     sincronizarBuscaPacientePreCadastro();
     processarRadarEmTempoReal(); atualizarStatusAutosave('✓ Rascunho restaurado');
     return true;
@@ -3173,13 +3267,13 @@ function renderizarTextoRelatorioEstruturado(texto){
 }
 
 async function montarDocumentoComparecimento(){
-    const id=await sincronizarPacienteRelatorio();if(!id){alert('⚠️ Selecione um paciente primeiro.');return;}
+    const id=await sincronizarPacienteRelatorio();if(!id){alert('Selecione um paciente primeiro.');return;}
     const p=await obterPacienteCompletoPorId(id);if(!p){alert('Paciente não encontrado.');return;}
     const valorData=document.getElementById('rel_comp_data').value||new Date().toISOString().slice(0,10);
     const data=formatarDataPorExtenso(valorData);
     const entrada=document.getElementById('rel_comp_entrada')?.value||'',saida=document.getElementById('rel_comp_saida')?.value||'';
-    if(!entrada||!saida){alert('⚠️ Informe a hora de entrada e a hora de saída.');return;}
-    if(saida<=entrada){alert('⚠️ A hora de saída deve ser posterior à hora de entrada.');return;}
+    if(!entrada||!saida){alert('Informe a hora de entrada e a hora de saída.');return;}
+    if(saida<=entrada){alert('A hora de saída deve ser posterior à hora de entrada.');return;}
     const incluirCid=!!document.getElementById('rel_incluir_cid')?.checked,incluirDiag=!!document.getElementById('rel_incluir_diagnostico')?.checked;
     const cid=document.getElementById('rel_comp_cid').value.trim(),diag=document.getElementById('rel_comp_diagnostico').value.trim();
     const extras=(incluirCid&&cid?`<p class="info-linha"><strong>CID:</strong> ${escapeHTML(cid)}</p>`:'')+(incluirDiag&&diag?`<p class="info-linha"><strong>Informação clínica:</strong> ${escapeHTML(diag)}</p>`:'');
@@ -3429,7 +3523,7 @@ async function testarConexaoGemini() {
 
 async function gerarDocumentoComIA(){
     const pacienteId = await sincronizarPacienteRelatorio();
-    if (!pacienteId) { alert('⚠️ Selecione um paciente primeiro.'); return; }
+    if (!pacienteId) { alert('Selecione um paciente primeiro.'); return; }
 
     const rascunho = document.getElementById('rel_rascunho_rapido').value.trim();
 
@@ -3446,7 +3540,7 @@ async function gerarDocumentoComIA(){
     const extensao=document.getElementById('rel_extensao')?.value||'medio';
     const qtdEvo=parseInt(document.getElementById('rel_evolucoes_qtd')?.value||'0',10);
     const clin=av?.mapeamento?.clinicaEstruturada||{};
-    const evolucoes=(p?.evolucoes||[]).slice(qtdEvo===999?0:Math.max(0,(p?.evolucoes||[]).length-qtdEvo)).map(e=>({data:e.data||'',eva:e.eva??'',estado:e.dadosEstruturados?.estadoClinico||'',mudancas:e.dadosEstruturados?.mudancas||'',respostaCarga:e.dadosEstruturados?.respostaCarga||null,relato:e.relatoLivre||e.relato||''}));
+    const evolucoes=(p?.evolucoes||[]).slice(qtdEvo===999?0:Math.max(0,(p?.evolucoes||[]).length-qtdEvo)).map(e=>({data:e.data||'',eva:e.eva??'',estado:e.dadosEstruturados?.estadoClinico||'',mudancas:e.dadosEstruturados?.mudancas||'',mudancasDetalhes:e.dadosEstruturados?.mudancasDetalhes||null,respostaCarga:e.dadosEstruturados?.respostaCarga||null,relato:e.relatoLivre||e.relato||''}));
     const contexto={paciente:p?{nome:p.nome,idade:p.idade||'',sexo:p.sexo||'',profissao:p.profissao||''}:null,avaliacao:av?{data:av.dataAvaliacao||'',eva:av.evaInicial??'',hma:av.hma||'',esporte:av.esporte||'',cirurgias:av.cirurgias||[],medicamentos:av.medicamentos||[],sinteseClinica:resumoMapa,tipo:av.tipo||'Avaliação',medidasObjetivas:document.getElementById('rel_inc_medidas')?.checked?(clin.medidasObjetivas||[]):[],psfs:document.getElementById('rel_inc_outcomes')?.checked?(clin.psfs||null):null,outcomes:document.getElementById('rel_inc_outcomes')?.checked?(clin.outcomes||[]):[],objetivosPlano:document.getElementById('rel_inc_objetivos')?.checked?(clin.objetivosPlano||null):null}:null,evolucoes};
     const rotulosObjetivo={geral:'relatório fisioterapêutico geral',evolucao:'relatório de evolução',avaliacao_medica:'relatório fisioterapêutico solicitando avaliação médica/especialista',alta:'relatório de alta fisioterapêutica',empresa:'relatório para empresa/convênio',academia:'relatório fisioterapêutico para academia / profissional de Educação Física'};
     const estruturas={
@@ -3494,7 +3588,7 @@ async function gerarDocumentoComIA(){
             status.textContent = `❌ Falha na IA: ${e.message}`;
             status.classList.remove('ks-status-success','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-error');
         }
-        alert('❌ Não foi possível gerar o relatório com o Gemini.\n\n' + e.message);
+        alert('Não foi possível gerar o relatório com o Gemini.\n\n' + e.message);
     } finally {
         btn.classList.remove('carregando');
         txt.textContent = orig;
@@ -3503,8 +3597,8 @@ async function gerarDocumentoComIA(){
 
 async function montarDocumentoIAParaImpressao(){
     const pacienteId=await sincronizarPacienteRelatorio(),texto=document.getElementById('rel_documento_oficial').value.trim();
-    if(!pacienteId){alert('⚠️ Selecione um paciente primeiro.');return;}
-    if(!texto){alert('⚠️ O Relatório Oficial está vazio. Gere com a IA ou escreva manualmente.');return;}
+    if(!pacienteId){alert('Selecione um paciente primeiro.');return;}
+    if(!texto){alert('O relatório oficial está vazio. Gere com a IA ou escreva manualmente.');return;}
     const validacao=validarRelatorioIA(false);if(validacao?.criticos?.length){if(!(await confirmarKineSys('O validador encontrou conteúdo potencialmente não sustentado pelos dados registrados. Deseja montar o documento mesmo assim para revisão?', {titulo:'Revisão necessária', confirmar:'Montar mesmo assim'})))return;}
     const p=await obterPacienteCompletoPorId(pacienteId);
     const tipoDocumento=document.getElementById('rel_tipo_documento')?.value||'relatorio';
@@ -3519,7 +3613,7 @@ async function montarDocumentoIAParaImpressao(){
 
 function renderizarRestricoesPersistentesEvolucao(p){const box=document.getElementById('banner_restricoes_posop');if(!box)return;if(!p){box.style.display='none';box.innerHTML='';return;}const av=obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p),r=av?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias;if(!r?.ativo){box.style.display='none';box.innerHTML='';return;}const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'}[r.statusCarga]||'Não informada';const itens=[r.procedimento&&`Procedimento: ${escapeHTML(r.procedimento)}`,`Carga: ${escapeHTML(carga)}`,r.ortese&&`Órtese: ${escapeHTML(r.ortese)}`,r.restricaoADM&&`ADM: ${escapeHTML(r.restricaoADM)}`,r.proibicoes&&`Proibições: ${escapeHTML(r.proibicoes)}`,r.retornoMedico&&`Retorno médico: ${escapeHTML(formatarDataBR(r.retornoMedico))}`].filter(Boolean);box.innerHTML=`<strong>⚠ Restrições pós-operatórias vigentes</strong><div class="kds-u-mt-5px kds-u-fs-label">${itens.join(' · ')}</div>`;box.style.display='block';}
 
-async function duplicarUltimaEvolucao(){const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('⚠️ Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);const lista=await obterPacientesSalvos(),p=lista.find(x=>String(x.id)===String(id)),e=(p?.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||''))).pop();if(!p){alert('⚠️ O paciente selecionado não foi encontrado. Atualize o prontuário e tente novamente.');return;}if(!e){alert('Nenhuma sessão anterior para duplicar.');return;}const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;document.getElementById('evo_relato').value=e.relatoLivre||'';document.getElementById('evo_mudancas').value='';[['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([campoId,v])=>{const el=document.getElementById(campoId);if(el)el.value=v??'';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.checked=false;});if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}alert('⧉ Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');}
+async function duplicarUltimaEvolucao(){const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);const lista=await obterPacientesSalvos(),p=lista.find(x=>String(x.id)===String(id)),e=(p?.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||''))).pop();if(!p){alert('O paciente selecionado não foi encontrado. Atualize o prontuário e tente novamente.');return;}if(!e){alert('Nenhuma sessão anterior para duplicar.');return;}const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;document.getElementById('evo_relato').value=e.relatoLivre||'';[['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([campoId,v])=>{const el=document.getElementById(campoId);if(el)el.value=v??'';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.checked=false;});if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}alert('Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');}
 
 function renderizarLinhaTempoClinicaCompleta(p){const c=document.getElementById('linha_tempo_clinica_completa');if(!c)return;if(!p){c.innerHTML='<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar a linha do tempo.</p>';return;}const ev=[];if(p.timestampCadastro||p.dataCadastro)ev.push({d:p.timestampCadastro?new Date(p.timestampCadastro).toISOString():p.dataCadastro,t:'cadastro',titulo:'Cadastro do paciente',desc:p.cadastradoPor?`Cadastrado por ${p.cadastradoPor}`:''});(obterAvaliacoes(p)||[]).forEach(a=>ev.push({d:obterRealizadoEmRegistro(a)||a.dataAvaliacao||'',t:'avaliacao',titulo:`${a.tipo||'Avaliação'} · ${a.status||'finalizada'}`,desc:`${profissionalRegistroClinico(a)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(a),true)} · EVA ${a.evaInicial??'N/I'}`}));(p.evolucoes||[]).forEach(e=>ev.push({d:obterRealizadoEmRegistro(e)||e.data||'',t:'evolucao',titulo:'Evolução fisioterapêutica',desc:`${profissionalRegistroClinico(e)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(e),true)} · EVA ${e.eva??'N/I'}${e.dadosEstruturados?.estadoClinico?' · '+e.dadosEstruturados.estadoClinico:''}`}));[...(p.documentos||[]),...obterDocumentosTimelineLocal(p.id),...(documentosTimelineNuvemCache.get(String(p.id))||[])].forEach(d=>ev.push({d:d.dataHoraISO||d.data_hora||'',t:'documento',titulo:d.titulo||'Documento',desc:d.emitidoPor||d.emitido_por?`Emitido por ${d.emitidoPor||d.emitido_por}`:''}));const ids=new Set();const eventosSemDuplicata=ev.filter(x=>{const chave=`${x.t}|${x.d}|${x.titulo}`;if(ids.has(chave))return false;ids.add(chave);return true;});eventosSemDuplicata.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const icon={cadastro:'👤',avaliacao:'🩺',evolucao:'📈',documento:'📄'};c.innerHTML=eventosSemDuplicata.length?eventosSemDuplicata.map(x=>`<div class="kds-u-gtc-34px-125px-1fr kds-u-gap-10px kds-u-ai-start-2 kds-u-p-10px-0 kds-u-bb-1px-solid-edf1ef kds-u-d-grid"><div class="kds-u-fs-heading-sm">${icon[x.t]||'•'}</div><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(formatarDataBR(String(x.d).slice(0,10)))}</div><div><strong class="kds-u-fs-label kds-u-text-petrol">${escapeHTML(x.titulo)}</strong><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(x.desc||'')}</div></div></div>`).join(''):'<p>Nenhum evento registrado.</p>';}
 
@@ -3566,11 +3660,42 @@ document.addEventListener('DOMContentLoaded', function(){
    sob demanda + Safety Gate compacto. A lógica clínica/heurística permanece a mesma.
    ========================================================================== */
 
+let ksEngineInfoTrigger = null;
 function abrirInfoMotorClinico(){
-    const modal=document.getElementById('engine_info_modal'); if(modal) modal.hidden=false;
+    const modal = document.getElementById('engine_info_modal');
+    if (!modal) return;
+    const eventTrigger = window.event?.currentTarget;
+    ksEngineInfoTrigger = eventTrigger instanceof HTMLElement
+        ? eventTrigger
+        : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    modal.hidden = false;
+    if (!modal.dataset.keyboardReady) {
+        modal.dataset.keyboardReady = 'true';
+        modal.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                fecharInfoMotorClinico();
+                return;
+            }
+            if (event.key === 'Tab') {
+                const focusable = Array.from(modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+                    .filter((element) => element.getClientRects().length > 0);
+                if (focusable.length === 1) {
+                    event.preventDefault();
+                    focusable[0].focus();
+                }
+            }
+        });
+    }
+    requestAnimationFrame(() => modal.querySelector('button:not([disabled])')?.focus());
 }
 function fecharInfoMotorClinico(){
-    const modal=document.getElementById('engine_info_modal'); if(modal) modal.hidden=true;
+    const modal = document.getElementById('engine_info_modal');
+    if (!modal) return;
+    modal.hidden = true;
+    const trigger = ksEngineInfoTrigger;
+    ksEngineInfoTrigger = null;
+    requestAnimationFrame(() => trigger?.focus());
 }
 
 function rotuloResultadoTeste(valor){
@@ -4036,7 +4161,7 @@ document.addEventListener('click', e => {
 (function () {
   'use strict';
 
-  var VERSAO_MOTOR_HMA = '11.1.1-flexao-profunda-topografia-joelho';
+  var VERSAO_MOTOR_HMA = '11.2.0-funil-anatomico';
   window.KINESYS_HMA_ENGINE_VERSION = VERSAO_MOTOR_HMA;
 
   var LEXICO = {
@@ -12185,6 +12310,49 @@ document.addEventListener('click', e => {
     return topologia;
   }
 
+  /* Resolve trajetos explícitos cuja origem foi descrita de modo coloquial.
+     A direção do membro desambigua "coluna/costas"; um termo isolado nunca
+     gera região ou hipótese. As inferências são rastreáveis e respeitam
+     negação/ausência de propagação. */
+  function aplicarFunilAnatomicoHMA(texto, sinais, proveniencia, topologia) {
+    var clausulas=clausulasDetalhadasHMA(texto||'');
+    function registrar(conceito,clausula,motivo){
+      sinais.add(conceito);
+      if(!proveniencia)return;
+      if(!proveniencia[conceito])proveniencia[conceito]=[];
+      if(proveniencia[conceito].some(function(x){return x.fonte==='funil_anatomico'&&x.clausulaId===clausula.id;}))return;
+      proveniencia[conceito].push({conceito:conceito,fonte:'funil_anatomico',modo:'combinacao',termo:'',termoNormalizado:'',clausulaId:clausula.id,trecho:clausula.texto,inicioClausula:clausula.inicio,fimClausula:clausula.fim,motivo:motivo});
+    }
+    clausulas.forEach(function(clausula){
+      var t=clausula.normalizado||normalizar(clausula.texto||'');
+      if(!t)return;
+      var colunaGenerica=/\b(?:coluna|costas|espinha)\b/.test(t);
+      var origemLombar=sinais.has('lombar')||/\b(?:lombar|lombalgia|lombossacra|coluna baixa)\b/.test(t);
+      var origemCervical=sinais.has('cervical')||/\b(?:cervical|pescoco|nuca)\b/.test(t);
+      var destinoMI=/\b(?:coxa|perna|panturrilha|canela|tornozelo|pe|calcanhar|dedos? do pe)\b/.test(t);
+      var destinoMS=/\b(?:ombro|braco|antebraco|cotovelo|punho|mao|dedos? da mao)\b/.test(t);
+      var distalMI=/\b(?:panturrilha|canela|tornozelo|pe|calcanhar|dedos? do pe)\b/.test(t);
+      var distalMS=/\b(?:antebraco|punho|mao|dedos? da mao)\b/.test(t);
+      var propagacao=clausulaTemPropagacaoAfirmadaHMA(clausula.texto||'');
+      var qualidadeNeural=sinais.has('neurologico')&&/\b(?:choque|queimacao|formigamento|dormencia|fraqueza|perda de forca)\b/.test(t);
+      var trajetoAte=qualidadeNeural&&/\b(?:ate|para)\b/.test(t)&&!/^.*\b(?:sem|nega|negou|nao apresenta|nao sente)\b.*\b(?:choque|queimacao|formigamento|dormencia|fraqueza)\b/.test(t);
+      var associacaoNeural=qualidadeNeural&&((destinoMI&&(origemLombar||colunaGenerica))||(destinoMS&&(origemCervical||colunaGenerica)));
+      if(!(propagacao||trajetoAte||associacaoNeural))return;
+
+      if(destinoMI&&(origemLombar||colunaGenerica)){
+        registrar('lombar',clausula,colunaGenerica?'coluna genérica + trajeto para membro inferior':'origem lombar + trajeto para membro inferior');
+        registrar('irradiacaoPerna',clausula,'propagação da coluna/lombar para membro inferior');
+        if(distalMI)registrar('trajetoAlemJoelhoLombar',clausula,'trajeto alcança estrutura distal ao joelho');
+      }
+      if(destinoMS&&(origemCervical||colunaGenerica)){
+        registrar('cervical',clausula,colunaGenerica?'coluna genérica + trajeto para membro superior':'origem cervical + trajeto para membro superior');
+        registrar('irradiacaoBraco',clausula,'propagação da coluna/cervical para membro superior');
+        if(distalMS)registrar('trajetoAlemCotovelo',clausula,'trajeto alcança estrutura distal ao cotovelo');
+      }
+    });
+    return topologia;
+  }
+
   function enriquecerAchadosNarrativosHMA(texto, resultado, sinais, topologia) {
     var achados = Array.isArray(resultado.achados) ? resultado.achados.slice() : [];
     var chaves = new Set(achados.map(function (a) { return String(a.titulo || '') + '|' + String(a.valor || ''); }));
@@ -12334,6 +12502,7 @@ document.addEventListener('click', e => {
     resultado.versaoMotor = VERSAO_MOTOR_HMA;
     var sinaisLocais = extracaoDetalhada.sinais;
     var topologiaHMA = enriquecerSinaisPelaTopologiaHMA(texto || '', sinaisLocais, extracaoDetalhada.proveniencia, contexto.origemIrradiacao || '', contexto.irradiacao || '');
+    aplicarFunilAnatomicoHMA(texto || '', sinaisLocais, extracaoDetalhada.proveniencia, topologiaHMA);
     var regioes = [['suspeitaArticulacaoSeptica','articulação'], ['deformidadeOmbroTrauma','ombro'], ['labralOmbro','ombro'], ['artroseGlenoumeral','ombro'], ['cmcPolegar','punho/mão'], ['instabilidadePatelar','joelho'], ['padraoLCA','joelho'], ['incapacidadeExtensaoAtivaJoelho','joelho'], ['rupturaMecanismoExtensorJoelho','joelho'], ['fraturaQuadrilAguda','quadril'], ['deformidadeFraturaQuadril','quadril'], ['padraoOsteonecroseQuadril','quadril'], ['riscoOsteonecroseQuadril','quadril'], ['tabaqueiraEscafoide','punho/mão'], ['guyon','punho/mão'], ['tunelRadial','cotovelo/antebraço'], ['popliteo','joelho'], ['herpesZoster','tórax/pele'], ['costalMecanico','torácica/costal'], ['irradiacaoLateralAteJoelhoQuadril', 'quadril/coxa lateral'], ['occipitalUnilateral', 'cervical/occipital'], ['nervoOccipital', 'cervical/occipital'], ['desfiladeiroToracico', 'cintura escapular/membro superior'], ['trapezioSuperior', 'cervical/ombro'], ['elevadorEscapula', 'cervical/escápula'], ['sinalEspecificoLisfranc', 'mediopé'], ['lisfranc', 'mediopé'], ['traumaMediope', 'mediopé'], ['morton', 'antepé'], ['metatarsoFocal', 'antepé'], ['punhoUlnar', 'punho'], ['nervoUlnar', 'cotovelo/mão'], ['isquioProximal', 'coxa posterior'], ['cardiopulmonar', 'tórax'], ['toracica', 'torácica'], ['sacroiliaca', 'sacroilíaca'], ['adutor', 'virilha/coxa medial'], ['isquiotibial', 'coxa posterior'], ['tibiaMedial', 'perna'], ['tibiaFocal', 'perna'], ['pernaExercicio', 'perna'], ['cervical', 'cervical'], ['ombro', 'ombro'], ['cotoveloLateral', 'cotovelo'], ['posteriorTornozelo', 'tornozelo/Aquiles'], ['calcanhar', 'calcanhar'], ['polegarRadial', 'punho/mão'], ['joelhoAnterior', 'joelho'], ['linhaArticularMedialJoelho', 'joelho'], ['linhaArticularLateralJoelho', 'joelho'], ['joelhoMedial', 'joelho'], ['joelhoLateral', 'joelho'], ['linhaArticularJoelho', 'joelho'], ['punhoMao', 'punho/mão'], ['joelho', 'joelho'], ['tornozelo', 'tornozelo'], ['quadril', 'quadril'], ['lombar', 'lombar']];
     var regiaoDetectada = (regioes.find(function (item) { return sinaisLocais.has(item[0]); }) || [])[1];
     if (regiaoDetectada) {
@@ -12537,7 +12706,7 @@ document.addEventListener('click', e => {
       principalUmDe:['chicote'], sinaisIncluem:['cervical','whiplash']
     }),
 
-    // LOMBAR / QUADRIL — 10
+    // LOMBAR / QUADRIL — funil anatômico, padrões e mimetizadores
     caso('L1','lombar_quadril','Dor na lombar há cerca de 6 meses, piora ao deitar de lado, irradia para joelho e perna, piora ao evacuar, tossir e espirrar, com dificuldade para fletir o tronco.',{
       principalUmDe:['lombar com componente radicular','lombociatalgia'], diferenciaisIncluem:['trocant'], sinaisIncluem:['lombar','irradiacaoPerna']
     }),
@@ -12567,6 +12736,27 @@ document.addEventListener('click', e => {
     }),
     caso('L10','lombar_quadril','Corredor aumentou muito a carga; apresenta dor profunda na virilha, dificuldade para caminhar e dor noturna.',{
       principalUmDe:['estresse do colo femoral'], sinaisIncluem:['virilha','marchaLimitada','noturna']
+    }),
+    caso('L11','lombar_quadril','Paciente relata dor de coluna que irradia para perna e pé.',{
+      principalUmDe:['lombociatalgia','componente radicular'], sinaisIncluem:['lombar','irradiacaoPerna','trajetoAlemJoelhoLombar']
+    }),
+    caso('L12','lombar_quadril','Lombalgia com choque até o pé.',{
+      principalUmDe:['componente radicular'], sinaisIncluem:['lombar','neurologico','irradiacaoPerna','trajetoAlemJoelhoLombar']
+    }),
+    caso('L13','lombar_quadril','Dor lombar com formigamento até o pé.',{
+      principalUmDe:['componente radicular'], sinaisIncluem:['lombar','neurologico','irradiacaoPerna','trajetoAlemJoelhoLombar']
+    }),
+    caso('L14','lombar_quadril','Dor lombar acompanhada de fraqueza na perna.',{
+      principalUmDe:['componente radicular'], sinaisIncluem:['lombar','neurologico','irradiacaoPerna']
+    }),
+    caso('L15','lombar_quadril','Dor lombar tipo ciático que desce para a perna.',{
+      principalUmDe:['lombociatalgia','componente radicular'], sinaisIncluem:['lombar','irradiacaoPerna']
+    }),
+    caso('L16','lombar_quadril','Dor na coluna, sem irradiação para a perna ou o pé e sem formigamento.',{
+      naoDeveIncluir:['lombociatalgia','componente radicular'], sinaisNaoIncluem:['irradiacaoPerna','trajetoAlemJoelhoLombar','neurologico']
+    }),
+    caso('L17','lombar_quadril','Dor no pé após caminhar, sem dor lombar e sem irradiação pela perna.',{
+      naoDeveIncluir:['lombociatalgia','componente radicular'], sinaisNaoIncluem:['lombar','irradiacaoPerna','trajetoAlemJoelhoLombar']
     }),
 
     // JOELHO — 10
@@ -12721,6 +12911,7 @@ document.addEventListener('click', e => {
     (e.alertasIncluem||[]).forEach(function(x){ if(!algumNomeInclui(alertas,x)) falhas.push('alerta ausente: '+x); });
     (e.alertasNaoIncluem||[]).forEach(function(x){ if(algumNomeInclui(alertas,x)) falhas.push('alerta indevido: '+x); });
     (e.sinaisIncluem||[]).forEach(function(x){ if(sinais.indexOf(x)<0) falhas.push('sinal ausente: '+x); });
+    (e.sinaisNaoIncluem||[]).forEach(function(x){ if(sinais.indexOf(x)>=0) falhas.push('sinal indevido: '+x); });
 
     return {
       id:c.id, regiao:c.regiao, hma:c.hma, passou:falhas.length===0, falhas:falhas,
@@ -13197,3 +13388,30 @@ document.addEventListener('click', e => {
     return{resumo:resumo,resultados:resultados};
   };
 })();
+
+
+/* Lembretes explícitos da avaliação: a conduta e a data são definidas pelo profissional. */
+window.carregarLembretesClinicosAvaliacao=async function(){
+ const lista=document.getElementById('ks_lembretes_lista'),status=document.getElementById('ks_lembrete_status');if(!lista||!status)return;
+ lista.replaceChildren();const id=String(pacienteAtualId||'').trim();
+ if(!id){status.textContent='Selecione um paciente cadastrado ou salve a avaliação antes de criar lembretes.';return;}
+ if(!_supabase||!usuarioLogado?.id){status.textContent='Não foi possível conectar os lembretes. Tente novamente.';return;}
+ const {data,error}=await _supabase.from('notificacoes_internas').select('id,titulo,agendamento_data').eq('tipo','lembrete_clinico').eq('destinatario_profissional_id',String(usuarioLogado.id)).like('origem_chave','avaliacao_lembrete:'+id+':%').order('agendamento_data',{ascending:true}).limit(30);
+ if(error){status.textContent='Não foi possível carregar os lembretes. Tente novamente.';return;}
+ status.textContent=data?.length?data.length+' lembrete(s) agendado(s) para este paciente.':'Nenhum lembrete agendado para este paciente.';
+ for(const item of data||[]){const linha=document.createElement('p');linha.className='helper-text';linha.textContent=String(item.agendamento_data||'').split('-').reverse().join('/')+' — '+(item.titulo||'Lembrete clínico');lista.appendChild(linha);}
+};
+window.salvarLembreteClinicoAvaliacao=async function(){
+ const acaoEl=document.getElementById('ks_lembrete_acao'),dataEl=document.getElementById('ks_lembrete_data'),status=document.getElementById('ks_lembrete_status'),botao=document.querySelector('#ks-lembretes-avaliacao button');if(!acaoEl||!dataEl||!status||!botao)return;
+ const id=String(pacienteAtualId||'').trim(),acao=acaoEl.value.trim().replace(/\s+/g,' '),dataAviso=dataEl.value,nome=document.getElementById('paciente_nome')?.value.trim()||'';
+ const partes=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));const hoje=partes.year+'-'+partes.month+'-'+partes.day;
+ if(!id||!nome){status.textContent='Selecione um paciente cadastrado ou salve a avaliação primeiro.';return;}
+ if(acao.length<5||acao.length>120){status.textContent='Descreva a ação em 5 a 120 caracteres.';acaoEl.focus();return;}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dataAviso)||dataAviso<hoje){status.textContent='Escolha uma data de hoje em diante.';dataEl.focus();return;}
+ if(!_supabase||!usuarioLogado?.id){status.textContent='Não foi possível conectar os lembretes. Tente novamente.';return;}
+ botao.disabled=true;status.textContent='Salvando lembrete…';
+ try{const {error}=await _supabase.from('notificacoes_internas').insert({destinatario_profissional_id:String(usuarioLogado.id),destinatario_email:usuarioLogado.email||null,tipo:'lembrete_clinico',titulo:acao,mensagem:'Paciente: '+nome,agendamento_data:dataAviso,origem_chave:'avaliacao_lembrete:'+id+':'+crypto.randomUUID(),criada_por:usuarioLogado.nome||'KineSys'});if(error)throw error;acaoEl.value='';dataEl.value='';await window.carregarLembretesClinicosAvaliacao();status.textContent='Lembrete salvo. Ele aparecerá no Meu dia clínico na data escolhida.';}
+ catch(error){console.warn('KineSys: não foi possível salvar o lembrete clínico.',error);status.textContent='Não foi possível salvar o lembrete. Nenhuma alteração foi feita; tente novamente.';}
+ finally{botao.disabled=false;}
+};
+
