@@ -97,7 +97,7 @@ body.ks-clinical-modal-open{overflow:hidden}
 #ks-investigation-modal-root{position:fixed;inset:0;z-index:5000}
 #ks-investigation-modal-root[hidden]{display:none!important}
 .ks-investigation-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:clamp(16px,3vw,32px);background:var(--kds-overlay-backdrop);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.ks-investigation-dialog{display:flex;flex-direction:column;width:min(700px,calc(100vw - 32px));max-height:min(calc(100dvh - 32px),820px);overflow:hidden;border:0;border-radius:var(--kds-radius-lg);background:var(--kds-surface);box-shadow:var(--kds-shadow-float);color:var(--kds-text);font-family:var(--kds-font-family,"Segoe UI Variable","Segoe UI",sans-serif)}
+.ks-investigation-dialog{display:flex;flex-direction:column;width:min(700px,calc(100vw - 32px));max-height:min(calc(100dvh - 32px),820px);overflow:hidden;border:0;border-radius:var(--kds-radius-lg);background:var(--kds-surface);box-shadow:var(--kds-shadow-float);color:var(--kds-text);font-family:"Segoe UI Variable","Segoe UI",sans-serif}
 .ks-investigation-dialog-head{position:relative;padding:22px 56px 16px 24px;border-bottom:1px solid #E3EEEB;background:linear-gradient(145deg,#F3FBF9 0%,#FFFFFF 78%)}
 .ks-investigation-dialog-head .ks-kicker{display:block;margin-bottom:5px;color:#2D8176;font-size:var(--kds-font-metadata)!important;font-weight:850;letter-spacing:0}
 .ks-investigation-dialog-head h2{margin:0;color:#173F47;font-size:22px!important;line-height:1.2!important;letter-spacing:-.02em}
