@@ -115,7 +115,9 @@
     function sequenciaDoAtendimento(atual,historico,hoje){
         const nome=nomeProcedimento(atual);
         const familia=familiaProcedimento(nome,atual?.procedimento_id);
+        const pacienteAtual=String(atual?.paciente_id||'').trim();
         const anteriores=(historico||[]).filter(r=>
+            pacienteAtual && String(r?.paciente_id||'').trim()===pacienteAtual &&
             STATUS_CONCLUIDOS.has(String(r?.status||'').toLowerCase()) && registroAntesDoAtual(r,atual,hoje)
         );
         const anterioresServico=anteriores.filter(r=>mesmaFamilia(r,atual,familia));
@@ -600,3 +602,4 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarMeuDia,{once:true});
     else iniciarMeuDia();
 })();
+
