@@ -334,6 +334,79 @@
         return b;
     }
 
+    function numeroClinico(valor){
+        if(valor===''||valor===null||valor===undefined)return null;
+        const numero=Number(valor);
+        return Number.isFinite(numero)?Math.max(0,Math.min(10,numero)):null;
+    }
+
+    function pontosEvolucaoPaciente(paciente){
+        const pontos=[];
+        avaliacoesFinalizadas(paciente).forEach(av=>{
+            const eva=numeroClinico(av?.evaInicial??av?.eva_inicial);
+            if(eva===null)return;
+            pontos.push({data:dataRegistro(av),eva,tipo:'Avaliação',estado:'Avaliação inicial'});
+        });
+        evolucoesPaciente(paciente).forEach(ev=>{
+            const eva=numeroClinico(ev?.eva);
+            if(eva===null)return;
+            const estado=String(ev?.dadosEstruturados?.estadoClinico||'').trim();
+            pontos.push({data:dataRegistro(ev),eva,tipo:'Evolução',estado:estado||'Não informado'});
+        });
+        return pontos.filter(p=>p.data).sort((a,b)=>a.data.localeCompare(b.data));
+    }
+
+    function garantirDialogAnaliseEvolucao(){
+        let dialog=document.getElementById('ks_fisio_evolution_dialog');
+        if(dialog)return dialog;
+        dialog=document.createElement('dialog');
+        dialog.id='ks_fisio_evolution_dialog';
+        dialog.className='ks-fisio-evolution-dialog';
+        dialog.setAttribute('aria-labelledby','ks_fisio_evolution_title');
+        dialog.innerHTML=`
+            <div class="ks-fisio-evolution-head">
+                <div><span>EVOLUÇÃO CLÍNICA</span><h2 id="ks_fisio_evolution_title">Análise da evolução</h2><p id="ks_fisio_evolution_patient"></p></div>
+                <button type="button" data-ks-evolution-close aria-label="Fechar análise">×</button>
+            </div>
+            <div class="ks-fisio-evolution-body" id="ks_fisio_evolution_body"></div>`;
+        dialog.querySelector('[data-ks-evolution-close]')?.addEventListener('click',()=>dialog.close());
+        dialog.addEventListener('cancel',event=>{event.preventDefault();dialog.close();});
+        document.body.appendChild(dialog);
+        return dialog;
+    }
+
+    function graficoEvolucaoSVG(pontos){
+        const largura=640,altura=260,margem={top:20,right:24,bottom:44,left:42};
+        const areaW=largura-margem.left-margem.right,areaH=altura-margem.top-margem.bottom;
+        const x=i=>margem.left+(pontos.length<=1?areaW/2:(i*areaW/(pontos.length-1)));
+        const y=eva=>margem.top+((10-eva)/10)*areaH;
+        const linhas=[0,2,4,6,8,10].map(v=>`<g><line x1="${margem.left}" y1="${y(v)}" x2="${largura-margem.right}" y2="${y(v)}"/><text x="${margem.left-12}" y="${y(v)+4}" text-anchor="end">${v}</text></g>`).join('');
+        const trilha=pontos.map((p,i)=>`${x(i)},${y(p.eva)}`).join(' ');
+        const passo=Math.max(1,Math.ceil(pontos.length/6));
+        const marcadores=pontos.map((p,i)=>{
+            const data=formatarDiaMes(p.data);
+            return `<g class="ks-fisio-chart-point"><circle cx="${x(i)}" cy="${y(p.eva)}" r="5"/><title>${data} · EVA ${p.eva}/10 · ${p.estado}</title>${i%passo===0||i===pontos.length-1?`<text x="${x(i)}" y="${altura-16}" text-anchor="middle">${data}</text>`:''}</g>`;
+        }).join('');
+        return `<svg class="ks-fisio-evolution-chart" viewBox="0 0 ${largura} ${altura}" role="img" aria-label="Gráfico da intensidade da dor ao longo do tratamento"><g class="ks-fisio-chart-grid">${linhas}</g><polyline class="ks-fisio-chart-line" points="${trilha}"/>${marcadores}</svg>`;
+    }
+
+    function abrirAnaliseEvolucao(paciente,nome){
+        const dialog=garantirDialogAnaliseEvolucao();
+        const titulo=document.getElementById('ks_fisio_evolution_patient');
+        const body=document.getElementById('ks_fisio_evolution_body');
+        if(titulo)titulo.textContent=String(nome||paciente?.nome||'Paciente');
+        if(!body)return;
+        const pontos=pontosEvolucaoPaciente(paciente);
+        if(!pontos.length){
+            body.innerHTML='<div class="ks-fisio-evolution-empty"><strong>Ainda não há dados suficientes para o gráfico</strong><span>Registre a avaliação com EVA ou uma evolução para iniciar a curva clínica.</span></div>';
+        }else{
+            const primeiro=pontos[0],ultimo=pontos[pontos.length-1],variacao=ultimo.eva-primeiro.eva;
+            const tendencia=variacao<0?`redução de ${Math.abs(variacao)} ponto(s)`:variacao>0?`aumento de ${variacao} ponto(s)`:'estabilidade';
+            body.innerHTML=`<div class="ks-fisio-evolution-summary"><span><small>Registros</small><strong>${pontos.length}</strong></span><span><small>EVA mais recente</small><strong>${ultimo.eva}/10</strong></span><span><small>Tendência</small><strong>${tendencia}</strong></span></div>${graficoEvolucaoSVG(pontos)}<div class="ks-fisio-evolution-legend"><span><i></i>EVA registrada</span><small>A curva apresenta a intensidade da dor documentada em avaliações e evoluções.</small></div>`;
+        }
+        if(!dialog.open)dialog.showModal();
+    }
+
     function prepararCabecalho(card,total=0){
         card.classList.add('ks-fisio-util','ks-fisio-util-compact');
         card.classList.remove('is-expanded');
@@ -383,6 +456,7 @@
         if(!bloqueiaAcao){
             const modoDestino=clinica.familia==='avaliacao' ? 'avaliacao' : 'evolucao';
             const labelDestino=modoDestino==='avaliacao' ? 'Avaliação' : 'Evolução';
+            if(paciente)actions.appendChild(criarBotao('Análise da evolução','btn-secondary ks-fisio-analysis-btn',()=>abrirAnaliseEvolucao(paciente,nome)));
             actions.appendChild(criarBotao(labelDestino,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,modoDestino,agendamento.id)));
             if(clinica.registroHoje){const done=document.createElement('span');done.className='ks-fisio-record-done';done.textContent='Registro concluído';actions.appendChild(done);}
         }
