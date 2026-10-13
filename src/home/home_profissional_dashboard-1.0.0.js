@@ -53,8 +53,6 @@
         if(recente){recente.hidden=true;recente.dataset.profHomeLegacyHidden='1';}
         const pend=document.getElementById('card_pendencias_clinicas');
         if(pend){pend.hidden=true;pend.dataset.profHomeLegacyHidden='1';}
-        const crm=document.getElementById('card_crm');
-        if(crm){crm.hidden=true;crm.dataset.profHomeLegacyHidden='1';}
         home.querySelectorAll('.card').forEach(card=>{
             if(card.id==='card_painel_fisioterapeuta'||card.id==='ks_prof_home_workspace')return;
             const texto=String(card.querySelector('h2')?.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -156,6 +154,26 @@
         const relacionamento=workspace.querySelector('.ks-prof-month-card')||document.querySelector('#ks_prof_home_focus .ks-prof-month-card');
         [prioridades,notificacoes,relacionamento].forEach(modulo=>{if(modulo&&modulo.parentElement!==apoio)apoio.appendChild(modulo);});
         if(painel.parentElement!==foco)foco.appendChild(painel);
+        const crmCard=document.getElementById('card_crm');
+        const mensagens=crmCard?.closest('details.ks-home-crm');
+        if(crmCard&&mensagens){
+            mensagens.classList.add('ks-prof-whatsapp-messages');
+            mensagens.hidden=false;
+            mensagens.open=true;
+            const resumo=mensagens.querySelector('summary');
+            if(resumo)resumo.textContent='Mensagens por WhatsApp';
+            const titulo=crmCard.querySelector('.card-header h2');
+            if(titulo)titulo.textContent='Envio rápido';
+            const label=crmCard.querySelector('label[for="crm_paciente_select"]');
+            if(label)label.textContent='Escolha o paciente';
+            let intro=crmCard.querySelector('.ks-prof-whatsapp-intro');
+            if(!intro){intro=document.createElement('p');intro.className='ks-prof-whatsapp-intro';crmCard.querySelector('.card-header')?.after(intro);}
+            intro.textContent='Envie lembretes e mensagens de acompanhamento pelo WhatsApp cadastrado do paciente.';
+            const botoes=crmCard.querySelectorAll('.dashboard-grid button');
+            const rotulos=['Enviar check-in de 24h','Enviar lembrete de exercícios','Enviar lembrete da sessão'];
+            botoes.forEach((botao,indice)=>{if(rotulos[indice])botao.textContent=rotulos[indice];});
+            if(mensagens.parentElement!==home||home.lastElementChild!==mensagens)home.appendChild(mensagens);
+        }
         return workspace;
     }
 

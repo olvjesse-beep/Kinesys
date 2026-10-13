@@ -572,6 +572,37 @@
   background:rgba(255,255,255,.055)!important;
   color:rgba(241,255,253,.82)!important;
 }
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages{
+  display:block;
+  margin:18px 0 0!important;
+  border:1px solid rgba(215,228,229,.95)!important;
+  border-radius:18px!important;
+  background:rgba(255,255,255,.86)!important;
+  box-shadow:0 15px 34px rgba(15,65,68,.065)!important;
+  overflow:hidden;
+}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages>summary{
+  min-height:54px!important;
+  padding:16px 20px!important;
+  color:var(--kds-petrol-deep)!important;
+  font-size:1rem!important;
+  font-weight:760!important;
+}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages #card_crm{
+  display:block!important;
+  margin:0!important;
+  padding:18px 20px 20px!important;
+  border:0!important;
+  border-top:1px solid var(--kds-line-soft)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages #card_crm .card-header{margin-bottom:4px!important}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages #card_crm .card-header h2{font-size:1rem!important}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-intro{margin:0 0 14px;color:var(--kds-muted);font-size:.8rem}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages .dashboard-grid{margin-bottom:0!important}
+#tela_home.ks-prof-home-active .ks-prof-whatsapp-messages .dashboard-grid button{min-height:44px!important}
 
 .ks-fisio-evolution-dialog{
   width:min(760px,calc(100vw - 28px));
@@ -628,4 +659,5 @@
   .ks-fisio-evolution-summary{grid-template-columns:1fr}
   .ks-fisio-evolution-body{padding:16px}
   .ks-fisio-evolution-legend{align-items:flex-start;flex-direction:column}
+  #tela_home.ks-prof-home-active .ks-prof-whatsapp-messages .dashboard-grid{grid-template-columns:1fr!important}
 }
