@@ -55,14 +55,15 @@ function fixture(){
   assert.match(dashboard,/ks-prof-priorities-card/,'professional Home keeps priorities beside the clinical day');
   assert.match(dashboard,/e\.detail\?\.id==='tela_home'\)atualizar\(\)/,'professional Home rebuilds its approved two-column composition whenever the screen opens');
   assert.match(dashboard,/eyebrow\.textContent='ÂNCORA CLÍNICA'/,'professional Home keeps the selected visual direction');
+  assert.doesNotMatch(dashboard,/\bicone\(/,'professional Home cannot depend on an undefined icon helper during composition');
   const dashboardCss=read('styles/home_profissional_dashboard-1.0.0.css');
   assert.match(dashboardCss,/\.ks-prof-home-focus\s*\{[\s\S]*grid-template-columns:/,'approved Home keeps support at left and clinical day at right');
   assert.match(dashboardCss,/\.ks-prof-home-support\s*\{[\s\S]*flex-direction:column/,'support modules remain in one unified white panel');
   const menu=read('src/ui/menu_dropdown-1.0.0.js');vm.runInContext(menu,f.ctx);assert.equal(typeof f.ctx.fecharMenu,'function');assert.doesNotThrow(()=>f.ctx.fecharMenu());
   const design=read('src/core/design_system-1.20.1.js');const handler=design.slice(design.indexOf('    function fecharConfiguracoesAgendaAoClicarFora'),design.indexOf("    document.addEventListener('click',fecharConfiguracoesAgendaAoClicarFora)"));vm.runInContext(handler,f.ctx);assert.doesNotThrow(()=>f.ctx.fecharConfiguracoesAgendaAoClicarFora({target:new Element()}),'removed Agenda controls do not throw null.contains');
   const html=read('index.html');for(const path of ['src/core/script-1.18.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/core/operational_resume_refresh-1.0.0.js','src/ui/menu_dropdown-1.0.0.js','src/core/design_system-1.20.1.js','src/ui/screen_loader-1.25.0.js'])assert(html.split('\n').some(l=>l.includes(path)&&l.includes('meudia=20260915-owner-r1')),path+' must be cache-busted');
-  assert.match(html,/home_profissional_dashboard-1\.0\.0\.css\?v=20261013-home-anchor-r2/,'Home visual CSS must bypass the stale r1 browser cache');
-  assert.match(html,/home_profissional_dashboard-1\.0\.0\.js\?v=20261013-home-anchor-r2/,'Home composition JS must bypass the stale r1 browser cache');
+  assert.match(html,/home_profissional_dashboard-1\.0\.0\.css\?v=20261013-home-anchor-r3/,'Home visual CSS must bypass stale browser caches');
+  assert.match(html,/home_profissional_dashboard-1\.0\.0\.js\?v=20261013-home-anchor-r3/,'Home composition JS must bypass stale browser caches');
   assert.match(design,/\$\{icon\('bell'\)\}/);assert.doesNotMatch(design,/>🔔<span/);
   console.log('PASS: 20 Home → Agenda → Home cycles; manual refresh; focus/blur/pageshow; reload; delayed response; failure/retry; sole writer; menu and detached Agenda controls; asset versions; SVG notification.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
