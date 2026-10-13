@@ -7,6 +7,7 @@
    ============================================================================ */
 (function(){
     'use strict';
+    let focoAnteriorPendencias=null;
 
     let refreshToken = 0;
 
@@ -17,6 +18,10 @@
 
     function escapar(v=''){
         return typeof escapeHTML==='function' ? escapeHTML(String(v??'')) : String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+
+    function icone(nome){
+        return typeof window.KineSysIcon==='function' ? window.KineSysIcon(nome) : '';
     }
 
     function agoraBrasilia(){
@@ -72,6 +77,8 @@
         if(!home||!painel)return null;
         if(!ehProfissional()){
             restaurarCardsLegados();
+            const foco=document.getElementById('ks_prof_home_focus');
+            if(foco){foco.parentElement?.insertBefore(painel,foco);foco.remove();}
             document.getElementById('ks_prof_home_workspace')?.remove();
             document.getElementById('ks_prof_pendencias_btn')?.remove();
             home.classList.remove('ks-prof-home-active');
@@ -85,7 +92,7 @@
             const btn=document.createElement('button');
             btn.type='button';btn.id='ks_prof_pendencias_btn';btn.className='ks-prof-pending-trigger';
             btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-controls','ks_prof_pendencias_dialog');
-            btn.innerHTML='<span class="ks-prof-pending-icon" aria-hidden="true">✓</span><span>Pendências</span><strong id="ks_prof_pendencias_badge" hidden>0</strong>';
+            btn.innerHTML=`<span class="ks-prof-pending-icon" aria-hidden="true">${icone('check')}</span><span>Pendências</span><strong id="ks_prof_pendencias_badge" hidden>0</strong>`;
             btn.addEventListener('click',abrirPendencias);
             header.appendChild(btn);
         }
@@ -95,16 +102,20 @@
             workspace=document.createElement('section');workspace.id='ks_prof_home_workspace';workspace.className='card ks-prof-home-workspace';
             workspace.innerHTML=`
                 <div class="ks-prof-home-grid">
+                    <article class="ks-prof-home-module ks-prof-priorities-card" id="ks_prof_priorities_card">
+                        <div class="ks-prof-module-title"><span><small>FOCO CLÍNICO</small><strong>Prioridades de hoje</strong><em>O que precisa da sua atenção</em></span></div>
+                        <div id="ks_prof_priorities_list" class="ks-prof-priorities-list"><p class="ks-prof-empty">Carregando prioridades…</p></div>
+                    </article>
                     <article class="ks-prof-home-module ks-prof-month-card" id="ks_prof_month_card">
                         <button type="button" class="ks-prof-module-head" id="ks_prof_month_toggle" aria-expanded="false" aria-controls="ks_prof_month_details">
-                            <span><small>ATIVIDADE DO MÊS</small><strong>Atendimentos realizados</strong></span>
+                            <span><small>CRM E RELACIONAMENTO</small><strong>Acompanhamento de pacientes</strong></span>
                             <span class="ks-prof-month-number" id="ks_prof_month_total">—</span>
                         </button>
                         <p class="ks-prof-module-sub" id="ks_prof_month_sub">Carregando ${escapar(nomeMesAtual())}…</p>
                         <div id="ks_prof_month_details" class="ks-prof-expand-panel" hidden></div>
                     </article>
                     <article class="ks-prof-home-module ks-prof-notifications-card">
-                        <div class="ks-prof-module-title"><span><small>ATENÇÃO</small><strong>Notificações</strong></span><span class="ks-prof-notification-count" id="ks_prof_notification_count" hidden>0</span></div>
+                        <div class="ks-prof-module-title"><span><small>ATENÇÃO</small><strong>Notificações de hoje</strong><em>Somente avisos com data de hoje</em></span><span class="ks-prof-notification-count" id="ks_prof_notification_count" hidden>0</span></div>
                         <div id="ks_prof_notifications_list" class="ks-prof-notification-list"><p class="ks-prof-empty">Carregando notificações…</p></div>
                     </article>
                 </div>
@@ -119,6 +130,20 @@
             workspace.querySelector('[data-prof-close]')?.addEventListener('click',fecharPendencias);
             workspace.querySelector('#ks_prof_pendencias_dialog')?.addEventListener('cancel',e=>{e.preventDefault();fecharPendencias();});
         }
+        let foco=document.getElementById('ks_prof_home_focus');
+        if(!foco){
+            foco=document.createElement('div');
+            foco.id='ks_prof_home_focus';
+            foco.className='ks-prof-home-focus';
+            home.insertBefore(foco,workspace);
+        }
+        let apoio=document.getElementById('ks_prof_home_support');
+        if(!apoio){apoio=document.createElement('aside');apoio.id='ks_prof_home_support';apoio.className='ks-prof-home-support';foco.prepend(apoio);}
+        const prioridades=workspace.querySelector('.ks-prof-priorities-card')||document.querySelector('#ks_prof_home_focus .ks-prof-priorities-card');
+        const notificacoes=workspace.querySelector('.ks-prof-notifications-card')||document.querySelector('#ks_prof_home_focus .ks-prof-notifications-card');
+        const relacionamento=workspace.querySelector('.ks-prof-month-card')||document.querySelector('#ks_prof_home_focus .ks-prof-month-card');
+        [prioridades,notificacoes,relacionamento].forEach(modulo=>{if(modulo&&modulo.parentElement!==apoio)apoio.appendChild(modulo);});
+        if(painel.parentElement!==foco)foco.appendChild(painel);
         return workspace;
     }
 
@@ -188,6 +213,20 @@
         }));
     }
 
+    function renderizarPrioridades(itens=[]){
+        const lista=document.getElementById('ks_prof_priorities_list');if(!lista)return;
+        const avaliacoes=itens.filter(item=>item.modo==='avaliacao').length;
+        const evolucoes=itens.filter(item=>item.modo==='evolucao').length;
+        const prioridades=[
+            {valor:avaliacoes,rotulo:'Avaliações clínicas pendentes'},
+            {valor:evolucoes,rotulo:'Evoluções a concluir'},
+            {valor:0,rotulo:'Documentos para revisar'},
+            {valor:0,rotulo:'Retornos confirmados hoje'}
+        ];
+        lista.innerHTML=prioridades.map(item=>`<button type="button" class="ks-prof-priority-item" data-ks-open-pending><strong>${item.valor}</strong><span>${item.rotulo}</span><i aria-hidden="true">›</i></button>`).join('');
+        lista.querySelectorAll('[data-ks-open-pending]').forEach(btn=>btn.addEventListener('click',abrirPendencias));
+    }
+
     async function carregarAtendimentosMes(token){
         const totalEl=document.getElementById('ks_prof_month_total'),sub=document.getElementById('ks_prof_month_sub'),det=document.getElementById('ks_prof_month_details');
         const profissional=profissionalAtualId();if(!profissional||!_supabase)return;
@@ -213,6 +252,16 @@
         const m=String(valor||'').match(/^\d{4}-(\d{2})-(\d{2})$/);return !!m&&Number(m[1])===hoje.mes&&Number(m[2])===hoje.dia;
     }
 
+    function dataAvisoEmBrasilia(valor){
+        if(!valor)return '';
+        const simples=String(valor).match(/^\d{4}-\d{2}-\d{2}$/);
+        if(simples)return simples[0];
+        const data=new Date(valor);
+        if(!Number.isFinite(data.getTime()))return '';
+        const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(data).map(x=>[x.type,x.value]));
+        return `${p.year}-${p.month}-${p.day}`;
+    }
+
     async function carregarNotificacoesHome(token){
         const lista=document.getElementById('ks_prof_notifications_list'),count=document.getElementById('ks_prof_notification_count');if(!lista)return;
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
@@ -222,11 +271,16 @@
         try{if(typeof carregarNotificacoesAgenda==='function')await carregarNotificacoesAgenda({avisar:false});}catch(_){}
         if(token!==refreshToken)return;
         let internas=[];
-        try{internas=Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache.slice(0,8):[];}catch(_){}
-        const itens=[...aniversarios,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))].slice(0,8);
-        if(count){const naoLidas=itens.filter(i=>i.tipo==='aniversario'||!i.lida).length;count.textContent=String(naoLidas);count.hidden=!naoLidas;}
-        if(!itens.length){lista.innerHTML='<div class="ks-prof-empty-state compact"><strong>Nenhuma notificação agora</strong><span>Aniversários e avisos da agenda aparecerão aqui.</span></div>';return;}
-        lista.innerHTML=itens.map((i,idx)=>`<button type="button" class="ks-prof-notification-item ${i.tipo==='agenda'&&!i.lida?'is-unread':''}" data-index="${idx}" ${i.tipo==='aniversario'?'disabled':''}><span class="ks-prof-notification-dot" aria-hidden="true"></span><span><strong>${escapar(i.titulo)}</strong><small>${escapar(i.mensagem)}</small></span></button>`).join('');
+        try{internas=Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache.filter(n=>dataAvisoEmBrasilia(n.agendamento_data||n.criada_em)===hoje.iso):[];}catch(_){}
+        const itens=[...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em})),...aniversarios].slice(0,12);
+        if(count){count.textContent=String(itens.length);count.hidden=!itens.length;count.setAttribute('aria-label',`${itens.length} notificações para hoje`);}
+        if(!itens.length){lista.innerHTML=`<div class="ks-prof-empty-state compact"><span class="ks-prof-empty-icon" aria-hidden="true">${icone('bell')}</span><strong>Nenhuma notificação para hoje</strong><span>Aniversários e lembretes com vencimento hoje aparecerão aqui.</span></div>`;return;}
+        lista.innerHTML=itens.map((i,idx)=>{
+            const conteudo=`<span class="ks-prof-notification-icon" aria-hidden="true">${icone(i.tipo==='aniversario'?'user':'calendar')}</span><span class="ks-prof-notification-copy"><strong>${escapar(i.titulo)}</strong><small>${escapar(i.mensagem)}</small></span>`;
+            return i.tipo==='aniversario'
+                ? `<div class="ks-prof-notification-item is-birthday">${conteudo}</div>`
+                : `<button type="button" class="ks-prof-notification-item ${!i.lida?'is-unread':''}" data-index="${idx}">${conteudo}</button>`;
+        }).join('');
         lista.querySelectorAll('[data-index]').forEach(btn=>{
             const item=itens[Number(btn.dataset.index)];if(!item||item.tipo!=='agenda'||!item.id)return;
             btn.disabled=false;btn.addEventListener('click',()=>{if(typeof abrirNotificacaoAgenda==='function')abrirNotificacaoAgenda(item.id);});
@@ -238,8 +292,8 @@
         det.hidden=!det.hidden;toggle.setAttribute('aria-expanded',String(!det.hidden));
     }
 
-    function abrirPendencias(){const d=document.getElementById('ks_prof_pendencias_dialog');if(d&&!d.open)d.showModal();}
-    function fecharPendencias(){const d=document.getElementById('ks_prof_pendencias_dialog');if(d?.open)d.close();}
+    function abrirPendencias(){const d=document.getElementById('ks_prof_pendencias_dialog');if(!d||d.open)return;focoAnteriorPendencias=document.activeElement instanceof HTMLElement?document.activeElement:null;d.showModal();requestAnimationFrame(()=>d.querySelector('[data-prof-close]')?.focus({preventScroll:true}));}
+    function fecharPendencias(){const d=document.getElementById('ks_prof_pendencias_dialog');if(!d?.open)return;d.close();const alvo=focoAnteriorPendencias;focoAnteriorPendencias=null;if(alvo?.isConnected)requestAnimationFrame(()=>alvo.focus({preventScroll:true}));}
 
     async function atualizar(){
         if(!ehProfissional())return garantirEstrutura();
@@ -248,9 +302,11 @@
         const [pendencias]=await Promise.all([carregarPendenciasProfissional(token),carregarAtendimentosMes(token),carregarNotificacoesHome(token)]);
         if(token!==refreshToken)return;
         renderizarPendencias(pendencias||[]);
+        renderizarPrioridades(pendencias||[]);
     }
 
     document.addEventListener('kinesys:meu-dia-atualizado',atualizar);
     document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_login')refreshToken++;});
     window.KineSysProfessionalHome={refresh:atualizar,limitesMesAtual};
 })();
+
