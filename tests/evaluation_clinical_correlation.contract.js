@@ -8,20 +8,20 @@ assert.match(src,/ultimoPlano\|\|window\.gerarPlanoClinicoHMAKineSys\?\.\(\)/,'o
 assert.match(src,/function construirCorrelacoes\(d\)/,'deve existir uma correlação clínica única');
 assert.match(src,/hipoteseAnamnese/,'a correlação deve preservar a hipótese originada na anamnese');
 assert.match(src,/resultados/,'a correlação deve incorporar resultados do exame');
-assert.match(src,/IMPRESSÃO CLÍNICO-FUNCIONAL/,'o laudo deve integrar anamnese e exame sem duplicar seções de conclusão');
+assert.match(src,/IMPRESSÃO FISIOTERAPÊUTICA/,'o laudo deve integrar anamnese e exame em uma única impressão profissional');
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:10/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:11/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/textoAutomatico&&!laudo\.revisado/,'texto profissional editado ou revisado deve continuar preservado');
 assert.match(src,/Quanto à queixa atual, registra-se:/,'rascunhos automáticos da versão anterior devem ser reconhecidos para migração');
 assert.match(src,/O exame físico ainda não contém resultados de testes registrados\./,'a migração deve ser restrita ao modelo automático antigo');
-assert.match(src,/ANAMNESE E CONTEXTO CLÍNICO\\n/,'o relatório formal deve separar a anamnese');
+assert.match(src,/HISTÓRIA CLÍNICA RELEVANTE\\n/,'o relatório formal deve apresentar a história clínica sem linguagem de formulário');
 assert.match(src,/EXAME FÍSICO-FUNCIONAL\\n/,'o relatório formal deve separar o exame físico-funcional');
 assert.match(src,/contagem=resultados\.reduce/,'a integração deve resumir resultados sem repetir a lista completa de testes');
 assert.match(src,/idsVinculados=new Set/,'testes prioritários devem manter vínculo com a hipótese que os originou');
 assert.match(src,/eixoId:a\.id\|\|''/,'resultados do exame devem preservar o eixo clínico de origem');
-assert.match(src,/SEGURANÇA CLÍNICA\\n/,'o relatório deve incorporar a revisão de segurança');
+assert.match(src,/if\(seguranca\)secoes\.push\(`SEGURANÇA CLÍNICA/,'segurança clínica só deve aparecer quando houver conteúdo relevante');
 assert.doesNotMatch(src,/`CONDUTA FISIOTERAPÊUTICA\\n\$\{conduta\}`/,'o relatório automático não deve inventar uma conduta não registrada');
 
 function campo({id='',value='',label='',type='text',checked=true,classes=[],tagName='INPUT',selectedText=''}){
@@ -65,7 +65,7 @@ assert.match(report,/Sono ruim/,'fatores psicossociais devem chegar ao relatóri
 assert.strictEqual((report.match(/Paciente Teste/g)||[]).length,1,'a identificação do paciente não deve ser repetida na anamnese');
 assert.match(report,/Teste A \(positivo\); Teste B \(negativo\); Teste C \(inconclusivo\)/,'todos os resultados válidos do exame devem chegar ao relatório');
 assert.match(report,/1 achado positivo, 1 achado negativo e 1 achado inconclusivo/,'a integração deve flexionar os achados em linguagem natural');
-assert.match(report,/elementos parcialmente compatíveis com Radiculopatia lombar/,'resultados mistos devem produzir interpretação clínica cautelosa');
+assert.match(report,/conjunto oferece suporte parcial à hipótese de radiculopatia lombar, porém os resultados divergentes limitam a conclusão/,'resultados mistos devem produzir interpretação clínica cautelosa e natural');
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
 
@@ -80,15 +80,15 @@ const somenteNegativos=renderizarCaso(
   [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'negativo',redFlags:[]}]
 );
 assert.match(somenteNegativos,/2 achados negativos/,'resultados negativos devem ser flexionados corretamente');
-assert.match(somenteNegativos,/não forneceram suporte objetivo para Radiculopatia lombar/,'resultado negativo não deve ser apresentado como confirmação');
-assert.match(somenteNegativos,/sem excluí-la isoladamente/,'resultado negativo isolado não deve excluir a hipótese');
+assert.match(somenteNegativos,/não sustentaram a hipótese de radiculopatia lombar/,'resultado negativo não deve ser apresentado como confirmação');
+assert.match(somenteNegativos,/isoladamente, não a exclui/,'resultado negativo isolado não deve excluir a hipótese');
 
 const somenteInconclusivo=renderizarCaso(
   [{regiao:'Coluna lombar',id:'radiculopatia',nome:'Radiculopatia lombar',achados:[{texto:'Slump',resultado:'inconclusivo'}]}],
   [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'inconclusivo',redFlags:[]}]
 );
 assert.match(somenteInconclusivo,/1 achado inconclusivo/,'resultado inconclusivo deve ser descrito no singular');
-assert.match(somenteInconclusivo,/não permitem sustentar ou afastar Radiculopatia lombar/,'resultado inconclusivo deve preservar a incerteza clínica');
+assert.match(somenteInconclusivo,/foi inconclusivo e não esclareceu a hipótese de radiculopatia lombar/,'resultado inconclusivo deve preservar a incerteza clínica');
 
 const multirregional=renderizarCaso(
   [
@@ -100,8 +100,19 @@ const multirregional=renderizarCaso(
     {regiao:'Coluna torácica',codigoHipotese:'radiculopatia_toracica',nomeHipotese:'Radiculopatia torácica',nivel:'negativo',redFlags:[]}
   ]
 );
-assert.match(multirregional,/Região avaliada: Joelho\. A anamnese orientou a investigação de Síndrome da dor patelofemoral/,'cada região deve receber interpretação própria');
-assert.match(multirregional,/Região avaliada: Coluna torácica\. A anamnese orientou a investigação de Radiculopatia torácica/,'o relatório deve preservar hipóteses multirregionais');
+assert.match(multirregional,/A investigação de síndrome da dor patelofemoral/,'cada região deve receber interpretação própria');
+assert.match(multirregional,/A investigação de radiculopatia torácica/,'o relatório deve preservar hipóteses multirregionais');
+assert.doesNotMatch(report,/permanece em aberto|registra-se|cabe ressaltar|faz-se necessário/i,'o relatório não deve usar clichês de texto automatizado');
+
+const predominioPositivo=renderizarCaso(
+  [{regiao:'Coluna lombar',id:'radiculopatia',nome:'Radiculopatia lombar',achados:[{texto:'SLR',resultado:'positivo'},{texto:'Slump',resultado:'positivo'},{texto:'Déficit sensitivo',resultado:'positivo'},{texto:'Reflexos',resultado:'negativo'}]}],
+  [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'positivo',redFlags:[]}]
+);
+assert.match(predominioPositivo,/3 achados positivos e 1 achado negativo/,'o relatório deve resumir corretamente três de quatro testes positivos');
+assert.match(predominioPositivo,/predomínio de respostas positivas, em conjunto com a história clínica, sustenta a hipótese de radiculopatia lombar/,'três de quatro testes positivos devem sustentar, sem confirmar, a hipótese');
+
+const semExame=renderizarCaso([],[]);
+assert.doesNotMatch(semExame,/EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'seções sem conteúdo não devem ser exibidas');
 
 console.log('Evaluation clinical correlation contract OK');
 
