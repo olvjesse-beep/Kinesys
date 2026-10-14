@@ -249,5 +249,22 @@ context.window.renderizarLaudoAvaliacaoKineSys();
 assert.match(elements['ks-laudo-texto'].value,/Profissional sem registro\nRegistro profissional \(conselho e número\): _+$/,'sem registro cadastrado, o motor deve oferecer espaço preenchível');
 assert.doesNotMatch(elements['ks-laudo-texto'].value,/CREFITO-3|654321-F/,'nunca reutilizar o registro de outro profissional');
 
-console.log('Evaluation clinical correlation contract OK');
+async function testarExameRestaurado(){
+  const consultarOriginal=context.document.querySelectorAll;
+  context.document.querySelectorAll=s=>s==='#grupo_regioes_mapeamento input:checked'?[{dataset:{regiao:'joelho'}}]:consultarOriginal(s);
+  let bancoPronto=false,concluirBanco;
+  const carga=new Promise(resolve=>{concluirBanco=resolve;});
+  context.window.KineSysClinicalRegionLoader={status:()=>({bankRegions:bancoPronto?['joelho']:[]}),ensure:()=>carga};
+  const textoAnterior=elements['ks-laudo-texto'].value;
+  context.window.renderizarLaudoAvaliacaoKineSys();
+  assert.match(elements['ks-laudo-status'].textContent,/Carregando os resultados do exame/,'entrada direta na etapa 3 deve aguardar o banco da região restaurada');
+  assert.strictEqual(elements['ks-laudo-texto'].value,textoAnterior,'texto existente não deve ser apagado durante o carregamento');
+  await Promise.resolve();
+  bancoPronto=true;concluirBanco();
+  await carga;
+  await new Promise(setImmediate);
+  assert.match(elements['ks-laudo-texto'].value,/dor ao agachamento/i,'o relatório deve incorporar o exame quando o banco fica pronto');
+  assert.doesNotMatch(elements['ks-laudo-status'].textContent,/Carregando|falta registrar/,'os testes restaurados devem gerar o documento sem voltar à etapa 2');
+}
+testarExameRestaurado().then(()=>console.log('Evaluation clinical correlation contract OK')).catch(error=>{console.error(error);process.exitCode=1;});
 

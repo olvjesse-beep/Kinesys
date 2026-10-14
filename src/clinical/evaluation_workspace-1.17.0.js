@@ -1,7 +1,7 @@
 /* KineSys 1.17 — espaço de avaliação, sem inferência diagnóstica adicional. */
 (function(){
     'use strict';
-    let painel=null,retorno=null,regiaoAtiva='',laudo=null;
+    let painel=null,retorno=null,regiaoAtiva='',laudo=null,carregamentoLaudo=null;
     const clone=value=>JSON.parse(JSON.stringify(value));
     const normalizar=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
@@ -537,6 +537,23 @@
     window.coletarLaudoAvaliacaoKineSys=function(){garantirFechamentoLaudo({profissional:profissionalDoLaudo()});return laudo?clone(laudo):null;};
     window.renderizarLaudoAvaliacaoKineSys=function(){
         const editor=document.getElementById('ks-laudo-texto');if(!editor)return;
+        const loader=window.KineSysClinicalRegionLoader;
+        if(loader?.ensure&&loader?.status){
+            const prontas=loader.status().bankRegions||[];
+            const pendentes=Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input:checked')).map(i=>i.dataset.regiao).filter(id=>id&&!prontas.includes(id));
+            if(pendentes.length){
+                document.getElementById('ks-laudo-status').textContent='Carregando os resultados do exame para compor o relatório…';
+                if(!carregamentoLaudo){
+                    carregamentoLaudo=Promise.resolve().then(()=>loader.ensure(pendentes));
+                    carregamentoLaudo.then(()=>{
+                        carregamentoLaudo=null;
+                        if(pendentes.every(id=>(loader.status().bankRegions||[]).includes(id)))window.renderizarLaudoAvaliacaoKineSys();
+                        else document.getElementById('ks-laudo-status').textContent='Não foi possível carregar o exame. Abra novamente a etapa Relatório para tentar de novo.';
+                    },()=>{carregamentoLaudo=null;document.getElementById('ks-laudo-status').textContent='Não foi possível carregar o exame. Abra novamente a etapa Relatório para tentar de novo.';});
+                }
+                return;
+            }
+        }
         const d=dadosAtuais();
         // Enquanto ninguém editou o texto, ele acompanha o exame; texto editado é preservado.
         const textoLaudo=laudo?.texto||'';
