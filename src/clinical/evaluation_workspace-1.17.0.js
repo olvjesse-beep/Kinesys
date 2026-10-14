@@ -147,11 +147,11 @@
             'Com base na relação entre queixa e achados objetivos'
         ]),
         contexto:Object.freeze([
-            'Também compõem o contexto clínico',
+            'No contexto clínico',
             'Entre os elementos que podem modular o quadro',
             'Como informações complementares relevantes',
-            'Na interpretação do caso, devem ainda ser considerados',
-            'O contexto da avaliação inclui ainda'
+            'Na interpretação do caso',
+            'Na avaliação de fatores associados'
         ]),
         resultado:Object.freeze({
             positivo:Object.freeze(['foi positivo','mostrou resposta positiva','reproduziu o achado esperado','apresentou resposta compatível']),
@@ -175,6 +175,11 @@
     function polirRelatoClinico(value){
         let texto=limparTextoClinico(value)
             .replace(/\ba cerca de\s+(?=\d)/gi,'há cerca de ')
+            .replace(/\bsepsemia\b/gi,'septicemia')
+            .replace(/\bperca de força\b/gi,'perda de força')
+            .replace(/\bhipsilateral\b/gi,'ipsilateral')
+            .replace(/\bdor a palpação\b/gi,'dor à palpação')
+            .replace(/\bdéficiencia\b/gi,'deficiência')
             .replace(/\bpaciente relata também\b/gi,'Também refere')
             .replace(/\bpaciente relata\b/gi,'Refere')
             .replace(/\ba mesma relata\b/gi,'Relata')
@@ -248,7 +253,7 @@
         if(f.antecedentes.medicamentos)modificadores.push(fraseClinica(`Medicamentos em uso: ${f.antecedentes.medicamentos}`));
         if(f.restricoes.ativo){const restricoes=Object.entries(f.restricoes).filter(([chave,valor])=>chave!=='ativo'&&valor).map(([chave,valor])=>`${chave.replace(/_/g,' ')}: ${valor}`);if(restricoes.length)modificadores.push(fraseClinica(`Mantêm-se as seguintes restrições pós-operatórias: ${restricoes.join('; ')}`));}
         if(f.imagem.descricao)modificadores.push(fraseClinica(`${f.imagem.fonte==='laudo_conferido'?'O documento de imagem apresentado descreve':'Segundo o relato, o exame de imagem descreve'} ${f.imagem.descricao}`));
-        if(f.contexto.psicossociais.length||f.contexto.observacao)modificadores.push(fraseClinica(`${escolhaSemantica(f.relato.hma,'contexto')} ${[f.contexto.psicossociais.length?unirNatural(f.contexto.psicossociais):'',f.contexto.observacao].filter(Boolean).join('; ').toLowerCase()}`));
+        if(f.contexto.psicossociais.length||f.contexto.observacao)modificadores.push(fraseClinica(`${escolhaSemantica(f.relato.hma,'contexto')}, destacam-se ${[f.contexto.psicossociais.length?unirNatural(f.contexto.psicossociais):'',f.contexto.observacao].filter(Boolean).join('; ').toLowerCase()}`));
         if(f.contexto.fonte&&!/relato do paciente/i.test(f.contexto.fonte))modificadores.push(fraseClinica(`A informação clínica foi complementada por ${BANCO_SEMANTICO_LAUDO.fonte[f.contexto.fonte]||f.contexto.fonte.toLowerCase()}`));
         if(modificadores.length)paragrafos.push(modificadores.join(' '));
         return valoresUnicos(paragrafos).join('\n\n');

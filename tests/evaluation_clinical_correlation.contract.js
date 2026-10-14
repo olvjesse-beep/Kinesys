@@ -169,7 +169,7 @@ assert.match(contraditorio,/resultados divergentes/i,'resultados contraditórios
 assert.doesNotMatch(contraditorio,/preenchem o critério|atende ao critério|atingem o critério/,'um exame contraditório não pode sustentar a hipótese');
 
 const hmaField=fields.find(f=>f.id==='paciente_hma'),hmaOriginal=hmaField.value;
-hmaField.value='Paciente relata dor na região medial da escápula esquerda. A mesma relata dor há cerca de 1 ano. Paciente relata também quadro de pneumonia severa há cerca de 1 ano, com evolução para sepse. Hoje apresenta dor à palpação e queimação na borda medial. Associado a isto apresenta perda de força no ombro ipsilateral, deficiência para rotação externa e abdução do ombro.';
+hmaField.value='Paciente relata dor na região medial da escápula esquerda. A mesma relata dor há cerca de 1 ano. Paciente relata também quadro de pneumonia severa há cerca de 1 ano, com evolução para sepsemia. Hoje apresenta dor a palpação e queimação na borda medial. Associado a isto apresenta perca de força no ombro hipsilateral, déficiencia para rotação externa e abdução do ombro.';
 context.window.KineSysMotorClinico3.ultimoPlano={versao:'caso-escapular',hipoteses:[{id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',regiaoId:'ombro',limiar:2}],exame:{testesPrioritarios:[]}};
 const narrativaEscapular=renderizarCaso(
   [{regiaoId:'ombro',regiao:'Ombro / complexo glenoumeral',id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',achados:[{texto:'Fraqueza de rotação externa ou abdução',resultado:'positivo'},{texto:'Atrofia supra ou infraespinal',resultado:'positivo'}]}],
@@ -177,6 +177,8 @@ const narrativaEscapular=renderizarCaso(
 );
 assert.doesNotMatch(narrativaEscapular,/Paciente relata|A mesma relata|Hoje apresenta|Associado a isto apresenta/i,'o motor deve remover repetições e construções artificiais do relato livre');
 assert.match(narrativaEscapular,/Também refere|Atualmente apresenta|O quadro associa-se/i,'o motor deve manter todos os fatos em linguagem clínica natural');
+assert.match(narrativaEscapular,/septicemia|dor à palpação|perda de força|ipsilateral|deficiência/i,'o motor deve normalizar erros frequentes sem alterar o sentido clínico');
+assert.doesNotMatch(narrativaEscapular,/sepsemia|dor a palpação|perca de força|hipsilateral|déficiencia/i,'erros frequentes da digitação clínica não devem vazar para o documento final');
 assert.doesNotMatch(narrativaEscapular,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA/,'o caso completo deve permanecer como narrativa contínua');
 hmaField.value='';
 const semHistoria=renderizarCaso(
