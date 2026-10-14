@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.11-relatorio-documental-r1';
-    const ASSET_REVISION='20261014-relatorio-documental-r1';
+    const VERSION='1.25.12-motor-semantico-r1';
+    const ASSET_REVISION='20261014-motor-semantico-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -21,7 +21,7 @@
             styles:Object.freeze([
                 'styles/design_clinical.css?v=20261012-visual-harmony-r1',
                 'styles/design_clinical_direction-1.17.0.css',
-                'styles/design_evaluation_workspace-1.18.0.css?v=20261014-relatorio-documental-r1',
+                'styles/design_evaluation_workspace-1.18.0.css?v=20261014-motor-semantico-r1',
                 'styles/design_evaluation_context-1.18.3.css',
                 'styles/avaliacao_experiencia-1.22.0.css?v=20261013-evaluation-option3-r2',
                 'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
@@ -35,7 +35,7 @@
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261014-relatorio-semantico-r3',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261014-motor-semantico-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',

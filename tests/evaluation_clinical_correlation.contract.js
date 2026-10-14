@@ -10,23 +10,23 @@ assert.match(src,/ultimoPlano\|\|window\.gerarPlanoClinicoHMAKineSys\?\.\(\)/,'o
 assert.match(src,/function construirCorrelacoes\(d\)/,'deve existir uma correlação clínica única');
 assert.match(src,/hipoteseAnamnese/,'a correlação deve preservar a hipótese originada na anamnese');
 assert.match(src,/resultados/,'a correlação deve incorporar resultados do exame');
-assert.match(src,/IMPRESSÃO FISIOTERAPÊUTICA/,'o laudo deve integrar anamnese e exame em uma única impressão profissional');
+assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semântico próprio e reutilizável');
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:13/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:14/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
 assert.match(src,/textoAutomatico&&!laudo\.revisado/,'texto profissional editado ou revisado deve continuar preservado');
 assert.match(src,/Quanto à queixa atual, registra-se:/,'rascunhos automáticos da versão anterior devem ser reconhecidos para migração');
 assert.match(src,/O exame físico ainda não contém resultados de testes registrados\./,'a migração deve ser restrita ao modelo automático antigo');
-assert.match(src,/HISTÓRIA CLÍNICA RELEVANTE\\n/,'o relatório formal deve apresentar a história clínica sem linguagem de formulário');
-assert.match(src,/EXAME FÍSICO-FUNCIONAL\\n/,'o relatório formal deve separar o exame físico-funcional');
+assert.match(src,/function polirRelatoClinico\(value\)/,'o relato livre deve passar por tratamento semântico antes da composição');
+assert.match(src,/anamnese:Object\.freeze\(\[/,'o banco deve variar aberturas da narrativa clínica');
 assert.match(src,/contagem=resultados\.reduce/,'a integração deve resumir resultados sem repetir a lista completa de testes');
 assert.match(src,/idsVinculados=new Set/,'testes prioritários devem manter vínculo com a hipótese que os originou');
 assert.match(src,/eixoId:a\.id\|\|''/,'resultados do exame devem preservar o eixo clínico de origem');
-assert.match(src,/if\(seguranca\)conteudo\.push\(`SEGURANÇA CLÍNICA/,'segurança clínica só deve aparecer quando houver conteúdo relevante');
+assert.match(src,/Quanto à segurança clínica/,'segurança clínica deve ser integrada em prosa quando houver conteúdo relevante');
 assert.doesNotMatch(src,/`CONDUTA FISIOTERAPÊUTICA\\n\$\{conduta\}`/,'o relatório automático não deve inventar uma conduta não registrada');
 assert.match(html,/class="ks-laudo-document"/,'o relatório deve ser apresentado como documento, não como campo solto');
 assert.match(html,/id="ks-laudo-texto"/,'o editor existente deve permanecer compatível com salvamento e cópia');
@@ -70,16 +70,17 @@ const report=elements['ks-laudo-texto'].value;
 assert.match(report,/Em pé/i,'fatores de piora sem id devem chegar ao relatório');
 assert.match(report,/Ortostatismo prolongado/i,'exposições ocupacionais sem id devem chegar ao relatório');
 assert.match(report,/DM/,'comorbidades devem chegar ao relatório');
-assert.match(report,/Sono ruim/,'fatores psicossociais devem chegar ao relatório');
+assert.match(report,/sono ruim/i,'fatores psicossociais devem chegar ao relatório');
 assert.strictEqual((report.match(/Paciente Teste/g)||[]).length,1,'a identificação do paciente não deve ser repetida na anamnese');
-assert.match(report,/Teste A apresentou resultado positivo/,'achados positivos devem ser narrados naturalmente');
-assert.match(report,/Teste B apresentou resultado negativo/,'achados negativos devem ser narrados naturalmente');
-assert.match(report,/Teste C permaneceu inconclusivo/,'achados inconclusivos devem preservar a incerteza');
+assert.match(report,/Teste A (?:foi positivo|mostrou resposta positiva|reproduziu o achado esperado|apresentou resposta compatível)/,'achados positivos devem ser narrados naturalmente');
+assert.match(report,/Teste B (?:foi negativo|não reproduziu o achado esperado|não apresentou resposta positiva|não ofereceu suporte ao achado pesquisado)/,'achados negativos devem ser narrados naturalmente');
+assert.match(report,/Teste C (?:permaneceu inconclusivo|não permitiu interpretação conclusiva|apresentou resposta indeterminada|exigiu correlação adicional)/,'achados inconclusivos devem preservar a incerteza');
 assert.doesNotMatch(report,/\((?:positivo|negativo|inconclusivo)\)/,'o exame não deve parecer uma exportação direta de campos');
 assert.match(report,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/,'resultados abaixo do limiar devem produzir interpretação clínica cautelosa');
 assert.strictEqual((report.match(/em pé/gi)||[]).length,1,'fator de piora já descrito na HMA não deve ser repetido');
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
+assert.doesNotMatch(report,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'subtítulos mecânicos não devem fragmentar a narrativa final');
 
 function renderizarCaso(achados,resumo){
   achadosAtuais=achados;resumoAtual=resumo;
@@ -91,7 +92,7 @@ const somenteNegativos=renderizarCaso(
   [{regiao:'Coluna lombar',id:'radiculopatia',nome:'Radiculopatia lombar',achados:[{texto:'SLR',resultado:'negativo'},{texto:'Slump',resultado:'negativo'}]}],
   [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'negativo',redFlags:[]}]
 );
-assert.match(somenteNegativos,/(?:não ofereceu suporte à hipótese|não sustentaram a hipótese) de radiculopatia lombar/,'resultado negativo não deve ser apresentado como confirmação');
+assert.match(somenteNegativos,/(?:não ofereceu suporte|reduziram o suporte) à hipótese de radiculopatia lombar/,'resultado negativo não deve ser apresentado como confirmação');
 assert.match(somenteNegativos,/(?:isoladamente|por si só), não (?:permitem excluí-la|permite afastá-la)/,'resultado negativo isolado não deve excluir a hipótese');
 
 const somenteInconclusivo=renderizarCaso(
@@ -118,7 +119,7 @@ const predominioPositivo=renderizarCaso(
   [{regiao:'Coluna lombar',id:'radiculopatia',nome:'Radiculopatia lombar',achados:[{texto:'SLR',resultado:'positivo'},{texto:'Slump',resultado:'positivo'},{texto:'Déficit sensitivo',resultado:'positivo'},{texto:'Reflexos',resultado:'negativo'}]}],
   [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'positivo',redFlags:[]}]
 );
-assert.match(predominioPositivo,/(?:preenchem|atende|atingem) (?:o|ao) critério (?:clínico )?registrado para radiculopatia lombar/,'três de quatro testes positivos devem preencher o limiar configurado');
+assert.match(predominioPositivo,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério (?:clínico )?(?:definido|estabelecido|previsto)/,'três de quatro testes positivos devem preencher o limiar configurado');
 
 const semExame=renderizarCaso([],[]);
 assert.doesNotMatch(semExame,/EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'seções sem conteúdo não devem ser exibidas');
@@ -127,7 +128,7 @@ assert.strictEqual(semExame,'','sem exame, o sistema não deve fabricar um relat
 function testarCondicao({id,nome,regiaoId,regiao,limiar,testes,esperaPreencher=false}){
   context.window.KineSysMotorClinico3.ultimoPlano={versao:'matriz-10',hipoteses:[{id,nome,regiaoId,aConfirmar:[],limiar}],exame:{testesPrioritarios:testes.map(t=>({texto:t.texto,hipoteseId:id}))}};
   const texto=renderizarCaso([{regiaoId,regiao,id,nome,achados:testes}],[{regiao,codigoHipotese:id,nomeHipotese:nome,nivel:'avaliado',redFlags:[]}]);
-  if(esperaPreencher)assert.match(texto,/(?:preenchem|atende|atingem) (?:o|ao) critério/);else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/);
+  if(esperaPreencher)assert.match(texto,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/);else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: necessário| definido| estabelecido)?/);
   return texto;
 }
 const matrizPoucoTestada=[
@@ -158,7 +159,7 @@ const regraQualquer=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
   [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(regraQualquer,/(?:preenchem|atende|atingem) (?:o|ao) critério/,'regra qualquer deve aceitar um achado positivo quando a base assim definir');
+assert.match(regraQualquer,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/,'regra qualquer deve aceitar um achado positivo quando a base assim definir');
 
 const contraditorio=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste duplicado',resultado:'positivo'},{texto:'Teste duplicado',resultado:'negativo'}]}],
@@ -168,6 +169,15 @@ assert.match(contraditorio,/resultados divergentes/i,'resultados contraditórios
 assert.doesNotMatch(contraditorio,/preenchem o critério|atende ao critério|atingem o critério/,'um exame contraditório não pode sustentar a hipótese');
 
 const hmaField=fields.find(f=>f.id==='paciente_hma'),hmaOriginal=hmaField.value;
+hmaField.value='Paciente relata dor na região medial da escápula esquerda. A mesma relata dor há cerca de 1 ano. Paciente relata também quadro de pneumonia severa há cerca de 1 ano, com evolução para sepse. Hoje apresenta dor à palpação e queimação na borda medial. Associado a isto apresenta perda de força no ombro ipsilateral, deficiência para rotação externa e abdução do ombro.';
+context.window.KineSysMotorClinico3.ultimoPlano={versao:'caso-escapular',hipoteses:[{id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',regiaoId:'ombro',limiar:2}],exame:{testesPrioritarios:[]}};
+const narrativaEscapular=renderizarCaso(
+  [{regiaoId:'ombro',regiao:'Ombro / complexo glenoumeral',id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',achados:[{texto:'Fraqueza de rotação externa ou abdução',resultado:'positivo'},{texto:'Atrofia supra ou infraespinal',resultado:'positivo'}]}],
+  [{regiao:'Ombro / complexo glenoumeral',codigoHipotese:'neuropatia_supraescapular',nomeHipotese:'Neuropatia do nervo supraescapular',nivel:'positivo',redFlags:[]}]
+);
+assert.doesNotMatch(narrativaEscapular,/Paciente relata|A mesma relata|Hoje apresenta|Associado a isto apresenta/i,'o motor deve remover repetições e construções artificiais do relato livre');
+assert.match(narrativaEscapular,/Também refere|Atualmente apresenta|O quadro associa-se/i,'o motor deve manter todos os fatos em linguagem clínica natural');
+assert.doesNotMatch(narrativaEscapular,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA/,'o caso completo deve permanecer como narrativa contínua');
 hmaField.value='';
 const semHistoria=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
