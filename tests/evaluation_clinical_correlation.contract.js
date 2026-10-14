@@ -2,6 +2,8 @@ const assert=require('assert');
 const fs=require('fs');
 const vm=require('vm');
 const src=fs.readFileSync('src/clinical/evaluation_workspace-1.17.0.js','utf8').replace(/\r\n/g,'\n');
+const html=fs.readFileSync('screens/tela_avaliacao.html','utf8');
+const css=fs.readFileSync('styles/design_evaluation_workspace-1.18.0.css','utf8');
 
 assert.match(src,/KineSysMotorClinico3\?\.ultimoPlano/,'o laudo deve consumir o plano derivado da anamnese');
 assert.match(src,/ultimoPlano\|\|window\.gerarPlanoClinicoHMAKineSys\?\.\(\)/,'o laudo deve reconstruir o plano quando um rascunho restaurado ainda não populou ultimoPlano');
@@ -26,6 +28,10 @@ assert.match(src,/idsVinculados=new Set/,'testes prioritários devem manter vín
 assert.match(src,/eixoId:a\.id\|\|''/,'resultados do exame devem preservar o eixo clínico de origem');
 assert.match(src,/if\(seguranca\)conteudo\.push\(`SEGURANÇA CLÍNICA/,'segurança clínica só deve aparecer quando houver conteúdo relevante');
 assert.doesNotMatch(src,/`CONDUTA FISIOTERAPÊUTICA\\n\$\{conduta\}`/,'o relatório automático não deve inventar uma conduta não registrada');
+assert.match(html,/class="ks-laudo-document"/,'o relatório deve ser apresentado como documento, não como campo solto');
+assert.match(html,/id="ks-laudo-texto"/,'o editor existente deve permanecer compatível com salvamento e cópia');
+assert.match(css,/#tela_avaliacao #ks-laudo-texto\{[^}]*font-family:Georgia,"Times New Roman",serif[^}]*font-size:17px[^}]*line-height:1\.78/,'o documento deve usar tipografia e entrelinha próprias para leitura prolongada');
+assert.match(css,/\.ks-laudo-document\{[^}]*width:min\(100%,940px\)|\.ks-laudo-heading,#tela_avaliacao #ks-laudo-status,#tela_avaliacao \.ks-laudo-document,#tela_avaliacao \.ks-laudo-footer\{[^}]*width:min\(100%,940px\)/,'a linha de leitura do relatório deve ter largura documental');
 
 function campo({id='',value='',label='',type='text',checked=true,classes=[],tagName='INPUT',selectedText=''}){
   const span={textContent:label};
