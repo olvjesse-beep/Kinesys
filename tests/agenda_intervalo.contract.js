@@ -29,6 +29,12 @@ assert.match(estilo, /--agenda-intervalo-fundo:/,
     'O intervalo deve preservar a sinalização amarela do KineSys.');
 assert.match(agenda, /agenda-slot-acao[^\n]*\+ Agendar/,
     'Horários livres de hora cheia devem expor a ação + Agendar sem trocar o fluxo existente.');
+assert.match(estilo, /\.agenda-slot-acao\{[^}]*opacity:0;[^}]*visibility:hidden;/,
+    'A ação de agendar deve permanecer oculta enquanto o horário está em repouso.');
+assert.match(estilo, /\.agenda-celula\.atendimento:hover \.agenda-slot-acao,[^}]*:focus-visible \.agenda-slot-acao\{[^}]*opacity:1;[^}]*visibility:visible;/,
+    'A ação de agendar deve aparecer no hover e continuar acessível pelo teclado.');
+assert.match(estilo, /@media\(hover:none\)\{[^}]*\.agenda-slot-acao\{[^}]*visibility:visible;/,
+    'Dispositivos sem hover devem preservar uma indicação tocável do horário livre.');
 assert.match(agenda, /function tipoVisualAgendamentoAgenda\s*\(/,
     'A Agenda deve classificar visualmente procedimentos e faltas sem alterar seus dados clínicos.');
 assert.match(agenda, /tipo-osteopatia|osteopatia/,

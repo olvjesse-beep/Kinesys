@@ -430,7 +430,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   top:4px;
   left:50%;
   z-index:1;
-  transform:translateX(-50%);
+  transform:translate(-50%,-2px);
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -445,11 +445,16 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   line-height:1;
   font-weight:800;
   white-space:nowrap;
-  opacity:.66;
+  opacity:0;
+  visibility:hidden;
   pointer-events:none;
+  transition:opacity .14s ease,transform .14s ease,visibility 0s linear .14s;
 }
 #tela_agenda .agenda-celula.atendimento:hover .agenda-slot-acao,
-#tela_agenda .agenda-celula.atendimento:focus-visible .agenda-slot-acao{opacity:1;background:var(--kds-surface)}
+#tela_agenda .agenda-celula.atendimento:focus-visible .agenda-slot-acao{opacity:1;visibility:visible;transform:translateX(-50%);background:var(--kds-surface);transition-delay:0s}
+@media(hover:none){
+  #tela_agenda .agenda-slot-acao{opacity:.66;visibility:visible;transform:translateX(-50%);transition:none}
+}
 #tela_agenda .agenda-celula.bloqueado{background:#596164;color:#fff;cursor:default}
 #tela_agenda .agenda-celula.bloqueado .agenda-bloqueio-texto{padding:5px 6px;color:#fff;font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui);font-weight:800}
 #tela_agenda .agenda-celula.feriado{background:#6A6261;color:#fff}
