@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:15/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:16/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -52,6 +52,7 @@ const elements={
 let achadosAtuais=[{regiaoId:'lombar',regiao:'Coluna lombar',id:'radiculopatia',grupo:'cluster',nome:'Radiculopatia lombar',status:'positivo',completo:true,achados:[{texto:'Teste A',resultado:'positivo'},{texto:'Teste B',resultado:'negativo'},{texto:'Teste C',resultado:'inconclusivo'}]}];
 let resumoAtual=[{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'positivo',redFlags:[],direcaoProfissional:'hipotese'}];
 const context={
+  usuarioLogado:{id:'prof-teste',nome:'Profissional Teste',conselho:'CREFITO',regional:'4',numero_registro:'123456-F',registro:'CREFITO-4 123456-F'},
   window:{
     coletarAchadosLaudoKineSys:()=>achadosAtuais,
     validarSegurancaParaFinalizacao:()=>({ok:true}),nomeHipoteseLimpoKineSys:n=>n,
@@ -70,7 +71,8 @@ const report=elements['ks-laudo-texto'].value;
 assert.match(report,/Em pé/i,'fatores de piora sem id devem chegar ao relatório');
 assert.match(report,/Ortostatismo prolongado/i,'exposições ocupacionais sem id devem chegar ao relatório');
 assert.match(report,/DM/,'comorbidades devem chegar ao relatório');
-assert.match(report,/sono ruim/i,'fatores psicossociais devem chegar ao relatório');
+assert.match(report,/refere dor lombar/i,'relato iniciado com sintoma deve receber um verbo de apresentação');
+assert.match(report,/alterações do sono/i,'fatores psicossociais devem chegar ao relatório em linguagem documental');
 assert.strictEqual((report.match(/Paciente Teste/g)||[]).length,1,'a identificação do paciente não deve ser repetida na anamnese');
 assert.match(report,/Teste A (?:foi positivo|mostrou resposta positiva|reproduziu o achado esperado|apresentou resposta compatível)/,'achados positivos devem ser narrados naturalmente');
 assert.match(report,/Teste B (?:foi negativo|não reproduziu o achado esperado|não apresentou resposta positiva|não ofereceu suporte ao achado pesquisado)/,'achados negativos devem ser narrados naturalmente');
@@ -81,6 +83,7 @@ assert.strictEqual((report.match(/em pé/gi)||[]).length,1,'fator de piora já d
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
 assert.doesNotMatch(report,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'subtítulos mecânicos não devem fragmentar a narrativa final');
+assert.match(report,/Data de emissão: [\s\S]*_{10,}\nProfissional Teste\nCREFITO-4 123456-F$/,'todo relatório deve terminar com data, espaço de assinatura, nome e registro da conta logada');
 
 function renderizarCaso(achados,resumo){
   achadosAtuais=achados;resumoAtual=resumo;
@@ -182,7 +185,7 @@ assert.match(narrativaEscapular,/septicemia|dor à palpação|perda de força|ip
 assert.doesNotMatch(narrativaEscapular,/sepsemia|dor a palpação|perca de força|hipsilateral|déficiencia/i,'erros frequentes da digitação clínica não devem vazar para o documento final');
 assert.doesNotMatch(narrativaEscapular,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA/,'o caso completo deve permanecer como narrativa contínua');
 assert.doesNotMatch(narrativaEscapular,/reproduzido de forma consistente|história clínica e os achados objetivos convergem/,'o texto não pode afirmar reprodução da queixa sem um registro específico');
-assert.match(narrativaEscapular,/O exame evidenciou fraqueza.*atrofia/i,'sinais objetivos devem ser descritos como achados, sem serem chamados de testes positivos');
+assert.match(narrativaEscapular,/Resultado positivo para “Fraqueza de rotação externa ou abdução”/,'um critério composto deve manter suas alternativas, sem atribuir todos os achados ao paciente');
 assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.relatoAusente),[],'nenhuma frase clínica deve se perder durante a composição');
 hmaField.value='Paciente relata dor no ombro esquerdo. Paciente relata dor no ombro esquerdo. Nega parestesia no braço direito. Refere dor de 3.5/10 após corrida e alívio em repouso.';
 const relatoPreciso=renderizarCaso(
@@ -198,10 +201,10 @@ context.window.renderizarLaudoAvaliacaoKineSys();
 assert.strictEqual(elements['ks-laudo-texto'].value,relatoPreciso,'a mesma avaliação deve gerar um texto estável em cada carregamento');
 context.window.preencherLaudoAvaliacaoKineSys({texto:'Texto profissional revisado.',textoAutomatico:true,revisado:true,versaoTexto:14,fonte:'anterior'});
 context.window.renderizarLaudoAvaliacaoKineSys();
-assert.strictEqual(elements['ks-laudo-texto'].value,'Texto profissional revisado.','migração do motor não pode sobrescrever texto revisado');
+assert.ok(elements['ks-laudo-texto'].value.startsWith('Texto profissional revisado.\n\nData de emissão:'),'migração deve preservar o texto revisado e acrescentar somente o fechamento');
 context.window.preencherLaudoAvaliacaoKineSys({texto:'Texto editado manualmente.',textoAutomatico:false,revisado:false,versaoTexto:14,fonte:'anterior'});
 context.window.renderizarLaudoAvaliacaoKineSys();
-assert.strictEqual(elements['ks-laudo-texto'].value,'Texto editado manualmente.','migração do motor não pode sobrescrever texto editado');
+assert.ok(elements['ks-laudo-texto'].value.startsWith('Texto editado manualmente.\n\nData de emissão:'),'migração deve preservar o texto editado e acrescentar somente o fechamento');
 hmaField.value='';
 const semHistoria=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
@@ -210,6 +213,41 @@ const semHistoria=renderizarCaso(
 assert.strictEqual(semHistoria,'','sem HMA, o sistema não deve preencher o documento com frases de ausência de dados');
 assert.match(elements['ks-laudo-status'].textContent,/História da Moléstia Atual/,'a pendência deve aparecer fora do documento');
 hmaField.value=hmaOriginal;
+
+// Comunicação interprofissional: valores e plano já registrados, sem gerar novos questionários.
+context.clinicaEstruturadaPreservada={
+  medidasObjetivas:[{nome:'Flexão de joelho',valor:95,unidade:'°',observacao:'lado esquerdo'},{nome:'Extensão de joelho',valor:0,unidade:'°'}],
+  psfs:{itens:[{atividade:'Subir escadas',valor:3},{atividade:'Caminhar',valor:4.5}],media:3.75},
+  outcomes:[{nome:'LEFS',valor:42,faixa:'0–80',observacao:'versão apresentada pelo paciente'}],
+  objetivosPlano:{plano:'exercícios graduados conforme tolerância',frequencia:'duas sessões por semana',objetivos:[{objetivo:'retornar à caminhada',baseline:'10 minutos',meta:'30 minutos',prazo:'quatro semanas',status:'em_progresso'}],criterios:'reavaliar dor e capacidade funcional',criteriosAlta:'atingir a meta funcional estabelecida',previsaoAlta:'2026-11-14'}
+};
+context.coletarRestricoesPosOperatorias=()=>({ativo:true,procedimento:'reconstrução ligamentar',dataCirurgia:'2026-09-01',statusCarga:'parcial',ortese:'órtese articulada',restricaoADM:'flexão limitada a 90°',proibicoes:'evitar pivô',orientacoesCirurgiao:'progredir apoio após revisão',retornoMedico:'2026-10-20',protocoloDisponivel:'nao_informado',observacoes:'Mantém acompanhamento da equipe cirúrgica.'});
+elements.avaliacao_realizado_em={value:'2026-10-14T08:20'};
+const comunicacao=renderizarCaso(
+  [{regiao:'Joelho',id:'patelofemoral',nome:'Síndrome da dor patelofemoral',achados:[{texto:'Dor ao agachamento',resultado:'positivo'}]}],
+  [{regiao:'Joelho',codigoHipotese:'patelofemoral',nomeHipotese:'Síndrome da dor patelofemoral',nivel:'avaliado',redFlags:[]}]
+);
+assert.match(comunicacao,/avaliação fisioterapêutica realizada em 14\/10\/2026/,'data de atendimento fora da anamnese deve aparecer no documento');
+assert.match(comunicacao,/diabetes mellitus \(DM\)/,'siglas de antecedentes devem ser explicadas para o destinatário');
+assert.match(comunicacao,/Flexão de joelho: 95 ° \(lado esquerdo\)/i,'medidas devem conservar valor, unidade e lado');
+assert.match(comunicacao,/Extensão de joelho: 0 °/i,'zero é resultado válido e não pode desaparecer');
+assert.match(comunicacao,/Subir escadas: 3\/10; Caminhar: 4,5\/10/,'capacidades registradas devem ser agrupadas com suas pontuações');
+assert.match(comunicacao,/LEFS: 42, na faixa registrada de 0–80/,'escores devem ser preservados sem classificar gravidade sem regra validada');
+assert.match(comunicacao,/exercícios graduados conforme tolerância|duas sessões por semana|retornar à caminhada/,'plano informado pelo profissional deve compor o relatório');
+assert.match(comunicacao,/apoio parcial de carga/,'código de restrição deve virar expressão clínica');
+assert.match(comunicacao,/retorno médico previsto para 20\/10\/2026/,'retorno médico deve permanecer explícito');
+assert.doesNotMatch(comunicacao,/statusCarga|restricaoADM|em_progresso|nao_informado/,'códigos internos não devem vazar para o documento');
+assert.strictEqual((comunicacao.match(/Data de emissão:/g)||[]).length,1,'deve existir somente um fechamento');
+for(let i=0;i<3;i++)context.window.renderizarLaudoAvaliacaoKineSys();
+assert.strictEqual((elements['ks-laudo-texto'].value.match(/Data de emissão:/g)||[]).length,1,'reabrir ou coletar o relatório não pode duplicar a assinatura');
+context.usuarioLogado={id:'outro-prof',nome:'Outra Profissional',conselho:'CREFITO',regional:'3',numero_registro:'654321-F'};
+context.window.renderizarLaudoAvaliacaoKineSys();
+assert.match(elements['ks-laudo-texto'].value,/Outra Profissional\nCREFITO-3 654321-F$/,'assinatura deve acompanhar os campos públicos da conta logada');
+assert.doesNotMatch(elements['ks-laudo-texto'].value,/Profissional Teste|123456-F/,'a assinatura anterior não deve persistir após trocar de conta');
+context.usuarioLogado={id:'sem-registro',nome:'Profissional sem registro'};
+context.window.renderizarLaudoAvaliacaoKineSys();
+assert.match(elements['ks-laudo-texto'].value,/Profissional sem registro\nRegistro profissional \(conselho e número\): _+$/,'sem registro cadastrado, o motor deve oferecer espaço preenchível');
+assert.doesNotMatch(elements['ks-laudo-texto'].value,/CREFITO-3|654321-F/,'nunca reutilizar o registro de outro profissional');
 
 console.log('Evaluation clinical correlation contract OK');
 
