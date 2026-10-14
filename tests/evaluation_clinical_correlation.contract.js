@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:14/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:15/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -113,6 +113,7 @@ const multirregional=renderizarCaso(
 );
 assert.match(multirregional,/hipótese de síndrome da dor patelofemoral/,'cada região deve receber interpretação própria');
 assert.match(multirregional,/hipótese de radiculopatia torácica/,'o relatório deve preservar hipóteses multirregionais');
+assert.ok(multirregional.indexOf('hipótese de síndrome da dor patelofemoral')<multirregional.indexOf('foi avaliada a região de coluna torácica'),'a interpretação do joelho deve acompanhar seu exame antes da próxima região');
 assert.doesNotMatch(report,/permanece em aberto|registra-se|cabe ressaltar|faz-se necessário/i,'o relatório não deve usar clichês de texto automatizado');
 
 const predominioPositivo=renderizarCaso(
@@ -180,6 +181,27 @@ assert.match(narrativaEscapular,/Também refere|Atualmente apresenta|O quadro as
 assert.match(narrativaEscapular,/septicemia|dor à palpação|perda de força|ipsilateral|deficiência/i,'o motor deve normalizar erros frequentes sem alterar o sentido clínico');
 assert.doesNotMatch(narrativaEscapular,/sepsemia|dor a palpação|perca de força|hipsilateral|déficiencia/i,'erros frequentes da digitação clínica não devem vazar para o documento final');
 assert.doesNotMatch(narrativaEscapular,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA/,'o caso completo deve permanecer como narrativa contínua');
+assert.doesNotMatch(narrativaEscapular,/reproduzido de forma consistente|história clínica e os achados objetivos convergem/,'o texto não pode afirmar reprodução da queixa sem um registro específico');
+assert.match(narrativaEscapular,/O exame evidenciou fraqueza.*atrofia/i,'sinais objetivos devem ser descritos como achados, sem serem chamados de testes positivos');
+assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.relatoAusente),[],'nenhuma frase clínica deve se perder durante a composição');
+hmaField.value='Paciente relata dor no ombro esquerdo. Paciente relata dor no ombro esquerdo. Nega parestesia no braço direito. Refere dor de 3.5/10 após corrida e alívio em repouso.';
+const relatoPreciso=renderizarCaso(
+  [{regiao:'Ombro',id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',achados:[{texto:'Teste de força',resultado:'inconclusivo'},{texto:'Dor ao movimento',resultado:'negativo'}]}],
+  [{regiao:'Ombro',codigoHipotese:'neuropatia_supraescapular',nomeHipotese:'Neuropatia do nervo supraescapular',nivel:'inconclusivo',redFlags:[]}]
+);
+assert.strictEqual((relatoPreciso.match(/dor no ombro esquerdo/gi)||[]).length,1,'a mesma frase clínica repetida deve aparecer uma única vez');
+assert.match(relatoPreciso,/Nega parestesia no braço direito/,'negações e lateralidade devem ser preservadas');
+assert.match(relatoPreciso,/3\.5\/10 após corrida e alívio em repouso/,'números decimais e fatores de alívio devem permanecer intactos');
+assert.match(relatoPreciso,/Teste de força permaneceu inconclusivo/,'a incerteza de um teste não pode virar ausência ou confirmação');
+context.window.preencherLaudoAvaliacaoKineSys(null);
+context.window.renderizarLaudoAvaliacaoKineSys();
+assert.strictEqual(elements['ks-laudo-texto'].value,relatoPreciso,'a mesma avaliação deve gerar um texto estável em cada carregamento');
+context.window.preencherLaudoAvaliacaoKineSys({texto:'Texto profissional revisado.',textoAutomatico:true,revisado:true,versaoTexto:14,fonte:'anterior'});
+context.window.renderizarLaudoAvaliacaoKineSys();
+assert.strictEqual(elements['ks-laudo-texto'].value,'Texto profissional revisado.','migração do motor não pode sobrescrever texto revisado');
+context.window.preencherLaudoAvaliacaoKineSys({texto:'Texto editado manualmente.',textoAutomatico:false,revisado:false,versaoTexto:14,fonte:'anterior'});
+context.window.renderizarLaudoAvaliacaoKineSys();
+assert.strictEqual(elements['ks-laudo-texto'].value,'Texto editado manualmente.','migração do motor não pode sobrescrever texto editado');
 hmaField.value='';
 const semHistoria=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
