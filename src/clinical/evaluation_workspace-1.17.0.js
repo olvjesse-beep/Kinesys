@@ -74,7 +74,7 @@
             versao:planoAtual.versao||'',
             insuficiente:!!planoAtual.insuficiente,
             hipoteses:(planoAtual.hipoteses||[]).filter(Boolean).map(h=>({id:h.id||'',nome:h.nome||'',regiaoId:h.regiaoId||'',aConfirmar:(h.aConfirmar||[]).filter(Boolean),criterio:criterioDaHipotese(h)})),
-            testesPrioritarios:(planoAtual.exame?.testesPrioritarios||[]).filter(Boolean).map(t=>({texto:t.texto||t.nome||'',tipo:t.tipo||'',hipoteseId:t.hipoteseId||t.condicaoId||''})).filter(t=>t.texto),
+            testesPrioritarios:(planoAtual.exame?.testesPrioritarios||[]).filter(Boolean).map(t=>({texto:t.texto||t.nome||'',tipo:t.tipo||'',hipoteseId:t.hipoteseId||t.condicaoId||'',hipoteseIds:t.hipoteseIds||[],regiaoIds:t.regiaoIds||[]})).filter(t=>t.texto),
             lacunas:(planoAtual.lacunas||[]).filter(Boolean)
         }:null;
         const identificacao=[],historia=[],campos={};
@@ -434,8 +434,10 @@
             const alvo=normalizar(regiao.nomeHipotese);
             const codigo=normalizar(regiao.codigoHipotese||regiao.codigoEixo),regiaoAlvo=normalizar(regiao.regiao);
             const achadosRegiao=d.achados.filter(a=>a.regiao===regiao.regiao),idsEixos=new Set(achadosRegiao.map(a=>normalizar(a.id)).filter(Boolean));
-            const idsVinculados=new Set((d.plano?.testesPrioritarios||[]).filter(t=>achadosRegiao.some(a=>(a.achados||[]).some(x=>normalizar(x.texto)===normalizar(t.texto)))).map(t=>normalizar(t.hipoteseId)).filter(Boolean));
-            const hip=hipoteses.find(h=>codigo&&normalizar(h.id)===codigo)||hipoteses.find(h=>idsEixos.has(normalizar(h.id))||idsVinculados.has(normalizar(h.id)))||(alvo?hipoteses.find(h=>nomeLimpo(h.nome)===nomeLimpo(regiao.nomeHipotese)||normalizar(h.nome).includes(alvo)||alvo.includes(normalizar(h.nome))):null)||hipoteses.find(h=>normalizar(h.regiaoId)===regiaoAlvo);
+            const idsVinculados=new Set((d.plano?.testesPrioritarios||[]).filter(t=>achadosRegiao.some(a=>(!t.regiaoIds?.length||t.regiaoIds.includes(a.regiaoId))&&(a.achados||[]).some(x=>normalizar(x.texto)===normalizar(t.texto)))).flatMap(t=>[t.hipoteseId,...(t.hipoteseIds||[])]).map(normalizar).filter(Boolean));
+            const hipotesesDaRegiao=hipoteses.filter(h=>achadosRegiao.some(a=>a.regiaoId===h.regiaoId)||normalizar(h.regiaoId)===regiaoAlvo||
+                (!achadosRegiao.some(a=>a.regiaoId)&&codigo&&normalizar(h.id)===codigo));
+            const hip=hipotesesDaRegiao.find(h=>codigo&&normalizar(h.id)===codigo)||hipotesesDaRegiao.find(h=>idsEixos.has(normalizar(h.id))||idsVinculados.has(normalizar(h.id)))||(alvo?hipotesesDaRegiao.find(h=>nomeLimpo(h.nome)===nomeLimpo(regiao.nomeHipotese)||normalizar(h.nome).includes(alvo)||alvo.includes(normalizar(h.nome))):null)||hipotesesDaRegiao[0];
             const sugeridos=[...(hip?.aConfirmar||[])];
             const achadosVinculados=hip?achadosRegiao.filter(a=>normalizar(a.id)===normalizar(hip.id)):[];
             const fonteResultados=achadosVinculados.length?achadosVinculados:achadosRegiao;

@@ -758,16 +758,20 @@
         const expandKey=`${grupo}::${item.id}`;
         const expanded=!!estado.testesExpandidos[expandKey];
         const answered=item.testes.map((_,i)=>i).filter(i=>!!valorAchado232(estado,grupo,item,i));
+        const discriminativos=(window.KineSysMotorClinico3?.ultimoPlano?.exame?.testesPrioritarios||[])
+            .filter(t=>t.discriminativo&&t.hipoteseIds?.includes(item.id)&&t.regiaoIds?.includes(idRegiao));
         const order=[];const add=i=>{if(Number.isInteger(i)&&i>=0&&i<item.testes.length&&!order.includes(i))order.push(i);};
-        answered.forEach(add);(meta.essenciais||[]).forEach(add);(suf.faltantes||[]).forEach(add);item.testes.forEach((_,i)=>add(i));
+        answered.forEach(add);(meta.essenciais||[]).forEach(add);discriminativos.forEach(t=>add(item.testes.findIndex(texto=>removerAcentos(texto)===removerAcentos(t.texto))));(suf.faltantes||[]).forEach(add);item.testes.forEach((_,i)=>add(i));
         const visible=expanded?order:order.slice(0,4);
         visible.forEach(i=>{
             const teste=item.testes[i],atual=valorAchado232(estado,grupo,item,i)||'';
             const linha=document.createElement('div');linha.className='teste-linha';const span=document.createElement('span');span.textContent=teste;
+            const discriminativo=discriminativos.find(t=>removerAcentos(t.texto)===removerAcentos(teste));
+            if(discriminativo){span.title=discriminativo.motivoPriorizacao;const motivo=document.createElement('small');motivo.textContent=' · Diferencia hipóteses';span.appendChild(motivo);}
             const select=document.createElement('select');select.className='teste-resultado-select';select.dataset.regiao=idRegiao;select.dataset.grupo=grupo;select.dataset.item=item.id;select.dataset.indice=i;
             [['','— Registrar achado —'],['positivo','Positivo'],['negativo','Negativo'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(v===atual)o.selected=true;select.appendChild(o);});
             atualizarClasseSelectResultado(select);
-            select.addEventListener('change',()=>{gravarAchado232(estado,grupo,item,i,select.value);marcarFerramentaInvestigada232(estado,grupo,item);atualizarDirecaoPeloExame232(idRegiao,grupo,item);atualizarClasseSelectResultado(select);agendarAutosaveKineSys();renderizarMapeamentoRegioes();});
+            select.addEventListener('change',()=>{gravarAchado232(estado,grupo,item,i,select.value);marcarFerramentaInvestigada232(estado,grupo,item);atualizarDirecaoPeloExame232(idRegiao,grupo,item);atualizarClasseSelectResultado(select);window.KineSysMotorClinico3?.atualizar?.(true);agendarAutosaveKineSys();renderizarMapeamentoRegioes();});
             linha.append(span,select);div.appendChild(linha);
         });
         if(order.length>4){
@@ -887,7 +891,7 @@
     function criarResultadoModal232(idRegiao,entry,index){
         const estado=window.obterEstadoRegiao(idRegiao),atual=valorAchado232(estado,entry.grupo,entry.item,index)||'',select=document.createElement('select');select.className='ks-modal-result';select.setAttribute('aria-label','Resultado do achado '+(index+1));
         [['','— Registrar achado —'],['positivo','Positivo'],['negativo','Negativo'],['inconclusivo','Inconclusivo'],['nao_realizado','Não avaliado'],['nao_aplicavel','Não se aplica']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;o.selected=v===atual;select.appendChild(o);});
-        atualizarClasseSelectResultado(select);select.addEventListener('change',()=>{gravarAchado232(estado,entry.grupo,entry.item,index,select.value);marcarFerramentaInvestigada232(estado,entry.grupo,entry.item);atualizarDirecaoPeloExame232(idRegiao,entry.grupo,entry.item);agendarAutosaveKineSys();renderizarMapeamentoRegioes();renderizarModalInvestigacao232();});
+        atualizarClasseSelectResultado(select);select.addEventListener('change',()=>{gravarAchado232(estado,entry.grupo,entry.item,index,select.value);marcarFerramentaInvestigada232(estado,entry.grupo,entry.item);atualizarDirecaoPeloExame232(idRegiao,entry.grupo,entry.item);window.KineSysMotorClinico3?.atualizar?.(true);agendarAutosaveKineSys();renderizarMapeamentoRegioes();renderizarModalInvestigacao232();});
         return select;
     }
     function renderizarTestesModal232(idRegiao,entry,holder){
@@ -955,6 +959,8 @@
             const identidade=document.createElement('div');identidade.className='ks-hypothesis-identity';
             const nome=document.createElement('strong');nome.textContent=String(candidato.item.nome||'').replace(/\s*[\u2014-]\s*cluster de exame\s*$/i,'');
             const situacao=document.createElement('span');situacao.className='ks-hypothesis-status '+status;situacao.textContent=aprovada?'Hipótese aprovada':status==='positivo'?'Achados positivos':status==='negativo'?'Achados negativos':status==='inconclusivo'?'Achados inconclusivos':'Aguardando testes';
+            const exameRadar=(window.KineSysMotorClinico3?.ultimoPlano?.hipoteses||[]).find(h=>h.regiaoId===idRegiao&&h.id===candidato.item.id&&h.grupo===candidato.grupo)?.exameAtual;
+            if(exameRadar?.respondidos)situacao.textContent=(aprovada?'Hipótese aprovada · ':'')+exameRadar.rotulo+` · ${exameRadar.respondidos}/${exameRadar.total} avaliados`;
             identidade.append(nome,situacao);
             const controles=document.createElement('div');controles.className='ks-hypothesis-actions';
             const aprovar=document.createElement('button');aprovar.type='button';aprovar.className='btn-secondary';aprovar.textContent='Aprovar hipótese';aprovar.hidden=aprovada;aprovar.setAttribute('aria-pressed',String(aprovada));aprovar.addEventListener('click',evento=>{evento.stopPropagation();if(!aprovada)selecionarDirecaoHipotese(idRegiao,candidato);});
