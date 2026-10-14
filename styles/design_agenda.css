@@ -31,6 +31,12 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   box-sizing:border-box;
 }
 
+#tela_agenda{
+  --agenda-cor-osteopatia:#2F8F72;
+  --agenda-cor-fisioterapia:#2F7EAD;
+  --agenda-cor-falta:#7B878C;
+}
+
 #tela_agenda .ks-agenda-controls{
   display:flex;
   justify-content:space-between;
@@ -342,6 +348,17 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   line-height:var(--kds-leading-compact);
   font-weight:850;
 }
+#tela_agenda .agenda-dia-cabecalho .dia-resumo{
+  display:block;
+  margin-top:2px;
+  overflow:hidden;
+  color:var(--kds-muted);
+  font-size:10px;
+  line-height:1.15;
+  font-weight:650;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
 #tela_agenda .agenda-dia-cabecalho.hoje{background:var(--kds-accent-soft);box-shadow:none;border-bottom:1px solid var(--kds-accent)}
 #tela_agenda .agenda-dia-cabecalho.feriado{background:var(--kds-danger-soft);box-shadow:none;border-bottom:1px solid var(--kds-danger)}
 #tela_agenda .agenda-dia-cabecalho.feriado.hoje{background:var(--kds-danger-soft);box-shadow:none;border-bottom:1px solid var(--kds-danger)}
@@ -407,6 +424,32 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-intervalo-icone::before{content:"";position:absolute;left:5px;top:-5px;width:2px;height:5px;border-radius:2px;background:currentColor;box-shadow:4px 2px 0 -1px currentColor}
 #tela_agenda .agenda-celula.atendimento{background:#fff;cursor:pointer}
 #tela_agenda .agenda-celula.atendimento:hover{background:#F1FAF7;box-shadow:inset 0 0 0 1px #9BCFC7}
+#tela_agenda .agenda-celula.atendimento.hora-cheia{z-index:1;overflow:visible}
+#tela_agenda .agenda-slot-acao{
+  position:absolute;
+  top:4px;
+  left:50%;
+  z-index:1;
+  transform:translateX(-50%);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  min-height:22px;
+  padding:2px 8px;
+  border:1px dashed color-mix(in srgb,var(--kds-accent) 42%,transparent);
+  border-radius:var(--kds-radius-pill);
+  background:color-mix(in srgb,var(--kds-surface) 86%,transparent);
+  color:var(--kds-accent);
+  font-size:10px;
+  line-height:1;
+  font-weight:800;
+  white-space:nowrap;
+  opacity:.66;
+  pointer-events:none;
+}
+#tela_agenda .agenda-celula.atendimento:hover .agenda-slot-acao,
+#tela_agenda .agenda-celula.atendimento:focus-visible .agenda-slot-acao{opacity:1;background:var(--kds-surface)}
 #tela_agenda .agenda-celula.bloqueado{background:#596164;color:#fff;cursor:default}
 #tela_agenda .agenda-celula.bloqueado .agenda-bloqueio-texto{padding:5px 6px;color:#fff;font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui);font-weight:800}
 #tela_agenda .agenda-celula.feriado{background:#6A6261;color:#fff}
@@ -443,6 +486,28 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 #tela_agenda .agenda-compromisso.status-falta_justificada,
 #tela_agenda .agenda-compromisso.status-faltou{background:#FFF2E3;border-color:#D78B35;border-left-color:#D06D00}
 #tela_agenda .agenda-compromisso.status-falta_nao_justificada{background:#FFF0EF;border-color:#D98A84;border-left-color:#B84239}
+
+/* Identificação visual por natureza do atendimento. O status de falta tem
+   precedência; os demais cartões preservam todos os estados e ações. */
+#tela_agenda .agenda-compromisso.tipo-osteopatia{
+  background:color-mix(in srgb,var(--agenda-cor-osteopatia) 16%,white);
+  border-color:color-mix(in srgb,var(--agenda-cor-osteopatia) 54%,white);
+  border-left-color:var(--agenda-cor-osteopatia);
+}
+#tela_agenda .agenda-compromisso.tipo-fisioterapia{
+  background:color-mix(in srgb,var(--agenda-cor-fisioterapia) 14%,white);
+  border-color:color-mix(in srgb,var(--agenda-cor-fisioterapia) 48%,white);
+  border-left-color:var(--agenda-cor-fisioterapia);
+}
+#tela_agenda .agenda-compromisso.tipo-falta,
+#tela_agenda .agenda-compromisso.status-falta_justificada,
+#tela_agenda .agenda-compromisso.status-falta_nao_justificada,
+#tela_agenda .agenda-compromisso.status-faltou{
+  opacity:.82;
+  background:color-mix(in srgb,var(--agenda-cor-falta) 17%,white);
+  border-color:color-mix(in srgb,var(--agenda-cor-falta) 48%,white);
+  border-left-color:var(--agenda-cor-falta);
+}
 
 #tela_agenda .agenda-compromisso .paciente{
   display:flex;
@@ -494,6 +559,37 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 .badge-falta_nao_justificada{background:#FFF0EF;color:#A6372F}
 .badge-cancelado{background:#F1F3F4;color:#636E72}
 .badge-lembrete-ok{background:#EAF7EE;color:#227A4A}
+
+#tela_agenda .agenda-color-legend{
+  display:flex;
+  align-items:center;
+  gap:8px 14px;
+  min-height:32px;
+  padding:3px 10px 6px;
+  color:var(--kds-text-secondary);
+  font-size:var(--kds-font-metadata);
+  line-height:var(--kds-leading-ui);
+  flex-wrap:wrap;
+}
+#tela_agenda .agenda-color-legend>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+#tela_agenda .agenda-legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--kds-muted)}
+#tela_agenda .agenda-legend-dot.osteopatia{background:var(--agenda-cor-osteopatia)}
+#tela_agenda .agenda-legend-dot.fisioterapia{background:var(--agenda-cor-fisioterapia)}
+#tela_agenda .agenda-legend-dot.falta{background:var(--agenda-cor-falta)}
+#tela_agenda .agenda-legend-dot.intervalo{background:#D6A52E}
+#tela_agenda .agenda-configurar-cores{
+  margin-left:auto;
+  padding:3px 0;
+  border:0;
+  background:transparent;
+  color:var(--kds-accent);
+  font:750 var(--kds-font-metadata)/var(--kds-leading-ui) var(--kds-font-family-ui);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+#tela_agenda .agenda-configurar-cores:focus-visible{outline:2px solid var(--kds-focus-line);outline-offset:3px}
+#tela_agenda .agenda-configurar-cores[hidden]{display:none!important}
 
 /* ==========================================================================
    6. Editor de horários da clínica/profissional
@@ -868,6 +964,10 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   #tela_agenda .agenda-dia-cabecalho .dia-semana,
   #tela_agenda .agenda-dia-cabecalho .dia-data,
   #tela_agenda .agenda-hora-eixo{font-size:var(--kds-font-metadata)}
+  #tela_agenda .agenda-dia-cabecalho .dia-resumo{display:none}
+  #tela_agenda .agenda-slot-acao{display:none}
+  #tela_agenda .agenda-color-legend{gap:6px 10px;padding-inline:6px}
+  #tela_agenda .agenda-configurar-cores{width:100%;margin-left:0;text-align:left}
 
   #modal_agendamento .grid-2{grid-template-columns:1fr}
   #modal_agendamento .actions{display:grid;grid-template-columns:1fr}
@@ -1095,9 +1195,9 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   }
   #tela_agenda .agenda-semana-grade{
     height:100%!important;
-    grid-template-rows:42px repeat(var(--kds-agenda-runtime-slot-count),minmax(2px,1fr))!important;
+    grid-template-rows:52px repeat(var(--kds-agenda-runtime-slot-count),minmax(2px,1fr))!important;
   }
-  #tela_agenda .agenda-dia-cabecalho{min-height:42px!important;padding:3px 3px!important}
+  #tela_agenda .agenda-dia-cabecalho{min-height:52px!important;padding:4px 3px!important}
   #tela_agenda .agenda-hora-eixo{padding-top:0!important}
   #tela_agenda .agenda-compromisso{height:100%;min-height:0!important;overflow:hidden}
 }

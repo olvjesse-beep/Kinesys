@@ -49,6 +49,14 @@ assert(js.includes("await salvarConfiguracaoPortal(client, { ...cfg, ativo: fals
   'salvamento deve fechar o portal antes das dependências e reativar somente ao final');
 assert(js.includes('window.KineSysConfiguracoesAgendaOnline'),
   'módulo deve expor contrato estável para abertura/refresh');
+assert(js.includes('Aparência da agenda') && js.includes('ks_config_panel_aparencia'),
+  'Configurações deve oferecer uma aba específica para aparência da Agenda');
+assert(js.includes('kinesys_agenda_cores::'),
+  'cores devem ser isoladas por clínica no armazenamento do navegador');
+assert(js.includes("osteopatia: 'Osteopatia'") && js.includes("fisioterapia: 'Fisioterapia'") && js.includes("falta: 'Falta'") && js.includes('ks_agenda_cor_${tipo}'),
+  'administrador deve configurar osteopatia, fisioterapia e falta separadamente');
+assert(js.includes("new CustomEvent('kinesys:agenda-cores-atualizadas'"),
+  'salvamento deve atualizar imediatamente a Agenda já carregada');
 assert(!js.includes('setInterval('),
   'configuração não deve usar polling contínuo');
 

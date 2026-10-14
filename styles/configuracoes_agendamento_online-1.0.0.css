@@ -32,13 +32,67 @@
     top: calc(var(--kds-topbar-mobile-height) + 6px);
     z-index: 8;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 3px;
     margin: 0 0 14px;
     padding: 3px;
     border: 1px solid var(--kds-line);
     border-radius: var(--kds-radius-md);
     background: var(--kds-surface);
+}
+
+.ks-agenda-color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.ks-agenda-color-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 68px;
+    padding: 12px 14px;
+    border: 1px solid var(--kds-line);
+    border-radius: var(--kds-radius-md);
+    background: var(--kds-surface);
+    cursor: pointer;
+}
+
+.ks-agenda-color-copy { display: grid; gap: 4px; }
+.ks-agenda-color-copy strong { color: var(--kds-text); font-size: var(--kds-font-content); }
+.ks-agenda-color-copy small { color: var(--kds-muted); font-size: var(--kds-font-metadata); }
+.ks-agenda-color-field input[type="color"] {
+    width: 42px;
+    height: 42px;
+    padding: 3px;
+    border: 1px solid var(--kds-line);
+    border-radius: 50%;
+    background: var(--kds-surface);
+    cursor: pointer;
+}
+
+.ks-agenda-color-preview { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.ks-agenda-color-preview span {
+    padding: 8px 12px;
+    border: 1px solid color-mix(in srgb, var(--preview-color) 50%, white);
+    border-left: 4px solid var(--preview-color);
+    border-radius: var(--kds-radius-sm);
+    background: color-mix(in srgb, var(--preview-color) 15%, white);
+    color: var(--kds-text);
+    font-size: var(--kds-font-label);
+    font-weight: 750;
+}
+
+.ks-agenda-color-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+@media (max-width: 760px) {
+    .ks-config-tabs { grid-template-columns: 1fr; }
+    .ks-agenda-color-grid { grid-template-columns: 1fr; }
+    .ks-agenda-color-actions { display: grid; grid-template-columns: 1fr; }
+    .ks-agenda-color-actions button { width: 100%; }
 }
 
 .ks-config-tabs button {
