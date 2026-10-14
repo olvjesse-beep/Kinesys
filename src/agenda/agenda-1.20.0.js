@@ -34,6 +34,66 @@ let agendaContatoResponsavelDisponivel = true;
 
 const AGENDA_SEMANA_CACHE_TTL_MS = 5000;
 
+const AGENDA_CORES_PADRAO = Object.freeze({
+    osteopatia: '#2F8F72',
+    fisioterapia: '#2F7EAD',
+    falta: '#7B878C'
+});
+
+function chaveCoresAgenda() {
+    const clinicaId = String(usuarioLogado?.clinica_id || 'sem_clinica').trim() || 'sem_clinica';
+    return `kinesys_agenda_cores::${clinicaId}`;
+}
+
+function corHexAgendaValida(valor) {
+    return /^#[0-9a-f]{6}$/i.test(String(valor || '').trim());
+}
+
+function obterCoresAgenda() {
+    let salvas = {};
+    try { salvas = JSON.parse(localStorage.getItem(chaveCoresAgenda()) || '{}') || {}; }
+    catch (_) { salvas = {}; }
+    return Object.fromEntries(Object.entries(AGENDA_CORES_PADRAO).map(([tipo, padrao]) => [
+        tipo,
+        corHexAgendaValida(salvas[tipo]) ? String(salvas[tipo]).toUpperCase() : padrao
+    ]));
+}
+
+function aplicarCoresAgenda() {
+    const tela = document.getElementById('tela_agenda');
+    if (!tela) return;
+    const cores = obterCoresAgenda();
+    Object.entries(cores).forEach(([tipo, cor]) => tela.style.setProperty(`--agenda-cor-${tipo}`, cor));
+    const configurar = tela.querySelector('.agenda-configurar-cores');
+    if (configurar) configurar.hidden = !usuarioEhAdministradorAgenda();
+}
+
+window.addEventListener('kinesys:agenda-cores-atualizadas', aplicarCoresAgenda);
+
+function normalizarTipoProcedimentoAgenda(valor = '') {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function tipoVisualAgendamentoAgenda(agendamento = {}) {
+    const status = classeStatusAgenda(agendamento.status);
+    if (['falta_justificada', 'falta_nao_justificada', 'faltou'].includes(status)) return 'falta';
+    const procedimento = normalizarTipoProcedimentoAgenda(agendamento.procedimentos?.nome || '');
+    if (/osteo/.test(procedimento)) return 'osteopatia';
+    if (/fisio|reabilit|pilates|rpg|terapia manual|exercicio terapeutico/.test(procedimento)) return 'fisioterapia';
+    return 'geral';
+}
+
+function classeTipoVisualAgendamentoAgenda(agendamento = {}) {
+    return `tipo-${tipoVisualAgendamentoAgenda(agendamento)}`;
+}
+
+function abrirConfiguracoesCoresAgenda() {
+    if (!usuarioEhAdministradorAgenda()) return;
+    try { sessionStorage.setItem('kinesys_config_tab', 'aparencia'); } catch (_) {}
+    if (typeof navegarPara === 'function') navegarPara('tela_configuracoes');
+    window.setTimeout(() => window.KineSysConfiguracoesAgendaOnline?.abrirAba?.('aparencia'), 150);
+}
+
 function prefixoCacheAgendaSemanaAtual() {
     const perfilId = String(usuarioLogado?.id || 'sem_perfil').trim() || 'sem_perfil';
     const clinicaId = String(usuarioLogado?.clinica_id || 'sem_clinica').trim() || 'sem_clinica';
@@ -2070,6 +2130,7 @@ async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') 
 function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     const container = document.getElementById('agenda_semana_grade');
     if (!container) return;
+    aplicarCoresAgenda();
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
     const limites = limitesHorariosGrade(dias, profissionalFiltro);
     const passo = AGENDA_GRADE_PASSO_MIN;
@@ -2098,7 +2159,9 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
         cab.style.gridRow = '1';
         const nome = d.data.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
         const tagFeriado = feriado ? `<span class="agenda-feriado-tag" title="${escapeHTML(rotuloTipoFeriadoAgenda(feriado) + ' — ' + feriado.nome)}">FERIADO</span>` : '';
-        cab.innerHTML = `<span class="dia-semana">${escapeHTML(nome)}</span><span class="dia-data">${String(d.data.getDate()).padStart(2, '0')}/${String(d.data.getMonth()+1).padStart(2,'0')}</span>${tagFeriado}`;
+        const atendimentosDia = agendaAgendamentosSemanaCache.filter(a => a.data === d.dataISO && (!profissionalFiltro || String(a.profissional_id || '') === String(profissionalFiltro))).length;
+        const resumoDia = `${atendimentosDia} atendimento${atendimentosDia === 1 ? '' : 's'}`;
+        cab.innerHTML = `<span class="dia-semana">${escapeHTML(nome)}</span><span class="dia-data">${String(d.data.getDate()).padStart(2, '0')}/${String(d.data.getMonth()+1).padStart(2,'0')}</span><span class="dia-resumo">${escapeHTML(resumoDia)}</span>${tagFeriado}`;
         if (feriado) cab.title = `${rotuloTipoFeriadoAgenda(feriado)} — ${feriado.nome}. Agenda padrão bloqueada; exceções somente por horário extraordinário.`;
         container.appendChild(cab);
     });
@@ -2149,6 +2212,15 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                     evento.preventDefault();
                     abrirModalAgendamento(profissionalFiltro || '', d.dataISO, hh);
                 });
+                if (minuto % 60 === 0) {
+                    const ocupado = agendaAgendamentosSemanaCache.some(a => {
+                        if (a.data !== d.dataISO || (profissionalFiltro && String(a.profissional_id || '') !== String(profissionalFiltro))) return false;
+                        const inicioAgendado = horaParaMinutos(horaCurta(a.hora_inicio));
+                        const fimAgendado = horaParaMinutos(horaCurta(a.hora_fim));
+                        return inicioAgendado < minuto + 60 && fimAgendado > minuto;
+                    });
+                    if (!ocupado) cell.innerHTML = '<span class="agenda-slot-acao" aria-hidden="true">+ Agendar</span>';
+                }
             }
             container.appendChild(cell);
         });
@@ -2201,7 +2273,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 evento.preventDefault();
                 abrirDetalheAgendamento(a.id);
             });
-            overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+            overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
             container.appendChild(overlay);
         });
     } else {
@@ -2245,7 +2317,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                     evento.preventDefault();
                     abrirDetalheAgendamento(a.id);
                 });
-                overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+                overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
                 container.appendChild(overlay);
             });
         });

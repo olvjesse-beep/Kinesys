@@ -27,6 +27,18 @@ assert.match(estilo, /\.agenda-intervalo-bloco\s*\{/,
     'A faixa de intervalo deve ter estilo próprio.');
 assert.match(estilo, /--agenda-intervalo-fundo:/,
     'O intervalo deve preservar a sinalização amarela do KineSys.');
+assert.match(agenda, /agenda-slot-acao[^\n]*\+ Agendar/,
+    'Horários livres de hora cheia devem expor a ação + Agendar sem trocar o fluxo existente.');
+assert.match(agenda, /function tipoVisualAgendamentoAgenda\s*\(/,
+    'A Agenda deve classificar visualmente procedimentos e faltas sem alterar seus dados clínicos.');
+assert.match(agenda, /tipo-osteopatia|osteopatia/,
+    'Osteopatia deve possuir identificação visual própria.');
+assert.match(agenda, /tipo-fisioterapia|fisioterapia/,
+    'Fisioterapia deve possuir identificação visual própria.');
+assert.match(estilo, /\.agenda-compromisso\.tipo-falta/,
+    'Faltas devem receber a cor configurável com precedência visual.');
+assert.match(estilo, /\.agenda-color-legend/,
+    'A grade deve exibir uma legenda compacta para as cores configuradas.');
 
 const inicioFuncoes = agenda.indexOf('function intervalosEntreJanelasAgenda');
 const fimFuncoes = agenda.indexOf('function bloqueioNoMinuto', inicioFuncoes);

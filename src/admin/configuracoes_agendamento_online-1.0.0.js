@@ -3,8 +3,13 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20260913-online-r3';
+    const ASSET_REVISION = '20261014-agenda-cores-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
+    const AGENDA_CORES_PADRAO = Object.freeze({
+        osteopatia: '#2F8F72',
+        fisioterapia: '#2F7EAD',
+        falta: '#7B878C'
+    });
     const DIAS = Object.freeze([
         { valor: 1, nome: 'Segunda-feira' },
         { valor: 2, nome: 'Terça-feira' },
@@ -82,6 +87,88 @@
         return String(window.usuarioLogado?.clinica_id || '').trim();
     }
 
+    function chaveCoresAgenda() {
+        return `kinesys_agenda_cores::${state.clinicaId || obterClinicaIdLocal() || 'sem_clinica'}`;
+    }
+
+    function corHexValida(valor) {
+        return /^#[0-9a-f]{6}$/i.test(String(valor || '').trim());
+    }
+
+    function lerCoresAgenda() {
+        let salvas = {};
+        try { salvas = JSON.parse(localStorage.getItem(chaveCoresAgenda()) || '{}') || {}; }
+        catch (_) { salvas = {}; }
+        return Object.fromEntries(Object.entries(AGENDA_CORES_PADRAO).map(([tipo, padrao]) => [
+            tipo,
+            corHexValida(salvas[tipo]) ? String(salvas[tipo]).toUpperCase() : padrao
+        ]));
+    }
+
+    function preencherCoresAgenda(cores = lerCoresAgenda()) {
+        Object.entries(cores).forEach(([tipo, cor]) => {
+            const input = document.getElementById(`ks_agenda_cor_${tipo}`);
+            const valor = document.getElementById(`ks_agenda_cor_${tipo}_valor`);
+            if (input) input.value = cor;
+            if (valor) valor.textContent = cor;
+        });
+    }
+
+    function salvarCoresAgenda(cores = null) {
+        const proximas = cores || Object.fromEntries(Object.keys(AGENDA_CORES_PADRAO).map(tipo => [
+            tipo,
+            document.getElementById(`ks_agenda_cor_${tipo}`)?.value || AGENDA_CORES_PADRAO[tipo]
+        ]));
+        if (Object.values(proximas).some(cor => !corHexValida(cor))) return false;
+        try { localStorage.setItem(chaveCoresAgenda(), JSON.stringify(proximas)); }
+        catch (_) { return false; }
+        preencherCoresAgenda(proximas);
+        const telaAgenda = document.getElementById('tela_agenda');
+        Object.entries(proximas).forEach(([tipo, cor]) => telaAgenda?.style.setProperty(`--agenda-cor-${tipo}`, cor));
+        window.dispatchEvent(new CustomEvent('kinesys:agenda-cores-atualizadas', { detail: proximas }));
+        const feedback = document.getElementById('ks_agenda_cores_feedback');
+        if (feedback) { feedback.textContent = 'Cores salvas para esta clínica.'; feedback.className = 'ks-online-feedback sucesso'; feedback.hidden = false; }
+        if (typeof window.mostrarToastKineSys === 'function') window.mostrarToastKineSys('Cores da Agenda atualizadas.', 'sucesso', 3000);
+        return true;
+    }
+
+    function markupAparenciaAgenda() {
+        return `
+            <div class="ks-online-shell ks-agenda-colors-shell">
+                <div class="ks-online-topline">
+                    <div>
+                        <h2>Aparência da agenda</h2>
+                        <p>Defina a identificação visual dos atendimentos sem alterar horários, status ou prontuários.</p>
+                    </div>
+                </div>
+                <div id="ks_agenda_cores_feedback" class="ks-online-feedback neutro" role="status" aria-live="polite" hidden></div>
+                <section class="ks-online-section">
+                    <div class="ks-online-section-head ks-online-section-head-simple">
+                        <div>
+                            <h3>Cores dos atendimentos</h3>
+                            <p>O KineSys reconhece osteopatia e fisioterapia pelo nome do procedimento. Faltas usam a cor definida abaixo.</p>
+                        </div>
+                    </div>
+                    <div class="ks-agenda-color-grid">
+                        ${Object.entries({ osteopatia: 'Osteopatia', fisioterapia: 'Fisioterapia', falta: 'Falta' }).map(([tipo, rotulo]) => `
+                            <label class="ks-agenda-color-field" for="ks_agenda_cor_${tipo}">
+                                <span class="ks-agenda-color-copy"><strong>${rotulo}</strong><small id="ks_agenda_cor_${tipo}_valor">${AGENDA_CORES_PADRAO[tipo]}</small></span>
+                                <input type="color" id="ks_agenda_cor_${tipo}" value="${AGENDA_CORES_PADRAO[tipo]}" aria-label="Cor para ${rotulo}">
+                            </label>`).join('')}
+                    </div>
+                    <div class="ks-agenda-color-preview" aria-label="Prévia das cores">
+                        <span data-preview-cor="osteopatia">Osteopatia</span>
+                        <span data-preview-cor="fisioterapia">Fisioterapia</span>
+                        <span data-preview-cor="falta">Falta</span>
+                    </div>
+                    <div class="ks-agenda-color-actions">
+                        <button type="button" class="btn-secondary" id="ks_agenda_cores_restaurar">Restaurar padrão</button>
+                        <button type="button" class="btn-primary" id="ks_agenda_cores_salvar">Salvar cores</button>
+                    </div>
+                </section>
+            </div>`;
+    }
+
     async function resolverClinicaId() {
         const local = obterClinicaIdLocal();
         if (local) return local;
@@ -128,6 +215,7 @@
         tabs.setAttribute('aria-label', 'Áreas de configuração');
         tabs.innerHTML = `
             <button type="button" id="ks_config_tab_online" role="tab" aria-selected="true" aria-controls="ks_config_panel_online" data-config-tab="online">Agendamento online</button>
+            <button type="button" id="ks_config_tab_aparencia" role="tab" aria-selected="false" aria-controls="ks_config_panel_aparencia" data-config-tab="aparencia">Aparência da agenda</button>
             <button type="button" id="ks_config_tab_mensagens" role="tab" aria-selected="false" aria-controls="ks_config_panel_mensagens" data-config-tab="mensagens">Mensagens padrão</button>`;
 
         const online = document.createElement('div');
@@ -137,6 +225,14 @@
         online.setAttribute('aria-labelledby', 'ks_config_tab_online');
         online.innerHTML = markupAgendamentoOnline();
 
+        const aparencia = document.createElement('div');
+        aparencia.id = 'ks_config_panel_aparencia';
+        aparencia.className = 'ks-config-panel';
+        aparencia.setAttribute('role', 'tabpanel');
+        aparencia.setAttribute('aria-labelledby', 'ks_config_tab_aparencia');
+        aparencia.hidden = true;
+        aparencia.innerHTML = markupAparenciaAgenda();
+
         const mensagens = document.createElement('div');
         mensagens.id = 'ks_config_panel_mensagens';
         mensagens.className = 'ks-config-panel';
@@ -145,7 +241,7 @@
         mensagens.hidden = true;
         existentes.forEach(el => mensagens.appendChild(el));
 
-        tela.append(header, tabs, online, mensagens);
+        tela.append(header, tabs, online, aparencia, mensagens);
         tela.classList.add('ks-config-hub-ready');
         tabs.addEventListener('click', evento => {
             const btn = evento.target.closest('[data-config-tab]');
@@ -154,8 +250,33 @@
         });
 
         ligarEventosOnline();
+        ligarEventosAparencia();
         state.montado = true;
         return true;
+    }
+
+    function ligarEventosAparencia() {
+        document.querySelectorAll('[id^="ks_agenda_cor_"]').forEach(input => {
+            if (input.type !== 'color') return;
+            input.addEventListener('input', () => {
+                const tipo = input.id.replace('ks_agenda_cor_', '');
+                const valor = document.getElementById(`${input.id}_valor`);
+                if (valor) valor.textContent = input.value.toUpperCase();
+                const previa = document.querySelector(`[data-preview-cor="${tipo}"]`);
+                if (previa) previa.style.setProperty('--preview-color', input.value);
+            });
+        });
+        document.getElementById('ks_agenda_cores_salvar')?.addEventListener('click', () => salvarCoresAgenda());
+        document.getElementById('ks_agenda_cores_restaurar')?.addEventListener('click', () => {
+            preencherCoresAgenda(AGENDA_CORES_PADRAO);
+            document.querySelectorAll('[data-preview-cor]').forEach(previa => {
+                previa.style.setProperty('--preview-color', AGENDA_CORES_PADRAO[previa.dataset.previewCor]);
+            });
+            salvarCoresAgenda(AGENDA_CORES_PADRAO);
+        });
+        preencherCoresAgenda();
+        const cores = lerCoresAgenda();
+        document.querySelectorAll('[data-preview-cor]').forEach(previa => previa.style.setProperty('--preview-color', cores[previa.dataset.previewCor]));
     }
 
     function markupAgendamentoOnline() {
@@ -322,22 +443,31 @@
 
     function abrirAba(nome = 'online') {
         if (!montarHub()) return;
-        const online = nome !== 'mensagens';
+        const aba = ['online', 'aparencia', 'mensagens'].includes(nome) ? nome : 'online';
+        const online = aba === 'online';
+        const aparencia = aba === 'aparencia';
+        const mensagens = aba === 'mensagens';
         const painelOnline = document.getElementById('ks_config_panel_online');
+        const painelAparencia = document.getElementById('ks_config_panel_aparencia');
         const painelMensagens = document.getElementById('ks_config_panel_mensagens');
         const tabOnline = document.getElementById('ks_config_tab_online');
+        const tabAparencia = document.getElementById('ks_config_tab_aparencia');
         const tabMensagens = document.getElementById('ks_config_tab_mensagens');
 
         painelOnline.hidden = !online;
-        painelMensagens.hidden = online;
+        painelAparencia.hidden = !aparencia;
+        painelMensagens.hidden = !mensagens;
         tabOnline.setAttribute('aria-selected', String(online));
-        tabMensagens.setAttribute('aria-selected', String(!online));
+        tabAparencia.setAttribute('aria-selected', String(aparencia));
+        tabMensagens.setAttribute('aria-selected', String(mensagens));
         tabOnline.tabIndex = online ? 0 : -1;
-        tabMensagens.tabIndex = online ? -1 : 0;
-        try { sessionStorage.setItem('kinesys_config_tab', online ? 'online' : 'mensagens'); } catch (_) {}
+        tabAparencia.tabIndex = aparencia ? 0 : -1;
+        tabMensagens.tabIndex = mensagens ? 0 : -1;
+        try { sessionStorage.setItem('kinesys_config_tab', aba); } catch (_) {}
 
         if (online) carregar(false);
-        else if (typeof window.abrirConfiguracoesMensagens === 'function') window.abrirConfiguracoesMensagens();
+        else if (aparencia) preencherCoresAgenda();
+        else if (mensagens && typeof window.abrirConfiguracoesMensagens === 'function') window.abrirConfiguracoesMensagens();
     }
 
     async function onOpen() {
@@ -765,6 +895,8 @@
         version: VERSION,
         abrirAba,
         onOpen,
-        refresh: () => carregar(true)
+        refresh: () => carregar(true),
+        lerCoresAgenda,
+        salvarCoresAgenda
     });
 })();
