@@ -14,7 +14,7 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.7-evidencias-discriminativas';
+    const VERSION='3.0.8-exame-adaptativo';
     const MAX_REGIOES=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
@@ -159,8 +159,8 @@
         lombar:['lombar','lombalgia','ciatica','sacroiliaca'],
         quadril:['quadril','coxa','virilha','glute'],
         joelho:['joelho','patela','menisco'],
-        tornozelo_pe:['tornozelo','pe','calcaneo','aquiles','metatarso'],
-        tornozelo:['tornozelo','pe','calcaneo','aquiles','metatarso'],
+        tornozelo_pe:['tornozelo','pe','calcaneo','calcanhar','aquiles','metatarso','antepe','mediope','plantar'],
+        tornozelo:['tornozelo','pe','calcaneo','calcanhar','aquiles','metatarso','antepe','mediope','plantar'],
         cefaleia:['cefaleia','dor de cabeca','enxaqueca','migranea','migranoso']
     };
 
@@ -168,14 +168,35 @@
         const t=' '+n(texto)+' ',x=n(expressao);return !!x&&t.includes(' '+x+' ');
     }
 
-    function scoreRegiao(id,reg,hmaResultado,textoHistoria){
+    function origemDoTrajeto(hmaResultado,contexto={}){
+        if(arr(hmaResultado?.topologiaAnatomica?.conflitosLateralidade).length||arr(hmaResultado?.conflitosLateralidade).length)return '';
+        const sinais=new Set(arr(hmaResultado?.sinais));
+        const origem=n(contexto.origemIrradiacao||'');
+        if(/\b(cervical|pescoco|nuca)\b/.test(origem)&&n(contexto.irradiacao))return 'cervical';
+        if(/\b(lombar|lombossacra)\b/.test(origem)&&n(contexto.irradiacao))return 'lombar';
+        if(sinais.has('cervical')&&(sinais.has('irradiacaoBraco')||sinais.has('trajetoAlemCotovelo')))return 'cervical';
+        if(sinais.has('lombar')&&(sinais.has('irradiacaoPerna')||sinais.has('trajetoAlemJoelhoLombar')))return 'lombar';
+        return '';
+    }
+    function queixaLocalIndependente(texto,aliases){
+        // O destino de uma irradiação não é, sozinho, uma segunda queixa local.
+        return String(texto||'').split(/[.;!?\n]|\b(?:além disso|também|mas)\b/i).some(frase=>{
+            const t=n(frase);
+            if(/\b(?:irrad|irradi|desce|irradiacao|trajeto)/.test(t))return false;
+            return aliases.some(a=>evidenciasDaHistoria(frase,[a]).positivas.length)&&
+                /\b(?:dor|dolor|fraqueza|travamento|edema|inchaco|entorse|trauma|queimacao)\b/.test(t);
+        });
+    }
+    function scoreRegiao(id,reg,hmaResultado,textoHistoria,contexto={}){
         let score=0; const motivos=[];
         const local=n(hmaResultado?.local||'');
         const aliases=ALIASES_REGIAO[id]||[n(reg?.nome||id),n(id)];
         const sinais=new Set(arr(hmaResultado?.sinais)),negacoes=new Set(arr(hmaResultado?.negacoesDetectadas).map(x=>x?.conceito));
-        const origemLombar=sinais.has('lombar')&&(sinais.has('irradiacaoPerna')||sinais.has('trajetoAlemJoelhoLombar'));
-        const origemCervical=sinais.has('cervical')&&(sinais.has('irradiacaoBraco')||sinais.has('trajetoAlemCotovelo'));
+        const origem=origemDoTrajeto(hmaResultado,contexto);
+        const origemLombar=origem==='lombar',origemCervical=origem==='cervical';
         const destinoConectado=(origemLombar&&['quadril','joelho','tornozelo_pe','tornozelo'].includes(id))||(origemCervical&&['ombro','cotovelo','punho_mao'].includes(id));
+        if(destinoConectado&&!queixaLocalIndependente(textoHistoria,aliases))return {id,nome:reg?.nome||id,score:0,motivos:['destino de irradiação, sem queixa local independente']};
+        if(origem===id){score+=8;motivos.push('origem do trajeto irradiado');}
         const outraRegiaoNoMesmoTrajeto=(origemLombar&&id!=='lombar')||(origemCervical&&id!=='cervical');
         const trajetoNegado=negacoes.has('irradiacaoPerna')||negacoes.has('irradiacaoBraco');
         aliases.forEach(a=>{ if(a&&incluiExpressao(local,a)){score+=4;motivos.push('localização extraída da HMA');} });
@@ -198,7 +219,7 @@
         const out=[]; const seen=new Set();
         selecionadas.filter(id=>{const campo=document.getElementById('chk_regiao_'+id);return campo?.dataset.tocadoManualmente==='true'||campo?.dataset.sugeridaPelaHMA!=='true';}).forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'selecionada',score:99,motivos:['selecionada pelo fisioterapeuta']});}});
         const texto=[hmaAtual(),contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
-        Object.entries(B).map(([id,reg])=>scoreRegiao(id,reg,hmaResultado,texto)).sort((a,b)=>b.score-a.score)
+        Object.entries(B).map(([id,reg])=>scoreRegiao(id,reg,hmaResultado,texto,contexto)).sort((a,b)=>b.score-a.score)
             // Um sintoma genérico (por exemplo, "formigamento") não pode criar
             // sozinho uma segunda região sem apoio anatômico ou da hipótese da HMA.
             .filter(x=>x.score>=1.6).forEach(x=>{if(out.length<MAX_REGIOES&&!seen.has(x.id)){seen.add(x.id);out.push({...x,origem:'hma'});}});
@@ -352,7 +373,57 @@
         neurologica:'Exame neurológico / neurodinâmico',mobilidade:'Mobilidade e ADM',forca_carga:'Força e tolerância à carga',funcional:'Capacidade funcional',inspecao:'Inspeção / palpação',ortopedico:'Testes ortopédicos e provocativos'
     };
 
-    function construirExame(hipoteses,hmaResultado,modificadores){
+    function achadosRegistrados(){
+        try {return arr(window.coletarAchadosLaudoKineSys?.());} catch(_){return [];}
+    }
+    function atualizarHipotesePeloExame(h,achados){
+        const registros=achados.filter(a=>a.id===h.id&&a.regiaoId===h.regiaoId&&(!a.grupo||a.grupo===h.grupo));
+        const respostas=arr(h.testes).map(texto=>{
+            const a=registros.flatMap(r=>arr(r.achados)).find(r=>n(r.texto)===n(texto));
+            return ['positivo','negativo','inconclusivo'].includes(a?.resultado)?a.resultado:'';
+        });
+        const positivos=respostas.filter(r=>r==='positivo').length,negativos=respostas.filter(r=>r==='negativo').length,inconclusivos=respostas.filter(r=>r==='inconclusivo').length;
+        const respondidos=positivos+negativos+inconclusivos,total=respostas.length;
+        const situacao=!respondidos?'aguardando_exame':positivos&&negativos?'achados_divergentes':respondidos<total?'exame_parcial':inconclusivos?'exame_inconclusivo':positivos?'achados_favoraveis':'achados_desfavoraveis';
+        const rotulos={aguardando_exame:'Aguardando exame',achados_divergentes:'Achados divergentes',exame_parcial:'Exame parcial',achados_favoraveis:'Achados favoráveis',achados_desfavoraveis:'Achados desfavoráveis',exame_inconclusivo:'Exame inconclusivo'};
+        // Ajuste de investigação limitado. Não aplica limiares diagnósticos, nem altera os dados registrados.
+        const ajuste=total?2*(positivos-negativos)/total:0;
+        return {...h,prioridadeHistoria:h.prioridadeOrdenacao,prioridadeOrdenacao:Number(h.prioridadeOrdenacao||0)+ajuste,
+            exameAtual:{situacao,rotulo:rotulos[situacao],positivos,negativos,inconclusivos,respondidos,total}};
+    }
+    function priorizarTestes(testes,hipoteses,limite=MAX_TESTES){
+        const mapa=new Map();
+        testes.forEach(t=>{
+            const key=n(t.texto);if(!key)return;
+            const anterior=mapa.get(key)||{};
+            mapa.set(key,{...anterior,...t,hipoteses:uniq([...arr(anterior.hipoteses),...arr(t.hipoteses)]),
+                hipoteseIds:uniq([...arr(anterior.hipoteseIds),anterior.hipoteseId,...arr(t.hipoteseIds),t.hipoteseId,t.condicaoId]),
+                regiaoIds:uniq([...arr(anterior.regiaoIds),...arr(t.regiaoIds),t.regiaoMotor31]),
+                prioridade:Math.max(Number(anterior.prioridade)||0,Number(t.prioridade)||0)});
+        });
+        const candidatos=[...mapa.values()].map(t=>{
+            const vinculadas=hipoteses.filter(h=>(t.hipoteseIds.includes(h.id)||arr(t.hipoteses).some(nome=>n(nome)===n(h.nome)))&&(!t.regiaoIds.length||t.regiaoIds.includes(h.regiaoId)));
+            t.hipoteseIds=uniq([...t.hipoteseIds,...vinculadas.map(h=>h.id)]);
+            t.regiaoIds=uniq([...t.regiaoIds,...vinculadas.map(h=>h.regiaoId)]);
+            const concorrentes=hipoteses.filter(h=>t.regiaoIds.includes(h.regiaoId)&&!vinculadas.includes(h));
+            const discriminativo=vinculadas.length>0&&concorrentes.length>0;
+            return {...t,hipoteseId:t.hipoteseIds.length===1?t.hipoteseIds[0]:'',discriminativo,
+                motivoPriorizacao:discriminativo?'Diferencia hipóteses concorrentes da mesma região':'Avalia achados pertinentes às hipóteses em investigação'};
+        });
+        const selecionados=[],cobertas=new Set();
+        // Primeiro oferece uma verificação específica para cada hipótese; depois completa o conjunto.
+        hipoteses.forEach(h=>{
+            if(cobertas.has(chaveHipotese(h))||selecionados.length>=limite)return;
+            const t=candidatos.filter(t=>!selecionados.includes(t)&&t.hipoteseIds.includes(h.id)&&t.regiaoIds.includes(h.regiaoId))
+                .sort((a,b)=>Number(b.discriminativo)-Number(a.discriminativo)||b.prioridade-a.prioridade)[0];
+            if(t){selecionados.push(t);hipoteses.filter(x=>t.hipoteseIds.includes(x.id)&&t.regiaoIds.includes(x.regiaoId)).forEach(x=>cobertas.add(chaveHipotese(x)));}
+        });
+        candidatos.filter(t=>!selecionados.includes(t)).sort((a,b)=>Number(b.discriminativo)-Number(a.discriminativo)||b.prioridade-a.prioridade)
+            .slice(0,Math.max(0,limite-selecionados.length)).forEach(t=>selecionados.push(t));
+        return selecionados;
+    }
+
+    function construirExame(hipoteses,hmaResultado,modificadores,limite=MAX_TESTES){
         const clusters=hipoteses.filter(h=>h.grupo==='cluster'&&h.testes.length).slice(0,3);
         const mapa=new Map();
         hipoteses.forEach(h=>h.testes.forEach(t=>{
@@ -360,7 +431,7 @@
             if(!mapa.has(key)) mapa.set(key,{texto:t,tipo:classificarTeste(t),hipoteses:[],hipoteseIds:[],regiaoIds:[],prioridade:h.prioridadeOrdenacao});
             const x=mapa.get(key); x.hipoteses.push(h.nome);x.hipoteseIds.push(h.id);x.regiaoIds.push(h.regiaoId);x.prioridade=Math.max(x.prioridade,h.prioridadeOrdenacao);
         }));
-        const testes=Array.from(mapa.values()).map(x=>({...x,hipoteses:uniq(x.hipoteses),hipoteseIds:uniq(x.hipoteseIds),regiaoIds:uniq(x.regiaoIds),hipoteseId:uniq(x.hipoteseIds).length===1?x.hipoteseIds[0]:''})).sort((a,b)=>b.prioridade-a.prioridade).slice(0,MAX_TESTES);
+        const testes=priorizarTestes([...mapa.values()],hipoteses,limite);
         const grupos={}; testes.forEach(t=>{(grupos[t.tipo]||(grupos[t.tipo]=[])).push(t);});
         const analises=Object.entries(grupos).map(([tipo,itens])=>({tipo,titulo:ROTULOS_ANALISE[tipo]||tipo,itens}));
         const seguranca=arr(hmaResultado?.alertas).map(a=>({titulo:a?.nome||'Pista de segurança',descricao:a?.acao||a?.desc||''}));
@@ -404,17 +475,30 @@
             catch(err){ console.warn('Motor 3.1 Cotovelo:',err); }
         }
         const regioesAtivas=new Set(regioes.map(r=>r.id));
+        // O grupo canônico vem do banco, não da presença eventual de um limiar no item.
+        planoGerado.hipoteses=arr(planoGerado.hipoteses).map(h=>{
+            const reg=banco()[h.regiaoId];
+            const grupo=arr(reg?.clusters).some(i=>i.id===h.id)?'cluster':arr(reg?.diferenciais).some(i=>i.id===h.id)?'diferencial':h.grupo;
+            return {...h,grupo};
+        });
         const todos=regioes.flatMap(r=>candidatosRegiao(r,contexto,hmaResultado,true));
         catalogoHipoteses=Array.from(new Map([...todos,...arr(planoGerado.hipoteses)].map(h=>[chaveHipotese(h),h])).values())
             .filter(h=>regioesAtivas.has(h.regiaoId));
         const porChave=new Map(arr(planoGerado.hipoteses).filter(h=>regioesAtivas.has(h.regiaoId)).map(h=>[chaveHipotese(h),h]));
         catalogoHipoteses.filter(h=>hipotesesAdicionadas.has(chaveHipotese(h))).forEach(h=>porChave.set(chaveHipotese(h),h));
-        planoGerado.hipoteses=[...porChave.values()].filter(h=>!hipotesesDescartadas.has(chaveHipotese(h)))
+        catalogoHipoteses.filter(h=>window.obterEstadoRegiao?.(h.regiaoId)?.hipotesePrincipalAtiva===`${h.grupo}::${h.id}`)
+            .forEach(h=>{if(!porChave.has(chaveHipotese(h)))porChave.set(chaveHipotese(h),h);});
+        const registrados=achadosRegistrados();
+        // Uma mudança na HMA não pode apagar do plano uma hipótese com exame já registrado.
+        catalogoHipoteses.filter(h=>registrados.some(a=>a.id===h.id&&a.regiaoId===h.regiaoId&&(!a.grupo||a.grupo===h.grupo)))
+            .forEach(h=>{if(!porChave.has(chaveHipotese(h)))porChave.set(chaveHipotese(h),h);});
+        planoGerado.hipoteses=[...porChave.values()].filter(h=>!hipotesesDescartadas.has(chaveHipotese(h))&&!arr(window.obterEstadoRegiao?.(h.regiaoId)?.hipotesesDescartadas).includes(`${h.grupo}::${h.id}`))
+            .map(h=>atualizarHipotesePeloExame(h,registrados))
             .sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));
         planoGerado.regioes=arr(planoGerado.regioes).filter(r=>regioesAtivas.has(r.id));
         // Exames e clusters derivam exclusivamente das hipóteses ainda abertas.
         const exameAtual=planoGerado.exame||{};
-        const reconstruido=construirExame(planoGerado.hipoteses,hmaResultado,modificadores);
+        const reconstruido=construirExame(planoGerado.hipoteses,hmaResultado,modificadores,Number.MAX_SAFE_INTEGER);
         planoGerado.exame={...exameAtual,...reconstruido,
             seguranca:regioesAtivas.has('cervical')?arr(exameAtual.seguranca):reconstruido.seguranca};
         const chavesAbertas=new Set(planoGerado.hipoteses.map(chaveHipotese));
@@ -429,13 +513,18 @@
         Object.values(planoGerado.motores31||{}).forEach(m=>{
             if(Array.isArray(m.condicoes))m.condicoes=m.condicoes.filter(f=>condicoesAbertas.has(f.id));
         });
+        const familiasEspecialistas=['familiasCervical','familiasOmbro','familiasCotovelo'].flatMap(chave=>arr(planoGerado.exame[chave]));
         const testesEspecialistas=arr(exameAtual.testesPrioritarios).filter(t=>{
             if(t.regiaoMotor31&&!regioesAtivas.has(t.regiaoMotor31))return false;
             if(!t.motor31)return false;
             return arr(t.hipoteses).some(nome=>rotulosAbertos.has(nome));
+        }).map(t=>{
+            const familias=familiasEspecialistas.filter(f=>arr(t.hipoteses).includes(f.nome));
+            const vinculadas=planoGerado.hipoteses.filter(h=>(!t.regiaoMotor31||h.regiaoId===t.regiaoMotor31)&&
+                (arr(t.hipoteses).includes(h.nome)||familias.some(f=>f.id===h.motor31?.condicaoId)));
+            return {...t,hipoteseIds:uniq([...arr(t.hipoteseIds),...vinculadas.map(h=>h.id)]),regiaoIds:uniq([...arr(t.regiaoIds),...vinculadas.map(h=>h.regiaoId)])};
         });
-        planoGerado.exame.testesPrioritarios=Array.from(new Map([...testesEspecialistas,...reconstruido.testesPrioritarios]
-            .map(t=>[n(t.texto),t])).values()).filter(t=>t.texto).slice(0,MAX_TESTES+12);
+        planoGerado.exame.testesPrioritarios=priorizarTestes([...testesEspecialistas,...reconstruido.testesPrioritarios],planoGerado.hipoteses);
         const grupos={};planoGerado.exame.testesPrioritarios.forEach(t=>{(grupos[t.tipo]||(grupos[t.tipo]=[])).push(t);});
         planoGerado.exame.analises=Object.entries(grupos).map(([tipo,itens])=>({tipo,titulo:ROTULOS_ANALISE[tipo]||tipo,itens}));
         planoGerado.exame.clusters=arr(planoGerado.exame.clusters).filter(h=>chavesAbertas.has(chaveHipotese(h)));
@@ -454,7 +543,7 @@
         host.innerHTML=`
             <div class="ks30-bridge-head"><div><strong>Direção para o exame</strong><span>História + contexto clínico</span></div><span class="ks30-count">${plano.exame.testesPrioritarios.length} itens priorizados</span></div>
             <div class="ks30-bridge-regions">${regioes?`<span>Regiões orientadas: <strong>${esc(regioes)}</strong></span>`:'<span>Região ainda não definida com segurança pela história.</span>'}</div>
-            <div class="ks30-bridge-hypotheses">${top.map((h,i)=>chip(`${i===0?'Prioridade':'Diferencial'} · ${h.nome}`,i===0?'is-primary':'')).join('')}</div>
+            <div class="ks30-bridge-hypotheses">${top.map((h,i)=>chip(`${i===0?'Prioridade':'Diferencial'} · ${h.nome}${h.exameAtual?.respondidos?' · '+h.exameAtual.rotulo:''}`,i===0?'is-primary':'')).join('')}</div>
             ${mod.length?`<div class="ks30-bridge-modifiers"><strong>Modificadores</strong><span>${mod.map(x=>esc(x.titulo)).join(' · ')}</span></div>`:''}
             <small>O exame deve confirmar, enfraquecer ou manter abertas essas hipóteses. Nenhuma hipótese é fechada apenas pela HMA.</small>`;
     }
@@ -478,7 +567,8 @@
             fatores:arr(c?.fatoresPiora).map(n).sort(),
             medicamentos:n(c?.textoMedicamentos||arr(c?.medicamentos).join(' ')),
             cirurgias:n(c?.textoCirurgias||cirurgias.join(' ')),
-            regioes:regioesSelecionadasAtual().slice().sort()
+            regioes:regioesSelecionadasAtual().slice().sort(),
+            exame:achadosRegistrados().map(a=>[a.regiaoId,a.grupo,a.id,arr(a.achados).map(t=>[t.texto,t.resultado])])
         });
     }
 
@@ -523,8 +613,12 @@
             }
         });
         tela.addEventListener('change',e=>{
-            if(e.target?.matches('#grupo_regioes_mapeamento input,.fatores-piora-compactos input,input[name*="comorb"],input[name*="anteced"]')) agendarAtualizacao();
+            if(e.target?.matches('#grupo_regioes_mapeamento input,.fatores-piora-compactos input,input[name*="comorb"],input[name*="anteced"],.teste-resultado-select')) agendarAtualizacao();
         });
+        // Captura antes de o seletor ser removido pela rerenderização; inclui testes em modal.
+        document.addEventListener('change',e=>{
+            if(e.target?.matches?.('.teste-resultado-select'))agendarAtualizacao(80);
+        },true);
         ['tags_medicamentos','tags_cirurgias'].forEach(id=>{
             const el=document.getElementById(id);
             if(el)new MutationObserver(()=>agendarAtualizacao(120)).observe(el,{childList:true,subtree:true,characterData:true});
