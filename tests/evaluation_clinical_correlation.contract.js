@@ -12,7 +12,10 @@ assert.match(src,/IMPRESSÃO FISIOTERAPÊUTICA/,'o laudo deve integrar anamnese 
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:12/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:13/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
+assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
+assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
 assert.match(src,/textoAutomatico&&!laudo\.revisado/,'texto profissional editado ou revisado deve continuar preservado');
 assert.match(src,/Quanto à queixa atual, registra-se:/,'rascunhos automáticos da versão anterior devem ser reconhecidos para migração');
 assert.match(src,/O exame físico ainda não contém resultados de testes registrados\./,'a migração deve ser restrita ao modelo automático antigo');
@@ -21,7 +24,7 @@ assert.match(src,/EXAME FÍSICO-FUNCIONAL\\n/,'o relatório formal deve separar 
 assert.match(src,/contagem=resultados\.reduce/,'a integração deve resumir resultados sem repetir a lista completa de testes');
 assert.match(src,/idsVinculados=new Set/,'testes prioritários devem manter vínculo com a hipótese que os originou');
 assert.match(src,/eixoId:a\.id\|\|''/,'resultados do exame devem preservar o eixo clínico de origem');
-assert.match(src,/if\(seguranca\)secoes\.push\(`SEGURANÇA CLÍNICA/,'segurança clínica só deve aparecer quando houver conteúdo relevante');
+assert.match(src,/if\(seguranca\)conteudo\.push\(`SEGURANÇA CLÍNICA/,'segurança clínica só deve aparecer quando houver conteúdo relevante');
 assert.doesNotMatch(src,/`CONDUTA FISIOTERAPÊUTICA\\n\$\{conduta\}`/,'o relatório automático não deve inventar uma conduta não registrada');
 
 function campo({id='',value='',label='',type='text',checked=true,classes=[],tagName='INPUT',selectedText=''}){
@@ -63,8 +66,11 @@ assert.match(report,/Ortostatismo prolongado/i,'exposições ocupacionais sem id
 assert.match(report,/DM/,'comorbidades devem chegar ao relatório');
 assert.match(report,/Sono ruim/,'fatores psicossociais devem chegar ao relatório');
 assert.strictEqual((report.match(/Paciente Teste/g)||[]).length,1,'a identificação do paciente não deve ser repetida na anamnese');
-assert.match(report,/Teste A \(positivo\); Teste B \(negativo\); Teste C \(inconclusivo\)/,'todos os resultados válidos do exame devem chegar ao relatório');
-assert.match(report,/(?:não preenche|insuficientes para atingir|não atendem) (?:o|ao) critério clínico/,'resultados abaixo do limiar devem produzir interpretação clínica cautelosa');
+assert.match(report,/Teste A apresentou resultado positivo/,'achados positivos devem ser narrados naturalmente');
+assert.match(report,/Teste B apresentou resultado negativo/,'achados negativos devem ser narrados naturalmente');
+assert.match(report,/Teste C permaneceu inconclusivo/,'achados inconclusivos devem preservar a incerteza');
+assert.doesNotMatch(report,/\((?:positivo|negativo|inconclusivo)\)/,'o exame não deve parecer uma exportação direta de campos');
+assert.match(report,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/,'resultados abaixo do limiar devem produzir interpretação clínica cautelosa');
 assert.strictEqual((report.match(/em pé/gi)||[]).length,1,'fator de piora já descrito na HMA não deve ser repetido');
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
@@ -110,11 +116,12 @@ assert.match(predominioPositivo,/(?:preenchem|atende|atingem) (?:o|ao) critério
 
 const semExame=renderizarCaso([],[]);
 assert.doesNotMatch(semExame,/EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'seções sem conteúdo não devem ser exibidas');
+assert.strictEqual(semExame,'','sem exame, o sistema não deve fabricar um relatório final incompleto');
 
 function testarCondicao({id,nome,regiaoId,regiao,limiar,testes,esperaPreencher=false}){
   context.window.KineSysMotorClinico3.ultimoPlano={versao:'matriz-10',hipoteses:[{id,nome,regiaoId,aConfirmar:[],limiar}],exame:{testesPrioritarios:testes.map(t=>({texto:t.texto,hipoteseId:id}))}};
   const texto=renderizarCaso([{regiaoId,regiao,id,nome,achados:testes}],[{regiao,codigoHipotese:id,nomeHipotese:nome,nivel:'avaliado',redFlags:[]}]);
-  if(esperaPreencher)assert.match(texto,/(?:preenchem|atende|atingem) (?:o|ao) critério/);else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atendem) (?:o|ao) critério clínico/);
+  if(esperaPreencher)assert.match(texto,/(?:preenchem|atende|atingem) (?:o|ao) critério/);else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/);
   return texto;
 }
 const matrizPoucoTestada=[
@@ -139,13 +146,30 @@ const obrigatorioAusente=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste obrigatório',resultado:'negativo'},{texto:'Teste B',resultado:'positivo'},{texto:'Teste C',resultado:'positivo'}]}],
   [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(obrigatorioAusente,/(?:não preenche|insuficientes para atingir|não atendem) (?:o|ao) critério clínico/,'regra combinada não pode ser aprovada sem o teste obrigatório');
+assert.match(obrigatorioAusente,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/,'regra combinada não pode ser aprovada sem o teste obrigatório');
 context.window.KineSysMotorClinico3.ultimoPlano.hipoteses[0].regraConfirmacao={tipo:'qualquer'};
 const regraQualquer=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
   [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
 );
 assert.match(regraQualquer,/(?:preenchem|atende|atingem) (?:o|ao) critério/,'regra qualquer deve aceitar um achado positivo quando a base assim definir');
+
+const contraditorio=renderizarCaso(
+  [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste duplicado',resultado:'positivo'},{texto:'Teste duplicado',resultado:'negativo'}]}],
+  [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
+);
+assert.match(contraditorio,/resultados divergentes/i,'resultados contraditórios devem interromper uma conclusão automática');
+assert.doesNotMatch(contraditorio,/preenchem o critério|atende ao critério|atingem o critério/,'um exame contraditório não pode sustentar a hipótese');
+
+const hmaField=fields.find(f=>f.id==='paciente_hma'),hmaOriginal=hmaField.value;
+hmaField.value='';
+const semHistoria=renderizarCaso(
+  [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
+  [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
+);
+assert.strictEqual(semHistoria,'','sem HMA, o sistema não deve preencher o documento com frases de ausência de dados');
+assert.match(elements['ks-laudo-status'].textContent,/História da Moléstia Atual/,'a pendência deve aparecer fora do documento');
+hmaField.value=hmaOriginal;
 
 console.log('Evaluation clinical correlation contract OK');
 

@@ -35,7 +35,7 @@
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261014-relatorio-clinico-r2',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261014-relatorio-semantico-r3',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
