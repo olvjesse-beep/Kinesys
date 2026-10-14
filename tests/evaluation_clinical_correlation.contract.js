@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:17/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:18/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -231,6 +231,34 @@ assert.ok(elements['ks-laudo-texto'].value.startsWith('Texto profissional revisa
 context.window.preencherLaudoAvaliacaoKineSys({texto:'Texto editado manualmente.',textoAutomatico:false,revisado:false,versaoTexto:14,fonte:'anterior'});
 context.window.renderizarLaudoAvaliacaoKineSys();
 assert.ok(elements['ks-laudo-texto'].value.startsWith('Texto editado manualmente.\n\nData de emissão:'),'migração deve preservar o texto editado e acrescentar somente o fechamento');
+// Exercita todos os rótulos reais em três estados; não equivale a validar diagnósticos.
+const corpusClinico=vm.createContext({});
+vm.runInContext(fs.readFileSync('database/mapeamento_clinico.js','utf8'),corpusClinico);
+for(const arquivo of fs.readdirSync('database/regioes').filter(nome=>nome.endsWith('-ext-1.0.0.js')))vm.runInContext(fs.readFileSync('database/regioes/'+arquivo,'utf8'),corpusClinico);
+const bancoReal=vm.runInContext('BANCO_MAPEAMENTO_CLINICO',corpusClinico);
+let narrativasVerificadas=0;
+for(const [regiaoId,regiao] of Object.entries(bancoReal)){
+ for(const item of [...regiao.clusters,...regiao.diferenciais]){
+  if(!item.testes?.length)continue;
+  context.window.KineSysMotorClinico3.ultimoPlano={versao:'corpus-narrativo',hipoteses:[{id:item.id,nome:item.nome,regiaoId,aConfirmar:[]}],exame:{testesPrioritarios:[]}};
+  for(const resultado of ['positivo','negativo','inconclusivo']){
+   const texto=renderizarCaso([{regiaoId,regiao:regiao.nome,id:item.id,nome:item.nome,achados:item.testes.map(texto=>({texto,resultado}))}],
+    [{regiao:regiao.nome,codigoHipotese:item.id,nomeHipotese:item.nome,nivel:resultado,redFlags:[]}]);
+   const laudoTeste=context.window.coletarLaudoAvaliacaoKineSys();
+   assert.ok(texto.trim(),`${item.id}: documento não vazio`);
+   assert.deepStrictEqual(Array.from(laudoTeste.validacao.testesAusentes),[],`${item.id} ${resultado}: todos os achados precisam estar representados`);
+   assert.doesNotMatch(texto,/undefined|\[object Object\]|Resultado positivo para “/,'não exportar dados crus');
+   assert.match(texto,/Data de emissão:[\s\S]*CREFITO/,'preservar fechamento documental');
+   narrativasVerificadas++;
+  }
+ }
+}
+console.log(`Clinical narrative corpus: ${narrativasVerificadas} documents across ${Object.keys(bancoReal).length} regions OK`);
+const ausenciaNegativa=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro',id:'ausencia',nome:'Verificação de segurança',achados:[{texto:'Ausência de sinais sistêmicos preocupantes',resultado:'negativo'}]}],[]);
+assert.match(ausenciaNegativa,/critério de ausência não foi confirmado/);
+assert.doesNotMatch(ausenciaNegativa,/O exame evidenciou sinais sistêmicos/,'negação de ausência não comprova presença');
+const declaracaoNegativa=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro',id:'provocacao',nome:'Provocação',achados:[{texto:'Palpação reproduz a dor familiar',resultado:'negativo'}]}],[]);
+assert.match(declaracaoNegativa,/Não se confirmou no exame que palpação reproduzisse a dor familiar/);
 hmaField.value='';
 const semHistoria=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
