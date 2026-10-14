@@ -52,13 +52,28 @@
         return regiaoAtiva;
     };
 
+    function itemClinicoDaHipotese(hipotese){
+        if(hipotese?.item)return hipotese.item;
+        const id=normalizar(hipotese?.id);if(!id||typeof BANCO_MAPEAMENTO_CLINICO==='undefined')return null;
+        for(const regiao of Object.values(BANCO_MAPEAMENTO_CLINICO||{})){
+            const item=[...(regiao?.clusters||[]),...(regiao?.diferenciais||[])].find(c=>normalizar(c?.id)===id);
+            if(item)return item;
+        }
+        return null;
+    }
+    function criterioDaHipotese(hipotese){
+        const item=itemClinicoDaHipotese(hipotese)||{},regra=typeof item.regraConfirmacao==='object'?item.regraConfirmacao:typeof hipotese?.regraConfirmacao==='object'?hipotese.regraConfirmacao:{};
+        const minimo=Number(regra.minimo||item.limiar||hipotese?.limiar||0);
+        return {tipo:regra.tipo||'',minimo:Number.isFinite(minimo)?minimo:0,obrigatorios:Array.isArray(regra.obrigatorios)?regra.obrigatorios.filter(Number.isInteger):[]};
+    }
+
     function dadosAtuais(){
         const sintese=gerarSinteseMapeamento(),achados=window.coletarAchadosLaudoKineSys?.()||[],seguranca=window.validarSegurancaParaFinalizacao();
         const planoAtual=window.KineSysMotorClinico3?.ultimoPlano||window.gerarPlanoClinicoHMAKineSys?.()||null;
         const plano=planoAtual?{
             versao:planoAtual.versao||'',
             insuficiente:!!planoAtual.insuficiente,
-            hipoteses:(planoAtual.hipoteses||[]).filter(Boolean).map(h=>({id:h.id||'',nome:h.nome||'',regiaoId:h.regiaoId||'',aConfirmar:(h.aConfirmar||[]).filter(Boolean)})),
+            hipoteses:(planoAtual.hipoteses||[]).filter(Boolean).map(h=>({id:h.id||'',nome:h.nome||'',regiaoId:h.regiaoId||'',aConfirmar:(h.aConfirmar||[]).filter(Boolean),criterio:criterioDaHipotese(h)})),
             testesPrioritarios:(planoAtual.exame?.testesPrioritarios||[]).filter(Boolean).map(t=>({texto:t.texto||t.nome||'',tipo:t.tipo||'',hipoteseId:t.hipoteseId||t.condicaoId||''})).filter(t=>t.texto),
             lacunas:(planoAtual.lacunas||[]).filter(Boolean)
         }:null;
@@ -97,8 +112,14 @@
     function valorCampo(d,id){return limparTextoClinico(d.campos?.[id]||'');}
     function primeiroCampo(d,ids){for(const id of ids){const valor=valorCampo(d,id);if(valor)return valor;}return'';}
     function unirNatural(itens){const lista=itens.map(limparTextoClinico).filter(Boolean);if(!lista.length)return'';if(lista.length===1)return lista[0];return lista.slice(0,-1).join(', ')+' e '+lista.at(-1);}
-    function nomeEmFrase(value){const nome=limparTextoClinico(nomeLimpo(value));return nome?nome.charAt(0).toLowerCase()+nome.slice(1):'';}
+    function nomeClinico(value){return limparTextoClinico(nomeLimpo(value)).replace(/\s+[—–-]\s+(?:cluster(?: de exame)?|padrão clínico|suspeita|investigação causal|hipótese(?: clínica| funcional)?|diferencial(?: neurovascular| neurológico| médico)?|rastreamento).*$/i,'').trim();}
+    function nomeEmFrase(value){const nome=nomeClinico(value);if(!nome)return'';return /^[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9]{2,}(?:\s|$)/.test(nome)?nome:nome.charAt(0).toLowerCase()+nome.slice(1);}
     function fatorEmFrase(value){const fator=limparTextoClinico(value).toLowerCase();return ({'em pé':'permanecer em pé','sentado':'permanecer sentado','noturno':'o período noturno','movimento':'o movimento','repouso':'o repouso','carga':'a aplicação de carga'})[fator]||fator;}
+    function fatorJaDescrito(hma,fator){
+        const texto=normalizar(hma),chave=normalizar(fator);
+        const aliases={'em pe':['em pe','ortostatismo'],'sentado':['sentad','sedestacao'],'noturno':['noturn','a noite'],'movimento':['moviment'],'repouso':['repous'],'carga':['carga','peso']};
+        return (aliases[chave]||[chave]).some(termo=>termo&&texto.includes(termo));
+    }
     // O relatório usa apenas informações registradas; hipóteses não são diagnósticos confirmados.
     const RESULTADO_LAUDO={positivo:'positivo',negativo:'negativo',inconclusivo:'inconclusivo'};
     const nomeLimpo=n=>(window.nomeHipoteseLimpoKineSys||(x=>x))(n);
@@ -117,10 +138,12 @@
         const grupos=d.gruposAnamnese||{},linhas=[];
         if(hma)linhas.push(fraseClinica(hma));
         const eva=primeiroCampo(d,['eva_slider']);
-        const fatores=grupos.fatoresPiora||[];
-        if(eva||fatores.length){
-            const dor=eva?`Intensidade atual de ${eva}/10 na EVA`:'';
-            const piora=fatores.length?`agravada por ${unirNatural(fatores.map(fatorEmFrase))}`:'';
+        const fatores=(grupos.fatoresPiora||[]).filter(fator=>!fatorJaDescrito(hma,fator));
+        const evaNumero=String(eva).replace(/\D/g,'');
+        const evaJaDescrita=evaNumero&&new RegExp(`(?:eva\\s*(?:de\\s*)?${evaNumero}(?:\\s*\\/\\s*10)?|${evaNumero}\\s*\\/\\s*10)`,'i').test(hma);
+        if((eva&&!evaJaDescrita)||fatores.length){
+            const dor=eva&&!evaJaDescrita?`Intensidade atual de ${eva}/10 na EVA`:'';
+            const piora=fatores.length?`${dor?'agravada':'Sintomas agravados'} por ${unirNatural(fatores.map(fatorEmFrase))}`:'';
             linhas.push(fraseClinica([dor,piora].filter(Boolean).join(', ')));
         }
         const mecanismo=primeiroCampo(d,['paciente_mecanismo_lesao']);
@@ -171,16 +194,25 @@
             const idsVinculados=new Set((d.plano?.testesPrioritarios||[]).filter(t=>achadosRegiao.some(a=>(a.achados||[]).some(x=>normalizar(x.texto)===normalizar(t.texto)))).map(t=>normalizar(t.hipoteseId)).filter(Boolean));
             const hip=hipoteses.find(h=>codigo&&normalizar(h.id)===codigo)||hipoteses.find(h=>idsEixos.has(normalizar(h.id))||idsVinculados.has(normalizar(h.id)))||(alvo?hipoteses.find(h=>nomeLimpo(h.nome)===nomeLimpo(regiao.nomeHipotese)||normalizar(h.nome).includes(alvo)||alvo.includes(normalizar(h.nome))):null)||hipoteses.find(h=>normalizar(h.regiaoId)===regiaoAlvo);
             const sugeridos=[...(hip?.aConfirmar||[])];
-            const resultados=achadosRegiao.flatMap(a=>(a.achados||[]).filter(x=>RESULTADO_LAUDO[x.resultado]).map(x=>({teste:limparTextoClinico(x.texto),resultado:x.resultado,eixo:a.nome,eixoId:a.id||''})));
+            const achadosVinculados=hip?achadosRegiao.filter(a=>normalizar(a.id)===normalizar(hip.id)):[];
+            const fonteResultados=achadosVinculados.length?achadosVinculados:achadosRegiao;
+            const resultados=fonteResultados.flatMap(a=>(a.achados||[]).map((x,indice)=>({x,indice})).filter(({x})=>RESULTADO_LAUDO[x.resultado]).map(({x,indice})=>({teste:limparTextoClinico(x.texto),resultado:x.resultado,indice,eixo:a.nome,eixoId:a.id||''})));
             const contagem=resultados.reduce((acc,item)=>(acc[item.resultado]=(acc[item.resultado]||0)+1,acc),{});
-            return {regiao:regiao.regiao,hipoteseAnamnese:hip?.nome||regiao.nomeHipotese||'',motivos:sugeridos.slice(0,4),resultados,contagem,nivel:regiao.nivel,direcao:regiao.direcaoInvestigacao||regiao.hipotese||'',conclusao:regiao.textoDocumento||'',direcaoProfissional:regiao.direcaoProfissional||''};
+            return {regiao:regiao.regiao,hipoteseAnamnese:hip?.nome||regiao.nomeHipotese||'',criterio:hip?.criterio||{tipo:'',minimo:0,obrigatorios:[]},motivos:sugeridos.slice(0,4),resultados,contagem,nivel:regiao.nivel,direcao:regiao.direcaoInvestigacao||regiao.hipotese||'',conclusao:regiao.textoDocumento||'',direcaoProfissional:regiao.direcaoProfissional||''};
         });
     }
     window.coletarContextoIntegradoAvaliacaoKineSys=function(){const d=dadosAtuais();return clone({...d,correlacoes:construirCorrelacoes(d)});};
-    function achadosPorQuantidade(quantidade,resultado){
-        const adjetivos={positivo:['positivo','positivos'],negativo:['negativo','negativos'],inconclusivo:['inconclusivo','inconclusivos']};
-        const flexao=adjetivos[resultado]||[resultado,resultado];
-        return `${quantidade} ${quantidade===1?'achado':'achados'} ${quantidade===1?flexao[0]:flexao[1]}`;
+    function estadoDoCriterio(c){
+        const criterio=c.criterio||{},positivos=new Set(c.resultados.filter(r=>r.resultado==='positivo').map(r=>r.indice));
+        const minimo=Number(criterio.minimo||0),obrigatorios=criterio.obrigatorios||[];
+        if(criterio.tipo==='qualquer')return positivos.size>0;
+        if(criterio.tipo==='combinada')return obrigatorios.every(indice=>positivos.has(indice))&&(!minimo||positivos.size>=minimo);
+        if(minimo)return positivos.size>=minimo;
+        return null;
+    }
+    function fraseVariada(chave,opcoes){
+        const soma=Array.from(String(chave||'')).reduce((total,letra)=>total+letra.charCodeAt(0),0);
+        return opcoes[soma%opcoes.length];
     }
     function secaoCorrelacao(d){
         const correlacoes=construirCorrelacoes(d);
@@ -189,21 +221,31 @@
         return avaliadas.map(c=>{
             const hipotese=nomeEmFrase(c.hipoteseAnamnese);
             const positivos=c.contagem.positivo||0,negativos=c.contagem.negativo||0,inconclusivos=c.contagem.inconclusivo||0;
-            const totais=[positivos?achadosPorQuantidade(positivos,'positivo'):'',negativos?achadosPorQuantidade(negativos,'negativo'):'',inconclusivos?achadosPorQuantidade(inconclusivos,'inconclusivo'):''].filter(Boolean);
             const alvo=hipotese?`a hipótese de ${hipotese}`:'a hipótese em análise';
             const alvoIndireto=hipotese?`à hipótese de ${hipotese}`:'à hipótese em análise';
-            let interpretacao='';
-            if(positivos&&(negativos||inconclusivos)){
-                interpretacao=positivos>negativos+inconclusivos
-                    ?`O predomínio de respostas positivas, em conjunto com a história clínica, sustenta ${alvo}.`
-                    :`O conjunto oferece suporte parcial ${alvoIndireto}, porém os resultados divergentes limitam a conclusão.`;
-            }else if(positivos)interpretacao=positivos===1?`O achado positivo reforça ${alvo} quando correlacionado à história clínica.`:`A convergência entre os achados positivos e a história clínica reforça ${alvo}.`;
-            else if(negativos&&!inconclusivos)interpretacao=`Os testes realizados não sustentaram ${alvo}. Esse resultado, isoladamente, não a exclui.`;
-            else if(negativos&&inconclusivos)interpretacao=`Os resultados não sustentaram ${alvo}; parte do exame foi inconclusiva.`;
-            else interpretacao=`O exame foi inconclusivo e não esclareceu ${alvo}.`;
-            const resumo=hipotese?`A investigação de ${hipotese} apresentou ${unirNatural(totais)}.`:`O exame de ${c.regiao.toLowerCase()} apresentou ${unirNatural(totais)}.`;
-            const alerta=c.nivel==='alerta'?' Há sinais de alerta que exigem análise antes da definição da conduta.':'';
-            return `${resumo} ${interpretacao}${alerta}`;
+            const alvoInicio=alvo.charAt(0).toUpperCase()+alvo.slice(1);
+            if(c.nivel==='alerta')return'A interpretação clínico-funcional permanece condicionada à análise dos sinais de alerta descritos abaixo.';
+            const criterio=estadoDoCriterio(c);
+            if(criterio===true)return fraseVariada(c.hipoteseAnamnese,[
+                `História e exame apresentam concordância e preenchem o critério clínico registrado para ${hipotese||'a hipótese em análise'}.`,
+                `O conjunto da história clínica e do exame atende ao critério registrado para ${hipotese||'a hipótese em análise'}.`,
+                `Os achados clínicos convergem e atingem o critério registrado para ${hipotese||'a hipótese em análise'}.`
+            ]);
+            if(positivos&&criterio===false)return fraseVariada(c.hipoteseAnamnese,[
+                `Há achados favoráveis ${alvoIndireto}, mas o conjunto ainda não preenche o critério clínico registrado.`,
+                `O exame encontrou elementos compatíveis com ${alvo}, ainda insuficientes para atingir o critério clínico definido.`,
+                `${alvoInicio} permanece possível, porém os achados registrados ainda não atendem ao critério clínico estabelecido.`
+            ]);
+            if(positivos)return fraseVariada(c.hipoteseAnamnese,[
+                `Os achados são compatíveis com ${alvo}, mas sua relevância depende da correlação com a história e o restante do exame.`,
+                `O exame oferece elementos a favor de ${alvo}, sem força suficiente para uma conclusão isolada.`
+            ]);
+            if(negativos&&!inconclusivos)return fraseVariada(c.hipoteseAnamnese,[
+                `O exame não ofereceu suporte ${alvoIndireto}. Os resultados negativos, isoladamente, não permitem excluí-la.`,
+                `Os testes realizados não sustentaram ${alvo}; esse resultado, por si só, não permite afastá-la.`
+            ]);
+            if(negativos&&inconclusivos)return`Os resultados disponíveis não sustentam ${alvo}; parte do exame permaneceu inconclusiva.`;
+            return`O exame foi inconclusivo e não permitiu esclarecer ${alvo}.`;
         }).join('\n\n');
     }
     function secaoSeguranca(d){
@@ -223,7 +265,7 @@
         if(exame)secoes.push(`EXAME FÍSICO-FUNCIONAL\n${exame}`);
         if(impressao)secoes.push(`IMPRESSÃO FISIOTERAPÊUTICA\n${impressao}`);
         if(seguranca)secoes.push(`SEGURANÇA CLÍNICA\n${seguranca}`);
-        return {texto:secoes.join('\n\n'),modo:exameRegistrado?'assistido':'manual',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:11,atualizadoEm:new Date().toISOString()};
+        return {texto:secoes.join('\n\n'),modo:exameRegistrado?'assistido':'manual',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:12,atualizadoEm:new Date().toISOString()};
     }
     window.preencherLaudoAvaliacaoKineSys=function(value){laudo=value&&typeof value==='object'?clone(value):null;const editor=document.getElementById('ks-laudo-texto');if(editor)editor.value=laudo?.texto||'';};
     window.coletarLaudoAvaliacaoKineSys=function(){return laudo?clone(laudo):null;};
@@ -236,7 +278,7 @@
             (textoLaudo.includes('foi avaliado(a) pela fisioterapia')&&textoLaudo.includes('Com base nos dados registrados, recomenda-se'))||
             (textoLaudo.startsWith('RELATÓRIO FISIOTERAPÊUTICO')&&textoLaudo.includes('Quanto à queixa atual, registra-se:')&&textoLaudo.includes('O exame físico ainda não contém resultados de testes registrados.')&&textoLaudo.includes('A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.'))
         );
-        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==11)))laudo=textoBase(d);
+        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==12)))laudo=textoBase(d);
         const mudou=laudo.fonte!==d.fonte;
         if(mudou)laudo.revisado=false;
         editor.value=laudo.texto;
