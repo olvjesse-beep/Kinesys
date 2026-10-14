@@ -14,7 +14,7 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.6-funil-dinamico';
+    const VERSION='3.0.7-evidencias-discriminativas';
     const MAX_REGIOES=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
@@ -62,6 +62,25 @@
     function textoHipoteseHMA(h){
         return [h?.nome||'',...arr(h?.aFavor),...arr(h?.aConfirmar)].join(' ');
     }
+    function evidenciasDaHistoria(texto,termos){
+        const clausulas=String(texto||'').split(/[.;!?\n]|\b(?:mas|porém|porem|entretanto)\b/i);
+        const positivas=[],negadas=[];
+        arr(termos).forEach(termo=>{
+            const palavras=n(termo).split(' ').filter(x=>x.length>=3&&!['para','com','das','dos','uma'].includes(x));
+            if(!palavras.length)return;
+            let afirmado=false,negado=false;
+            clausulas.forEach(c=>{
+                const partes=n(c).split(' ');
+                const pos=palavras.map(p=>partes.findIndex(x=>x===p||(p.length>=6&&x.length>=6&&x.startsWith(p.slice(0,-2)))));
+                if(pos.some(i=>i<0)||Math.max(...pos)-Math.min(...pos)>12)return;
+                const inicio=Math.min(...pos),antes=partes.slice(Math.max(0,inicio-4),inicio).join(' ');
+                if(/(?:^| )(?:nega|negou|sem|ausencia de|nao apresenta|nao relata|nao tem)(?: |$)/.test(antes)){negado=true;return;}
+                afirmado=true;
+            });
+            if(afirmado)positivas.push(termo);else if(negado)negadas.push(termo);
+        });
+        return {positivas:uniq(positivas),negadas:uniq(negadas)};
+    }
     function contribuicaoSemanticaFunil(item,hmaResultado){
         const perfis=nomeHipotesesHMA(hmaResultado),itemFamiliaTexto=[item?.nome||'',...arr(item?.palavrasChaveHMA)].join(' '),itemTexto=[itemFamiliaTexto,...arr(item?.testes).map(textoTeste),item?.interpretacao||''].join(' ');
         const familiasItem=new Set(familiasClinicas(itemFamiliaTexto));
@@ -69,7 +88,8 @@
         if(principal){
             const texto=textoHipoteseHMA(principal),sim=similaridade(itemFamiliaTexto,texto),familiasPrincipal=familiasClinicas(principal?.nome||'');
             const compartilha=familiasPrincipal.some(id=>familiasItem.has(id));
-            if(compartilha)return{score:Math.min(2.6,2.1+Math.min(.5,sim)),perfil:principal,motivo:'padrão clínico principal da HMA compatível com a família da hipótese'};
+            if(compartilha&&sim>=.2)return{score:Math.min(2.6,1.2+sim),perfil:principal,motivo:'hipótese da HMA compatível com o padrão e a família clínica'};
+            if(compartilha)return{score:.45,perfil:null,motivo:'mesma família clínica; requer evidência específica para priorização'};
             if((!familiasPrincipal.length||!familiasItem.size)&&sim>=.24)return{score:Math.min(1.6,sim*3),perfil:principal,motivo:'evidências combinadas da HMA compatíveis com a hipótese'};
         }
         let melhor=0,familia=false,perfil=null;
@@ -195,8 +215,10 @@
         const contrib=[]; let score=0;
         const textoHMA=n(hmaAtual());
         const pesos={palavraChave:.65,mecanismo:1.25,fatorPiora:.45,comorbidade:.45,medicamento:.45,idade:.35,cirurgia:1.5,...(item?.pesos||{})};
-        const kw=contemAlgum(textoHMA,item?.palavrasChaveHMA).slice(0,3);
+        const evidencia=evidenciasDaHistoria(hmaAtual(),item?.palavrasChaveHMA);
+        const kw=evidencia.positivas.slice(0,3);
         if(kw.length){const p=Math.min(2.4,kw.length*Math.min(Number(pesos.palavraChave)||.65,1.2));score+=p;contrib.push(`HMA: ${kw.slice(0,2).join(' / ')}`);}
+        if(evidencia.negadas.length){score-=Math.min(2.4,evidencia.negadas.length*.8);contrib.push(`menos compatível: achado negado na HMA (${evidencia.negadas.slice(0,2).join(' / ')})`);}
 
         const familiasItem=new Set(familiasClinicas([item?.nome||'',...arr(item?.palavrasChaveHMA)].join(' ')));
         const negacoesHMA=new Set(arr(hmaResultado?.negacoesDetectadas).map(x=>x?.conceito));
@@ -297,7 +319,7 @@
                 item
             };
         }).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao)
-          .filter((x,i)=>incluirTodos||x.prioridadeOrdenacao>0||i<2)
+          .filter(x=>incluirTodos||x.prioridadeOrdenacao>=1.2)
           .slice(0,incluirTodos?Number.MAX_SAFE_INTEGER:MAX_HIPOTESES_POR_REGIAO);
     }
 
@@ -335,10 +357,10 @@
         const mapa=new Map();
         hipoteses.forEach(h=>h.testes.forEach(t=>{
             const key=n(t); if(!key)return;
-            if(!mapa.has(key)) mapa.set(key,{texto:t,tipo:classificarTeste(t),hipoteses:[],prioridade:h.prioridadeOrdenacao});
-            const x=mapa.get(key); x.hipoteses.push(h.nome); x.prioridade=Math.max(x.prioridade,h.prioridadeOrdenacao);
+            if(!mapa.has(key)) mapa.set(key,{texto:t,tipo:classificarTeste(t),hipoteses:[],hipoteseIds:[],regiaoIds:[],prioridade:h.prioridadeOrdenacao});
+            const x=mapa.get(key); x.hipoteses.push(h.nome);x.hipoteseIds.push(h.id);x.regiaoIds.push(h.regiaoId);x.prioridade=Math.max(x.prioridade,h.prioridadeOrdenacao);
         }));
-        const testes=Array.from(mapa.values()).map(x=>({...x,hipoteses:uniq(x.hipoteses)})).sort((a,b)=>b.prioridade-a.prioridade).slice(0,MAX_TESTES);
+        const testes=Array.from(mapa.values()).map(x=>({...x,hipoteses:uniq(x.hipoteses),hipoteseIds:uniq(x.hipoteseIds),regiaoIds:uniq(x.regiaoIds),hipoteseId:uniq(x.hipoteseIds).length===1?x.hipoteseIds[0]:''})).sort((a,b)=>b.prioridade-a.prioridade).slice(0,MAX_TESTES);
         const grupos={}; testes.forEach(t=>{(grupos[t.tipo]||(grupos[t.tipo]=[])).push(t);});
         const analises=Object.entries(grupos).map(([tipo,itens])=>({tipo,titulo:ROTULOS_ANALISE[tipo]||tipo,itens}));
         const seguranca=arr(hmaResultado?.alertas).map(a=>({titulo:a?.nome||'Pista de segurança',descricao:a?.acao||a?.desc||''}));

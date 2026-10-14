@@ -10,10 +10,18 @@ function aplicarClasseEvaKineSys(el, val) {
     const faixa = val === 0 ? 0 : val <= 3 ? 1 : val <= 5 ? 2 : val <= 7 ? 3 : val <= 9 ? 4 : 5;
     el.classList.add('kds-eva-level-' + faixa);
 }
+function notificarSugestaoAvaliacaoKineSys(input){
+    if(input)input.dispatchEvent(new Event('change',{bubbles:true}));
+    if(typeof agendarAutosaveKineSys==='function')agendarAutosaveKineSys();
+}
 
-const sliderEVA = document.getElementById("eva_slider");
-const valorEVA = document.getElementById("eva_valor");
+let sliderEVA = null;
+let valorEVA = null;
 
+function inicializarEvaAvaliacao(){
+    sliderEVA=document.getElementById('eva_slider');valorEVA=document.getElementById('eva_valor');
+    if(!sliderEVA||sliderEVA.dataset.ksEva==='true')return;
+    sliderEVA.dataset.ksEva='true';
 if (sliderEVA) {
     sliderEVA.addEventListener("input", function() {
         const val = parseInt(this.value) || 0;
@@ -22,6 +30,8 @@ if (sliderEVA) {
             aplicarClasseEvaKineSys(valorEVA, val);
         }
     });
+}
+
 }
 
 const sliderEvo = document.getElementById("eva_slider_evo");
@@ -168,8 +178,15 @@ function expandirSugestoesIndividuais(item, mapa) {
 }
 
 // --- AUTOCOMPLETE: CIRURGIAS ---
-const inputCirurgia = document.getElementById('input_cirurgia');
-const sugestaoBoxCirurgia = document.getElementById('sugestao_box');
+let inputCirurgia = null;
+let sugestaoBoxCirurgia = null;
+
+function inicializarAutocompleteCirurgia(){
+    inputCirurgia=document.getElementById('input_cirurgia');
+    sugestaoBoxCirurgia=document.getElementById('sugestao_box');
+    if(!inputCirurgia||inputCirurgia.dataset.ksAutocomplete==='true')return;
+    inputCirurgia.dataset.ksAutocomplete='true';
+    inputCirurgia.addEventListener('focus',()=>inputCirurgia.dispatchEvent(new Event('input',{bubbles:true})));
 
 if (inputCirurgia) {
     inputCirurgia.addEventListener("input", function() {
@@ -204,7 +221,7 @@ if (inputCirurgia) {
                 sugestoesEncontradas.forEach(item => {
                     const div = document.createElement('div');
                     div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-petrol', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = "➔ " + item.texto;
+                    div.innerText = item.texto;
                     div.classList.add('kds-u-hover-soft');
                     div.onclick = function(e) {
                         e.stopPropagation();
@@ -218,6 +235,8 @@ if (inputCirurgia) {
             }
         }
     });
+}
+
 }
 
 function adicionarTagCirurgia(chave, termoExibicao) {
@@ -234,6 +253,7 @@ function adicionarTagCirurgia(chave, termoExibicao) {
         botaoRemover.textContent = "✕";
         botaoRemover.onclick = function() {
             tag.remove();
+            notificarSugestaoAvaliacaoKineSys(inputCirurgia);
             if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
         };
 
@@ -243,12 +263,20 @@ function adicionarTagCirurgia(chave, termoExibicao) {
     }
     if (inputCirurgia) inputCirurgia.value = '';
     if (sugestaoBoxCirurgia) sugestaoBoxCirurgia.style.display = 'none';
+    notificarSugestaoAvaliacaoKineSys(inputCirurgia);
     if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
 }
 
 // --- AUTOCOMPLETE: PROFISSÕES ---
-const inputProfissao = document.getElementById('paciente_ocupacao');
-const sugestaoBoxProfissao = document.getElementById('sugestao_box_profissao');
+let inputProfissao = null;
+let sugestaoBoxProfissao = null;
+
+function inicializarAutocompleteProfissao(){
+    inputProfissao=document.getElementById('paciente_ocupacao');
+    sugestaoBoxProfissao=document.getElementById('sugestao_box_profissao');
+    if(!inputProfissao||inputProfissao.dataset.ksAutocomplete==='true')return;
+    inputProfissao.dataset.ksAutocomplete='true';
+    inputProfissao.addEventListener('focus',()=>inputProfissao.dispatchEvent(new Event('input',{bubbles:true})));
 
 if (inputProfissao) {
     inputProfissao.addEventListener("input", function() {
@@ -283,12 +311,13 @@ if (inputProfissao) {
                 sugestoesEncontradas.forEach(item => {
                     const div = document.createElement('div');
                     div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-003b46', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = "➔ " + item.texto;
+                    div.innerText = item.texto;
                     div.classList.add('kds-u-hover-soft');
                     
                     div.onclick = function(e) {
                         e.stopPropagation();
                         inputProfissao.value = item.texto;
+                        notificarSugestaoAvaliacaoKineSys(inputProfissao);
                         sugestaoBoxProfissao.style.display = "none";
                         if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
                     };
@@ -303,9 +332,18 @@ if (inputProfissao) {
     });
 }
 
+}
+
 // --- AUTOCOMPLETE: ESPORTES ---
-const inputEsporte = document.getElementById('paciente_esporte');
-const sugestaoBoxEsporte = document.getElementById('sugestao_box_esporte');
+let inputEsporte = null;
+let sugestaoBoxEsporte = null;
+
+function inicializarAutocompleteEsporte(){
+    inputEsporte=document.getElementById('paciente_esporte');
+    sugestaoBoxEsporte=document.getElementById('sugestao_box_esporte');
+    if(!inputEsporte||inputEsporte.dataset.ksAutocomplete==='true')return;
+    inputEsporte.dataset.ksAutocomplete='true';
+    inputEsporte.addEventListener('focus',()=>inputEsporte.dispatchEvent(new Event('input',{bubbles:true})));
 
 if (inputEsporte) {
     inputEsporte.addEventListener("input", function() {
@@ -340,12 +378,13 @@ if (inputEsporte) {
                 sugestoesEncontradas.forEach(item => {
                     const div = document.createElement('div');
                     div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-003b46', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = "➔ " + item.texto;
+                    div.innerText = item.texto;
                     div.classList.add('kds-u-hover-soft');
                     
                     div.onclick = function(e) {
                         e.stopPropagation();
                         inputEsporte.value = item.texto;
+                        notificarSugestaoAvaliacaoKineSys(inputEsporte);
                         sugestaoBoxEsporte.style.display = "none";
                         if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
                     };
@@ -360,9 +399,18 @@ if (inputEsporte) {
     });
 }
 
+}
+
 // --- AUTOCOMPLETE: MEDICAMENTOS ---
-const inputMedicamento = document.getElementById('input_medicamento');
-const sugestaoBoxMed = document.getElementById('sugestao_box_med');
+let inputMedicamento = null;
+let sugestaoBoxMed = null;
+
+function inicializarAutocompleteMedicamento(){
+    inputMedicamento=document.getElementById('input_medicamento');
+    sugestaoBoxMed=document.getElementById('sugestao_box_med');
+    if(!inputMedicamento||inputMedicamento.dataset.ksAutocomplete==='true')return;
+    inputMedicamento.dataset.ksAutocomplete='true';
+    inputMedicamento.addEventListener('focus',()=>inputMedicamento.dispatchEvent(new Event('input',{bubbles:true})));
 
 if (inputMedicamento) {
     inputMedicamento.addEventListener("input", function() {
@@ -388,7 +436,7 @@ if (inputMedicamento) {
                 sugestoesEncontradas.forEach(termo => {
                     const div = document.createElement('div');
                     div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-d35400', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = "➔ " + termo;
+                    div.innerText = termo;
                     div.classList.add('kds-u-hover-warm');
                     div.onclick = function(e) {
                         e.stopPropagation();
@@ -414,6 +462,8 @@ if (inputMedicamento) {
     });
 }
 
+}
+
 function adicionarTagMedicamento(termo) {
     const container = document.getElementById('tags_medicamentos');
     if (container) {
@@ -427,6 +477,7 @@ function adicionarTagMedicamento(termo) {
         botaoRemover.textContent = "✕";
         botaoRemover.onclick = function() {
             tag.remove();
+            notificarSugestaoAvaliacaoKineSys(inputMedicamento);
             if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
         };
 
@@ -436,6 +487,7 @@ function adicionarTagMedicamento(termo) {
     }
     if (inputMedicamento) inputMedicamento.value = '';
     if (sugestaoBoxMed) sugestaoBoxMed.style.display = 'none';
+    notificarSugestaoAvaliacaoKineSys(inputMedicamento);
     if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
 }
 
@@ -454,4 +506,16 @@ document.addEventListener('click', function(e) {
         sugestaoBoxEsporte.style.display = 'none';
     }
 });
+
+
+
+function inicializarSugestoesAvaliacaoKineSys(){
+    inicializarEvaAvaliacao();
+    inicializarAutocompleteCirurgia();inicializarAutocompleteProfissao();
+    inicializarAutocompleteEsporte();inicializarAutocompleteMedicamento();
+}
+window.inicializarSugestoesAvaliacaoKineSys=inicializarSugestoesAvaliacaoKineSys;
+['kinesys:tela-dom-pronta','kinesys:tela-modulos-prontos','kinesys:tela-ativada'].forEach(evento=>document.addEventListener(evento,e=>{if(e.detail?.id==='tela_avaliacao')inicializarSugestoesAvaliacaoKineSys();}));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicializarSugestoesAvaliacaoKineSys,{once:true});
+else inicializarSugestoesAvaliacaoKineSys();
 
