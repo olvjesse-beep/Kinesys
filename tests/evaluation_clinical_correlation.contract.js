@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:18/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:19/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -116,7 +116,7 @@ const multirregional=renderizarCaso(
 );
 assert.match(multirregional,/hipótese de síndrome da dor patelofemoral/,'cada região deve receber interpretação própria');
 assert.match(multirregional,/hipótese de radiculopatia torácica/,'o relatório deve preservar hipóteses multirregionais');
-assert.ok(multirregional.indexOf('hipótese de síndrome da dor patelofemoral')<multirregional.indexOf('foi avaliada a região da coluna torácica'),'a interpretação do joelho deve acompanhar seu exame antes da próxima região');
+assert.ok(multirregional.indexOf('hipótese de síndrome da dor patelofemoral')<multirregional.indexOf('Na avaliação da coluna torácica'),'a interpretação do joelho deve acompanhar seu exame antes da próxima região');
 assert.doesNotMatch(report,/permanece em aberto|registra-se|cabe ressaltar|faz-se necessário/i,'o relatório não deve usar clichês de texto automatizado');
 
 const predominioPositivo=renderizarCaso(
@@ -184,8 +184,10 @@ assert.match(narrativaEscapular,/Também refere|Atualmente apresenta|O quadro as
 assert.match(narrativaEscapular,/septicemia|dor à palpação|perda de força|ipsilateral|deficiência/i,'o motor deve normalizar erros frequentes sem alterar o sentido clínico');
 assert.doesNotMatch(narrativaEscapular,/sepsemia|dor a palpação|perca de força|hipsilateral|déficiencia/i,'erros frequentes da digitação clínica não devem vazar para o documento final');
 assert.doesNotMatch(narrativaEscapular,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA/,'o caso completo deve permanecer como narrativa contínua');
-assert.match(narrativaEscapular,/região do ombro e do complexo glenoumeral/,'anatomia deve usar artigos e conexões naturais');
+assert.match(narrativaEscapular,/A avaliação do ombro e do complexo glenoumeral evidenciou/,'anatomia deve introduzir diretamente os achados');
 assert.doesNotMatch(narrativaEscapular,/Resultado positivo para|“|”|ombro\s*\//,'achados não devem virar rótulos de formulário');
+assert.doesNotMatch(narrativaEscapular,/Durante a entrevista clínica|No contexto clínico|foi avaliada a região|ainda sem força suficiente/,'composição não deve manter as aberturas mecânicas rejeitadas');
+assert.ok(!narrativaEscapular.includes('fisioterapêutica.\n\n'),'identificação e história devem formar uma abertura integrada');
 const rotulosSupra=[
  'Dor posterior/superior do ombro com distribuição compatível',
  'Fraqueza de rotação externa e/ou abdução não explicada apenas por dor',
@@ -198,13 +200,24 @@ for(const resultado of ['positivo','negativo','inconclusivo']){
  assert.match(texto,/rotação externa, na abdução ou em ambos os movimentos, não explicada apenas pela dor/,'não transformar alternativas em dois déficits confirmados');
  assert.match(texto,/supraespinhal ou do infraespinhal ou contexto de tração ou compressão/,'não trocar possibilidade de contexto por atrofia confirmada');
  if(resultado==='positivo'){
-  assert.match(texto,/a alternativa observada não foi especificada/,'o resultado composto não autoriza escolher um achado');
+  assert.match(texto,/não distingue qual dessas situações foi identificada/,'o resultado composto não autoriza escolher um achado');
   assert.match(elements['ks-laudo-status'].textContent,/Especifique no texto qual achado foi observado/,'ambiguidade deve ser sinalizada para revisão profissional');
  }
  if(resultado==='negativo')assert.match(texto,/Não houve resposta positiva na avaliação de atrofia/);
  if(resultado==='inconclusivo')assert.match(texto,/avaliação de atrofia[\s\S]*permaneceu inconclusiva/);
  assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.testesAusentes),[],'validação deve reconhecer a descrição equivalente sem perder fatos');
 }
+const hmaAntesDaComposicao=hmaField.value;
+hmaField.value='Paciente relata dor na região da escápula que irradia para base inferior, Também refere dormência na região e dor à palpação, região medial da escápula, apresenta fraqueza de rotação externa, e abdução de ombro. Refere quadro de pneumonia há 1 ano, que evoluiu para septicemia.';
+context.window.KineSysMotorClinico3.ultimoPlano={versao:'composicao',hipoteses:[{id:'neuropatia_supraescapular',nome:'Neuropatia do Nervo Supraescapular',regiaoId:'ombro'}],exame:{testesPrioritarios:[]}};
+const composicao=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro / complexo glenoumeral',id:'neuropatia_supraescapular',nome:'Neuropatia do Nervo Supraescapular',achados:rotulosSupra.map(texto=>({texto,resultado:'positivo'}))}],
+ [{regiao:'Ombro / complexo glenoumeral',codigoHipotese:'neuropatia_supraescapular',nomeHipotese:'Neuropatia do Nervo Supraescapular',nivel:'positivo',redFlags:[]}]);
+assert.match(composicao,/Refere dor na região escapular que irradia para sua porção inferior\. Relata dormência local e dor à palpação na região medial da escápula\. Também relata redução da força/,'organizar as orações sem alterar localização e força relatadas');
+assert.match(composicao,/Esses achados mantêm a hipótese de neuropatia do nervo supraescapular como possibilidade de investigação, sem estabelecer diagnóstico definitivo/);
+assert.ok(composicao.indexOf('sem estabelecer diagnóstico definitivo')<composicao.indexOf('O registro referente à atrofia'),'a lacuna composta deve ficar depois da interpretação, em parágrafo próprio');
+assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.relatoAusente),[],'verificar fatos na composição final, não num texto intermediário');
+hmaField.value=hmaAntesDaComposicao;
+if(process.env.KINESYS_EXIBIR_COMPOSICAO==='1')console.log(composicao);
 assert.doesNotMatch(narrativaEscapular,/reproduzido de forma consistente|história clínica e os achados objetivos convergem/,'o texto não pode afirmar reprodução da queixa sem um registro específico');
 assert.match(narrativaEscapular,/fraqueza na rotação externa ou na abdução/,'um critério composto deve manter suas alternativas, sem atribuir todos os achados ao paciente');
 assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.relatoAusente),[],'nenhuma frase clínica deve se perder durante a composição');
@@ -281,7 +294,7 @@ const comunicacao=renderizarCaso(
   [{regiao:'Joelho',id:'patelofemoral',nome:'Síndrome da dor patelofemoral',achados:[{texto:'Dor ao agachamento',resultado:'positivo'}]}],
   [{regiao:'Joelho',codigoHipotese:'patelofemoral',nomeHipotese:'Síndrome da dor patelofemoral',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(comunicacao,/avaliação fisioterapêutica realizada em 14\/10\/2026/,'data de atendimento fora da anamnese deve aparecer no documento');
+assert.match(comunicacao,/avaliação fisioterapêutica em 14\/10\/2026/,'data de atendimento fora da anamnese deve aparecer no documento');
 assert.match(comunicacao,/diabetes mellitus \(DM\)/,'siglas de antecedentes devem ser explicadas para o destinatário');
 assert.match(comunicacao,/Flexão de joelho: 95 ° \(lado esquerdo\)/i,'medidas devem conservar valor, unidade e lado');
 assert.match(comunicacao,/Extensão de joelho: 0 °/i,'zero é resultado válido e não pode desaparecer');
