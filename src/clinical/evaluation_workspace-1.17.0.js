@@ -265,27 +265,64 @@
             return fraseClinica(texto);
         }).join(' ');
     }
+    function descricaoDocumentalDoAchado(value){
+        // Tradução do rótulo, não inferência: alternativas permanecem alternativas.
+        return limparTextoClinico(value)
+            .replace(/fraqueza de rotação externa e\/ou abdução não explicada apenas por dor/gi,'fraqueza na rotação externa, na abdução ou em ambos os movimentos, não explicada apenas pela dor')
+            .replace(/fraqueza de rotação externa ou abdução/gi,'fraqueza na rotação externa ou na abdução')
+            .replace(/atrofia (?:de )?supra\/infraespinal/gi,'atrofia do supraespinhal ou do infraespinhal')
+            .replace(/atrofia supra ou infraespinal/gi,'atrofia do supraespinhal ou do infraespinhal')
+            .replace(/posterior\/superior/gi,'posterior ou superior')
+            .replace(/tração\/compressão/gi,'tração ou compressão')
+            .replace(/\be\/ou\b/gi,'ou')
+            .replace(/([A-Za-zÀ-ÿ]{3,})\s*\/\s*([A-Za-zÀ-ÿ]{3,})/g,(original,a,b)=>
+                /^(?:mmhg|mg|mcg|mmol|cm|mm|km|ml)$/i.test(a)||/^(?:kg|ml|min)$/i.test(b)?original:`${a} ou ${b}`);
+    }
+    function regiaoEmFrase(value){
+        const regiao=limparTextoClinico(value).toLowerCase();
+        const nomes={
+            'ombro / complexo glenoumeral':'do ombro e do complexo glenoumeral',
+            'coluna lombar / lombossacra':'da coluna lombar e lombossacra',
+            'quadril / virilha / pelve':'do quadril, da virilha e da pelve',
+            'atm / dor orofacial':'da articulação temporomandibular e da região orofacial',
+            'punho / mão':'do punho e da mão',
+            'cotovelo / antebraço':'do cotovelo e do antebraço',
+            'tornozelo e pé':'do tornozelo e do pé',
+            'ombro':'do ombro','joelho':'do joelho','quadril':'do quadril','punho':'do punho','cotovelo':'do cotovelo',
+            'coluna cervical':'da coluna cervical','coluna lombar':'da coluna lombar','coluna torácica':'da coluna torácica'
+        };
+        return nomes[regiao]||`de ${regiao.replace(/\s*\/\s*/g,' e ')}`;
+    }
     function narrativaDosResultados(resultados){
         const grupos={positivo:[],negativo:[],inconclusivo:[]};
         resultados.forEach(r=>{if(grupos[r.resultado])grupos[r.resultado].push(r.teste);});
         const frases=[];
         Object.entries(grupos).forEach(([resultado,itens])=>{
             const nomes=valoresUnicos(itens);if(!nomes.length)return;
+            const compostos=nomes.filter(n=>/^atrofia\b.*\bou contexto de\b/i.test(n));
             // Listas extensas ficam em frases independentes. Um sintoma não é chamado de teste positivo.
             const testes=nomes.filter(n=>/^teste\b/i.test(n)||VOCABULARIO_DOCUMENTAL_LAUDO.testes.some(t=>normalizar(n).startsWith(normalizar(t))));
-            const achados=nomes.filter(n=>!testes.includes(n)&&!/\bou\b|e\/ou|contexto de/i.test(n)&&/^(?:dor\b|fraqueza\b|atrofia\b|d[eé]ficit\b|redução\b|limitação\b|parestesia\b|edema\b|rigidez\b|instabilidade\b|perda\b)/i.test(n));
-            const procedimentos=nomes.filter(n=>!testes.includes(n)&&!achados.includes(n));
+            const achados=nomes.filter(n=>!testes.includes(n)&&!compostos.includes(n)&&/^(?:dor\b|fraqueza\b|atrofia\b|d[eé]ficit\b|redução\b|limitação\b|parestesia\b|edema\b|rigidez\b|instabilidade\b|perda\b)/i.test(n));
+            const procedimentos=nomes.filter(n=>!testes.includes(n)&&!achados.includes(n)&&!compostos.includes(n));
             if(testes.length){
                 const verbo=resultado==='positivo'?(testes.length===1?'foi positivo':'foram positivos'):resultado==='negativo'?(testes.length===1?'foi negativo':'foram negativos'):(testes.length===1?'permaneceu inconclusivo':'permaneceram inconclusivos');
                 frases.push(fraseClinica(`${unirNatural(testes)} ${verbo}`));
             }
             if(achados.length){
                 const verbo=resultado==='positivo'?'O exame evidenciou':resultado==='negativo'?'O exame não evidenciou':'A avaliação permaneceu inconclusiva quanto a';
-                frases.push(fraseClinica(`${verbo} ${unirNatural(achados.map(minusculaInicial))}`));
+                const descricoes=achados.map(x=>minusculaInicial(descricaoDocumentalDoAchado(x)));
+                if(descricoes.some(x=>/\bou\b/.test(x)))descricoes.forEach((descricao,i)=>frases.push(fraseClinica(`${resultado==='positivo'&&i?'Também se observou':verbo} ${descricao}`)));
+                else frases.push(fraseClinica(`${verbo} ${unirNatural(descricoes)}`));
             }
+            compostos.forEach(achado=>{
+                const descricao=minusculaInicial(descricaoDocumentalDoAchado(achado));
+                frases.push(fraseClinica(resultado==='positivo'?`Consta registro de ${descricao}; a alternativa observada não foi especificada`:
+                    resultado==='negativo'?`Não houve resposta positiva na avaliação de ${descricao}`:
+                    `A avaliação de ${descricao} permaneceu inconclusiva`));
+            });
             if(procedimentos.length){
-                const verbo=resultado==='positivo'?'Resultado positivo':resultado==='negativo'?'Resultado negativo':'Resultado inconclusivo';
-                frases.push(fraseClinica(`${verbo} para ${procedimentos.map(p=>`“${p}”`).join('; ')}`));
+                const resposta=resultado==='positivo'?'houve resposta positiva':resultado==='negativo'?'não houve resposta positiva':'a resposta permaneceu inconclusiva';
+                procedimentos.forEach(p=>frases.push(fraseClinica(`Na avaliação de ${minusculaInicial(descricaoDocumentalDoAchado(p))}, ${resposta}`)));
             }
         });
         return frases.join(' ');
@@ -424,7 +461,7 @@
         if(!porRegiao.size)return'';
         const blocos=[];porRegiao.forEach((resultados,regiao)=>{
             const abertura=escolhaSemantica(regiao,'exame');
-            blocos.push(`${fraseClinica(`${abertura}, foi avaliada a região de ${regiao.toLowerCase()}`)} ${narrativaDosResultados(resultados)}`);
+            blocos.push(`${fraseClinica(`${abertura}, foi avaliada a região ${regiaoEmFrase(regiao)}`)} ${narrativaDosResultados(resultados)}`);
         });
         return blocos.join('\n\n');
     }
@@ -519,21 +556,22 @@
         if(!temHistoria)pendencias.push('preencher a História da Moléstia Atual');
         if(!exameRegistrado)pendencias.push('registrar ao menos um resultado do exame físico-funcional');
         const texto=secoes.join('\n\n'),testesAusentes=[];
-        d.achados.forEach(item=>(item.achados||[]).filter(a=>RESULTADO_LAUDO[a.resultado]).forEach(a=>{if(!normalizar(texto).includes(normalizar(a.texto)))testesAusentes.push(limparTextoClinico(a.texto));}));
+        d.achados.forEach(item=>(item.achados||[]).filter(a=>RESULTADO_LAUDO[a.resultado]).forEach(a=>{if(!normalizar(texto).includes(normalizar(a.texto))&&!normalizar(texto).includes(normalizar(descricaoDocumentalDoAchado(a.texto))))testesAusentes.push(limparTextoClinico(a.texto));}));
         const conflitos=conflitosDoExame(d);
         const relatoAusente=frasesDoRelato(primeiroCampo(d,['paciente_hma','hma'])).filter(frase=>!normalizar(texto).includes(normalizar(fraseClinica(frase))));
-        return {ok:!pendencias.length&&!testesAusentes.length&&!conflitos.length&&!relatoAusente.length,pendencias,testesAusentes:valoresUnicos(testesAusentes),relatoAusente,conflitos};
+        const ambiguidades=d.achados.flatMap(item=>(item.achados||[]).filter(a=>a.resultado==='positivo'&&/^atrofia\b.*\bou contexto de\b/i.test(a.texto)).map(a=>limparTextoClinico(a.texto)));
+        return {ok:!pendencias.length&&!testesAusentes.length&&!conflitos.length&&!relatoAusente.length&&!ambiguidades.length,pendencias,testesAusentes:valoresUnicos(testesAusentes),relatoAusente,conflitos,ambiguidades};
     }
     function textoBase(d){
         const historia=secaoHistoria(d),exame=secaoExame(d),impressao=secaoCorrelacao(d),seguranca=secaoSeguranca(d);
         const conteudo=[historia,exame,impressao,seguranca].filter(Boolean);
         const validacao=validarNarrativaClinica(d,conteudo);
-        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:16,pendencias:validacao.pendencias,validacao,atualizadoEm:new Date().toISOString()};
+        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:17,pendencias:validacao.pendencias,validacao,atualizadoEm:new Date().toISOString()};
         const regioes=valoresUnicos(d.achados.filter(a=>(a.achados||[]).some(r=>RESULTADO_LAUDO[r.resultado])).map(a=>a.regiao));
         const conflitos=conflitosDoExame(d);
         const exameIntegrado=regioes.map(regiao=>[secaoExame(d,regiao),conflitos.length?'':secaoCorrelacao(d,regiao)].filter(Boolean).join(' '));
         const secoes=[secaoIdentificacao(d),historia,...exameIntegrado,secaoFuncional(d),secaoPlanoRegistrado(d),conflitos.length?impressao:'',seguranca].filter(Boolean);
-        return {texto:secoes.join('\n\n'),modo:validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:16,validacao,atualizadoEm:new Date().toISOString()};
+        return {texto:secoes.join('\n\n'),modo:validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:17,validacao,atualizadoEm:new Date().toISOString()};
     }
     window.preencherLaudoAvaliacaoKineSys=function(value){laudo=value&&typeof value==='object'?clone(value):null;const editor=document.getElementById('ks-laudo-texto');if(editor)editor.value=laudo?.texto||'';};
     window.coletarLaudoAvaliacaoKineSys=function(){garantirFechamentoLaudo({profissional:profissionalDoLaudo()});return laudo?clone(laudo):null;};
@@ -563,13 +601,13 @@
             (textoLaudo.includes('foi avaliado(a) pela fisioterapia')&&textoLaudo.includes('Com base nos dados registrados, recomenda-se'))||
             (textoLaudo.startsWith('RELATÓRIO FISIOTERAPÊUTICO')&&textoLaudo.includes('Quanto à queixa atual, registra-se:')&&textoLaudo.includes('O exame físico ainda não contém resultados de testes registrados.')&&textoLaudo.includes('A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.'))
         );
-        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==16)))laudo=textoBase(d);
+        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==17)))laudo=textoBase(d);
         const mudou=laudo.fonte!==d.fonte;
         if(mudou)laudo.revisado=false;
         garantirFechamentoLaudo(d);
         editor.value=laudo.texto;
         document.getElementById('ks-laudo-revisado').checked=!!laudo.revisado;
-        document.getElementById('ks-laudo-status').textContent=mudou?'A avaliação mudou. Seu texto foi preservado: atualize a base ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:laudo.modo==='revisao'?'O relatório requer revisão: confira resultados divergentes ou informações que não foram incorporadas ao texto.':'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';
+        document.getElementById('ks-laudo-status').textContent=mudou?'A avaliação mudou. Seu texto foi preservado: atualize a base ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:laudo.validacao?.ambiguidades?.length?'O relatório requer revisão: um item positivo reúne achados alternativos. Especifique no texto qual achado foi observado.':laudo.modo==='revisao'?'O relatório requer revisão: confira resultados divergentes ou informações que não foram incorporadas ao texto.':'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';
     };
     let workspaceInicializado=false;
     function inicializarWorkspaceAvaliacaoKineSys(){
