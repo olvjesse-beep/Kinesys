@@ -272,18 +272,29 @@
                 </div>
 
 
-                <div class="card" id="ks-laudo-card">
-                    <div class="card-header"><h2>Relatório fisioterapêutico</h2></div>
+                <div class="card ks-laudo-card" id="ks-laudo-card">
+                    <div class="ks-laudo-heading">
+                        <div>
+                            <span class="ks-laudo-eyebrow">Documento clínico</span>
+                            <h2>Relatório fisioterapêutico</h2>
+                            <p>Texto final correlacionado à anamnese e ao exame físico-funcional.</p>
+                        </div>
+                        <span class="ks-laudo-editable">Editável</span>
+                    </div>
                     <p id="ks-laudo-status" role="status"></p>
-                    <label for="ks-laudo-texto">Revise e ajuste o relatório antes de finalizar</label>
-                    <textarea id="ks-laudo-texto" rows="22" spellcheck="true"></textarea>
-                    <label class="ks-laudo-review"><input type="checkbox" id="ks-laudo-revisado"> Revisei o conteúdo e registrei minha conclusão clínica.</label>
-                    <div class="ks-laudo-actions">
+                    <div class="ks-laudo-document">
+                        <label class="ks-laudo-editor-label" for="ks-laudo-texto">Conteúdo do relatório</label>
+                        <textarea id="ks-laudo-texto" rows="28" spellcheck="true"></textarea>
+                    </div>
+                    <div class="ks-laudo-footer">
+                        <label class="ks-laudo-review"><input type="checkbox" id="ks-laudo-revisado"> Revisei o conteúdo e registrei minha conclusão clínica.</label>
+                        <div class="ks-laudo-actions">
                         <button type="button" class="btn-secondary" onclick="irParaSubtela('subtela_mapeamento')">◀ Voltar ao exame</button>
                         <button type="button" class="btn-secondary" id="ks-laudo-atualizar">Atualizar base da avaliação</button>
                         <button type="button" class="btn-secondary" id="ks-laudo-copiar">Copiar texto</button>
                         <button type="button" class="btn-secondary" onclick="salvarAvaliacaoAtual(false)">Salvar rascunho</button>
                         <button type="button" class="btn-primary" onclick="salvarAvaliacaoAtual(true)">Finalizar e salvar avaliação</button>
+                        </div>
                     </div>
                 </div>
                 <div class="card" id="card_restricoes_posop" hidden style="display:none !important">
