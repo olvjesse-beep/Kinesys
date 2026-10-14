@@ -26,7 +26,7 @@
         coluna_toracica:'database/regioes/coluna_toracica-base-1.0.0.js'
     });
     const EXTENSOES_BANCO=Object.freeze({
-        ombro:'database/regioes/ombro-ext-1.0.0.js',
+        ombro:'database/regioes/ombro-ext-1.0.0.js?v=20261014-radar-autocomplete-r1',
         cotovelo:'database/regioes/cotovelo-ext-1.0.0.js',
         punho_mao:'database/regioes/punho_mao-ext-1.0.0.js',
         quadril:'database/regioes/quadril-ext-1.0.0.js',
