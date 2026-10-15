@@ -7,23 +7,10 @@
   if(typeof BANCO_MAPEAMENTO_CLINICO==='undefined')return;
   const r=BANCO_MAPEAMENTO_CLINICO["tornozelo_pe"];
   if(!r)return;
-  r["palavrasChave"]=[...(Array.isArray(r["palavrasChave"])?r["palavrasChave"]:[]),...[
-  "halux valgo",
-  "hallux valgus",
-  "joanete",
-  "halux rigido",
-  "hallux rigidus",
-  "dedo em garra",
-  "dedo em martelo",
-  "metatarsalgia",
-  "placa plantar",
-  "pe plano",
-  "pe cavo",
-  "bunionette",
-  "joanete do quinto",
-  "equinismo"
-]];
-  r["diferenciais"]=[...(Array.isArray(r["diferenciais"])?r["diferenciais"]:[]),...[
+  r.palavrasChave=[...(Array.isArray(r.palavrasChave)?r.palavrasChave:[]),
+    'halux valgo','hallux valgus','joanete','halux rigido','hallux rigidus','dedo em garra','dedo em martelo',
+    'metatarsalgia','placa plantar','pe plano','pe cavo','bunionette','joanete do quinto','equinismo'];
+  r.diferenciais=[...(Array.isArray(r.diferenciais)?r.diferenciais:[]),...[
   {
     "id": "hallux_valgus",
     "nome": "Hálux Valgo",
@@ -273,12 +260,27 @@
     "testes": [
       "Dor/queimação ou parestesia posterior ao maléolo medial",
       "Irradiação para planta do pé/dedos conforme distribuição tibial",
-      "Provocação local e diferenciação de radiculopatia S1/S2 e causas plantares"
+      "Provocação local e diferenciação de radiculopatia S1/S2 e causas plantares",
+      "Tinel posterior ao maléolo medial reproduz parestesia plantar familiar",
+      "Teste de dorsiflexão e eversão reproduz os sintomas plantares familiares, quando seguro e tolerado"
     ],
     "interpretacao": "Sintomas plantares neuropáticos originados no tornozelo medial podem justificar investigação do nervo tibial/túnel do tarso.",
     "tipoDorPreferido": [
       "neuropatica"
-    ]
+    ],
+    "sinonimos": [
+      "sindrome do tunel do tarso",
+      "neuropatia tibial no tornozelo"
+    ],
+    "palavrasChaveHMA": [
+      "queimacao planta pe",
+      "parestesia plantar",
+      "dor maleolo medial",
+      "tunel tarso",
+      "dormencia planta pe"
+    ],
+    "nivelEvidencia": "Estudo clínico em pacientes operados; sensibilidade e critérios variam entre estudos.",
+    "evidencia": "Kinoshita et al. 2001: https://pubmed.ncbi.nlm.nih.gov/11741063/; revisão sistemática: https://pmc.ncbi.nlm.nih.gov/articles/PMC12875632/"
   },
   {
     "id": "fibular_superficial",
