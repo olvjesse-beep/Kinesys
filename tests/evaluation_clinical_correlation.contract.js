@@ -267,6 +267,14 @@ for(const [regiaoId,regiao] of Object.entries(bancoReal)){
  }
 }
 console.log(`Clinical narrative corpus: ${narrativasVerificadas} documents across ${Object.keys(bancoReal).length} regions OK`);
+const gtpsPublicado=bancoReal.quadril.clusters.find(h=>h.id==='gtps');
+context.window.KineSysMotorClinico3.ultimoPlano={versao:'gtps-evidencia',hipoteses:[{id:gtpsPublicado.id,nome:gtpsPublicado.nome,regiaoId:'quadril',item:gtpsPublicado}],exame:{testesPrioritarios:[]}};
+for(const [respostas,preenche] of [[['positivo','positivo','',''],true],[['negativo','negativo','positivo','positivo'],false],[['positivo','inconclusivo','positivo','positivo'],false]]){
+ const texto=renderizarCaso([{regiaoId:'quadril',regiao:'Quadril',id:'gtps',nome:gtpsPublicado.nome,achados:gtpsPublicado.testes.map((texto,i)=>({texto,resultado:respostas[i]||'nao_avaliado'}))}],
+  [{regiao:'Quadril',codigoHipotese:'gtps',nomeHipotese:gtpsPublicado.nome,nivel:'avaliado',redFlags:[]}]);
+ if(preenche)assert.match(texto,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/);
+ else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério/,'laudo deve respeitar os dois testes publicados, e não uma soma arbitrária');
+}
 const ausenciaNegativa=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro',id:'ausencia',nome:'Verificação de segurança',achados:[{texto:'Ausência de sinais sistêmicos preocupantes',resultado:'negativo'}]}],[]);
 assert.match(ausenciaNegativa,/critério de ausência não foi confirmado/);
 assert.doesNotMatch(ausenciaNegativa,/O exame evidenciou sinais sistêmicos/,'negação de ausência não comprova presença');

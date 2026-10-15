@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.21-composicao-integrada-r1';
-    const ASSET_REVISION='20261014-composicao-integrada-r1';
+    const VERSION='1.25.22-radar-cientifico-r1';
+    const ASSET_REVISION='20261015-radar-cientifico-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -39,8 +39,8 @@
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261014-radar-adaptativo-r1',
-                'src/clinical/clinical_region_loader-1.0.0.js?v=20261014-radar-autocomplete-r1'
+                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261015-radar-cientifico-r1',
+                'src/clinical/clinical_region_loader-1.0.0.js?v=20261015-radar-cientifico-r1'
             ]),
             afterLoad(){
                 window.inicializarSugestoesAvaliacaoKineSys?.();

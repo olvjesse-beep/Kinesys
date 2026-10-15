@@ -45,7 +45,7 @@ historia='Dor na borda medial da escápula com fraqueza dos romboides e retraç�
 plano=env.window.gerarPlanoClinicoHMAKineSys();
 const dorsal=plano.hipoteses.find(h=>h.id==='neuropatia_dorsal_escapular');
 assert.ok(dorsal,'dor medial escapular com alterações dos romboides deve permitir o diferencial dorsal escapular');
-assert.strictEqual(dorsal.testes.length,4,'o diferencial deve orientar quatro verificações clínicas');
+assert.strictEqual(dorsal.testes.length,6,'o diferencial deve preservar as quatro verificações anteriores e acrescentar duas');
 assert.ok(!dorsal.item.limiar&&!dorsal.item.regraConfirmacao,'o diferencial não pode receber um limiar de confirmação sem validação');
 assert.ok(plano.exame.testesPrioritarios.some(t=>t.hipoteseIds.includes(dorsal.id)),'os novos testes devem manter conexão com o relatório');
 console.log('Dorsal scapular differential and evidence-based boundaries: OK');
@@ -164,3 +164,41 @@ achados=[examinar('patelofemoral',['negativo','negativo'])];
 assert.strictEqual(env.window.KineSysMotorClinico3.atualizar().hipoteses.find(h=>h.id==='patelofemoral').exameAtual.situacao,'achados_desfavoraveis','resultado alterado precisa invalidar o cache');
 env.window.obterEstadoRegiao=()=>({hipotesesDescartadas:['cluster::patelofemoral']});
 assert.ok(!env.window.gerarPlanoClinicoHMAKineSys().hipoteses.some(h=>h.id==='patelofemoral'),'restaurar rascunho deve conservar hipótese descartada');
+
+// Biblioteca científica: reconhecimento real, negações e conexão com os achados canônicos.
+examesReais=[];
+for(const arquivo of ['database/regioes/quadril-ext-1.0.0.js','database/regioes/tornozelo_pe-ext-1.0.0.js'])vm.runInContext(fs.readFileSync(arquivo,'utf8'),real);
+const casosCientificos=[
+ ['Síndrome de encarceramento do escapular dorsal.','neuropatia_dorsal_escapular'],
+ ['Dor na borda medial da escápula com fraqueza dos romboides e retração escapular fraca.','neuropatia_dorsal_escapular'],
+ ['Lesão do nervo torácico longo com escápula alada e fraqueza do serrato anterior.','neuropatia_toracico_longo'],
+ ['Ombro caído após biópsia cervical, com fraqueza e atrofia do trapézio.','neuropatia_acessorio_espinal'],
+ ['Dor intensa no ombro seguida de fraqueza, hipótese de Parsonage Turner.','amiotrofia_neuralgica'],
+ ['Escápula crepitante com crepitação dolorosa e estalido doloroso na escápula.','sindrome_escapula_crepitante'],
+ ['Síndrome glútea profunda, dor profunda glútea que piora sentado.','deep_gluteal'],
+ ['Queimação na planta do pé com parestesia plantar e dor no maléolo medial.','tunel_tarsal_neural']
+];
+for(const [hma,id] of casosCientificos){
+ hmaReal=hma;examesReais=[];const p=real.gerarPlanoClinicoHMAKineSys(),h=p.hipoteses.find(h=>h.id===id);
+ assert.ok(h,`${hma}: faltou ${id}; atuais ${p.hipoteses.map(h=>h.id)}`);
+ assert.ok(h.item.evidencia&&h.item.nivelEvidencia,'fontes e limitações precisam acompanhar o item');
+ assert.ok(!h.item.limiar&&!h.item.regraConfirmacao,'neuropatia não recebe cluster confirmatório inventado');
+ examesReais=[{id:h.id,regiaoId:h.regiaoId,grupo:h.grupo,achados:h.testes.map(texto=>({texto,resultado:'positivo'}))}];
+ const revisto=real.gerarPlanoClinicoHMAKineSys().hipoteses.find(x=>x.id===id);
+ assert.strictEqual(revisto.exameAtual.respondidos,h.testes.length,'novos exames precisam integrar os resultados e o laudo');
+}
+examesReais=[];hmaReal='Dor no ombro ao elevar o braço. Nega encarceramento do nervo escapular dorsal. Nega fraqueza dos romboides.';
+assert.ok(!real.gerarPlanoClinicoHMAKineSys().hipoteses.some(h=>h.id==='neuropatia_dorsal_escapular'),'nome negado não deve promover a hipótese');
+hmaReal='Dor no joelho ao agachar. Minha mãe tem encarceramento do nervo escapular dorsal.';
+assert.ok(!real.gerarPlanoClinicoHMAKineSys().hipoteses.some(h=>h.id==='neuropatia_dorsal_escapular'),'condição familiar não é hipótese do paciente');
+const gtpsReal=vm.runInContext('BANCO_MAPEAMENTO_CLINICO.quadril.clusters.find(x=>x.id==="gtps")',real);
+assert.deepStrictEqual(Array.from(gtpsReal.regraConfirmacao.obrigatorios),[0,1],'a combinação publicada não equivale a quaisquer dois testes');
+vm.runInContext(core.slice(core.indexOf('const KINESYS_META_CRITERIOS_2'),core.indexOf('function grupoDoItemKineSys')),real);
+vm.runInContext(core.slice(core.indexOf('function grupoDoItemKineSys'),core.indexOf('function calcularSuficienciaInvestigacaoKineSys')),real);
+const estadoGTPS={resultados:{}};
+real.obterEstadoRegiao=()=>estadoGTPS;
+function preencherGTPS(respostas){estadoGTPS.resultados={};respostas.forEach((r,i)=>estadoGTPS.resultados[`cluster::gtps::${i}`]=r);return real.avaliarCluster('quadril',gtpsReal);}
+assert.strictEqual(preencherGTPS(['positivo','positivo','','']),'positivo','palpação e abdução resistida concordantes sustentam a combinação estudada');
+assert.notStrictEqual(preencherGTPS(['negativo','negativo','positivo','positivo']),'positivo','dois itens acessórios não substituem os testes estudados');
+assert.notStrictEqual(preencherGTPS(['positivo','inconclusivo','positivo','positivo']),'positivo','abdução inconclusiva não equivale a positiva');
+console.log('Scientific library integration: eight patterns + negation, family attribution and published cluster boundaries OK');

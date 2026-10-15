@@ -754,7 +754,7 @@
         const h4=document.createElement('h4');h4.textContent=item.nome;div.appendChild(h4);
         const meta=obterMetaCriteriosKineSys(item,grupo),estado=window.obterEstadoRegiao(idRegiao),suf=calcularSuficienciaInvestigacaoKineSys(idRegiao,item,grupo);
         const sub=document.createElement('div');sub.className='cluster-sub';sub.textContent='Registre somente os achados pertinentes. Não avaliados permanecem neutros.';div.appendChild(sub);
-        if(item.evidencia){const ref=document.createElement('div');ref.className='base-evidencia';ref.textContent='Base clínica: '+item.evidencia;div.appendChild(ref);}
+        if(item.evidencia){const ref=document.createElement('div');ref.className='base-evidencia';ref.textContent='Base clínica: '+item.evidencia+(item.nivelEvidencia?' Limitações: '+item.nivelEvidencia:'');div.appendChild(ref);}
         const expandKey=`${grupo}::${item.id}`;
         const expanded=!!estado.testesExpandidos[expandKey];
         const answered=item.testes.map((_,i)=>i).filter(i=>!!valorAchado232(estado,grupo,item,i));

@@ -7,7 +7,7 @@
   if(typeof BANCO_MAPEAMENTO_CLINICO==='undefined')return;
   const r=BANCO_MAPEAMENTO_CLINICO["quadril"];
   if(!r)return;
-  r["diferenciais"]=[...(Array.isArray(r["diferenciais"])?r["diferenciais"]:[]),...[
+  r.diferenciais=[...(Array.isArray(r.diferenciais)?r.diferenciais:[]),...[
   {
     "id": "rigidez_capsular_quadril",
     "nome": "Déficit de Mobilidade do Quadril / Rigidez Capsular",
@@ -37,18 +37,29 @@
     "testes": [
       "Dor profunda glútea com possível irradiação posterior",
       "Piora sentada e/ou com posições que tensionam estruturas glúteas profundas",
-      "Exame lombar e neurológico para diferenciar origem radicular"
+      "Exame lombar e neurológico para diferenciar origem radicular",
+      "Teste ativo do piriforme reproduz a dor glútea familiar",
+      "Teste de alongamento do piriforme sentado reproduz a dor glútea familiar"
     ],
-    "interpretacao": "Síndrome glútea profunda descreve aprisionamento não discogênico do ciático no espaço glúteo profundo; deve ser diferenciada de radiculopatia lombar e patologia do quadril.",
+    "interpretacao": "Os testes ativo do piriforme e de alongamento sentado podem apoiar a investigação de aprisionamento glúteo do ciático. O estudo disponível é pequeno e selecionado; não autoriza diagnóstico automático. Comparar com exame lombar, neurológico e do quadril.",
     "palavrasChaveHMA": [
       "dor glutea piora sentado",
       "gluteo posterior coxa",
-      "piriforme"
+      "piriforme",
+      "dor profunda glutea",
+      "dor nadega sentado"
     ],
     "tipoDorPreferido": [
       "neuropatica",
       "mista"
-    ]
+    ],
+    "sinonimos": [
+      "sindrome glutea profunda",
+      "sindrome do piriforme",
+      "aprisionamento ciatico gluteo"
+    ],
+    "nivelEvidencia": "Estudo de acurácia retrospectivo com 33 participantes e referência endoscópica; aplicabilidade limitada à população estudada.",
+    "evidencia": "Martin et al. 2014: https://pubmed.ncbi.nlm.nih.gov/24217716/"
   },
   {
     "id": "hamstring_proximal_neural",
@@ -109,4 +120,11 @@
     ]
   }
 ]];
+  const gtps=(r.clusters||[]).find(item=>item.id==='gtps');
+  if(gtps)Object.assign(gtps,{
+    regraConfirmacao:{tipo:'combinada',minimo:2,obrigatorios:[0,1],descricao:'Combinação estudada: palpação glútea/trocantérica e abdução resistida concordantes, no contexto de dor lateral do quadril.'},
+    nivelEvidencia:'Revisão sistemática com meta-análise; certeza de muito baixa a moderada e dependência do contexto clínico.',
+    evidencia:'Kinsella et al. 2024: https://pubmed.ncbi.nlm.nih.gov/37561820/',
+    interpretacao:'Na dor lateral do quadril, palpação glútea/trocantérica e abdução resistida concordantes ajudam a modificar a suspeita de síndrome dolorosa trocantérica. Não equivale a escolher quaisquer dois dos quatro itens nem a confirmar uma lesão anatômica. Probabilidades do estudo não são probabilidades individuais do paciente.'
+  });
 })();

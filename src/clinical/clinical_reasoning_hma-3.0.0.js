@@ -14,7 +14,7 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.8-exame-adaptativo';
+    const VERSION='3.0.9-biblioteca-cientifica';
     const MAX_REGIOES=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
@@ -70,6 +70,7 @@
             if(!palavras.length)return;
             let afirmado=false,negado=false;
             clausulas.forEach(c=>{
+                if(/\b(?:minha mae|meu pai|minha irma|meu irmao|historico familiar|antecedente familiar)\b/.test(n(c)))return;
                 const partes=n(c).split(' ');
                 const pos=palavras.map(p=>partes.findIndex(x=>x===p||(p.length>=6&&x.length>=6&&x.startsWith(p.slice(0,-2)))));
                 if(pos.some(i=>i<0)||Math.max(...pos)-Math.min(...pos)>12)return;
@@ -151,13 +152,13 @@
 
     const ALIASES_REGIAO={
         cervical:['cervical','pescoco','nuca'],
-        ombro:['ombro','manguito','escapula'],
+        ombro:['ombro','manguito','escapula','escapular','romboides','serrato anterior'],
         cotovelo:['cotovelo','epicondilo'],
         punho_mao:['punho','mao','carpo','dedo'],
         toracica:['toracica','torax','interescapular'],
         coluna_toracica:['toracica','torax','interescapular'],
         lombar:['lombar','lombalgia','ciatica','sacroiliaca'],
-        quadril:['quadril','coxa','virilha','glute'],
+        quadril:['quadril','coxa','virilha','glute','gluteo','glutea','nadega'],
         joelho:['joelho','patela','menisco'],
         tornozelo_pe:['tornozelo','pe','calcaneo','calcanhar','aquiles','metatarso','antepe','mediope','plantar'],
         tornozelo:['tornozelo','pe','calcaneo','calcanhar','aquiles','metatarso','antepe','mediope','plantar'],
@@ -196,6 +197,8 @@
         const origemLombar=origem==='lombar',origemCervical=origem==='cervical';
         const destinoConectado=(origemLombar&&['quadril','joelho','tornozelo_pe','tornozelo'].includes(id))||(origemCervical&&['ombro','cotovelo','punho_mao'].includes(id));
         if(destinoConectado&&!queixaLocalIndependente(textoHistoria,aliases))return {id,nome:reg?.nome||id,score:0,motivos:['destino de irradiação, sem queixa local independente']};
+        if(id==='ombro'&&evidenciasDaHistoria(textoHistoria,['escapular dorsal','nervo dorsal escapula','romboides','toracico longo','serrato anterior','escapula crepitante','parsonage turner','nervo acessorio']).positivas.length){score+=2;motivos.push('localização escapular ou nervo regional explicitado');}
+        if(id==='quadril'&&evidenciasDaHistoria(textoHistoria,['glutea','gluteo','nadega','piriforme']).positivas.length){score+=2;motivos.push('localização glútea explicitada');}
         if(origem===id){score+=8;motivos.push('origem do trajeto irradiado');}
         const outraRegiaoNoMesmoTrajeto=(origemLombar&&id!=='lombar')||(origemCervical&&id!=='cervical');
         const trajetoNegado=negacoes.has('irradiacaoPerna')||negacoes.has('irradiacaoBraco');
@@ -237,6 +240,9 @@
         const textoHMA=n(hmaAtual());
         const pesos={palavraChave:.65,mecanismo:1.25,fatorPiora:.45,comorbidade:.45,medicamento:.45,idade:.35,cirurgia:1.5,...(item?.pesos||{})};
         const evidencia=evidenciasDaHistoria(hmaAtual(),item?.palavrasChaveHMA);
+        const sinonimos=evidenciasDaHistoria(hmaAtual(),item?.sinonimos);
+        if(sinonimos.positivas.length){score+=3.2;contrib.push('termo clínico reconhecido na história; hipótese a verificar pelo exame');}
+        if(sinonimos.negadas.length&&!sinonimos.positivas.length){score-=3.2;contrib.push('menos compatível: hipótese explicitamente negada na história');}
         const kw=evidencia.positivas.slice(0,3);
         if(kw.length){const p=Math.min(2.4,kw.length*Math.min(Number(pesos.palavraChave)||.65,1.2));score+=p;contrib.push(`HMA: ${kw.slice(0,2).join(' / ')}`);}
         if(evidencia.negadas.length){score-=Math.min(2.4,evidencia.negadas.length*.8);contrib.push(`menos compatível: achado negado na HMA (${evidencia.negadas.slice(0,2).join(' / ')})`);}
