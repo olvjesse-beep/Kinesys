@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-conectada-r2';
+    const ASSET_REVISION = '20261016-config-paginas-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css';
 
     const state = {
@@ -301,6 +301,7 @@
         if ($('ks_online_v2_telefone')) $('ks_online_v2_telefone').value = state.config?.telefone_publico || '';
         if ($('ks_online_v2_mensagem_confirmacao')) $('ks_online_v2_mensagem_confirmacao').value = state.config?.mensagem_confirmacao || '';
         atualizarLink();
+        window.KineSysConfiguracoesAgendaOnlineLayout?.refreshClinicPreview?.();
     }
 
     function atualizarLink() {
@@ -373,19 +374,20 @@
             .slice(0, 30);
     }
 
-    async function salvar() {
-        if (state.saving || !state.clinicaId) return;
+    async function salvar({ somenteClinica = false } = {}) {
+        if (state.saving || !state.clinicaId || !ehAdministrador()) return;
         const client = sb();
         if (!client) return;
 
         const slug = slugificar($('ks_online_v2_slug')?.value || '');
         if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug)) {
             feedback('Informe um nome válido para o link público.', 'erro');
+            if (somenteClinica) window.KineSysConfiguracoesAgendaOnlineLayout?.showClinicSection?.('publico');
             $('ks_online_v2_slug')?.focus();
             return;
         }
         const fotoUrl = String($('ks_online_v2_foto_url')?.value || '').trim();
-        if (fotoUrl && !/^https:\/\//i.test(fotoUrl)) {
+        if (!somenteClinica && fotoUrl && !/^https:\/\//i.test(fotoUrl)) {
             feedback('A foto pública deve usar um endereço https://.', 'erro');
             $('ks_online_v2_foto_url')?.focus();
             return;
@@ -393,6 +395,7 @@
         const mensagem = String($('ks_online_v2_mensagem_confirmacao')?.value || '').trim();
         if (!mensagem) {
             feedback('Informe a mensagem exibida após o agendamento.', 'erro');
+            if (somenteClinica) window.KineSysConfiguracoesAgendaOnlineLayout?.showClinicSection?.('publico');
             $('ks_online_v2_mensagem_confirmacao')?.focus();
             return;
         }
@@ -412,7 +415,7 @@
                 .eq('clinica_id', state.clinicaId);
             if (cfgError) throw cfgError;
 
-            if (state.profissionalId) {
+            if (!somenteClinica && state.profissionalId) {
                 const perfil = {
                     clinica_id: state.clinicaId,
                     profissional_id: state.profissionalId,
@@ -475,6 +478,7 @@
             carregar();
             return true;
         },
-        refresh: carregar
+        refresh: carregar,
+        saveClinic: () => salvar({somenteClinica:true})
     });
 })();

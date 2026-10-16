@@ -48,3 +48,9 @@ create index if not exists idx_equipe_agendamento_online_publicacao
 
 -- Segurança: esta migration não cria grants para anon e não expõe nenhuma tabela.
 -- A publicação externa continuará acontecendo apenas pela futura fronteira pública controlada.
+
+-- Extensão aditiva de 16/10/2026: aparência compartilhada por clínica.
+-- As políticas existentes continuam sendo a autoridade; nenhum grant é ampliado.
+alter table public.configuracoes_agendamento_online
+    add column if not exists cores_agenda jsonb not null default '{}'::jsonb
+    check (jsonb_typeof(cores_agenda) = 'object');

@@ -6,6 +6,116 @@
 }
 
 /* Configurações — composição aprovada “Clínica conectada”. Escopo restrito à tela. */
+/* Modelo 3: uma página por domínio; os formulários originais seguem únicos. */
+#tela_configuracoes .ks-config-page-breadcrumb{margin:18px 0 20px;color:var(--kds-muted);font-size:var(--kds-font-ui)}
+#tela_configuracoes .ks-config-dedicated-page{display:grid;grid-template-columns:260px minmax(0,1fr);gap:10px;align-items:stretch}
+#tela_configuracoes .ks-config-context{display:flex;flex-direction:column;align-items:stretch;gap:5px;background:var(--kds-surface-muted);padding:18px 12px;border-radius:var(--kds-radius-sm);min-width:0}
+#tela_configuracoes .ks-config-context>button{min-height:48px;border:0;background:transparent;box-shadow:none;text-align:left;padding:12px 18px;white-space:normal;color:var(--kds-text);border-radius:var(--kds-radius-sm);font:inherit;font-size:var(--kds-font-body);display:flex;align-items:center;gap:14px}
+#tela_configuracoes .ks-config-context .ks-nav-icon{display:inline-flex;width:20px;height:20px;flex:0 0 20px}
+#tela_configuracoes .ks-config-context svg{width:20px;height:20px}
+#tela_configuracoes .ks-config-falta-row{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:20px 0;border-block:1px solid var(--kds-line-soft);margin-bottom:20px}
+#tela_configuracoes .ks-config-falta-row h3{margin:0 0 6px}
+#tela_configuracoes .ks-config-falta-row p{margin:0;color:var(--kds-muted)}
+#tela_configuracoes .ks-config-falta-row>.ks-agenda-color-field{min-width:220px;margin:0}
+#tela_configuracoes .ks-agenda-color-preview{display:flex;gap:12px;margin-top:20px}
+#tela_configuracoes .ks-agenda-color-preview>span{flex:1;min-height:60px;display:flex;flex-direction:column;justify-content:center;padding:10px 16px}
+#tela_configuracoes .ks-agenda-color-preview small{font-weight:400;margin-top:5px}
+#tela_configuracoes .ks-config-context>button[aria-current="page"]{background:var(--kds-accent-soft);color:var(--kds-accent-hover);font-weight:700;border-left:4px solid var(--kds-accent)}
+#tela_configuracoes .ks-config-page-content{min-width:0;background:var(--kds-surface);padding:28px 32px;border-radius:var(--kds-radius-sm);min-height:700px}
+#tela_configuracoes .ks-config-page-content>.ks-data-governance-card>.card-header h2{font-size:var(--kds-font-title);margin:0 0 8px}
+#tela_configuracoes .ks-config-page-content>.ks-data-governance-card>.card-header p{font-size:var(--kds-font-body);max-width:65ch;line-height:var(--kds-leading-text)}
+#tela_configuracoes .ks-config-page-heading{margin:0 0 28px}
+#tela_configuracoes .ks-config-page-heading h2{margin:0 0 8px;font-size:var(--kds-font-title);line-height:var(--kds-leading-tight)}
+#tela_configuracoes .ks-config-page-heading p{margin:0;color:var(--kds-muted)}
+#tela_configuracoes .ks-config-page-heading-actions{display:flex;justify-content:space-between;align-items:start;gap:20px}
+#tela_configuracoes .ks-config-page-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:28px;padding-top:24px;border-top:1px solid var(--kds-line-soft)}
+#tela_configuracoes .ks-config-page-footer p{margin:0;color:var(--kds-muted)}
+#tela_configuracoes .ks-config-page-footer output{flex:1}
+#tela_configuracoes .ks-config-page-content :is(input,select,textarea){max-width:100%;font-family:var(--kds-font-family-ui)}
+#tela_configuracoes .ks-config-page-content .ks-online-section{padding:0;border:0;background:transparent;box-shadow:none}
+#tela_configuracoes #ks_config_content_clinica .ks-online-section-head{display:none}
+#tela_configuracoes #ks_config_content_clinica .ks-online-v2-link-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px}
+#tela_configuracoes #ks_config_content_clinica [class*="ks-online-v2-span-"]{grid-column:auto}
+#tela_configuracoes #ks_config_content_clinica :is(.ks-online-v2-span-12,.ks-online-v2-linkbox){grid-column:1/-1}
+#tela_configuracoes #ks_config_content_clinica .ks-online-v2-linkbox{display:flex;gap:12px;align-items:end}
+#tela_configuracoes #ks_config_content_clinica .ks-online-v2-linkbox label{flex:1}
+#tela_configuracoes .ks-config-team-search{display:block;max-width:440px;margin-bottom:22px}
+#tela_configuracoes #ks_config_team_list{overflow-x:auto}
+#tela_configuracoes #ks_config_team_list>.card,#tela_configuracoes #ks_config_team_form>.card{padding:0;border:0;box-shadow:none;background:transparent}
+#tela_configuracoes #ks_config_team_form{padding:24px 0;border-block:1px solid var(--kds-line-soft);margin-bottom:24px}
+#tela_configuracoes .ks-config-document-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px}
+#tela_configuracoes .ks-config-document-preview{padding:28px;border:1px solid var(--kds-line);min-height:400px;color:var(--kds-text);font-family:Georgia,serif}
+#tela_configuracoes .ks-config-document-preview>p:first-child{font:var(--kds-font-ui) var(--kds-font-family-ui);color:var(--kds-muted)}
+#tela_configuracoes .ks-config-signature{margin:100px auto 0;padding-top:12px;border-top:1px solid var(--kds-text);text-align:center}
+#tela_configuracoes .ks-config-signature p{margin:4px}
+#tela_configuracoes .ks-config-clinic-preview{border-top:1px solid var(--kds-line-soft);padding-top:24px;margin-top:28px}
+#tela_configuracoes .ks-config-clinic-preview h3{margin:0 0 18px}
+#tela_configuracoes .ks-config-clinic-preview strong{display:block;padding:18px 18px 0;background:var(--kds-accent-soft)}
+#tela_configuracoes .ks-config-clinic-preview p{margin:0;padding:12px 18px 18px;background:var(--kds-accent-soft);color:var(--kds-muted)}
+#tela_configuracoes .ks-config-data-section{padding:22px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_configuracoes .ks-config-data-section h3{margin:0 0 8px}
+#tela_configuracoes .ks-config-data-section p{color:var(--kds-muted);margin:0 0 20px}
+#tela_configuracoes .ks-config-data-section button{margin-right:12px}
+#tela_configuracoes .ks-config-data-section .ks-config-restore-warning{padding:16px;background:var(--kds-surface-muted);border:1px solid var(--kds-line);margin-top:20px}
+#tela_configuracoes #ks_config_data_advanced{margin-top:22px}
+#tela_configuracoes #ks_config_data_advanced summary{cursor:pointer;color:var(--kds-muted)}
+#tela_configuracoes .ks-config-manual-integration{display:flex;align-items:center;gap:22px;padding:28px 0;border-bottom:1px solid var(--kds-line-soft)}
+#tela_configuracoes .ks-config-manual-integration>div{flex:1}
+#tela_configuracoes .ks-config-manual-integration img{width:30px;height:30px}
+#tela_configuracoes .ks-config-manual-integration h3{margin:0 0 8px}
+#tela_configuracoes .ks-config-manual-integration p{margin:0;color:var(--kds-muted)}
+#tela_configuracoes #ks_config_panel_integracoes .ks-config-integration{padding:28px 0}
+#tela_configuracoes #ks_config_panel_integracoes .ks-config-requirements{border:1px solid var(--kds-line);padding:12px 16px;border-radius:var(--kds-radius-sm);text-decoration:none}
+#tela_configuracoes .ks-config-integration-note{padding:18px;background:var(--kds-surface-muted);color:var(--kds-muted);margin-top:24px}
+#tela_configuracoes .ks-config-dedicated-page .ks-config-preview-canvas{min-height:280px}
+#tela_configuracoes .ks-config-dedicated-page .ks-data-governance-card{margin:0;padding:0;border:0;box-shadow:none;background:transparent}
+#tela_configuracoes .ks-config-dedicated-page .ks-config-communication-grid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+#tela_configuracoes .ks-config-dedicated-page :is(.ks-config-message-panel,.ks-config-preview-panel){padding:0;border:0;box-shadow:none}
+#tela_configuracoes .ks-config-dedicated-page .ks-config-message-panel>h3,#tela_configuracoes .ks-config-dedicated-page .ks-config-message-panel>p{display:none}
+#tela_configuracoes .ks-config-dedicated-page .ks-config-communication-heading{margin-bottom:28px}
+#tela_configuracoes .ks-config-context .ks-msg-template-list{margin:0}
+#tela_configuracoes .ks-config-context .ks-msg-template-item{min-height:48px!important;padding:14px 16px!important;white-space:normal;text-align:left;display:flex;align-items:center;gap:14px}
+#tela_configuracoes.ks-config-connected .ks-config-context .ks-msg-template-item[aria-pressed="true"]{border-left:4px solid var(--kds-accent)!important;background:var(--kds-accent-soft)!important}
+#tela_configuracoes .ks-config-rules-details{margin-top:20px;color:var(--kds-muted);font-size:var(--kds-font-ui)}
+#tela_configuracoes .ks-config-rules-details>summary{cursor:pointer;padding:12px 0}
+#tela_configuracoes .ks-config-table-scroll{overflow-x:auto}
+#tela_configuracoes .ks-config-procedure-table{width:100%;border-collapse:collapse;margin:12px 0 24px;font-size:var(--kds-font-ui)}
+#tela_configuracoes .ks-config-procedure-table :is(th,td){padding:8px 10px;text-align:left;border-bottom:1px solid var(--kds-line-soft);vertical-align:middle}
+#tela_configuracoes .ks-config-procedure-table th{color:var(--kds-muted);background:var(--kds-surface-muted);font-weight:600}
+#tela_configuracoes .ks-procedure-color{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:var(--kds-font-metadata)}
+#tela_configuracoes .ks-procedure-color input{width:38px;height:38px;min-height:38px;padding:3px;margin:0}
+#tela_configuracoes .ks-config-default-colors{padding:8px 0;margin-bottom:8px}
+#tela_configuracoes .ks-config-default-colors summary{cursor:pointer;margin:0}
+#tela_configuracoes .ks-agenda-colors-shell .ks-online-section-head{display:none}
+#tela_configuracoes .ks-agenda-colors-shell>.ks-online-topline{align-items:start;gap:16px}
+#tela_configuracoes .ks-agenda-colors-shell>.ks-online-topline h2{font-size:var(--kds-font-title)}
+#tela_configuracoes .ks-agenda-colors-shell>.ks-online-topline>button{flex-shrink:0}
+#tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0 10px;align-items:start}
+#tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled>*{grid-column:2;min-width:0}
+#tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled>.ks-online-layout-nav{grid-column:1;grid-row:1/span 8;display:flex;flex-direction:column;gap:4px;width:auto;background:var(--kds-accent-soft);padding:18px 12px;border:0;border-radius:var(--kds-radius-sm);align-self:stretch}
+#tela_configuracoes #ks_config_panel_online .ks-online-layout-nav button{width:100%;min-height:48px;text-align:left;padding:12px 16px;border:0;white-space:normal}
+#tela_configuracoes #ks_config_panel_online .ks-online-topline{padding:28px 32px 12px;background:var(--kds-surface);margin:0}
+#tela_configuracoes #ks_config_panel_online .ks-online-surface{background:var(--kds-surface);padding:18px 32px 28px}
+#tela_configuracoes #ks_config_panel_online .ks-config-colors-link{justify-self:start;margin:8px 32px}
+@media(max-width:1100px){
+ #tela_configuracoes .ks-config-dedicated-page,#tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled{grid-template-columns:210px minmax(0,1fr)}
+ #tela_configuracoes .ks-config-page-content{padding:22px}
+ #tela_configuracoes .ks-config-document-grid,#tela_configuracoes .ks-config-dedicated-page .ks-config-communication-grid{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ #tela_configuracoes .ks-config-dedicated-page,#tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled{display:flex;flex-direction:column;gap:12px}
+ #tela_configuracoes .ks-config-dedicated-page>*{width:100%}
+ #tela_configuracoes .ks-config-context{flex-direction:row;overflow-x:auto;padding:8px;max-width:100%}
+ #tela_configuracoes .ks-config-context>button{flex:0 0 auto;max-width:230px}
+ #tela_configuracoes .ks-config-page-content{padding:20px 16px;min-height:0}
+ #tela_configuracoes #ks_config_content_clinica .ks-online-v2-link-grid{grid-template-columns:1fr}
+ #tela_configuracoes .ks-config-falta-row{flex-direction:column;align-items:stretch}
+ #tela_configuracoes :is(.ks-config-page-heading-actions,.ks-config-page-footer,.ks-config-manual-integration){flex-direction:column;align-items:stretch}
+ #tela_configuracoes .ks-agenda-colors-shell>.ks-online-topline{display:flex;flex-direction:column}
+ #tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled>.ks-online-layout-nav{flex-direction:row;width:100%;overflow-x:auto;align-self:auto}
+ #tela_configuracoes #ks_config_panel_online .ks-online-layout-nav button{width:auto;flex:0 0 auto}
+ #tela_configuracoes #ks_config_panel_online :is(.ks-online-topline,.ks-online-surface){padding:18px 16px}
+}
 body.ks-design-ready #tela_configuracoes.ks-config-connected { padding: 14px 24px 24px; }
 body.ks-design-ready:has(#tela_configuracoes.ativa) { --kds-sidebar-width:232px; }
 @media(min-width:1100px) {
@@ -51,7 +161,7 @@ body.ks-design-ready #tela_configuracoes.ks-config-connected .ks-msg-preview { m
 .ks-config-variable-menu { position:relative; flex-shrink:0; }
 .ks-config-variable-menu summary { cursor:pointer; border:1px solid var(--kds-line); border-radius:var(--kds-radius-sm); padding:9px 12px; font-size:var(--kds-font-ui); }
 .ks-config-variable-menu .ks-msg-vars { position:absolute; top:100%; right:0; z-index:3; width:280px; max-width:75vw; padding:12px; border:1px solid var(--kds-line); border-radius:var(--kds-radius-sm); background:var(--kds-surface); box-shadow:var(--kds-shadow-float); }
-#tela_configuracoes.ks-config-connected #cfg_msg_texto { min-height:140px; width:100%; resize:vertical; font-family:var(--kds-font-family-ui); line-height:var(--kds-leading-text); }
+#tela_configuracoes.ks-config-connected #cfg_msg_texto { min-height:280px; width:100%; resize:vertical; font-family:var(--kds-font-family-ui); line-height:var(--kds-leading-text); }
 .ks-config-editor-meta { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:start; gap:8px; font-size:var(--kds-font-metadata); color:var(--kds-muted); }
 .ks-config-editor-meta > .ks-config-message-details { margin:0; }
 .ks-config-editor-meta > .ks-config-message-details[open] { grid-column:1 / -1; order:4; }
@@ -85,7 +195,7 @@ body.ks-design-ready #tela_configuracoes .ks-config-communication :is(.ks-config
     .ks-config-preview-canvas { min-height:148px; }
     .ks-config-integrations-panel { padding:14px 18px; }
     #tela_configuracoes.ks-config-connected .ks-msg-template-list { margin-bottom:14px; }
-    #tela_configuracoes.ks-config-connected #cfg_msg_texto { min-height:126px; }
+    #tela_configuracoes.ks-config-connected #cfg_msg_texto { min-height:280px; }
     .ks-config-communication-rules { padding:12px 18px; }
     .ks-config-communication-heading p { margin-bottom:10px; }
     .ks-config-communication-heading h2 { line-height:var(--kds-leading-tight); }

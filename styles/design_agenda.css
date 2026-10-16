@@ -504,6 +504,11 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   border-color:color-mix(in srgb,var(--agenda-cor-fisioterapia) 48%,white);
   border-left-color:var(--agenda-cor-fisioterapia);
 }
+#tela_agenda .agenda-compromisso.tipo-personalizado:not(.tipo-falta){
+  background:color-mix(in srgb,var(--agenda-cor-procedimento) 16%,white);
+  border-color:color-mix(in srgb,var(--agenda-cor-procedimento) 54%,white);
+  border-left-color:var(--agenda-cor-procedimento);
+}
 #tela_agenda .agenda-compromisso.tipo-falta,
 #tela_agenda .agenda-compromisso.status-falta_justificada,
 #tela_agenda .agenda-compromisso.status-falta_nao_justificada,

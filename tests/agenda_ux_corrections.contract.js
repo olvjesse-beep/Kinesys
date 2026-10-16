@@ -156,3 +156,29 @@ assert.match(agendaCss,/#modal_agendamento \.agenda-recurrencia-grid>\.input-gro
 assert.match(agendaCss,/#modal_agendamento \[hidden\],#modal_agendamento #ag_recorrencia_bloco \[hidden\]\{display:none!important\}/,'CSS não pode reabrir campos condicionais ocultos pela lógica do formulário');
 
 console.log('Agenda UX corrections contract: autocomplete + modal polish OK');
+
+(async()=>{
+  const values={proc_id:'',proc_nome:'Pilates',proc_duracao:'50',proc_valor:'100',proc_sessoes_pacote:'1'};
+  const elementos=Object.fromEntries(Object.entries(values).map(([id,value])=>[id,{value}]));
+  const button={disabled:false};let writes=0,closed=0,payload,finish;
+  const pending=new Promise(resolve=>{finish=resolve;});
+  const context={
+    usuarioLogado:{clinica_id:'clinic-a'},usuarioEhAdministradorAgenda:()=>true,
+    document:{getElementById:id=>elementos[id],querySelectorAll:()=>[],querySelector:()=>button},
+    _supabase:{from:table=>{assert.equal(table,'procedimentos');return{insert:rows=>{writes++;payload=rows[0];return pending;}};}},
+    alert:message=>{throw new Error(message);},invalidarCacheProcedimentosAgenda:()=>{},
+    fecharModal:()=>{closed++;},carregarProcedimentos:async()=>{},
+    window:{KineSysConfiguracoesAgendaOnline:{refreshProcedures:async()=>{}}},console
+  };
+  vm.createContext(context);
+  vm.runInContext(agenda.slice(agenda.indexOf('let agendaSalvandoProcedimento = false;'),agenda.indexOf('async function alternarAtivoProcedimento(')),context);
+  const save=vm.runInContext('salvarProcedimento()',context);
+  await vm.runInContext('salvarProcedimento()',context);
+  assert.equal(writes,1,'cadastro não pode duplicar procedimento por duplo clique');
+  assert.equal(payload.clinica_id,'clinic-a');assert.equal(payload.sessoes_pacote,1);
+  finish({error:null});await save;
+  assert.equal(closed,1);assert.equal(button.disabled,false);
+  context.usuarioEhAdministradorAgenda=()=>false;
+  await vm.runInContext('salvarProcedimento()',context);assert.equal(writes,1);
+  console.log('Procedimentos: cadastro com sessões/escopo preservados e proteção contra duplo clique OK.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
