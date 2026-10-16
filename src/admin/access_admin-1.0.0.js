@@ -8,7 +8,7 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20261016-config-conectada-r2';
+    const ONLINE_CONFIG_REVISION='20261016-config-conectada-r3';
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
     const ONLINE_PROFILE_CONFIG_REVISION='20261016-config-conectada-r2';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
@@ -193,6 +193,9 @@
         prepararEntradaAgendaConfiguracoes();
         const configuracoes=window.KineSysConfiguracoesAgendaOnline;
         configuracoes?.onOpen?.();
+        // O perfil necessita do DOM do hub antes de montar; módulos podem ter
+        // sido carregados enquanto a sessão ainda estava sendo restaurada.
+        window.KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.();
         let aba='online';
         try{aba=sessionStorage.getItem('kinesys_config_tab')||'online';}catch(_){}
         configuracoes?.abrirAba?.(aba);

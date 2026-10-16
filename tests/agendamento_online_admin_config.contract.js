@@ -108,3 +108,6 @@ perfilAPI.onOpen();
 assert.strictEqual(lifecycle.mountCount,1,'reabertura não deve duplicar seções');
 assert.strictEqual(lifecycle.loadCount,1,'reabertura atualiza dados sem duplicar a montagem');
 console.log('Configuração cold boot: estilos independentes, montagem após login e reabertura idempotente OK.');
+const ativacao=adminBootstrap.slice(adminBootstrap.indexOf('function ativarConfiguracoesAgenda()'),adminBootstrap.indexOf('function carregarLayoutAgendaOnline()'));
+assert(ativacao.indexOf('configuracoes?.onOpen?.()') < ativacao.indexOf('KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.()'), 'o hub deve montar antes do perfil público');
+assert(ativacao.indexOf('KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.()') < ativacao.indexOf('KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.()'), 'o perfil deve montar antes do workspace da agenda');
