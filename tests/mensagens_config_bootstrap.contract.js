@@ -9,7 +9,8 @@ const html=fs.readFileSync('index.html','utf8');
 const crm=fs.readFileSync('src/core/crm_relationship_core-1.0.0.js','utf8');
 const agenda=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
 
-assert.match(html,/src\/core\/mensagens_config\.js\?v=20261016-config-conectada-r1/,'index deve invalidar o cache da interface de mensagens');
+const mensagensRevision=fs.readFileSync('src/core/mensagens_config.js','utf8').match(/KINESYS_MENSAGENS_UI_REVISION = '([^']+)'/)[1];
+assert(html.includes(`src/core/mensagens_config.js?v=${mensagensRevision}`),'index deve usar a revisão atual da interface de mensagens');
 assert.match(messages,/document\.addEventListener\('DOMContentLoaded', inicializarConfiguracaoMensagens\);/,'marcação administrativa da tela deve continuar inicializada no DOMContentLoaded');
 
 const initMatch=messages.match(/function inicializarConfiguracaoMensagens\(\) \{([\s\S]*?)\n\}/);

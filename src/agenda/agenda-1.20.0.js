@@ -64,11 +64,48 @@ function aplicarCoresAgenda() {
     if (!tela) return;
     const cores = obterCoresAgenda();
     Object.entries(cores).forEach(([tipo, cor]) => tela.style.setProperty(`--agenda-cor-${tipo}`, cor));
+    let procedimentos = {};
+    try { procedimentos = JSON.parse(localStorage.getItem(chaveCoresAgenda().replace('kinesys_agenda_cores::','kinesys_agenda_cores_procedimentos::')) || '{}') || {}; } catch (_) {}
+    tela.querySelectorAll('.agenda-compromisso[data-procedimento-id]').forEach(card => {
+        const cor = procedimentos[card.dataset.procedimentoId];
+        const personalizada = corHexAgendaValida(cor) && !card.classList.contains('tipo-falta');
+        card.classList.toggle('tipo-personalizado', personalizada);
+        if (personalizada) card.style.setProperty('--agenda-cor-procedimento', cor);
+        else card.style.removeProperty('--agenda-cor-procedimento');
+    });
     const configurar = tela.querySelector('.agenda-configurar-cores');
     if (configurar) configurar.hidden = !usuarioEhAdministradorAgenda();
 }
 
-window.addEventListener('kinesys:agenda-cores-atualizadas', aplicarCoresAgenda);
+window.addEventListener('kinesys:agenda-cores-atualizadas', () => {
+    agendaCoresVersao += 1;
+    agendaCoresLeituraEm = 0;
+    aplicarCoresAgenda();
+});
+let agendaCoresVersao = 0;
+let agendaCoresLeitura = null;
+let agendaCoresLeituraChave = '';
+let agendaCoresLeituraEm = 0;
+async function carregarCoresAgendaCompartilhadas() {
+    const clinica = String(usuarioLogado?.clinica_id || '').trim();
+    const versao = agendaCoresVersao;
+    if (!_supabase || !clinica) return;
+    if (agendaCoresLeituraChave === clinica && Date.now() - agendaCoresLeituraEm < 30000) return agendaCoresLeitura;
+    agendaCoresLeituraChave = clinica;
+    agendaCoresLeituraEm = Date.now();
+    agendaCoresLeitura = (async () => {
+        const {data,error} = await _supabase.from('configuracoes_agendamento_online').select('cores_agenda').eq('clinica_id',clinica).maybeSingle();
+        if (error) throw error;
+        if (String(usuarioLogado?.clinica_id || '') !== clinica || versao !== agendaCoresVersao) return;
+        const cores = data?.cores_agenda;
+        if (!cores || !Object.keys(cores).length) return;
+        const defaults = Object.fromEntries(Object.entries(AGENDA_CORES_PADRAO).map(([tipo,padrao]) => [tipo,corHexAgendaValida(cores[tipo]) ? cores[tipo] : padrao]));
+        const procedimentos = Object.fromEntries(Object.entries(cores.procedimentos || {}).filter(([id,cor]) => /^[\w-]+$/.test(id) && corHexAgendaValida(cor)));
+        localStorage.setItem(chaveCoresAgenda(),JSON.stringify(defaults));
+        localStorage.setItem(chaveCoresAgenda().replace('kinesys_agenda_cores::','kinesys_agenda_cores_procedimentos::'),JSON.stringify(procedimentos));
+    })().catch(error => { agendaCoresLeituraEm = 0; console.warn('Cores compartilhadas indisponíveis; preservando a aparência local.', error); });
+    return agendaCoresLeitura;
+}
 
 function normalizarTipoProcedimentoAgenda(valor = '') {
     return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -1247,7 +1284,9 @@ function abrirModalProcedimento(id) {
     abrirModal('modal_procedimento');
 }
 
+let agendaSalvandoProcedimento = false;
 async function salvarProcedimento() {
+    if (!usuarioEhAdministradorAgenda() || agendaSalvandoProcedimento) return;
     const id = document.getElementById('proc_id').value;
     const nome = document.getElementById('proc_nome').value.trim();
     const duracao = parseInt(document.getElementById('proc_duracao').value, 10);
@@ -1260,12 +1299,17 @@ async function salvarProcedimento() {
 
     const sessoes_pacote=Number(document.getElementById('proc_sessoes_pacote').value);
     if(!Number.isInteger(sessoes_pacote)||sessoes_pacote<1){alert('Informe uma quantidade válida de sessões.');return;}
-    const registro = { nome, duracao_minutos: duracao, valor, profissionais_ids: profissionaisIds, sessoes_pacote };
+    const clinicaId = String(usuarioLogado?.clinica_id || '').trim();
+    if (!clinicaId) { alert('Não foi possível identificar a clínica. Reabra a página antes de cadastrar.'); return; }
+    const registro = { nome, duracao_minutos: duracao, valor, profissionais_ids: profissionaisIds, sessoes_pacote, clinica_id: clinicaId };
 
+    agendaSalvandoProcedimento = true;
+    const botaoSalvar = document.querySelector('#modal_procedimento button[onclick="salvarProcedimento()"]');
+    if (botaoSalvar) botaoSalvar.disabled = true;
     try {
         let error;
         if (id) {
-            ({ error } = await _supabase.from('procedimentos').update(registro).eq('id', id));
+            ({ error } = await _supabase.from('procedimentos').update(registro).eq('id', id).eq('clinica_id',clinicaId));
         } else {
             registro.ativo = true;
             ({ error } = await _supabase.from('procedimentos').insert([registro]));
@@ -1274,8 +1318,12 @@ async function salvarProcedimento() {
         invalidarCacheProcedimentosAgenda();
         fecharModal('modal_procedimento');
         await carregarProcedimentos();
+        await window.KineSysConfiguracoesAgendaOnline?.refreshProcedures?.().catch(error => console.warn('Procedimento salvo; reabra Configurações para atualizar a lista de cores.', error));
     } catch (err) {
         alert('❌ Erro ao salvar procedimento: ' + (err.message || err));
+    } finally {
+        agendaSalvandoProcedimento = false;
+        if (botaoSalvar) botaoSalvar.disabled = false;
     }
 }
 
@@ -2114,6 +2162,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     const container = document.getElementById('agenda_semana_grade');
     if (!container) return;
     aplicarCoresAgenda();
+    carregarCoresAgendaCompartilhadas().then(aplicarCoresAgenda);
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
     const limites = limitesHorariosGrade(dias, profissionalFiltro);
     const passo = AGENDA_GRADE_PASSO_MIN;
@@ -2256,7 +2305,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 evento.preventDefault();
                 abrirDetalheAgendamento(a.id);
             });
-            overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+            overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
             container.appendChild(overlay);
         });
     } else {
@@ -2300,7 +2349,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                     evento.preventDefault();
                     abrirDetalheAgendamento(a.id);
                 });
-                overlay.innerHTML = `<div class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+                overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
                 container.appendChild(overlay);
             });
         });

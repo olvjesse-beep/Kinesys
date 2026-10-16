@@ -63,7 +63,7 @@ assert(js.includes("await salvarConfiguracaoPortal(client, { ...cfg, ativo: fals
   'salvamento deve fechar o portal antes das dependências e reativar somente ao final');
 assert(js.includes('window.KineSysConfiguracoesAgendaOnline'),
   'módulo deve expor contrato estável para abertura/refresh');
-assert(js.includes('Aparência da agenda') && js.includes('ks_config_panel_aparencia'),
+assert(js.includes('Procedimentos e cores') && js.includes('ks_config_panel_aparencia'),
   'Configurações deve oferecer uma aba específica para aparência da Agenda');
 assert(js.includes('kinesys_agenda_cores::'),
   'cores devem ser isoladas por clínica no armazenamento do navegador');
@@ -125,3 +125,75 @@ console.log('Configuração cold boot: estilos independentes, montagem após log
 const ativacao=adminBootstrap.slice(adminBootstrap.indexOf('function ativarConfiguracoesAgenda()'),adminBootstrap.indexOf('function carregarLayoutAgendaOnline()'));
 assert(ativacao.indexOf('configuracoes?.onOpen?.()') < ativacao.indexOf('KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.()'), 'o hub deve montar antes do perfil público');
 assert(ativacao.indexOf('KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.()') < ativacao.indexOf('KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.()'), 'o perfil deve montar antes do workspace da agenda');
+
+const layout = fs.readFileSync('src/admin/configuracoes_agendamento_online_layout-1.0.0.js','utf8');
+assert(layout.includes('function prepararPaginas()') && layout.includes('function showPage(aba)'), 'sete áreas devem usar composição e navegação próprias');
+assert(!layout.includes('cloneNode(true)); mensagens'), 'formulários não podem ser clonados para criar páginas paralelas');
+assert(layout.includes('equipeOrigem') && layout.includes('destino.appendChild(el)'), 'a página Equipe original deve receber seus mesmos nós ao sair das Configurações');
+assert(layout.includes('saveClinic?.()') && perfil.includes('if (!somenteClinica && state.profissionalId)'), 'salvar Clínica não pode sobrescrever o perfil do profissional oculto');
+assert(js.includes('data-adicionar-procedimento') && layout.includes('window.abrirModalProcedimento?.('), 'Adicionar procedimento deve abrir o CRUD existente');
+assert(html.includes('id="proc_sessoes_pacote"'), 'o formulário de procedimento deve preservar o campo exigido pelos planos');
+
+(async () => {
+  const inputs = new Map(['osteopatia','fisioterapia','falta'].map(tipo => [`ks_agenda_cor_${tipo}`,{value:'#336699'}]));
+  const feedback={hidden:true,textContent:'',className:''},button={disabled:false};
+  inputs.set('ks_agenda_cores_feedback',feedback);inputs.set('ks_agenda_cores_salvar',button);
+  let finish, writes=0, cacheWrites=0, updates=0, payload, clinicFilter;
+  const pending = new Promise(resolve=>{finish=resolve;});
+  const context = {
+    state:{carregado:true}, ehAdministrador:()=>true, resolverClinicaId:async()=> 'clinic-a',
+    AGENDA_CORES_PADRAO:{osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#7B878C'},
+    document:{getElementById:id=>inputs.get(id)||null,querySelectorAll:()=>[{dataset:{corProcedimento:'procedure-a'},value:'#8844AA'}]},
+    corHexValida:value=>/^#[0-9a-f]{6}$/i.test(value), lerCoresAgenda:()=>({}), lerCoresProcedimentos:()=>({'procedure-b':'#115522'}),
+    chaveCoresProcedimentos:()=> 'scoped-procedures',localStorage:{setItem:()=>{cacheWrites++;}},
+    salvarCoresAgenda:()=>{updates++;return true;}, CustomEvent:class {},window:{dispatchEvent:()=>{}},
+    sb:()=>({from:table=>{
+      assert.equal(table,'configuracoes_agendamento_online');
+      return {update:p=>{
+        writes++;payload=p;
+        return {eq:(key,value)=>{
+          assert.equal(key,'clinica_id');clinicFilter=value;
+          return {select:()=>pending};
+        }};
+      }};
+    }})
+  };
+  vm.createContext(context);
+  vm.runInContext('let salvandoCores=false;'+js.slice(js.indexOf('async function salvarCoresCompartilhadas()'),js.indexOf('function markupAparenciaAgenda()')),context);
+  const first=vm.runInContext('salvarCoresCompartilhadas()',context);
+  await new Promise(resolve=>setImmediate(resolve));
+  const second=await vm.runInContext('salvarCoresCompartilhadas()',context);
+  assert.equal(second,false,'duplo clique deve ser rejeitado por estado, não só disabled');
+  assert.equal(writes,1);assert.equal(cacheWrites,0,'não anunciar persistência local antes do servidor');
+  assert.equal(clinicFilter,'clinic-a');assert.equal(payload.cores_agenda.procedimentos['procedure-a'],'#8844AA');
+  assert.equal(payload.cores_agenda.procedimentos['procedure-b'],'#115522','cores de procedimentos fora da lista devem ser preservadas');
+  finish({data:[{clinica_id:'clinic-a'}],error:null});
+  assert.equal(await first,true);assert.equal(cacheWrites,1);assert.equal(updates,1);assert.equal(button.disabled,false);
+  context.sb=()=>({from:()=>({update:()=>({eq:()=>({select:async()=>({data:null,error:{message:'offline'}})})})})});
+  assert.equal(await vm.runInContext('salvarCoresCompartilhadas()',context),false);
+  assert.equal(updates,1,'falha no servidor não pode alterar a aparência como se tivesse salvo');
+  assert(feedback.textContent.includes('offline'));assert.equal(button.disabled,false);
+  context.ehAdministrador=()=>false;
+  assert.equal(await vm.runInContext('salvarCoresCompartilhadas()',context),false,'perfil sem autorização não salva cores');
+  console.log('Cores compartilhadas: escopo, cor arbitrária por ID, duplo clique, erro e confirmação do servidor OK.');
+  const refreshSource = js.slice(js.indexOf('async refreshProcedures()'), js.lastIndexOf('\n    });')).replace('async refreshProcedures()', 'async function refreshProcedures()');
+  const refreshContext = {
+    state:{clinicaId:'clinic-a',procedimentos:[{id:'old',agendamento_online_ativo:false,_onlineOriginal:true}]},
+    resolverClinicaId:async()=> 'clinic-a',
+    sb:()=>({from:()=>({select:fields=>{
+      assert(fields.includes('profissionais_ids') && fields.includes('agendamento_online_ativo'));
+      const query={eq:()=>query,order:async()=>({data:[{id:'old',agendamento_online_ativo:true,profissionais_ids:['prof']},{id:'new',agendamento_online_ativo:false}],error:null})};
+      return query;
+    }})}),renderizarProcedimentos:()=>{},renderizarCoresProcedimentos:()=>{},atualizarResumoPublicacao:()=>{}
+  };
+  vm.createContext(refreshContext);vm.runInContext(refreshSource,refreshContext);
+  await vm.runInContext('refreshProcedures()',refreshContext);
+  assert.equal(refreshContext.state.procedimentos[0].agendamento_online_ativo,false,'refresh do CRUD deve preservar a escolha online ainda não salva');
+  assert.equal(refreshContext.state.procedimentos[0]._onlineOriginal,true,'baseline de persistência deve ser mantida para salvar o rascunho');
+  assert.equal(refreshContext.state.procedimentos[1]._onlineOriginal,false,'novo procedimento deve receber baseline do servidor');
+  refreshContext.state.clinicaId='clinic-b';
+  const previous=refreshContext.state.procedimentos;
+  await vm.runInContext('refreshProcedures()',refreshContext);
+  assert.strictEqual(refreshContext.state.procedimentos,previous,'resposta de outra clínica não deve substituir o estado atual');
+  console.log('Refresh de procedimentos: rascunhos, vínculos e isolamento entre clínicas preservados.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

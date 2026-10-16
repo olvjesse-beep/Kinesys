@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-conectada-r4';
+    const ASSET_REVISION = '20261016-config-paginas-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -39,6 +39,7 @@
         disponibilidadeEditada: [],
         profissionalSelecionado: ''
     };
+    let salvandoCores = false;
 
     function sb() {
         return (typeof _supabase !== 'undefined' && _supabase) ? _supabase : window._supabase;
@@ -148,30 +149,89 @@
         return true;
     }
 
+    function chaveCoresProcedimentos() {
+        return chaveCoresAgenda().replace('kinesys_agenda_cores::', 'kinesys_agenda_cores_procedimentos::');
+    }
+
+    function lerCoresProcedimentos() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(chaveCoresProcedimentos()) || '{}');
+            return Object.fromEntries(Object.entries(raw || {}).filter(([id, cor]) => /^[\w-]+$/.test(id) && corHexValida(cor)));
+        } catch (_) { return {}; }
+    }
+
+    function renderizarCoresProcedimentos() {
+        const lista = document.getElementById('ks_cores_procedimentos');
+        if (!lista) return;
+        const cores = lerCoresProcedimentos();
+        lista.innerHTML = state.procedimentos.length ? `<div class="ks-config-table-scroll"><table class="ks-config-procedure-table"><thead><tr><th>Procedimento</th><th>Duração</th><th>Valor</th><th>Cor</th><th>Ações</th></tr></thead><tbody>${state.procedimentos.map(p => {
+            const tipo = /osteo/i.test(p.nome) ? 'osteopatia' : 'fisioterapia';
+            const cor = cores[p.id] || lerCoresAgenda()[tipo];
+            return `<tr><td><strong>${escapeHTML(p.nome)}</strong></td><td>${Number(p.duracao_minutos)} min</td><td>${p.valor == null ? 'Não informado' : escapeHTML(Number(p.valor).toLocaleString('pt-BR', {style:'currency',currency:'BRL'}))}</td><td><label class="ks-procedure-color"><input type="color" value="${cor}" data-cor-procedimento="${escapeHTML(p.id)}" aria-label="Cor de ${escapeHTML(p.nome)}"><span>${cor.toUpperCase()}</span></label></td><td><button type="button" class="btn-secondary" data-editar-procedimento="${escapeHTML(p.id)}">Editar</button></td></tr>`;
+        }).join('')}</tbody></table></div>` : '<p class="field-help">Nenhum procedimento disponível. Use Adicionar procedimento para cadastrar o primeiro.</p>';
+        const previa = document.querySelector('.ks-agenda-color-preview');
+        if (previa && state.procedimentos.length) previa.innerHTML = state.procedimentos.slice(0,4).map(p => `<span data-preview-procedimento="${escapeHTML(p.id)}" style="--preview-color:${cores[p.id] || lerCoresAgenda()[/osteo/i.test(p.nome) ? 'osteopatia' : 'fisioterapia']}">${escapeHTML(p.nome)}<small>${Number(p.duracao_minutos)} min</small></span>`).join('');
+    }
+
+    async function salvarCoresCompartilhadas() {
+        if (salvandoCores || !ehAdministrador()) return false;
+        const feedback = document.getElementById('ks_agenda_cores_feedback');
+        const btn = document.getElementById('ks_agenda_cores_salvar');
+        const dizer = (texto, erro = false) => { if (feedback) { feedback.hidden = false; feedback.textContent = texto; feedback.className = `ks-online-feedback ${erro ? 'erro' : 'sucesso'}`; } };
+        salvandoCores = true;
+        if (btn) btn.disabled = true;
+        try {
+            if (!state.carregado) throw new Error('Aguarde o carregamento dos procedimentos antes de salvar.');
+            const clinicaId = await resolverClinicaId();
+            const cores = Object.fromEntries(Object.keys(AGENDA_CORES_PADRAO).map(tipo => [tipo, document.getElementById(`ks_agenda_cor_${tipo}`)?.value || lerCoresAgenda()[tipo]]));
+            const procedimentos = {...lerCoresProcedimentos()};
+            document.querySelectorAll('[data-cor-procedimento]').forEach(input => { procedimentos[input.dataset.corProcedimento] = input.value.toUpperCase(); });
+            if ([...Object.values(cores), ...Object.values(procedimentos)].some(cor => !corHexValida(cor))) throw new Error('Confira as cores informadas.');
+            const payload = {cores_agenda: {...cores, procedimentos}};
+            const client = sb();
+            if (!client) throw new Error('Servidor indisponível. As cores não foram salvas.');
+            const res = await client.from('configuracoes_agendamento_online').update(payload).eq('clinica_id', clinicaId).select('clinica_id');
+            if (res.error) throw res.error;
+            if (!res.data?.length) {
+                const criado = await client.from('configuracoes_agendamento_online').insert({clinica_id: clinicaId, ...configPadrao(), ...payload});
+                if (criado.error) throw criado.error;
+            }
+            // Só anunciar sucesso depois da confirmação do servidor. Cache é auxiliar.
+            try { localStorage.setItem(chaveCoresProcedimentos(), JSON.stringify(procedimentos)); } catch (_) {}
+            salvarCoresAgenda(cores);
+            window.dispatchEvent(new CustomEvent('kinesys:agenda-cores-atualizadas'));
+            dizer('Cores salvas para a equipe desta clínica.');
+            return true;
+        } catch (error) { dizer(`Não foi possível salvar as cores: ${error.message || error}`, true); return false; }
+        finally { salvandoCores = false; if (btn) btn.disabled = false; }
+    }
+
     function markupAparenciaAgenda() {
         return `
             <div class="ks-online-shell ks-agenda-colors-shell">
                 <div class="ks-online-topline">
                     <div>
-                        <h2>Aparência da agenda</h2>
-                        <p>Defina a identificação visual dos atendimentos sem alterar horários, status ou prontuários.</p>
+                        <h2>Procedimentos e cores</h2>
+                        <p>Cada procedimento pode ter sua própria cor na Agenda, sem alterar o status do atendimento.</p>
                     </div>
+                    <button type="button" class="btn-primary" data-adicionar-procedimento>Adicionar procedimento</button>
                 </div>
                 <div id="ks_agenda_cores_feedback" class="ks-online-feedback neutro" role="status" aria-live="polite" hidden></div>
                 <section class="ks-online-section">
                     <div class="ks-online-section-head ks-online-section-head-simple">
                         <div>
                             <h3>Cores dos atendimentos</h3>
-                            <p>O KineSys reconhece osteopatia e fisioterapia pelo nome do procedimento. Faltas usam a cor definida abaixo.</p>
+                            <p>Defina a cor de cada procedimento. A cor de falta tem prioridade sobre a cor do serviço.</p>
                         </div>
                     </div>
-                    <div class="ks-agenda-color-grid">
+                    <div id="ks_cores_procedimentos"></div>
+                    <details class="ks-config-default-colors"><summary>Cores padrão e status de falta</summary><div class="ks-agenda-color-grid">
                         ${Object.entries({ osteopatia: 'Osteopatia', fisioterapia: 'Fisioterapia', falta: 'Falta' }).map(([tipo, rotulo]) => `
                             <label class="ks-agenda-color-field" for="ks_agenda_cor_${tipo}">
                                 <span class="ks-agenda-color-copy"><strong>${rotulo}</strong><small id="ks_agenda_cor_${tipo}_valor">${AGENDA_CORES_PADRAO[tipo]}</small></span>
                                 <input type="color" id="ks_agenda_cor_${tipo}" value="${AGENDA_CORES_PADRAO[tipo]}" aria-label="Cor para ${rotulo}">
                             </label>`).join('')}
-                    </div>
+                    </div></details>
                     <div class="ks-agenda-color-preview" aria-label="Prévia das cores">
                         <span data-preview-cor="osteopatia">Osteopatia</span>
                         <span data-preview-cor="fisioterapia">Fisioterapia</span>
@@ -341,9 +401,10 @@
                 if (previa) previa.style.setProperty('--preview-color', input.value);
             });
         });
-        document.getElementById('ks_agenda_cores_salvar')?.addEventListener('click', () => salvarCoresAgenda());
+        document.getElementById('ks_agenda_cores_salvar')?.addEventListener('click', salvarCoresCompartilhadas);
         document.getElementById('ks_agenda_cores_restaurar')?.addEventListener('click', () => {
-            salvarCoresAgenda(AGENDA_CORES_PADRAO);
+            preencherCoresAgenda(AGENDA_CORES_PADRAO);
+            document.querySelectorAll('[data-cor-procedimento]').forEach(input => { input.value = AGENDA_CORES_PADRAO[/osteo/i.test(input.getAttribute('aria-label')) ? 'osteopatia' : 'fisioterapia']; input.dispatchEvent(new Event('input', {bubbles:true})); });
         });
         preencherCoresAgenda();
     }
@@ -529,8 +590,10 @@
         try { sessionStorage.setItem('kinesys_config_tab', aba); } catch (_) {}
 
         if (online) carregar(false);
-        else if (aparencia) preencherCoresAgenda();
+        else if (aparencia) { preencherCoresAgenda(); renderizarCoresProcedimentos(); carregar(false); }
         else if (mensagens && typeof window.abrirConfiguracoesMensagens === 'function') window.abrirConfiguracoesMensagens();
+        else if (['clinica','documentos'].includes(aba)) carregar(false);
+        window.KineSysConfiguracoesAgendaOnlineLayout?.showPage?.(aba);
     }
 
     async function onOpen() {
@@ -575,6 +638,15 @@
             state.config = { ...configPadrao(), ...(cfgRes.data || {}) };
             state.profissionais = (profRes.data || []).map(p => ({ ...p, _onlineOriginal: !!p.agendamento_online_ativo }));
             state.procedimentos = (procRes.data || []).map(p => ({ ...p, _onlineOriginal: !!p.agendamento_online_ativo }));
+            const cores = cfgRes.data?.cores_agenda;
+            if (cores && Object.keys(cores).length) {
+                try {
+                    localStorage.setItem(chaveCoresProcedimentos(), JSON.stringify(cores.procedimentos || {}));
+                    localStorage.setItem(chaveCoresAgenda(), JSON.stringify(Object.fromEntries(Object.keys(AGENDA_CORES_PADRAO).map(tipo => [tipo, corHexValida(cores[tipo]) ? cores[tipo] : AGENDA_CORES_PADRAO[tipo]]))));
+                } catch (_) {}
+            }
+            preencherCoresAgenda();
+            renderizarCoresProcedimentos();
             state.disponibilidadeOriginal = (dispRes.data || []).map(x => ({ ...x }));
             state.disponibilidadeEditada = (dispRes.data || []).map(x => ({ ...x }));
             state.profissionalSelecionado = state.profissionalSelecionado && state.profissionais.some(p => p.id === state.profissionalSelecionado)
@@ -960,6 +1032,25 @@
         onOpen,
         refresh: () => carregar(true),
         lerCoresAgenda,
-        salvarCoresAgenda
+        salvarCoresAgenda,
+        salvarCoresCompartilhadas,
+        renderizarCoresProcedimentos,
+        async refreshProcedures() {
+            const clinicaId = await resolverClinicaId();
+            const {data,error} = await sb().from('procedimentos').select('id,nome,duracao_minutos,valor,profissionais_ids,ativo,agendamento_online_ativo').eq('clinica_id',clinicaId).eq('ativo',true).order('nome');
+            if (error) throw error;
+            if (String(clinicaId) !== String(state.clinicaId)) return;
+            const anteriores = new Map(state.procedimentos.map(p => [String(p.id), p]));
+            state.procedimentos = (data || []).map(p => {
+                const anterior = anteriores.get(String(p.id));
+                return { ...p,
+                    agendamento_online_ativo: anterior ? anterior.agendamento_online_ativo : !!p.agendamento_online_ativo,
+                    _onlineOriginal: anterior ? anterior._onlineOriginal : !!p.agendamento_online_ativo
+                };
+            });
+            renderizarProcedimentos();
+            renderizarCoresProcedimentos();
+            atualizarResumoPublicacao();
+        }
     });
 })();

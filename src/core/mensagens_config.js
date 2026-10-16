@@ -151,11 +151,12 @@ async function salvarMensagemPadraoConfigurada(chave, titulo, mensagem) {
     return Array.isArray(data) ? data[0] : data;
 }
 
+const KINESYS_MENSAGENS_UI_REVISION = '20261016-config-paginas-r1';
 function renderizarListaMensagensConfiguracao() {
     const lista = document.getElementById('cfg_msg_lista');
     if (!lista) return;
     const ordem = ['agenda_lembrete_sessao', 'crm_lembrete_sessao', 'crm_checkin_24h', 'crm_exercicios_3d', 'agenda_oferta_lista_espera'];
-    const nomes = { agenda_lembrete_sessao: 'Lembrete de sessão', crm_lembrete_sessao: 'Lembrete pela Home', crm_checkin_24h: 'Check-in após atendimento', crm_exercicios_3d: 'Orientações de exercícios' };
+    const nomes = { agenda_lembrete_sessao: 'Lembrete de sessão', crm_lembrete_sessao: 'Lembrete pela Home', crm_checkin_24h: 'Check-in após atendimento', crm_exercicios_3d: 'Orientações de exercícios', agenda_oferta_lista_espera: 'Lista de espera' };
     const itens = [...KINESYS_MENSAGENS_PADRAO].sort((a,b) => ordem.indexOf(a.chave) - ordem.indexOf(b.chave)).map(base => {
         const cfg = kinesysMensagensCache.get(base.chave) || base;
         const ativo = base.chave === kinesysMensagemEditando ? ' ativa' : '';
@@ -167,8 +168,10 @@ function renderizarListaMensagensConfiguracao() {
         </button>`;
     });
     const outros = document.getElementById('cfg_msg_outros');
-    lista.innerHTML = (outros ? itens.slice(0,4) : itens).join('');
-    if (outros) outros.innerHTML = itens.slice(4).join('');
+    const paginaDedicada = lista.dataset?.paginaDedicada === '1';
+    lista.innerHTML = (outros && !paginaDedicada ? itens.slice(0,4) : itens).join('');
+    if (outros) outros.innerHTML = paginaDedicada ? '' : itens.slice(4).join('');
+    window.KineSysConfiguracoesAgendaOnlineLayout?.decorateContexts?.();
 }
 
 function atualizarPreviewMensagemConfiguracao() {
@@ -184,6 +187,8 @@ function atualizarPreviewMensagemConfiguracao() {
 function selecionarMensagemConfiguracao(chave) {
     const base = templatePadraoMensagem(chave);
     if (!base) return;
+    const heading = document.getElementById('ks_config_current_message_title');
+    if (heading) heading.textContent = base.titulo;
     // Captura também o título antes da troca, sem gravar rascunhos na nuvem.
     const anteriorTexto = document.getElementById('cfg_msg_texto');
     const anteriorTitulo = document.getElementById('cfg_msg_titulo');
