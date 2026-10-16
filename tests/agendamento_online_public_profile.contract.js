@@ -135,8 +135,9 @@ const revisaoBase = configBase.match(/const ASSET_REVISION = '([^']+)'/)[1];
 const revisaoLayout = layout.match(/const ASSET_REVISION = '([^']+)'/)[1];
 assert(bootstrap.includes(`ONLINE_CONFIG_REVISION='${revisaoBase}'`),
   'bootstrap e configuração base devem usar a mesma revisão');
-assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agenda-r1'"),
-  'perfil público deve usar revisão inequívoca do novo hub');
+const revisaoPerfil = addon.match(/const ASSET_REVISION = '([^']+)'/)[1];
+assert(bootstrap.includes(`ONLINE_PROFILE_CONFIG_REVISION='${revisaoPerfil}'`),
+  'bootstrap e perfil público devem usar a mesma revisão');
 assert(bootstrap.includes(`ONLINE_LAYOUT_REVISION='${revisaoLayout}'`),
   'bootstrap e workspace devem usar a mesma revisão');
 assert(rootHtml.includes(`src/admin/access_admin-1.0.0.js?v=${revisaoBase}`),

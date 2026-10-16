@@ -8,9 +8,9 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20261016-config-conectada-r1';
+    const ONLINE_CONFIG_REVISION='20261016-config-conectada-r2';
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
-    const ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agenda-r1';
+    const ONLINE_PROFILE_CONFIG_REVISION='20261016-config-conectada-r2';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
     const ONLINE_LAYOUT_REVISION='20261016-config-conectada-r1';
     let alvoAtual=null;
@@ -219,6 +219,7 @@
 
     function carregarPerfilPublicoAgendaOnline(){
         if(window.KineSysConfiguracoesAgendaOnlinePerfilPublico){
+            window.KineSysConfiguracoesAgendaOnlinePerfilPublico.onOpen?.();
             carregarLayoutAgendaOnline();
             return;
         }
@@ -230,7 +231,10 @@
         const script=document.createElement('script');
         script.src=`${ONLINE_PROFILE_CONFIG_SCRIPT}?v=${ONLINE_PROFILE_CONFIG_REVISION}`;
         script.async=false;
-        script.addEventListener('load',carregarLayoutAgendaOnline);
+        script.addEventListener('load',()=>{
+            window.KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.();
+            carregarLayoutAgendaOnline();
+        });
         document.body.appendChild(script);
     }
 

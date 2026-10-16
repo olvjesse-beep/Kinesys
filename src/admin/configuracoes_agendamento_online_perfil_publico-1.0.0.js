@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20260913-online-v4';
+    const ASSET_REVISION = '20261016-config-conectada-r2';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css';
 
     const state = {
@@ -469,6 +469,12 @@
 
     window.KineSysConfiguracoesAgendaOnlinePerfilPublico = Object.freeze({
         version: VERSION,
+        onOpen() {
+            if (!ehAdministrador()) return false;
+            if (!state.mounted) return montar();
+            carregar();
+            return true;
+        },
         refresh: carregar
     });
 })();
