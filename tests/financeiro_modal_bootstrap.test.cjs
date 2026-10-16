@@ -1,9 +1,9 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8');
 const financeiro=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
-for(const match of financeiro.matchAll(/getElementById\('(fin_plano_[^']+)'\)/g))assert.ok(html.includes(`id="${match[1]}"`),`Contrato HTML/JS do plano: campo ausente ${match[1]}`);
+for(const id of new Set(Array.from(financeiro.matchAll(/getElementById\('(fin_plano_[^']+)'\)/g),m=>m[1])))assert.equal(html.split(`id="${id}"`).length-1,1,`Contrato HTML/JS do plano: campo ausente ou duplicado ${id}`);
 assert.match(html, /id="fin_plano_personalizar"[^>]*onchange="alternarPersonalizacaoContrato\(\)"/);
-assert(html.indexOf('src/ui/modal_helpers-1.0.0.js')<html.indexOf('src/finance/financeiro-1.19.0.js'));
+assert(html.indexOf('src/ui/modal_helpers-1.0.0.js')>=0&&html.indexOf('src/ui/modal_helpers-1.0.0.js')<html.indexOf('src/finance/financeiro-1.19.0.js'),'helper deve existir e carregar antes do financeiro');
 assert.doesNotMatch(fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8'),/function (abrirModal|fecharModal)\(/);
 const classes=new Set(),ctx=vm.createContext({document:{body:{classList:{add(){},remove(){}}},querySelector:()=>null,getElementById:id=>id==='modal_fin_plano'?{setAttribute(){},classList:{add:v=>classes.add(v),remove:v=>classes.delete(v)}}:null}});
 vm.runInContext(fs.readFileSync('src/ui/modal_helpers-1.0.0.js','utf8'),ctx);
