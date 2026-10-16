@@ -43,4 +43,10 @@ jobs:
           node tests/screen_loader.contract.js
           node tests/runtime_asset_cache.contract.js
           node tests/agenda_cache.contract.js
+          node --check src/admin/configuracoes_agendamento_online-1.0.0.js
+          node --check src/admin/configuracoes_agendamento_online_layout-1.0.0.js
+          node --check src/core/mensagens_config.js
+          node tests/mensagens_config_bootstrap.contract.js
+          node tests/agendamento_online_admin_config.contract.js
+          node tests/access_management.contract.js
           git diff --check

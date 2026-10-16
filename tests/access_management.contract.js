@@ -49,3 +49,9 @@ assert.match(index,/src\/admin\/access_admin-1\.0\.0\.js/,'access admin controll
 assert.ok(index.indexOf('src/auth/login_access-1.18.0.js')<index.indexOf('src/admin/access_admin-1.0.0.js'),'access admin must load after login access and the core globals it relies on');
 
 console.log('Access management contract OK: unified profile login, dedicated recovery and MASTER-only server-side password reset.');
+// Chrome novo, cache antigo ou preferência de movimento reduzido não podem
+// depender de uma animação para revelar o login ou a aplicação.
+assert.doesNotMatch(index, /<body[^>]*\bks-app-booting\b/, 'HTML novo deve iniciar visível sem aguardar JavaScript');
+assert.doesNotMatch(fs.readFileSync('styles/design_screens.css','utf8'), /body\.ks-app-booting\s*\{[^}]*visibility:\s*hidden/i, 'CSS não pode esconder o body durante o bootstrap');
+assert.match(fs.readFileSync('src/core/design_system-1.20.1.js','utf8'), /classList\.remove\('ks-app-booting'\)/, 'HTML legado em cache deve ser revelado sem depender de animação');
+console.log('Boot visibility: login visível por padrão e compatibilidade com HTML legado OK.');
