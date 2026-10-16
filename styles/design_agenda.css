@@ -837,6 +837,10 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 }
 .agenda-recurrencia-grid,.agenda-recurrencia-fim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;margin-top:9px}
 .agenda-recurrencia-grid>*{min-width:0}
+#modal_agendamento .agenda-recurrencia-grid>.input-group{margin:0;display:flex;flex-direction:column;align-self:start}
+#modal_agendamento .agenda-recurrencia-grid>.input-group>label{min-height:2.6em;margin:0 0 6px;line-height:1.3}
+#modal_agendamento .agenda-recurrencia-grid>.input-group>select{width:100%;min-width:0;box-sizing:border-box}
+#modal_agendamento [hidden],#modal_agendamento #ag_recorrencia_bloco [hidden]{display:none!important}
 .agenda-recurrencia-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .agenda-dia-pill{
   position:relative;

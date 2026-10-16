@@ -89,7 +89,7 @@ assert.match(configurar, /pacienteBusca\.disabled = editando/,'Busca de paciente
 assert.match(configurar, /data\.disabled = false/,'Data deve permanecer editável no modo edição');
 assert.match(configurar, /Data, Horário, Procedimento ou Profissional/,
   'Aviso de edição deve comunicar os quatro campos editáveis');
-assert.match(editar, /async function salvarEdicaoAtendimentoAtual\(\{ profissionalId, procedimentoId, dataISO, horarioVal \}\)/,
+assert.match(editar, /async function salvarEdicaoAtendimentoAtual\(\{ profissionalId, procedimentoId, dataISO, horarioVal,/,
   'Persistência de edição deve receber a nova data');
 assert.match(editar, /existeConflitoImediato\(profissionalId, dataISO, horaInicio, horaFim, id\)/,
   'Conflito deve ser verificado na nova data ignorando apenas o próprio id');
@@ -99,13 +99,16 @@ assert.match(editar, /\.eq\('id', id\)/,'UPDATE continua limitado ao mesmo id');
 assert.doesNotMatch(editar, /\.insert\(|\.upsert\(/,'Edição não pode recriar o agendamento');
 
 // Cache bust obrigatório mantendo Agenda lazy e Screen Loader contratual.
-assert.match(html,/styles\/design_agenda\.css\?v=20260911-modal-r6/,
+assert.match(html,/styles\/design_agenda\.css\?v=20261016-agenda-planos-r1/,
   'Index deve invalidar o CSS do modal corrigido');
-assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20260910-phase4d-r1&agenda_edit=20260911-r3&agenda_compact=20260910-r2&agenda_patient=20260911-r1/,
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20261016-agenda-planos-r1/,
   'Index deve invalidar cache do Screen Loader para o autocomplete');
-assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20260911-agenda-edit-r3&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1/,
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20261016-agenda-planos-r1/,
   'Screen Loader deve entregar a Agenda corrigida');
 assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve permanecer lazy');
-assert.match(loader,/const VERSION='1\.25\.4-phase4d';/,'Versão contratual do Screen Loader deve permanecer intacta');
+assert.match(loader,/const VERSION='1\.25\.24-agenda-planos-r1';/,'Versão contratual do Screen Loader deve acompanhar esta publicação');
+assert.match(html,/class="agenda-recurrencia-grid">\s*<div class="input-group[^>]*>\s*<label for="ag_recorrencia_tipo">/,'os dois campos de recorrência precisam ter rótulos dentro da mesma linha de grid');
+assert.match(agendaCss,/#modal_agendamento \.agenda-recurrencia-grid>\.input-group>label\{[^}]*min-height:2\.6em/,'rótulos de uma ou duas linhas devem manter os campos alinhados');
+assert.match(agendaCss,/#modal_agendamento \[hidden\],#modal_agendamento #ag_recorrencia_bloco \[hidden\]\{display:none!important\}/,'CSS não pode reabrir campos condicionais ocultos pela lógica do formulário');
 
 console.log('Agenda UX corrections contract: autocomplete + modal polish OK');
