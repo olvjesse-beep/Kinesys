@@ -826,10 +826,13 @@ async function abrirRenovacaoPlanoFinanceiro(planoId) {
     abrirModal('modal_fin_plano');
 }
 
+let financeiroPlanoSalvando = false;
 async function salvarPlanoFinanceiro() {
     if(!financeiroPodeEditar() || !_supabase) return false;
     const btn=document.getElementById('fin_plano_salvar_btn');
-    if(btn.disabled)return false;
+    // O guard global desabilita o botão ANTES de chamar esta função.
+    // O bloqueio de concorrência não pode confundir isso com um envio já iniciado.
+    if(financeiroPlanoSalvando)return false;
     const contratoId=document.getElementById('fin_plano_contrato_id').value;
     const personalizar=document.getElementById('fin_plano_personalizar').checked;
     const personalizacao=personalizar?{
@@ -838,6 +841,7 @@ async function salvarPlanoFinanceiro() {
         desconto_pacote:numeroFinanceiro(document.getElementById('fin_plano_desconto_pacote').value),
         desconto_cortesia:numeroFinanceiro(document.getElementById('fin_plano_desconto_cortesia').value)
     }:null;
+    financeiroPlanoSalvando=true;
     btn.disabled=true;
     try {
         const args=contratoId?{p_plano_id:contratoId,p_acao:personalizar?'personalizar':'remover_personalizacao',p_personalizacao:personalizacao,p_motivo:'Alteração das condições pelo financeiro'}:{
@@ -851,7 +855,7 @@ async function salvarPlanoFinanceiro() {
         fecharModal('modal_fin_plano');await carregarFinanceiroPaciente();
         mensagemFinanceiro('Contratação confirmada. As condições e o histórico foram preservados.','sucesso');return true;
     } catch(err) {alert('Não foi possível confirmar a contratação: '+(err.message||err));return false;}
-    finally {btn.disabled=false;}
+    finally {financeiroPlanoSalvando=false;btn.disabled=false;}
 }
 function personalizarContratoFinanceiro(id) {
     const pl=financeiroPlanosCache.find(p=>String(p.id)===String(id)); if(!pl)return;

@@ -69,6 +69,14 @@ jobs:
           echo "### JavaScript" >> "$GITHUB_STEP_SUMMARY"
           echo "- Syntax valid in **$count** files." >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Protect scheduling exceptions, plans, modal bootstrap and recurrence alignment
+        run: |
+          node tests/agenda_editar_atendimento.contract.js
+          node tests/agenda_ux_corrections.contract.js
+          node tests/agenda_intervalo.contract.js
+          node tests/financeiro_modal_bootstrap.test.cjs
+          node tests/screen_loader.contract.js
+
       - name: HTML, forms and runtime asset contracts
         run: |
           python - <<'PY'

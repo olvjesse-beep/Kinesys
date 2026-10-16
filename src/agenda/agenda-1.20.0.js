@@ -662,23 +662,6 @@ if (document.readyState === 'loading') {
     inicializarEventosDomAgenda();
 }
 
-function fecharModal(id) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.classList.remove('ativa');
-        el.setAttribute('aria-hidden','true');
-        if (!document.querySelector('.modal-overlay.ativa')) document.body.classList.remove('ks-modal-open');
-    }
-}
-function abrirModal(id) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.classList.add('ativa');
-        el.setAttribute('aria-hidden','false');
-        document.body.classList.add('ks-modal-open');
-    }
-}
-
 function irParaSubtelaAgenda(id) {
     if (!usuarioPodeVerAgendaClinicaToda() && id !== 'agenda_painel') return;
     if (!usuarioEhAdministradorAgenda() && ['agenda_procedimentos','agenda_horarios','agenda_bloqueios'].includes(id)) return;
@@ -2589,7 +2572,7 @@ function duracaoProcedimentoModal() {
 }
 function lerHorarioExtraordinarioModal() {
     const inicio = document.getElementById('ag_horario_extra_inicio')?.value || '';
-    if (!inicio) return { inicio:'', fim:'', valido:false };
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(inicio)) return { inicio:'', fim:'', valido:false };
     const ini = horaParaMinutos(inicio);
     const fimMin = ini + duracaoProcedimentoModal();
     if (!Number.isFinite(ini) || fimMin > 24*60) return { inicio, fim:'', valido:false };
@@ -2641,6 +2624,7 @@ function intervaloDisponivelNaJornadaRecorrencia(profissionalId, dataISO, horaIn
     if (!d) return { ok:false, motivo:'data inválida' };
     const ini = horaParaMinutos(horaInicio);
     const fim = horaParaMinutos(horaFim);
+    if (!Number.isFinite(ini) || !Number.isFinite(fim) || ini < 0 || fim <= ini || fim > 1440) return {ok:false,motivo:'intervalo de horário inválido'};
     const feriado = obterFeriadoAgenda(dataISO);
     const dentroPadrao = intervaloDentroDaJornadaPadrao(profissionalId, dataISO, horaInicio, horaFim);
     if (feriado && !opcoes.permitirExtraordinario) {
@@ -2739,7 +2723,7 @@ function configurarModalEdicaoAtendimento(agendamento = null) {
         data.setAttribute('aria-disabled', 'false');
     }
     if (recorrencia) recorrencia.hidden = editando;
-    if (extra) extra.hidden = editando;
+    if (extra) extra.hidden = false;
     if (observacoes) observacoes.hidden = editando;
     if (listaEspera) listaEspera.hidden = editando || !usuarioPodeVerAgendaClinicaToda();
     if (botaoSalvar) botaoSalvar.textContent = editando ? 'Salvar alterações' : 'Confirmar Agendamento';
@@ -2810,6 +2794,10 @@ async function abrirModalAgendamento(profissionalPre, dataPre, horaPre, opcoes =
         if (atendimentoEdicao) {
             selPaciente.value = atendimentoEdicao.paciente_id || '';
             document.getElementById('ag_observacoes').value = atendimentoEdicao.observacoes || '';
+            const foraPadrao = !intervaloDentroDaJornadaPadrao(profissionalInicial, atendimentoEdicao.data, horaCurta(atendimentoEdicao.hora_inicio), horaCurta(atendimentoEdicao.hora_fim));
+            if (extraToggle) extraToggle.checked = foraPadrao;
+            if (extraInicio) extraInicio.value = foraPadrao ? horaCurta(atendimentoEdicao.hora_inicio) : '';
+            if (foraPadrao) await aoAlternarHorarioExtraordinario();
         }
         atualizarControlesAgendaPorPerfil();
         configurarModalEdicaoAtendimento(atendimentoEdicao);
@@ -2917,6 +2905,9 @@ async function atualizarHorariosDisponiveisModal(horaParaPreSelecionar) {
         if (error) throw error;
 
         const agendamentosConsiderados = (agendamentosDia || []).filter(a => String(a.id) !== String(agendaEdicaoAtendimentoId || ''));
+        // Uma consulta iniciada antes do clique no checkbox não pode desfazer
+        // o modo extraordinário quando a resposta chega depois.
+        if (horarioExtraordinarioAtivoModal()) { selHorario.disabled = true; atualizarResumoHorarioExtraordinario(); return; }
         const livres = calcularSlotsLivres(profissionalId, dataISO, duracao, agendamentosConsiderados);
         if (!livres.length) {
             selHorario.innerHTML = '<option value="">Nenhum horário livre nesta data</option>';
@@ -3012,7 +3003,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
     }
 }
 
-async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal }) {
+async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal, usarHorarioExtraordinario=false, horarioExtra=null }) {
     const id = String(agendaEdicaoAtendimentoId || '');
     const a = agendaAgendamentosSemanaCache.find(x => String(x.id) === id)
         || agendaAgendamentosDoDiaCache.find(x => String(x.id) === id);
@@ -3038,16 +3029,21 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
         mostrarFeedbackAgendaModal('O procedimento selecionado não está habilitado para este profissional.', 'erro');
         return false;
     }
-    const [horaInicio, horaFim] = String(horarioVal || '').split('|');
+    const [horaInicio, horaFim] = usarHorarioExtraordinario && horarioExtra?.valido
+        ? [horarioExtra.inicio,horarioExtra.fim] : String(horarioVal || '').split('|');
     if (!horaInicio || !horaFim) {
         mostrarFeedbackAgendaModal('Selecione um horário disponível.', 'erro');
         return false;
     }
+    const jornada=intervaloDisponivelNaJornadaRecorrencia(profissionalId,dataISO,horaInicio,horaFim,{permitirExtraordinario:usarHorarioExtraordinario});
+    if(!jornada.ok){mostrarFeedbackAgendaModal('Horário indisponível: '+jornada.motivo,'erro');return false;}
     const conflito = await existeConflitoImediato(profissionalId, dataISO, horaInicio, horaFim, id);
     if (conflito) {
         mostrarFeedbackAgendaModal('Este profissional já possui outro atendimento nesse horário. Escolha um horário disponível.', 'erro');
         return false;
     }
+    const extraordinario=!intervaloDentroDaJornadaPadrao(profissionalId,dataISO,horaInicio,horaFim);
+    if(extraordinario&&!await confirmarKineSys(`Este horário (${horaInicio}–${horaFim}) está fora da jornada padrão. Conflitos e bloqueios continuam protegidos. Confirmar a alteração como horário extraordinário?`,{titulo:'Horário fora do padrão',confirmar:'Confirmar horário extraordinário',cancelar:'Voltar e revisar',tipo:'aviso'}))return false;
 
     const mudouProcedimento = String(a.procedimento_id || '') !== String(procedimentoId || '');
     let financeiroAnterior = null;
@@ -3069,6 +3065,11 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
         hora_inicio: horaInicio,
         hora_fim: horaFim
     };
+    if(extraordinario||a.horario_extraordinario){
+        alteracoes.horario_extraordinario=extraordinario;
+        alteracoes.horario_extraordinario_confirmado_por=extraordinario?(usuarioLogado?.nome||'Desconhecido'):null;
+        alteracoes.horario_extraordinario_confirmado_em=extraordinario?new Date().toISOString():null;
+    }
     const pendenteLocal = lerAgendamentosPendentesSync().some(x => String(x.payload?.id || '') === id);
     let salvo = false;
     if (_supabase) {
@@ -3100,6 +3101,10 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
         equipe: agendaEquipeCache.find(p => String(p.id) === String(profissionalId)) || a.equipe,
         procedimentos: procedimento
     });
+    if(salvo&&extraordinario){
+        try{await registrarNotificacaoHorarioExtraordinario(a,{profissional_nome:a.equipe?.nome||'Profissional',motivo_extraordinario:motivoHorarioExtraordinarioAgenda(profissionalId,dataISO,horaInicio,horaFim),criado_por:usuarioLogado?.nome||'Desconhecido'});}
+        catch(err){console.warn('Atendimento extraordinário salvo; não foi possível confirmar o aviso ao profissional.',err);}
+    }
     if (a.plano_id && typeof salvarVinculoAgendaLocal === 'function') {
         salvarVinculoAgendaLocal(id, a.plano_id, a.paciente_id, procedimentoId, a.status || 'agendado');
     }
@@ -3160,7 +3165,7 @@ async function salvarAgendamento() {
         if (btn) { btn.disabled = true; btn.textContent = 'Salvando alterações…'; }
         mostrarFeedbackAgendaModal('Validando e atualizando este atendimento…', 'info');
         try {
-            await salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal });
+            await salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal, usarHorarioExtraordinario, horarioExtra });
         } catch (err) {
             console.error('Erro ao editar atendimento:', err);
             mostrarFeedbackAgendaModal('Não foi possível salvar as alterações: ' + mensagemErroSalvarAgenda(err), 'erro');
