@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-conectada-r3';
+    const ASSET_REVISION = '20261016-config-conectada-r4';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -92,11 +92,13 @@
     }
 
     function obterClinicaIdLocal() {
-        return String(window.usuarioLogado?.clinica_id || '').trim();
+        // A sessão principal é lexical (let), não uma propriedade de window.
+        const usuario = (typeof usuarioLogado !== 'undefined' && usuarioLogado) || window.usuarioLogado;
+        return String(usuario?.clinica_id || '').trim();
     }
 
     function chaveCoresAgenda() {
-        return `kinesys_agenda_cores::${state.clinicaId || obterClinicaIdLocal() || 'sem_clinica'}`;
+        return `kinesys_agenda_cores::${obterClinicaIdLocal() || state.clinicaId || 'sem_clinica'}`;
     }
 
     function corHexValida(valor) {
@@ -119,10 +121,16 @@
             const valor = document.getElementById(`ks_agenda_cor_${tipo}_valor`);
             if (input) input.value = cor;
             if (valor) valor.textContent = cor;
+            document.querySelector(`[data-preview-cor="${tipo}"]`)?.style.setProperty('--preview-color', cor);
         });
     }
 
     function salvarCoresAgenda(cores = null) {
+        if (!ehAdministrador() || !(obterClinicaIdLocal() || state.clinicaId)) {
+            const feedback = document.getElementById('ks_agenda_cores_feedback');
+            if (feedback) { feedback.textContent = 'Aguarde a identificação da clínica antes de salvar as cores.'; feedback.className = 'ks-online-feedback erro'; feedback.hidden = false; }
+            return false;
+        }
         const proximas = cores || Object.fromEntries(Object.keys(AGENDA_CORES_PADRAO).map(tipo => [
             tipo,
             document.getElementById(`ks_agenda_cor_${tipo}`)?.value || AGENDA_CORES_PADRAO[tipo]
@@ -335,15 +343,9 @@
         });
         document.getElementById('ks_agenda_cores_salvar')?.addEventListener('click', () => salvarCoresAgenda());
         document.getElementById('ks_agenda_cores_restaurar')?.addEventListener('click', () => {
-            preencherCoresAgenda(AGENDA_CORES_PADRAO);
-            document.querySelectorAll('[data-preview-cor]').forEach(previa => {
-                previa.style.setProperty('--preview-color', AGENDA_CORES_PADRAO[previa.dataset.previewCor]);
-            });
             salvarCoresAgenda(AGENDA_CORES_PADRAO);
         });
         preencherCoresAgenda();
-        const cores = lerCoresAgenda();
-        document.querySelectorAll('[data-preview-cor]').forEach(previa => previa.style.setProperty('--preview-color', cores[previa.dataset.previewCor]));
     }
 
     function markupAgendamentoOnline() {

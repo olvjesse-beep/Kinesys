@@ -7,6 +7,50 @@ const agenda = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
 const loader = fs.readFileSync('src/ui/screen_loader-1.25.0.js', 'utf8');
 const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
+const configCores = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
+const vm = require('vm');
+
+// Executar os leitores reais: let usuarioLogado não é window.usuarioLogado.
+const configReaders = configCores.slice(configCores.indexOf('function obterClinicaIdLocal()'), configCores.indexOf('function preencherCoresAgenda('));
+const agendaReaders = agenda.slice(agenda.indexOf('function chaveCoresAgenda()'), agenda.indexOf('function aplicarCoresAgenda()'));
+const storage = new Map();
+const scope = {
+  window: {}, state: {clinicaId: ''},
+  localStorage: {getItem: key => storage.get(key) || null},
+  AGENDA_CORES_PADRAO: {osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#7B878C'}
+};
+vm.createContext(scope);
+vm.runInContext("let usuarioLogado = {clinica_id:'clinica-a'};", scope);
+vm.runInContext(configReaders, scope);
+const chaveConfig = vm.runInContext('chaveCoresAgenda()', scope);
+assert.equal(chaveConfig, 'kinesys_agenda_cores::clinica-a', 'cores devem usar a sessão real mesmo antes de carregar o portal online');
+storage.set(chaveConfig, JSON.stringify({osteopatia:'#771122',fisioterapia:'#225577',falta:'#555555'}));
+vm.runInContext(agendaReaders, scope);
+assert.equal(vm.runInContext('chaveCoresAgenda()', scope), chaveConfig, 'Agenda e Configurações precisam ler a mesma clínica');
+assert.equal(vm.runInContext('obterCoresAgenda().fisioterapia', scope), '#225577', 'Agenda deve ler a cor salva, não o padrão');
+vm.runInContext("usuarioLogado={clinica_id:'clinica-b'};", scope);
+assert.equal(vm.runInContext('obterCoresAgenda().fisioterapia', scope), '#2F7EAD', 'cores de outra clínica não podem vazar');
+vm.runInContext(configReaders, scope);
+scope.state.clinicaId = 'clinica-a';
+assert.equal(vm.runInContext('chaveCoresAgenda()', scope), 'kinesys_agenda_cores::clinica-b', 'sessão atual prevalece sobre estado antigo do portal');
+const applied = {}, events = [], previews = {};
+scope.localStorage.setItem = (key, value) => storage.set(key, value);
+scope.ehAdministrador = () => true;
+scope.CustomEvent = class {constructor(type, options){this.type=type;this.detail=options.detail;}};
+scope.window.dispatchEvent = event => events.push(event);
+scope.document = {
+  getElementById: id => id === 'tela_agenda' ? {style:{setProperty:(key,value)=>{applied[key]=value;}}} : null,
+  querySelector: selector => ({style:{setProperty:(_,value)=>{previews[selector]=value;}}})
+};
+vm.runInContext(configCores.slice(configCores.indexOf('function preencherCoresAgenda('),configCores.indexOf('function markupAparenciaAgenda()')),scope);
+assert(vm.runInContext("salvarCoresAgenda({osteopatia:'#884422',fisioterapia:'#336699',falta:'#666666'})",scope));
+assert.equal(JSON.parse(storage.get('kinesys_agenda_cores::clinica-b')).fisioterapia,'#336699');
+assert.equal(applied['--agenda-cor-fisioterapia'],'#336699','salvar deve atualizar a Agenda montada');
+assert.equal(events[0].type,'kinesys:agenda-cores-atualizadas','salvar deve notificar a Agenda sem recriar agendamentos');
+vm.runInContext(agendaReaders,scope);
+assert.equal(vm.runInContext('obterCoresAgenda().fisioterapia',scope),'#336699','reabertura/reload deve preservar a cor');
+vm.runInContext("usuarioLogado={clinica_id:'clinica-a'};",scope);
+assert.equal(vm.runInContext('obterCoresAgenda().fisioterapia',scope),'#225577','salvar na clínica B deve preservar a clínica A');
 
 function trechoEntre(inicio, fim) {
   const a = agenda.indexOf(inicio);
