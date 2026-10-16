@@ -6,6 +6,20 @@ const hardening = fs.readFileSync('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ON
 const js = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const css = fs.readFileSync('styles/configuracoes_agendamento_online-1.0.0.css', 'utf8');
 const adminBootstrap = fs.readFileSync('src/admin/access_admin-1.0.0.js', 'utf8');
+const html = fs.readFileSync('index.html', 'utf8');
+const head = html.slice(0, html.indexOf('</head>'));
+// O desenho não pode depender de montar a Agenda, do login ou de um módulo lazy.
+for (const path of [
+  'styles/configuracoes_agendamento_online-1.0.0.css',
+  'styles/configuracoes_agendamento_online_layout-1.0.0.css'
+]) {
+  const links = [...head.matchAll(/<link\b[^>]*>/g)]
+    .filter(([tag]) => tag.includes(`href="${path}?`));
+  assert.strictEqual(links.length, 1, `${path} deve carregar uma única vez no HTML inicial`);
+  assert(/rel="stylesheet"/.test(links[0][0]), 'layout deve ser stylesheet obrigatório, não preload ou lazy');
+  const revision = js.match(/const ASSET_REVISION = '([^']+)'/)[1];
+  assert(links[0][0].includes(`?v=${revision}"`), 'HTML e módulo devem usar a mesma revisão do layout');
+}
 
 assert(migration.includes("add column if not exists titulo_publico text not null default 'Agende seu atendimento'"),
   'configuração pública deve ter título seguro por padrão');
