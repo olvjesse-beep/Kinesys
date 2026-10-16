@@ -8,6 +8,11 @@ const agenda = fs.readFileSync('src/agenda/agenda-1.20.0.js', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
 const loader = fs.readFileSync('src/ui/screen_loader-1.25.0.js', 'utf8');
 const financeiro = fs.readFileSync('src/finance/financeiro_agendamento-1.21.0.js', 'utf8');
+const workflow = fs.readFileSync('.github/workflows/agenda-edit-contract.yml','utf8');
+assert.match(workflow,/name: Agenda e planos - regressao critica/,'nome do check obrigatório deve permanecer estável');
+assert.match(workflow,/runs-on: ubuntu-latest/,'a barreira não pode depender do computador local');
+assert.doesNotMatch(workflow,/\bpaths(?:-ignore)?:|continue-on-error:/,'alterações em outras telas também precisam testar agenda e planos');
+for(const teste of ['agenda_editar_atendimento.contract.js','agenda_ux_corrections.contract.js','agenda_intervalo.contract.js','financeiro_modal_bootstrap.test.cjs','runtime_asset_cache.contract.js'])assert.ok(workflow.includes('node tests/'+teste),'barreira deve executar '+teste);
 
 function trechoEntre(inicio, fim) {
   const a = agenda.indexOf(inicio);
@@ -88,8 +93,11 @@ assert.match(editar, /await renderizarPainelAgenda\(\)/,'Agenda deve atualizar a
 assert.match(editar, /await abrirDetalheAgendamento\(id\)/,'Detalhe deve reabrir no mesmo atendimento atualizado');
 
 // Cache-busting: garante que o navegador realmente recebe a versão nova, mantendo Agenda lazy.
-assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20261016-agenda-planos-r1/,'index deve invalidar cache do Screen Loader');
-assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20261016-agenda-planos-r1/,'Screen Loader deve invalidar cache da Agenda');
+const revisaoLoader=loader.match(/const ASSET_REVISION='([^']+)'/)?.[1];
+const srcLoader=html.match(/src="(src\/ui\/screen_loader-1\.25\.0\.js\?[^\"]+)"/)?.[1];
+assert.ok(revisaoLoader&&srcLoader,'loader deve ter revisão e cache-buster explícitos');
+assert.strictEqual(new URL(srcLoader,'https://app.fisiofixfisioterapia.com/').searchParams.get('v'),revisaoLoader,'HTML e loader devem pertencer à mesma publicação');
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=[^'\s]+/,'Screen Loader deve invalidar cache da Agenda');
 assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve continuar fora do bootstrap');
 
 // Smoke dinâmico do UPDATE: prova mesmo id, quatro campos e nenhuma criação.

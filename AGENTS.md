@@ -92,6 +92,16 @@ Ao finalizar, informe de forma breve:
 - resultado dos três domínios;
 - riscos ou pendências.
 
+## 9. Barreira permanente contra regressões de Agenda e Planos
+
+- Toda PR para `main`, inclusive de Avaliação, Radar, Home ou CSS compartilhado, deve executar o check `Agenda e planos - regressao critica` do workflow existente `agenda-edit-contract.yml`.
+- Esse check usa executor hospedado do GitHub. Não trocar por executor local, filtrar por caminhos, marcar `continue-on-error` ou remover testes para liberar uma publicação.
+- Não integrar PR enquanto o check estiver pendente ou falhando. Não publicar branches de desenvolvimento diretamente, nem usar upload manual para contornar a barreira de `main`.
+- Preservar: criação e edição extraordinária com confirmação/conflitos/bloqueios; abertura de planos antes de carregar a Agenda; contrato entre IDs do HTML e JS; trava de concorrência independente de `button.disabled`; campos de recorrência alinhados e respeito a `[hidden]`.
+- Diálogos genéricos pertencem a `src/ui/modal_helpers-1.0.0.js`, carregado antes do Financeiro. Não redeclarar `abrirModal`/`fecharModal` em módulos lazy.
+- Testes de cache devem conferir coerência entre HTML e loader, não congelar uma revisão antiga que obrigue ignorar a suíte a cada release.
+- Corrigir a implementação quando um teste funcional falhar. Só alterar a expectativa quando o requisito mudar explicitamente; não substituir testes por verificações vazias.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

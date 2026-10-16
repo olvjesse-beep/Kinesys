@@ -99,14 +99,14 @@ assert.match(editar, /\.eq\('id', id\)/,'UPDATE continua limitado ao mesmo id');
 assert.doesNotMatch(editar, /\.insert\(|\.upsert\(/,'Edição não pode recriar o agendamento');
 
 // Cache bust obrigatório mantendo Agenda lazy e Screen Loader contratual.
-assert.match(html,/styles\/design_agenda\.css\?v=20261016-agenda-planos-r1/,
+assert.match(html,/styles\/design_agenda\.css\?v=[^"\s]+/,
   'Index deve invalidar o CSS do modal corrigido');
-assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=20261016-agenda-planos-r1/,
+assert.match(html,/src\/ui\/screen_loader-1\.25\.0\.js\?v=[^"\s]+/,
   'Index deve invalidar cache do Screen Loader para o autocomplete');
-assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=20261016-agenda-planos-r1/,
+assert.match(loader,/src\/agenda\/agenda-1\.20\.0\.js\?v=[^'\s]+/,
   'Screen Loader deve entregar a Agenda corrigida');
 assert.doesNotMatch(html,/<script[^>]+src\/agenda\/agenda-1\.20\.0\.js/i,'Agenda deve permanecer lazy');
-assert.match(loader,/const VERSION='1\.25\.24-agenda-planos-r1';/,'Versão contratual do Screen Loader deve acompanhar esta publicação');
+assert.match(loader,/const VERSION='1\.25\.\d+-[^']+';/,'Screen Loader deve manter versão identificável sem congelar uma release antiga');
 assert.match(html,/class="agenda-recurrencia-grid">\s*<div class="input-group[^>]*>\s*<label for="ag_recorrencia_tipo">/,'os dois campos de recorrência precisam ter rótulos dentro da mesma linha de grid');
 assert.match(agendaCss,/#modal_agendamento \.agenda-recurrencia-grid>\.input-group>label\{[^}]*min-height:2\.6em/,'rótulos de uma ou duas linhas devem manter os campos alinhados');
 assert.match(agendaCss,/#modal_agendamento \[hidden\],#modal_agendamento #ag_recorrencia_bloco \[hidden\]\{display:none!important\}/,'CSS não pode reabrir campos condicionais ocultos pela lógica do formulário');
