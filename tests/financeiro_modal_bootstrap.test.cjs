@@ -1,11 +1,27 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8');
+const financeiro=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
+for(const match of financeiro.matchAll(/getElementById\('(fin_plano_[^']+)'\)/g))assert.ok(html.includes(`id="${match[1]}"`),`Contrato HTML/JS do plano: campo ausente ${match[1]}`);
+assert.match(html, /id="fin_plano_personalizar"[^>]*onchange="alternarPersonalizacaoContrato\(\)"/);
 assert(html.indexOf('src/ui/modal_helpers-1.0.0.js')<html.indexOf('src/finance/financeiro-1.19.0.js'));
 assert.doesNotMatch(fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8'),/function (abrirModal|fecharModal)\(/);
 const classes=new Set(),ctx=vm.createContext({document:{body:{classList:{add(){},remove(){}}},querySelector:()=>null,getElementById:id=>id==='modal_fin_plano'?{setAttribute(){},classList:{add:v=>classes.add(v),remove:v=>classes.delete(v)}}:null}});
 vm.runInContext(fs.readFileSync('src/ui/modal_helpers-1.0.0.js','utf8'),ctx);
 ctx.abrirModal('modal_fin_plano');assert(classes.has('ativa'));ctx.fecharModal('modal_fin_plano');assert(!classes.has('ativa'));ctx.abrirModal('ausente');
 console.log('PASS: diálogos financeiros disponíveis sem carregar Agenda.');
+
+// Abertura real com formulário derivado dos IDs publicados, sem substitutos
+// para elementos ausentes: detecta regressões de HTML antes da publicação.
+const camposPlano={financeiro_paciente_select:{value:'pac-fixture'}};
+for(const match of html.matchAll(/id="(fin_plano_[^"]+)"/g))camposPlano[match[1]]={value:'',checked:false,disabled:false,hidden:false,textContent:'',innerHTML:'',selectedOptions:[{dataset:{sessoes:'10',valor:'800'}}]};
+let abriuPlano=false;
+const abertura={document:{getElementById:id=>camposPlano[id]||null},financeiroPlanoRenovacaoOrigemId:'',financeiroPlanosCache:[],gerarOperacaoFinanceiraId:()=> 'op-fixture',definirFormasPagamentoSelecionadas(){},numeroFinanceiro:v=>Number(String(v||0).replace(',','.')),moedaBR:v=>String(v),abrirModal:id=>{assert.equal(id,'modal_fin_plano');abriuPlano=true;},alert:message=>{throw Error(message);}};
+vm.createContext(abertura);
+vm.runInContext(financeiro.slice(financeiro.indexOf('function calcularValorFinalPlano'),financeiro.indexOf('async function abrirRenovacaoPlanoFinanceiro')),abertura);
+abertura.abrirModalNovoPlano();assert.equal(abriuPlano,true);assert.equal(camposPlano.fin_plano_sessoes.disabled,true);
+camposPlano.fin_plano_personalizar.checked=true;abertura.alternarPersonalizacaoContrato();assert.equal(camposPlano.fin_plano_sessoes.disabled,false);
+assert.equal(camposPlano.fin_plano_operacao.value,'op-fixture');
+console.log('PASS: abertura real do plano e personalização compatíveis com o HTML publicado.');
 
 // Usa o guard REAL com botão focado: disabled=true é apresentação, não lock.
 async function testarContratacaoProtegida(){

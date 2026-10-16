@@ -1464,11 +1464,16 @@
             <button class="modal-fechar" onclick="fecharModal('modal_fin_plano')" type="button" aria-label="Fechar diálogo">✕</button>
             <h2 id="fin_plano_titulo">Novo plano de atendimento</h2>
             <input type="hidden" id="fin_plano_operacao">
+            <input type="hidden" id="fin_plano_contrato_id">
             <p id="fin_plano_contexto" class="field-help" hidden></p>
             <div class="input-group"><label for="fin_plano_nome">Nome do plano</label><input id="fin_plano_nome" placeholder="Ex.: Pacote de fisioterapia — 10 sessões"></div>
             <div class="grid-2">
                 <div class="input-group"><label for="fin_plano_procedimento">Procedimento</label><select id="fin_plano_procedimento" onchange="aoSelecionarProcedimentoPlano()"><option value="">Sem procedimento específico</option></select></div>
                 <div class="input-group"><label for="fin_plano_sessoes">Sessões contratadas</label><input id="fin_plano_sessoes" type="number" min="1" value="10"></div>
+            </div>
+            <div class="input-group">
+                <label for="fin_plano_personalizar"><input type="checkbox" id="fin_plano_personalizar" onchange="alternarPersonalizacaoContrato()"> Personalizar sessões, valores e descontos deste plano</label>
+                <small class="field-help">Desmarcado: usa as condições cadastradas no procedimento. Marcado: permite ajustar as condições deste contrato sem alterar o cadastro do procedimento.</small>
             </div>
             <div class="grid-2">
                 <div class="input-group"><label for="fin_plano_valor_tabela">Valor de tabela do pacote</label><input id="fin_plano_valor_tabela" inputmode="decimal" placeholder="0,00" oninput="calcularValorFinalPlano()"></div>
