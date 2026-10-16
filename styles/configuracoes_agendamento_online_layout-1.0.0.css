@@ -11,7 +11,7 @@ body.ks-design-ready:has(#tela_configuracoes.ativa) { --kds-sidebar-width:232px;
 @media(min-width:1100px) {
     html body.ks-design-ready:has(#tela_configuracoes.ativa) > .container { margin-left:var(--kds-sidebar-width); padding-left:36px; padding-right:26px; }
     html body.ks-design-ready:has(#tela_configuracoes.ativa) #ks_topbar { margin-left:-36px; margin-right:-26px; padding-left:36px; padding-right:26px; }
-    body.ks-design-ready #tela_configuracoes.ks-config-connected .ks-config-hub-header { position:fixed; top:18px; right:100px; z-index:1600; margin:0; }
+    body.ks-design-ready #tela_configuracoes.ks-config-connected .ks-config-hub-header { position:fixed; top:18px; right:200px; z-index:1600; margin:0; }
     body.ks-design-ready #tela_configuracoes.ks-config-connected { padding:4px 0 24px; }
 }
 #tela_configuracoes.ks-config-connected .ks-config-hub-header { display:flex; justify-content:flex-end; align-items:center; gap:14px; margin:0 0 14px; }
