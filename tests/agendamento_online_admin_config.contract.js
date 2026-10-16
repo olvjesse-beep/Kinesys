@@ -85,3 +85,26 @@ assert(!/#[0-9a-f]{3,8}\b/i.test(css),
   'CSS novo deve usar somente tokens --kds-* e não cores locais');
 
 console.log('agendamento_online_admin_config.contract: OK');
+// O layout da Comunicação deve carregar mesmo se o perfil público da Agenda
+// foi pré-carregado antes de existir uma sessão administrativa.
+const garantirCSS = js.slice(js.indexOf('function garantirCSS()'), js.indexOf('function setStatus('));
+assert(garantirCSS.includes('configuracoes_agendamento_online_layout-1.0.0.css'), 'o hub deve carregar sua apresentação sem depender do perfil público');
+assert(adminBootstrap.includes('KineSysConfiguracoesAgendaOnlinePerfilPublico.onOpen?.()'), 'módulo já carregado deve poder montar após login');
+const vm = require('vm');
+const perfil = fs.readFileSync('src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js','utf8');
+const lifecycle = {window:{usuarioLogado:{tipo:'SECRETARIA'}},document:{readyState:'complete'},mountCount:0,loadCount:0};
+// Só os colaboradores de DOM/rede são simulados; onOpen é executado intacto.
+const instrumentado = perfil
+  .replace('function montar() {', 'function montar() { mountCount++; state.mounted=true; return true; } function montarDOMOriginal() {')
+  .replace('async function carregar() {', 'async function carregar() { loadCount++; } async function carregarDadosOriginal() {');
+vm.runInNewContext(instrumentado,lifecycle);
+const perfilAPI = lifecycle.window.KineSysConfiguracoesAgendaOnlinePerfilPublico;
+assert.strictEqual(perfilAPI.onOpen(),false,'abertura sem administrador não pode montar o perfil');
+assert.strictEqual(lifecycle.mountCount,0);
+lifecycle.window.usuarioLogado={tipo:'MASTER'};
+assert.strictEqual(perfilAPI.onOpen(),true,'restauração administrativa precisa montar o módulo pré-carregado');
+assert.strictEqual(lifecycle.mountCount,1);
+perfilAPI.onOpen();
+assert.strictEqual(lifecycle.mountCount,1,'reabertura não deve duplicar seções');
+assert.strictEqual(lifecycle.loadCount,1,'reabertura atualiza dados sem duplicar a montagem');
+console.log('Configuração cold boot: estilos independentes, montagem após login e reabertura idempotente OK.');

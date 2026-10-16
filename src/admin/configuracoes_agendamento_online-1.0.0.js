@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-conectada-r1';
+    const ASSET_REVISION = '20261016-config-conectada-r2';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -58,11 +58,14 @@
     }
 
     function garantirCSS() {
-        if (document.querySelector(`link[href^="${STYLE_PATH}"]`)) return;
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `${STYLE_PATH}?v=${ASSET_REVISION}`;
-        document.head.appendChild(link);
+        // A composição do hub não depende de abrir Agenda nem do perfil público.
+        [STYLE_PATH, 'styles/configuracoes_agendamento_online_layout-1.0.0.css'].forEach(path => {
+            if (document.querySelector(`link[href^="${path}"]`)) return;
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = `${path}?v=${ASSET_REVISION}`;
+            document.head.appendChild(link);
+        });
     }
 
     function setStatus(mensagem, tipo = 'neutro') {
