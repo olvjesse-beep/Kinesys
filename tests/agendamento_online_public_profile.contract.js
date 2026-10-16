@@ -58,8 +58,8 @@ assert(layout.includes("sections: ['agenda_bloqueios']"),
   'Ausências e bloqueios devem ficar em Configurações > Agenda');
 assert(layout.includes("KineSysScreenLoader.ensure('tela_agenda')"),
   'hub administrativo deve carregar o bundle da Agenda sem navegar para a tela operacional');
-assert(layout.includes("tab.textContent = 'Agenda'"),
-  'aba administrativa principal deve se chamar Agenda');
+assert(layout.includes("tab.setAttribute('aria-label', 'Agenda e serviços')"),
+  'aba administrativa principal deve seguir o nome aprovado Agenda e serviços');
 assert(layout.includes("document.querySelector('#tela_agenda .ks-agenda-config-wrap')"),
   'Agenda operacional não deve manter um segundo menu de configurações concorrente');
 assert(layout.includes("sessionStorage.setItem(STORAGE_KEY"),
@@ -130,13 +130,16 @@ assert(bootstrap.includes('configuracoes_agendamento_online_perfil_publico-1.0.0
   'bootstrap deve carregar o módulo V2 de perfil público');
 assert(bootstrap.includes('configuracoes_agendamento_online_layout-1.0.0.js'),
   'bootstrap deve carregar o workspace administrativo depois do perfil público');
-assert(bootstrap.includes("ONLINE_CONFIG_REVISION='20260913-config-agenda-r1'"),
-  'configuração base deve usar revisão inequívoca do novo hub');
+const configBase = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
+const revisaoBase = configBase.match(/const ASSET_REVISION = '([^']+)'/)[1];
+const revisaoLayout = layout.match(/const ASSET_REVISION = '([^']+)'/)[1];
+assert(bootstrap.includes(`ONLINE_CONFIG_REVISION='${revisaoBase}'`),
+  'bootstrap e configuração base devem usar a mesma revisão');
 assert(bootstrap.includes("ONLINE_PROFILE_CONFIG_REVISION='20260913-config-agenda-r1'"),
   'perfil público deve usar revisão inequívoca do novo hub');
-assert(bootstrap.includes("ONLINE_LAYOUT_REVISION='20260913-config-agenda-r1'"),
-  'workspace deve usar revisão inequívoca do novo hub');
-assert(rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-config-agenda-r3'),
+assert(bootstrap.includes(`ONLINE_LAYOUT_REVISION='${revisaoLayout}'`),
+  'bootstrap e workspace devem usar a mesma revisão');
+assert(rootHtml.includes(`src/admin/access_admin-1.0.0.js?v=${revisaoBase}`),
   'HTML raiz deve carregar diretamente a revisão atual do bootstrap administrativo');
 assert(!rootHtml.includes('src/admin/access_admin-1.0.0.js?v=20260913-online-v4'),
   'HTML raiz não pode depender da revisão histórica do bootstrap');

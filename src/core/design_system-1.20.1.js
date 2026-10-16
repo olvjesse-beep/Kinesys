@@ -21,7 +21,7 @@
         tela_relatorio: ['Relatórios','Relatórios clínicos e declarações'],
         tela_financeiro: ['Financeiro','Caixa, pacientes, despesas e relatórios'],
         tela_equipe: ['Equipe','Usuários, perfis e permissões'],
-        tela_configuracoes: ['Configurações','Mensagens e preferências da clínica'],
+        tela_configuracoes: ['Configurações','Controle da clínica, comunicação e conexões'],
         tela_login: ['Acesso ao KineSys','']
     };
     const PACIENTE_SELECTS = ['select_paciente_precadastro','evo_paciente_select','rel_paciente_select','midia_paciente_select','financeiro_paciente_select'];
@@ -687,10 +687,13 @@
     function limparTitulosEmoji(){document.querySelectorAll('.card-header h2,.finance-hero h2,.midia-hero-head h2').forEach(h=>{h.textContent=h.textContent.replace(/^[^\p{L}\p{N}]+/u,'').trim();});}
 
     function prepararTudo(){
+        // Compatibilidade com HTML antigo em cache: a apresentação nunca oculta a página inteira.
+        document.body.classList.remove('ks-app-booting');
         ensureFeedback();prepararSidebar();criarTopbar();prepararHome();prepararProntuarios();prepararCadastro();preparEvolucaoSafe();prepararRelatorio();prepararAgenda();prepararMidias();prepararBuscasPaciente();prepararFinanceiro();prepararEquipe();limparTitulosEmoji();wrapNavegacao();wrapProntuarioRender();wrapAberturaPaciente();escutarSeletoresPaciente();
         const ativo=document.querySelector('.tela.ativa')?.id||'tela_login';atualizarPaginaAtiva(ativo);atualizarContextoVisual();
         const role=document.getElementById('ks_sidebar_role');if(role&&((typeof usuarioLogado!=='undefined')?usuarioLogado:null)&&typeof window.rotuloPerfil==='function')role.textContent=window.rotuloPerfil(((typeof usuarioLogado!=='undefined')?usuarioLogado:null).tipo);
         document.body.classList.add('ks-design-ready');atualizarGruposNav();
+        document.dispatchEvent(new CustomEvent('kinesys:design-ready'));
     }
     function preparEvolucaoSafe(){try{prepararEvolucao();}catch(e){console.warn('Design evolução:',e);}}
 

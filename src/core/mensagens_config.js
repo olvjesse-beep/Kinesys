@@ -48,7 +48,9 @@ const KINESYS_MENSAGENS_PADRAO = Object.freeze([
 let kinesysMensagensCache = new Map(KINESYS_MENSAGENS_PADRAO.map((m, i) => [m.chave, {...m, ordem:i+1, origem:'padrao'}]));
 let kinesysMensagensCarregadas = false;
 let kinesysMensagensUltimoErro = null;
-let kinesysMensagemEditando = KINESYS_MENSAGENS_PADRAO[0]?.chave || '';
+let kinesysMensagemEditando = 'agenda_lembrete_sessao';
+const kinesysMensagensRascunhos = new Map();
+let kinesysMensagemSalvando = false;
 
 function usuarioEhAdministradorMensagens() {
     if (typeof usuarioEhMaster === 'function') return usuarioEhMaster();
@@ -152,36 +154,51 @@ async function salvarMensagemPadraoConfigurada(chave, titulo, mensagem) {
 function renderizarListaMensagensConfiguracao() {
     const lista = document.getElementById('cfg_msg_lista');
     if (!lista) return;
-    lista.innerHTML = KINESYS_MENSAGENS_PADRAO.map(base => {
+    const ordem = ['agenda_lembrete_sessao', 'crm_lembrete_sessao', 'crm_checkin_24h', 'crm_exercicios_3d', 'agenda_oferta_lista_espera'];
+    const nomes = { agenda_lembrete_sessao: 'Lembrete de sessão', crm_lembrete_sessao: 'Lembrete pela Home', crm_checkin_24h: 'Check-in após atendimento', crm_exercicios_3d: 'Orientações de exercícios' };
+    const itens = [...KINESYS_MENSAGENS_PADRAO].sort((a,b) => ordem.indexOf(a.chave) - ordem.indexOf(b.chave)).map(base => {
         const cfg = kinesysMensagensCache.get(base.chave) || base;
         const ativo = base.chave === kinesysMensagemEditando ? ' ativa' : '';
         const atualizado = cfg.atualizado_em ? `Atualizada ${formatarDataHoraMensagem(cfg.atualizado_em)}` : 'Texto padrão do sistema';
-        return `<button type="button" class="ks-msg-template-item${ativo}" onclick="selecionarMensagemConfiguracao('${escaparHTMLMensagens(base.chave)}')">
-            <span class="ks-msg-template-group">${escaparHTMLMensagens(base.grupo)}</span>
-            <strong>${escaparHTMLMensagens(cfg.titulo || base.titulo)}</strong>
+        return `<button type="button" class="ks-msg-template-item${ativo}" aria-pressed="${base.chave === kinesysMensagemEditando}" onclick="selecionarMensagemConfiguracao('${escaparHTMLMensagens(base.chave)}')">
+            <span class="ks-msg-template-group">${escaparHTMLMensagens(base.grupo === 'CRM e relacionamento' ? 'WhatsApp da Home' : base.grupo)}</span>
+            <strong>${escaparHTMLMensagens(cfg.titulo && cfg.titulo !== base.titulo ? cfg.titulo : nomes[base.chave] || base.titulo)}</strong>
             <small>${escaparHTMLMensagens(atualizado)}</small>
         </button>`;
-    }).join('');
+    });
+    const outros = document.getElementById('cfg_msg_outros');
+    lista.innerHTML = (outros ? itens.slice(0,4) : itens).join('');
+    if (outros) outros.innerHTML = itens.slice(4).join('');
 }
 
 function atualizarPreviewMensagemConfiguracao() {
     const textarea = document.getElementById('cfg_msg_texto');
     const preview = document.getElementById('cfg_msg_preview');
     if (preview && textarea) preview.textContent = aplicarVariaveisMensagem(textarea.value, contextoExemploMensagem());
+    const contador = document.getElementById('cfg_msg_contador');
+    if (contador && textarea) contador.textContent = `${textarea.value.length}/4000`;
+    const titulo = document.getElementById('cfg_msg_titulo');
+    if (textarea) kinesysMensagensRascunhos.set(kinesysMensagemEditando, { mensagem: textarea.value, titulo: titulo?.value || '' });
 }
 
 function selecionarMensagemConfiguracao(chave) {
     const base = templatePadraoMensagem(chave);
     if (!base) return;
+    // Captura também o título antes da troca, sem gravar rascunhos na nuvem.
+    const anteriorTexto = document.getElementById('cfg_msg_texto');
+    const anteriorTitulo = document.getElementById('cfg_msg_titulo');
+    if (anteriorTexto?.dataset.mensagemCarregada === '1') {
+        kinesysMensagensRascunhos.set(kinesysMensagemEditando, { mensagem: anteriorTexto.value, titulo: anteriorTitulo?.value || '' });
+    }
     kinesysMensagemEditando = chave;
-    const cfg = kinesysMensagensCache.get(chave) || base;
+    const cfg = kinesysMensagensRascunhos.get(chave) || kinesysMensagensCache.get(chave) || base;
     const titulo = document.getElementById('cfg_msg_titulo');
     const texto = document.getElementById('cfg_msg_texto');
     const descricao = document.getElementById('cfg_msg_descricao');
     const variaveis = document.getElementById('cfg_msg_variaveis');
     const meta = document.getElementById('cfg_msg_meta');
     if (titulo) titulo.value = cfg.titulo || base.titulo;
-    if (texto) texto.value = cfg.mensagem || base.mensagem;
+    if (texto) { texto.value = cfg.mensagem ?? base.mensagem; texto.dataset.mensagemCarregada = '1'; }
     if (descricao) descricao.textContent = base.descricao;
     if (variaveis) variaveis.innerHTML = base.variaveis.map(v => `<button type="button" class="ks-msg-var" onclick="inserirVariavelMensagem('{${escaparHTMLMensagens(v)}}')">{${escaparHTMLMensagens(v)}}</button>`).join('');
     if (meta) {
@@ -229,14 +246,19 @@ async function abrirConfiguracoesMensagens() {
 }
 
 async function salvarMensagemConfiguracaoAtual() {
+    if (kinesysMensagemSalvando) return;
+    kinesysMensagemSalvando = true;
     const btn = document.getElementById('cfg_msg_salvar');
     const status = document.getElementById('cfg_msg_status');
+    const chave = kinesysMensagemEditando;
+    const titulo = document.getElementById('cfg_msg_titulo')?.value || '';
+    const texto = document.getElementById('cfg_msg_texto')?.value || '';
     try {
         if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
-        const titulo = document.getElementById('cfg_msg_titulo')?.value || '';
-        const texto = document.getElementById('cfg_msg_texto')?.value || '';
-        await salvarMensagemPadraoConfigurada(kinesysMensagemEditando, titulo, texto);
-        selecionarMensagemConfiguracao(kinesysMensagemEditando);
+        await salvarMensagemPadraoConfigurada(chave, titulo, texto);
+        const atual = kinesysMensagensRascunhos.get(chave);
+        if (atual?.mensagem === texto && atual?.titulo === titulo) kinesysMensagensRascunhos.delete(chave);
+        renderizarListaMensagensConfiguracao();
         if (status) { status.textContent = '✓ Mensagem salva. Os próximos envios de qualquer funcionário já usarão esta versão.'; status.className = 'ks-msg-status ok'; }
         if (typeof mostrarToastKineSys === 'function') mostrarToastKineSys('Mensagem padrão atualizada para toda a equipe.', 'sucesso', 4500);
     } catch (err) {
@@ -248,17 +270,20 @@ async function salvarMensagemConfiguracaoAtual() {
             status.className = 'ks-msg-status erro';
         }
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Salvar para toda a equipe'; }
+        kinesysMensagemSalvando = false;
+        if (btn) { btn.disabled = false; btn.textContent = 'Salvar mensagem'; }
     }
 }
 
 async function restaurarMensagemPadraoAtual() {
+    if (kinesysMensagemSalvando) return;
+    const chave = kinesysMensagemEditando;
     const base = templatePadraoMensagem(kinesysMensagemEditando);
     if (!base) return;
     const ok = typeof confirmarKineSys === 'function'
         ? await confirmarKineSys(`Restaurar “${base.titulo}” para o texto padrão desta versão?`, {titulo:'Restaurar mensagem', confirmar:'Restaurar padrão'})
         : confirm(`Restaurar “${base.titulo}” para o texto padrão?`);
-    if (!ok) return;
+    if (!ok || kinesysMensagemEditando !== chave || kinesysMensagemSalvando) return;
     const titulo = document.getElementById('cfg_msg_titulo');
     const texto = document.getElementById('cfg_msg_texto');
     if (titulo) titulo.value = base.titulo;

@@ -490,8 +490,6 @@ html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>.ks-evo-history-a
 html body.ks-design-ready #tela_evolucao .ks-evo-main>.actions>#btn_salvar_evolucao{background:#187f79!important;background-color:#187f79!important;border-color:#187f79!important;color:#fff!important}
 
 /* Correções visuais globais sem alterar regras de negócio. */
-@keyframes ks-app-boot-failsafe{to{visibility:visible}}
-html body.ks-app-booting{visibility:hidden!important;animation:ks-app-boot-failsafe 0s 3s forwards}
 html body.ks-design-ready .tela:not(.ativa){display:none!important}
 html body.ks-design-ready :is(button,.btn-primary,.btn-secondary,.btn-nav){min-height:44px;box-sizing:border-box}
 html body.ks-design-ready .modal-fechar{width:44px!important;height:44px!important;display:grid!important;place-items:center!important}

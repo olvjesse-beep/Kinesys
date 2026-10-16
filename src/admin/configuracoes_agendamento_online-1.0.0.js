@@ -3,8 +3,13 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261014-agenda-cores-r1';
+    const ASSET_REVISION = '20261016-config-conectada-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
+    const CONFIG_AREAS = Object.freeze([
+        ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
+        ['mensagens', 'Comunicação'], ['documentos', 'Documentos'],
+        ['integracoes', 'Integrações'], ['dados', 'Dados e segurança']
+    ]);
     const AGENDA_CORES_PADRAO = Object.freeze({
         osteopatia: '#2F8F72',
         fisioterapia: '#2F7EAD',
@@ -203,20 +208,11 @@
         const existentes = Array.from(tela.children);
         const header = document.createElement('div');
         header.className = 'ks-config-hub-header';
-        header.innerHTML = `
-            <div>
-                <h1>Configurações</h1>
-                <p>Defina regras administrativas da clínica sem alterar a operação diária da Agenda.</p>
-            </div>`;
 
         const tabs = document.createElement('div');
         tabs.className = 'ks-config-tabs';
         tabs.setAttribute('role', 'tablist');
         tabs.setAttribute('aria-label', 'Áreas de configuração');
-        tabs.innerHTML = `
-            <button type="button" id="ks_config_tab_online" role="tab" aria-selected="true" aria-controls="ks_config_panel_online" data-config-tab="online">Agendamento online</button>
-            <button type="button" id="ks_config_tab_aparencia" role="tab" aria-selected="false" aria-controls="ks_config_panel_aparencia" data-config-tab="aparencia">Aparência da agenda</button>
-            <button type="button" id="ks_config_tab_mensagens" role="tab" aria-selected="false" aria-controls="ks_config_panel_mensagens" data-config-tab="mensagens">Mensagens padrão</button>`;
 
         const online = document.createElement('div');
         online.id = 'ks_config_panel_online';
@@ -229,9 +225,10 @@
         aparencia.id = 'ks_config_panel_aparencia';
         aparencia.className = 'ks-config-panel';
         aparencia.setAttribute('role', 'tabpanel');
-        aparencia.setAttribute('aria-labelledby', 'ks_config_tab_aparencia');
+        aparencia.setAttribute('aria-labelledby', 'ks_config_tab_online');
         aparencia.hidden = true;
         aparencia.innerHTML = markupAparenciaAgenda();
+        aparencia.insertAdjacentHTML('afterbegin', '<button type="button" class="btn-secondary" data-config-voltar-agenda>Voltar para Agenda e serviços</button>');
 
         const mensagens = document.createElement('div');
         mensagens.id = 'ks_config_panel_mensagens';
@@ -239,20 +236,87 @@
         mensagens.setAttribute('role', 'tabpanel');
         mensagens.setAttribute('aria-labelledby', 'ks_config_tab_mensagens');
         mensagens.hidden = true;
-        existentes.forEach(el => mensagens.appendChild(el));
+        existentes.filter(el => !el.classList.contains('ks-data-governance-card')).forEach(el => mensagens.appendChild(el));
 
-        tela.append(header, tabs, online, aparencia, mensagens);
+        const adicionais = CONFIG_AREAS.filter(([id]) => !['online', 'mensagens'].includes(id)).map(([id, label]) => {
+            const panel = document.createElement('div');
+            panel.id = `ks_config_panel_${id}`;
+            panel.className = 'ks-config-panel ks-config-domain';
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', `ks_config_tab_${id}`);
+            panel.hidden = true;
+            if (id === 'dados') existentes.filter(el => el.classList.contains('ks-data-governance-card')).forEach(el => panel.appendChild(el));
+            else if (id === 'integracoes') panel.innerHTML = `<h2>Integrações</h2><p>Conexões propostas para a clínica. Nenhum serviço externo é conectado automaticamente.</p>${markupIntegracoes()}`;
+            else panel.innerHTML = `<h2>${label}</h2><p>${({clinica:'Identidade pública, endereço e comunicação da clínica.',equipe:'Profissionais, registros e permissões continuam na gestão de equipe.',documentos:'Os documentos usam os dados da clínica e o registro do profissional responsável.'})[id]}</p><button type="button" class="btn-secondary" data-config-destino="${id === 'clinica' ? 'identidade' : id === 'equipe' ? 'tela_equipe' : 'tela_relatorio'}">${id === 'clinica' ? 'Editar identidade da clínica' : id === 'equipe' ? 'Gerenciar equipe e acessos' : 'Abrir relatórios'}</button>${id === 'documentos' ? '<button type="button" class="btn-secondary" data-config-destino="tela_equipe">Editar registro profissional</button>' : ''}`;
+            return panel;
+        });
+
+        tabs.innerHTML = CONFIG_AREAS.map(([id, label]) => `<button type="button" id="ks_config_tab_${id}" role="tab" aria-selected="${id === 'mensagens'}" aria-controls="ks_config_panel_${id}" data-config-tab="${id}">${label}</button>`).join('');
+        header.innerHTML = `<label class="ks-config-search"><input type="search" id="ks_config_busca" placeholder="Buscar ajuste" autocomplete="off" aria-label="Buscar ajuste"></label><span class="ks-config-scope">Clínica atual</span>`;
+        tela.classList.add('ks-config-connected');
+        tela.append(header, tabs, online, aparencia, mensagens, ...adicionais);
+        document.getElementById('ks_config_integracoes_resumo')?.insertAdjacentHTML('beforeend', markupIntegracoes());
         tela.classList.add('ks-config-hub-ready');
         tabs.addEventListener('click', evento => {
             const btn = evento.target.closest('[data-config-tab]');
             if (!btn) return;
             abrirAba(btn.dataset.configTab);
         });
+        tabs.addEventListener('keydown', evento => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(evento.key)) return;
+            const buttons = [...tabs.querySelectorAll('[role="tab"]')].filter(button => !button.hidden);
+            const index = buttons.indexOf(evento.target);
+            if (index < 0) return;
+            evento.preventDefault();
+            const next = evento.key === 'Home' ? 0 : evento.key === 'End' ? buttons.length - 1 : (index + (evento.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+            abrirAba(buttons[next].dataset.configTab);
+            buttons[next].focus();
+        });
+        tela.addEventListener('click', evento => {
+            if (evento.target.closest('[data-config-voltar-agenda]')) { abrirAba('online'); return; }
+            const destino = evento.target.closest('[data-config-destino]')?.dataset.configDestino;
+            if (!destino) return;
+            if (destino === 'identidade') {
+                abrirAba('online');
+                window.KineSysConfiguracoesAgendaOnlineLayout?.showStage?.('geral');
+                document.getElementById('ks_online_v2_nome_publico')?.focus();
+            } else if (destino === 'aparencia') abrirAba('aparencia');
+            else if (typeof window.navegarPara === 'function') window.navegarPara(destino);
+        });
+        document.getElementById('ks_config_busca')?.addEventListener('input', evento => {
+            const normalizar = valor => valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const termo = normalizar(evento.target.value.trim());
+            const aliases = { online: 'agenda horarios intervalos encaixes servicos cores aparencia ausencias procedimentos', mensagens: 'comunicacao whatsapp mensagens lembretes', dados: 'dados seguranca backup exportar restaurar', documentos: 'documentos relatorios assinatura registro', equipe: 'equipe profissionais acessos permissoes', clinica: 'clinica identidade endereco', integracoes: 'integracoes google calendar whatsapp api' };
+            tabs.querySelectorAll('[data-config-tab]').forEach(button => { button.hidden = !!termo && !normalizar(aliases[button.dataset.configTab] || button.textContent).includes(termo); });
+            document.getElementById('ks_config_busca_status').textContent = termo && !tabs.querySelector('[data-config-tab]:not([hidden])') ? 'Nenhum ajuste encontrado. Tente horários, mensagens ou backup.' : '';
+        });
+        tabs.insertAdjacentHTML('afterend', '<p id="ks_config_busca_status" role="status" aria-live="polite"></p>');
 
         ligarEventosOnline();
         ligarEventosAparencia();
         state.montado = true;
+        // Reutiliza os ícones do próprio produto, sem outro pacote ou desenhos paralelos.
+        const decorarAbas = () => {
+            const origem = {clinica:'tela_home',online:'tela_agenda',equipe:'tela_equipe',mensagens:'tela_evolucao',documentos:'tela_relatorio',integracoes:'tela_configuracoes',dados:'tela_midias'};
+            CONFIG_AREAS.forEach(([id]) => {
+                const icon = document.querySelector(`[data-tela-menu="${origem[id]}"] .ks-nav-icon`);
+                const tab = document.getElementById(`ks_config_tab_${id}`);
+                if (icon && !tab?.querySelector('.ks-nav-icon')) tab?.prepend(icon.cloneNode(true));
+            });
+        };
+        decorarAbas();
+        document.addEventListener('kinesys:design-ready', decorarAbas);
         return true;
+    }
+
+    function markupIntegracoes() {
+        // Ícones de marca incorporados: Simple Icons e favicon oficial do Google Calendar.
+        // Não há consulta a terceiros ao abrir as configurações.
+        const marcas = ['data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMUU3NTZGIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+V2hhdHNBcHA8L3RpdGxlPjxwYXRoIGQ9Ik0xNy40NzIgMTQuMzgyYy0uMjk3LS4xNDktMS43NTgtLjg2Ny0yLjAzLS45NjctLjI3My0uMDk5LS40NzEtLjE0OC0uNjcuMTUtLjE5Ny4yOTctLjc2Ny45NjYtLjk0IDEuMTY0LS4xNzMuMTk5LS4zNDcuMjIzLS42NDQuMDc1LS4yOTctLjE1LTEuMjU1LS40NjMtMi4zOS0xLjQ3NS0uODgzLS43ODgtMS40OC0xLjc2MS0xLjY1My0yLjA1OS0uMTczLS4yOTctLjAxOC0uNDU4LjEzLS42MDYuMTM0LS4xMzMuMjk4LS4zNDcuNDQ2LS41Mi4xNDktLjE3NC4xOTgtLjI5OC4yOTgtLjQ5Ny4wOTktLjE5OC4wNS0uMzcxLS4wMjUtLjUyLS4wNzUtLjE0OS0uNjY5LTEuNjEyLS45MTYtMi4yMDctLjI0Mi0uNTc5LS40ODctLjUtLjY2OS0uNTEtLjE3My0uMDA4LS4zNzEtLjAxLS41Ny0uMDEtLjE5OCAwLS41Mi4wNzQtLjc5Mi4zNzItLjI3Mi4yOTctMS4wNCAxLjAxNi0xLjA0IDIuNDc5IDAgMS40NjIgMS4wNjUgMi44NzUgMS4yMTMgMy4wNzQuMTQ5LjE5OCAyLjA5NiAzLjIgNS4wNzcgNC40ODcuNzA5LjMwNiAxLjI2Mi40ODkgMS42OTQuNjI1LjcxMi4yMjcgMS4zNi4xOTUgMS44NzEuMTE4LjU3MS0uMDg1IDEuNzU4LS43MTkgMi4wMDYtMS40MTMuMjQ4LS42OTQuMjQ4LTEuMjg5LjE3My0xLjQxMy0uMDc0LS4xMjQtLjI3Mi0uMTk4LS41Ny0uMzQ3bS01LjQyMSA3LjQwM2gtLjAwNGE5Ljg3IDkuODcgMCAwMS01LjAzMS0xLjM3OGwtLjM2MS0uMjE0LTMuNzQxLjk4Mi45OTgtMy42NDgtLjIzNS0uMzc0YTkuODYgOS44NiAwIDAxLTEuNTEtNS4yNmMuMDAxLTUuNDUgNC40MzYtOS44ODQgOS44ODgtOS44ODQgMi42NCAwIDUuMTIyIDEuMDMgNi45ODggMi44OThhOS44MjUgOS44MjUgMCAwMTIuODkzIDYuOTk0Yy0uMDAzIDUuNDUtNC40MzcgOS44ODQtOS44ODUgOS44ODRtOC40MTMtMTguMjk3QTExLjgxNSAxMS44MTUgMCAwMDEyLjA1IDBDNS40OTUgMCAuMTYgNS4zMzUuMTU3IDExLjg5MmMwIDIuMDk2LjU0NyA0LjE0MiAxLjU4OCA1Ljk0NUwuMDU3IDI0bDYuMzA1LTEuNjU0YTExLjg4MiAxMS44ODIgMCAwMDUuNjgzIDEuNDQ4aC4wMDVjNi41NTQgMCAxMS44OS01LjMzNSAxMS44OTMtMTEuODkzYTExLjgyMSAxMS44MjEgMCAwMC0zLjQ4LTguNDEzWiIvPjwvc3ZnPg==', 'data:image/x-icon;base64,AAABAAEAICAAAAEAIAAoEQAAFgAAACgAAAAgAAAAQAAAAAEAIAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAA1gBUwOIAY3ziAGP84gBj/OIAY/ziAGP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/zZC6YAAAAAAAAAAAAAAAAAAAAAAAAAAADeAF+84gBj/OIAY/ziAGP84gBj/OIAY/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/NUPq/zZC6YAAAAAAAAAAAAAAAAAAAAAAOIAY/ziAGP84gBj/OIAY/ziAGP84gBj/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP81Q+r/NUPq/zZC6YAAAAAAAAAAAAAAAAA4gBj/OIAY/ziAGP84gBj/OIAY/ziAGP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/zVD6v81Q+r/NUPq/zZC6YAAAAAAAAAAADiAGP84gBj/OIAY/ziAGP84gBj/OIAY/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/NUPq/zVD6v81Q+r/NUPq/zZC6YAAAAAAOIAY/ziAGP84gBj/OIAY/ziAGP84gBj/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP9TqDT/U6g0/1OoNP81Q+r/NUPq/zVD6v81Q+r/NUPq/zZC6YD0hUL/9IVC//SFQv/0hUL/9IVC//SFQv///////////////////////////////////////////////////////////////////////////////////////////////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC////////////////////////////////////////////////////////////////////////////////////////////////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL///////////////////////////////////////////////////////////////////////////////////////////////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/////////////////57OL/7sao/92NU//djVP/46Bv//TZxf/////////////////////////////////os4z/67ya/////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC////////////+ezi/9d6Nv/SZxn/0mcZ/9JnGf/SZxn/0mcZ/+/Gqf///////////////////////////9JnGf/Yejb/////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL////////////djVL/0mcZ/9qDRP/349T/+uzj/+izjP/SZxn/0mcZ//ns4v//////////////////////0mcZ/9h6Nv////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv///////////9h6Nv/SZxn//PXx/////////////////+CWYf/SZxn/8dC3///////////////////////SZxn/2Ho2/////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//////////////////rs4///////////////////////5al+/9JnGf/uxqn//////////////////////9JnGf/Yejb/////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL///////////////////////////////////////ns4v/Xejb/0mcZ//TZxf//////////////////////0mcZ/9h6Nv////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv///////////////////////////+Ogb//gl2H/13o2/9JnGf/os4z////////////////////////////SZxn/2Ho2/////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC////////////////////////////0mcZ/9JnGf/SZxn/3Y1S/////////////////////////////////9JnGf/Yejb/////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL////////////////////////////67OP/9+PU/+Kgb//SZxn/6bOM/////////////PXx////////////0mcZ/9h6Nv////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv///////////////////////////////////////////9JnGf/Xejb////////////djVL/9NnF///////SZxn/2Ho2/////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC////////////6LOM/92NU//57OL/////////////////1XEn/9JnGf///////////9uDRP/SZxn/6bOM/9JnGf/Yejb/////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL////////////rvJv/0mcZ/9qDRP/02cX/9+PT/+apfv/SZxn/3Y1S////////////9uPT/9h6Nv/SZxn/0mcZ/9h6Nv////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/////////////////djVL/0mcZ/9JnGf/SZxn/0mcZ/9h6Nv/349P//////////////////PXx/+Wpfv/SZxn/2Ho2/////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC///////////////////////uxqn/46Bv/+Ogb//rvZr/+ezi//////////////////////////////////HPt//xz7j/////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL///////////////////////////////////////////////////////////////////////////////////////////////////////////8EvPv/BLz7/wS8+/8EvPv/BLz7/wS8+//0hUL/9IVC//SFQv/0hUL/9IVC//SFQv///////////////////////////////////////////////////////////////////////////////////////////////////////////wS8+/8EvPv/BLz7/wS8+/8EvPv/BLz7//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC////////////////////////////////////////////////////////////////////////////////////////////////////////////BLz7/wS8+/8EvPv/BLz7/wS8+/8EvPv/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/SZxn/0mcZ/9JnGf/SZxn/0mcZ/9JnGf/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC/9JnGf/SZxn/0mcZ/9JnGf/SZxn/0mcZ//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/0mcZ/9JnGf/SZxn/0mcZ/9JnGf/SZxn/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/SZxn/0mcZ/9JnGf/SZxn/0mcZ/9JnGf/0hULf9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC/9JnGf/SZxn/0mcZ/9JnGf/SZxn/0mcZv/eGQF/zhULv9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/9IVC//SFQv/0hUL/0mcZ/9JnGf/SZxn/0mcZ/9JnGb/PaBggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='];
+        return `<div class="ks-config-integrations">${[
+            ['WhatsApp Business API', 'Envio automático requer implantação.', 'Será necessário definir um provedor oficial, consentimentos, permissões e custos antes da ativação. Nenhuma mensagem é enviada por esta tela.'],
+            ['Google Calendar', 'Sincronização da agenda.', 'Será necessário autorizar a conta Google e definir o sentido da sincronização, dados compartilhados e tratamento de conflitos. Nenhum acesso foi concedido.']
+        ].map(([nome, descricao, requisitos], index) => `<details class="ks-config-integration"><summary><img src="${marcas[index]}" width="30" height="30" alt=""><span><strong>${nome}</strong><small>Planejada · ${descricao}</small></span><span class="ks-config-requirements">Ver requisitos</span></summary><p>${requisitos}</p></details>`).join('')}</div>`;
     }
 
     function ligarEventosAparencia() {
@@ -441,28 +505,22 @@
         document.getElementById('ks_online_salvar')?.addEventListener('click', salvarTudo);
     }
 
-    function abrirAba(nome = 'online') {
+    function abrirAba(nome = 'mensagens') {
         if (!montarHub()) return;
-        const aba = ['online', 'aparencia', 'mensagens'].includes(nome) ? nome : 'online';
+        const aba = [...CONFIG_AREAS.map(([id]) => id), 'aparencia'].includes(nome) ? nome : 'mensagens';
         const online = aba === 'online';
         const aparencia = aba === 'aparencia';
         const mensagens = aba === 'mensagens';
-        const painelOnline = document.getElementById('ks_config_panel_online');
         const painelAparencia = document.getElementById('ks_config_panel_aparencia');
-        const painelMensagens = document.getElementById('ks_config_panel_mensagens');
-        const tabOnline = document.getElementById('ks_config_tab_online');
-        const tabAparencia = document.getElementById('ks_config_tab_aparencia');
-        const tabMensagens = document.getElementById('ks_config_tab_mensagens');
-
-        painelOnline.hidden = !online;
         painelAparencia.hidden = !aparencia;
-        painelMensagens.hidden = !mensagens;
-        tabOnline.setAttribute('aria-selected', String(online));
-        tabAparencia.setAttribute('aria-selected', String(aparencia));
-        tabMensagens.setAttribute('aria-selected', String(mensagens));
-        tabOnline.tabIndex = online ? 0 : -1;
-        tabAparencia.tabIndex = aparencia ? 0 : -1;
-        tabMensagens.tabIndex = mensagens ? 0 : -1;
+        CONFIG_AREAS.forEach(([id]) => {
+            const active = id === aba || (id === 'online' && aparencia);
+            const tab = document.getElementById(`ks_config_tab_${id}`);
+            tab.setAttribute('aria-selected', String(active));
+            tab.tabIndex = active ? 0 : -1;
+            const panel = document.getElementById(`ks_config_panel_${id}`);
+            panel.hidden = id !== aba;
+        });
         try { sessionStorage.setItem('kinesys_config_tab', aba); } catch (_) {}
 
         if (online) carregar(false);
@@ -473,8 +531,8 @@
     async function onOpen() {
         if (!ehAdministrador()) return;
         if (!montarHub()) return;
-        let aba = 'online';
-        try { aba = sessionStorage.getItem('kinesys_config_tab') || 'online'; } catch (_) {}
+        let aba = 'mensagens';
+        try { aba = sessionStorage.getItem('kinesys_config_tab') || 'mensagens'; } catch (_) {}
         abrirAba(aba);
     }
 

@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20260913-config-agenda-r1';
+    const ASSET_REVISION = '20261016-config-conectada-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_layout-1.0.0.css';
     const GLASS_STYLE_PATH = 'styles/navigation_glass-1.0.0.css';
     const STORAGE_KEY = 'kinesys_online_config_stage';
@@ -47,12 +47,11 @@
     function ajustarHubConfiguracoes() {
         const tab = document.getElementById('ks_config_tab_online');
         if (tab) {
-            tab.textContent = 'Agenda';
-            tab.setAttribute('aria-label', 'Agenda');
+            tab.setAttribute('aria-label', 'Agenda e serviços');
         }
 
         const headerCopy = document.querySelector('#tela_configuracoes .ks-config-hub-header p');
-        if (headerCopy) headerCopy.textContent = 'Agenda, comunicação e preferências administrativas da clínica.';
+        if (headerCopy) headerCopy.textContent = 'Controle da clínica, comunicação e conexões.';
 
         const titulo = document.querySelector('#ks_config_panel_online .ks-online-topline h2');
         const descricao = document.querySelector('#ks_config_panel_online .ks-online-topline p');
@@ -87,7 +86,7 @@
     function navMarkup() {
         return `<div class="ks-online-layout-nav" role="tablist" aria-label="Áreas de configuração da Agenda">
             ${STAGES.map((stage, index) => `<button type="button" role="tab" data-online-stage="${stage.id}" aria-selected="${index === 0 ? 'true' : 'false'}">${stage.label}</button>`).join('')}
-        </div>`;
+        </div><button type="button" class="btn-secondary ks-config-colors-link" data-config-destino="aparencia">Aparência da agenda · Cores dos atendimentos</button>`;
     }
 
     function nomeProfissionalSelecionado() {
