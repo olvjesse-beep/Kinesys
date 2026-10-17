@@ -7,6 +7,155 @@
 #tela_home .ks-home-hero p{font-size:var(--kds-font-label);line-height:var(--kds-leading-text);text-transform:none}
 #tela_home .ks-home-primary{align-self:center;white-space:nowrap}
 
+/* Panorama exclusivo do administrador. Nenhum seletor altera os demais perfis. */
+#tela_home.ks-admin-home-active{max-width:none;padding:0 0 20px}
+@media(min-width:821px){
+ html body.ks-design-ready.ks-admin-home-route>.container{margin-left:240px!important;padding:0 12px 24px}
+ html body.ks-design-ready.ks-admin-home-route #ks_sidebar{inset:0 auto 0 0!important;width:240px!important;height:100dvh!important;border-radius:0!important;margin:0;padding-top:24px}
+}
+#tela_home.ks-admin-home-active>:not(#ks_admin_home){display:none!important}
+.ks-admin-home-route .ks-topbar{display:none}
+#ks_admin_home{--admin-rail-width:300px;color:var(--kds-text);font-family:var(--kds-font-family-ui);font-size:var(--kds-font-ui);line-height:var(--kds-leading-text)}
+#ks_admin_home *{box-sizing:border-box}
+#ks_admin_home h1,#ks_admin_home h2,#ks_admin_home p{margin:0}
+#ks_admin_home h1{font-size:36px;font-weight:740;line-height:var(--kds-leading-tight);letter-spacing:-.5px}
+#ks_admin_home h2{font-size:var(--kds-font-heading-md);line-height:var(--kds-leading-ui);font-weight:720}
+#ks_admin_home button,#ks_admin_home input,#ks_admin_home textarea,#ks_admin_home a{font-family:inherit}
+#ks_admin_home button,#ks_admin_home a{font-size:var(--kds-font-ui);cursor:pointer}
+#ks_admin_home button:disabled{cursor:default;opacity:.45}
+#ks_admin_home button:focus-visible,#ks_admin_home input:focus-visible,#ks_admin_home summary:focus-visible,#ks_admin_home a:focus-visible{outline:3px solid var(--kds-focus-line);outline-offset:3px}
+#ks_admin_home .ks-icon{width:22px;height:22px;flex:0 0 auto}
+#ks_admin_home .kds-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#ks_admin_home .ks-admin-heading{display:flex;justify-content:space-between;align-items:center;gap:22px;padding:12px 24px}
+#ks_admin_home .ks-admin-heading p{color:var(--kds-muted);margin-top:5px;font-size:var(--kds-font-body)}
+#ks_admin_home .ks-admin-head-actions{display:flex;align-items:center;gap:18px}
+#ks_admin_home .ks-admin-head-actions>span{font-size:var(--kds-font-label);white-space:nowrap;border-left:1px solid var(--kds-line);padding-left:18px}
+#ks_admin_home [data-admin-action="privacy"]{width:42px;padding:9px;border-radius:50%;background:var(--kds-teal-soft);border:0;box-shadow:none}
+#ks_admin_home .ks-admin-library-icon{width:22px;height:22px;display:block}
+#ks_admin_home .ks-admin-head-actions>button{min-height:44px;white-space:nowrap}
+#ks_admin_home .ks-admin-panorama{display:grid;grid-template-columns:minmax(0,1fr) var(--admin-rail-width);gap:28px;background:var(--kds-surface);padding:0 0 8px 24px}
+#ks_admin_home .ks-admin-main{min-width:0;padding:16px 0 0}
+#ks_admin_home .ks-admin-period{display:flex;align-items:center;gap:16px;min-height:44px;margin-bottom:24px;flex-wrap:wrap}
+#ks_admin_home .ks-admin-period label{display:flex;align-items:center;gap:8px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);padding:5px 10px}
+#ks_admin_home .ks-admin-period input{width:170px;min-height:34px;border:0;background:none;padding:0;color:var(--kds-text);box-shadow:none;font-size:var(--kds-font-ui)}
+#ks_admin_home .ks-admin-month-nav{border:0;background:transparent;color:var(--kds-muted);padding:7px 0;min-height:40px}
+#ks_admin_month_label:first-letter{text-transform:uppercase}
+#ks_admin_home .ks-admin-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:12px 0 24px;gap:20px;border-bottom:1px solid var(--kds-line-soft)}
+#ks_admin_home .ks-admin-metrics>div{min-width:0;position:relative}
+#ks_admin_home .ks-admin-metrics .ks-admin-metric-icon{display:flex;align-items:center;justify-content:center;width:42px;height:42px;position:absolute;right:4px;top:23px;border-radius:50%;background:var(--kds-accent-soft)}
+#ks_admin_home .ks-admin-metrics>div:nth-child(2) .ks-admin-metric-icon{background:var(--kds-surface-muted)}
+#ks_admin_home .ks-admin-metrics>div:nth-child(3) .ks-admin-metric-icon{background:var(--kds-danger-soft)}
+#ks_admin_home .ks-admin-metrics>div+div{border-left:1px solid var(--kds-line);padding-left:18px}
+#ks_admin_home .ks-admin-metrics span{font-size:var(--kds-font-body);font-weight:650}
+#ks_admin_home .ks-admin-metrics strong{display:block;font-size:36px;line-height:1.1;letter-spacing:-.5px;margin-top:4px;white-space:nowrap;font-weight:730;color:var(--kds-accent)}
+#ks_admin_home #ks_admin_receivable{color:#2F7EAD}
+#ks_admin_home #ks_admin_expenses{color:var(--kds-eva-severe)}
+#ks_admin_home .ks-admin-flow{padding-top:24px}
+#ks_admin_home .ks-admin-flow-description{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:5px}
+#ks_admin_home .ks-admin-flow-description>p{font-size:var(--kds-font-label);color:var(--kds-muted)}
+#ks_admin_home .ks-admin-legend{display:flex;gap:12px;flex-shrink:0;font-size:11px;color:var(--kds-muted)}
+#ks_admin_home .ks-admin-legend>span{border-left:7px solid var(--kds-accent);padding-left:5px}
+#ks_admin_home .ks-admin-legend>span+span{border-color:var(--kds-danger)}
+#ks_admin_home .ks-admin-chart{height:300px;position:relative;margin-top:19px;min-width:0}
+#ks_admin_chart{display:block;width:100%;height:100%}
+#ks_admin_chart_message{position:absolute;inset:42% 8px auto;text-align:center;color:var(--kds-muted)}
+#ks_admin_home .ks-admin-chart-details{font-size:var(--kds-font-metadata);color:var(--kds-muted);margin:0 0 10px}
+#ks_admin_chart_table{max-height:220px;overflow:auto}
+#ks_admin_chart_table table{width:100%;border-collapse:collapse;font-size:var(--kds-font-ui)}
+#ks_admin_chart_table td,#ks_admin_chart_table th{padding:8px;border-bottom:1px solid var(--kds-line);text-align:left}
+#ks_admin_home .ks-admin-glass{padding:20px 24px;min-width:0;border-radius:var(--kds-radius-md);color:var(--kds-surface);background:color-mix(in srgb,var(--kds-accent) 58%,var(--kds-petrol-deep));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--kds-surface) 16%,transparent);backdrop-filter:blur(18px)}
+#ks_admin_home .ks-admin-glass h2{color:inherit;font-size:var(--kds-font-heading-sm)}
+#ks_admin_attended{display:block;font-size:40px;line-height:1.1;font-weight:720;margin-top:6px}
+#ks_admin_home .ks-admin-glass>div>p{margin-top:8px;font-size:var(--kds-font-label);opacity:.87}
+#ks_admin_home .ks-admin-glass>section{border-top:1px solid color-mix(in srgb,var(--kds-surface) 25%,transparent);margin-top:16px;padding-top:16px}
+#ks_admin_home .ks-admin-today-number{display:flex;align-items:center;gap:12px;margin-top:9px;line-height:1.2}
+#ks_admin_home .ks-admin-today-number strong{font-size:32px;font-weight:700;min-width:27px}
+#ks_admin_home .ks-admin-glass small{font-size:var(--kds-font-metadata);opacity:.85}
+#ks_admin_home .ks-admin-glass>section>small{display:none}
+#ks_admin_home .ks-admin-glass .btn-secondary{width:100%;margin-top:14px;background:var(--kds-teal-soft);color:var(--kds-petrol-deep);border-color:transparent;box-shadow:none;min-height:44px}
+#ks_admin_home .ks-admin-alerts h2{margin-bottom:10px}
+#ks_admin_home .ks-admin-alerts>button{display:flex;align-items:center;gap:11px;color:inherit;background:none;border:0;border-bottom:1px solid color-mix(in srgb,var(--kds-surface) 14%,transparent);padding:10px 0;text-align:left;width:100%;line-height:var(--kds-leading-ui)}
+#ks_admin_home .ks-admin-alerts>button>span:nth-child(2){flex:1;min-width:0}
+#ks_admin_home .ks-admin-alerts strong{display:block;font-weight:650}
+#ks_admin_pending_value{display:block;color:var(--kds-eva-high);font-weight:720;margin-top:3px}
+#ks_admin_home .ks-admin-alert-icon{display:flex;color:var(--kds-eva-moderate)}
+#ks_admin_home .ks-admin-chevron{display:inline-flex;width:16px}
+#ks_admin_home .ks-admin-chevron .ks-icon{width:16px;height:16px}
+#ks_admin_home .ks-admin-alerts .ks-admin-review{border:0;justify-content:flex-start;color:var(--kds-teal-soft);text-decoration:underline;margin-top:4px;padding:6px 0 0;min-height:36px}
+#ks_admin_home .ks-admin-status:empty{display:none}
+#ks_admin_home .ks-admin-status{margin:12px 0;padding:10px 16px;background:var(--kds-warning-soft);color:var(--kds-text-secondary);border-radius:var(--kds-radius-sm)}
+#ks_admin_home .ks-admin-messages{margin-top:16px;padding:12px 24px 10px;background:var(--kds-surface);border-radius:var(--kds-radius-md)}
+#ks_admin_home .ks-admin-messages>header{display:flex;align-items:center;justify-content:space-between;gap:20px}
+#ks_admin_home .ks-admin-messages h2{display:flex;align-items:center;gap:10px}
+#ks_admin_home .ks-admin-message-icon:empty{display:none}
+#ks_admin_home .ks-admin-message-icon img{width:27px;height:27px}
+#ks_admin_home .ks-admin-messages>header p{color:var(--kds-muted);margin:3px 0 0 0;font-size:14px;line-height:1.4}
+#ks_admin_home .ks-admin-messages>header input{width:240px;min-height:44px;font-size:var(--kds-font-ui);background:var(--kds-surface-soft);border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);padding:10px 14px}
+#ks_admin_home .ks-admin-messages>header>label{position:relative}
+#ks_admin_home .ks-admin-messages>header>label>img{position:absolute;left:12px;top:12px;width:20px;height:20px}
+#ks_admin_home .ks-admin-messages>header>label:has(img) input{padding-left:42px}
+#ks_admin_home .ks-admin-message-tabs{display:flex;gap:24px;border-bottom:1px solid var(--kds-line);margin-top:10px;overflow-x:auto}
+#ks_admin_home .ks-admin-message-tabs button{white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;box-shadow:none;color:var(--kds-muted);padding:12px 0;font-weight:500;min-height:44px}
+#ks_admin_home .ks-admin-message-tabs button[aria-selected="true"]{color:var(--kds-accent);border-bottom-color:var(--kds-accent);font-weight:700}
+#ks_admin_message_list{max-height:270px;overflow-y:auto}
+#ks_admin_home .ks-admin-message-row{display:flex;align-items:center;gap:16px;padding:9px 0;border-bottom:1px solid var(--kds-line-soft)}
+#ks_admin_home .ks-admin-avatar{width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:var(--kds-teal-soft);color:var(--kds-accent);border-radius:50%;font-weight:700}
+#ks_admin_home .ks-admin-message-row>strong{min-width:130px;font-size:var(--kds-font-body)}
+#ks_admin_home .ks-admin-message-row>span:nth-child(3){color:var(--kds-muted);font-size:var(--kds-font-label)}
+#ks_admin_home .ks-admin-message-row button{margin-left:auto;flex:0 0 auto;min-height:40px;box-shadow:none;white-space:nowrap}
+#ks_admin_home .ks-admin-messages footer{display:flex;justify-content:space-between;color:var(--kds-muted);font-size:var(--kds-font-metadata);padding-top:12px;gap:16px}
+#ks_admin_home .ks-admin-empty{padding:24px 0;color:var(--kds-muted)}
+#ks_admin_message_dialog textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);margin:8px 0}
+#ks_admin_message_dialog a{display:inline-flex;align-items:center;text-decoration:none;padding:12px 18px;margin-top:14px}
+@media(min-width:701px) and (max-width:1250px){
+ #ks_admin_home{--admin-rail-width:275px}
+ #ks_admin_home .ks-admin-heading{align-items:flex-start}
+ #ks_admin_home .ks-admin-head-actions{flex-wrap:wrap;justify-content:flex-end;gap:10px}
+ #ks_admin_home .ks-admin-head-actions>span{display:none}
+ #ks_admin_home .ks-admin-metrics{gap:12px}
+ #ks_admin_home .ks-admin-metrics strong{font-size:var(--kds-font-kpi)}
+ #ks_admin_home .ks-admin-metric-icon{display:none!important}
+ #ks_admin_home .ks-admin-metrics>div+div{padding-left:12px}
+ #ks_admin_home .ks-admin-flow-description{flex-direction:column}
+}
+@media(max-width:1000px){
+ #ks_admin_home .ks-admin-panorama{grid-template-columns:minmax(0,1fr);padding:0 16px;gap:18px}
+ #ks_admin_home .ks-admin-glass{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+ #ks_admin_home .ks-admin-glass>section{margin:0;padding:0;border:0}
+ #ks_admin_home .ks-admin-glass .ks-admin-alerts{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--kds-surface) 25%,transparent);padding-top:16px}
+}
+@media(max-width:700px){
+ .ks-admin-home-route .ks-topbar{display:flex}
+ .ks-admin-home-route .ks-topbar .ks-page-heading{display:none}
+ #tela_home.ks-admin-home-active{padding:0 8px 20px}
+ #ks_admin_home .ks-admin-heading{padding:20px 8px;align-items:flex-start;flex-direction:column;gap:16px}
+ #ks_admin_home h1{font-size:var(--kds-font-title-mobile-lg)}
+ #ks_admin_home .ks-admin-head-actions{gap:12px;flex-wrap:wrap}
+ #ks_admin_home .ks-admin-head-actions>span{display:none}
+ #ks_admin_home .ks-admin-heading p{font-size:var(--kds-font-ui)}
+ #ks_admin_home .ks-admin-period{gap:10px;margin-bottom:12px}
+ #ks_admin_month_label{display:none}
+ #ks_admin_home .ks-admin-metrics{grid-template-columns:1fr;gap:12px;padding-bottom:20px}
+ #ks_admin_home .ks-admin-metrics>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+ #ks_admin_home .ks-admin-metrics>div+div{padding:10px 0 0;border-left:0;border-top:1px solid var(--kds-line-soft)}
+ #ks_admin_home .ks-admin-metrics span{font-size:var(--kds-font-ui)}
+ #ks_admin_home .ks-admin-metrics strong{font-size:24px;white-space:nowrap;margin:0}
+ #ks_admin_home .ks-admin-metrics .ks-admin-metric-icon{display:none}
+ #ks_admin_home .ks-admin-flow-description{flex-direction:column}
+ #ks_admin_home .ks-admin-chart{height:270px}
+ #ks_admin_home .ks-admin-glass{display:block;padding:22px}
+ #ks_admin_home .ks-admin-glass>section{border-top:1px solid color-mix(in srgb,var(--kds-surface) 25%,transparent);margin-top:22px;padding-top:20px}
+ #ks_admin_home .ks-admin-messages{padding:18px 16px}
+ #ks_admin_home .ks-admin-messages>header{align-items:stretch;flex-direction:column;gap:14px}
+ #ks_admin_home .ks-admin-messages>header input{width:100%;font-size:16px}
+ #ks_admin_home .ks-admin-message-tabs{gap:18px}
+ #ks_admin_home .ks-admin-message-row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:5px 12px}
+ #ks_admin_home .ks-admin-avatar{grid-row:span 2}
+ #ks_admin_home .ks-admin-message-row>span:nth-child(3){grid-column:2}
+ #ks_admin_home .ks-admin-message-row button{grid-column:2;margin-left:0;justify-self:start;margin-top:5px}
+ #ks_admin_home .ks-admin-messages footer{flex-wrap:wrap}
+}
+
 /* Resumo da Home: compacto, legível e sem tratamento de hero-card. */
 #tela_home .ks-home-overview{display:grid;grid-auto-flow:row;grid-template-columns:minmax(0,.82fr) minmax(0,.92fr) minmax(0,1.26fr);gap:12px;align-items:stretch;margin:14px 0}
 #tela_home .ks-home-overview>div,#tela_home .ks-home-overview>button{box-sizing:border-box;min-width:0;min-height:198px;margin:0;padding:16px 17px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);background:var(--kds-surface);box-shadow:none}

@@ -49,4 +49,6 @@ jobs:
           node tests/mensagens_config_bootstrap.contract.js
           node tests/agendamento_online_admin_config.contract.js
           node tests/access_management.contract.js
+          node --check src/home/home_detalhes-1.18.5.js
+          node tests/home_atendimentos_24h.contract.js
           git diff --check
