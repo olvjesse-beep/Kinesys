@@ -42,6 +42,12 @@ const vm = require('vm');
 // Executa a busca real, inclusive ordenação antes de paginar.
 (async()=>{
   const ds=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');
+  const nav={preservarResumoPacienteNaNavegacao:false,pacientesProntuariosCarregados:null,alvo:'tela_agenda',paciente:'pac-fixture',TITULOS:{},sincronizarIdentidadeContexto(){},limparSelecaoPaciente(){this.paciente='';},setTimeout(){},document:{getElementById:()=>null,querySelectorAll:()=>[],querySelector:()=>({id:nav.alvo}),body:{dataset:{},classList:{remove(){}}}}};
+  nav.limparSelecaoPaciente=()=>{nav.paciente='';};nav.window={navegarPara:t=>{nav.alvo=t;}};
+  vm.createContext(nav);vm.runInContext(ds.slice(ds.indexOf('function atualizarPaginaAtiva('),ds.indexOf('/* -------------------------- Contexto do paciente')),nav);
+  nav.wrapNavegacao();nav.window.navegarPara('tela_buscar',true);nav.atualizarPaginaAtiva('tela_buscar');
+  assert.equal(nav.paciente,'pac-fixture','atalho e reaplicação visual não podem limpar paciente escolhido');
+  nav.window.navegarPara('tela_buscar');assert.equal(nav.paciente,'','menu Pacientes continua abrindo sem seleção anterior');
   const cards={innerHTML:''},paginacao={};
   const lista=[{id:'1',nome:'Dilson José dos Santos'},{id:'2',nome:'João José Vieira Júnior'},{id:'3',nome:'José Antônio Pinheiro Lima'},{id:'4',nome:'Josefina Alves'},{id:'5',nome:'Maria Josefa'}];
   const c={window:{obterPacientesSalvos:async()=>lista},document:{getElementById:id=>id==='ks_prontuario_cards'?cards:id==='ks_prontuario_paginacao'?paginacao:null},buscaRevisao:0,filtroProntuariosAtivo:'',paginaProntuarios:1,pacientesProntuariosCarregados:null,pacienteContextoId:'',escapeHTMLDS:s=>String(s)};

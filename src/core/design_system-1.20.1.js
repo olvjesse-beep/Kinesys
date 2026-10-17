@@ -35,6 +35,7 @@
     function storageSet(chave,valor){try{if(valor)localStorage.setItem(chave,valor);else localStorage.removeItem(chave);}catch(_){}}
     // A seleção pertence ao acesso atual, nunca a uma sessão anterior.
     let pacienteContextoId = '';
+    let preservarResumoPacienteNaNavegacao = false;
     storageSet('kinesys_paciente_contexto','');
     let contextoRevisao = 0;
     let buscaRevisao = 0;
@@ -47,6 +48,7 @@
     }
     let identidadeContexto = identidadePaciente();
     function limparSelecaoPaciente(){
+        preservarResumoPacienteNaNavegacao=false;
         pacienteContextoId='';
         contextoRevisao++;
         storageSet('kinesys_paciente_contexto','');
@@ -270,9 +272,10 @@
         if(id==='tela_home')setTimeout(atualizarHomeOperacional,80);
         if(id==='tela_buscar'){
             pacientesProntuariosCarregados=null;
-            // A tela Pacientes inicia sempre sem prontuário ativo. O contexto
-            // só nasce após uma escolha explícita no resultado da busca.
-            limparSelecaoPaciente();
+            // O menu Pacientes começa sem seleção. Atalhos explícitos de um
+            // paciente (Agenda/Resumo) conservam o ID escolhido, inclusive no
+            // reaplicar do MutationObserver após a navegação.
+            if(!preservarResumoPacienteNaNavegacao)limparSelecaoPaciente();
             const busca=document.getElementById('input_busca_paciente');
             if(busca) busca.value='';
             setTimeout(()=>{renderProntuarioCards('');atualizarResumoPacienteContexto();},50);
@@ -282,7 +285,7 @@
     function wrapNavegacao(){
         if(typeof window.navegarPara!=='function'||window.navegarPara.__ksWrapped)return;
         const orig=window.navegarPara;
-        const wrapped=function(...args){sincronizarIdentidadeContexto();if(args[0]==='tela_buscar'||args[0]==='tela_login')limparSelecaoPaciente();const r=orig.apply(this,args); const ativo=document.querySelector('.tela.ativa')?.id||args[0]; atualizarPaginaAtiva(ativo); return r;};
+        const wrapped=function(...args){sincronizarIdentidadeContexto();preservarResumoPacienteNaNavegacao=args[0]==='tela_buscar'&&args[1]===true;if((args[0]==='tela_buscar'&&!preservarResumoPacienteNaNavegacao)||args[0]==='tela_login')limparSelecaoPaciente();const r=orig.apply(this,args); const ativo=document.querySelector('.tela.ativa')?.id||args[0]; atualizarPaginaAtiva(ativo); return r;};
         wrapped.__ksWrapped=true;window.navegarPara=wrapped;
     }
 
@@ -351,7 +354,7 @@
     async function abrirPacienteNaTela(tela){
         const p=await obterPacienteContexto();if(!p)return;
         if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela)){toast('Seu perfil não tem acesso a esta área.','seguranca');return;}
-        if(tela==='tela_buscar'){window.navegarPara(tela);return;}
+        if(tela==='tela_buscar'){window.navegarPara(tela,true);await atualizarResumoPacienteContexto();return;}
         window.navegarPara(tela,true);
         await aplicarContextoNaTela(tela);
         // A Avaliação possui uma fila de pré-cadastro com filtros próprios.
