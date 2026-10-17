@@ -104,7 +104,20 @@ begin
   return new;
  end if;
  select * into pl from public.planos_atendimento where id=new.plano_id for update;
- if not found or pl.paciente_id<>new.paciente_id or pl.clinica_id<>new.clinica_id or (pl.procedimento_id is not null and pl.procedimento_id<>new.procedimento_id) then raise exception 'Contrato incompatível com paciente, clínica ou procedimento'; end if;
+ if not found or pl.paciente_id is distinct from new.paciente_id or pl.clinica_id is distinct from new.clinica_id then raise exception 'Contrato incompatível com paciente ou clínica'; end if;
+ if pl.procedimento_id is not null and pl.procedimento_id is distinct from new.procedimento_id then
+  -- Um recebimento unitário pertence à ocorrência, não é recontratado ao
+  -- corrigir sua descrição clínica. Mantém identidade e valores originais.
+  -- Inserções, transferências de paciente/clínica/contrato e pacotes continuam
+  -- exigindo compatibilidade integral com o procedimento contratado.
+  if not (tg_op='UPDATE' and new.plano_id is not distinct from old.plano_id
+   and new.paciente_id is not distinct from old.paciente_id
+   and new.clinica_id is not distinct from old.clinica_id
+   and pl.sessoes_contratadas=1
+   and exists(select 1 from public.procedimentos where id=new.procedimento_id and clinica_id=new.clinica_id and coalesce(sessoes_pacote,1)=1)) then
+    raise exception 'O pacote vinculado não cobre este procedimento. Preserve o procedimento contratado ou vincule um contrato compatível antes da troca';
+  end if;
+ end if;
  if tg_op='UPDATE' and new.plano_id=old.plano_id and new.status=old.status then return new; end if;
  if pl.status<>'ativo' and (consome or reserva) then
   if not (tg_op='UPDATE' and new.plano_id=old.plano_id and pl.encerramento_automatico and old.status in ('atendido','concluido','falta_nao_justificada')) then raise exception 'Contrato não está ativo'; end if;

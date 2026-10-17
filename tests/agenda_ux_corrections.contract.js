@@ -10,6 +10,56 @@ const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
 const configCores = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const vm = require('vm');
 
+(async()=>{
+  const source=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
+  for(const financeiro of [true,false]){
+    const chamadas=[],status={outerHTML:'',textContent:'',append(){}},botao={};
+    const dialog={open:false,innerHTML:'',className:'',setAttribute(){},showModal(){this.open=true;},close(){this.open=false;},querySelector:s=>s==='[role="status"]'?status:botao};
+    const a={id:'ag-fixture',data:'2026-10-13',hora_inicio:'18:00',hora_fim:'19:00',status:'atendido',procedimentos:{nome:'Osteopatia'},equipe:{nome:'Equipe fixture'}};
+    let financeiroConsultado=0;
+    const query={select(){return this;},eq(k,v){chamadas.push(['eq',k,v]);return this;},order(k,v){chamadas.push(['order',k,v.ascending]);return this;}};
+    // Transporte fake devolve registro explícito; nenhuma gravação é oferecida.
+    query.range=async(inicio,fim)=>{chamadas.push(['range',inicio,fim]);return {data:[a],error:null};};
+    const c={console,document:{getElementById:()=>null,createElement:()=>dialog,body:{append(){}}},usuarioLogado:{clinica_id:'clinic-fixture'},telaPermitida:t=>t!=='tela_financeiro'||financeiro,_supabase:{from:t=>{chamadas.push(['from',t]);return query;}},escapeHTML:v=>String(v),obterMapaPagamentoAgendamentos:async()=>{financeiroConsultado++;return new Map([['ag-fixture',{verificado:true,pago:false,parcial:true}]]);}};
+    c.window=c;vm.createContext(c);vm.runInContext(source.slice(source.indexOf('let historicoAgendamentosPacienteRevisao'),source.indexOf('if (document.readyState')),c);
+    await c.abrirHistoricoAgendamentosPaciente('pac-fixture',2);
+    assert(chamadas.some(x=>x[0]==='eq'&&x[1]==='clinica_id'&&x[2]==='clinic-fixture'));
+    assert(chamadas.some(x=>x[0]==='eq'&&x[1]==='paciente_id'&&x[2]==='pac-fixture'));
+    assert.deepEqual(chamadas.filter(x=>x[0]==='order').map(x=>x.slice(1)),[['data',false],['hora_inicio',false],['id',false]]);
+    assert(chamadas.some(x=>x[0]==='range'&&x[1]===100&&x[2]===150),'histórico não pode limitar ao cache semanal nem ignorar paginação');
+    assert(status.outerHTML.includes('13/10/2026')&&status.outerHTML.includes('18:00–19:00')&&status.outerHTML.includes('Osteopatia'));
+    assert(status.outerHTML.includes(financeiro?'Pagamento parcial':'Acesso restrito'));
+    assert.equal(financeiroConsultado,financeiro?1:0,'perfil restrito não consulta informações financeiras');
+  }
+  const sql=fs.readFileSync('SUPABASE_SQL/pacotes_contrato_canonico.sql','utf8');
+  assert.match(sql,/new\.plano_id is not distinct from old\.plano_id/);
+  assert.match(sql,/pl\.sessoes_contratadas=1/);
+  assert.match(sql,/new\.paciente_id is not distinct from old\.paciente_id/);
+  assert.match(sql,/new\.clinica_id is not distinct from old\.clinica_id/);
+  console.log('Histórico por paciente/clínica, ordenação, paginação e privacidade financeira OK');
+})().catch(e=>{console.error(e);process.exitCode=1;});
+
+// Executa a busca real, inclusive ordenação antes de paginar.
+(async()=>{
+  const ds=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');
+  const cards={innerHTML:''},paginacao={};
+  const lista=[{id:'1',nome:'Dilson José dos Santos'},{id:'2',nome:'João José Vieira Júnior'},{id:'3',nome:'José Antônio Pinheiro Lima'},{id:'4',nome:'Josefina Alves'},{id:'5',nome:'Maria Josefa'}];
+  const c={window:{obterPacientesSalvos:async()=>lista},document:{getElementById:id=>id==='ks_prontuario_cards'?cards:id==='ks_prontuario_paginacao'?paginacao:null},buscaRevisao:0,filtroProntuariosAtivo:'',paginaProntuarios:1,pacientesProntuariosCarregados:null,pacienteContextoId:'',escapeHTMLDS:s=>String(s)};
+  vm.createContext(c);vm.runInContext(ds.slice(ds.indexOf('async function renderProntuarioCards('),ds.indexOf('window.renderProntuarioCards=renderProntuarioCards;')),c);
+  for(const busca of ['jose','JOSÉ','  José  ']){
+    await c.renderProntuarioCards(busca);
+    assert(cards.innerHTML.indexOf('José Antônio')<cards.innerHTML.indexOf('Dilson José'),'primeiro nome exato tem prioridade sobre nome do meio');
+    assert(cards.innerHTML.indexOf('José Antônio')<cards.innerHTML.indexOf('Josefina'),'palavra completa tem prioridade sobre prefixo parcial');
+  }
+  await c.renderProntuarioCards('jose antonio');assert(cards.innerHTML.includes('José Antônio'));assert(!cards.innerHTML.includes('Dilson'));
+  await c.renderProntuarioCards('');assert(cards.innerHTML.indexOf('Dilson')<cards.innerHTML.indexOf('João'),'sem busca mantém ordem alfabética');
+  const css=fs.readFileSync('styles/design_agenda.css','utf8');
+  assert.match(css,/flex:0 0 auto!important;\s+white-space:nowrap!important;/,'navegação não deve quebrar palavras no notebook');
+  assert(ds.includes("['agendamentos','Histórico de agendamentos','tela_agenda']"));
+  assert(ds.includes("['financeiro','Financeiro','tela_financeiro']"));
+  console.log('Busca de pacientes: relevância por início/palavra/acentos e ordem alfabética sem filtro OK');
+})().catch(e=>{console.error(e);process.exitCode=1;});
+
 // Executar os leitores reais: let usuarioLogado não é window.usuarioLogado.
 const configReaders = configCores.slice(configCores.indexOf('function obterClinicaIdLocal()'), configCores.indexOf('function preencherCoresAgenda('));
 const agendaReaders = agenda.slice(agenda.indexOf('function chaveCoresAgenda()'), agenda.indexOf('function aplicarCoresAgenda()'));

@@ -1,6 +1,21 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8');
 const financeiro=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
+
+// Retorno contextual: roda o salvamento integrado real com transporte simulado.
+(async()=>{
+ const integrado=fs.readFileSync('src/finance/financeiro_agendamento-1.21.0.js','utf8');
+ const trecho=integrado.slice(integrado.indexOf('const salvarLegado=salvarPagamentoFinanceiro;'),integrado.indexOf('let hooksAgendaFinanceiroInstalados=false;'));
+ for(const legacy of [false,true])for(const origem of ['', '1'])for(const falha of [false,true]){
+  const navegacoes=[],modal={dataset:{retornoAgenda:origem}},ag={value:legacy?'':'ag-fixture'};
+  const campos={modal_fin_pagamento:modal,fin_pag_agendamento_id:ag,fin_pag_valor:{value:'100'},fin_pag_desconto:{value:'0'},fin_pag_data:{value:'2026-10-17'},fin_pag_observacoes:{value:''},fin_pag_operacao:{value:'operacao-fixture'}};
+  const c={document:{getElementById:id=>campos[id]||null,querySelectorAll:()=>[{value:'PIX'}]},salvarPagamentoFinanceiro:async()=>!falha,contextoPagamentoAgendamento:{},_supabase:{rpc:async()=>({data:{valor_pendente:0},error:falha?{message:'falha simulada'}:null})},num:Number,fmt:String,alert(){},fecharModal(){},carregarFinanceiroPaciente:async()=>{},renderizarPainelAgenda:async()=>{},mensagemFinanceiro(){},navegarPara:t=>navegacoes.push(t)};
+  vm.createContext(c);vm.runInContext(trecho,c);const salvo=await c.salvarPagamentoFinanceiro();
+  assert.equal(salvo,!falha);assert.deepEqual(navegacoes,!falha&&origem==='1'?['tela_agenda']:[],'retorna só após sucesso e somente quando aberto pela Agenda');
+  if(falha)assert.equal(modal.dataset.retornoAgenda,origem,'falha mantém contexto para nova tentativa');
+ }
+ console.log('PASS: retorno após pagamento unitário/pacote, erro e abertura pelo Financeiro.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
 for(const id of new Set(Array.from(financeiro.matchAll(/getElementById\('(fin_plano_[^']+)'\)/g),m=>m[1])))assert.equal(html.split(`id="${id}"`).length-1,1,`Contrato HTML/JS do plano: campo ausente ou duplicado ${id}`);
 assert.match(html, /id="fin_plano_personalizar"[^>]*onchange="alternarPersonalizacaoContrato\(\)"/);
 assert(html.indexOf('src/ui/modal_helpers-1.0.0.js')>=0&&html.indexOf('src/ui/modal_helpers-1.0.0.js')<html.indexOf('src/finance/financeiro-1.19.0.js'),'helper deve existir e carregar antes do financeiro');

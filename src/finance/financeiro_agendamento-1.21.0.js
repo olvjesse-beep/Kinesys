@@ -117,6 +117,7 @@
     };
 
     window.abrirPagamentoAgendamentoIntegrado=async function(id){
+        const veioDaAgenda=document.getElementById('tela_agenda')?.classList.contains('ativa')===true;
         if(typeof financeiroPodeEditar==='function'&&!financeiroPodeEditar()){alert('Seu perfil não possui permissão para registrar pagamentos.');return;}
         if(!_supabase){alert('Conecte-se à internet para lançar o pagamento com segurança.');return;}
         const semana=typeof agendaAgendamentosSemanaCache!=='undefined'?(agendaAgendamentosSemanaCache||[]):[];
@@ -137,7 +138,9 @@
                 await carregarFinanceiroPaciente();
                 contextoPagamentoAgendamento=null;
                 const campo=document.getElementById('fin_pag_agendamento_id');if(campo)campo.value='';
-                abrirModalPagamento(a.plano_id);return;
+                abrirModalPagamento(a.plano_id);
+                const modal=document.getElementById('modal_fin_pagamento');if(modal)modal.dataset.retornoAgenda=veioDaAgenda?'1':'';
+                return;
             }
         }
         const prep=await _supabase.rpc('kinesys_preparar_cobranca_agendamento',{p_agendamento_id:id});
@@ -160,13 +163,25 @@
         document.getElementById('fin_pag_desconto').value=contextoPagamentoAgendamento.desconto.toFixed(2).replace('.',',');document.getElementById('fin_pag_desconto').disabled=contextoPagamentoAgendamento.pagos>0;
         const valor=document.getElementById('fin_pag_valor');valor.value='';delete valor.dataset.tocado;valor.oninput=()=>{valor.dataset.tocado='1';};
         if(typeof definirFormasPagamentoSelecionadas==='function')definirFormasPagamentoSelecionadas('fin_pag_forma',['PIX']);
-        atualizarResumoPagamentoAgendamento();abrirModal('modal_fin_pagamento');
+        atualizarResumoPagamentoAgendamento();
+        const modal=document.getElementById('modal_fin_pagamento');if(modal)modal.dataset.retornoAgenda=veioDaAgenda?'1':'';
+        abrirModal('modal_fin_pagamento');
     };
 
     const salvarLegado=salvarPagamentoFinanceiro;
     salvarPagamentoFinanceiro=async function(){
+        const modal=document.getElementById('modal_fin_pagamento');
+        const voltarAgenda=modal?.dataset.retornoAgenda==='1';
+        const concluirRetorno=()=>{
+            if(modal)delete modal.dataset.retornoAgenda;
+            if(voltarAgenda&&typeof navegarPara==='function')navegarPara('tela_agenda');
+        };
         const agendamentoId=document.getElementById('fin_pag_agendamento_id')?.value||'';
-        if(!agendamentoId)return salvarLegado();
+        if(!agendamentoId){
+            const salvo=await salvarLegado();
+            if(salvo===true){concluirRetorno();if(voltarAgenda&&typeof renderizarPainelAgenda==='function')await renderizarPainelAgenda();}
+            return salvo;
+        }
         if(!contextoPagamentoAgendamento||!_supabase)return false;
         const valor=num(document.getElementById('fin_pag_valor')?.value),desconto=num(document.getElementById('fin_pag_desconto')?.value||0);
         const marcadas=[...document.querySelectorAll('#fin_pag_forma input:checked')]; if(marcadas.length!==1){alert('Selecione uma forma de pagamento para este lançamento.');return false;}
@@ -176,6 +191,7 @@
         const {data,error}=await _supabase.rpc('kinesys_registrar_pagamento_agendamento',{p_agendamento_id:agendamentoId,p_valor:valor,p_desconto:desconto,p_desconto_tipo:desconto>0?'cortesia':'nenhum',p_forma:forma,p_parcelas:parcelas,p_data:document.getElementById('fin_pag_data').value,p_observacoes:document.getElementById('fin_pag_observacoes').value,p_composicao:composicao,p_operacao_id:document.getElementById('fin_pag_operacao').value});
         if(error){alert('Não foi possível registrar: '+(error.message||error));return false;}
         fecharModal('modal_fin_pagamento');contextoPagamentoAgendamento=null;document.getElementById('fin_pag_agendamento_id').value='';
+        concluirRetorno();
         await carregarFinanceiroPaciente();if(typeof renderizarPainelAgenda==='function')await renderizarPainelAgenda();
         if(typeof mensagemFinanceiro==='function')mensagemFinanceiro(data?.valor_pendente>0?`Pagamento registrado. Ainda pendente: ${fmt(data.valor_pendente)}.`:'Pagamento registrado. Atendimento quitado.','sucesso');return true;
     };

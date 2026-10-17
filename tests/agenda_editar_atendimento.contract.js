@@ -229,6 +229,8 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
   const corrida=await executarNovoExtra();let liberarConsulta;
   corrida.campos.ag_horario_extra_toggle.checked=false;
   corrida.context.agendaProcedimentosCache=[{id:'proc-fixture'}];corrida.context.agendaHoraPreSelecionadaModal='';
+  corrida.context.agendaHorariosConsultaRevisao=0;
+  corrida.context.agendaAgendamentosSemanaCache=[];corrida.context.agendaAgendamentosDoDiaCache=[];
   corrida.context.oferecerExcecaoJornadaProfissionalModal=async()=>false;
   corrida.context.calcularSlotsLivres=()=>{throw Error('resposta padrão atrasada não pode sobrescrever o modo extra');};
   corrida.context._supabase.from=()=>({select(){return this;},eq(){return this;},neq(){return new Promise(resolve=>liberarConsulta=resolve);}});
@@ -241,4 +243,24 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
   assert.strictEqual(corrida.campos.ag_horario_select.disabled,true,'resposta tardia não pode reativar o seletor padrão');
   assert.strictEqual(corrida.campos.ag_horario_extra_toggle.checked,true);
   console.log('Agenda async slot response cannot undo extraordinary mode: OK');
+  // Reproduz a troca Avaliação -> Osteopatia sem tocar nas 18h/19h.
+  const campos=corrida.campos,ctx=corrida.context;
+  ctx.agendaEdicaoAtendimentoId='edit-18h';
+  ctx.agendaAgendamentosSemanaCache=[{id:'edit-18h',profissional_id:'prof-fixture',data:'2026-10-19',hora_inicio:'18:00:00',hora_fim:'19:00:00'}];
+  campos.ag_horario_extra_toggle.checked=false;
+  campos.ag_horario_select.value='18:00|19:00';
+  Object.defineProperty(campos.ag_horario_select,'options',{get(){return [...(this.innerHTML||'').matchAll(/<option value="([^"]*)"/g)].map(m=>({value:m[1]}));}});
+  ctx.calcularSlotsLivres=()=>[{inicio:'18:00',fim:'18:30'}];
+  ctx._supabase.from=()=>({select(){return this;},eq(){return this;},async neq(){return {data:[],error:null};}});
+  await ctx.atualizarHorariosDisponiveisModal();
+  assert.equal(campos.ag_horario_select.value,'18:00|19:00','trocar só procedimento não pode apagar horário nem alterar a duração original');
+  assert(campos.ag_horario_select.innerHTML.includes('18:00|19:00'));
+  let resolverAntiga;
+  ctx._supabase.from=()=>({select(){return this;},eq(){return this;},neq(){return new Promise(r=>resolverAntiga=r);}});
+  const antiga=ctx.atualizarHorariosDisponiveisModal();await new Promise(setImmediate);
+  ctx._supabase.from=()=>({select(){return this;},eq(){return this;},async neq(){return {data:[],error:null};}});
+  campos.ag_horario_select.value='16:00|17:00';await ctx.atualizarHorariosDisponiveisModal();
+  resolverAntiga({data:[],error:null});await antiga;
+  assert.equal(campos.ag_horario_select.value,'16:00|17:00','resposta antiga não pode desfazer a seleção mais recente');
+  console.log('Agenda procedure-only edit preserves original time/duration and rejects stale slot response: OK');
 })().catch(err=>{console.error(err);process.exit(1);});

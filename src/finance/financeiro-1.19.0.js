@@ -940,6 +940,7 @@ async function vincularPreAgendamentosAoPlanoFinanceiro(planoId, opcoes = {}) {
 }
 
 function abrirModalPagamento(planoId='') {
+    const modal=document.getElementById('modal_fin_pagamento');if(modal)delete modal.dataset.retornoAgenda;
     const agCampo=document.getElementById('fin_pag_agendamento_id');if(agCampo)agCampo.value='';
     const grupoPlano=document.getElementById('fin_pag_plano_grupo');if(grupoPlano)grupoPlano.hidden=false;
     ['fin_pag_valores_agendamento','fin_pag_contexto_agendamento'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true;});

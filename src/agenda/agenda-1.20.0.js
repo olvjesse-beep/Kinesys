@@ -23,6 +23,7 @@ let agendaRecorrenciaDatasEspecificas = [];
 let agendaPagamentoCoberturaCache = new Map();
 let agendaHistoricoStatusCache = [];
 let agendaEdicaoAtendimentoId = null;
+let agendaHorariosConsultaRevisao = 0;
 // Evita repetir o mesmo diálogo de exceção várias vezes enquanto o usuário
 // apenas completa os demais campos do mesmo agendamento.
 let agendaExcecaoJornadaPromptadaChaveModal = '';
@@ -2616,6 +2617,13 @@ function horarioExtraordinarioAtivoModal() {
     return !!document.getElementById('ag_horario_extra_toggle')?.checked;
 }
 function duracaoProcedimentoModal() {
+    if(typeof agendaEdicaoAtendimentoId!=='undefined'&&agendaEdicaoAtendimentoId){
+        const original=agendaAgendamentosSemanaCache.concat(agendaAgendamentosDoDiaCache).find(a=>String(a.id)===String(agendaEdicaoAtendimentoId));
+        if(original){
+            const duracao=horaParaMinutos(horaCurta(original.hora_fim))-horaParaMinutos(horaCurta(original.hora_inicio));
+            if(duracao>0)return duracao;
+        }
+    }
     const sel = document.getElementById('ag_procedimento_select');
     return Math.max(1, parseInt(sel?.selectedOptions?.[0]?.dataset?.duracao || '30', 10) || 30);
 }
@@ -2905,12 +2913,18 @@ Deseja continuar e criar um agendamento fora do dia/horário de atendimento dess
 }
 
 async function atualizarHorariosDisponiveisModal(horaParaPreSelecionar) {
+    const revisao = ++agendaHorariosConsultaRevisao;
     const profissionalId = document.getElementById('ag_profissional_select').value;
     const procedimentoSel = document.getElementById('ag_procedimento_select');
     const procedimentoId = procedimentoSel.value;
     const dataISO = document.getElementById('ag_data_input').value;
     const selHorario = document.getElementById('ag_horario_select');
-    const preferida = horaParaPreSelecionar || agendaHoraPreSelecionadaModal;
+    const selecionada = String(selHorario.value || '');
+    const preferida = horaParaPreSelecionar || selecionada.split('|')[0] || agendaHoraPreSelecionadaModal;
+    const edicao = agendaAgendamentosSemanaCache.find(a=>String(a.id)===String(agendaEdicaoAtendimentoId||''))
+        || agendaAgendamentosDoDiaCache.find(a=>String(a.id)===String(agendaEdicaoAtendimentoId||''));
+    const original = edicao && String(edicao.profissional_id)===String(profissionalId) && edicao.data===dataISO
+        ? horaCurta(edicao.hora_inicio)+'|'+horaCurta(edicao.hora_fim) : '';
 
     mostrarFeedbackAgendaModal('', 'info');
     if (!profissionalId || !procedimentoId || !dataISO) {
@@ -2952,12 +2966,20 @@ async function atualizarHorariosDisponiveisModal(horaParaPreSelecionar) {
             .select('id,profissional_id,data,hora_inicio,hora_fim,status')
             .eq('data', dataISO).eq('profissional_id', profissionalId).neq('status', 'cancelado');
         if (error) throw error;
+        if(revisao!==agendaHorariosConsultaRevisao)return;
 
         const agendamentosConsiderados = (agendamentosDia || []).filter(a => String(a.id) !== String(agendaEdicaoAtendimentoId || ''));
         // Uma consulta iniciada antes do clique no checkbox não pode desfazer
         // o modo extraordinário quando a resposta chega depois.
         if (horarioExtraordinarioAtivoModal()) { selHorario.disabled = true; atualizarResumoHorarioExtraordinario(); return; }
         const livres = calcularSlotsLivres(profissionalId, dataISO, duracao, agendamentosConsiderados);
+        // A edição não muda duração/horário por efeito colateral de trocar o
+        // procedimento. A validação de jornada/conflitos continua no salvar.
+        const preservar = selecionada || (preferida && original.startsWith(preferida+'|') ? original : '');
+        if(edicao && preservar && !livres.some(l=>l.inicio+'|'+l.fim===preservar)){
+            const [inicio,fim]=preservar.split('|');
+            if(inicio&&fim)livres.push({inicio,fim});
+        }
         if (!livres.length) {
             selHorario.innerHTML = '<option value="">Nenhum horário livre nesta data</option>';
             mostrarFeedbackAgendaModal('Não há horário livre compatível com a duração deste procedimento.', 'info');
@@ -2968,11 +2990,13 @@ async function atualizarHorariosDisponiveisModal(horaParaPreSelecionar) {
         ).join('');
 
         if (preferida) {
-            const opcao = Array.from(selHorario.options).find(o => o.value.startsWith(preferida + '|'));
+            const opcao = Array.from(selHorario.options).find(o => edicao && o.value===preservar)
+                || Array.from(selHorario.options).find(o => o.value.startsWith(preferida + '|'));
             if (opcao) selHorario.value = opcao.value;
         }
         agendaHoraPreSelecionadaModal = '';
     } catch (err) {
+        if(revisao!==agendaHorariosConsultaRevisao)return;
         console.error('Erro ao calcular horários disponíveis:', err);
         selHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
         mostrarFeedbackAgendaModal('Não foi possível consultar os horários: ' + (err.message || err), 'erro');
@@ -3462,6 +3486,7 @@ async function abrirDetalheAgendamento(id) {
     const corpo = document.getElementById('detalhe_agendamento_corpo');
     corpo.innerHTML = `
         <p><strong>Paciente:</strong> ${escapeHTML(a.pacientes?.nome || '—')}</p>
+        ${a.paciente_id && (typeof telaPermitida!=='function'||telaPermitida('tela_buscar')) ? '<p><button type="button" class="btn-secondary" onclick="abrirProntuarioAgendamentoAtual()">Abrir prontuário</button></p>' : ''}
         <p><strong>Contato:</strong> ${escapeHTML((() => { const c = obterContatoAgendaPaciente(a.pacientes); return c.telefone ? c.telefone + (c.usaResponsavel ? ' · Responsável: ' + c.nomeDestinatario : '') : 'Não informado'; })())}</p>
         <p><strong>Profissional:</strong> ${escapeHTML(a.equipe?.nome || '—')}</p>
         <p><strong>Procedimento:</strong> ${escapeHTML(a.procedimentos?.nome || '—')}</p>
@@ -3494,6 +3519,16 @@ async function abrirDetalheAgendamento(id) {
         <div class="agenda-plano-vinculo"><label>Plano ou atendimento unitário</label>${!a.plano_id && String(a.status||'')==='pre_agendado'?'<div class="agenda-status-impacto">Pré-agendamento sem cobertura financeira. O horário está reservado. Vincule um plano ou registre um atendimento unitário.</div>':''}<div><select id="detalhe_plano_select">${optionsPlano}</select><button type="button" onclick="vincularPlanoAgendamentoAtual()">Vincular</button></div>${!a.plano_id && a.status !== 'cancelado' && typeof financeiroPodeEditar === 'function' && financeiroPodeEditar() ? '<button type="button" class="btn-secondary" onclick="abrirCriarAtendimento(\'detalhe\')">Registrar atendimento unitário</button>' : ''}<small>${a.plano_id?'Este atendimento tem uma cobrança vinculada. ':'Sem cobrança vinculada. '}Atendido e falta não justificada consomem sessão; falta justificada e cancelamento não consomem.</small></div>
     `;
     abrirModal('modal_detalhe_agendamento');
+}
+
+async function abrirProntuarioAgendamentoAtual() {
+    const a=agendaAgendamentosSemanaCache.concat(agendaAgendamentosDoDiaCache).find(x=>String(x.id)===String(agendamentoDetalheAtualId));
+    if(!a?.paciente_id || (typeof telaPermitida==='function'&&!telaPermitida('tela_buscar')))return;
+    if(typeof window.executarAcaoPacienteCard!=='function'||typeof window.abrirPacienteNaTela!=='function')return;
+    fecharModal('modal_detalhe_agendamento');
+    await window.executarAcaoPacienteCard('selecionar',a.paciente_id);
+    await window.abrirPacienteNaTela('tela_buscar');
+    if(typeof window.atualizarResumoPacienteContexto==='function')await window.atualizarResumoPacienteContexto();
 }
 
 async function editarAgendamentoAtual() {
@@ -4123,6 +4158,7 @@ function abrirDetalheAgendaPessoal(a) {
     const podeCancelar = ['agendado','pre_agendado','confirmado','em_recepcao'].includes(a.status);
     document.getElementById('detalhe_agendamento_corpo').innerHTML = `
         <p><strong>Paciente:</strong> ${escapeHTML(a.pacientes?.nome || 'Paciente')}</p>
+        ${a.paciente_id && (typeof telaPermitida!=='function'||telaPermitida('tela_buscar')) ? '<p><button type="button" class="btn-secondary" onclick="abrirProntuarioAgendamentoAtual()">Abrir prontuário</button></p>' : ''}
         <p><strong>Profissional:</strong> ${escapeHTML(encontrarProfissionalAgendaDoUsuario()?.nome || usuarioLogado?.nome || '')}</p>
         <p><strong>Procedimento:</strong> ${escapeHTML(a.procedimentos?.nome || agendaProcedimentosCache.find(p => String(p.id) === String(a.procedimento_id))?.nome || 'Atendimento')}</p>
         <p><strong>Horário:</strong> ${escapeHTML(formatarDataAgendaBR(a.data))} · ${horaCurta(a.hora_inicio)} – ${horaCurta(a.hora_fim)}</p>
