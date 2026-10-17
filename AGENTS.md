@@ -102,6 +102,18 @@ Ao finalizar, informe de forma breve:
 - Testes de cache devem conferir coerência entre HTML e loader, não congelar uma revisão antiga que obrigue ignorar a suíte a cada release.
 - Corrigir a implementação quando um teste funcional falhar. Só alterar a expectativa quando o requisito mudar explicitamente; não substituir testes por verificações vazias.
 
+## 10. Contratos permanentes de Agenda e Paciente
+
+Estas decisões só podem ser removidas ou revertidas por solicitação explícita do usuário. Refatorações devem preservar o comportamento e ampliar os testes quando necessário:
+
+- Em notebook, navegação e filtros da Agenda quebram por grupos, nunca por letras ou por sobreposição de campos. Conferir 1366×768, 1280×720, 1024×768 e mobile.
+- Busca de pacientes ordena relevância antes de paginar: nome exato, começo do nome, palavra no meio e ocorrência parcial. Ignorar acentos/caixa; sem filtro manter alfabética. Caso permanente: José Antônio antes de Dilson José e João José ao buscar jose.
+- Trocar somente procedimento na edição não limpa horário nem modifica duração original ou campos não tocados. Respostas assíncronas antigas não sobrescrevem a escolha atual; conflitos, bloqueios e confirmação extraordinária permanecem obrigatórios.
+- Pagamento aberto pela Agenda retorna à Agenda somente após sucesso, inclusive contrato/pacote; aberto no Financeiro permanece ali. Erro de lançamento conserva formulário/contexto para nova tentativa.
+- Não remover Abrir prontuário do detalhe, nem Histórico de agendamentos e Financeiro do prontuário ativo. Atalhos selecionam o paciente pelo ID e respeitam permissões, sem busca manual.
+- Histórico é somente leitura, por paciente e clínica, em data/hora decrescente, com paginação e situação financeira canônica. Não transformar falha de consulta em Pago/Pendente falso nem revelar financeiro a perfil restrito.
+- Corrigir procedimento de uma ocorrência unitária pode preservar o contrato financeiro original; jamais reatribuir paciente/clínica/contrato nem converter pacote incompatível silenciosamente. Identidade/valores/pagamentos do contrato permanecem imutáveis.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

@@ -1216,7 +1216,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   #tela_agenda .agenda-compromisso{height:100%;min-height:0!important;overflow:hidden}
 }
 
-@media (min-width:1280px){
+@media (min-width:901px){
   #tela_agenda .agenda-card-semanal{padding:0!important}
   #tela_agenda .agenda-visoes{
     min-height:0!important;
@@ -1229,21 +1229,27 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     padding:5px 12px!important;
   }
   #tela_agenda .agenda-toolbar-semanal{
-    display:grid!important;
-    grid-template-columns:minmax(440px,1fr) auto!important;
-    align-items:center!important;
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    align-items:end!important;
     gap:12px!important;
     padding:7px 10px!important;
     margin:0!important;
     border-bottom:1px solid var(--kds-line-soft)!important;
   }
   #tela_agenda .agenda-semana-nav{
+    flex:1 1 480px!important;
     width:auto!important;
     min-width:0!important;
     gap:6px!important;
     flex-wrap:nowrap!important;
   }
   #tela_agenda .agenda-semana-nav>button{
+    flex:0 0 auto!important;
+    white-space:nowrap!important;
+    word-break:normal!important;
+    overflow-wrap:normal!important;
     min-width:36px!important;
     width:auto;
     height:36px!important;
@@ -1262,8 +1268,9 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     padding:5px 10px!important;
   }
   #tela_agenda .agenda-toolbar-filtros{
-    display:grid!important;
-    grid-template-columns:132px minmax(210px,270px) max-content max-content!important;
+    display:flex!important;
+    flex:1 1 650px!important;
+    flex-wrap:wrap!important;
     align-items:end!important;
     justify-content:end!important;
     gap:8px!important;
@@ -1274,6 +1281,7 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     background:transparent!important;
   }
   #tela_agenda .agenda-toolbar-filtros>.input-group{
+    flex:1 1 180px!important;
     width:100%!important;
     min-width:0!important;
     margin:0!important;
@@ -1291,6 +1299,8 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   #tela_agenda .agenda-escopo-acesso{display:none!important}
   #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
   #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{
+    flex:0 0 auto!important;
+    white-space:nowrap!important;
     height:36px!important;
     min-height:36px!important;
     margin:20px 0 0!important;
@@ -1298,29 +1308,6 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
     align-self:end!important;
   }
   #tela_agenda .agenda-feedback:not(:empty){margin:4px 10px!important}
-}
-
-@media (min-width:901px) and (max-width:1280px){
-  #tela_agenda .agenda-visoes{padding:6px 10px!important}
-  #tela_agenda .agenda-toolbar-semanal{
-    display:grid!important;
-    grid-template-columns:1fr!important;
-    gap:6px!important;
-    padding:7px 10px!important;
-    margin:0!important;
-  }
-  #tela_agenda .agenda-semana-nav{width:100%!important;min-width:0!important}
-  #tela_agenda .agenda-toolbar-filtros{
-    display:grid!important;
-    grid-template-columns:132px minmax(210px,1fr) max-content max-content!important;
-    gap:8px!important;
-    padding:0!important;
-    margin:0!important;
-    border:0!important;
-  }
-  #tela_agenda .agenda-escopo-acesso{display:none!important}
-  #tela_agenda .agenda-toolbar-filtros>.agenda-audit-btn,
-  #tela_agenda .agenda-toolbar-filtros>.ks-new-appointment{margin:20px 0 0!important}
 }
 
 /* Na visão da clínica, cada profissional ocupa uma faixa horizontal do dia. */

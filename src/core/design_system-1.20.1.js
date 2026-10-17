@@ -388,6 +388,17 @@
             await abrirPacienteNaTela('tela_midias');
             return;
         }
+        if(acao==='financeiro'){
+            await abrirPacienteNaTela('tela_financeiro');
+            if(typeof window.popularPacientesFinanceiro==='function')await window.popularPacientesFinanceiro(pacienteId);
+            if(typeof window.carregarFinanceiroPaciente==='function')await window.carregarFinanceiroPaciente();
+            if(typeof window.alternarAbaFinanceiro==='function')window.alternarAbaFinanceiro('paciente');
+            return;
+        }
+        if(acao==='agendamentos'){
+            if(typeof window.abrirHistoricoAgendamentosPaciente==='function')await window.abrirHistoricoAgendamentosPaciente(pacienteId);
+            return;
+        }
         if(acao==='prontuario'){
             if(typeof window.abrirEscolhaProntuarioPDF!=='function'){toast('A exportação do prontuário não está disponível.','erro');return;}
             return window.abrirEscolhaProntuarioPDF(pacienteId);
@@ -491,7 +502,20 @@
             const lista=pacientesProntuariosCarregados||await window.obterPacientesSalvos();if(revisao!==buscaRevisao)return;pacientesProntuariosCarregados=lista;
             const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
             const digitos=q.replace(/\D/g,'');
-            const itens=(lista||[]).filter(p=>!q||norm(p.nome).includes(norm(q))||(digitos.length>0&&(String(p.cpf||'').replace(/\D/g,'').includes(digitos)||String(p.telefone||'').replace(/\D/g,'').includes(digitos)))).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base'}));
+            const busca=norm(q).replace(/\s+/g,' ');
+            // Relevância antes da paginação: nome completo, início do nome,
+            // início de uma palavra e, por último, ocorrência interna.
+            const relevancia=p=>{
+                const nome=norm(p.nome).trim().replace(/\s+/g,' ');
+                if(!busca)return 0;
+                if(nome===busca)return 0;
+                if(nome.startsWith(busca+' '))return 1;
+                if(nome.startsWith(busca))return 2;
+                if((' '+nome).includes(' '+busca+' ')||nome.endsWith(' '+busca))return 3;
+                if((' '+nome).includes(' '+busca))return 4;
+                return nome.includes(busca)?5:6;
+            };
+            const itens=(lista||[]).filter(p=>!busca||norm(p.nome).includes(busca)||(digitos.length>0&&(String(p.cpf||'').replace(/\D/g,'').includes(digitos)||String(p.telefone||'').replace(/\D/g,'').includes(digitos)))).sort((a,b)=>relevancia(a)-relevancia(b)||String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR',{sensitivity:'base'}));
             const paginacao=document.getElementById('ks_prontuario_paginacao');
             if(!itens.length){c.innerHTML='<div class="ks-empty">Nenhum paciente encontrado.</div>';if(paginacao)paginacao.hidden=true;return;}
             const totalPaginas=Math.ceil(itens.length/10);paginaProntuarios=Math.min(Math.max(1,paginaProntuarios),totalPaginas);
@@ -514,6 +538,15 @@
         const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):p.avaliacoes||[];const ev=p.evolucoes||[];const av=avs[avs.length-1];const idade=typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade;
         const podeExcluir=typeof window.usuarioEhMaster==='function'&&window.usuarioEhMaster();
         r.innerHTML=`<div class="ks-prontuario-summary-main"><span class="ks-patient-initial lg">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><div><span class="ks-eyebrow">PRONTUÁRIO ATIVO</span><h2>${escapeHTMLDS(p.nome||'Paciente')}</h2><p>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||'',p.telefone||''].filter(Boolean).join(' · '))}</p></div></div><div class="ks-prontuario-metrics"><div><span>Avaliações</span><strong>${avs.length}</strong></div><div><span>Evoluções</span><strong>${ev.length}</strong></div><div><span>Última avaliação</span><strong>${escapeHTMLDS(av?.dataAvaliacao||'—')}</strong></div></div><div class="ks-prontuario-actions"><button type="button" class="btn-primary" data-ks-patient-action="evolucao">Registrar evolução</button><button type="button" class="btn-secondary" data-ks-patient-action="avaliacao">Nova avaliação</button><button type="button" class="btn-secondary" data-ks-patient-action="documentos">Documentos</button><button type="button" class="btn-secondary" data-ks-patient-action="prontuario_simples">PDF simplificado</button>${(typeof window.podeExportarProntuarioDetalhado==='function'&&window.podeExportarProntuarioDetalhado())?'<button type="button" class="btn-secondary" data-ks-patient-action="prontuario_detalhado">PDF detalhado</button>':''}${podeExcluir?'<button type="button" class="btn-danger ks-patient-delete" data-ks-patient-action="excluir" title="Excluir cadastro e todo o histórico">Excluir cadastro</button>':''}</div>`;
+        const acoes=r.querySelector('.ks-prontuario-actions');
+        if(acoes){
+            const extra=document.createDocumentFragment();
+            [['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
+                if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
+                const b=document.createElement('button');b.type='button';b.className='btn-secondary';b.dataset.ksPatientAction=acao;b.textContent=label;extra.append(b);
+            });
+            acoes.insertBefore(extra,acoes.querySelector('.ks-patient-delete'));
+        }
         const fechar=document.createElement('button');
         fechar.type='button';fechar.className='ks-prontuario-close';
         fechar.dataset.ksPatientClose='1';fechar.textContent='×';
