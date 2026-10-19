@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="styles/design_experience.css?v=20260909-ux-r1">
     <link rel="stylesheet" href="styles/home_fisioterapeuta_util-1.24.0.css?v=20260909-r1&home4h=20260910-r1">
     <link rel="stylesheet" href="styles/lightglass_pearl-1.0.1.css?v=20260915-petrol-r2">
-    <link rel="stylesheet" href="styles/home_profissional_dashboard-1.0.0.css?v=20261013-home-anchor-r5">
+    <link rel="stylesheet" href="styles/home_profissional_dashboard-1.0.0.css?v=20261013-home-anchor-r5&crm_busca=20261019-r1">
     <!-- Estrutura de Configurações: carregar antes dos módulos e da restauração da sessão. -->
     <link rel="stylesheet" href="styles/configuracoes_agendamento_online-1.0.0.css?v=20261016-config-paginas-r1">
     <link rel="stylesheet" href="styles/configuracoes_agendamento_online_layout-1.0.0.css?v=20261016-config-paginas-r1">
@@ -150,8 +150,10 @@
                     <h2>CRM e relacionamento</h2>
                 </div>
                 <div class="input-group kds-u-mb-15px">
-                    <label for="crm_paciente_select">Selecionar Paciente para CRM</label>
-                    <select id="crm_paciente_select" onchange="carregarPacienteCRM()">
+                    <label for="crm_paciente_busca">Buscar paciente pelo nome</label>
+                    <input id="crm_paciente_busca" type="search" placeholder="Digite o nome do paciente..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="crm_paciente_sugestoes" oninput="buscarPacienteCRM(true)" onfocus="buscarPacienteCRM(false)" onkeydown="navegarBuscaPacienteCRM(event)">
+                    <div id="crm_paciente_sugestoes" role="listbox" aria-label="Pacientes encontrados" hidden></div>
+                    <select id="crm_paciente_select" hidden aria-hidden="true" tabindex="-1" onchange="carregarPacienteCRM()">
                         <option value="">-- Selecione um paciente --</option>
                     </select>
                 </div>
@@ -1570,7 +1572,7 @@
     <script defer src="src/ui/input_helpers_core-1.0.0.js?v=20261014-radar-autocomplete-r1"></script>
     <script defer src="src/patient/patient_pre_registration_core-1.0.0.js?v=20260911-phase4k-r1"></script>
     <script defer src="src/patient/patient_records_browse_core-1.0.0.js?v=20261017-agenda-paciente-r1"></script>
-    <script defer src="src/core/crm_relationship_core-1.0.0.js?v=20260911-phase4g-r1"></script>
+    <script defer src="src/core/crm_relationship_core-1.0.0.js?v=20261019-crm-busca-r1"></script>
     <script defer src="src/core/document_timeline_core-1.0.0.js?v=20260911-phase4h-r1"></script>
     <script defer src="src/core/midias_core-1.0.0.js?v=20261010-regression-hotfix-r1"></script>
     <script defer src="src/admin/team_management_core-1.0.0.js?v=20260911-phase4o-r1"></script>
@@ -1602,7 +1604,7 @@
     <script defer src="src/admin/access_admin-1.0.0.js?v=20261016-config-paginas-r1"></script>
     <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20261019-pagamento-contexto-r1"></script>
     <script defer src="src/ui/ui_experience.js?v=20260909-ux-r1"></script>
-    <script defer src="src/home/home_profissional_dashboard-1.0.0.js?v=20261013-home-anchor-r5&meudia=20260915-owner-r1"></script>
+    <script defer src="src/home/home_profissional_dashboard-1.0.0.js?v=20261013-home-anchor-r5&meudia=20260915-owner-r1&crm_busca=20261019-r1"></script>
     <script defer src="src/home/home_profissional_polish-1.0.0.js?v=20260915-meudia-owner-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/home/home_fisioterapeuta_util-1.24.0.js?v=20261013-home-anchor-r1&fisio_home=20260910-r1&home4h=20260910-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/core/operational_resume_refresh-1.0.0.js?v=20260912-home-mobile-r5&meudia=20260915-owner-r1"></script>
