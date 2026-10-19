@@ -20,9 +20,9 @@ assert.match(js,/kinesys_baixar_cobranca_agendamento/,'Frontend deve usar a RPC 
 assert.match(js,/id="fin_ag_baixa_tipo"/,'Baixa deve registrar tipo/motivo');
 assert.match(js,/id="fin_ag_baixa_motivo"/,'Baixa deve exigir justificativa');
 
-assert.match(js,/typeof agendaAgendamentosSemanaCache!=='undefined'/,'Pagamento aberto pelo Financeiro não pode depender de Agenda já carregada');
-assert.match(js,/from\('agendamentos'\)\.select\('id,paciente_id,profissional_id,procedimento_id,plano_id,status,data,hora_inicio'\)/,'Quitar deve buscar o agendamento no banco quando o bundle/cache da Agenda não estiver disponível');
-assert.match(js,/prep\.data\?\.baixada_em/,'Cobrança já baixada não pode reabrir pagamento');
+assert.doesNotMatch(js,/agendaAgendamentosSemanaCache!=='undefined'/,'Abertura financeira não deve usar um cache semanal como fonte de identidade');
+assert.match(js,/from\('agendamentos'\)\.select\('id,clinica_id,paciente_id,profissional_id,procedimento_id,plano_id,status,data,hora_inicio,pacientes\(nome\),procedimentos\(nome\),equipe\(nome\)'\)\.eq\('id',id\)\.eq\('clinica_id',clinica\)/,'Quitar busca sempre o agendamento canônico com identidade e escopo de clínica');
+assert.match(js,/cobranca\.baixada_em/,'Cobrança já baixada não pode reabrir pagamento');
 
 assert.match(sqlBase,/add column if not exists baixa_tipo text/i,'Schema deve guardar tipo da baixa');
 assert.match(sqlBase,/add column if not exists baixa_motivo text/i,'Schema deve guardar justificativa');
@@ -42,9 +42,12 @@ assert.doesNotMatch(js,/from\('cobrancas_agendamento'\)\.delete\(/,'Frontend nã
 
 assert.match(css,/\.fin-ag-history-actions/,'Ações de quitação/baixa devem possuir layout próprio');
 assert.match(css,/\.fin-ag-writeoff-dialog/,'Baixa deve usar diálogo visual dedicado');
-assert.match(html,/styles\/financeiro_agendamento-1\.21\.0\.css\?v=20260911-pending-r1/,'CSS deve ter cache bust da correção');
-assert.match(html,/src\/finance\/financeiro_agendamento-1\.21\.0\.js\?v=20260916-contratos-r1/,'JS deve ter cache bust da correção');
-assert.match(loader,/const VERSION\s*=\s*['"]1\.25\.10-agenda-repeat-until-r44['"]/,'Versão pública atual do Screen Loader deve permanecer intacta');
+const cssRev=html.match(/styles\/financeiro_agendamento-1\.21\.0\.css\?v=([^"&]+)/)?.[1];
+const jsRev=html.match(/src\/finance\/financeiro_agendamento-1\.21\.0\.js\?v=([^"&]+)/)?.[1];
+assert(cssRev&&jsRev,'CSS e JS precisam de revisão explícita');
+assert.equal(cssRev,jsRev,'CSS e JS do contexto financeiro devem ser publicados juntos, sem congelar uma versão antiga');
+assert.match(loader,/const VERSION\s*=\s*['"]1\.25\.[^'"]+['"]/,'Loader mantém identificação pública versionada');
+assert.match(loader,/version:VERSION/,'A identificação exportada deve corresponder à versão do loader');
 
 console.log('Financeiro pending appointment contract: OK');
 

@@ -418,7 +418,7 @@ function navegarPara(idTela, contextoEdicao = false) {
     }
     if (idTela === 'tela_financeiro') {
         if (typeof inicializarFinanceiro === 'function') {
-            Promise.resolve(inicializarFinanceiro(pacienteAtualId || '')).catch(err => console.error('KineSys Financeiro:', err));
+            window.financeiroInicializacaoPendente = Promise.resolve(inicializarFinanceiro(pacienteAtualId || '')).catch(err => console.error('KineSys Financeiro:', err));
         }
     }
     if (idTela === 'tela_avaliacao') {

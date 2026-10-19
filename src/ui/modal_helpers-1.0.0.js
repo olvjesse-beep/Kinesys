@@ -1,5 +1,6 @@
 // Diálogos compartilhados são disponíveis antes de qualquer tela lazy.
 function fecharModal(id) {
+    if(id==='modal_fin_pagamento'&&typeof window!=='undefined')window.limparContextoPagamentoAgendamento?.();
     const el = document.getElementById(id);
     if (el) {
         el.classList.remove('ativa');

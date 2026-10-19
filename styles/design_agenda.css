@@ -581,8 +581,13 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   line-height:var(--kds-leading-ui);
   flex-wrap:wrap;
 }
-#tela_agenda .agenda-color-legend>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-#tela_agenda .agenda-legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--kds-muted)}
+#tela_agenda .agenda-legend-procedimentos,
+#tela_agenda .agenda-legend-financeiro{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;min-width:0}
+#tela_agenda .agenda-legend-financeiro[hidden]{display:none}
+#tela_agenda .agenda-color-legend>span,
+#tela_agenda .agenda-legend-procedimentos>span,
+#tela_agenda .agenda-legend-financeiro>span{display:inline-flex;align-items:center;gap:6px;white-space:normal;overflow-wrap:anywhere}
+#tela_agenda .agenda-legend-dot{display:inline-block;flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:var(--kds-muted)}
 #tela_agenda .agenda-legend-dot.osteopatia{background:var(--agenda-cor-osteopatia)}
 #tela_agenda .agenda-legend-dot.fisioterapia{background:var(--agenda-cor-fisioterapia)}
 #tela_agenda .agenda-legend-dot.falta{background:var(--agenda-cor-falta)}
@@ -1209,9 +1214,9 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   }
   #tela_agenda .agenda-semana-grade{
     height:100%!important;
-    grid-template-rows:52px repeat(var(--kds-agenda-runtime-slot-count),minmax(2px,1fr))!important;
+    grid-template-rows:minmax(68px,max-content) repeat(var(--kds-agenda-runtime-slot-count),minmax(2px,1fr))!important;
   }
-  #tela_agenda .agenda-dia-cabecalho{min-height:52px!important;padding:4px 3px!important}
+  #tela_agenda .agenda-dia-cabecalho{min-height:68px!important;height:auto!important;padding:6px 3px!important}
   #tela_agenda .agenda-hora-eixo{padding-top:0!important}
   #tela_agenda .agenda-compromisso{height:100%;min-height:0!important;overflow:hidden}
 }

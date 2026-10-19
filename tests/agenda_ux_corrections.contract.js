@@ -10,6 +10,69 @@ const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
 const configCores = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const vm = require('vm');
 
+// A origem unitária não pode mascarar condições vigentes corrigidas e auditadas.
+(() => {
+  const finance=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
+  const c={};vm.createContext(c);
+  vm.runInContext(finance.slice(finance.indexOf('function ehAtendimentoUnitario('),finance.indexOf('function valorMonetarioUnitario(')),c);
+  assert(c.ehAtendimentoUnitario({operacao_id:'unitario-agenda-fixture',sessoes_contratadas:1}));
+  assert(!c.ehAtendimentoUnitario({operacao_id:'unitario-agenda-fixture',sessoes_contratadas:2}),'contrato conciliado de duas sessões não pode dizer 1 sessão nem usar fluxo unitário');
+  assert(!c.ehAtendimentoUnitario({operacao_id:'plano-fixture',sessoes_contratadas:3}));
+  const credito=fs.readFileSync('src/finance/credito_cliente-1.19.0.js','utf8');
+  const pendencias=fs.readFileSync('src/finance/pendencias_financeiras-1.19.0.js','utf8');
+  Object.assign(c,{pagamentoEstaMarcadoParaExclusao:()=>false,usoCreditoEstaMarcadoParaExclusao:()=>false,financeiroResumoPagamentoPlano:()=>{},financeiroCreditosUsosCache:[],financeiroHojeISO:()=> '2026-10-19'});
+  vm.runInContext(credito.slice(credito.indexOf('function calcularComponentesCreditoPaciente('),credito.indexOf('function calcularCreditoDisponivelPaciente(')),c);
+  vm.runInContext(credito.slice(credito.indexOf('const financeiroResumoPagamentoPlanoSemCredito'),credito.indexOf('const metricasPlanoSemCredito')),c);
+  vm.runInContext(pendencias.slice(0,pendencias.indexOf('async function carregarDadosPendenciasFinanceiras(')),c);
+  const planos=[1,1,2,3,1,1].map((n,i)=>({id:`pl-${i}`,paciente_id:'fixture',nome:'Fisioterapia',sessoes_contratadas:n,valor_tabela:89.9*n,desconto_valor:14.9*n,valor_final:75*n,status:'concluido'}));
+  const pagamentos=planos.map((p,i)=>({id:`pag-${i}`,paciente_id:'fixture',plano_id:p.id,valor:p.valor_final}));
+  const agenda=planos.flatMap(p=>Array.from({length:p.sessoes_contratadas},(_,i)=>({id:`ag-${p.id}-${i}`,paciente_id:'fixture',plano_id:p.id,status:'atendido',data:'2026-10-16'})));
+  agenda.push({id:'futura',paciente_id:'fixture',status:'agendado',data:'2026-10-19',hora_inicio:'10:00'});
+  assert.equal(pagamentos.reduce((n,p)=>n+p.valor,0),675);
+  assert.equal(Math.round(planos.reduce((n,p)=>n+p.desconto_valor,0)*100),13410);
+  assert.equal(c.calcularComponentesCreditoPaciente(pagamentos,planos,[]).disponivel,0,'descontos e antecipação distribuída corretamente não geram crédito');
+  const [linha]=c.construirPendenciasPorPaciente([{id:'fixture',nome:'Paciente fixture'}],planos,pagamentos,[],agenda);
+  assert.equal(linha.creditoDisponivel,0);assert.equal(linha.saldoReceber,0);assert.equal(linha.sessoesPagasARealizar,0);
+  assert(!linha.aCobrar&&!linha.clinicaDeve,'nove sessões quitadas/realizadas não podem reaparecer como pendência');
+  console.log('Conciliação: nove sessões, descontos separados de crédito, recebimentos e Pendências coerentes OK');
+})();
+
+// A mesma paleta precisa identificar cartões e legenda após cada reconstrução.
+(() => {
+  const salvas = new Map();
+  salvas.set('kinesys_agenda_cores::clinic-cor', JSON.stringify({osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#FF0000'}));
+  salvas.set('kinesys_agenda_cores_procedimentos::clinic-cor', JSON.stringify({osteo:'#DD592C',avaliacao:'#8D78F2',individual:'#A9C2D1',pct:'#034F81',liberacao:'#F5D42E',invalido:'red;bad'}));
+  function card(id, tipo='fisioterapia') {
+    const classes=new Set(['agenda-compromisso',`tipo-${tipo}`]), styles={};
+    return {dataset:{procedimentoId:id},styles,classes,classList:{contains:s=>classes.has(s),toggle(s,on){on?classes.add(s):classes.delete(s);}},style:{setProperty:(k,v)=>{styles[k]=v;},removeProperty:k=>{delete styles[k];}}};
+  }
+  let cards=[card('osteo','osteopatia'),card('pct'),card('avaliacao','geral'),card('individual'),card('liberacao','geral'),card('osteo','falta')];
+  const legenda={innerHTML:''}, financeiro={hidden:true}, config={}, tela={style:{setProperty(){}},querySelectorAll:()=>cards,querySelector:()=>config};
+  const c={document:{getElementById:id=>({tela_agenda:tela,agenda_legenda_procedimentos:legenda,agenda_legenda_financeiro:financeiro}[id]||null)},localStorage:{getItem:k=>salvas.get(k)||null},usuarioLogado:{clinica_id:'clinic-cor'},AGENDA_CORES_PADRAO:{osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#7B878C'},agendaProcedimentosCache:[{id:'osteo',nome:'Osteopatia'},{id:'avaliacao',nome:'Avaliação'},{id:'individual',nome:'Fisioterapia individual'},{id:'pct',nome:'Fisioterapia PCT'},{id:'liberacao',nome:'Liberação miofascial'},{id:'antigo',nome:'Procedimento inativo',ativo:false}],agendaAgendamentosSemanaCache:[{procedimento_id:'antigo',procedimentos:{nome:'Procedimento inativo'}}],usuarioEhAdministradorAgenda:()=>true,classeStatusAgenda:s=>s||'agendado',escapeHTML:s=>String(s).replaceAll('<','&lt;')};
+  vm.createContext(c);
+  vm.runInContext(agenda.slice(agenda.indexOf('function chaveCoresAgenda()'),agenda.indexOf("window.addEventListener('kinesys:agenda-cores-atualizadas'")),c);
+  vm.runInContext(agenda.slice(agenda.indexOf('function normalizarTipoProcedimentoAgenda'),agenda.indexOf('function abrirConfiguracoesCoresAgenda')),c);
+  c.aplicarCoresAgenda();
+  ['#DD592C','#034F81','#8D78F2','#A9C2D1','#F5D42E'].forEach((cor,i)=>assert.equal(cards[i].styles['--agenda-cor-procedimento'],cor));
+  assert(!cards[5].classes.has('tipo-personalizado'),'falta mantém a precedência da cor de falta');
+  for(const nome of ['Osteopatia','Avaliação','Fisioterapia individual','Fisioterapia PCT','Liberação miofascial','Procedimento inativo']) assert(legenda.innerHTML.includes(nome),`legenda incompleta: ${nome}`);
+  for(const cor of ['#DD592C','#034F81','#8D78F2','#A9C2D1','#F5D42E']) assert(legenda.innerHTML.includes(cor),'legenda e cartão devem usar exatamente a mesma cor');
+  assert(legenda.innerHTML.includes('data-procedimento-id="avaliacao"'),'legenda vinculada ao mesmo ID de Configurações');
+  assert(legenda.innerHTML.includes('Avaliação · #8D78F2'),'cor configurada também pode ser conferida na legenda');
+  assert(agendaCss.includes('grid-template-rows:minmax(68px,max-content)'),'cabeçalho deve acomodar dia, data e resumo, sem linha fixa de 52px');
+  assert(agendaCss.includes('flex:0 0 10px'),'amostras de cor não podem encolher e sumir em notebook');
+  assert(!Object.hasOwn(c.obterCoresProcedimentosAgenda(),'invalido'),'cor inválida não entra em style');
+  cards=[card('osteo','osteopatia')];c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#DD592C','troca de semana não pode recolorir apenas nós descartados');
+  salvas.set('kinesys_agenda_cores_procedimentos::clinic-cor','{}');c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#2F8F72','remover personalização restaura cor base, sem estilo obsoleto');
+  c.usuarioEhAdministradorAgenda=()=>false;c.aplicarCoresAgenda();assert(financeiro.hidden&&config.hidden,'legenda financeira e configurações respeitam permissão');
+  c.usuarioLogado.clinica_id='outra';c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#2F8F72','paleta não vaza entre clínicas');
+  const render=agenda.slice(agenda.indexOf('function renderizarGradeSemanal'),agenda.indexOf('async function renderizarPainelAgenda'));
+  assert(render.indexOf('aplicarCoresAgenda();')>render.lastIndexOf('container.appendChild(overlay);'),'cores só são aplicadas depois de inserir os cartões novos, nas duas visões');
+  assert(html.includes('id="agenda_legenda_procedimentos"'));
+  assert(html.includes('Pagamento realizado')&&html.includes('Pagamento pendente'));
+  console.log('Cores: cinco procedimentos, legenda dinâmica, faltas, reconstrução, permissões e isolamento OK');
+})();
+
 (async()=>{
   const source=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
   for(const financeiro of [true,false]){

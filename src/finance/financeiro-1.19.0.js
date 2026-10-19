@@ -5,6 +5,10 @@
    ========================================================================== */
 
 let financeiroPacienteAtualId = '';
+let financeiroCargaPacienteRevisao = 0;
+let financeiroPopularPacientesRevisao = 0;
+let financeiroPacienteDadosConfirmados = false;
+let financeiroContextoModalPagamento = null;
 let financeiroPlanosCache = [];
 let financeiroPagamentosCache = [];
 let financeiroAgendamentosCache = [];
@@ -524,15 +528,19 @@ async function inicializarFinanceiro(preSelecionado = '') {
 }
 
 async function popularPacientesFinanceiro(preSelecionado = '') {
+    const revisao=++financeiroPopularPacientesRevisao;
+    const identidade=String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
     const sel = document.getElementById('financeiro_paciente_select');
     if (!sel) return;
     const pacientes = typeof obterPacientesBasicos === 'function'
         ? await obterPacientesBasicos()
         : await obterPacientesSalvos();
+    if(revisao!==financeiroPopularPacientesRevisao||identidade!==String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||''))return false;
     sel.innerHTML = '<option value="">-- Selecione um paciente --</option>' + pacientes
         .slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
         .map(p=>`<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome)}${p.cpf ? ' · '+escapeHTML(p.cpf) : ''}</option>`).join('');
     if (preSelecionado && pacientes.some(p=>String(p.id)===String(preSelecionado))) sel.value = preSelecionado;
+    return true;
 }
 
 async function carregarProcedimentosFinanceiro() {
@@ -558,6 +566,9 @@ async function consultarPlanosFinanceirosNuvem(pacienteId) {
 }
 
 function renderizarFinanceiroVazio() {
+    financeiroCargaPacienteRevisao++;
+    financeiroPacienteDadosConfirmados=false;
+    financeiroContextoModalPagamento=null;
     financeiroPacienteAtualId = '';
     financeiroPlanosCache = [];
     financeiroPagamentosCache = [];
@@ -583,7 +594,15 @@ async function consultarAgendamentosFinanceiroPaciente(pacienteId) {
 }
 
 async function carregarFinanceiroPaciente() {
+    const revisao=++financeiroCargaPacienteRevisao;
     const pacienteId = document.getElementById('financeiro_paciente_select')?.value || '';
+    const identidade=String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    const aindaAtual=()=>revisao===financeiroCargaPacienteRevisao&&pacienteId===(document.getElementById('financeiro_paciente_select')?.value||'')&&identidade===String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    financeiroPacienteDadosConfirmados=false;
+    if(financeiroContextoModalPagamento&&financeiroContextoModalPagamento.pacienteId!==pacienteId){
+        fecharModal('modal_fin_pagamento');
+        financeiroContextoModalPagamento=null;
+    }
     financeiroPacienteAtualId = pacienteId;
     if (!pacienteId) { renderizarFinanceiroVazio(); return; }
 
@@ -603,6 +622,7 @@ async function carregarFinanceiroPaciente() {
 
     try {
         await sincronizarFinanceiroLocalPaciente(pacienteId);
+        if(!aindaAtual())return false;
         planosLocais = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PLANOS, pacienteId);
         pagamentosLocais = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PAGAMENTOS, pacienteId);
 
@@ -611,6 +631,7 @@ async function carregarFinanceiroPaciente() {
             _supabase.from('pagamentos').select('*').eq('paciente_id', pacienteId).order('data_pagamento',{ascending:false}).order('criado_em',{ascending:false}),
             consultarAgendamentosFinanceiroPaciente(pacienteId)
         ]);
+        if(!aindaAtual())return false;
 
         const erroPlanos = planosR.error || null;
         const erroPagamentos = pagamentosR.error || null;
@@ -621,6 +642,7 @@ async function carregarFinanceiroPaciente() {
         financeiroPlanosCache = (erroPlanos ? [] : (planosR.data || [])).map(enriquecerPlanoProcedimento);
         financeiroPagamentosCache = erroPagamentos ? [] : (pagamentosR.data || []);
         financeiroAgendamentosCache = agendaR.error ? enriquecerAgendamentosComVinculoLocal([]) : enriquecerAgendamentosComVinculoLocal(agendaR.data || []);
+        financeiroPacienteDadosConfirmados=!erroPlanos&&!erroPagamentos&&!agendaR.error;
         renderizarFinanceiroPaciente();
 
         const falhas = [];
@@ -634,7 +656,9 @@ async function carregarFinanceiroPaciente() {
         } else {
             mensagemFinanceiro('');
         }
+        return financeiroPacienteDadosConfirmados;
     } catch (err) {
+        if(!aindaAtual())return false;
         console.error('Financeiro:', err);
         if (erroFinanceiroTabelaAusente(err)) financeiroTabelaDisponivel = false;
         const exclusoesPendentes = obterExclusoesPagamentosPendentes(pacienteId);
@@ -643,6 +667,7 @@ async function carregarFinanceiroPaciente() {
         financeiroAgendamentosCache = [];
         renderizarFinanceiroPaciente();
         mensagemFinanceiro(`Não foi possível acessar o financeiro na nuvem. Reconecte antes de confirmar operações. ${err?.message || ''}`.trim(), 'aviso');
+        return false;
     }
 }
 
@@ -940,6 +965,9 @@ async function vincularPreAgendamentosAoPlanoFinanceiro(planoId, opcoes = {}) {
 }
 
 function abrirModalPagamento(planoId='') {
+    if(window.pagamentoFinanceiroEmCurso?.()){alert('Aguarde a conclusão do pagamento em andamento.');return false;}
+    window.limparContextoPagamentoAgendamento?.();
+    financeiroContextoModalPagamento=null;
     const modal=document.getElementById('modal_fin_pagamento');if(modal)delete modal.dataset.retornoAgenda;
     const agCampo=document.getElementById('fin_pag_agendamento_id');if(agCampo)agCampo.value='';
     const grupoPlano=document.getElementById('fin_pag_plano_grupo');if(grupoPlano)grupoPlano.hidden=false;
@@ -947,8 +975,12 @@ function abrirModalPagamento(planoId='') {
 
     const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
     if(!pacienteId){alert('Selecione o paciente.');return;}
-    const ativos=financeiroPlanosCache.filter(p=>p.status!=='cancelado');
+    if(!financeiroPacienteDadosConfirmados||String(financeiroPacienteAtualId)!==String(pacienteId)){alert('Aguarde a confirmação dos dados deste paciente antes de lançar o pagamento.');return false;}
+    const ativos=financeiroPlanosCache.filter(p=>p.status!=='cancelado'&&String(p.paciente_id)===String(pacienteId));
+    if(planoId&&!ativos.some(p=>String(p.id)===String(planoId))){alert('Esta cobrança não pertence ao paciente selecionado. Atualize o Financeiro.');return false;}
+    financeiroContextoModalPagamento=Object.freeze({pacienteId:String(pacienteId),clinicaId:String(usuarioLogado?.clinica_id||''),perfilId:String(usuarioLogado?.id||'')});
     const sel=document.getElementById('fin_pag_plano');
+    sel.disabled=false;
     sel.innerHTML='<option value="">-- Selecione --</option>'+ativos.map(p=>`<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome)}</option>`).join('');
     if(planoId) sel.value=planoId;
     document.getElementById('fin_pag_operacao').value=gerarOperacaoFinanceiraId('pag');
@@ -956,11 +988,22 @@ function abrirModalPagamento(planoId='') {
     document.getElementById('fin_pag_data').value=new Date().toISOString().slice(0,10);
     definirFormasPagamentoSelecionadas('fin_pag_forma', ['PIX']);
     document.getElementById('fin_pag_observacoes').value='';
+    const contexto=document.getElementById('fin_pag_contexto_agendamento');
+    if(contexto){contexto.innerHTML=`<strong>${escapeHTML(document.getElementById('financeiro_paciente_select')?.selectedOptions?.[0]?.textContent||'Paciente selecionado')}</strong>`;contexto.hidden=false;}
     abrirModal('modal_fin_pagamento');
+    return true;
+}
+
+function validarContextoModalPagamento() {
+    const c=financeiroContextoModalPagamento;
+    const paciente=String(document.getElementById('financeiro_paciente_select')?.value||'');
+    const plano=financeiroPlanosCache.find(p=>String(p.id)===String(document.getElementById('fin_pag_plano')?.value||''));
+    return !!(c&&financeiroPacienteDadosConfirmados&&c.pacienteId===paciente&&paciente===String(financeiroPacienteAtualId)&&c.clinicaId===String(usuarioLogado?.clinica_id||'')&&c.perfilId===String(usuarioLogado?.id||'')&&plano&&String(plano.paciente_id)===paciente&&(!plano.clinica_id||String(plano.clinica_id)===c.clinicaId)&&plano.status!=='cancelado');
 }
 
 async function salvarPagamentoFinanceiro() {
     if(!financeiroPodeEditar()) { alert('Seu perfil não possui permissão para registrar pagamentos.'); return false; }
+    if(!validarContextoModalPagamento()){alert('O contexto do pagamento mudou. Feche o formulário e abra novamente pelo paciente correto.');return false;}
     const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
     const planoId=document.getElementById('fin_pag_plano')?.value||'';
     const valor=numeroFinanceiro(document.getElementById('fin_pag_valor')?.value);
@@ -1192,7 +1235,9 @@ let atendimentoUnitarioContexto = null;
 let atendimentoUnitarioSalvando = false;
 
 function ehAtendimentoUnitario(registro) {
-    return /^unitario[-_]/.test(String(registro?.operacao_id || ''));
+    // A origem não muda numa conciliação auditada; a quantidade vigente é que
+    // define se a contratação ainda corresponde a uma única sessão.
+    return Number(registro?.sessoes_contratadas || 1) === 1 && /^unitario[-_]/.test(String(registro?.operacao_id || ''));
 }
 
 function valorMonetarioUnitario(valor) {
