@@ -198,6 +198,8 @@ sincronizarFinanceiroLocalPaciente = async function(pacienteId) {
 };
 
 async function carregarCreditosUsosPaciente(pacienteId) {
+    const revisao=financeiroCargaPacienteRevisao;
+    const clinica=String(usuarioLogado?.clinica_id||'');
     if (!pacienteId) { financeiroCreditosUsosCache=[]; return []; }
     const exclusoes = obterExclusoesCreditosPendentes(pacienteId);
     let locais = obterUsosCreditoLocaisPaciente(pacienteId).filter(u=>!usoCreditoEstaMarcadoParaExclusao(u,exclusoes));
@@ -213,6 +215,7 @@ async function carregarCreditosUsosPaciente(pacienteId) {
             else console.warn('Financeiro: não foi possível carregar usos de crédito.',err);
         }
     }
+    if(revisao!==financeiroCargaPacienteRevisao||String(financeiroPacienteAtualId)!==String(pacienteId)||clinica!==String(usuarioLogado?.clinica_id||''))return [];
     financeiroCreditosUsosCache = mesclarRegistrosFinanceiros(nuvem,locais).filter(u=>!usoCreditoEstaMarcadoParaExclusao(u,exclusoes));
     return financeiroCreditosUsosCache;
 }
@@ -220,11 +223,17 @@ async function carregarCreditosUsosPaciente(pacienteId) {
 const carregarFinanceiroPacienteSemCredito = carregarFinanceiroPaciente;
 carregarFinanceiroPaciente = async function() {
     financeiroCreditosUsosCache=[];
-    await carregarFinanceiroPacienteSemCredito();
-    if (financeiroPacienteAtualId) {
-        await carregarCreditosUsosPaciente(financeiroPacienteAtualId);
+    const carga=carregarFinanceiroPacienteSemCredito();
+    const revisao=financeiroCargaPacienteRevisao;
+    const paciente=financeiroPacienteAtualId;
+    const confirmado=await carga;
+    if(revisao!==financeiroCargaPacienteRevisao)return false;
+    if (paciente) {
+        await carregarCreditosUsosPaciente(paciente);
+        if(revisao!==financeiroCargaPacienteRevisao)return false;
         renderizarFinanceiroPaciente();
     }
+    return confirmado;
 };
 
 const renderizarFinanceiroVazioSemCredito = renderizarFinanceiroVazio;
@@ -357,10 +366,11 @@ function atualizarResumoPagamentoFinanceiro() {
 
 const abrirModalPagamentoSemCredito = abrirModalPagamento;
 abrirModalPagamento = function(planoId='') {
-    abrirModalPagamentoSemCredito(planoId);
+    if(abrirModalPagamentoSemCredito(planoId)!==true)return false;
     const chk=document.getElementById('fin_pag_usar_credito'); if(chk)chk.checked=false;
     const hidden=document.getElementById('fin_pag_credito_valor'); if(hidden)hidden.value='0';
     atualizarResumoPagamentoFinanceiro();
+    return true;
 };
 
 async function salvarUsoCredito(row) {
@@ -382,6 +392,7 @@ async function salvarUsoCredito(row) {
 
 salvarPagamentoFinanceiro = async function() {
     if(!financeiroPodeEditar()){alert('Seu perfil não possui permissão para registrar pagamentos.');return false;}
+    if(!validarContextoModalPagamento()){alert('O contexto do pagamento mudou. Feche o formulário e abra novamente pelo paciente correto.');return false;}
     const pacienteId=document.getElementById('financeiro_paciente_select')?.value||'';
     const planoId=document.getElementById('fin_pag_plano')?.value||'';
     const valor=Math.max(0,numeroFinanceiro(document.getElementById('fin_pag_valor')?.value));

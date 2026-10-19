@@ -103,7 +103,7 @@ function renderizarLegendaCoresAgenda(cores, personalizadas) {
     const legenda = document.getElementById('agenda_legenda_procedimentos');
     if (!legenda) return;
     const itens = itensLegendaCoresAgenda(cores, personalizadas);
-    legenda.innerHTML = itens.map(item => `<span><i class="agenda-legend-dot" style="background:${item.cor}" aria-hidden="true"></i>${escapeHTML(item.nome)}</span>`).join('');
+    legenda.innerHTML = itens.map(item => `<span data-procedimento-id="${escapeHTML(item.id)}" title="${escapeHTML(item.nome)} · ${item.cor.toUpperCase()}"><i class="agenda-legend-dot" style="background:${item.cor}" aria-hidden="true"></i>${escapeHTML(item.nome)}</span>`).join('');
     const financeiro = document.getElementById('agenda_legenda_financeiro');
     if (financeiro) financeiro.hidden = !usuarioEhAdministradorAgenda();
 }

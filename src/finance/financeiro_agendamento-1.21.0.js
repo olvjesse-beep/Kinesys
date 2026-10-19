@@ -2,11 +2,33 @@
 (function(){
     'use strict';
     let contextoPagamentoAgendamento = null;
+    let pagamentoAberturaRevisao = 0;
+    let pagamentoSalvando = false;
     let contextoBaixaPendenciaAgendamento = null;
     let historicoAtendimentosSeq = 0;
     const fmt = v => typeof moedaBR === 'function' ? moedaBR(Number(v)||0) : (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
     const esc = v => typeof escapeHTML === 'function' ? escapeHTML(String(v??'')) : String(v??'');
     const num = v => typeof numeroFinanceiro === 'function' ? numeroFinanceiro(v) : Number(String(v||0).replace('.','').replace(',','.'));
+
+    window.pagamentoFinanceiroEmCurso=()=>pagamentoSalvando;
+    window.limparContextoPagamentoAgendamento=function(){
+        pagamentoAberturaRevisao++;
+        contextoPagamentoAgendamento=null;
+        if(typeof financeiroContextoModalPagamento!=='undefined')financeiroContextoModalPagamento=null;
+        ['fin_pag_agendamento_id','fin_pag_cobranca_id'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+        ['fin_pag_contexto_agendamento','fin_pag_valores_agendamento'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true;});
+        const contexto=document.getElementById('fin_pag_contexto_agendamento');if(contexto)contexto.innerHTML='';
+        ['fin_pag_original','fin_pag_devido','fin_pag_pago','fin_pag_pendente'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmt(0);});
+        const desconto=document.getElementById('fin_pag_desconto');if(desconto){desconto.value='0,00';desconto.disabled=false;}
+        const valor=document.getElementById('fin_pag_valor');if(valor){valor.value='';delete valor.dataset.tocado;}
+        const plano=document.getElementById('fin_pag_plano');if(plano){plano.disabled=false;plano.innerHTML='<option value="">-- Selecione --</option>';}
+        const credito=document.getElementById('fin_pag_credito_box');if(credito)credito.hidden=true;
+        const usar=document.getElementById('fin_pag_usar_credito');if(usar)usar.checked=false;
+        const usado=document.getElementById('fin_pag_credito_valor');if(usado)usado.value='0';
+        const parcelas=document.getElementById('fin_pag_parcelas');if(parcelas)parcelas.value='1';
+        const grupo=document.getElementById('fin_pag_parcelas_grupo');if(grupo)grupo.hidden=true;
+        const modal=document.getElementById('modal_fin_pagamento');if(modal)delete modal.dataset.retornoAgenda;
+    };
 
     function instalarModalBaixaPendencia(){
         if(!document.body||document.getElementById('fin_ag_baixa_dialog'))return;
@@ -73,7 +95,7 @@
         forma?.querySelectorAll('input[value="Transferência"],input[value="Outro"]').forEach(i=>{const label=i.closest('label');if(label)label.hidden=true;});
         forma?.closest('.input-group')?.insertAdjacentHTML('afterend','<div class="input-group" id="fin_pag_parcelas_grupo" hidden><label>Quantidade de parcelas</label><input id="fin_pag_parcelas" type="number" min="1" max="60" value="1"></div>');
         forma?.addEventListener('change',ev=>{
-            if(contextoPagamentoAgendamento&&ev.target?.matches('input[type="checkbox"]')&&ev.target.checked)forma.querySelectorAll('input[type="checkbox"]').forEach(i=>{if(i!==ev.target)i.checked=false;});
+            if(contextoPagamentoAgendamento?.modo==='agendamento'&&ev.target?.matches('input[type="checkbox"]')&&ev.target.checked)forma.querySelectorAll('input[type="checkbox"]').forEach(i=>{if(i!==ev.target)i.checked=false;});
             const credito=!!forma.querySelector('input[value="Cartão de crédito"]:checked');
             const box=document.getElementById('fin_pag_parcelas_grupo'); if(box)box.hidden=!credito;
             if(!credito)document.getElementById('fin_pag_parcelas').value='1';
@@ -120,56 +142,81 @@
         const veioDaAgenda=document.getElementById('tela_agenda')?.classList.contains('ativa')===true;
         if(typeof financeiroPodeEditar==='function'&&!financeiroPodeEditar()){alert('Seu perfil não possui permissão para registrar pagamentos.');return;}
         if(!_supabase){alert('Conecte-se à internet para lançar o pagamento com segurança.');return;}
-        const semana=typeof agendaAgendamentosSemanaCache!=='undefined'?(agendaAgendamentosSemanaCache||[]):[];
-        const dia=typeof agendaAgendamentosDoDiaCache!=='undefined'?(agendaAgendamentosDoDiaCache||[]):[];
-        let a=semana.concat(dia).find(x=>String(x.id)===String(id));
-        if(!a){
-            const r=await _supabase.from('agendamentos').select('id,paciente_id,profissional_id,procedimento_id,plano_id,status,data,hora_inicio').eq('id',id).maybeSingle();
-            if(r.error||!r.data){alert('Agendamento não encontrado. Atualize o Financeiro e tente novamente.');return;}
-            a=r.data;
-        }
-        if(a.plano_id) {
-            const contrato=await _supabase.from('planos_atendimento').select('id,sessoes_contratadas').eq('id',a.plano_id).single();
-            if(contrato.error){alert(contrato.error.message);return;}
-            if(Number(contrato.data.sessoes_contratadas)>1) {
-                fecharModal('modal_detalhe_agendamento');
-                if(typeof navegarPara==='function')navegarPara('tela_financeiro');
-                if(typeof popularPacientesFinanceiro==='function')await popularPacientesFinanceiro(a.paciente_id);
-                await carregarFinanceiroPaciente();
-                contextoPagamentoAgendamento=null;
-                const campo=document.getElementById('fin_pag_agendamento_id');if(campo)campo.value='';
-                abrirModalPagamento(a.plano_id);
-                const modal=document.getElementById('modal_fin_pagamento');if(modal)modal.dataset.retornoAgenda=veioDaAgenda?'1':'';
-                return;
+        if(pagamentoSalvando){alert('Aguarde a conclusão do pagamento em andamento.');return false;}
+        fecharModal('modal_fin_pagamento');
+        limparContextoPagamentoAgendamento();
+        let revisao=pagamentoAberturaRevisao;
+        const clinica=String(usuarioLogado?.clinica_id||''),perfil=String(usuarioLogado?.id||'');
+        const atual=()=>revisao===pagamentoAberturaRevisao&&clinica===String(usuarioLogado?.clinica_id||'')&&perfil===String(usuarioLogado?.id||'');
+        try {
+            if(!clinica)throw Error('Sessão da clínica indisponível. Entre novamente.');
+            const r=await _supabase.from('agendamentos').select('id,clinica_id,paciente_id,profissional_id,procedimento_id,plano_id,status,data,hora_inicio,pacientes(nome),procedimentos(nome),equipe(nome)').eq('id',id).eq('clinica_id',clinica).maybeSingle();
+            if(!atual())return false;
+            if(r.error)throw r.error;
+            const a=r.data;
+            if(!a||String(a.id)!==String(id)||String(a.clinica_id)!==clinica||a.status==='cancelado')throw Error('Agendamento indisponível. Atualize a Agenda.');
+            let contrato=null;
+            if(a.plano_id){
+                const p=await _supabase.from('planos_atendimento').select('*').eq('id',a.plano_id).eq('paciente_id',a.paciente_id).eq('clinica_id',clinica).single();
+                if(!atual())return false;
+                if(p.error)throw p.error;
+                contrato=p.data;
+                if(!contrato||String(contrato.paciente_id)!==String(a.paciente_id)||String(contrato.clinica_id)!==clinica)throw Error('Contrato incompatível com o paciente.');
+                if(Number(contrato.sessoes_contratadas)>1&&String(contrato.procedimento_id)!==String(a.procedimento_id))throw Error('O procedimento não corresponde ao pacote deste agendamento.');
             }
-        }
-        const prep=await _supabase.rpc('kinesys_preparar_cobranca_agendamento',{p_agendamento_id:id});
-        if(prep.error){alert('Não foi possível preparar a cobrança: '+(prep.error.message||prep.error));return;}
-        if(prep.data?.baixada_em){alert('Esta pendência já foi removida. Atualize o Financeiro.');return;}
-        const sit=await obterSituacaoPagamentoAgendamento(a); if(!sit?.verificado){alert('Não foi possível confirmar a situação financeira.');return;}
-        contextoPagamentoAgendamento={...sit,agendamento:a,planoId:prep.data?.plano_id||a.plano_id||'',cobrancaId:prep.data?.id||sit.cobrancaId,valorOriginal:Number(prep.data?.valor_original??sit.valorOriginal),desconto:Number(prep.data?.desconto_valor??sit.desconto),pagos:Number(sit.pagos)||0};
-        fecharModal('modal_detalhe_agendamento');
-        if(typeof navegarPara==='function')navegarPara('tela_financeiro');
-        if(typeof alternarAbaFinanceiro==='function')alternarAbaFinanceiro('paciente');
-        const paciente=document.getElementById('financeiro_paciente_select'); if(paciente){paciente.value=a.paciente_id;await carregarFinanceiroPaciente();}
-        instalarCamposPagamentoAgendamento();
-        document.getElementById('fin_pag_agendamento_id').value=id; document.getElementById('fin_pag_cobranca_id').value=contextoPagamentoAgendamento.cobrancaId||'';
-        const grupo=document.getElementById('fin_pag_plano_grupo');if(grupo)grupo.hidden=true;
-        const valores=document.getElementById('fin_pag_valores_agendamento');if(valores)valores.hidden=false;
-        const ctx=document.getElementById('fin_pag_contexto_agendamento');ctx.hidden=false;ctx.innerHTML=`<strong>${esc(a.pacientes?.nome||prep.data?.paciente_nome||'Paciente')}</strong><span>${esc(a.procedimentos?.nome||prep.data?.procedimento_nome||'Atendimento')} · ${esc(a.equipe?.nome||prep.data?.profissional_nome||'Profissional')}</span><span>${esc(typeof formatarDataAgendaBR==='function'?formatarDataAgendaBR(a.data):a.data)} · ${esc(typeof horaCurta==='function'?horaCurta(a.hora_inicio):a.hora_inicio)}</span>`;
-        const sel=document.getElementById('fin_pag_plano');sel.innerHTML=`<option value="${esc(contextoPagamentoAgendamento.planoId)}" selected>Cobrança deste agendamento</option>`;
-        document.getElementById('fin_pag_operacao').value=typeof gerarOperacaoFinanceiraId==='function'?gerarOperacaoFinanceiraId('pag-agenda'):`pag-agenda-${Date.now()}`;
-        document.getElementById('fin_pag_data').value=new Date().toISOString().slice(0,10);document.getElementById('fin_pag_observacoes').value='';
-        document.getElementById('fin_pag_desconto').value=contextoPagamentoAgendamento.desconto.toFixed(2).replace('.',',');document.getElementById('fin_pag_desconto').disabled=contextoPagamentoAgendamento.pagos>0;
-        const valor=document.getElementById('fin_pag_valor');valor.value='';delete valor.dataset.tocado;valor.oninput=()=>{valor.dataset.tocado='1';};
-        if(typeof definirFormasPagamentoSelecionadas==='function')definirFormasPagamentoSelecionadas('fin_pag_forma',['PIX']);
-        atualizarResumoPagamentoAgendamento();
-        const modal=document.getElementById('modal_fin_pagamento');if(modal)modal.dataset.retornoAgenda=veioDaAgenda?'1':'';
-        abrirModal('modal_fin_pagamento');
+            const pacote=Number(contrato?.sessoes_contratadas)>1;
+            let cobranca=null;
+            if(!pacote){
+                const prep=await _supabase.rpc('kinesys_preparar_cobranca_agendamento',{p_agendamento_id:id});
+                if(!atual())return false;
+                if(prep.error)throw prep.error;
+                cobranca=prep.data;
+                if(!cobranca||cobranca.baixada_em||String(cobranca.agendamento_id)!==String(a.id)||String(cobranca.paciente_id)!==String(a.paciente_id)||String(cobranca.clinica_id)!==clinica||String(cobranca.procedimento_id)!==String(a.procedimento_id))throw Error('Cobrança divergente do agendamento. Atualize a Agenda antes de registrar.');
+            }
+            const sit=await obterSituacaoPagamentoAgendamento(a);
+            if(!atual())return false;
+            if(!sit?.verificado||String(sit.agendamentoId)!==String(a.id))throw Error('Não foi possível confirmar a situação financeira deste agendamento.');
+            fecharModal('modal_detalhe_agendamento');
+            if(!document.getElementById('tela_financeiro')?.classList.contains('ativa')&&typeof navegarPara==='function')await navegarPara('tela_financeiro');
+            await window.financeiroInicializacaoPendente;
+            if(!atual())return false;
+            if(typeof alternarAbaFinanceiro==='function')alternarAbaFinanceiro('paciente');
+            await popularPacientesFinanceiro(a.paciente_id);
+            if(!atual())return false;
+            if(String(document.getElementById('financeiro_paciente_select')?.value)!==String(a.paciente_id))throw Error('Seleção de paciente alterada durante a abertura. Tente novamente.');
+            const confirmado=await carregarFinanceiroPaciente();
+            if(!atual())return false;
+            if(confirmado!==true)throw Error('Aguarde a confirmação dos dados financeiros e abra novamente o pagamento.');
+            const planoId=String(cobranca?.plano_id||a.plano_id||'');
+            const plano=financeiroPlanosCache.find(p=>String(p.id)===planoId&&String(p.paciente_id)===String(a.paciente_id));
+            if(!plano)throw Error('Contrato deste paciente não confirmado.');
+            instalarCamposPagamentoAgendamento();
+            // A abertura comum também limpa tudo. Só depois montamos um contexto
+            // completo, exclusivo desta ocorrência, sem aproveitar HTML anterior.
+            if(abrirModalPagamento(planoId)!==true)return false;
+            revisao=pagamentoAberturaRevisao;
+            const resumo=pacote?financeiroResumoPagamentoPlano(plano,financeiroPagamentosCache):null;
+            contextoPagamentoAgendamento=Object.freeze({...sit,modo:pacote?'plano':'agendamento',agendamento:Object.freeze({...a}),pacienteId:String(a.paciente_id),clinicaId:clinica,perfilId:perfil,planoId,cobrancaId:pacote?'':String(cobranca.id),valorOriginal:Number(pacote?plano.valor_tabela:cobranca.valor_original),desconto:Number(pacote?plano.desconto_valor:cobranca.desconto_valor),pagos:pacote?Number(resumo.recebido||0)+Number(resumo.creditoAplicado||0):Number(sit.pagos||0),operacaoId:document.getElementById('fin_pag_operacao').value});
+            const c=contextoPagamentoAgendamento;
+            document.getElementById('fin_pag_agendamento_id').value=pacote?'':String(a.id);
+            document.getElementById('fin_pag_cobranca_id').value=c.cobrancaId;
+            document.getElementById('fin_pag_plano').disabled=true;
+            const grupo=document.getElementById('fin_pag_plano_grupo');if(grupo)grupo.hidden=!pacote;
+            const valores=document.getElementById('fin_pag_valores_agendamento');if(valores)valores.hidden=false;
+            const ctx=document.getElementById('fin_pag_contexto_agendamento');ctx.hidden=false;ctx.innerHTML=`<strong>${esc(a.pacientes?.nome||cobranca?.paciente_nome||'Paciente')}</strong><span>${esc(a.procedimentos?.nome||cobranca?.procedimento_nome||'Atendimento')} · ${esc(a.equipe?.nome||cobranca?.profissional_nome||'Profissional')}</span><span>${esc(typeof formatarDataAgendaBR==='function'?formatarDataAgendaBR(a.data):a.data)} · ${esc(typeof horaCurta==='function'?horaCurta(a.hora_inicio):a.hora_inicio)}</span>`;
+            document.getElementById('fin_pag_desconto').value=c.desconto.toFixed(2).replace('.',',');document.getElementById('fin_pag_desconto').disabled=pacote||c.pagos>0;
+            const valor=document.getElementById('fin_pag_valor');valor.value='';delete valor.dataset.tocado;valor.oninput=()=>{valor.dataset.tocado='1';};
+            if(!pacote){const credito=document.getElementById('fin_pag_credito_box');if(credito)credito.hidden=true;}
+            atualizarResumoPagamentoAgendamento();
+            const modal=document.getElementById('modal_fin_pagamento');if(modal)modal.dataset.retornoAgenda=veioDaAgenda?'1':'';
+            return true;
+        }catch(error){if(atual()){limparContextoPagamentoAgendamento();alert(error.message||'Não foi possível confirmar o contexto do pagamento.');}return false;}
     };
 
     const salvarLegado=salvarPagamentoFinanceiro;
     salvarPagamentoFinanceiro=async function(){
+        if(pagamentoSalvando)return false;
+        if(!validarContextoModalPagamento()){alert('Paciente ou cobrança mudou. Feche o formulário e abra novamente pelo agendamento correto.');return false;}
         const modal=document.getElementById('modal_fin_pagamento');
         const voltarAgenda=modal?.dataset.retornoAgenda==='1';
         const concluirRetorno=()=>{
@@ -177,23 +224,32 @@
             if(voltarAgenda&&typeof navegarPara==='function')navegarPara('tela_agenda');
         };
         const agendamentoId=document.getElementById('fin_pag_agendamento_id')?.value||'';
+        const c=contextoPagamentoAgendamento;
+        if(c&&(c.pacienteId!==String(document.getElementById('financeiro_paciente_select')?.value||'')||c.clinicaId!==String(usuarioLogado?.clinica_id||'')||c.perfilId!==String(usuarioLogado?.id||'')||c.planoId!==String(document.getElementById('fin_pag_plano')?.value||'')||c.operacaoId!==document.getElementById('fin_pag_operacao')?.value||String(agendamentoId)!==(c.modo==='plano'?'':String(c.agendamento.id))||String(document.getElementById('fin_pag_cobranca_id')?.value||'')!==c.cobrancaId)){
+            alert('Os vínculos do pagamento foram alterados. Reabra pelo agendamento correto.');return false;
+        }
+        if(agendamentoId&&(!c||c.modo!=='agendamento')){alert('Contexto do agendamento não confirmado. Reabra o pagamento.');return false;}
+        pagamentoSalvando=true;
+        try{
         if(!agendamentoId){
             const salvo=await salvarLegado();
             if(salvo===true){concluirRetorno();if(voltarAgenda&&typeof renderizarPainelAgenda==='function')await renderizarPainelAgenda();}
             return salvo;
         }
-        if(!contextoPagamentoAgendamento||!_supabase)return false;
+        if(!_supabase)return false;
         const valor=num(document.getElementById('fin_pag_valor')?.value),desconto=num(document.getElementById('fin_pag_desconto')?.value||0);
         const marcadas=[...document.querySelectorAll('#fin_pag_forma input:checked')]; if(marcadas.length!==1){alert('Selecione uma forma de pagamento para este lançamento.');return false;}
         const forma=marcadas[0].value,parcelas=forma==='Cartão de crédito'?Number(document.getElementById('fin_pag_parcelas')?.value||1):1;
         if(!(valor>0)){alert('Informe o valor recebido agora.');return false;}
         const composicao=[{forma,valor}];
-        const {data,error}=await _supabase.rpc('kinesys_registrar_pagamento_agendamento',{p_agendamento_id:agendamentoId,p_valor:valor,p_desconto:desconto,p_desconto_tipo:desconto>0?'cortesia':'nenhum',p_forma:forma,p_parcelas:parcelas,p_data:document.getElementById('fin_pag_data').value,p_observacoes:document.getElementById('fin_pag_observacoes').value,p_composicao:composicao,p_operacao_id:document.getElementById('fin_pag_operacao').value});
+        const {data,error}=await _supabase.rpc('kinesys_registrar_pagamento_agendamento',{p_agendamento_id:c.agendamento.id,p_valor:valor,p_desconto:desconto,p_desconto_tipo:desconto>0?'cortesia':'nenhum',p_forma:forma,p_parcelas:parcelas,p_data:document.getElementById('fin_pag_data').value,p_observacoes:document.getElementById('fin_pag_observacoes').value,p_composicao:composicao,p_operacao_id:c.operacaoId});
         if(error){alert('Não foi possível registrar: '+(error.message||error));return false;}
         fecharModal('modal_fin_pagamento');contextoPagamentoAgendamento=null;document.getElementById('fin_pag_agendamento_id').value='';
         concluirRetorno();
         await carregarFinanceiroPaciente();if(typeof renderizarPainelAgenda==='function')await renderizarPainelAgenda();
         if(typeof mensagemFinanceiro==='function')mensagemFinanceiro(data?.valor_pendente>0?`Pagamento registrado. Ainda pendente: ${fmt(data.valor_pendente)}.`:'Pagamento registrado. Atendimento quitado.','sucesso');return true;
+        }catch(error){alert('Não foi possível registrar: '+(error.message||error));return false;}
+        finally{pagamentoSalvando=false;}
     };
 
     let hooksAgendaFinanceiroInstalados=false;
@@ -202,11 +258,15 @@
         if(typeof abrirDetalheAgendamento!=='function'||typeof situacaoPagamentoAgenda!=='function'||typeof iconePagamentoAgendaHTML!=='function')return false;
         iconePagamentoAgendaHTML=iconePagamentoAgendaIntegradoHTML;
         const abrirDetalheBase=abrirDetalheAgendamento;
+        let revisaoDetalheFinanceiro=0;
         abrirDetalheAgendamento=async function(id){
+            const revisao=++revisaoDetalheFinanceiro;
             await abrirDetalheBase(id);
+            if(revisao!==revisaoDetalheFinanceiro||String(agendamentoDetalheAtualId)!==String(id))return;
             if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return;
             const a=(agendaAgendamentosSemanaCache||[]).concat(agendaAgendamentosDoDiaCache||[]).find(x=>String(x.id)===String(id));if(!a)return;
-            const s=await obterSituacaoPagamentoAgendamento(a); const corpo=document.getElementById('detalhe_agendamento_corpo');if(!corpo||!s)return;
+            const s=await obterSituacaoPagamentoAgendamento(a); const corpo=document.getElementById('detalhe_agendamento_corpo');if(!corpo||!s||revisao!==revisaoDetalheFinanceiro||String(agendamentoDetalheAtualId)!==String(id))return;
+            corpo.querySelectorAll('.agenda-fin-resumo').forEach(e=>e.remove());
             corpo.querySelector('.agenda-pagamento-detalhe')?.remove();
             const status=s.pago?'Pago':s.parcial?'Parcial':'Pendente';
             const html=`<section class="agenda-fin-resumo ${esc(s.statusFinanceiro)}"><div><strong>Financeiro · ${status}</strong><span>Original ${fmt(s.valorOriginal)} · desconto ${fmt(s.desconto)} · devido ${fmt(s.valorDevido)}</span><span>Pago ${fmt(s.pagos)} · pendente <b>${fmt(s.valorPendente)}</b></span></div>${a.status!=='cancelado'&&s.valorPendente>0?`<button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(a.id)}')">LANÇAR PAGAMENTO</button>`:''}</section>`;
