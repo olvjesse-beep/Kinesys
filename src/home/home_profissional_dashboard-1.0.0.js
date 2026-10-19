@@ -164,8 +164,8 @@
             if(resumo)resumo.textContent='Mensagens por WhatsApp';
             const titulo=crmCard.querySelector('.card-header h2');
             if(titulo)titulo.textContent='Envio rápido';
-            const label=crmCard.querySelector('label[for="crm_paciente_select"]');
-            if(label)label.textContent='Escolha o paciente';
+            const label=crmCard.querySelector('label[for="crm_paciente_busca"]');
+            if(label)label.textContent='Buscar paciente pelo nome';
             let intro=crmCard.querySelector('.ks-prof-whatsapp-intro');
             if(!intro){intro=document.createElement('p');intro.className='ks-prof-whatsapp-intro';crmCard.querySelector('.card-header')?.after(intro);}
             intro.textContent='Envie lembretes e mensagens de acompanhamento pelo WhatsApp cadastrado do paciente.';

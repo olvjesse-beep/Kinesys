@@ -661,3 +661,10 @@
   .ks-fisio-evolution-legend{align-items:flex-start;flex-direction:column}
   #tela_home.ks-prof-home-active .ks-prof-whatsapp-messages .dashboard-grid{grid-template-columns:1fr!important}
 }
+
+/* Busca por nome no WhatsApp: mantém o ID legado sem exibir a lista nativa. */
+#card_crm #crm_paciente_select[hidden],#card_crm #crm_paciente_sugestoes[hidden]{display:none!important}
+#card_crm #crm_paciente_sugestoes{max-height:260px;overflow-y:auto;border:1px solid var(--kds-line,#d5e4e2);border-radius:10px;background:var(--kds-surface,#fff);margin-top:6px;padding:4px;min-width:0}
+#card_crm #crm_paciente_sugestoes button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;border-radius:6px;background:transparent;color:var(--kds-text,#173b45);padding:11px 12px;min-height:44px;font:inherit;cursor:pointer}
+#card_crm #crm_paciente_sugestoes button:hover,#card_crm #crm_paciente_sugestoes button[aria-selected="true"]{background:var(--kds-accent-soft,#e8f4f1)}
+#card_crm #crm_paciente_sugestoes p{margin:8px 12px;color:var(--kds-muted,#607a82)}

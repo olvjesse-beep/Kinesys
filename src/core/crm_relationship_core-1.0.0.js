@@ -8,11 +8,123 @@
    ========================================================================== */
 
 let pacienteCRM = null;
+let crmPacientesCache = [];
+let crmCargaRevisao = 0;
+let crmSelecaoRevisao = 0;
+let crmEscopoCache = '';
+let crmSugestoes = [];
+let crmIndiceSugestao = -1;
+
+function escopoPacienteCRM() {
+    return typeof usuarioLogado === 'undefined' ? '' : `${usuarioLogado?.id || ''}|${usuarioLogado?.clinica_id || ''}`;
+}
+
+function normalizarBuscaPacienteCRM(valor) {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+}
+
+function ordenarBuscaPacienteCRM(lista, termo) {
+    const busca = normalizarBuscaPacienteCRM(termo);
+    if (!busca) return [];
+    const rank = nome => nome === busca ? 0 : nome.startsWith(busca) ? 1 : nome.split(' ').some(p => p === busca) ? 2 : 3;
+    return lista.filter(p => busca.split(' ').every(t => normalizarBuscaPacienteCRM(p.nome).includes(t)))
+        .sort((a,b) => rank(normalizarBuscaPacienteCRM(a.nome))-rank(normalizarBuscaPacienteCRM(b.nome)) || String(a.nome).localeCompare(String(b.nome),'pt-BR'))
+        .slice(0,8);
+}
+
+function fecharBuscaPacienteCRM() {
+    const lista = document.getElementById('crm_paciente_sugestoes');
+    if (lista) lista.hidden = true;
+    const campo = document.getElementById('crm_paciente_busca');
+    campo?.setAttribute('aria-expanded','false');
+    campo?.removeAttribute('aria-activedescendant');
+    crmIndiceSugestao = -1;
+}
+
+function buscarPacienteCRM(editando = true) {
+    const campo = document.getElementById('crm_paciente_busca');
+    const lista = document.getElementById('crm_paciente_sugestoes');
+    if (!campo || !lista) return;
+    if (editando || crmEscopoCache !== escopoPacienteCRM()) {
+        crmSelecaoRevisao++;
+        pacienteCRM = null;
+        document.getElementById('crm_paciente_select').value = '';
+        document.getElementById('crm_paciente_info').style.display = 'none';
+    }
+    crmSugestoes = crmEscopoCache === escopoPacienteCRM() ? ordenarBuscaPacienteCRM(crmPacientesCache,campo.value) : [];
+    lista.replaceChildren();
+    crmIndiceSugestao = -1;
+    campo.removeAttribute('aria-activedescendant');
+    if (!campo.value.trim()) { fecharBuscaPacienteCRM(); return; }
+    for (const [i,p] of crmSugestoes.entries()) {
+        const opcao = document.createElement('button');
+        opcao.type = 'button';
+        opcao.id = `crm_paciente_opcao_${i}`;
+        opcao.setAttribute('role','option');
+        opcao.setAttribute('aria-selected','false');
+        const contato = obterContatoPreferencialPaciente(p);
+        opcao.textContent = `${p.nome}${contato.telefone ? ' · '+contato.telefone : ' · sem telefone cadastrado'}`;
+        opcao.onmousedown = event => event.preventDefault();
+        opcao.onclick = () => selecionarPacienteBuscaCRM(p.id);
+        lista.appendChild(opcao);
+    }
+    if (!crmSugestoes.length) {
+        const vazio = document.createElement('p');
+        vazio.textContent = 'Nenhum paciente encontrado.';
+        lista.appendChild(vazio);
+    }
+    lista.hidden = false;
+    campo.setAttribute('aria-expanded','true');
+}
+
+async function selecionarPacienteBuscaCRM(id) {
+    if (crmEscopoCache !== escopoPacienteCRM()) return;
+    const p = crmPacientesCache.find(p => String(p.id) === String(id));
+    if (!p) return;
+    document.getElementById('crm_paciente_select').value = p.id;
+    document.getElementById('crm_paciente_busca').value = p.nome;
+    fecharBuscaPacienteCRM();
+    return carregarPacienteCRM();
+}
+
+function navegarBuscaPacienteCRM(event) {
+    const lista = document.getElementById('crm_paciente_sugestoes');
+    if (event.key === 'Escape') { fecharBuscaPacienteCRM(); return; }
+    if (!lista || lista.hidden || !crmSugestoes.length) return;
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        selecionarPacienteBuscaCRM(crmSugestoes[Math.max(0,crmIndiceSugestao)].id);
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        crmIndiceSugestao = (crmIndiceSugestao + (event.key === 'ArrowDown' ? 1 : -1) + crmSugestoes.length) % crmSugestoes.length;
+        [...lista.children].forEach((opcao,i) => opcao.setAttribute('aria-selected',String(i === crmIndiceSugestao)));
+        document.getElementById('crm_paciente_busca').setAttribute('aria-activedescendant',`crm_paciente_opcao_${crmIndiceSugestao}`);
+    }
+}
+
+document.addEventListener('click', event => {
+    if (!document.getElementById('crm_paciente_busca')?.parentElement?.contains(event.target)) fecharBuscaPacienteCRM();
+});
 
 async function popularSelectCRM() {
+    const revisao = ++crmCargaRevisao;
+    const escopo = escopoPacienteCRM();
     const select = document.getElementById('crm_paciente_select');
     if (!select) return;
+    if (escopo !== crmEscopoCache) {
+        crmSelecaoRevisao++;
+        pacienteCRM = null;
+        crmPacientesCache = [];
+        select.value = '';
+        const campo = document.getElementById('crm_paciente_busca'); if (campo) campo.value = '';
+        document.getElementById('crm_paciente_info').style.display = 'none';
+        fecharBuscaPacienteCRM();
+    }
     const lista = await obterPacientesBasicos();
+    if (revisao !== crmCargaRevisao || escopo !== escopoPacienteCRM()) return;
+    const selecionado = select.value;
+    crmEscopoCache = escopo;
+    crmPacientesCache = lista;
     let options = `<option value="">-- Selecione um paciente --</option>`;
     lista.forEach(p => {
         const contato = obterContatoPreferencialPaciente(p);
@@ -20,17 +132,24 @@ async function popularSelectCRM() {
         options += `<option value="${escapeHTML(p.id)}">${escapeHTML(p.nome)} (${escapeHTML(sufixo)})</option>`;
     });
     select.innerHTML = options;
+    if (lista.some(p => String(p.id) === String(selecionado))) select.value = selecionado;
+    else { pacienteCRM = null; crmSelecaoRevisao++; }
 }
 
 async function carregarPacienteCRM() {
+    const revisao = ++crmSelecaoRevisao;
+    const escopo = escopoPacienteCRM();
     const select = document.getElementById('crm_paciente_select');
     const id = select.value;
+    pacienteCRM = null;
+    document.getElementById('crm_paciente_info').style.display = 'none';
     if (!id) {
         document.getElementById('crm_paciente_info').style.display = 'none';
         pacienteCRM = null;
         return;
     }
     const lista = await obterPacientesBasicos();
+    if (revisao !== crmSelecaoRevisao || escopo !== escopoPacienteCRM() || id !== select.value) return;
     const p = lista.find(item => item.id === id);
     if (p) {
         pacienteCRM = p;
@@ -51,11 +170,13 @@ async function carregarPacienteCRM() {
  * com target fixo para reutilizar a mesma aba.
  */
 async function enviarWhatsApp(tipo) {
-    if (!pacienteCRM) {
+    const pacienteEnvio = pacienteCRM;
+    const escopoEnvio = escopoPacienteCRM();
+    if (!pacienteEnvio || crmEscopoCache !== escopoEnvio) {
         alert('⚠️ Selecione um paciente no CRM primeiro.');
         return;
     }
-    const contato = obterContatoPreferencialPaciente(pacienteCRM);
+    const contato = obterContatoPreferencialPaciente(pacienteEnvio);
     const telefone = contato.telefone;
     if (!telefone) {
         alert(pacienteEhDependente(pacienteCRM)
@@ -64,7 +185,7 @@ async function enviarWhatsApp(tipo) {
         return;
     }
     const numeroLimpo = '55' + telefone.replace(/\D/g, '');
-    const nome = pacienteCRM.nome;
+    const nome = pacienteEnvio.nome;
     const saudacao = contato.usaResponsavel
         ? `Olá ${contato.nomeDestinatario}! Sobre o atendimento de ${nome}`
         : `Olá ${nome}`;
@@ -89,7 +210,7 @@ async function enviarWhatsApp(tipo) {
                 : `${saudacao}, aqui é ${usuarioLogado?.nome || 'a equipe'} da Fisiofix. Passando para lembrar dos exercícios que combinamos. Qualquer dúvida, estou à disposição.`;
             break;
         case 'sessao': {
-            const agendamento = obterProximoAgendamento(pacienteCRM.id);
+            const agendamento = obterProximoAgendamento(pacienteEnvio.id);
             if (!agendamento) {
                 alert('⚠️ Não foi possível obter o próximo agendamento.');
                 return;
@@ -114,6 +235,7 @@ async function enviarWhatsApp(tipo) {
             return;
     }
 
+    if (pacienteCRM !== pacienteEnvio || escopoEnvio !== escopoPacienteCRM()) return;
     const mensagemCodificada = encodeURIComponent(mensagem);
     const url = 'https://web.whatsapp.com/send?phone=' + numeroLimpo + '&text=' + mensagemCodificada;
 
