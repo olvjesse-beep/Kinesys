@@ -64,7 +64,9 @@ body.ks-design-ready a:focus-visible{outline:3px solid rgba(42,167,157,.20);outl
 #tela_financeiro .finance-plan-actions button{border-radius:var(--kds-radius-sm)}
 #tela_financeiro .finance-payment-row{padding:10px 0}
 #tela_midias{max-width:1240px}
-#tela_midias .midia-hero-card{box-shadow:none}
+#tela_midias .midia-hero-card{box-shadow:none;overflow:visible;z-index:2}
+#tela_midias .ks-patient-picker-options{z-index:60;max-height:min(260px,45dvh);overscroll-behavior:contain}
+#tela_midias .ks-patient-picker-options button{min-height:44px;white-space:normal;overflow-wrap:anywhere}
 #tela_midias .midia-hero-head h2{line-height:1.25}
 #tela_midias .midia-hero-head p{max-width:68ch}
 #tela_midias .midia-capture-box{border-radius:11px}

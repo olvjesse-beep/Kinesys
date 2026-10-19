@@ -46,6 +46,7 @@ jobs:
           node --check src/core/crm_relationship_core-1.0.0.js
           node --check src/core/iphone_camera-1.0.0.js
           node tests/iphone_camera.test.cjs
+          node tests/midias_patient_picker.contract.cjs
           node tests/crm_relationship_modularization.contract.js
           node tests/screen_loader.contract.js
           node tests/runtime_asset_cache.contract.js

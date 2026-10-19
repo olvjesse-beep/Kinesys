@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const css=fs.readFileSync('styles/design_screens.css','utf8'),html=fs.readFileSync('index.html','utf8');
+const rule=selector=>{const escaped=selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const match=css.match(new RegExp(escaped+'\\s*\\{([^}]+)\\}'));assert(match,selector+' deve manter regra específica');return match[1];};
+assert.match(rule('#tela_midias .midia-hero-card'),/overflow\s*:\s*visible/,'O cartão não pode recortar as opções');
+assert.match(rule('#tela_midias .midia-hero-card'),/z-index\s*:\s*2/,'Lista deve aparecer acima da galeria seguinte');
+assert.match(rule('#tela_midias .ks-patient-picker-options'),/max-height\s*:\s*min\(260px,45dvh\)/,'Lista deve ter altura limitada pelo viewport');
+assert.match(rule('#tela_midias .ks-patient-picker-options'),/overscroll-behavior\s*:\s*contain/);
+assert.match(rule('#tela_midias .ks-patient-picker-options button'),/min-height\s*:\s*44px/,'Opções devem manter alvos clicáveis');
+assert.match(css,/\.ks-patient-picker-options\[hidden\]\{display:none!important\}/,'Fechar deve continuar removendo a lista');
+assert.match(html,/styles\/design_screens\.css\?v=20261019-midias-picker-r1/,'Atualizar cache junto com a correção visual');
+console.log('Documentos: lista sem recorte, camada acima da galeria, rolagem, alvos de toque e fechamento preservados OK');
