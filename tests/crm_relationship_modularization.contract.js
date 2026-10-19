@@ -29,7 +29,10 @@ async function testarBuscaCRM(){
   let carregar=async()=>pacientes,links=0,template=async()=> 'Mensagem teste';
   const c={console,usuarioLogado:{id:'u',clinica_id:'clinica-a',nome:'Profissional'},document:{getElementById:id=>campos[id],addEventListener(){},createElement:()=>elemento(),body:{appendChild(){links++;},removeChild(){}}},obterPacientesBasicos:()=>carregar(),escapeHTML:String,obterContatoPreferencialPaciente:p=>({telefone:p.telefone}),pacienteEhDependente:()=>false,obterMensagemPadraoConfigurada:()=>template(),alert(){}};
   vm.createContext(c);vm.runInContext(mod,c);
-  await c.popularSelectCRM();
+  let liberarIndice;carregar=()=>new Promise(resolve=>liberarIndice=resolve);
+  const carregando=c.popularSelectCRM();campos.crm_paciente_busca.value='jose';c.buscarPacienteCRM();
+  liberarIndice(pacientes);await carregando;carregar=async()=>pacientes;
+  assert(campos.crm_paciente_sugestoes.children[0].textContent.startsWith('José Antônio'),'busca digitada durante carregamento deve atualizar sugestões automaticamente');
   campos.crm_paciente_busca.value='jose';c.buscarPacienteCRM();
   assert(campos.crm_paciente_sugestoes.children[0].textContent.startsWith('José Antônio'),'começo do nome tem prioridade, ignorando acento');
   c.navegarBuscaPacienteCRM({key:'ArrowDown',preventDefault(){}});assert.equal(campos.crm_paciente_busca.attrs['aria-activedescendant'],'crm_paciente_opcao_0');

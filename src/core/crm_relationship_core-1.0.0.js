@@ -134,6 +134,7 @@ async function popularSelectCRM() {
     select.innerHTML = options;
     if (lista.some(p => String(p.id) === String(selecionado))) select.value = selecionado;
     else { pacienteCRM = null; crmSelecaoRevisao++; }
+    if (!selecionado && document.getElementById('crm_paciente_busca')?.value.trim()) buscarPacienteCRM(false);
 }
 
 async function carregarPacienteCRM() {
