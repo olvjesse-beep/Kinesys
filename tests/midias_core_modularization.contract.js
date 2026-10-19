@@ -21,10 +21,10 @@ assert(core.includes('function atualizarPSFSMedia('), 'Patient self-service medi
 const states=['KINESYS_LOCAL_URL','kinesysLocalOnline','kinesysLocalStatus','midiasPacienteAtual','midiaComparacaoA','midiaComparacaoB','midiaPollTimer','midiaPollingCapturaSolicitado','kinesysLocalStatusTimer','midiaUltimaQuantidadeLocal','midiaTabelaSupabaseDisponivel'];
 for(const state of states) assert(!new RegExp('\\b'+state+'\\b').test(core), `Estado interno ${state} não pode permanecer acoplado ao core`);
 
-const mediaTag='<script defer src="src/core/midias_core-1.0.0.js?v=20260911-phase4d-r1"></script>';
+const mediaTag=html.match(/<script defer src="src\/core\/midias_core-1\.0\.0\.js\?v=[^"]+"><\/script>/)?.[0];
 const escapeTag='<script defer src="src/core/html_escape-1.0.0.js?v=20260911-phase4c-r1"></script>';
 const coreNeedle='<script defer src="src/core/script-1.18.0.js';
-assert(html.includes(mediaTag), 'index.html não carrega o módulo principal de Mídias');
+assert(mediaTag&&html.includes(mediaTag), 'index.html não carrega o módulo principal de Mídias com versão explícita');
 assert(html.indexOf(escapeTag)<html.indexOf(mediaTag), 'HTML escape deve carregar antes de Mídias');
 assert(html.indexOf(mediaTag)<html.indexOf(coreNeedle), 'Mídias deve carregar antes do core para preservar APIs globais no bootstrap');
 
