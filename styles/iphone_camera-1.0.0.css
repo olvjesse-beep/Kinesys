@@ -1,0 +1,22 @@
+/* Scoped to the media workspace; no shared inputs, buttons or layout overrides. */
+#camera_settings [hidden],#camera_phone[hidden]{display:none!important}
+#camera_settings .camera-workspace{padding:24px}
+#camera_settings .camera-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}
+#camera_settings .camera-setting{border:1px solid #d4e5e3;border-radius:14px;padding:20px;min-width:0;background:#f6fbfa}
+#camera_settings .camera-setting h3{margin:0 0 12px}
+#camera_settings .camera-setting button{margin-top:12px;white-space:normal}
+#camera_settings .camera-setting p{overflow-wrap:anywhere}
+#camera_settings .camera-setting select{width:100%;min-height:44px}
+#camera_settings .camera-pair{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:center;border:1px solid #a8d8cf;border-radius:14px;padding:20px;background:white}
+#camera_qr{width:100%;max-width:230px;background:white}
+#camera_qr svg{display:block;width:100%;height:auto}
+#camera_pair button{display:block;margin-top:16px}
+#camera_status{padding:14px;border-radius:10px;background:#eaf5f1;color:#174b49;overflow-wrap:anywhere}
+#camera_settings .camera-legacy{padding:0 24px 24px}
+#camera_phone{position:fixed;inset:0;z-index:100000;overflow:auto;padding:24px;background:#e6f2ef;color:#173f43;display:grid;place-items:center}
+#camera_phone .camera-phone-card{max-width:520px;width:100%;box-sizing:border-box;background:white;border-radius:20px;padding:28px}
+#camera_phone h1{font-size:28px;margin:0 0 20px}
+#camera_phone p{font-size:16px;line-height:1.6}
+#camera_phone label{display:block;font-weight:700;margin:24px 0 12px}
+#camera_phone input{max-width:100%;min-height:48px;font-size:16px}
+@media(max-width:760px){#camera_settings .camera-grid,#camera_settings .camera-pair{grid-template-columns:1fr}#camera_settings .camera-workspace{padding:16px}#camera_qr{margin:auto}#camera_phone{padding:12px}}
