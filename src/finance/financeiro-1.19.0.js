@@ -1192,7 +1192,9 @@ let atendimentoUnitarioContexto = null;
 let atendimentoUnitarioSalvando = false;
 
 function ehAtendimentoUnitario(registro) {
-    return /^unitario[-_]/.test(String(registro?.operacao_id || ''));
+    // A origem não muda numa conciliação auditada; a quantidade vigente é que
+    // define se a contratação ainda corresponde a uma única sessão.
+    return Number(registro?.sessoes_contratadas || 1) === 1 && /^unitario[-_]/.test(String(registro?.operacao_id || ''));
 }
 
 function valorMonetarioUnitario(valor) {

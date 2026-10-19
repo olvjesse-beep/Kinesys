@@ -10,6 +10,33 @@ const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
 const configCores = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const vm = require('vm');
 
+// A origem unitária não pode mascarar condições vigentes corrigidas e auditadas.
+(() => {
+  const finance=fs.readFileSync('src/finance/financeiro-1.19.0.js','utf8');
+  const c={};vm.createContext(c);
+  vm.runInContext(finance.slice(finance.indexOf('function ehAtendimentoUnitario('),finance.indexOf('function valorMonetarioUnitario(')),c);
+  assert(c.ehAtendimentoUnitario({operacao_id:'unitario-agenda-fixture',sessoes_contratadas:1}));
+  assert(!c.ehAtendimentoUnitario({operacao_id:'unitario-agenda-fixture',sessoes_contratadas:2}),'contrato conciliado de duas sessões não pode dizer 1 sessão nem usar fluxo unitário');
+  assert(!c.ehAtendimentoUnitario({operacao_id:'plano-fixture',sessoes_contratadas:3}));
+  const credito=fs.readFileSync('src/finance/credito_cliente-1.19.0.js','utf8');
+  const pendencias=fs.readFileSync('src/finance/pendencias_financeiras-1.19.0.js','utf8');
+  Object.assign(c,{pagamentoEstaMarcadoParaExclusao:()=>false,usoCreditoEstaMarcadoParaExclusao:()=>false,financeiroResumoPagamentoPlano:()=>{},financeiroCreditosUsosCache:[],financeiroHojeISO:()=> '2026-10-19'});
+  vm.runInContext(credito.slice(credito.indexOf('function calcularComponentesCreditoPaciente('),credito.indexOf('function calcularCreditoDisponivelPaciente(')),c);
+  vm.runInContext(credito.slice(credito.indexOf('const financeiroResumoPagamentoPlanoSemCredito'),credito.indexOf('const metricasPlanoSemCredito')),c);
+  vm.runInContext(pendencias.slice(0,pendencias.indexOf('async function carregarDadosPendenciasFinanceiras(')),c);
+  const planos=[1,1,2,3,1,1].map((n,i)=>({id:`pl-${i}`,paciente_id:'fixture',nome:'Fisioterapia',sessoes_contratadas:n,valor_tabela:89.9*n,desconto_valor:14.9*n,valor_final:75*n,status:'concluido'}));
+  const pagamentos=planos.map((p,i)=>({id:`pag-${i}`,paciente_id:'fixture',plano_id:p.id,valor:p.valor_final}));
+  const agenda=planos.flatMap(p=>Array.from({length:p.sessoes_contratadas},(_,i)=>({id:`ag-${p.id}-${i}`,paciente_id:'fixture',plano_id:p.id,status:'atendido',data:'2026-10-16'})));
+  agenda.push({id:'futura',paciente_id:'fixture',status:'agendado',data:'2026-10-19',hora_inicio:'10:00'});
+  assert.equal(pagamentos.reduce((n,p)=>n+p.valor,0),675);
+  assert.equal(Math.round(planos.reduce((n,p)=>n+p.desconto_valor,0)*100),13410);
+  assert.equal(c.calcularComponentesCreditoPaciente(pagamentos,planos,[]).disponivel,0,'descontos e antecipação distribuída corretamente não geram crédito');
+  const [linha]=c.construirPendenciasPorPaciente([{id:'fixture',nome:'Paciente fixture'}],planos,pagamentos,[],agenda);
+  assert.equal(linha.creditoDisponivel,0);assert.equal(linha.saldoReceber,0);assert.equal(linha.sessoesPagasARealizar,0);
+  assert(!linha.aCobrar&&!linha.clinicaDeve,'nove sessões quitadas/realizadas não podem reaparecer como pendência');
+  console.log('Conciliação: nove sessões, descontos separados de crédito, recebimentos e Pendências coerentes OK');
+})();
+
 // A mesma paleta precisa identificar cartões e legenda após cada reconstrução.
 (() => {
   const salvas = new Map();

@@ -112,8 +112,13 @@ Hostinger Git deployment is connected to:
 
 - Repository: `olvjesse-beep/Kinesys`
 - Branch: `main`
-- Deployment root: `public_html`
+- Deployment root: `public_html/app` (exclusive KineSys directory).
 - Automatic deployment: enabled
+
+The parent `public_html` contains the independent FisioFix WordPress website.
+Never deploy this repository there. Recheck the live destination before each
+publication, as required by `AGENTS.md`; this document is not proof of current
+hosting configuration.
 
 Production should mirror `main`. A moved file should resolve at its new path and the old root path should return 404. Do not maintain duplicate production copies solely to preserve obsolete paths.
 
