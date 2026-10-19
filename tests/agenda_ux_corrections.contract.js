@@ -10,6 +10,38 @@ const agendaCss = fs.readFileSync('styles/design_agenda.css', 'utf8');
 const configCores = fs.readFileSync('src/admin/configuracoes_agendamento_online-1.0.0.js', 'utf8');
 const vm = require('vm');
 
+// A mesma paleta precisa identificar cartões e legenda após cada reconstrução.
+(() => {
+  const salvas = new Map();
+  salvas.set('kinesys_agenda_cores::clinic-cor', JSON.stringify({osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#FF0000'}));
+  salvas.set('kinesys_agenda_cores_procedimentos::clinic-cor', JSON.stringify({osteo:'#DD592C',avaliacao:'#8D78F2',individual:'#A9C2D1',pct:'#034F81',liberacao:'#F5D42E',invalido:'red;bad'}));
+  function card(id, tipo='fisioterapia') {
+    const classes=new Set(['agenda-compromisso',`tipo-${tipo}`]), styles={};
+    return {dataset:{procedimentoId:id},styles,classes,classList:{contains:s=>classes.has(s),toggle(s,on){on?classes.add(s):classes.delete(s);}},style:{setProperty:(k,v)=>{styles[k]=v;},removeProperty:k=>{delete styles[k];}}};
+  }
+  let cards=[card('osteo','osteopatia'),card('pct'),card('avaliacao','geral'),card('individual'),card('liberacao','geral'),card('osteo','falta')];
+  const legenda={innerHTML:''}, financeiro={hidden:true}, config={}, tela={style:{setProperty(){}},querySelectorAll:()=>cards,querySelector:()=>config};
+  const c={document:{getElementById:id=>({tela_agenda:tela,agenda_legenda_procedimentos:legenda,agenda_legenda_financeiro:financeiro}[id]||null)},localStorage:{getItem:k=>salvas.get(k)||null},usuarioLogado:{clinica_id:'clinic-cor'},AGENDA_CORES_PADRAO:{osteopatia:'#2F8F72',fisioterapia:'#2F7EAD',falta:'#7B878C'},agendaProcedimentosCache:[{id:'osteo',nome:'Osteopatia'},{id:'avaliacao',nome:'Avaliação'},{id:'individual',nome:'Fisioterapia individual'},{id:'pct',nome:'Fisioterapia PCT'},{id:'liberacao',nome:'Liberação miofascial'},{id:'antigo',nome:'Procedimento inativo',ativo:false}],agendaAgendamentosSemanaCache:[{procedimento_id:'antigo',procedimentos:{nome:'Procedimento inativo'}}],usuarioEhAdministradorAgenda:()=>true,classeStatusAgenda:s=>s||'agendado',escapeHTML:s=>String(s).replaceAll('<','&lt;')};
+  vm.createContext(c);
+  vm.runInContext(agenda.slice(agenda.indexOf('function chaveCoresAgenda()'),agenda.indexOf("window.addEventListener('kinesys:agenda-cores-atualizadas'")),c);
+  vm.runInContext(agenda.slice(agenda.indexOf('function normalizarTipoProcedimentoAgenda'),agenda.indexOf('function abrirConfiguracoesCoresAgenda')),c);
+  c.aplicarCoresAgenda();
+  ['#DD592C','#034F81','#8D78F2','#A9C2D1','#F5D42E'].forEach((cor,i)=>assert.equal(cards[i].styles['--agenda-cor-procedimento'],cor));
+  assert(!cards[5].classes.has('tipo-personalizado'),'falta mantém a precedência da cor de falta');
+  for(const nome of ['Osteopatia','Avaliação','Fisioterapia individual','Fisioterapia PCT','Liberação miofascial','Procedimento inativo']) assert(legenda.innerHTML.includes(nome),`legenda incompleta: ${nome}`);
+  for(const cor of ['#DD592C','#034F81','#8D78F2','#A9C2D1','#F5D42E']) assert(legenda.innerHTML.includes(cor),'legenda e cartão devem usar exatamente a mesma cor');
+  assert(!Object.hasOwn(c.obterCoresProcedimentosAgenda(),'invalido'),'cor inválida não entra em style');
+  cards=[card('osteo','osteopatia')];c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#DD592C','troca de semana não pode recolorir apenas nós descartados');
+  salvas.set('kinesys_agenda_cores_procedimentos::clinic-cor','{}');c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#2F8F72','remover personalização restaura cor base, sem estilo obsoleto');
+  c.usuarioEhAdministradorAgenda=()=>false;c.aplicarCoresAgenda();assert(financeiro.hidden&&config.hidden,'legenda financeira e configurações respeitam permissão');
+  c.usuarioLogado.clinica_id='outra';c.aplicarCoresAgenda();assert.equal(cards[0].styles['--agenda-cor-procedimento'],'#2F8F72','paleta não vaza entre clínicas');
+  const render=agenda.slice(agenda.indexOf('function renderizarGradeSemanal'),agenda.indexOf('async function renderizarPainelAgenda'));
+  assert(render.indexOf('aplicarCoresAgenda();')>render.lastIndexOf('container.appendChild(overlay);'),'cores só são aplicadas depois de inserir os cartões novos, nas duas visões');
+  assert(html.includes('id="agenda_legenda_procedimentos"'));
+  assert(html.includes('Pagamento realizado')&&html.includes('Pagamento pendente'));
+  console.log('Cores: cinco procedimentos, legenda dinâmica, faltas, reconstrução, permissões e isolamento OK');
+})();
+
 (async()=>{
   const source=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
   for(const financeiro of [true,false]){

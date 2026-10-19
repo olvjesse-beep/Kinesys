@@ -65,17 +65,47 @@ function aplicarCoresAgenda() {
     if (!tela) return;
     const cores = obterCoresAgenda();
     Object.entries(cores).forEach(([tipo, cor]) => tela.style.setProperty(`--agenda-cor-${tipo}`, cor));
-    let procedimentos = {};
-    try { procedimentos = JSON.parse(localStorage.getItem(chaveCoresAgenda().replace('kinesys_agenda_cores::','kinesys_agenda_cores_procedimentos::')) || '{}') || {}; } catch (_) {}
+    const procedimentos = obterCoresProcedimentosAgenda();
     tela.querySelectorAll('.agenda-compromisso[data-procedimento-id]').forEach(card => {
-        const cor = procedimentos[card.dataset.procedimentoId];
+        const tipo = card.classList.contains('tipo-osteopatia') ? 'osteopatia' : 'fisioterapia';
+        const cor = procedimentos[card.dataset.procedimentoId] || cores[tipo];
         const personalizada = corHexAgendaValida(cor) && !card.classList.contains('tipo-falta');
         card.classList.toggle('tipo-personalizado', personalizada);
         if (personalizada) card.style.setProperty('--agenda-cor-procedimento', cor);
         else card.style.removeProperty('--agenda-cor-procedimento');
     });
+    renderizarLegendaCoresAgenda(cores, procedimentos);
     const configurar = tela.querySelector('.agenda-configurar-cores');
     if (configurar) configurar.hidden = !usuarioEhAdministradorAgenda();
+}
+
+function obterCoresProcedimentosAgenda() {
+    try {
+        const salvas = JSON.parse(localStorage.getItem(chaveCoresAgenda().replace('kinesys_agenda_cores::', 'kinesys_agenda_cores_procedimentos::')) || '{}') || {};
+        return Object.fromEntries(Object.entries(salvas).filter(([id, cor]) => /^[\w-]+$/.test(id) && corHexAgendaValida(cor)));
+    } catch (_) { return {}; }
+}
+
+function itensLegendaCoresAgenda(cores, personalizadas) {
+    // Inclui procedimentos inativos que ainda tenham ocorrências visíveis.
+    const catalogo = new Map();
+    agendaProcedimentosCache.filter(p => p.ativo !== false).forEach(p => catalogo.set(String(p.id), p.nome));
+    agendaAgendamentosSemanaCache.forEach(a => {
+        if (a.procedimento_id) catalogo.set(String(a.procedimento_id), a.procedimentos?.nome || catalogo.get(String(a.procedimento_id)) || 'Atendimento');
+    });
+    return [...catalogo].sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'pt-BR')).map(([id, nome]) => {
+        const tipo = tipoVisualAgendamentoAgenda({procedimentos: {nome}});
+        return {id, nome, cor: personalizadas[id] || cores[tipo] || cores.fisioterapia};
+    });
+}
+
+function renderizarLegendaCoresAgenda(cores, personalizadas) {
+    const legenda = document.getElementById('agenda_legenda_procedimentos');
+    if (!legenda) return;
+    const itens = itensLegendaCoresAgenda(cores, personalizadas);
+    legenda.innerHTML = itens.map(item => `<span><i class="agenda-legend-dot" style="background:${item.cor}" aria-hidden="true"></i>${escapeHTML(item.nome)}</span>`).join('');
+    const financeiro = document.getElementById('agenda_legenda_financeiro');
+    if (financeiro) financeiro.hidden = !usuarioEhAdministradorAgenda();
 }
 
 window.addEventListener('kinesys:agenda-cores-atualizadas', () => {
@@ -99,7 +129,11 @@ async function carregarCoresAgendaCompartilhadas() {
         if (error) throw error;
         if (String(usuarioLogado?.clinica_id || '') !== clinica || versao !== agendaCoresVersao) return;
         const cores = data?.cores_agenda;
-        if (!cores || !Object.keys(cores).length) return;
+        if (!cores || !Object.keys(cores).length) {
+            localStorage.removeItem(chaveCoresAgenda());
+            localStorage.removeItem(chaveCoresAgenda().replace('kinesys_agenda_cores::','kinesys_agenda_cores_procedimentos::'));
+            return;
+        }
         const defaults = Object.fromEntries(Object.entries(AGENDA_CORES_PADRAO).map(([tipo,padrao]) => [tipo,corHexAgendaValida(cores[tipo]) ? cores[tipo] : padrao]));
         const procedimentos = Object.fromEntries(Object.entries(cores.procedimentos || {}).filter(([id,cor]) => /^[\w-]+$/.test(id) && corHexAgendaValida(cor)));
         localStorage.setItem(chaveCoresAgenda(),JSON.stringify(defaults));
@@ -2162,8 +2196,6 @@ async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') 
 function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     const container = document.getElementById('agenda_semana_grade');
     if (!container) return;
-    aplicarCoresAgenda();
-    carregarCoresAgendaCompartilhadas().then(aplicarCoresAgenda);
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
     const limites = limitesHorariosGrade(dias, profissionalFiltro);
     const passo = AGENDA_GRADE_PASSO_MIN;
@@ -2355,6 +2387,10 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             });
         });
     }
+    // Aplicar depois da montagem: os cartões anteriores não são os novos nós.
+    // A leitura remota é complementar; o cache válido já deve colorir a grade.
+    aplicarCoresAgenda();
+    carregarCoresAgendaCompartilhadas().then(aplicarCoresAgenda);
     iniciarRelogioAgenda();
 }
 
