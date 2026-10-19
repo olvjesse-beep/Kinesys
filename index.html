@@ -10,6 +10,7 @@
 
     <!-- KineSys Design System — ordem oficial de produção -->
     <link rel="stylesheet" href="styles/design_tokens.css">
+    <link rel="stylesheet" href="styles/iphone_camera-1.0.0.css?v=20261019-camera-r1">
     <link rel="stylesheet" href="styles/design_base.css?v=20261012-overlay-harmony-r5">
     <link rel="stylesheet" href="styles/design_responsive.css">
     <link rel="stylesheet" href="styles/design_foundation.css">
@@ -339,7 +340,7 @@
                         <h2>Fotos e documentos do prontuário</h2>
                         <p>Originais ficam organizados neste computador. O Supabase recebe somente os metadados de vínculo com o paciente.</p>
                     </div>
-                    <div id="midia_status_local" class="midia-status offline"><span class="midia-dot"></span> Serviço local não detectado</div>
+                    <div id="midia_status_local" class="midia-status"><span class="midia-dot"></span> Originais: configure a pasta abaixo</div>
                 </div>
                 <div id="midia_perfil_aviso" class="midia-role-note" style="display:none;"></div>
                 <div class="grid-2 midia-top-grid">
@@ -351,7 +352,7 @@
                     </div>
                     <div class="midia-capture-box">
                         <div class="midia-capture-actions">
-                            <button class="btn-primary" type="button" id="btn_captura_iphone" onclick="iniciarCapturaComIPhone()">Capturar com iPhone</button>
+                            <button class="btn-primary" type="button" id="btn_captura_iphone" onclick="document.getElementById('camera_settings').open=true; document.getElementById('camera_settings').scrollIntoView({block:'center',behavior:'smooth'});">Capturar com iPhone</button>
                             <button class="btn-secondary" type="button" id="btn_importar_documento_pc" onclick="abrirSeletorImportacaoComputador()">Importar do computador</button>
                             <select id="midia_import_tipo" class="midia-import-type" aria-label="Tipo do documento importado">
                                 <option value="documento">Documento</option>
@@ -407,8 +408,20 @@
                 </div>
             </div>
 
-            <details class="card midia-settings-card">
-                <summary>⚙️ Armazenamento e backup local</summary>
+            <details class="card midia-settings-card" id="camera_settings">
+                <summary>iPhone, pasta dos originais e backup</summary>
+                <div class="camera-workspace">
+                    <div><h2>Câmera do iPhone por QR code</h2><p>Original na pasta autorizada deste computador. Somente a miniatura e os dados do registro ficam no Supabase.</p></div>
+                    <div class="camera-grid">
+                        <section class="camera-setting"><h3>1. Pasta dos originais</h3><p id="camera_folder">Nenhuma pasta selecionada neste navegador</p><button type="button" class="btn-secondary" id="camera_choose">Escolher pasta dos originais</button><p class="helper-text">Use Chrome ou Edge no computador. A permissão vale para este navegador e perfil. Trocar a pasta não move nem apaga arquivos anteriores.</p></section>
+                        <section class="camera-setting"><h3>2. Conectar o iPhone</h3><label for="camera_tipo">Tipo da fotografia</label><select id="camera_tipo"><option value="avaliacao">Avaliação</option><option value="evolucao">Evolução</option><option value="postura">Postura</option><option value="ferida">Ferida / cicatriz</option><option value="edema">Edema</option><option value="exame">Exame / laudo</option><option value="documento">Documento</option><option value="termo">Termo / autorização</option></select><button type="button" class="btn-primary" id="camera_start">Gerar QR code</button><p class="helper-text">Na mesma rede Wi-Fi, abra o QR code no iPhone e entre com a mesma conta e perfil. Uma foto por conexão; validade de 10 minutos.</p></section>
+                    </div>
+                    <div id="camera_pair" class="camera-pair" hidden><div id="camera_qr" aria-label="QR code para conectar o iPhone"></div><div><strong>Leia com a câmera do iPhone</strong><p>Confirme o paciente no computador antes de fotografar. O envio é direto e criptografado, sem armazenar o original na nuvem.</p><a id="camera_link" rel="noreferrer noopener" target="_blank">Abrir câmera neste dispositivo</a><button type="button" class="btn-secondary" id="camera_cancel">Cancelar conexão</button></div></div>
+                    <p id="camera_status" role="status" aria-live="polite">Escolha a pasta e o paciente para iniciar.</p>
+                    <button type="button" class="btn-secondary" id="camera_retry">Reenviar miniaturas pendentes</button>
+                    <p class="helper-text">Mantenha o computador e esta aba abertos até a confirmação. Em outro computador, a galeria mostra a miniatura; o original depende da pasta local. Faça backup dos originais. Apagar os dados do navegador remove as permissões e referências locais, não os arquivos da pasta.</p>
+                </div>
+                <details class="camera-legacy"><summary>Serviço local anterior e backup legado</summary>
                 <div class="midia-settings-body">
                     <p>O original é salvo automaticamente dentro de <code>C:\KineSys\Dados\Pacientes\&lt;paciente_id&gt;</code>: fotografias clínicas em <code>Fotos\AAAA\MM</code> e termos/identificação/documentos em <code>Documentos\AAAA\MM</code>. Você pode definir uma segunda pasta para cópia automática de segurança.</p>
                     <div class="grid-2">
@@ -423,6 +436,7 @@
                     </div>
                     <p class="helper-text">As imagens originais não são enviadas ao Supabase nesta versão. A tabela <code>arquivos_paciente</code> guarda apenas metadados e o caminho relativo local.</p>
                 </div>
+                </details>
             </details>
         </section>
 
@@ -1574,7 +1588,9 @@
     <script defer src="src/patient/patient_records_browse_core-1.0.0.js?v=20261017-agenda-paciente-r1"></script>
     <script defer src="src/core/crm_relationship_core-1.0.0.js?v=20261019-crm-busca-r2"></script>
     <script defer src="src/core/document_timeline_core-1.0.0.js?v=20260911-phase4h-r1"></script>
-    <script defer src="src/core/midias_core-1.0.0.js?v=20261010-regression-hotfix-r1"></script>
+    <script defer src="src/core/midias_core-1.0.0.js?v=20261019-camera-r1"></script>
+    <script defer src="assets/vendor/qrcode-generator-1.4.4.js"></script>
+    <script defer src="src/core/iphone_camera-1.0.0.js?v=20261019-camera-r1"></script>
     <script defer src="src/admin/team_management_core-1.0.0.js?v=20260911-phase4o-r1"></script>
     <script defer src="src/auth/login_ui_helpers_core-1.0.0.js?v=20260911-phase4r-r1"></script>
     <script defer src="src/reports/report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1"></script>
@@ -1593,6 +1609,9 @@
     <script defer src="src/home/home_detalhes-1.18.5.js?v=20261017-admin-panorama-r1&meudia=20260915-owner-r1"></script>
     <script defer src="src/core/data_governance.js?v=1.17.0-evaluation"></script>
 
+    <section id="camera_phone" class="camera-phone" hidden role="dialog" aria-modal="true" aria-labelledby="camera_phone_title">
+        <div class="camera-phone-card"><h1 id="camera_phone_title">KineSys Câmera</h1><p id="camera_phone_status" role="status">Entre com a mesma conta e perfil do computador.</p><label for="camera_phone_file">Fotografar e enviar ao computador</label><input id="camera_phone_file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled><p>Aguarde a confirmação de gravação antes de fechar. Não use dados móveis: conecte o iPhone à mesma rede Wi-Fi do computador.</p><button type="button" class="btn-secondary" id="camera_phone_exit">Fechar câmera</button></div>
+    </section>
     <div id="engine_info_modal" class="engine-info-modal" hidden onclick="if(event.target===this) fecharInfoMotorClinico()">
         <div class="engine-info-card" role="dialog" aria-modal="true" aria-labelledby="engine_info_title">
             <h3 id="engine_info_title">Sobre o motor clínico</h3>
