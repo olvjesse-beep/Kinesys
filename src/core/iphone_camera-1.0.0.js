@@ -53,7 +53,7 @@
  }
  async function authorizedFolder(){
   const c=context(),handle=await loadRoot();assertContext(c);
-  if(!handle)throw Error('Primeiro clique em Escolher pasta dos originais.');
+  if(!handle)throw Error('Primeiro escolha a pasta dos originais no botão Alterar pasta.');
   if(await handle.queryPermission({mode:'readwrite'})!=='granted' && await handle.requestPermission({mode:'readwrite'})!=='granted')throw Error('Autorize a pasta antes de conectar o iPhone.');
   assertContext(c);return handle;
  }

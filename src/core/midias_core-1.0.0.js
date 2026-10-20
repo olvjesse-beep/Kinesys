@@ -93,7 +93,7 @@ function configurarMidiasPorPerfil() {
     const btnComparar = document.getElementById('midia_btn_comparar');
     if (btnComparar) btnComparar.style.display = secretaria ? 'none' : 'inline-flex';
     const titulo = document.getElementById('midia_galeria_titulo');
-    if (titulo) titulo.textContent = secretaria ? 'Documentos administrativos' : 'Galeria clínica e documental';
+    if (titulo) titulo.textContent = secretaria ? 'Documentos administrativos' : (document.getElementById('tela_midias')?.dataset.documentsLayout==='2'?'Arquivos do prontuário':'Galeria clínica e documental');
     const captura = document.getElementById('btn_captura_iphone');
     if (captura) captura.textContent = secretaria ? 'Digitalizar documento com iPhone' : 'Capturar com iPhone';
 }
@@ -359,26 +359,47 @@ function formatarTamanhoArquivo(bytes){const n=Number(bytes)||0;if(n<1024)return
 function rotuloTipoMidia(t){return ({avaliacao:'Avaliação',evolucao:'Evolução',postura:'Postura',ferida:'Ferida / cicatriz',edema:'Edema',exame:'Exame / laudo',termo:'Termo / autorização',identificacao:'Identificação / CPF / RG',guia:'Guia / pedido',documento:'Documento',outro_admin:'Outro documento',outro:'Outro'}[t]||'Registro');}
 function urlMidiaLocal(item,thumb=true){if(item.cloud_thumbnail)return /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(item.thumbnail||'')&&item.thumbnail.length<=90000?item.thumbnail:'';return `${KINESYS_LOCAL_URL}/${thumb?'thumb':'media'}/${encodeURIComponent(item.id)}?v=${encodeURIComponent(item.sha256||item.captured_at||'')}`;}
 
+// Deterministic, read-only view model. Permission filtering always precedes UI filters.
+function organizarListaMidias(registros, permitidos, filtro='', categoria='all'){
+    return registros.filter(item=>permitidos.includes(item.type||'outro') && (!filtro||item.type===filtro)
+        && (categoria==='all'||(categoria==='photos')===String(item.mime_type||'').toLowerCase().startsWith('image/')))
+        .slice().sort((a,b)=>(Date.parse(b.captured_at)||0)-(Date.parse(a.captured_at)||0));
+}
+function rotuloDataMidia(value){
+    const date=new Date(value||'');
+    if(!Number.isFinite(date.getTime()))return 'Data não informada';
+    const today=new Date();
+    const label=date.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+    return date.toDateString()===today.toDateString()?'Hoje, '+label:label;
+}
 function renderizarGaleriaMidias(){
     const gal=document.getElementById('midia_galeria'); if(!gal)return;
+    const selecao=document.getElementById('midia_paciente_select');
+    if(selecao&&!selecao.value){gal.innerHTML='<p class="midia-empty">Selecione um paciente para visualizar os registros.</p>';return;}
     const filtro=document.getElementById('midia_filtro_tipo')?.value||'';
     const permitidos=tiposMidiaPermitidosParaPerfil();
-    const itens=midiasPacienteAtual.filter(x=>permitidos.includes(x.type||'outro') && (!filtro||x.type===filtro));
+    const categoria=document.getElementById('tela_midias')?.dataset.mediaCategory||'all';
+    const itens=organizarListaMidias(midiasPacienteAtual,permitidos,filtro,categoria);
     if(!itens.length){gal.innerHTML='<p class="midia-empty">Nenhuma foto ou documento registrado para este filtro.</p>';return;}
+    let grupoAnterior='';
     gal.innerHTML=itens.map(item=>{
         const local=!item.cloud_only && (item.cloud_thumbnail || kinesysLocalOnline);
         const dt=item.captured_at?new Date(item.captured_at).toLocaleString('pt-BR'):'Data N/I';
         const ehImagem=String(item.mime_type||'').toLowerCase().startsWith('image/');
-        const iconeDoc=String(item.mime_type||'').toLowerCase().includes('pdf')?'PDF':'📄';
+        const iconeDoc=String(item.mime_type||'').toLowerCase().includes('pdf')?'PDF':'Arquivo';
         const thumbSeguro=item.cloud_thumbnail&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(item.thumbnail||'')&&item.thumbnail.length<=90000;
-        const img=(thumbSeguro||(local&&ehImagem&&!item.cloud_thumbnail))?`<img src="${thumbSeguro?item.thumbnail:urlMidiaLocal(item,true)}" alt="Registro clínico" loading="lazy" onerror="this.parentElement.innerHTML='📄'">`:`<span class="ks-media-doc-icon ${iconeDoc==='PDF'?'ks-media-doc-icon--pdf':'ks-media-doc-icon--generic'}">${iconeDoc}</span>`;
-        return `<article class="midia-card">
+        const img=(thumbSeguro||(local&&ehImagem&&!item.cloud_thumbnail))?`<img src="${thumbSeguro?item.thumbnail:urlMidiaLocal(item,true)}" alt="${escapeHTML(rotuloTipoMidia(item.type))}" loading="lazy" onerror="this.hidden=true;this.parentElement.setAttribute('aria-label','Prévia indisponível')">`:`<img class="documents-file-icon" src="assets/vendor/tabler/${iconeDoc==='PDF'?'file-type-pdf':'file'}.svg" alt="${iconeDoc}">`;
+        const argumento=escapeHTML(JSON.stringify(String(item.id)));
+        const grupo=rotuloDataMidia(item.captured_at);
+        const heading=grupo!==grupoAnterior?`<h3 class="documents-date">${escapeHTML(grupo)}</h3>`:'';
+        grupoAnterior=grupo;
+        return `${heading}<article class="midia-card">
             <div class="midia-thumb">${img}</div>
             <div class="midia-card-body">
                 <div class="midia-card-title">${escapeHTML(rotuloTipoMidia(item.type))}${item.region?' · '+escapeHTML(item.region):''}</div>
                 <div class="midia-card-meta">${escapeHTML(dt)}<br>${escapeHTML(item.filename||'arquivo')} · ${escapeHTML(formatarTamanhoArquivo(item.size_bytes))}</div>
                 <div class="midia-card-badges"><span class="midia-badge ${local?'ok':'warn'}">${local?'Original local':'Original não disponível nesta estação'}</span><span class="midia-badge ${item.backup_status==='ok'?'ok':'warn'}">Backup ${item.backup_status==='ok'?'OK':'pendente'}</span></div>
-                <div class="midia-card-actions">${local?`<button onclick="abrirMidiaLocal('${escapeHTML(item.id)}')">Abrir original</button>`:''}${!perfilEhSecretaria()&&(local||item.cloud_thumbnail)?`<button onclick="selecionarMidiaComparacao('${escapeHTML(item.id)}','A')">Inicial</button><button onclick="selecionarMidiaComparacao('${escapeHTML(item.id)}','B')">Atual</button>`:''}</div>
+                <details class="documents-row-menu"><summary aria-label="Ações do arquivo"><img src="assets/vendor/tabler/dots.svg" alt=""></summary><div class="midia-card-actions">${local?`<button onclick="abrirMidiaLocal(${argumento})">Abrir original</button>`:'<span>O original está em outra estação.</span>'}${ehImagem&&!perfilEhSecretaria()&&(local||item.cloud_thumbnail)?`<button onclick="selecionarMidiaComparacao(${argumento},'A')">Comparar como inicial</button><button onclick="selecionarMidiaComparacao(${argumento},'B')">Comparar como atual</button>`:''}</div></details>
             </div></article>`;
     }).join('');
 }
