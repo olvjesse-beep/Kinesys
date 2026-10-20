@@ -3494,9 +3494,6 @@ async function abrirDetalheAgendamento(id) {
     if (!a) return;
     if (!usuarioPodeVerAgendaClinicaToda()) return abrirDetalheAgendaPessoal(a);
     agendamentoDetalheAtualId = id;
-    let respostaTexto = 'Ainda sem resposta do paciente';
-    if (a.confirmado_pelo_paciente === true) respostaTexto = '✅ Paciente confirmou presença';
-    else if (a.confirmado_pelo_paciente === false) respostaTexto = '⚠️ Paciente avisou que não vai poder ir';
     let planos = [];
     if (typeof obterPlanosAtivosPaciente === 'function') planos = await obterPlanosAtivosPaciente(a.paciente_id);
     const planosVinculaveis = planos.filter(p=>p.__vinculavel || p.__vinculavel_nuvem || p.__vinculavel_local || String(p.id)===String(a.plano_id||''));
@@ -3528,7 +3525,6 @@ async function abrirDetalheAgendamento(id) {
         <p><strong>Procedimento:</strong> ${escapeHTML(a.procedimentos?.nome || '—')}</p>
         <p><strong>Horário:</strong> ${horaCurta(a.hora_inicio)} – ${horaCurta(a.hora_fim)} ${agendamentoEhHorarioExtraordinario(a) ? '<span class="badge agenda-extra-badge">Horário extraordinário</span>' : ''}</p>
         <p><strong>Status atual:</strong> <span class="badge badge-${escapeHTML(classeStatusAgenda(a.status))}">${escapeHTML(rotuloStatusAgenda(a.status))}</span></p>
-        <p><strong>Confirmação:</strong> ${respostaTexto}</p>
         ${linhaPagamento}
         ${a.resposta_em ? `<p><strong>Resposta registrada em:</strong> ${new Date(a.resposta_em).toLocaleString('pt-BR')}</p>` : ''}
         ${a.observacoes ? `<p><strong>Observações do agendamento:</strong> ${escapeHTML(a.observacoes)}</p>` : ''}
