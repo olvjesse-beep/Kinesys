@@ -1,10 +1,10 @@
-/* KineSys: original -> pasta autorizada; miniatura -> Supabase; WebRTC sem relay de fotos. */
+/* KineSys: original -> pasta autorizada; miniatura -> Supabase.
+ * Camera v2 uses ephemeral end-to-end encrypted Broadcast, never cloud photo storage. */
 (function () {
  'use strict';
- const MAX=25*1024*1024, UUID=/^[a-f0-9-]{36}$/i;
- let dbPromise, root=null, scope='', active=null, phone=null, phoneAttempt=false, starting=false, syncing=false;
+ const MAX=25*1024*1024;
+ let dbPromise, root=null, scope='', active=null, starting=false, syncing=false;
  const localIds=new Set(), objectUrls=new Set();
- const cameraId=new URL(location.href).searchParams.get('camera');
  const $=id=>document.getElementById(id);
  const status=t=>{if($('camera_status'))$('camera_status').textContent=t;};
  const errorText=e=>e?.message||String(e);
@@ -27,6 +27,13 @@
    const tx=d.transaction('items',op==='get'?'readonly':'readwrite'),s=tx.objectStore('items');
    const r=op==='get'?s.get(k):op==='delete'?s.delete(k):s.put(v,k);let result;
    r.onsuccess=()=>{result=r.result;};tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Armazenamento local interrompido.'));
+  });
+ }
+ async function updateLocal(k,update){
+  const d=await db();return new Promise((resolve,reject)=>{
+   const tx=d.transaction('items','readwrite'),store=tx.objectStore('items'),request=store.get(k);let value;
+   request.onsuccess=()=>{try{value=update(request.result);store.put(value,k);}catch(e){reject(e);tx.abort?.();}};
+   tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Armazenamento local interrompido.'));
   });
  }
  async function loadRoot(){
@@ -93,89 +100,99 @@
   const record={id,clinica_id:s.ctx.clinica,paciente_id:s.row.paciente_id,profissional_id:s.ctx.perfil,profissional_nome:s.ctx.nome,tipo:s.row.tipo,data_hora:now.toISOString(),arquivo_nome:filename,caminho_relativo:[...parts,filename].join('/'),tamanho_bytes:meta.size,mime_type:meta.mime,sha256:meta.sha256,...thumb,estacao:s.folder.name};
   // Durable outbox: cloud failure never loses the local original or silently claims sync.
   await local('put','photo:'+key(s.ctx)+':'+id,{handle,record});
-  const ids=await local('get','ids:'+key(s.ctx))||[];ids.push(id);await local('put','ids:'+key(s.ctx),ids);localIds.add(id);
-  const pending=await local('get','pending:'+key(s.ctx))||[];pending.push(record);await local('put','pending:'+key(s.ctx),pending);
-  await syncPending(s.ctx);return record;
+  await updateLocal('ids:'+key(s.ctx),ids=>[...(ids||[]),id]);localIds.add(id);
+  await updateLocal('pending:'+key(s.ctx),pending=>[...(pending||[]),record]);
+  try{await syncPending(s.ctx,record.id);}catch(e){e.savedId=record.id;throw e;}return record;
  }
- async function syncPending(c=context()){
+ async function cloudRequest(query){
+  const controller=new AbortController();let timer;
+  try{return await Promise.race([typeof query.abortSignal==='function'?query.abortSignal(controller.signal):query,new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('Tempo de sincronização esgotado.'));},15000);})]);}
+  finally{clearTimeout(timer);}
+ }
+ async function syncPending(c=context(),onlyId){
   if(syncing)throw Error('Já existe uma sincronização em andamento. Aguarde.');syncing=true;
   try{
-  const pending=await local('get','pending:'+key(c))||[],failed=[];
+  const pending=(await local('get','pending:'+key(c))||[]).filter(record=>!onlyId||record.id===onlyId),completed=new Set();
   for(const record of pending){
-   assertContext(c);const {error}=await _supabase.from('midias_miniaturas').insert(record);
+   assertContext(c);let error;try{({error}=await cloudRequest(_supabase.from('midias_miniaturas').insert(record)));}catch(_){continue;}
    if(error){
     if(error.code==='23505'){
-     const existing=await _supabase.from('midias_miniaturas').select('id,sha256,paciente_id,clinica_id').eq('id',record.id).maybeSingle();
-     if(existing.error||existing.data?.sha256!==record.sha256||existing.data?.paciente_id!==record.paciente_id||existing.data?.clinica_id!==record.clinica_id)failed.push(record);
-    }else failed.push(record);
-   }
+     let existing;try{existing=await cloudRequest(_supabase.from('midias_miniaturas').select('id,sha256,paciente_id,clinica_id').eq('id',record.id).maybeSingle());}catch(_){continue;}
+     if(!existing.error&&existing.data?.sha256===record.sha256&&existing.data?.paciente_id===record.paciente_id&&existing.data?.clinica_id===record.clinica_id)completed.add(record.id);
+    }
+   }else completed.add(record.id);
   }
-  assertContext(c);await local('put','pending:'+key(c),failed);
-  if(failed.length)throw Error('Original salvo na pasta. A miniatura ainda não foi sincronizada. Clique em Reenviar miniaturas pendentes; não fotografe novamente.');
+  assertContext(c);await updateLocal('pending:'+key(c),latest=>(latest||[]).filter(record=>!completed.has(record.id)));
+  if(pending.some(record=>!completed.has(record.id)))throw Error('Original salvo na pasta. A miniatura ainda não foi sincronizada. Clique em Reenviar miniaturas pendentes; não fotografe novamente.');
   }finally{syncing=false;}
  }
  async function retry(){try{await syncPending();status('Miniaturas sincronizadas. Originais preservados no computador.');await atualizarGaleriaMidias(true);}catch(e){status(errorText(e));}}
- function iceComplete(pc){return new Promise((resolve,reject)=>{
-  if(pc.iceGatheringState==='complete'){resolve();return;}
-  const timeout=setTimeout(()=>{clean();reject(Error('A conexão local demorou. Verifique a rede Wi-Fi e tente novamente.'));},15000);
-  const on=()=>{if(pc.iceGatheringState==='complete'){clean();resolve();}};
-  function clean(){clearTimeout(timeout);pc.removeEventListener('icegatheringstatechange',on);}pc.addEventListener('icegatheringstatechange',on);
- });}
- function peer(){if(!window.RTCPeerConnection)throw Error('Este navegador não oferece a conexão direta de câmera.');return new RTCPeerConnection({iceServers:[]});}
  async function closeDesktop(message='Captura cancelada. Gere outro QR code para continuar.'){
-  const old=active;active=null;if(old){clearTimeout(old.timer);clearTimeout(old.deadline);old.pc.close();
-   try{await _supabase.from('midias_camera_sessoes').delete().eq('id',old.row.id);}catch(_){}
-  }
+  const old=active;active=null;if(old){clearTimeout(old.deadline);clearTimeout(old.receiptTimer);old.chunks=[];
+   if(old.relay){try{await old.relay.request('cancel',{message},250);}catch(_){}old.relay.close();}}
   if(active)return;
   if($('camera_pair'))$('camera_pair').hidden=true;status(message);
  }
  async function start(){
   if(starting){status('A conexão já está sendo preparada. Aguarde.');return;}starting=true;
-  let pc;
+  let s;
   try{
-   if(active)throw Error('Já existe uma captura aberta. Cancele-a antes de gerar outro QR code.');
+   if(active?.finishing&&!active.savedResult)throw Error('Aguarde a verificação da foto antes de gerar outro QR code.');
+   if(active)await closeDesktop('Conexão anterior encerrada.');
    const ctx=context(),folder=await authorizedFolder(),paciente=await sincronizarPacienteMidias(false);assertContext(ctx);
    if(!paciente)throw Error('Escolha o paciente antes de conectar o iPhone.');
    if(!/^https:/.test(location.protocol))throw Error('O iPhone precisa abrir o endereço HTTPS publicado do KineSys. A prévia 127.0.0.1 não funciona no celular.');
    const tipo=$('camera_tipo')?.value||'avaliacao';if(!tiposMidiaPermitidosParaPerfil().includes(tipo))throw Error('Tipo de fotografia não permitido para este perfil.');
-   pc=peer();const channel=pc.createDataChannel('kinesys-foto',{ordered:true});
-   status('Preparando conexão direta…');await pc.setLocalDescription(await pc.createOffer());await iceComplete(pc);assertContext(ctx);
-   if(String(obterPacienteIdMidiasAtivo())!==String(paciente))throw Error('O paciente mudou durante a conexão. Tente novamente.');
-   const {data:row,error}=await _supabase.from('midias_camera_sessoes').insert({clinica_id:ctx.clinica,paciente_id:paciente,perfil_id:ctx.perfil,tipo,offer:pc.localDescription.toJSON()}).select().single();if(error)throw error;
-   assertContext(ctx);if(String(obterPacienteIdMidiasAtivo())!==String(paciente)){
-    await _supabase.from('midias_camera_sessoes').delete().eq('id',row.id);throw Error('O paciente mudou. A conexão foi cancelada.');
-   }
-   const s={ctx,folder,pc,row,channel,chunks:[],meta:null,count:0,started:false,finishing:false};active=s;bindReceiver(s);
-   const link=new URL(location.href);link.search='';link.searchParams.set('camera',row.id);link.hash='tela_login';
+   const transport=window.KineSysCameraTransport;if(!transport)throw Error('Atualize a página antes de conectar o iPhone.');
+   const cap=transport.capability();
+   s={ctx,folder,row:{id:crypto.randomUUID(),paciente_id:paciente,tipo,expira_em:new Date(cap.expires).toISOString()},chunks:[],meta:null,count:0,seq:0,started:false,finishing:false,phoneDevice:null};active=s;
+   status('Preparando captura segura…');
+   s.relay=await transport.connect(cap,'desktop',(op,body)=>handleCaptureRequest(s,op,body),e=>{if(active===s)closeDesktop(e.message);});
+   assertActive(s);
+   const link=new URL('camera.html',location.href);link.searchParams.set('v','20261020-camera-r2');link.hash=new URLSearchParams({r:cap.room,k:cap.secret,e:String(cap.expires)}).toString();
    const qr=qrcode(0,'M');qr.addData(link.href);qr.make();$('camera_qr').innerHTML=qr.createSvgTag({cellSize:4,margin:4,scalable:true});
    $('camera_link').href=link.href;$('camera_link').textContent='Abrir câmera neste dispositivo';$('camera_pair').hidden=false;
-   status('Leia o QR code com o iPhone. Entre com a mesma conta e o mesmo perfil do computador. Ambos devem estar na mesma rede Wi-Fi. O QR code expira em 10 minutos.');
-   s.deadline=setTimeout(()=>closeDesktop('QR code expirado. Gere outro para continuar.'),Math.max(0,Date.parse(row.expira_em)-Date.now()));
-   const poll=async()=>{if(active!==s)return;try{
-    assertActive(s);const {data,error}=await _supabase.from('midias_camera_sessoes').select('answer').eq('id',row.id).maybeSingle();if(error)throw error;
-    if(data?.answer&&!pc.remoteDescription){await pc.setRemoteDescription(data.answer);status('iPhone conectado. Tire a foto e confirme o envio no celular.');}
-   }catch(e){await closeDesktop(errorText(e));return;}if(active===s)s.timer=setTimeout(poll,1800);};poll();
-   pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed')closeDesktop('Não foi possível conectar. Use a mesma rede Wi-Fi, sem rede de convidados ou isolamento de dispositivos.');};
-  }catch(e){if(pc&&active?.pc!==pc)pc.close();status(errorText(e));}finally{starting=false;}
+   status('Leia o QR code no iPhone: não precisa entrar no KineSys. Autorize a câmera, tire a foto e aguarde a confirmação. Não compartilhe este QR code.');
+   s.deadline=setTimeout(()=>{if(active===s)closeDesktop('QR code expirado. Gere outro para continuar.');},Math.max(0,cap.expires-Date.now()));
+  }catch(e){if(s){if(active===s)await closeDesktop(errorText(e));else s.relay?.close();}status(errorText(e));}finally{starting=false;}
  }
- function bindReceiver(s){
-  const ch=s.channel;ch.binaryType='arraybuffer';
-  ch.onmessage=async e=>{try{
-   assertActive(s);
-   if(typeof e.data==='string'){
-    const m=JSON.parse(e.data);
-    if(m.op==='start'){if(s.started)throw Error('Esta conexão aceita uma única foto.');s.meta=validateMeta(m);s.started=true;}
-    else if(m.op==='end'){
-     if(!s.started||s.finishing||s.count!==s.meta.size)throw Error('Transferência incompleta. Tente novamente.');s.finishing=true;
-     const result=await persistPhoto(s,new Blob(s.chunks,{type:s.meta.mime}),s.meta);s.chunks=[];
-     ch.send(JSON.stringify({op:'saved',id:result.id}));status('Foto salva e verificada na pasta; miniatura sincronizada no prontuário.');
-     await atualizarGaleriaMidias(true);setTimeout(()=>{if(active===s)closeDesktop('Foto salva. Para outra foto, gere um novo QR code.');},2000);
-    }else throw Error('Mensagem de captura inválida.');
-   }else{
-    if(!s.started||s.finishing||!(e.data instanceof ArrayBuffer)||e.data.byteLength>65536)throw Error('Bloco de foto inválido.');
-    s.count+=e.data.byteLength;if(s.count>s.meta.size||s.count>MAX)throw Error('Arquivo maior que o informado.');s.chunks.push(e.data);
-   }
-  }catch(e){try{ch.send(JSON.stringify({op:'error',message:errorText(e)}));}catch(_){}await closeDesktop(errorText(e));}};
+ async function handleCaptureRequest(s,op,m){
+  assertActive(s);
+  if(op==='hello'){
+   if(!/^[a-f0-9]{64}$/.test(m?.device||''))throw Error('Conexão inválida.');
+   if(s.phoneDevice&&s.phoneDevice!==m.device)throw Error('Este QR code já foi conectado a outro celular. Gere outro.');
+   s.phoneDevice=m.device;status('iPhone conectado. A foto será enviada para o paciente selecionado neste computador.');return {ready:true};
+  }
+  if(!s.phoneDevice||m?.device!==s.phoneDevice)throw Error('Celular não autorizado nesta captura.');
+  if(op==='received'){
+   if(!s.savedResult)throw Error('A gravação ainda não foi confirmada.');
+   clearTimeout(s.receiptTimer);s.receiptTimer=setTimeout(()=>{if(active===s)closeDesktop(s.savedResult.pending?'Original salvo. Reenvie a miniatura pendente pelo computador.':'Foto salva. Para outra foto, gere um novo QR code.');},2000);return {received:true};
+  }
+  if(op==='start'){
+   if(s.started)throw Error('Esta conexão aceita uma única foto. Gere outro QR code.');
+   s.meta=validateMeta(m);s.started=true;s.seq=0;return {ready:true};
+  }
+  if(op==='chunk'){
+   if(!s.started||s.finishing||m.seq!==s.seq)throw Error('Bloco de foto inválido ou fora de ordem.');
+   const bytes=window.KineSysCameraTransport.unb64(m.data);
+   if(!bytes.length||bytes.length>window.KineSysCameraTransport.CHUNK||s.count+bytes.length>s.meta.size||s.count+bytes.length>MAX)throw Error('Arquivo maior que o informado.');
+   s.count+=bytes.length;s.seq++;s.chunks.push(bytes);
+   status('Recebendo foto… '+Math.round(s.count/s.meta.size*100)+'%');return {received:s.seq};
+  }
+  if(op==='end'){
+   if(!s.started||s.finishing||s.count!==s.meta.size)throw Error('Transferência incompleta. Gere outro QR code.');
+   s.finishing=true;let result;
+   try{const record=await persistPhoto(s,new Blob(s.chunks,{type:s.meta.mime}),s.meta);result={saved:true,id:record.id,pending:false};status('Foto salva e verificada na pasta; miniatura sincronizada no prontuário.');}
+   catch(e){if(!e.savedId){status('Não foi possível concluir: '+errorText(e));throw e;}result={saved:true,id:e.savedId,pending:true};status(errorText(e));}
+   finally{s.chunks=[];}
+   // Refresh cannot turn a verified disk save into a false failure on the phone.
+   Promise.resolve().then(()=>atualizarGaleriaMidias(true)).catch(()=>{});
+   s.savedResult=result;
+   // Keep the cached save result available across all three 20-second retries.
+   s.receiptTimer=setTimeout(()=>{if(active===s)closeDesktop(result.pending?'Original salvo. Reenvie a miniatura pendente pelo computador.':'Foto salva. Para outra foto, gere um novo QR code.');},70000);
+   return result;
+  }
+  throw Error('Mensagem de captura inválida.');
  }
  async function list(paciente){
   const c=context();await folderInfo();assertContext(c);
@@ -190,48 +207,13 @@
    const file=await photo.handle.getFile();assertContext(c);if(await hash(await file.arrayBuffer())!==photo.record.sha256)throw Error('O arquivo foi alterado fora do KineSys. Confira o original na pasta.');const url=URL.createObjectURL(file);objectUrls.add(url);window.open(url,'_blank','noopener');
   }catch(e){status('Original indisponível: '+errorText(e));}
  }
- async function receivePhone(){
-  if(!cameraId||phoneAttempt)return;phoneAttempt=true;
-  try{
-   if(!UUID.test(cameraId))throw Error('QR code inválido.');const ctx=context();
-   const {data:row,error}=await _supabase.from('midias_camera_sessoes').select('*').eq('id',cameraId).maybeSingle();if(error)throw error;
-   if(!row||row.concluida_em||Date.parse(row.expira_em)<=Date.now())throw Error('QR code expirado ou vinculado a outra conta/perfil. Gere outro no computador e entre com a mesma conta.');
-   const pc=peer();phone={pc,row,ctx,channel:null,busy:false};
-   const panel=$('camera_phone');panel.hidden=false;$('camera_phone_status').textContent='Conectando ao computador…';
-   pc.ondatachannel=event=>{
-    phone.channel=event.channel;event.channel.onopen=()=>{$('camera_phone_status').textContent='Conectado. Confira no computador o paciente e tire a foto.';$('camera_phone_file').disabled=false;};
-    event.channel.onmessage=e=>{const m=JSON.parse(e.data);if(m.op==='saved'){$('camera_phone_status').textContent='Foto salva no computador e miniatura sincronizada. Você pode fechar esta página.';phone.busy=false;}else if(m.op==='error'){$('camera_phone_status').textContent=m.message;phone.busy=false;}};
-    event.channel.onclose=()=>{if(phone?.busy)$('camera_phone_status').textContent='Conexão encerrada sem confirmação. Confira a pasta e as miniaturas pendentes no computador antes de tentar novamente.';};
-   };
-   await pc.setRemoteDescription(row.offer);await pc.setLocalDescription(await pc.createAnswer());await iceComplete(pc);assertContext(ctx);
-   const result=await _supabase.from('midias_camera_sessoes').update({answer:pc.localDescription.toJSON()}).eq('id',row.id).is('answer',null).select('id');if(result.error)throw result.error;if(!result.data?.length)throw Error('Este QR code já foi utilizado. Gere outro.');
-   phone.deadline=setTimeout(()=>{pc.close();$('camera_phone_status').textContent='Conexão expirada. Gere outro QR code.';},Math.max(0,Date.parse(row.expira_em)-Date.now()));
-  }catch(e){if(phone?.pc)phone.pc.close();$('camera_phone').hidden=false;$('camera_phone_status').textContent=errorText(e);}
- }
- async function sendPhoto(input){
-  const p=phone,f=input.files?.[0];if(!f||!p||p.busy)return;
-  try{
-   assertContext(p.ctx);if(Date.now()>=Date.parse(p.row.expira_em))throw Error('Conexão expirada. Gere outro QR code.');
-   if(p.channel?.readyState!=='open')throw Error('A conexão direta ainda não está pronta.');
-   if(!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size<=0||f.size>MAX)throw Error('Use JPEG, PNG ou WEBP até 25 MB. No iPhone, prefira capturar uma nova foto para enviar em JPEG.');
-   p.busy=true;input.disabled=true;const buffer=await f.arrayBuffer(),sha256=await hash(buffer);assertContext(p.ctx);
-   p.channel.send(JSON.stringify({op:'start',size:f.size,mime:f.type,sha256}));
-   for(let offset=0;offset<buffer.byteLength;offset+=16384){
-    while(p.channel.bufferedAmount>262144){if(p.channel.readyState!=='open'||Date.now()>=Date.parse(p.row.expira_em))throw Error('Transferência interrompida.');await new Promise(r=>setTimeout(r,25));}
-    assertContext(p.ctx);p.channel.send(buffer.slice(offset,offset+16384));$('camera_phone_status').textContent=`Enviando foto… ${Math.round(Math.min(offset+16384,f.size)/f.size*100)}%`;
-   }
-   p.channel.send(JSON.stringify({op:'end'}));$('camera_phone_status').textContent='Foto enviada. Aguarde o computador confirmar a gravação na pasta.';
-  }catch(e){p.busy=false;$('camera_phone_status').textContent=errorText(e);input.disabled=false;}finally{input.value='';}
- }
- function exitPhone(){if(phone){clearTimeout(phone.deadline);phone.pc.close();}phone=null;$('camera_phone').hidden=true;const u=new URL(location.href);u.searchParams.delete('camera');history.replaceState(null,'',u.href);}
  async function boot(){
-  if(cameraId){const wait=setInterval(()=>{try{context();clearInterval(wait);receivePhone();}catch(_){}},1200);window.addEventListener('pagehide',()=>clearInterval(wait),{once:true});}
   $('camera_choose')?.addEventListener('click',chooseFolder);$('camera_start')?.addEventListener('click',start);$('camera_cancel')?.addEventListener('click',()=>closeDesktop());$('camera_retry')?.addEventListener('click',retry);
-  $('camera_phone_file')?.addEventListener('change',e=>sendPhoto(e.target));$('camera_phone_exit')?.addEventListener('click',exitPhone);
   document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_midias')folderInfo();});
   document.addEventListener('kinesys:tela-desativada',e=>{if(e.detail?.id==='tela_midias'&&active)closeDesktop('Captura cancelada ao sair de Documentos.');});
   $('midia_paciente_select')?.addEventListener('change',()=>{if(active)closeDesktop('Paciente alterado. Gere outro QR code para evitar vincular a foto à pessoa errada.');});
-  window.addEventListener('pagehide',()=>{if(active)active.pc.close();if(phone)phone.pc.close();for(const u of objectUrls)URL.revokeObjectURL(u);});
+  $('camera_tipo')?.addEventListener('change',()=>{if(active)closeDesktop('Tipo de registro alterado. Gere outro QR code para a nova categoria.');});
+  window.addEventListener('pagehide',()=>{active?.relay?.close();for(const u of objectUrls)URL.revokeObjectURL(u);});
  }
  window.KineSysCamera={chooseFolder,start,cancel:closeDesktop,list,openOriginal,folderInfo,validateMeta,validateMagic,hash,safe};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
