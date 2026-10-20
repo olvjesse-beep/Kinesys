@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src wss://yulkylvkofeisbjwnxhe.supabase.co; img-src blob: data:; media-src blob:; base-uri 'none'; form-action 'none'">
+  <title>KineSys · Câmera</title>
+  <link rel="stylesheet" href="styles/camera_phone-1.0.0.css?v=20261020-camera-r2">
+  <script defer src="src/core/camera_transport-1.0.0.js?v=20261020-camera-r2"></script>
+  <script defer src="src/core/camera_phone-1.0.0.js?v=20261020-camera-r2"></script>
+</head>
+<body>
+  <main>
+    <header><span class="brand">KINESYS</span><span>Captura segura</span></header>
+    <h1>Fotografar para o computador</h1>
+    <p>Sem login. A foto será vinculada ao paciente escolhido no computador.</p>
+    <div class="viewfinder"><video id="phone_video" autoplay playsinline muted hidden aria-label="Prévia da câmera traseira"></video><span id="phone_placeholder">Preparando a câmera…</span></div>
+    <p id="phone_status" role="status" aria-live="polite">Conectando ao computador…</p>
+    <progress id="phone_progress" max="100" value="0" hidden aria-label="Progresso do envio"></progress>
+    <button id="phone_capture" type="button" disabled>Tirar foto e enviar</button>
+    <label class="alternative" id="phone_file_label" for="phone_file">Abrir câmera do iPhone / escolher foto</label>
+    <input id="phone_file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled>
+    <p class="note">Permita o uso da câmera quando o iPhone pedir. Mantenha esta página e o computador abertos até a confirmação. Cada QR code permite uma foto e vale por 10 minutos.</p>
+    <button id="phone_close" class="secondary" type="button">Encerrar captura</button>
+    <footer>Original na pasta do computador · Miniatura no prontuário</footer>
+  </main>
+</body>
+</html>
