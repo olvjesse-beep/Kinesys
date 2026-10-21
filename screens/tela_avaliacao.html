@@ -147,30 +147,14 @@
                 </div>
 
                 <div class="card clinical-secondary-card">
-                    <div class="clinical-section-heading compact-heading">
-                        <div><h2>Antecedentes e fatores modificadores</h2></div>
-                    </div>
+                    <div class="clinical-section-heading compact-heading"><h2>Antecedentes e fatores modificadores</h2></div>
+                    <details class="clinical-disclosure" data-context-key="saude"><summary><span>Saúde e hábitos</span><small>Condições e hábitos informados na entrevista.</small></summary><div class="disclosure-body"><div class="checkbox-group compact-chips"><label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>Hipertensão</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_diabetico"><span>Diabetes</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Consumo de álcool</span></label></div><div class="input-group"><label for="contexto_saude_observacao">Outras condições ou observações (opcional)</label><textarea id="contexto_saude_observacao" data-context-field rows="2" placeholder="Registre apenas o que foi informado…"></textarea></div></div></details>
 
-                    <details class="clinical-disclosure">
-                        <summary><span>Antecedentes, cirurgias e medicamentos</span><small>Comorbidades e informações farmacológicas relevantes</small></summary>
-                        <div class="disclosure-body">
-                            <div class="input-group"><span class="kds-group-label" id="marcadores_comorbidades_label">Marcadores e comorbidades</span><div class="checkbox-group compact-chips" role="group" aria-labelledby="marcadores_comorbidades_label">
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label>
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Etilismo</span></label>
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>HAS</span></label>
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_diabetico"><span>DM</span></label>
-                                <input type="checkbox" id="chk_corticoide" style="display:none;" aria-hidden="true">
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_sistemico"><span>Corticoide sistêmico</span></label>
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_infiltracao"><span>Infiltração recente</span></label>
-                                <label class="checkbox-pill"><input type="checkbox" id="chk_aine_recente"><span>AINE recente</span></label>
-                                <label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia / trauma</span></label>
-                            </div></div>
-                            <div id="bloco_cirurgias"><div class="input-group kds-u-pos-relative kds-u-z-98"><label for="input_cirurgia">Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div></div>
-                            <div class="input-group kds-u-pos-relative kds-u-z-97"><label for="input_medicamento">Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div>
-                        </div>
-                    </details>
+                    <details class="clinical-disclosure" data-context-key="cirurgias"><summary><span>Cirurgias e traumas</span><small>Registre o procedimento ou evento, sem presumir detalhes.</small></summary><div class="disclosure-body"><div class="checkbox-group compact-chips"><label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia ou trauma anterior</span></label></div><div id="bloco_cirurgias"><div class="input-group"><label for="input_cirurgia">Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div><div class="grid-2"><div class="input-group"><label for="contexto_cirurgia_regiao">Região e lado (se informados)</label><input id="contexto_cirurgia_regiao" data-context-field placeholder="Região / lado"></div><div class="input-group"><label for="contexto_cirurgia_data">Data aproximada (opcional)</label><input id="contexto_cirurgia_data" data-context-field placeholder="Mês/ano, se souber"></div></div></div><div class="input-group"><label for="contexto_trauma_observacao">Detalhes do trauma ou restrições informadas (opcional)</label><textarea id="contexto_trauma_observacao" data-context-field rows="2" placeholder="Descreva o evento ou a orientação recebida…"></textarea></div></div></details>
 
-                    <details class="clinical-disclosure">
+                    <details class="clinical-disclosure" data-context-key="medicamentos"><summary><span>Medicamentos e infiltrações</span><small>Busque pelo nome e registre o uso relatado; não é uma prescrição.</small></summary><div class="disclosure-body"><div class="checkbox-group compact-chips"><input type="checkbox" id="chk_corticoide" hidden aria-hidden="true"><label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_sistemico"><span>Corticoide sistêmico</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_corticoide_infiltracao"><span>Infiltração recente</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_aine_recente"><span>Anti-inflamatório recente</span></label></div><div class="input-group"><label for="input_medicamento">Medicamentos em uso</label><input type="text" id="input_medicamento" placeholder="Digite o medicamento..." autocomplete="off"><div id="sugestao_box_med" class="box-sugestoes"></div></div><div id="tags_medicamentos"></div><div class="input-group"><label for="contexto_medicamento_observacao">Detalhes do uso ou infiltração (opcional)</label><textarea id="contexto_medicamento_observacao" data-context-field rows="2" placeholder="Nome, período, dose ou frequência somente se informados…"></textarea></div></div></details>
+
+                    <details class="clinical-disclosure" data-context-key="exames">
                         <summary><span>Exames de imagem</span><small>Registre somente exames disponíveis ou informados pelo paciente</small></summary>
                         <div class="disclosure-body">
                             <div class="input-group">
@@ -188,8 +172,8 @@
                         </div>
                     </details>
 
-                    <details class="clinical-disclosure">
-                        <summary><span>Exposição ocupacional</span><small>Detalhar somente quando houver relação potencial com o quadro</small></summary>
+                    <details class="clinical-disclosure" data-context-key="trabalho">
+                        <summary><span>Trabalho e rotina</span><small>Detalhar somente quando houver relação potencial com o quadro</small></summary>
                         <div class="disclosure-body">
                             <p class="helper-text">A profissão gera contexto; o Radar considera apenas exposições confirmadas.</p>
                             <div class="checkbox-group compact-chips" id="grupo_exposicoes_ocupacionais">
@@ -200,12 +184,12 @@
                                 <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="repeticao_maos"><span>Repetição mãos/punhos</span></label>
                                 <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="vibracao"><span>Vibração</span></label>
                                 <label class="checkbox-pill"><input type="checkbox" class="chk_exposicao_ocupacional" value="manejo_pacientes"><span>Manejo de pacientes</span></label>
-                            </div><div id="sugestao_exposicoes_ocupacionais" class="helper-text"></div>
+                            </div><div id="sugestao_exposicoes_ocupacionais" class="helper-text"></div><div class="context-conditional" data-context-condition="checked"><h3>Detalhar exposição selecionada (opcional)</h3><div class="context-detail-grid"><div class="input-group"><label for="contexto_trabalho_tarefa">Tarefa ou atividade</label><input id="contexto_trabalho_tarefa" data-context-field placeholder="Descreva a tarefa…"></div><div class="input-group"><label for="contexto_trabalho_tempo">Tempo de exposição</label><input id="contexto_trabalho_tempo" data-context-field placeholder="Ex.: 2 horas/dia"></div><div class="input-group"><label for="contexto_trabalho_frequencia">Frequência</label><input id="contexto_trabalho_frequencia" data-context-field placeholder="Ex.: diária, semanal"></div></div><details class="context-extra"><summary>Adicionar observação (opcional)</summary><div class="input-group"><label for="contexto_trabalho_observacao">Carga ou observação (opcional)</label><textarea id="contexto_trabalho_observacao" data-context-field rows="2" placeholder="Detalhes relatados sobre a tarefa…"></textarea></div></details></div>
                         </div>
                     </details>
 
-                    <details class="clinical-disclosure">
-                        <summary><span>Carga esportiva</span><small>Frequência, dose e exposição predominante</small></summary>
+                    <details class="clinical-disclosure" data-context-key="atividade">
+                        <summary><span>Atividade física e carga</span><small>Frequência, dose e exposição predominante</small></summary>
                         <div class="disclosure-body">
                             <div class="grid-2 compact-grid"><div class="input-group"><label for="esporte_frequencia">Frequência semanal</label><input type="number" id="esporte_frequencia" min="0" max="14" placeholder="sessões/semana"></div><div class="input-group"><label for="esporte_duracao">Duração média</label><input type="number" id="esporte_duracao" min="0" placeholder="min/sessão"></div><div class="input-group"><label for="esporte_nivel">Nível</label><select id="esporte_nivel"><option value="">Não informado</option><option value="recreacional">Recreacional</option><option value="competitivo">Competitivo</option><option value="alto_rendimento">Alto rendimento</option></select></div><div class="input-group"><label for="esporte_mudanca_carga">Mudança recente de carga</label><select id="esporte_mudanca_carga"><option value="">Não informado</option><option value="nao">Sem aumento relevante</option><option value="leve">Aumento leve</option><option value="moderado">Aumento moderado</option><option value="acentuado">Aumento acentuado</option></select></div></div>
                             <div class="checkbox-group compact-chips" id="grupo_exposicoes_esportivas">
@@ -214,8 +198,8 @@
                         </div>
                     </details>
 
-                    <details class="clinical-disclosure">
-                        <summary><span>Fatores psicossociais</span><small>Yellow Flags — triagem breve contextual</small></summary>
+                    <details class="clinical-disclosure" data-context-key="psicossocial">
+                        <summary><span>Sono e contexto psicossocial</span><small>Yellow Flags — triagem breve contextual</small></summary>
                         <div class="disclosure-body">
                             <p class="helper-text">Não substitui instrumento psicométrico validado.</p>
                             <div class="checkbox-group compact-chips" id="grupo_yellow_flags">
@@ -225,7 +209,7 @@
                         </div>
                     </details>
 
-                    <details class="clinical-disclosure fonte-disclosure">
+                    <details class="clinical-disclosure fonte-disclosure" data-context-key="fonte">
                         <summary><span>Fonte dos dados</span><small id="fonte_dados_resumo">Relato do paciente</small></summary>
                         <div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
                     </details>
