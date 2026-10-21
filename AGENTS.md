@@ -132,6 +132,13 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Executar `evolution_persistence.contract.js` e `evolution_model1_roundtrip.test.cjs` na barreira hospedada de Agenda e Planos. Conferir layout amplo, notebooks e celular, detalhes abertos e parâmetros de carga acessíveis.
 - Remover essas decisões somente mediante pedido explícito do usuário; refatorações devem preservar o comportamento e ampliar os testes.
 
+## 13. Contratos permanentes de integração Avaliação → Relatório
+
+- Incorporar os detalhes preenchidos nos sete grupos da Anamnese, preservar a separação de medicamentos e cirurgias e sinalizar campos sem regra de integração. Negativa explícita, ausência e relato incompleto são estados distintos.
+- Regiões selecionadas sem resultados não podem ser apresentadas como examinadas, negativas ou confirmadas. Preservar resultados inconclusivos, alternativas dos itens compostos, doses, medidas, lateralidade e limites das hipóteses clínicas.
+- Não alterar a HMA de origem ao compor a narrativa nem completar trechos ambíguos por suposição. Texto profissional ou revisado não é substituído automaticamente; atualizar a base exige confirmação. Preservar data, autoria e registro profissional.
+- Executar `evaluation_clinical_correlation.contract.js` e `evaluation_report_integration.test.cjs` na barreira hospedada, sem reduzir os testes clínicos anteriores. Usar apenas dados sintéticos em testes e PRs.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.
