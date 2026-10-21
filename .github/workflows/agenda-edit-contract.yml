@@ -71,4 +71,7 @@ jobs:
           node tests/input_helpers_modularization.contract.js
           node tests/evaluation_context_lifecycle.contract.js
           node tests/evaluation_context_model2.test.cjs
+          node --check src/core/script-1.18.0.js
+          node tests/evolution_persistence.contract.js
+          node tests/evolution_model1_roundtrip.test.cjs
           git diff --check

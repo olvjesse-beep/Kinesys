@@ -632,6 +632,48 @@
             }
         }
         const hist=tela.querySelectorAll(':scope > .card');[...hist].slice(1).forEach((card,i)=>{card.classList.add('ks-collapsible-card');const head=card.querySelector('.card-header');if(head&&!head.querySelector('.ks-collapse-toggle')){const btn=document.createElement('button');btn.type='button';btn.className='ks-collapse-toggle';btn.innerHTML=`${i===0?'Histórico de sessões':'Linha do tempo completa'} ${icon('chevron')}`;btn.onclick=()=>card.classList.toggle('ks-expanded');head.innerHTML='';head.appendChild(btn);}});
+        prepararEvolucaoModelo1(tela,principal);
+    }
+
+    function prepararEvolucaoModelo1(tela,principal){
+        if(!principal||tela.classList.contains('ks-evo-model1'))return;
+        const vitais=tela.querySelector('.ks-evo-workspace-vitals'),relato=tela.querySelector('.ks-evo-narrative-card'),apoio=tela.querySelector('.ks-evo-workspace-support');
+        if(!vitais||!relato||!apoio)return;
+        tela.classList.add('ks-evo-model1');
+        const layout=document.createElement('div');layout.className='ks-evo-editor-layout';
+        const documento=document.createElement('div');documento.className='ks-evo-document';
+        principal.insertBefore(layout,principal.querySelector(':scope > .actions'));documento.append(vitais,relato);layout.append(documento,apoio);
+        principal.querySelectorAll('.ks-evo-workspace-details').forEach(e=>{if(!e.children.length)e.remove();});
+        const carga=apoio.querySelector('.ks-evo-load-details');if(carga){carga.style.display='';documento.append(carga);}
+        const titulo=vitais.querySelector('.ks-evo-vitals-heading');if(titulo)titulo.hidden=true;
+        const apoioTitulo=apoio.querySelector('.ks-evo-details-heading');if(apoioTitulo){apoioTitulo.querySelector('h3').textContent='Mudanças desde a última sessão';apoioTitulo.querySelector('p').textContent='Marque apenas o que mudou.';}
+        const labelRelato=relato.querySelector('label');if(labelRelato)labelRelato.textContent='Relato do paciente e conduta terapêutica';
+        const orientacao=document.createElement('p');orientacao.className='ks-evo-field-hint';orientacao.textContent='Registre a resposta do paciente, a intervenção realizada, a dosagem e a decisão para a próxima sessão.';labelRelato?.after(orientacao);
+        const estadoCabecalho=vitais.querySelector('.ks-evo-status-card .card-header');if(estadoCabecalho){const hint=document.createElement('p');hint.className='ks-evo-field-hint';hint.textContent='Comparado com a sessão anterior.';estadoCabecalho.append(hint);}
+        const evaLabel=vitais.querySelector('.ks-evo-eva-card>label');if(evaLabel)evaLabel.textContent='Selecione a dor (EVA)';
+        const editor=document.getElementById('evo_relato');editor.placeholder='Descreva a resposta do paciente, a intervenção realizada, a dosagem e a decisão para a próxima sessão.';
+        const contadorRelato=document.createElement('small');contadorRelato.className='ks-evo-character-count';relato.append(contadorRelato);
+        const campos=apoio.querySelector('.ks-evo-change-fields'),rows=[];
+        const defs=[['evo_novo_exame','evo_novo_exame_texto','Novo exame ou laudo'],['evo_nova_intercorrencia','evo_intercorrencia_texto','Intercorrência'],['evo_mudanca_medicacao','evo_medicacao_texto','Mudança de medicação'],['evo_novo_alerta','evo_alerta_texto','Sinal de alerta']];
+        defs.forEach(([id,campoId,nome])=>{
+            const check=document.getElementById(id),input=document.getElementById(campoId),label=check?.closest('label'),detail=input?.closest('.input-group');if(!check||!label||!detail)return;
+            const row=document.createElement('div');row.className='ks-evo-change-row';label.querySelector('span').textContent=nome;
+            const hint=document.createElement('small');hint.className='ks-evo-field-hint';hint.textContent=input.placeholder;label.querySelector('span').append(hint);
+            check.setAttribute('aria-controls',campoId+'-details');detail.id=campoId+'-details';
+            const count=document.createElement('small');count.className='ks-evo-character-count';detail.append(count);
+            const message=document.createElement('small');message.className='ks-evo-change-message';message.setAttribute('role','status');
+            row.append(label,detail,message);campos.append(row);rows.push({check,input,detail,count,message});
+            check.addEventListener('change',()=>{message.textContent='';if(!check.checked&&input.value.trim()){check.checked=true;message.textContent='O detalhe foi mantido. Apague o texto para desmarcar esta mudança.';}atualizar();});
+            input.addEventListener('input',()=>{if(input.value.trim())check.checked=true;atualizar();});
+        });
+        apoio.querySelectorAll(':scope > .checkbox-group').forEach(e=>{if(!e.querySelector('input'))e.remove();});
+        function atualizar(){
+            rows.forEach(({check,input,detail,count})=>{if(input.value.trim())check.checked=true;detail.hidden=!check.checked;check.setAttribute('aria-expanded',String(check.checked));count.textContent=input.value.length+' caracteres';});
+            contadorRelato.textContent=editor.value.length+' caracteres';
+            const salvar=document.getElementById('btn_salvar_evolucao');if(salvar&&salvar.textContent==='Registrar evolução')salvar.textContent='Salvar evolução';
+        }
+        editor.addEventListener('input',atualizar);
+        window.KineSysEvolucaoUI={atualizar};atualizar();
     }
 
     /* -------------------------- Relatório -------------------------- */
