@@ -852,6 +852,7 @@ async function atualizarSelectsPacientes() {
 
 async function salvarEvolucaoSessao() {
     const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId){alert('Selecione um paciente para registrar a evolução.');return;}sincronizarSelectPacienteEvolucao(pacienteId);
+    const edicaoNoInicio=evolucaoEdicaoId;
     const relatoLivre=document.getElementById('evo_relato').value.trim();if(!relatoLivre){alert('Preencha o relato/conduta da sessão.');return;}
     const realizadoInput=validarRealizacaoClinicaInput('evo_realizado_em');if(!realizadoInput)return;
     const estado=document.querySelector('input[name="evo_estado"]:checked')?.value||'igual';
@@ -859,16 +860,18 @@ async function salvarEvolucaoSessao() {
     const novoAlerta=!!document.getElementById('evo_novo_alerta')?.checked||!!mudancasDetalhes.novoAlerta;
     if(novoAlerta&&!mudancasDetalhes.novoAlerta){alert('Descreva o novo sinal de alerta antes de salvar.');return;}
     const pacienteAtual=await obterPacienteCompletoPorId(pacienteId);
+    if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId)||evolucaoEdicaoId!==edicaoNoInicio){alert('O contexto da evolução mudou. Confira o paciente e tente salvar novamente.');return;}
     const registroEmEdicao=evolucaoEdicaoId?(pacienteAtual?.evolucoes||[]).find(e=>String(e.id)===String(evolucaoEdicaoId)):null;
     if(evolucaoEdicaoId&&!registroEmEdicao){alert('Evolução em edição não encontrada. Recarregue o histórico.');evolucaoEdicaoId=null;return;}
     if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
     const avFinalizada=pacienteAtual?obterAvaliacaoFinalizadaMaisRecente(pacienteAtual):null;const excecao=!!document.getElementById('evo_excecao_sem_avaliacao')?.checked;const justificativaExcecao=document.getElementById('evo_justificativa_excecao')?.value.trim()||'';if(!avFinalizada&&(!excecao||justificativaExcecao.length<10)){alert('Este paciente não possui avaliação clínica finalizada. Finalize a avaliação ou marque a exceção e registre uma justificativa clínica/operacional (mínimo 10 caracteres).');return;}const avAtual=avFinalizada||(pacienteAtual?obterAvaliacaoMaisRecente(pacienteAtual):null);const restricoesAtuais=avAtual?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias||null;
-    const dadosEstruturados={estadoClinico:estado,atendimentoSemAvaliacaoFinalizada:!avFinalizada,justificativaExcecao:!avFinalizada?justificativaExcecao:'',mudancasDetalhes,novaIntercorrencia:!!document.getElementById('evo_nova_intercorrencia')?.checked||!!mudancasDetalhes.novaIntercorrencia,mudancaMedicacao:!!document.getElementById('evo_mudanca_medicacao')?.checked||!!mudancasDetalhes.mudancaMedicacao,novoExame:!!document.getElementById('evo_novo_exame')?.checked||!!mudancasDetalhes.novoExame,novoAlerta,restricoesPosOperatorias:restricoesAtuais,respostaCarga:{dorDurante:valorNumeroOuNull('evo_dor_durante'),dor24h:valorNumeroOuNull('evo_dor_24h'),rpe:valorNumeroOuNull('evo_rpe'),duracaoMin:valorNumeroOuNull('evo_duracao'),resposta24h:document.getElementById('evo_resposta_24h')?.value||'',edema:document.getElementById('evo_edema')?.value||''}};
+    const dadosEstruturados={...registroEmEdicao?.dadosEstruturados,estadoClinico:estado,atendimentoSemAvaliacaoFinalizada:!avFinalizada,justificativaExcecao:!avFinalizada?justificativaExcecao:'',mudancasDetalhes:{...registroEmEdicao?.dadosEstruturados?.mudancasDetalhes,...mudancasDetalhes},novaIntercorrencia:!!document.getElementById('evo_nova_intercorrencia')?.checked||!!mudancasDetalhes.novaIntercorrencia,mudancaMedicacao:!!document.getElementById('evo_mudanca_medicacao')?.checked||!!mudancasDetalhes.mudancaMedicacao,novoExame:!!document.getElementById('evo_novo_exame')?.checked||!!mudancasDetalhes.novoExame,novoAlerta,restricoesPosOperatorias:restricoesAtuais,respostaCarga:{...registroEmEdicao?.dadosEstruturados?.respostaCarga,dorDurante:valorNumeroOuNull('evo_dor_durante'),dor24h:valorNumeroOuNull('evo_dor_24h'),rpe:valorNumeroOuNull('evo_rpe'),duracaoMin:valorNumeroOuNull('evo_duracao'),resposta24h:document.getElementById('evo_resposta_24h')?.value||'',edema:document.getElementById('evo_edema')?.value||''}};
     if(registroEmEdicao?.dadosEstruturados && Object.prototype.hasOwnProperty.call(registroEmEdicao.dadosEstruturados,'mudancas')) dadosEstruturados.mudancas=registroEmEdicao.dadosEstruturados.mudancas;
     const resumoEstruturado=montarResumoEvolucaoEstruturada(dadosEstruturados);const relatoCompleto=`${resumoEstruturado}${resumoEstruturado?'\n\n':''}${relatoLivre}`;
     const prof=metadadosProfissionalLogado(), agora=new Date();
     const realizadoEm=registroEmEdicao?obterRealizadoEmRegistro(registroEmEdicao):realizadoInput;
     const registro={
+        ...registroEmEdicao,
         id:registroEmEdicao?.id||`ev_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
         agendamentoId:registroEmEdicao?.agendamentoId||registroEmEdicao?.agendamento_id||await resolverAgendamentoClinicoParaRegistro(pacienteId,realizadoEm,'evolucao'),
         data:String(realizadoEm).slice(0,10),
@@ -886,14 +889,16 @@ async function salvarEvolucaoSessao() {
         ultimaEdicaoPorId:registroEmEdicao?prof.profissionalId:null,
         ultimaEdicaoPorNome:registroEmEdicao?prof.profissionalNome:null
     };
-    if(!pacienteAtual)return;if(!pacienteAtual.evolucoes)pacienteAtual.evolucoes=[];
-    if(registroEmEdicao) pacienteAtual.evolucoes=pacienteAtual.evolucoes.map(e=>String(e.id)===String(registroEmEdicao.id)?registro:e);
-    else pacienteAtual.evolucoes.push(registro);
-    const sucesso=await salvarPacienteNaNuvem(pacienteAtual,{exigirRastreabilidadeClinica:true});if(!sucesso)return;
+    if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId)||evolucaoEdicaoId!==edicaoNoInicio){alert('O contexto da evolução mudou. Nenhuma alteração foi enviada.');return;}
+    if(!pacienteAtual)return;
+    const evolucoesAtuais=pacienteAtual.evolucoes||[];
+    const pacienteParaSalvar={...pacienteAtual,evolucoes:registroEmEdicao?evolucoesAtuais.map(e=>String(e.id)===String(registroEmEdicao.id)?registro:e):[...evolucoesAtuais,registro]};
+    const sucesso=await salvarPacienteNaNuvem(pacienteParaSalvar,{exigirRastreabilidadeClinica:true});if(!sucesso)return;
+    if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId)||evolucaoEdicaoId!==edicaoNoInicio){alert('A evolução foi salva no paciente original. O formulário atual foi preservado.');return;}
     if(registro.agendamentoId) limparAgendamentoClinicoContexto();
     alert(registroEmEdicao?'Evolução atualizada com rastreabilidade. O carimbo original de salvamento foi preservado.':'Evolução registrada com data, profissional e horário de salvamento.');
     cancelarEdicaoEvolucao(true);
-    ['evo_relato','evo_novo_exame_texto','evo_intercorrencia_texto','evo_medicacao_texto','evo_alerta_texto','evo_dor_durante','evo_dor_24h','evo_rpe','evo_duracao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});carregarHistoricoEvolucao();
+    ['evo_relato','evo_novo_exame_texto','evo_intercorrencia_texto','evo_medicacao_texto','evo_alerta_texto','evo_dor_durante','evo_dor_24h','evo_rpe','evo_duracao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});window.KineSysEvolucaoUI?.atualizar();carregarHistoricoEvolucao();
 }
 
 function valorNumeroOuNull(id){const v=document.getElementById(id)?.value;return(v===''||v==null)?null:Number(v);}
@@ -927,6 +932,7 @@ function montarResumoEvolucaoEstruturada(d={}){
 function montarRelatoEvolucaoParaExibicao(evolucao={}){
     if(!evolucao.dadosEstruturados)return evolucao.relato||evolucao.relatoLivre||'';
     const resumo=montarResumoEvolucaoEstruturada(evolucao.dadosEstruturados);
+    if(!String(evolucao.relatoLivre||'').trim()){const legado=String(evolucao.relato||'');return legado.includes(resumo)?legado:[resumo,legado].filter(Boolean).join('\n\n');}
     return [resumo,evolucao.relatoLivre||''].filter(Boolean).join('\n\n')||evolucao.relato||'';
 }
 
@@ -952,24 +958,27 @@ function renderResumoPaciente(idContainer, p) {
 async function editarEvolucaoClinica(evolucaoId){
     const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId)return;sincronizarSelectPacienteEvolucao(pacienteId);
     const p=await obterPacienteCompletoPorId(pacienteId),e=(p?.evolucoes||[]).find(x=>String(x.id)===String(evolucaoId));
+    if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId))return;
     if(!e){alert('⚠️ Evolução não encontrada.');return;}
     if(!registroClinicoPodeEditar(e)){alert(`🔒 O prazo de edição desta evolução terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(e))}.`);return;}
     evolucaoEdicaoId=e.id;
     const realizado=document.getElementById('evo_realizado_em');if(realizado){realizado.value=valorDatetimeLocalAgora(obterRealizadoEmRegistro(e));realizado.disabled=true;}
     const data=document.getElementById('evo_data');if(data){data.value=String(obterRealizadoEmRegistro(e)||e.data||'').slice(0,10);data.disabled=true;}
     const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;
-    document.getElementById('evo_relato').value=e.relatoLivre||'';
+    document.getElementById('evo_relato').value=e.relatoLivre||e.relato||'';
     const md=d.mudancasDetalhes||{};[['evo_novo_exame_texto',md.novoExame],['evo_intercorrencia_texto',md.novaIntercorrencia],['evo_medicacao_texto',md.mudancaMedicacao],['evo_alerta_texto',md.novoAlerta]].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});
     [['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v??'';});
     ['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=!!d[({evo_nova_intercorrencia:'novaIntercorrencia',evo_mudanca_medicacao:'mudancaMedicacao',evo_novo_exame:'novoExame',evo_novo_alerta:'novoAlerta'})[id]];});
     if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}
     const btn=document.getElementById('btn_salvar_evolucao');if(btn)btn.textContent='Salvar alterações';const cancelar=document.getElementById('btn_cancelar_edicao_evolucao');if(cancelar)cancelar.style.display='inline-flex';
+    window.KineSysEvolucaoUI?.atualizar();
     document.getElementById('evo_relato')?.focus();
 }
 function cancelarEdicaoEvolucao(atualizarCampos=true){
     evolucaoEdicaoId=null;const realizado=document.getElementById('evo_realizado_em');if(realizado){realizado.disabled=false;if(atualizarCampos)realizado.value=valorDatetimeLocalAgora();}
     const data=document.getElementById('evo_data');if(data){data.disabled=false;if(atualizarCampos)data.value=valorDatetimeLocalAgora().slice(0,10);}
     const btn=document.getElementById('btn_salvar_evolucao');if(btn)btn.textContent='Registrar evolução';const cancelar=document.getElementById('btn_cancelar_edicao_evolucao');if(cancelar)cancelar.style.display='none';
+    window.KineSysEvolucaoUI?.atualizar();
 }
 
 async function carregarHistoricoEvolucao() {
@@ -987,6 +996,7 @@ async function carregarHistoricoEvolucao() {
     }
 
     const p = await obterPacienteCompletoPorId(pacienteId);
+    if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId))return;
     renderResumoPaciente('resumo_paciente_evolucao', p);
     renderizarRestricoesPersistentesEvolucao(p);
     renderizarLinhaTempoClinicaCompleta(p);
@@ -3614,7 +3624,19 @@ async function montarDocumentoIAParaImpressao(){
 
 function renderizarRestricoesPersistentesEvolucao(p){const box=document.getElementById('banner_restricoes_posop');if(!box)return;if(!p){box.style.display='none';box.innerHTML='';return;}const av=obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p),r=av?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias;if(!r?.ativo){box.style.display='none';box.innerHTML='';return;}const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'}[r.statusCarga]||'Não informada';const itens=[r.procedimento&&`Procedimento: ${escapeHTML(r.procedimento)}`,`Carga: ${escapeHTML(carga)}`,r.ortese&&`Órtese: ${escapeHTML(r.ortese)}`,r.restricaoADM&&`ADM: ${escapeHTML(r.restricaoADM)}`,r.proibicoes&&`Proibições: ${escapeHTML(r.proibicoes)}`,r.retornoMedico&&`Retorno médico: ${escapeHTML(formatarDataBR(r.retornoMedico))}`].filter(Boolean);box.innerHTML=`<strong>⚠ Restrições pós-operatórias vigentes</strong><div class="kds-u-mt-5px kds-u-fs-label">${itens.join(' · ')}</div>`;box.style.display='block';}
 
-async function duplicarUltimaEvolucao(){const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);const lista=await obterPacientesSalvos(),p=lista.find(x=>String(x.id)===String(id)),e=(p?.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||''))).pop();if(!p){alert('O paciente selecionado não foi encontrado. Atualize o prontuário e tente novamente.');return;}if(!e){alert('Nenhuma sessão anterior para duplicar.');return;}const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;document.getElementById('evo_relato').value=e.relatoLivre||'';[['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([campoId,v])=>{const el=document.getElementById(campoId);if(el)el.value=v??'';});['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.checked=false;});if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}alert('Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');}
+async function duplicarUltimaEvolucao(){
+    const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);
+    const lista=await obterPacientesSalvos();if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(id))return;
+    const p=lista.find(x=>String(x.id)===String(id)),e=(p?.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||''))).pop();
+    if(!p){alert('O paciente selecionado não foi encontrado. Atualize o prontuário e tente novamente.');return;}if(!e){alert('Nenhuma sessão anterior para duplicar.');return;}
+    const d=e.dadosEstruturados||{},r=d.respostaCarga||{};const radio=document.querySelector(`input[name="evo_estado"][value="${d.estadoClinico||'igual'}"]`);if(radio)radio.checked=true;
+    document.getElementById('evo_relato').value=e.relatoLivre||e.relato||'';
+    [['evo_dor_durante',r.dorDurante],['evo_dor_24h',r.dor24h],['evo_rpe',r.rpe],['evo_duracao',r.duracaoMin],['evo_resposta_24h',r.resposta24h||''],['evo_edema',r.edema||'']].forEach(([campoId,v])=>{const el=document.getElementById(campoId);if(el)el.value=v??'';});
+    ['evo_novo_exame_texto','evo_intercorrencia_texto','evo_medicacao_texto','evo_alerta_texto'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.value='';});
+    ['evo_nova_intercorrencia','evo_mudanca_medicacao','evo_novo_exame','evo_novo_alerta'].forEach(campoId=>{const el=document.getElementById(campoId);if(el)el.checked=false;});
+    if(document.getElementById('eva_slider_evo')){document.getElementById('eva_slider_evo').value=e.eva??0;document.getElementById('eva_slider_evo').dispatchEvent(new Event('input'));}
+    window.KineSysEvolucaoUI?.atualizar();alert('Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');
+}
 
 function renderizarLinhaTempoClinicaCompleta(p){const c=document.getElementById('linha_tempo_clinica_completa');if(!c)return;if(!p){c.innerHTML='<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar a linha do tempo.</p>';return;}const ev=[];if(p.timestampCadastro||p.dataCadastro)ev.push({d:p.timestampCadastro?new Date(p.timestampCadastro).toISOString():p.dataCadastro,t:'cadastro',titulo:'Cadastro do paciente',desc:p.cadastradoPor?`Cadastrado por ${p.cadastradoPor}`:''});(obterAvaliacoes(p)||[]).forEach(a=>ev.push({d:obterRealizadoEmRegistro(a)||a.dataAvaliacao||'',t:'avaliacao',titulo:`${a.tipo||'Avaliação'} · ${a.status||'finalizada'}`,desc:`${profissionalRegistroClinico(a)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(a),true)} · EVA ${a.evaInicial??'N/I'}`}));(p.evolucoes||[]).forEach(e=>ev.push({d:obterRealizadoEmRegistro(e)||e.data||'',t:'evolucao',titulo:'Evolução fisioterapêutica',desc:`${profissionalRegistroClinico(e)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(e),true)} · EVA ${e.eva??'N/I'}${e.dadosEstruturados?.estadoClinico?' · '+e.dadosEstruturados.estadoClinico:''}`}));[...(p.documentos||[]),...obterDocumentosTimelineLocal(p.id),...(documentosTimelineNuvemCache.get(String(p.id))||[])].forEach(d=>ev.push({d:d.dataHoraISO||d.data_hora||'',t:'documento',titulo:d.titulo||'Documento',desc:d.emitidoPor||d.emitido_por?`Emitido por ${d.emitidoPor||d.emitido_por}`:''}));const ids=new Set();const eventosSemDuplicata=ev.filter(x=>{const chave=`${x.t}|${x.d}|${x.titulo}`;if(ids.has(chave))return false;ids.add(chave);return true;});eventosSemDuplicata.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const icon={cadastro:'👤',avaliacao:'🩺',evolucao:'📈',documento:'📄'};c.innerHTML=eventosSemDuplicata.length?eventosSemDuplicata.map(x=>`<div class="kds-u-gtc-34px-125px-1fr kds-u-gap-10px kds-u-ai-start-2 kds-u-p-10px-0 kds-u-bb-1px-solid-edf1ef kds-u-d-grid"><div class="kds-u-fs-heading-sm">${icon[x.t]||'•'}</div><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(formatarDataBR(String(x.d).slice(0,10)))}</div><div><strong class="kds-u-fs-label kds-u-text-petrol">${escapeHTML(x.titulo)}</strong><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(x.desc||'')}</div></div></div>`).join(''):'<p>Nenhum evento registrado.</p>';}
 

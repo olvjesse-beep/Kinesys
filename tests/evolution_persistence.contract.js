@@ -6,7 +6,7 @@ const vm = require('vm');
 const root = path.resolve(__dirname, '..');
 const script = fs.readFileSync(path.join(root, 'src/core/script-1.18.0.js'), 'utf8');
 const design = fs.readFileSync(path.join(root, 'src/core/design_system-1.20.1.js'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'styles/design_screens.css'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'styles/evolucao_modelo1.css'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 for (const id of ['evo_novo_exame_texto', 'evo_intercorrencia_texto', 'evo_medicacao_texto', 'evo_alerta_texto']) {
@@ -29,8 +29,9 @@ assert(!html.includes('id="evo_mudancas"'), 'campo genérico legado não pode co
 assert(!design.includes("evo_mudancas"), 'layout não pode recriar o campo genérico legado');
 assert(!script.includes("getElementById('evo_mudancas')"), 'novos salvamentos não podem ler ou preencher o campo genérico legado');
 assert(script.includes("hasOwnProperty.call(registroEmEdicao.dadosEstruturados,'mudancas')"), 'edição precisa preservar o valor histórico legado sem o expor');
-assert(/\.ks-evo-workspace-details\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/.test(css), 'mudanças e narrativa precisam ocupar duas colunas gerais');
-assert(/\.ks-evo-change-fields\{display:grid;grid-template-columns:minmax\(0,1fr\)/.test(css), 'os quatro campos de mudanças precisam ficar empilhados na coluna esquerda');
+assert(css.includes('.ks-evo-editor-layout') && css.includes('grid-template-columns:minmax(0,2fr) minmax(300px,1fr)'), 'modelo 1 precisa ter narrativa principal e painel lateral');
+assert(design.includes('detail.hidden=!check.checked'), 'detalhes precisam acompanhar os checkboxes');
+assert(html.includes('styles/evolucao_modelo1.css'), 'a folha isolada da Evolução precisa ser carregada');
 
 const resumoInicio = script.indexOf('function montarResumoEvolucaoEstruturada');
 const resumoFim = script.search(/\r?\n\r?\nfunction montarRelatoEvolucaoParaExibicao/);

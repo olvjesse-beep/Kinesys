@@ -124,6 +124,14 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Executar `tests/input_helpers_modularization.contract.js`, `tests/evaluation_context_model2.test.cjs` e `tests/evaluation_context_lifecycle.contract.js` na barreira hospedada de Agenda e Planos. Conferir visualmente listas abertas em notebook e celular ao alterar estes componentes.
 - Estas decisões só podem ser removidas por solicitação explícita do usuário; refatorações devem preservar o comportamento e ampliar os testes.
 
+## 12. Contratos permanentes da Evolução
+
+- Preservar o modelo 1: narrativa principal e painel de mudanças com checkboxes e detalhes condicionais, reutilizando IDs e funções canônicas. Estilos exclusivos de Evolução, sem alterar as demais telas.
+- Salvar e reabrir exame/laudo, intercorrência, medicação e alerta no JSON clínico existente e exibir seus detalhes no Histórico de sessões. Edição pontual preserva os demais dados, chaves legadas, autoria e carimbos originais; manter a janela clínica de edição e a justificativa de exceção.
+- Não apagar detalhes preenchidos ao desmarcar. Duplicação de sessão não reapresenta intercorrências antigas como novas. Falha ao salvar conserva o formulário e não cria evolução fantasma no cache. Respostas atrasadas não preenchem outro paciente.
+- Executar `evolution_persistence.contract.js` e `evolution_model1_roundtrip.test.cjs` na barreira hospedada de Agenda e Planos. Conferir layout amplo, notebooks e celular, detalhes abertos e parâmetros de carga acessíveis.
+- Remover essas decisões somente mediante pedido explícito do usuário; refatorações devem preservar o comportamento e ampliar os testes.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.
