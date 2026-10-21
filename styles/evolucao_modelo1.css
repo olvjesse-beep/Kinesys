@@ -9,7 +9,7 @@ html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-document{display:
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-workspace-vitals{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px!important;align-items:start;min-width:0}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-vitals-heading[hidden]{display:none!important}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card{display:block!important;padding:0 20px 0 0!important;border-right:1px solid var(--kds-line)!important}
-html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card .card-header{margin:0 0 18px!important;padding:0!important}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card .card-header{display:block!important;margin:0 0 18px!important;padding:0!important}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card h2,html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-narrative-card>label,html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-eva-card>label{font-size:var(--kds-font-heading-sm)!important;line-height:var(--kds-leading-ui);font-weight:700;color:var(--kds-text)}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card .evo-status-grid{display:flex!important;gap:10px!important;justify-content:space-between}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-status-card .checkbox-pill{flex:1;min-width:0}
@@ -31,6 +31,7 @@ html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-row>.input
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-row textarea{min-height:110px!important;font-size:var(--kds-font-field)!important;line-height:var(--kds-leading-text);padding:12px!important}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-character-count{display:block;text-align:right;color:var(--kds-muted);font-size:var(--kds-font-metadata);margin-top:4px}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-field-hint{display:block;font-size:var(--kds-font-label);line-height:var(--kds-leading-text);font-weight:400;color:var(--kds-muted);margin:4px 0 0}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-row:has(input:checked) .checkbox-pill .ks-evo-field-hint{display:none}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-message{display:block;color:var(--kds-warning);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-message:empty{display:none}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-load-details{background:transparent!important;border-top:1px solid var(--kds-line)!important;padding-top:12px!important}
