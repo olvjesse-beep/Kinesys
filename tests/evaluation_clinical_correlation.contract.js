@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:20/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:21/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -78,7 +78,7 @@ assert.match(report,/Teste A (?:foi positivo|mostrou resposta positiva|reproduzi
 assert.match(report,/Teste B (?:foi negativo|não reproduziu o achado esperado|não apresentou resposta positiva|não ofereceu suporte ao achado pesquisado)/,'achados negativos devem ser narrados naturalmente');
 assert.match(report,/Teste C (?:permaneceu inconclusivo|não permitiu interpretação conclusiva|apresentou resposta indeterminada|exigiu correlação adicional)/,'achados inconclusivos devem preservar a incerteza');
 assert.doesNotMatch(report,/\((?:positivo|negativo|inconclusivo)\)/,'o exame não deve parecer uma exportação direta de campos');
-assert.match(report,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/,'resultados abaixo do limiar devem produzir interpretação clínica cautelosa');
+assert.match(report,/combinação de resultados ainda é insuficiente para sustentá-la/,'resultados abaixo do limiar devem produzir interpretação clínica cautelosa sem expor a regra interna');
 assert.strictEqual((report.match(/em pé/gi)||[]).length,1,'fator de piora já descrito na HMA não deve ser repetido');
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
@@ -123,7 +123,8 @@ const predominioPositivo=renderizarCaso(
   [{regiao:'Coluna lombar',id:'radiculopatia',nome:'Radiculopatia lombar',achados:[{texto:'SLR',resultado:'positivo'},{texto:'Slump',resultado:'positivo'},{texto:'Déficit sensitivo',resultado:'positivo'},{texto:'Reflexos',resultado:'negativo'}]}],
   [{regiao:'Coluna lombar',codigoHipotese:'radiculopatia',nomeHipotese:'Radiculopatia lombar',nivel:'positivo',redFlags:[]}]
 );
-assert.match(predominioPositivo,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério (?:clínico )?(?:definido|estabelecido|previsto)/,'três de quatro testes positivos devem preencher o limiar configurado');
+assert.match(predominioPositivo,/conjunto dos resultados registrados dá suporte/,'três de quatro testes positivos devem preencher o limiar configurado');
+assert.equal(context.window.coletarLaudoAvaliacaoKineSys().semantica.correlacoes[0].criterioAtendido,true);
 
 const semExame=renderizarCaso([],[]);
 assert.doesNotMatch(semExame,/EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'seções sem conteúdo não devem ser exibidas');
@@ -132,7 +133,8 @@ assert.strictEqual(semExame,'','sem exame, o sistema não deve fabricar um relat
 function testarCondicao({id,nome,regiaoId,regiao,limiar,testes,esperaPreencher=false}){
   context.window.KineSysMotorClinico3.ultimoPlano={versao:'matriz-10',hipoteses:[{id,nome,regiaoId,aConfirmar:[],limiar}],exame:{testesPrioritarios:testes.map(t=>({texto:t.texto,hipoteseId:id}))}};
   const texto=renderizarCaso([{regiaoId,regiao,id,nome,achados:testes}],[{regiao,codigoHipotese:id,nomeHipotese:nome,nivel:'avaliado',redFlags:[]}]);
-  if(esperaPreencher)assert.match(texto,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/);else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: necessário| definido| estabelecido)?/);
+  if(esperaPreencher)assert.match(texto,/conjunto dos resultados registrados dá suporte/);else assert.match(texto,/combinação de resultados ainda é insuficiente para sustentá-la/);
+  assert.equal(context.window.coletarLaudoAvaliacaoKineSys().semantica.correlacoes[0].criterioAtendido,esperaPreencher);
   return texto;
 }
 const matrizPoucoTestada=[
@@ -157,13 +159,15 @@ const obrigatorioAusente=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste obrigatório',resultado:'negativo'},{texto:'Teste B',resultado:'positivo'},{texto:'Teste C',resultado:'positivo'}]}],
   [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(obrigatorioAusente,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério(?: clínico)?(?: registrado| definido| estabelecido)?/,'regra combinada não pode ser aprovada sem o teste obrigatório');
+assert.match(obrigatorioAusente,/combinação de resultados ainda é insuficiente para sustentá-la/,'regra combinada não pode ser aprovada sem o teste obrigatório');
+assert.equal(context.window.coletarLaudoAvaliacaoKineSys().semantica.correlacoes[0].criterioAtendido,false);
 context.window.KineSysMotorClinico3.ultimoPlano.hipoteses[0].regraConfirmacao={tipo:'qualquer'};
 const regraQualquer=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste A',resultado:'positivo'}]}],
   [{regiao:'Região teste',codigoHipotese:'combinada',nomeHipotese:'Hipótese combinada',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(regraQualquer,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/,'regra qualquer deve aceitar um achado positivo quando a base assim definir');
+assert.match(regraQualquer,/conjunto dos resultados registrados dá suporte/,'regra qualquer deve aceitar um achado positivo quando a base assim definir');
+assert.equal(context.window.coletarLaudoAvaliacaoKineSys().semantica.correlacoes[0].criterioAtendido,true);
 
 const contraditorio=renderizarCaso(
   [{regiao:'Região teste',id:'combinada',nome:'Hipótese combinada',achados:[{texto:'Teste duplicado',resultado:'positivo'},{texto:'Teste duplicado',resultado:'negativo'}]}],
@@ -260,6 +264,7 @@ for(const [regiaoId,regiao] of Object.entries(bancoReal)){
    const laudoTeste=context.window.coletarLaudoAvaliacaoKineSys();
    assert.ok(texto.trim(),`${item.id}: documento não vazio`);
    assert.deepStrictEqual(Array.from(laudoTeste.validacao.testesAusentes),[],`${item.id} ${resultado}: todos os achados precisam estar representados`);
+   assert.deepStrictEqual(Array.from(laudoTeste.semantica.validacao.ausentes),[],`${item.id} ${resultado}: rastreabilidade de todos os fatos`);
    assert.doesNotMatch(texto,/undefined|\[object Object\]|Resultado positivo para “/,'não exportar dados crus');
    assert.match(texto,/Data de emissão:[\s\S]*CREFITO/,'preservar fechamento documental');
    narrativasVerificadas++;
@@ -272,8 +277,9 @@ context.window.KineSysMotorClinico3.ultimoPlano={versao:'gtps-evidencia',hipotes
 for(const [respostas,preenche] of [[['positivo','positivo','',''],true],[['negativo','negativo','positivo','positivo'],false],[['positivo','inconclusivo','positivo','positivo'],false]]){
  const texto=renderizarCaso([{regiaoId:'quadril',regiao:'Quadril',id:'gtps',nome:gtpsPublicado.nome,achados:gtpsPublicado.testes.map((texto,i)=>({texto,resultado:respostas[i]||'nao_avaliado'}))}],
   [{regiao:'Quadril',codigoHipotese:'gtps',nomeHipotese:gtpsPublicado.nome,nivel:'avaliado',redFlags:[]}]);
- if(preenche)assert.match(texto,/(?:atingiu|preencheram|atingindo) (?:o|ao) critério/);
- else assert.match(texto,/(?:não preenche|insuficientes para atingir|não atende(?:m)?) (?:o|ao) critério/,'laudo deve respeitar os dois testes publicados, e não uma soma arbitrária');
+ if(preenche)assert.match(texto,/conjunto dos resultados registrados dá suporte/);
+ else assert.match(texto,/combinação de resultados ainda é insuficiente para sustentá-la/,'laudo deve respeitar os dois testes publicados, e não uma soma arbitrária');
+ assert.equal(context.window.coletarLaudoAvaliacaoKineSys().semantica.correlacoes[0].criterioAtendido,preenche);
 }
 const ausenciaNegativa=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro',id:'ausencia',nome:'Verificação de segurança',achados:[{texto:'Ausência de sinais sistêmicos preocupantes',resultado:'negativo'}]}],[]);
 assert.match(ausenciaNegativa,/critério de ausência não foi confirmado/);

@@ -46,3 +46,4 @@ t.fields[2].value='Nega que a mesma relata dor durante o movimento.';const neg=t
 t.tests=[];assert.equal(t.render().modo,'incompleto');assert.equal(t.nodes['ks-laudo-texto'].value,'');
 console.log('Avaliação→relatório: contexto completo, listas, prosa cervical, regiões pendentes, JSON, texto manual, negativa/ausência/ambiguidade e original preservado OK.');
 if(process.env.KINESYS_REPORT_EXAMPLE==='1')console.log(text);
+module.exports={fixture};

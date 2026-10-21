@@ -157,9 +157,12 @@ async function carregarPacientePreCadastradoNaAvaliacao() {
     try { contextoPacienteId = String(localStorage.getItem('kinesys_paciente_contexto') || '').trim(); } catch (_) {}
     const pacienteIdAlvo = String(select.value || contextoPacienteId || pacienteAtualId || '').trim();
     if (!pacienteIdAlvo) {
+        window.iniciarContextoAvaliacaoKineSys?.();
         pacienteAtualId = null;
         return;
     }
+    if(String(pacienteAtualId||'')!==pacienteIdAlvo)window.iniciarContextoAvaliacaoKineSys?.(pacienteIdAlvo);
+    const contextoCarga=window.obterContextoAvaliacaoKineSys?JSON.stringify(window.obterContextoAvaliacaoKineSys()):null;
 
     // Se o paciente veio do contexto global, sincroniza o select quando a opção
     // já estiver disponível. A carga dos dados não depende mais exclusivamente
@@ -190,6 +193,8 @@ async function carregarPacientePreCadastradoNaAvaliacao() {
     // os dados essenciais acima já permanecerão preenchidos na avaliação.
     try {
         const p = await obterPacienteCompletoPorId(pacienteIdAlvo);
+        if(contextoCarga&&!window.contextoAvaliacaoContinuaKineSys(contextoCarga))return;
+        if(String(pacienteAtualId||'')!==pacienteIdAlvo||select.value&&String(select.value)!==pacienteIdAlvo)return;
         if (p) {
             if (campoNome) campoNome.value = p.nome || opt?.dataset?.nome || '';
             const idadePaciente = idadeNumericaPaciente(p) || idadeOption;

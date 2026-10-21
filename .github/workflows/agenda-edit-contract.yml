@@ -77,4 +77,6 @@ jobs:
           node --check src/clinical/evaluation_workspace-1.17.0.js
           node tests/evaluation_clinical_correlation.contract.js
           node tests/evaluation_report_integration.test.cjs
+          node tests/evaluation_semantic_facts.test.cjs
+          node tests/evaluation_patient_isolation.test.cjs
           git diff --check
