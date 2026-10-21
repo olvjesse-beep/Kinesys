@@ -4,7 +4,8 @@ const src=fs.readFileSync('src/clinical/evaluation_context_panels-1.18.3.js','ut
 const core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
 const engine=fs.readFileSync('src/clinical/clinical_engine-1.17.0.js','utf8');
 
-assert.match(src,/const navegacao=new MutationObserver\(\(\)=>\{if\(aberto&&!triagem\.classList\.contains\('ativa'\)\)fechar\(false\);\}\)/,'observer deve permanecer restrito à subtela de triagem');
+assert.match(src,/navegacao=new MutationObserver\(\(\)=>\{if\(aberto&&!triagem\.classList\.contains\('ativa'\)\)fechar\(false\);\}\)/,'observer deve permanecer restrito à subtela de triagem');
+assert.match(src,/navegacao\?\.disconnect\(\)/,'remontagem deve desconectar o observer anterior');
 assert.match(src,/navegacao\.observe\(triagem,\{attributes:true,attributeFilter:\['class'\]\}\)/,'triagem deve continuar observada');
 assert.doesNotMatch(src,/navegacao\.observe\(avaliacao/,'tela_avaliacao não deve ser observada de forma redundante');
 assert.match(src,/document\.addEventListener\('kinesys:tela-desativada',[\s\S]*event\.detail\?\.id==='tela_avaliacao'[\s\S]*pararSincronizacaoContexto\(\);[\s\S]*if\(aberto\)fechar\(false\);/,'saída da avaliação deve continuar coberta pelo lifecycle oficial');

@@ -60,6 +60,7 @@ function toggleCirurgias(labelElement) {
         if (bloco) bloco.style.display = 'block';
         if (inputCirurgia) inputCirurgia.focus();
     } else {
+        if (tagsCirurgias?.children.length && !window.confirm('Remover os procedimentos registrados? Cancelar mantém as informações.')) { checkbox.checked=true; return; }
         if (bloco) bloco.style.display = 'none';
         if (tagsCirurgias) tagsCirurgias.innerHTML = '';
         if (inputCirurgia) inputCirurgia.value = '';
@@ -177,70 +178,82 @@ function expandirSugestoesIndividuais(item, mapa) {
     return (mapa && mapa[exibicao]) ? mapa[exibicao] : [exibicao];
 }
 
+// Catálogos são consultados no momento da digitação, não capturados antes do lazy-load.
+const autocompletesAvaliacaoKineSys=new WeakMap();
+function normalizarBuscaClinicaKineSys(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
+function buscarSugestoesClinicasKineSys(tipo,termo){
+ const q=normalizarBuscaClinicaKineSys(termo);if(q.length<2)return [];
+ const base=tipo==='medicamento'?(typeof dicionarioMedicamentos==='undefined'?null:dicionarioMedicamentos):tipo==='cirurgia'?(typeof dicionarioCirurgias==='undefined'?null:dicionarioCirurgias):(typeof dicionarioOcupacoesEsportes==='undefined'?null:dicionarioOcupacoesEsportes);
+ if(!base)return null;
+ const results=new Map(),map=tipo==='cirurgia'?OPCOES_INDIVIDUAIS_CIRURGIAS:OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE;
+ for(const [chave,item] of Object.entries(base)){
+  if((tipo==='esporte'||tipo==='profissao')&&item?.tipo!==tipo)continue;
+  const display=typeof item==='string'?item:obterTextoExibicao(item),options=tipo==='medicamento'?[display]:expandirSugestoesIndividuais(item,map),key=normalizarBuscaClinicaKineSys(chave);
+  const direct=options.some(t=>normalizarBuscaClinicaKineSys(t).includes(q));
+  for(const texto of options){
+   const text=normalizarBuscaClinicaKineSys(texto);
+   if(direct&&!text.includes(q)&&!key.includes(q))continue;
+   if(!q.split(/\s+/).every(part=>(key+' '+text+' '+normalizarBuscaClinicaKineSys(display)).includes(part)))continue;
+   const rank=text===q?0:text.startsWith(q)?1:text.split(/[^a-z0-9]+/).some(w=>w.startsWith(q))?2:key===q||key.startsWith(q)?3:4;
+   if(!results.has(text)||rank<results.get(text).rank)results.set(text,{chave,texto,rank});
+  }
+ }
+ return Array.from(results.values()).sort((a,b)=>a.rank-b.rank||a.texto.localeCompare(b.texto,'pt-BR')).slice(0,20);
+}
+function conectarAutocompleteAvaliacaoKineSys(input,box,tipo){
+ if(!input||!box)return;
+ let state=autocompletesAvaliacaoKineSys.get(input);
+ if(state){state.box=box;if(document.activeElement===input)state.render();return;}
+ state={input,box,tipo,items:[],selected:-1};autocompletesAvaliacaoKineSys.set(input,state);input.dataset.ksAutocomplete='true';
+ input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls',box.id);input.setAttribute('aria-expanded','false');
+ const hide=()=>{state.box.style.display='none';input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');state.selected=-1;};
+ state.hide=hide;
+ function choose(item){
+  if(tipo==='cirurgia')adicionarTagCirurgia(item.chave,item.texto);
+  else if(tipo==='medicamento')adicionarTagMedicamento(item.texto);
+  else{input.value=item.texto;notificarSugestaoAvaliacaoKineSys(input);if(typeof processarRadarEmTempoReal==='function')processarRadarEmTempoReal();}
+  hide();
+ }
+ function render(){
+  const query=input.value||'';if(normalizarBuscaClinicaKineSys(query).length<2){hide();return;}
+  state.items=buscarSugestoesClinicasKineSys(tipo,query)||[];state.selected=-1;state.box.innerHTML='';state.box.setAttribute('role','listbox');
+  state.items.forEach((item,i)=>{const option=document.createElement('div');option.id=state.box.id+'-op-'+i;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.textContent=item.texto;option.onmousedown=e=>e.preventDefault();option.onclick=e=>{e.stopPropagation();choose(item);};state.box.appendChild(option);});
+  if(!state.items.length){const message=document.createElement('p');message.className='helper-text';message.textContent=buscarSugestoesClinicasKineSys(tipo,query)===null?'Carregando catálogo. Aguarde a avaliação terminar de abrir.':'Nenhum item encontrado. '+(['cirurgia','medicamento'].includes(tipo)?'Pressione Enter para registrar o texto informado.':'Você pode manter a atividade ou profissão informada.');state.box.appendChild(message);}
+  state.box.style.display='block';input.setAttribute('aria-expanded','true');
+ }
+ state.render=render;input.addEventListener('input',render);input.addEventListener('focus',render);
+ input.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){hide();e.stopPropagation();return;}
+  if(e.key==='Tab'){hide();return;}
+  if(['ArrowDown','ArrowUp'].includes(e.key)){
+   e.preventDefault();if(state.box.style.display==='none')render();if(!state.items.length)return;
+   state.selected=(state.selected+(e.key==='ArrowDown'?1:-1)+state.items.length)%state.items.length;
+   Array.from(state.box.children).forEach((o,i)=>o.setAttribute('aria-selected',String(i===state.selected)));
+   const option=state.box.children[state.selected];input.setAttribute('aria-activedescendant',option.id);option.scrollIntoView?.({block:'nearest'});return;
+  }
+  if(e.key==='Enter'){
+   if(state.selected>=0&&state.items[state.selected]){e.preventDefault();choose(state.items[state.selected]);}
+   else if(['cirurgia','medicamento'].includes(tipo)&&input.value.trim()){e.preventDefault();choose({chave:'relato_livre',texto:input.value.trim()});}
+  }
+ });
+}
+function fecharSugestoesAvaliacaoKineSys(){
+ ['input_cirurgia','input_medicamento','paciente_ocupacao','paciente_esporte'].forEach(id=>{const input=document.getElementById(id);if(input)autocompletesAvaliacaoKineSys.get(input)?.hide();});
+}
+window.fecharSugestoesAvaliacaoKineSys=fecharSugestoesAvaliacaoKineSys;
+
 // --- AUTOCOMPLETE: CIRURGIAS ---
 let inputCirurgia = null;
 let sugestaoBoxCirurgia = null;
 
 function inicializarAutocompleteCirurgia(){
-    inputCirurgia=document.getElementById('input_cirurgia');
-    sugestaoBoxCirurgia=document.getElementById('sugestao_box');
-    if(!inputCirurgia||inputCirurgia.dataset.ksAutocomplete==='true')return;
-    inputCirurgia.dataset.ksAutocomplete='true';
-    inputCirurgia.addEventListener('focus',()=>inputCirurgia.dispatchEvent(new Event('input',{bubbles:true})));
-
-if (inputCirurgia) {
-    inputCirurgia.addEventListener("input", function() {
-        let textoDigitado = removerAcentos(this.value);
-        let sugestoesEncontradas = [];
-
-        if (typeof dicionarioCirurgias !== 'undefined' && textoDigitado.length > 2) {
-            for (let palavraChave in dicionarioCirurgias) {
-                let palavraLimpa = removerAcentos(palavraChave);
-                const objetoItem = dicionarioCirurgias[palavraChave];
-                const opcoes = expandirSugestoesIndividuais(objetoItem, OPCOES_INDIVIDUAIS_CIRURGIAS);
-                const bateChave = palavraLimpa.includes(textoDigitado) || textoDigitado.includes(palavraLimpa);
-                const bateExibicao = opcoes.some(op => removerAcentos(op).includes(textoDigitado));
-                const bateGrupo = removerAcentos(obterTextoExibicao(objetoItem)).includes(textoDigitado);
-                if (bateChave || bateExibicao || bateGrupo) {
-                    opcoes.forEach(textoExibicao => {
-                        // Se o usuário digitou um subtipo específico (ex.: speed, MTB, reversa),
-                        // prioriza/mostra somente opções semanticamente compatíveis quando houver match direto.
-                        const opMatch = removerAcentos(textoExibicao).includes(textoDigitado);
-                        if (bateExibicao && !opMatch && !bateChave) return;
-                        if (!sugestoesEncontradas.some(s => s.texto === textoExibicao)) {
-                            sugestoesEncontradas.push({ chave: palavraChave, texto: textoExibicao });
-                        }
-                    });
-                }
-            }
-        }
-
-        if (sugestaoBoxCirurgia) {
-            if (sugestoesEncontradas.length > 0) {
-                sugestaoBoxCirurgia.innerHTML = "";
-                sugestoesEncontradas.forEach(item => {
-                    const div = document.createElement('div');
-                    div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-petrol', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = item.texto;
-                    div.classList.add('kds-u-hover-soft');
-                    div.onclick = function(e) {
-                        e.stopPropagation();
-                        adicionarTagCirurgia(item.chave, item.texto);
-                    };
-                    sugestaoBoxCirurgia.appendChild(div);
-                });
-                sugestaoBoxCirurgia.style.display = "block";
-            } else {
-                sugestaoBoxCirurgia.style.display = "none";
-            }
-        }
-    });
-}
-
+    inputCirurgia=document.getElementById('input_cirurgia');sugestaoBoxCirurgia=document.getElementById('sugestao_box');
+    conectarAutocompleteAvaliacaoKineSys(inputCirurgia,sugestaoBoxCirurgia,'cirurgia');
 }
 
 function adicionarTagCirurgia(chave, termoExibicao) {
     const container = document.getElementById('tags_cirurgias');
+    if(container&&Array.from(container.children).some(e=>e.dataset.chave===chave&&e.dataset.exibicao===termoExibicao)){if(inputCirurgia)inputCirurgia.value='';fecharSugestoesAvaliacaoKineSys();return;}
     if (container) {
         const tag = document.createElement('div');
         tag.className = 'tag-cirurgia';
@@ -272,66 +285,8 @@ let inputProfissao = null;
 let sugestaoBoxProfissao = null;
 
 function inicializarAutocompleteProfissao(){
-    inputProfissao=document.getElementById('paciente_ocupacao');
-    sugestaoBoxProfissao=document.getElementById('sugestao_box_profissao');
-    if(!inputProfissao||inputProfissao.dataset.ksAutocomplete==='true')return;
-    inputProfissao.dataset.ksAutocomplete='true';
-    inputProfissao.addEventListener('focus',()=>inputProfissao.dispatchEvent(new Event('input',{bubbles:true})));
-
-if (inputProfissao) {
-    inputProfissao.addEventListener("input", function() {
-        let textoDigitado = removerAcentos(this.value);
-        let sugestoesEncontradas = [];
-
-        if (typeof dicionarioOcupacoesEsportes !== 'undefined' && textoDigitado.length >= 2) {
-            for (let palavraChave in dicionarioOcupacoesEsportes) {
-                let item = dicionarioOcupacoesEsportes[palavraChave];
-                if (item && item.tipo === "profissao") {
-                    let palavraLimpa = removerAcentos(palavraChave);
-                    const opcoes = expandirSugestoesIndividuais(item, OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE);
-                    const bateChave = palavraLimpa.includes(textoDigitado);
-                    const bateOpcao = opcoes.some(op => removerAcentos(op).includes(textoDigitado));
-                    const bateGrupo = removerAcentos(obterTextoExibicao(item)).includes(textoDigitado);
-                    if (bateChave || bateOpcao || bateGrupo) {
-                        opcoes.forEach(textoExibicao => {
-                            const opMatch = removerAcentos(textoExibicao).includes(textoDigitado);
-                            if (bateOpcao && !opMatch && !bateChave) return;
-                            if (!sugestoesEncontradas.some(s => s.texto === textoExibicao)) {
-                                sugestoesEncontradas.push({ chave: palavraChave, texto: textoExibicao });
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        if (sugestaoBoxProfissao) {
-            if (sugestoesEncontradas.length > 0) {
-                sugestaoBoxProfissao.innerHTML = "";
-                sugestoesEncontradas.forEach(item => {
-                    const div = document.createElement('div');
-                    div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-003b46', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = item.texto;
-                    div.classList.add('kds-u-hover-soft');
-                    
-                    div.onclick = function(e) {
-                        e.stopPropagation();
-                        inputProfissao.value = item.texto;
-                        notificarSugestaoAvaliacaoKineSys(inputProfissao);
-                        sugestaoBoxProfissao.style.display = "none";
-                        if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
-                    };
-
-                    sugestaoBoxProfissao.appendChild(div);
-                });
-                sugestaoBoxProfissao.style.display = "block";
-            } else {
-                sugestaoBoxProfissao.style.display = "none";
-            }
-        }
-    });
-}
-
+    inputProfissao=document.getElementById('paciente_ocupacao');sugestaoBoxProfissao=document.getElementById('sugestao_box_profissao');
+    conectarAutocompleteAvaliacaoKineSys(inputProfissao,sugestaoBoxProfissao,'profissao');
 }
 
 // --- AUTOCOMPLETE: ESPORTES ---
@@ -339,66 +294,8 @@ let inputEsporte = null;
 let sugestaoBoxEsporte = null;
 
 function inicializarAutocompleteEsporte(){
-    inputEsporte=document.getElementById('paciente_esporte');
-    sugestaoBoxEsporte=document.getElementById('sugestao_box_esporte');
-    if(!inputEsporte||inputEsporte.dataset.ksAutocomplete==='true')return;
-    inputEsporte.dataset.ksAutocomplete='true';
-    inputEsporte.addEventListener('focus',()=>inputEsporte.dispatchEvent(new Event('input',{bubbles:true})));
-
-if (inputEsporte) {
-    inputEsporte.addEventListener("input", function() {
-        let textoDigitado = removerAcentos(this.value);
-        let sugestoesEncontradas = [];
-
-        if (typeof dicionarioOcupacoesEsportes !== 'undefined' && textoDigitado.length >= 2) {
-            for (let palavraChave in dicionarioOcupacoesEsportes) {
-                let item = dicionarioOcupacoesEsportes[palavraChave];
-                if (item && item.tipo === "esporte") {
-                    let palavraLimpa = removerAcentos(palavraChave);
-                    const opcoes = expandirSugestoesIndividuais(item, OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE);
-                    const bateChave = palavraLimpa.includes(textoDigitado);
-                    const bateOpcao = opcoes.some(op => removerAcentos(op).includes(textoDigitado));
-                    const bateGrupo = removerAcentos(obterTextoExibicao(item)).includes(textoDigitado);
-                    if (bateChave || bateOpcao || bateGrupo) {
-                        opcoes.forEach(textoExibicao => {
-                            const opMatch = removerAcentos(textoExibicao).includes(textoDigitado);
-                            if (bateOpcao && !opMatch && !bateChave) return;
-                            if (!sugestoesEncontradas.some(s => s.texto === textoExibicao)) {
-                                sugestoesEncontradas.push({ chave: palavraChave, texto: textoExibicao });
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        if (sugestaoBoxEsporte) {
-            if (sugestoesEncontradas.length > 0) {
-                sugestaoBoxEsporte.innerHTML = "";
-                sugestoesEncontradas.forEach(item => {
-                    const div = document.createElement('div');
-                    div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-003b46', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = item.texto;
-                    div.classList.add('kds-u-hover-soft');
-                    
-                    div.onclick = function(e) {
-                        e.stopPropagation();
-                        inputEsporte.value = item.texto;
-                        notificarSugestaoAvaliacaoKineSys(inputEsporte);
-                        sugestaoBoxEsporte.style.display = "none";
-                        if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
-                    };
-
-                    sugestaoBoxEsporte.appendChild(div);
-                });
-                sugestaoBoxEsporte.style.display = "block";
-            } else {
-                sugestaoBoxEsporte.style.display = "none";
-            }
-        }
-    });
-}
-
+    inputEsporte=document.getElementById('paciente_esporte');sugestaoBoxEsporte=document.getElementById('sugestao_box_esporte');
+    conectarAutocompleteAvaliacaoKineSys(inputEsporte,sugestaoBoxEsporte,'esporte');
 }
 
 // --- AUTOCOMPLETE: MEDICAMENTOS ---
@@ -406,66 +303,13 @@ let inputMedicamento = null;
 let sugestaoBoxMed = null;
 
 function inicializarAutocompleteMedicamento(){
-    inputMedicamento=document.getElementById('input_medicamento');
-    sugestaoBoxMed=document.getElementById('sugestao_box_med');
-    if(!inputMedicamento||inputMedicamento.dataset.ksAutocomplete==='true')return;
-    inputMedicamento.dataset.ksAutocomplete='true';
-    inputMedicamento.addEventListener('focus',()=>inputMedicamento.dispatchEvent(new Event('input',{bubbles:true})));
-
-if (inputMedicamento) {
-    inputMedicamento.addEventListener("input", function() {
-        let textoDigitado = removerAcentos(this.value);
-        let sugestoesEncontradas = [];
-
-        if (typeof dicionarioMedicamentos !== 'undefined' && textoDigitado.length > 2) {
-            for (let palavraChave in dicionarioMedicamentos) {
-                let palavraLimpa = removerAcentos(palavraChave);
-                let regexChaveNoTexto = new RegExp("\\b" + palavraLimpa + "\\b", "i");
-                if (regexChaveNoTexto.test(textoDigitado) || palavraLimpa.includes(textoDigitado)) {
-                    let termoTecnico = dicionarioMedicamentos[palavraChave];
-                    if (!sugestoesEncontradas.includes(termoTecnico)) {
-                        sugestoesEncontradas.push(termoTecnico);
-                    }
-                }
-            }
-        }
-
-        if (sugestaoBoxMed) {
-            if (sugestoesEncontradas.length > 0) {
-                sugestaoBoxMed.innerHTML = "";
-                sugestoesEncontradas.forEach(termo => {
-                    const div = document.createElement('div');
-                    div.classList.add('kds-u-p-10px', 'kds-u-bb-1px-solid-e2e8f0', 'kds-u-cursor-pointer', 'kds-u-text-d35400', 'kds-u-fw-600', 'kds-u-fs-ui', 'kds-u-transition-0p2s');
-                    div.innerText = termo;
-                    div.classList.add('kds-u-hover-warm');
-                    div.onclick = function(e) {
-                        e.stopPropagation();
-                        adicionarTagMedicamento(termo);
-                    };
-                    sugestaoBoxMed.appendChild(div);
-                });
-                sugestaoBoxMed.style.display = "block";
-            } else {
-                sugestaoBoxMed.style.display = "none";
-            }
-        }
-    });
-
-    inputMedicamento.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            let texto = this.value.trim();
-            if (texto !== "") {
-                adicionarTagMedicamento(texto.charAt(0).toUpperCase() + texto.slice(1));
-            }
-        }
-    });
-}
-
+    inputMedicamento=document.getElementById('input_medicamento');sugestaoBoxMed=document.getElementById('sugestao_box_med');
+    conectarAutocompleteAvaliacaoKineSys(inputMedicamento,sugestaoBoxMed,'medicamento');
 }
 
 function adicionarTagMedicamento(termo) {
     const container = document.getElementById('tags_medicamentos');
+    if(container&&Array.from(container.children).some(e=>normalizarBuscaClinicaKineSys(e.textContent.replace(/[✕×]/g,''))===normalizarBuscaClinicaKineSys(termo))){if(inputMedicamento)inputMedicamento.value='';fecharSugestoesAvaliacaoKineSys();return;}
     if (container) {
         const tag = document.createElement('div');
         tag.classList.add('kds-u-bg-e67e22', 'kds-u-text-white', 'kds-u-p-6px-12px', 'kds-u-br-4px', 'kds-u-fs-label', 'kds-u-fw-bold', 'kds-u-d-flex', 'kds-u-ai-center', 'kds-u-gap-8px');
@@ -494,16 +338,16 @@ function adicionarTagMedicamento(termo) {
 // FECHAMENTO DE CAIXAS AO CLICAR FORA
 document.addEventListener('click', function(e) {
     if (inputMedicamento && sugestaoBoxMed && !inputMedicamento.contains(e.target) && !sugestaoBoxMed.contains(e.target)) {
-        sugestaoBoxMed.style.display = 'none';
+        autocompletesAvaliacaoKineSys.get(inputMedicamento)?.hide();
     }
     if (inputCirurgia && sugestaoBoxCirurgia && !inputCirurgia.contains(e.target) && !sugestaoBoxCirurgia.contains(e.target)) {
-        sugestaoBoxCirurgia.style.display = 'none';
+        autocompletesAvaliacaoKineSys.get(inputCirurgia)?.hide();
     }
     if (inputProfissao && sugestaoBoxProfissao && !inputProfissao.contains(e.target) && !sugestaoBoxProfissao.contains(e.target)) {
-        sugestaoBoxProfissao.style.display = 'none';
+        autocompletesAvaliacaoKineSys.get(inputProfissao)?.hide();
     }
     if (inputEsporte && sugestaoBoxEsporte && !inputEsporte.contains(e.target) && !sugestaoBoxEsporte.contains(e.target)) {
-        sugestaoBoxEsporte.style.display = 'none';
+        autocompletesAvaliacaoKineSys.get(inputEsporte)?.hide();
     }
 });
 

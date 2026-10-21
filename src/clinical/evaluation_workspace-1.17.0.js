@@ -86,7 +86,7 @@
         const grupoCampo=el=>el.classList.contains('chk_fator_piora')?'fatoresPiora':el.classList.contains('chk_exposicao_ocupacional')?'exposicoesOcupacionais':el.classList.contains('chk_exposicao_esportiva')?'exposicoesEsportivas':el.classList.contains('chk_yellow_flag')?'fatoresPsicossociais':/^chk_(tabagista|etilista|hipertenso|diabetico|corticoide_sistemico|corticoide_infiltracao|aine_recente|cirurgia)$/.test(el.id)?'comorbidades':'';
         const rotuloCampo=el=>limparTextoClinico(el.labels?.[0]?.querySelector('span')?.textContent||el.labels?.[0]?.textContent||el.closest('.input-group')?.querySelector('label')?.textContent||el.id.replace(/_/g,' '));
         document.querySelectorAll('#subtela_triagem input,#subtela_triagem textarea,#subtela_triagem select').forEach(el=>{
-            if(el.type==='hidden'||el.type==='password'||ignorar.has(el.id)||el.disabled)return;
+            if(el.type==='hidden'||el.type==='password'||el.dataset?.contextUi==='true'||ignorar.has(el.id)||el.disabled)return;
             if((el.type==='checkbox'||el.type==='radio')&&!el.checked)return;
             if(el.tagName==='SELECT'&&!el.value)return;
             const label=rotulos[el.id]||rotuloCampo(el);

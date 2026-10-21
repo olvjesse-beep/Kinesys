@@ -115,6 +115,15 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Histórico é somente leitura, por paciente e clínica, em data/hora decrescente, com paginação e situação financeira canônica. Não transformar falha de consulta em Pago/Pendente falso nem revelar financeiro a perfil restrito.
 - Corrigir procedimento de uma ocorrência unitária pode preservar o contrato financeiro original; jamais reatribuir paciente/clínica/contrato nem converter pacote incompatível silenciosamente. Identidade/valores/pagamentos do contrato permanecem imutáveis.
 
+## 11. Contratos permanentes da Anamnese e sugestões
+
+- Preservar o modelo de índice com sete grupos e um painel de preenchimento, sem duplicar IDs/campos clínicos. Trocar de grupo não apaga informações.
+- Medicamentos, cirurgias e atividades físicas devem continuar pesquisáveis ao montar a Avaliação sob demanda, após carregar os catálogos e ao sair/voltar à tela. Inicialização repetida não duplica eventos. Consultar o catálogo atual e reaplicar a consulta ativa quando terminar o carregamento.
+- Não recortar listas de sugestões pelo container, diálogo ou rodapé; manter navegação por teclado, fechamento acessível, seleção canônica e ausência de tags duplicadas. Não transformar sugestões de registro em prescrições.
+- Não informado, negativa explícita e relato são estados distintos. Dados positivos existentes não podem ser apagados silenciosamente por uma negativa. Gravar/reabrir o contexto adicional no JSON clínico existente, preservar chaves anteriores e limpar o contexto ao iniciar avaliação de outro paciente.
+- Executar `tests/input_helpers_modularization.contract.js`, `tests/evaluation_context_model2.test.cjs` e `tests/evaluation_context_lifecycle.contract.js` na barreira hospedada de Agenda e Planos. Conferir visualmente listas abertas em notebook e celular ao alterar estes componentes.
+- Estas decisões só podem ser removidas por solicitação explícita do usuário; refatorações devem preservar o comportamento e ampliar os testes.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.
