@@ -107,4 +107,32 @@ caso('motor sem rede, IA externa ou nova tabela',()=>{
  const core=src.slice(src.indexOf('const CONCEITOS_RELATO'),src.indexOf('function descricaoDocumentalDoAchado'));
  assert(!/fetch\(|XMLHttpRequest|\b(?:supabase|supabaseClient)\.(?:rpc|from)\(|api[_-]?key|Math\.random/.test(core));
 });
+caso('quadro multirregional: queixas agrupadas e diagnóstico/indicação apenas relatados',()=>{
+ const original='Refere que está apresentando diagnóstico de hernia lombar e hernia de disco cervical. O mesmo recebeu indicação de cirurgia da lombar e cervical. Refere que sente dores na região do cotovelo bilateralmente. Refere que sente dores no ombro direito. O mesmo relata que sente choques na região do halux direito e dedo mínimo esquerdo. Refere que o GAMA GP/TPG está alto.';
+ const t=preparar(original),r=t.render(),s=r.semantica;
+ assert.equal(s.origemHMA,original);assert.equal(t.fields[2].value,original);
+ assert(r.texto.includes('Relata dor em ambos os cotovelos e no ombro direito.'));
+ assert(r.texto.includes('Segundo o relato, há diagnóstico de hérnia lombar e hérnia de disco cervical.'));
+ assert(r.texto.includes('Informa indicação cirúrgica da lombar e cervical.'));
+ assert(r.texto.includes('choques no hálux direito e dedo mínimo esquerdo'));
+ assert(r.texto.includes('GAMA GP/TPG'));assert(!r.texto.includes('TGP'));assert(!/O mesmo|A mesma/.test(r.texto));
+ assert(s.blocos.some(b=>b.tipo==='diagnosticos_relatados'));assert(s.blocos.some(b=>b.tipo==='indicacoes_relatadas'));
+ assert.equal(s.validacao.ausentes.length,0);assert.equal(r.validacao.relatoAusente.length,0);
+ assert(!/cirurgia realizada|foi operado|hérnia confirmada/.test(r.texto));
+});
+caso('negação contextual não ganha prefixo burocrático nem cirurgia positiva',()=>{
+ const t=preparar('Refere dor cervical.');t.notes.contexto_trauma_observacao='Nega cirurgias.';
+ t.notes.contexto_saude_observacao='Paciente relata que era tabagista e etilista porém parou há 2 anos.';
+ const r=t.render();assert(r.texto.includes('Nega cirurgias.'));assert(!r.texto.includes('foi registrado: Nega'));
+ assert(r.texto.includes('interrupção de ambos há 2 anos'));assert.equal(r.validacao.contextoAusente.length,0);assert.equal(r.semantica.validacao.ausentes.length,0);
+});
+caso('critério neurológico negativo não inverte o significado do resultado',()=>{
+ for(const resultado of ['positivo','negativo','inconclusivo']){
+  const t=preparar('Refere dor cervical.');t.tests=[{regiaoId:'cervical',regiao:'Coluna cervical',id:'eixo_mecanico',achados:[{texto:'Exame neurológico sem padrão radicular ou mielopático',resultado}]}];
+  const r=t.render();assert(!r.texto.includes('houve resposta positiva'));assert.equal(r.validacao.testesAusentes.length,0);assert.equal(r.semantica.validacao.ausentes.length,0);
+  if(resultado==='positivo')assert(r.texto.includes('não foi identificado padrão radicular ou mielopático'));
+  if(resultado==='negativo'){assert(r.texto.includes('não confirmou a ausência'));assert(!r.texto.includes('foi identificado padrão radicular'));}
+  if(resultado==='inconclusivo')assert(r.texto.includes('permaneceu inconclusivo'));
+ }
+});
 console.log(`${count} cenários semânticos adversariais completos OK.`);

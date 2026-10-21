@@ -102,6 +102,36 @@ let ultimoRadarAlertas = [];
 // só consultado enquanto a nova avaliação é preenchida.
 let mapeamentoAvaliacaoAnterior = null;
 
+// Identidade independente da HMA/nome: duas pessoas podem ter o mesmo nome.
+let revisaoContextoAvaliacaoKineSys = 0;
+window.obterContextoAvaliacaoKineSys = function(){
+    return {pacienteId:String(pacienteAtualId||''),avaliacaoId:String(avaliacaoEdicaoId||''),
+        usuarioId:String(usuarioLogado?.id||usuarioLogado?.email||''),
+        clinicaId:String(usuarioLogado?.clinica_id||usuarioLogado?.clinicaId||''),revisao:revisaoContextoAvaliacaoKineSys};
+};
+window.iniciarContextoAvaliacaoKineSys = function(pacienteId='',avaliacaoId=null){
+    revisaoContextoAvaliacaoKineSys++;
+    pacienteAtualId=pacienteId||null;avaliacaoEdicaoId=avaliacaoId||null;
+    try{if(pacienteId)localStorage.setItem('kinesys_paciente_contexto',String(pacienteId));else localStorage.removeItem('kinesys_paciente_contexto');}catch(_){}
+    clearTimeout(autosaveTimerKineSys);autosaveTimerKineSys=null;
+    estadoMapeamento={};mapeamentoAvaliacaoAnterior=null;
+    if(window.KineSysMotorClinico3)window.KineSysMotorClinico3.ultimoPlano=null;
+    limparClinicaEstruturada();
+    document.querySelectorAll('#subtela_triagem input,#subtela_triagem textarea,#subtela_triagem select').forEach(el=>{
+        if(el.type==='button'||el.type==='submit'||el.dataset?.contextUi==='true')return;
+        if(el.type==='checkbox'||el.type==='radio')el.checked=false;
+        else if(el.type==='range')el.value=el.min||'0';
+        else if(el.tagName==='SELECT')el.selectedIndex=0;
+        else el.value='';
+    });
+    ['tags_cirurgias','tags_medicamentos','grupo_regioes_mapeamento','container_clusters_regioes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+    const select=document.getElementById('select_paciente_precadastro');if(select)select.value=String(pacienteId||'');
+    const realizado=document.getElementById('avaliacao_realizado_em');if(realizado){realizado.disabled=!!avaliacaoId;realizado.value=valorDatetimeLocalAgora();}
+    ocultarStatusAutosaveKineSys();
+    return JSON.stringify(window.obterContextoAvaliacaoKineSys());
+};
+window.contextoAvaliacaoContinuaKineSys = token=>token===JSON.stringify(window.obterContextoAvaliacaoKineSys());
+
 function limparSelecaoPerfilLogin() { KineSysLogin.clearPending(); }
 
 function descreverPerfilLogin(u={}) {
@@ -345,6 +375,7 @@ function navegarPara(idTela, contextoEdicao = false) {
     }
 
     if (idTela === 'tela_avaliacao' && !contextoEdicao) {
+        window.iniciarContextoAvaliacaoKineSys();
         pacienteAtualId = null; 
         if(document.getElementById('select_paciente_precadastro')) document.getElementById('select_paciente_precadastro').value = "";
         if(document.getElementById('busca_paciente_precadastro')) document.getElementById('busca_paciente_precadastro').value = "";
@@ -706,13 +737,16 @@ function obterAvaliacaoFinalizadaMaisRecente(p){const lista=obterAvaliacoes(p).f
 
 /* ================= 11. PRONTUÁRIOS E BUSCA ================= */
 async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
+    const contextoCarga=window.iniciarContextoAvaliacaoKineSys(id,avaliacaoIdEditar);
     const p = await obterPacienteCompletoPorId(id);
-    if (!p) return;
+    if (!p || !window.contextoAvaliacaoContinuaKineSys(contextoCarga)) return;
 
     pacienteAtualId = p.id;
     avaliacaoEdicaoId = avaliacaoIdEditar || null;
     const navegacao = await navegarPara('tela_avaliacao', true);
-    if (navegacao === false) return;
+    if (navegacao === false || !window.contextoAvaliacaoContinuaKineSys(contextoCarga)) return;
+    // A tela pode ter sido montada sob demanda depois da limpeza inicial.
+    limparClinicaEstruturada();
     estadoMapeamento = {};
     mapeamentoAvaliacaoAnterior = null; // será preenchido abaixo se houver avaliação anterior com mapeamento
     if (document.getElementById('grupo_regioes_mapeamento')) document.getElementById('grupo_regioes_mapeamento').innerHTML = '';
@@ -767,7 +801,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
             if (document.getElementById('chk_aine_recente')) document.getElementById('chk_aine_recente').checked = !!med.aineRecente;
         }
 
-        if (avaliacaoRecente.mapeamento?.clinicaEstruturada) preencherClinicaEstruturada(avaliacaoRecente.mapeamento.clinicaEstruturada);
+        if (avaliacaoRecente.mapeamento?.clinicaEstruturada) preencherClinicaEstruturada({...avaliacaoRecente.mapeamento.clinicaEstruturada,laudo:avaliacaoIdEditar?avaliacaoRecente.mapeamento.clinicaEstruturada.laudo:null});
         else preencherClinicaEstruturada({});
 
         if (document.getElementById('eva_slider') && avaliacaoRecente.evaInicial != null) {
@@ -2185,6 +2219,8 @@ function validarSegurancaParaFinalizacao() {
     return{ok:true};
 }
 async function salvarAvaliacaoAtual(finalizar=false) {
+    if(cargasPacienteAvaliacaoKineSys>0)return;
+    const contextoSalvar=JSON.stringify(window.obterContextoAvaliacaoKineSys());
     if(finalizar&&window.prepararFinalizacaoLaudoKineSys&&!window.prepararFinalizacaoLaudoKineSys()){alert('Revise o texto do relatório antes de finalizar.');return;}
     const nome=document.getElementById('paciente_nome')?.value.trim();
     if(!nome){alert('⚠️ Informe o nome do paciente na avaliação antes de salvar.');return;}
@@ -2193,6 +2229,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     // A triagem segue visível, sem confirmação oculta obrigatória para salvar.
     let pacienteExistente=pacienteAtualId?await obterPacienteCompletoPorId(pacienteAtualId):null;
     if(!pacienteExistente&&!pacienteAtualId){const listaBasica=await obterPacientesBasicos();const duplicados=listaBasica.filter(p=>(p.nome||'').toLowerCase()===nome.toLowerCase());if(duplicados.length&&!(await confirmarKineSys(`Já existe(m) ${duplicados.length} paciente(s) chamado(s) "${nome}".\n\nSalvar como NOVO cadastro?`, {titulo:'Paciente com nome semelhante', confirmar:'Salvar como novo'})))return;}
+    if(!window.contextoAvaliacaoContinuaKineSys(contextoSalvar))return;
 
     const historico=pacienteExistente?obterAvaliacoes(pacienteExistente):[];
     const registroEmEdicao=avaliacaoEdicaoId?historico.find(a=>String(a.id)===String(avaliacaoEdicaoId)):null;
@@ -2243,12 +2280,15 @@ async function salvarAvaliacaoAtual(finalizar=false) {
         dadosAvaliacao.tipo=finalizadas.length===0?'Avaliação Inicial':'Reavaliação';
     }
     const pacienteObjeto=pacienteExistente||{id:'pac_'+Date.now(),dataCadastroISO:agora.toISOString().slice(0,10),cadastradoPor:prof.profissionalNome,nome,profissao:dadosAvaliacao.profissao,evolucoes:[],avaliacoes:[]};
+    if(!window.contextoAvaliacaoContinuaKineSys(contextoSalvar))return;
+    if(dadosAvaliacao.mapeamento.clinicaEstruturada.laudo)dadosAvaliacao.mapeamento.clinicaEstruturada.laudo.contextoPaciente={...window.obterContextoAvaliacaoKineSys(),pacienteId:String(pacienteObjeto.id)};
     pacienteObjeto.nome=nome;
     if(registroEmEdicao) pacienteObjeto.avaliacoes=historico.map(a=>String(a.id)===String(registroEmEdicao.id)?dadosAvaliacao:a);
     else pacienteObjeto.avaliacoes=[...historico.filter(a=>a.status!=='rascunho'),dadosAvaliacao];
     pacienteObjeto.avaliadoPor=dadosAvaliacao.profissionalNome;
     const sucesso=await salvarPacienteNaNuvem(pacienteObjeto,{exigirRastreabilidadeClinica:true});
     if(!sucesso)return;
+    if(!window.contextoAvaliacaoContinuaKineSys(contextoSalvar))return;
     if(dadosAvaliacao.agendamentoId) limparAgendamentoClinicoContexto();
     if(registroEmEdicao){
         avaliacaoEdicaoId=null;
@@ -2258,7 +2298,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
         return;
     }
     if(finalizar){limparRascunhoKineSys();alert(`${dadosAvaliacao.tipo} finalizada e salva com rastreabilidade (Motor ${KINESYS_MOTOR_VERSION}).`);pacienteAtualId=null;estadoMapeamento={};mapeamentoAvaliacaoAnterior=null;navegarPara('tela_buscar');}
-    else{pacienteAtualId=pacienteObjeto.id;atualizarStatusAutosave('✓ Rascunho persistido no prontuário');alert('💾 Rascunho da avaliação salvo. A avaliação ainda NÃO está finalizada.');}
+    else{pacienteAtualId=pacienteObjeto.id;window.preencherLaudoAvaliacaoKineSys?.(dadosAvaliacao.mapeamento.clinicaEstruturada.laudo||null);atualizarStatusAutosave('✓ Rascunho persistido no prontuário');alert('💾 Rascunho da avaliação salvo. A avaliação ainda NÃO está finalizada.');}
 }
 
 function chaveUsuarioRascunhoKineSys() {
@@ -2306,7 +2346,7 @@ function coletarRascunhoKineSys() {
         const key = el.id || `${Array.from(el.classList).join('.')}:${el.value}`;
         campos[key] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
     });
-    return {versaoMotor:KINESYS_MOTOR_VERSION, salvoEm:new Date().toISOString(), pacienteAtualId, usuarioChave:chaveUsuarioRascunhoKineSys(), contextoExameFingerprint:fingerprintContextoExameKineSys(campos), campos, estadoMapeamento:JSON.parse(JSON.stringify(estadoMapeamento)),clinicaEstruturada:coletarClinicaEstruturada()};
+    return {versaoMotor:KINESYS_MOTOR_VERSION, salvoEm:new Date().toISOString(), pacienteAtualId, avaliacaoEdicaoId, contextoPaciente:window.obterContextoAvaliacaoKineSys(), usuarioChave:chaveUsuarioRascunhoKineSys(), contextoExameFingerprint:fingerprintContextoExameKineSys(campos), campos, estadoMapeamento:JSON.parse(JSON.stringify(estadoMapeamento)),clinicaEstruturada:coletarClinicaEstruturada()};
 }
 function atualizarStatusAutosave(texto) { const el=document.getElementById('autosave_status'); if(!el)return; el.style.display='block'; el.textContent=texto; }
 function ocultarStatusAutosaveKineSys() { const el=document.getElementById('autosave_status'); if(el)el.style.display='none'; }
@@ -2325,12 +2365,15 @@ let rascunhoDialogAbertoKineSys = false;
 
 
 async function restaurarRascunhoKineSys() {
+    const contextoRestaurar=JSON.stringify(window.obterContextoAvaliacaoKineSys());
     if (rascunhoDialogAbertoKineSys) return false;
     // Não empilha a recuperação automática sobre uma escolha clínica já aberta.
     // O rascunho permanece intacto e volta a ser oferecido na próxima entrada.
     if (document.querySelector('dialog[open], .ks-eval-dialog-backdrop:not([hidden]), .modal-overlay.ativa, .ks-drawer-overlay.ativa, #ks-investigation-modal-root:not([hidden])')) return false;
     let r=null; try{r=JSON.parse(localStorage.getItem('kinesys_rascunho_avaliacao_v11')||'null');}catch(e){}
     if (!r) return false;
+    const clinicaRascunho=r.contextoPaciente?.clinicaId||r.clinicaEstruturada?.laudo?.contextoPaciente?.clinicaId;
+    if(clinicaRascunho&&String(clinicaRascunho)!==window.obterContextoAvaliacaoKineSys().clinicaId)return false;
     if (!rascunhoKineSysEhValido(r)) {
         // Rascunhos antigos sem paciente/contexto real eram criados por eventos
         // padrão da tela. Eles não devem gerar aviso no login nem na avaliação.
@@ -2345,6 +2388,8 @@ async function restaurarRascunhoKineSys() {
         r.campos?.paciente_nome || ''
     ].map(v=>String(v||'').trim().toLowerCase()).join('::');
     if (chaveAviso && rascunhoKineSysAvisadoNestaSessao === chaveAviso) return false;
+    const pacienteRascunho=String(r.pacienteAtualId||r.paciente_id||r.pacienteId||'');
+    if(pacienteAtualId&&String(pacienteAtualId)!==pacienteRascunho)return false;
     rascunhoDialogAbertoKineSys = true;
     const autosaveAnterior=autosaveSuspensoKineSys;
     autosaveSuspensoKineSys=true;
@@ -2360,6 +2405,7 @@ async function restaurarRascunhoKineSys() {
         rascunhoDialogAbertoKineSys=false;
         autosaveSuspensoKineSys=autosaveAnterior;
     }
+    if(!window.contextoAvaliacaoContinuaKineSys(contextoRestaurar))return false;
     // Uma decisão explícita vale para esta sessão. Cancelar preserva o rascunho,
     // mas não volta a interromper o profissional a cada troca de tela.
     if (chaveAviso) rascunhoKineSysAvisadoNestaSessao=chaveAviso;
@@ -2370,13 +2416,16 @@ async function restaurarRascunhoKineSys() {
         return false;
     }
     if(escolha!==true)return false;
-    preencherClinicaEstruturada(r.clinicaEstruturada||{});
+    if(!window.contextoAvaliacaoContinuaKineSys(contextoRestaurar))return false;
+    window.iniciarContextoAvaliacaoKineSys(pacienteRascunho,r.avaliacaoEdicaoId||null);
+    preencherClinicaEstruturada({...r.clinicaEstruturada,laudo:null});
     Object.entries(r.campos).forEach(([key,value])=>{
         let el=document.getElementById(key);
         if(!el && key.includes(':')) { const [classes,val]=key.split(':'); el=Array.from(document.querySelectorAll('.'+classes.split('.').join('.'))).find(x=>x.value===val); }
         if(!el)return; if(el.type==='checkbox'||el.type==='radio')el.checked=!!value; else el.value=value;
     });
-    pacienteAtualId = r.pacienteAtualId || r.paciente_id || r.pacienteId || pacienteAtualId;
+    pacienteAtualId = pacienteRascunho || null;
+    window.preencherLaudoAvaliacaoKineSys?.(r.clinicaEstruturada?.laudo||null);
     if(r.estadoMapeamento) {
         estadoMapeamento=r.estadoMapeamento;
         const fpRascunho=String(r.contextoExameFingerprint||fingerprintContextoExameKineSys(r.campos||{}));
@@ -3640,7 +3689,7 @@ async function duplicarUltimaEvolucao(){
 
 function renderizarLinhaTempoClinicaCompleta(p){const c=document.getElementById('linha_tempo_clinica_completa');if(!c)return;if(!p){c.innerHTML='<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar a linha do tempo.</p>';return;}const ev=[];if(p.timestampCadastro||p.dataCadastro)ev.push({d:p.timestampCadastro?new Date(p.timestampCadastro).toISOString():p.dataCadastro,t:'cadastro',titulo:'Cadastro do paciente',desc:p.cadastradoPor?`Cadastrado por ${p.cadastradoPor}`:''});(obterAvaliacoes(p)||[]).forEach(a=>ev.push({d:obterRealizadoEmRegistro(a)||a.dataAvaliacao||'',t:'avaliacao',titulo:`${a.tipo||'Avaliação'} · ${a.status||'finalizada'}`,desc:`${profissionalRegistroClinico(a)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(a),true)} · EVA ${a.evaInicial??'N/I'}`}));(p.evolucoes||[]).forEach(e=>ev.push({d:obterRealizadoEmRegistro(e)||e.data||'',t:'evolucao',titulo:'Evolução fisioterapêutica',desc:`${profissionalRegistroClinico(e)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(e),true)} · EVA ${e.eva??'N/I'}${e.dadosEstruturados?.estadoClinico?' · '+e.dadosEstruturados.estadoClinico:''}`}));[...(p.documentos||[]),...obterDocumentosTimelineLocal(p.id),...(documentosTimelineNuvemCache.get(String(p.id))||[])].forEach(d=>ev.push({d:d.dataHoraISO||d.data_hora||'',t:'documento',titulo:d.titulo||'Documento',desc:d.emitidoPor||d.emitido_por?`Emitido por ${d.emitidoPor||d.emitido_por}`:''}));const ids=new Set();const eventosSemDuplicata=ev.filter(x=>{const chave=`${x.t}|${x.d}|${x.titulo}`;if(ids.has(chave))return false;ids.add(chave);return true;});eventosSemDuplicata.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const icon={cadastro:'👤',avaliacao:'🩺',evolucao:'📈',documento:'📄'};c.innerHTML=eventosSemDuplicata.length?eventosSemDuplicata.map(x=>`<div class="kds-u-gtc-34px-125px-1fr kds-u-gap-10px kds-u-ai-start-2 kds-u-p-10px-0 kds-u-bb-1px-solid-edf1ef kds-u-d-grid"><div class="kds-u-fs-heading-sm">${icon[x.t]||'•'}</div><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(formatarDataBR(String(x.d).slice(0,10)))}</div><div><strong class="kds-u-fs-label kds-u-text-petrol">${escapeHTML(x.titulo)}</strong><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(x.desc||'')}</div></div></div>`).join(''):'<p>Nenhum evento registrado.</p>';}
 
-async function abrirAtendimentoDoPainel(pacienteId,tipo){if(!pacienteId)return;try{localStorage.setItem("kinesys_paciente_contexto",String(pacienteId));}catch(_){}await atualizarSelectsPacientes();if(tipo==="evolucao"){sincronizarSelectPacienteEvolucao(pacienteId);navegarPara("tela_evolucao");setTimeout(function(){carregarHistoricoEvolucao();},0);}else{pacienteAtualId=pacienteId;navegarPara("tela_avaliacao");}}
+async function abrirAtendimentoDoPainel(pacienteId,tipo){if(!pacienteId)return;try{localStorage.setItem("kinesys_paciente_contexto",String(pacienteId));}catch(_){}await atualizarSelectsPacientes();if(tipo==="evolucao"){sincronizarSelectPacienteEvolucao(pacienteId);navegarPara("tela_evolucao");setTimeout(function(){carregarHistoricoEvolucao();},0);}else{await carregarPacienteParaEdicao(pacienteId);}}
 async function renderizarPendenciasClinicas(){const c=document.getElementById('lista_pendencias_clinicas');if(!c)return;const lista=await obterPacientesSalvos();const hoje=Date.now(),itens=[];for(const p of lista){const avs=obterAvaliacoes(p),av=obterAvaliacaoFinalizadaMaisRecente(p);const ras=avs.find(a=>a.status==='rascunho');if(ras)itens.push({n:p.nome,p:'Avaliação em rascunho',nivel:'alto'});if(!av)itens.push({n:p.nome,p:'Sem avaliação clínica finalizada',nivel:'alto'});if(av){const clin=av.mapeamento?.clinicaEstruturada||{};if(!(clin.psfs?.itens||[]).length)itens.push({n:p.nome,p:'PSFS não registrada',nivel:'baixo'});const objs=clin.objetivosPlano?.objetivos||[];if(objs.some(o=>!['atingido','nao_atingido'].includes(o.status||'')))itens.push({n:p.nome,p:'Objetivos terapêuticos em acompanhamento',nivel:'baixo'});const ro=clin.restricoesPosOperatorias;if(ro?.ativo&&!ro.retornoMedico)itens.push({n:p.nome,p:'Pós-operatório com restrição ativa e retorno médico não informado',nivel:'medio'});}
 const evs=(p.evolucoes||[]).slice().sort((a,b)=>String(a.data||a.dataHoraISO||'').localeCompare(String(b.data||b.dataHoraISO||'')));const ultima=evs.at(-1);if(ultima?.dadosEstruturados?.novoAlerta)itens.push({n:p.nome,p:'Última evolução registrou novo sinal de alerta',nivel:'alto'});if(ultima){const dt=new Date(ultima.dataHoraISO||ultima.data);if(Number.isFinite(dt.getTime())&&(hoje-dt.getTime())>14*864e5)itens.push({n:p.nome,p:'Sem evolução registrada há mais de 14 dias',nivel:'medio'});}}
 c.innerHTML=itens.length?itens.slice(0,20).map(i=>`<div class="ks-pending-row ks-pending-row--${i.nivel==='alto'?'high':i.nivel==='medio'?'medium':'low'}"><strong>${escapeHTML(i.n)}</strong><span class="kds-u-fs-meta kds-u-text-muted"> — ${escapeHTML(i.p)}</span></div>`).join(''):'<p class="kds-u-text-success-dark kds-u-fs-ui">✓ Nenhuma pendência automática relevante encontrada.</p>';}

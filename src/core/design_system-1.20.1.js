@@ -52,6 +52,7 @@
         pacienteContextoId='';
         contextoRevisao++;
         storageSet('kinesys_paciente_contexto','');
+        if((typeof pacienteAtualId!=='undefined'&&pacienteAtualId)||document.getElementById('paciente_nome')?.value||document.getElementById('paciente_hma')?.value)window.iniciarContextoAvaliacaoKineSys?.();
         if(typeof pacienteAtualId!=='undefined') pacienteAtualId=null;
         PACIENTE_SELECTS.forEach(id=>{const el=document.getElementById(id);if(el){el.value='';delete el.dataset.ksContextLoaded;}});
         const resumo=document.getElementById('ks_prontuario_resumo');
@@ -285,7 +286,15 @@
     function wrapNavegacao(){
         if(typeof window.navegarPara!=='function'||window.navegarPara.__ksWrapped)return;
         const orig=window.navegarPara;
-        const wrapped=function(...args){sincronizarIdentidadeContexto();preservarResumoPacienteNaNavegacao=args[0]==='tela_buscar'&&args[1]===true;if((args[0]==='tela_buscar'&&!preservarResumoPacienteNaNavegacao)||args[0]==='tela_login')limparSelecaoPaciente();const r=orig.apply(this,args); const ativo=document.querySelector('.tela.ativa')?.id||args[0]; atualizarPaginaAtiva(ativo); return r;};
+        const wrapped=function(...args){
+            sincronizarIdentidadeContexto();preservarResumoPacienteNaNavegacao=args[1]===true;
+            if((args[0]==='tela_buscar'&&!preservarResumoPacienteNaNavegacao)||args[0]==='tela_login')limparSelecaoPaciente();
+            const r=orig.apply(this,args);
+            const atualizar=()=>atualizarPaginaAtiva(document.querySelector('.tela.ativa')?.id||args[0]);
+            // Não reaplica a tela antiga enquanto o fragmento solicitado ainda carrega.
+            if(r&&typeof r.then==='function')return r.then(resultado=>{if(resultado!==false)atualizar();return resultado;});
+            atualizar();return r;
+        };
         wrapped.__ksWrapped=true;window.navegarPara=wrapped;
     }
 
@@ -298,6 +307,7 @@
     async function definirPacienteContexto(id){
         sincronizarIdentidadeContexto();
         if(!id){limparSelecaoPaciente();return;}
+        if(document.getElementById('tela_avaliacao')?.classList.contains('ativa')&&typeof pacienteAtualId!=='undefined'&&String(pacienteAtualId||'')!==String(id))window.iniciarContextoAvaliacaoKineSys?.(id);
         contextoRevisao++;
         pacienteContextoId=id||'';
         storageSet('kinesys_paciente_contexto',pacienteContextoId);
@@ -758,7 +768,7 @@
     function wrapAberturaPaciente(){
         ['carregarPacienteParaEdicao','editarCadastro'].forEach(nome=>{
             const fn=window[nome];if(typeof fn!=='function'||fn.__ksContextWrapped)return;
-            const wrapped=async function(id,...rest){if(id)await definirPacienteContexto(id);return fn.call(this,id,...rest);};wrapped.__ksContextWrapped=true;window[nome]=wrapped;
+            const wrapped=async function(id,...rest){const carga=id?definirPacienteContexto(id):null,revisao=contextoRevisao;await carga;if(revisao!==contextoRevisao)return;return fn.call(this,id,...rest);};wrapped.__ksContextWrapped=true;window[nome]=wrapped;
         });
     }
     function prepararFinanceiro(){const tela=document.getElementById('tela_financeiro');if(!tela)return;tela.querySelector('.finance-hero')?.classList.add('ks-section-hero');}

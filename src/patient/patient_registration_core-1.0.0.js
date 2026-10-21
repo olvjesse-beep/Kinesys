@@ -111,9 +111,12 @@ async function salvarEIniciarAvaliacao() {
 
     const paciente = await salvarCadastroSomente(false);
     if (paciente) {
+        window.iniciarContextoAvaliacaoKineSys?.(paciente.id);
         pacienteAtualId = paciente.id;
+        const contextoCarga=window.obterContextoAvaliacaoKineSys?JSON.stringify(window.obterContextoAvaliacaoKineSys()):null;
         const navegacao = await navegarPara('tela_avaliacao', true);
-        if (navegacao === false) return null;
+        if (navegacao === false || contextoCarga&&!window.contextoAvaliacaoContinuaKineSys(contextoCarga)) return null;
+        limparClinicaEstruturada();
 
         document.getElementById('paciente_nome').value = paciente.nome;
         if (paciente.idade) document.getElementById('paciente_idade').value = paciente.idade.replace(' anos', '').trim();
