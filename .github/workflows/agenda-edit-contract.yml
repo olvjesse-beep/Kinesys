@@ -42,6 +42,7 @@ jobs:
           node tests/agenda_editar_atendimento.contract.js
           node tests/agenda_ux_corrections.contract.js
           node tests/agenda_detalhe_sem_confirmacao.test.cjs
+          node tests/agenda_lembrete_whatsapp_web.test.cjs
           node tests/agenda_intervalo.contract.js
           node tests/financeiro_modal_bootstrap.test.cjs
           node --check src/core/crm_relationship_core-1.0.0.js

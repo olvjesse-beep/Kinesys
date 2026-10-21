@@ -3832,7 +3832,7 @@ async function enviarLembreteAgendamentoAtual() {
         ? await obterMensagemPadraoConfigurada('agenda_lembrete_sessao', contextoMensagem, true)
         : `${saudacaoMensagem}! Passando para lembrar da sessão de ${a.procedimentos?.nome || 'atendimento'} no dia ${dataFormatada} às ${horaCurta(a.hora_inicio)}. ${chamadaConfirmacao}`;
     const numeroCompleto = telefone.length <= 11 ? '55' + telefone : telefone;
-    const url = `https://wa.me/${numeroCompleto}?text=${encodeURIComponent(mensagem)}`;
+    const url = `https://web.whatsapp.com/send?phone=${numeroCompleto}&text=${encodeURIComponent(mensagem)}`;
 
     const link = document.createElement('a');
     link.href = url;
