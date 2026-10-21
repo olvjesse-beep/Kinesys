@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:19/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:20/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
