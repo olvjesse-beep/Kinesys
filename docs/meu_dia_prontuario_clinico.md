@@ -27,3 +27,11 @@ Não altera recebimentos, prontuários reais, rascunhos, assinatura ou conteúdo
 Backup verificado fora do diretório público: `C:/Users/User/.codex/backups/kinesys-20261022-meu-dia-cuidados/antes.zip`, 532 entradas, SHA256 `BF3CFC2707CF27BB0A2DDA9C51CF9DAB433D6F91E59EF5FEE7735F8843ADFB54`.
 
 Reverter apenas o commit desta PR por nova PR, mantendo publicações posteriores. Nenhuma restauração de banco é necessária. Quando autorizado publicar, destino exclusivo `/home/u760374282/domains/fisiofixfisioterapia.com/public_html/app`; nunca a pasta pai. Conferir os três domínios após publicação.
+
+## Ajuste dos botões lado a lado
+
+Ajuste exclusivamente visual solicitado após a publicação: remove o limite de 255px do grupo de ações e usa a largura efetiva do card para posicionar o grupo. Os três botões ficam na mesma linha; em cards estreitos, seus títulos podem ocupar duas linhas dentro do botão, sem cortar palavras. O indicador “Registro concluído” usa uma faixa separada. Nenhum handler, dado clínico ou critério de visibilidade foi alterado.
+
+Teste `home_actions_inline.contract.cjs` acrescentado à barreira, sem retirar os contratos existentes. Validação visual com DOM e CSS reais, dados sintéticos e medição de bounding boxes: janelas de 1920, 1366, 1280, 1024, 900, 620, 390 e 320px, incluindo card de 905px como no exemplo enviado. Conferidos três botões na mesma linha, títulos sem recorte, dois botões com indicador de conclusão, ausência de sobreposição e overflow. Suíte local completa: 77 checks aprovados.
+
+Backup anterior a este ajuste: `C:/Users/User/.codex/backups/kinesys-20261022-botoes-lado-a-lado/antes.zip`, 535 entradas, SHA256 `1A62A3EF006BB855A553622CC42F57641DAD7F591F569E63FF018A4483CB0617`. Base: `9f484bb8865e2adc51ff40e0141610c0962f43f6`. Reversão seletiva pelo commit/PR deste ajuste, sem desfazer a funcionalidade clínica da PR 220.

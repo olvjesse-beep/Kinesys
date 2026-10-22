@@ -546,7 +546,7 @@
 #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-status,
 #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-category{color:rgba(241,255,253,.9)!important}
 #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-detail{color:rgba(230,249,246,.72)!important}
-#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{max-width:255px}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{max-width:none;min-width:0;align-items:stretch}
 #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions button{
   min-height:40px!important;
   padding:7px 11px!important;
@@ -668,3 +668,19 @@
 #card_crm #crm_paciente_sugestoes button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;border-radius:6px;background:transparent;color:var(--kds-text,#173b45);padding:11px 12px;min-height:44px;font:inherit;cursor:pointer}
 #card_crm #crm_paciente_sugestoes button:hover,#card_crm #crm_paciente_sugestoes button[aria-selected="true"]{background:var(--kds-accent-soft,#e8f4f1)}
 #card_crm #crm_paciente_sugestoes p{margin:8px 12px;color:var(--kds-muted,#607a82)}
+
+/* As três ações são um grupo horizontal. A largura do card, não apenas a
+ * janela, determina quando o grupo passa para baixo do nome do paciente. */
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta{container:ks-meu-dia / inline-size}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions button{flex:0 0 auto}
+#tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-record-done{flex-basis:100%;justify-content:flex-end}
+@container ks-meu-dia (max-width:720px){
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row{grid-template-columns:70px minmax(0,1fr)}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{grid-column:2;justify-content:flex-start;width:100%}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions button{flex:1 1 0;min-width:0;white-space:normal;word-break:normal;overflow-wrap:normal}
+}
+@container ks-meu-dia (max-width:480px){
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-row{grid-template-columns:minmax(0,1fr)}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-actions{grid-column:1}
+  #tela_home.ks-prof-home-active #card_painel_fisioterapeuta .ks-fisio-day-time{display:flex;padding-right:0;border-right:0}
+}
