@@ -110,6 +110,7 @@
         await carregarScript(BASES_BANCO[chave]);
         const extensao=EXTENSOES_BANCO[chave];
         if(extensao)await carregarScript(extensao);
+        window.KineSysEvidenceProfiles?.instalarBanco(typeof BANCO_MAPEAMENTO_CLINICO==='undefined'?null:BANCO_MAPEAMENTO_CLINICO);
         regioesBancoCarregadas.add(chave);
         document.dispatchEvent(new CustomEvent('kinesys:clinical-bank-region-ready',{detail:{id:chave,versao:VERSION}}));
         return true;

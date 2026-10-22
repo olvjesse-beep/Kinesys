@@ -79,13 +79,16 @@
 
     function dadosAtuais(){
         const sintese=gerarSinteseMapeamento(),achados=window.coletarAchadosLaudoKineSys?.()||[],seguranca=window.validarSegurancaParaFinalizacao();
-        const planoAtual=window.KineSysMotorClinico3?.ultimoPlano||window.gerarPlanoClinicoHMAKineSys?.()||null;
+        let planoAtual=window.KineSysMotorClinico3?.ultimoPlano||window.gerarPlanoClinicoHMAKineSys?.()||null;
+        const hmaFonte=document.getElementById('paciente_hma')?.value?.trim()||'';
+        if(window.KineSysEvidenceReasoning&&planoAtual?.raciocinio?.origemHMA!==hmaFonte)planoAtual=window.gerarPlanoClinicoHMAKineSys?.()||planoAtual;
         const plano=planoAtual?{
             versao:planoAtual.versao||'',
             insuficiente:!!planoAtual.insuficiente,
             hipoteses:(planoAtual.hipoteses||[]).filter(Boolean).map(h=>({id:h.id||'',nome:h.nome||'',regiaoId:h.regiaoId||'',aConfirmar:(h.aConfirmar||[]).filter(Boolean),criterio:criterioDaHipotese(h)})),
             testesPrioritarios:(planoAtual.exame?.testesPrioritarios||[]).filter(Boolean).map(t=>({texto:t.texto||t.nome||'',tipo:t.tipo||'',hipoteseId:t.hipoteseId||t.condicaoId||'',hipoteseIds:t.hipoteseIds||[],regiaoIds:t.regiaoIds||[]})).filter(t=>t.texto),
-            lacunas:(planoAtual.lacunas||[]).filter(Boolean)
+            lacunas:(planoAtual.lacunas||[]).filter(Boolean),
+            raciocinio:clone(planoAtual.raciocinio||planoAtual.hmaResultado?.raciocinio||null)
         }:null;
         const identificacao=[],historia=[],campos={},rotulosCampos={};
         const gruposAnamnese={
@@ -112,6 +115,7 @@
         if(campos.exames_imagem_descricao)campos.exames_imagem_fonte=document.getElementById('exames_imagem_fonte')?.value||'relato_paciente';
         const dataAtendimento=document.getElementById('avaliacao_realizado_em')?.value;
         if(dataAtendimento)campos.avaliacao_realizado_em=dataAtendimento;
+        if(plano&&window.KineSysEvidenceReasoning&&plano.raciocinio?.origemHMA!==String(campos.paciente_hma||campos.hma||''))plano.raciocinio=window.KineSysEvidenceReasoning.analisar(campos.paciente_hma||campos.hma||'');
         const complementos={cirurgias:'',medicamentos:'',cirurgiasItens:[],medicamentosItens:[]};
         ['tags_cirurgias','tags_medicamentos'].forEach(id=>{
             const container=document.getElementById(id),chave=id==='tags_cirurgias'?'cirurgias':'medicamentos';
@@ -493,7 +497,7 @@
         adicionar('funcional',secaoFuncional(d),[{campo:'medidasObjetivas/psfs/outcomes'}]);
         adicionar('plano',secaoPlanoRegistrado(d),[{campo:'objetivosPlano'}]);
         adicionar('seguranca',secaoSeguranca(d),[{campo:'sintese.segurancaGlobal'}]);
-        return {versao:2,fontes,fatos,relacoes,blocos,proposicoes:relato.proposicoes||[],problemas:relato.problemas||[],coberturaProblemas,pendenciasInterpretacao:relato.pendencias||[],correlacoes:correlacoes.map(c=>({...c,criterioAtendido:estadoDoCriterio(c)})),origemHMA:relato.origem};
+        return {versao:3,fontes,fatos,relacoes,blocos,proposicoes:relato.proposicoes||[],problemas:relato.problemas||[],coberturaProblemas,raciocinio:d.plano?.raciocinio||null,pendenciasInterpretacao:relato.pendencias||[],correlacoes:correlacoes.map(c=>({...c,criterioAtendido:estadoDoCriterio(c)})),origemHMA:relato.origem};
     }
     function validarPlanoSemantico(plano,texto){
         const corpo=String(texto||'').replace(/\n\nData de emissão:[^\n]*\n\n_{10,}\n[^\n]*\n[^\n]*$/,''),n=normalizar(corpo),ausentes=[],cobertura=[];
@@ -515,7 +519,8 @@
         // Qualidade é independente da cobertura: texto completo pode continuar mal redigido.
         const significado=window.KineSysSemanticGraph&&plano.proposicoes?.length?window.KineSysSemanticGraph.validar({origem:plano.origemHMA,proposicoes:plano.proposicoes,pendencias:plano.pendenciasInterpretacao||[]},corpo,plano.fatos.filter(f=>f.tipo!=='relato').map(f=>f.redacao)):null;
         const problemasSemExame=(plano.coberturaProblemas||[]).filter(p=>!p.possuiExameRegistrado);
-        return {ok:!ausentes.length&&!contradicoes.length&&!palavras.length&&!problemasSemExame.length&&!plano.pendenciasInterpretacao?.length&&(!significado||significado.ok),cobertura,ausentes,contradicoes,qualidade:palavras,numerosSemOrigem,significado,problemasSemExame};
+        const correlacoesDivergentes=(plano.correlacoes||[]).filter(c=>c.resultados.length&&['menos_compativel','localizacao_pendente','lateralidade_pendente','cronologia_pendente','dados_divergentes'].includes(c.evidenciasCompartilhadas?.estado));
+        return {ok:!ausentes.length&&!contradicoes.length&&!palavras.length&&!problemasSemExame.length&&!correlacoesDivergentes.length&&!plano.pendenciasInterpretacao?.length&&(!significado||significado.ok),cobertura,ausentes,contradicoes,qualidade:palavras,numerosSemOrigem,significado,problemasSemExame,correlacoesDivergentes};
     }
     window.analisarSemanticaAvaliacaoKineSys=function(){const d=dadosAtuais(),p=construirPlanoNarrativo(d);return clone({...p,validacao:validarPlanoSemantico(p,p.blocos.map(b=>b.texto).join('\n\n'))});};
     window.validarTextoSemanticoAvaliacaoKineSys=function(texto){return clone(validarPlanoSemantico(construirPlanoNarrativo(dadosAtuais()),String(texto||'')));};
@@ -822,7 +827,7 @@
             const fonteResultados=achadosVinculados.length?achadosVinculados:achadosRegiao.map(a=>({...a,achados:(a.achados||[]).map(x=>({...x,resultado:priorizados.some(t=>normalizar(t.texto)===normalizar(x.texto)&&(!t.regiaoIds?.length||t.regiaoIds.includes(a.regiaoId)))?x.resultado:'nao_avaliado'}))}));
             const resultados=fonteResultados.flatMap(a=>(a.achados||[]).map((x,indice)=>({x,indice})).filter(({x})=>RESULTADO_LAUDO[x.resultado]).map(({x,indice})=>({teste:limparTextoClinico(x.texto),resultado:x.resultado,indice,eixo:a.nome,eixoId:a.id||''}))).filter((r,i,todos)=>todos.findIndex(o=>normalizar(o.teste)===normalizar(r.teste)&&o.resultado===r.resultado)===i);
             const contagem=resultados.reduce((acc,item)=>(acc[item.resultado]=(acc[item.resultado]||0)+1,acc),{});
-            return {regiao:regiao.regiao,regiaoId:hip?.regiaoId||achadosRegiao[0]?.regiaoId||'',hipoteseId:hip?.id||regiao.codigoHipotese||'',hipoteseAnamnese:hip?.nome||regiao.nomeHipotese||'',criterio:achadosVinculados.length?(hip?.criterio||criterioDaHipotese({id:regiao.codigoHipotese})): {tipo:'',minimo:0,obrigatorios:[]},motivos:sugeridos.slice(0,4),resultados,contagem,semVinculo:!resultados.length&&achadosRegiao.some(a=>(a.achados||[]).some(x=>RESULTADO_LAUDO[x.resultado])),nivel:regiao.nivel,direcao:regiao.direcaoInvestigacao||regiao.hipotese||'',conclusao:regiao.textoDocumento||'',direcaoProfissional:regiao.direcaoProfissional||''};
+            return {regiao:regiao.regiao,regiaoId:hip?.regiaoId||achadosRegiao[0]?.regiaoId||'',hipoteseId:hip?.id||regiao.codigoHipotese||'',hipoteseAnamnese:hip?.nome||regiao.nomeHipotese||'',evidenciasCompartilhadas:d.plano?.raciocinio?.hipoteses?.find(h=>h.id===(hip?.id||regiao.codigoHipotese)),fonteRaciocinio:d.plano?.raciocinio?.fonteId||'',criterio:achadosVinculados.length?(hip?.criterio||criterioDaHipotese({id:regiao.codigoHipotese})): {tipo:'',minimo:0,obrigatorios:[]},motivos:sugeridos.slice(0,4),resultados,contagem,semVinculo:!resultados.length&&achadosRegiao.some(a=>(a.achados||[]).some(x=>RESULTADO_LAUDO[x.resultado])),nivel:regiao.nivel,direcao:regiao.direcaoInvestigacao||regiao.hipotese||'',conclusao:regiao.textoDocumento||'',direcaoProfissional:regiao.direcaoProfissional||''};
         });
     }
     window.coletarContextoIntegradoAvaliacaoKineSys=function(){const d=dadosAtuais();return clone({...d,correlacoes:construirCorrelacoes(d)});};
@@ -861,6 +866,7 @@
             if(c.semVinculo)return `Há resultados de exame na região, mas sem vínculo registrado com ${alvo}; não foi produzida conclusão automática para essa hipótese.`;
             if(c.nivel==='alerta')return'A interpretação clínico-funcional permanece condicionada à análise dos sinais de alerta identificados na avaliação.';
             const criterio=estadoDoCriterio(c);
+            if(positivos&&['menos_compativel','localizacao_pendente','lateralidade_pendente','cronologia_pendente','dados_divergentes'].includes(c.evidenciasCompartilhadas?.estado))return `Há resultados positivos relacionados ${alvoIndireto}, mas a localização ou a história relatada ainda não é concordante. É necessário esclarecer esses dados antes de integrá-los a uma conclusão clínica.`;
             if(criterio===true)return `O conjunto dos resultados registrados dá suporte ${alvoIndireto}, considerada na investigação da queixa. Esses resultados não estabelecem diagnóstico definitivo isoladamente.`;
             if(positivos&&criterio===false)return `Há achados favoráveis ${alvoIndireto}, mas a combinação de resultados ainda é insuficiente para sustentá-la com maior segurança.`;
             if(positivos)return`Esses achados mantêm ${alvo} como possibilidade de investigação, sem estabelecer diagnóstico definitivo.`;
@@ -971,6 +977,7 @@
         if(sv?.significado&&!sv.significado.ok)avisos.push('Confira a correspondência entre sintomas, locais, lados, momentos e doses do relato e do texto final');
         if(sv?.significado?.causalidade?.length)avisos.push('Há uma relação causal nova sem fonte correspondente');
         if(sv?.problemasSemExame?.length)avisos.push('Queixas ainda sem exame registrado: '+unirNatural(valoresUnicos(sv.problemasSemExame.map(p=>p.regiao))));
+        if(sv?.correlacoesDivergentes?.length)avisos.push('Há hipótese examinada com localização ou história ainda não concordante; confira as evidências do Radar');
         if(laudo.semantica?.pendenciasInterpretacao?.length)avisos.push('Há localizações ou referências no relato que precisam ser esclarecidas antes de associá-las a uma hipótese');
         const motorAnterior=laudo.versaoTexto!==22;
         document.getElementById('ks-laudo-status').textContent=mudou||motorAnterior?'A avaliação mudou ou há uma nova base semântica. Seu texto foi preservado: use Atualizar base da avaliação ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:v.ambiguidades?.length?'O relatório requer revisão: um item positivo reúne achados alternativos. Especifique no texto qual achado foi observado.':(laudo.modo==='revisao'||sv&&!sv.ok)?`O relatório requer revisão. ${avisos.length?avisos.join('. ')+'.':'Confira os achados divergentes ou os trechos do relato que precisam de revisão.'}`:'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';

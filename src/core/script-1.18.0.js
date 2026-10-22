@@ -4233,7 +4233,7 @@ document.addEventListener('click', e => {
 (function () {
   'use strict';
 
-  var VERSAO_MOTOR_HMA = '11.2.0-funil-anatomico';
+  var VERSAO_MOTOR_HMA = '11.3.0-evidencias-contextuais';
   window.KINESYS_HMA_ENGINE_VERSION = VERSAO_MOTOR_HMA;
 
   var LEXICO = {
@@ -12635,7 +12635,7 @@ document.addEventListener('click', e => {
         contra: (p.evidenciasContra || []).map(rotuloEvidenciaHMA)
       };
     });
-    return resultado;
+    return window.KineSysEvidenceReasoning?.refinarLeitura(resultado, texto || '') || resultado;
   };
 
   window.inspecionarScoreHMAKineSys = function (texto) {
@@ -12676,7 +12676,7 @@ document.addEventListener('click', e => {
     var ultimaChave = null;
     var ultimoResultado = null;
     var memo = function(texto, contexto){
-      var chave = normalizar(texto || '') + '|' + JSON.stringify(contexto || {});
+      var chave = String(texto || '') + '|' + JSON.stringify(contexto || {}) + '|' + (window.KineSysEvidenceReasoning?.version || 'legado');
       if (chave === ultimaChave && ultimoResultado) return ultimoResultado;
       ultimoResultado = original.call(this, texto, contexto);
       ultimaChave = chave;
@@ -12697,26 +12697,33 @@ document.addEventListener('click', e => {
       irradiacao: document.getElementById('paciente_irradiacao')?.value?.trim() || ''
     });
     box.hidden = !(r.achados.length || (r.alertas || []).length || r.suspeitaPrincipal || (r.diferenciais || []).length);
-    if (box.hidden) return;
+    if (box.hidden) { lista.innerHTML='';box.dataset.fatos='{}';box.dataset.raciocinio='null';return; }
     var alertas = (r.alertas || []).map(function (a) { return '<div role="alert"><strong>' + escapeHTML(a.nome) + '</strong><br><small>' + escapeHTML(a.acao) + '</small></div>'; }).join('');
     var achados = r.achados.map(function (a) { return '<li><strong>' + escapeHTML(a.titulo) + ':</strong> ' + escapeHTML(a.valor) + '</li>'; }).join('');
     var principal = r.suspeitaPrincipal ? (function (h) {
       var contra = (h.contra || []).length ? '<br><small><strong>Contra:</strong> ' + escapeHTML(h.contra.join(' · ')) + '.</small>' : '';
-      return '<div><strong>' + escapeHTML(h.nome) + '</strong><br><small><strong>O que sustenta:</strong> ' + escapeHTML((h.aFavor || []).filter(Boolean).join(' · ') || 'dados ainda insuficientes') + '.</small>' + contra + '</div>';
+      var confirmar=(h.aConfirmar||[]).length?'<br><small><strong>Dados a esclarecer:</strong> '+escapeHTML(h.aConfirmar.join(' · '))+'</small>':'';
+      return '<div><strong>' + escapeHTML(h.nome) + '</strong><br><small><strong>O que sustenta:</strong> ' + escapeHTML((h.aFavor || []).filter(Boolean).join(' · ') || 'dados ainda insuficientes') + '.</small>' + contra + confirmar + '</div>';
     })(r.suspeitaPrincipal) : '';
     var diferenciais = (r.diferenciais || []).map(function (h) {
       var contra = (h.contra || []).length ? '<br><small><strong>Contra:</strong> ' + escapeHTML(h.contra.join(' · ')) + '.</small>' : '';
-      var confirmar = (h.aConfirmar || []).length ? '<br><small><strong>Confirmar no exame:</strong> ' + escapeHTML(h.aConfirmar.join(' · ')) + '.</small>' : '';
-      return '<div><strong>' + escapeHTML(h.nome) + '</strong><br><small><strong>A favor:</strong> ' + escapeHTML((h.aFavor || []).filter(Boolean).join(' · ') || 'compatibilidade parcial') + '.</small>' + contra + confirmar + '</div>';
+      var confirmar = (h.aConfirmar || []).length ? '<br><small><strong>Dados a esclarecer:</strong> ' + escapeHTML(h.aConfirmar.join(' · ')) + '</small>' : '';
+      var estado=h.estadoInvestigacao?'<br><small><strong>Situação:</strong> '+escapeHTML(({compativel_com_relato:'compatível com os dados relatados, a examinar',localizacao_pendente:'localização ainda não informada',lateralidade_pendente:'achados em lados diferentes, esclarecer',cronologia_pendente:'data ou relação com os sintomas ainda não esclarecida',menos_compativel:'menor compatibilidade com o relato atual',dados_divergentes:'dados divergentes, revisar'})[h.estadoInvestigacao]||h.estadoInvestigacao)+'</small>':'';
+      return '<div><strong>' + escapeHTML(h.nome) + '</strong>'+estado+'<br><small><strong>A favor:</strong> ' + escapeHTML((h.aFavor || []).filter(Boolean).join(' · ') || 'sem suporte específico suficiente') + '.</small>' + contra + confirmar + '</div>';
     }).join('');
-    var lacunas = r.lacunas.length ? '<div><strong>Para decidir melhor no exame:</strong><ul>' + r.lacunas.map(function (x) { return '<li>' + escapeHTML(x) + '</li>'; }).join('') + '</ul></div>' : '';
+    var lacunasExame=r.lacunas.filter(function(x){return !(r.perguntasEntrevista||[]).some(function(q){return q.texto===x;});});
+    var lacunas = lacunasExame.length ? '<div><strong>Para decidir melhor no exame:</strong><ul>' + lacunasExame.map(function (x) { return '<li>' + escapeHTML(x) + '</li>'; }).join('') + '</ul></div>' : '';
+    var entrevista=(r.perguntasEntrevista||[]).length?'<div><strong>Perguntas prioritárias da entrevista</strong><ul>'+r.perguntasEntrevista.map(function(q){return '<li>'+escapeHTML(q.texto)+'</li>';}).join('')+'</ul></div>':'';
+    var fontesRaciocinio=Array.from(new Map((r.raciocinio?.hipoteses||[]).flatMap(function(h){return h.fontes||[];}).map(function(f){return [f.url,f];})).values());
+    var fontesHTML=fontesRaciocinio.length?'<details><summary>Base científica e limites</summary><ul>'+fontesRaciocinio.map(function(f){return '<li><a target="_blank" rel="noopener noreferrer" href="'+escapeHTML(f.url)+'">'+escapeHTML(f.titulo)+'</a> — '+escapeHTML(f.limite)+'</li>';}).join('')+'</ul></details>':'';
     lista.innerHTML = alertas +
       (achados ? '<div><strong>Resumo clínico extraído</strong><ul>' + achados + '</ul></div>' : '') +
       (principal ? '<div><strong>Suspeita principal</strong>' + principal + '</div>' : '') +
       (diferenciais ? '<div><strong>Diagnósticos diferenciais a investigar</strong>' + diferenciais + '</div>' : '') +
-      lacunas;
+      entrevista + lacunas + fontesHTML;
     box.dataset.engineVersion = VERSAO_MOTOR_HMA;
-    box.dataset.fatos = JSON.stringify({ versao: VERSAO_MOTOR_HMA, local: r.local, eventos: r.eventos || [], eventosClinicos: r.eventosClinicos || [], clausulas: r.clausulas || [], provenienciaSinais: r.provenienciaSinais || {}, negacoesDetectadas: r.negacoesDetectadas || [], topologiaAnatomica:r.topologiaAnatomica||null, conflitosLateralidade:r.conflitosLateralidade||[], sobreposicoesEvidencia: r.sobreposicoesEvidencia || [], sinais: r.sinais || [], achados: r.achados, suspeitaPrincipal: r.suspeitaPrincipal, diferenciais: r.diferenciais, lacunas: r.lacunas, alertas: r.alertas });
+    box.dataset.raciocinio = JSON.stringify(r.raciocinio || null);
+    box.dataset.fatos = JSON.stringify({ versao: VERSAO_MOTOR_HMA, local: r.local, eventos: r.eventos || [], eventosClinicos: r.eventosClinicos || [], clausulas: r.clausulas || [], provenienciaSinais: r.provenienciaSinais || {}, negacoesDetectadas: r.negacoesDetectadas || [], topologiaAnatomica:r.topologiaAnatomica||null, conflitosLateralidade:r.conflitosLateralidade||[], sobreposicoesEvidencia: r.sobreposicoesEvidencia || [], sinais: r.sinais || [], achados: r.achados, suspeitaPrincipal: r.suspeitaPrincipal, diferenciais: r.diferenciais, lacunas: r.lacunas, alertas: r.alertas, raciocinio:r.raciocinio||null });
   };
 })();
 
