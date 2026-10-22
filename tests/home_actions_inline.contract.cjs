@@ -1,0 +1,16 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const css=fs.readFileSync('styles/home_profissional_dashboard-1.0.0.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const home=fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
+assert(!css.includes('max-width:255px'),'O grupo de três ações não pode continuar limitado a 255px');
+assert.match(css,/#tela_home\.ks-prof-home-active #card_painel_fisioterapeuta\{container:ks-meu-dia \/ inline-size\}/,'Responsividade precisa considerar a largura real do card na grade de duas colunas');
+const compact=css.slice(css.indexOf('@container ks-meu-dia (max-width:720px)'));
+assert.match(compact,/grid-column:2;justify-content:flex-start;width:100%/,'Em card estreito, ações usam a faixa abaixo do paciente');
+assert.match(compact,/flex:1 1 0;min-width:0;white-space:normal;word-break:normal;overflow-wrap:normal/,'Três botões dividem a linha sem cortar títulos ou quebrar letras');
+assert.match(compact,/@container ks-meu-dia \(max-width:480px\)[\s\S]*grid-column:1/,'No celular o grupo horizontal usa toda a largura');
+assert.match(css,/\.ks-fisio-record-done\{flex-basis:100%;justify-content:flex-end\}/,'Carimbo de conclusão tem faixa própria e não empurra um botão para outra linha');
+for(const label of ['Análise da evolução','Realizar avaliação','Evolução'])assert(home.includes(label),'Preservar ação: '+label);
+assert(home.includes("abrirRegistroClinico(agendamento.paciente_id,'avaliacao',agendamento.id)"),'Preservar vínculo clínico');
+const href=html.match(/href="(styles\/home_profissional_dashboard-1\.0\.0\.css\?[^"\s]+)"/)?.[1];
+assert(new URL(href,'https://app.fisiofixfisioterapia.com/').searchParams.get('v'),'CSS precisa de revisão explícita');
+console.log('PASS Meu dia: grupo horizontal, responsividade pelo card, títulos completos, carimbo separado e vínculos preservados.');
