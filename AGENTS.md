@@ -154,6 +154,15 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Não afirmar que o KineSys consegue inspecionar a sessão ou controlar uma aba externa já aberta. O WhatsApp verifica o login do próprio perfil do navegador; sessão desconectada pode exigir autenticação.
 - Invalidar os assets de todos os consumidores e executar `whatsapp_direct_web.test.cjs` na barreira hospedada. Preservar destinatário responsável/dependente, texto configurado e o registro de lembrete; usar somente destinatários sintéticos nos testes, sem enviar mensagens reais.
 
+## 15. Contratos do Meu dia e consulta clínica
+
+- Em Meu dia clínico, “Realizar avaliação” aparece somente no prontuário carregado sem avaliação finalizada; rascunho não conta como finalização. Preservar evolução, exceções justificadas e reavaliação, com vínculo pelo ID do paciente e agendamento. Dados indisponíveis ou locais pendentes não equivalem a paciente sem avaliação.
+- Após salvamento bem-sucedido, invalidar a fotografia clínica da Home usando a clínica de origem. Respostas anteriores ao salvamento ou à troca de perfil/clínica não podem recolocar ações ou cuidados desatualizados.
+- Cuidados abaixo do nome são registros com origem, não prescrições nem contraindicações automáticas. Diferenciar antecedente, relato a conferir e restrição explicitamente documentada. Não promover negativa, história familiar, cirurgia indicada ou rascunho a antecedente próprio. Restrições ativas usam a avaliação finalizada mais recente, não um pós-operatório antigo.
+- Preservar “Consultar avaliação” e “Histórico de evoluções” no paciente selecionado, com permissões e consulta somente leitura, do mais recente ao mais antigo. Não abrir o formulário de edição ao consultar.
+- PDF simplificado apresenta conteúdo clínico em seções; fingerprints, caches, planos internos e JSON de rastreamento não são conteúdo narrativo. O detalhado mantém o apêndice técnico e auditoria. Não regenerar nem alterar texto profissional salvo. Preservar detalhes das intercorrências, exames, medicações e alertas nas evoluções. Resultados legados sem rótulos exigem aviso, nunca omissão silenciosa ou interpretação inventada.
+- Executar `home_avaliacao_cuidados.test.cjs` e `prontuario_clinico.test.cjs` na barreira hospedada, além de todas as suítes anteriores. Conferir notebook e mobile. Remover estas decisões somente por solicitação explícita do usuário.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

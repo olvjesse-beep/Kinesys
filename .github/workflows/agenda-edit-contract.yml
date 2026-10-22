@@ -67,6 +67,10 @@ jobs:
           node tests/access_management.contract.js
           node --check src/home/home_detalhes-1.18.5.js
           node tests/home_atendimentos_24h.contract.js
+          node --check src/home/home_fisioterapeuta_util-1.24.0.js
+          node tests/home_avaliacao_cuidados.test.cjs
+          node --check src/patient/prontuario_export_impl.js
+          node tests/prontuario_clinico.test.cjs
           node --check src/ui/input_helpers_core-1.0.0.js
           node --check src/clinical/evaluation_context_panels-1.18.3.js
           node tests/input_helpers_modularization.contract.js

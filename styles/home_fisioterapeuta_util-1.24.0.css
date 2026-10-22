@@ -1,4 +1,12 @@
 /* KineSys — Meu dia clínico compacto v1.24.0 */
+/* Escopo exclusivo do Meu dia; texto clínico nunca fica oculto apenas em tooltip. */
+#card_painel_fisioterapeuta .ks-fisio-day-care{min-width:0;margin:6px 0 8px;padding:8px 10px;border:1px solid #d9b178;border-radius:9px;background:#fff4df;color:#503819;font-size:.8rem;line-height:1.45;overflow-wrap:anywhere}
+#card_painel_fisioterapeuta .ks-fisio-day-safety-preview{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:650}
+#card_painel_fisioterapeuta .ks-fisio-day-safety summary{min-height:32px;padding:5px 0;cursor:pointer;font-weight:700}
+#card_painel_fisioterapeuta .ks-fisio-day-safety summary:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:3px}
+#card_painel_fisioterapeuta .ks-fisio-day-safety ul{display:grid;gap:10px;margin:4px 0;padding-left:18px}
+#card_painel_fisioterapeuta .ks-fisio-day-safety small{display:block;font-size:.72rem;color:#624c2c}
+#card_painel_fisioterapeuta .ks-fisio-day-safety p{margin:10px 0 2px;color:inherit;font-size:.75rem}
 #tela_home #card_painel_fisioterapeuta.ks-fisio-util-compact{
   width:min(100%,920px);
   margin:0 0 16px!important;

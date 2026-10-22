@@ -412,6 +412,12 @@
             if(typeof window.abrirHistoricoAgendamentosPaciente==='function')await window.abrirHistoricoAgendamentosPaciente(pacienteId);
             return;
         }
+        if(acao==='consultar_avaliacao'||acao==='historico_evolucao'){
+            const tela=acao==='consultar_avaliacao'?'tela_avaliacao':'tela_evolucao';
+            if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
+            if(typeof window.gerarProntuarioCompletoPDF!=='function'){toast('A consulta do prontuário não está disponível.','erro');return;}
+            return window.gerarProntuarioCompletoPDF(pacienteId,acao==='consultar_avaliacao'?'avaliacoes':'evolucoes');
+        }
         if(acao==='prontuario'){
             if(typeof window.abrirEscolhaProntuarioPDF!=='function'){toast('A exportação do prontuário não está disponível.','erro');return;}
             return window.abrirEscolhaProntuarioPDF(pacienteId);
@@ -554,7 +560,7 @@
         const acoes=r.querySelector('.ks-prontuario-actions');
         if(acoes){
             const extra=document.createDocumentFragment();
-            [['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
+            [['consultar_avaliacao','Consultar avaliação','tela_avaliacao'],['historico_evolucao','Histórico de evoluções','tela_evolucao'],['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
                 if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
                 const b=document.createElement('button');b.type='button';b.className='btn-secondary';b.dataset.ksPatientAction=acao;b.textContent=label;extra.append(b);
             });
