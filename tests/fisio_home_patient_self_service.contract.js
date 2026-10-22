@@ -27,7 +27,8 @@ assert.match(carregar,/resolverProfissionalHomeFisioterapeuta/, 'Home deve usar 
 const linha = bloco(home,'function montarLinha','function pontuacaoPrioridade');
 assert.doesNotMatch(linha,/criarBotao\('Prontuário'/, 'Meu dia clínico não deve usar Prontuário como ação principal');
 assert.match(linha,/clinica\.familia==='avaliacao' \? 'avaliacao' : 'evolucao'/, 'Avaliação deve abrir avaliação; demais sessões devem abrir evolução');
-assert.match(linha,/labelDestino=modoDestino==='avaliacao' \? 'Avaliação' : 'Evolução'/, 'Rótulo direto deve refletir destino clínico');
+assert.match(linha,/labelDestino=modoDestino==='avaliacao' \? \(clinica.temAvaliacao\?'Reavaliar':'Realizar avaliação'\) : 'Evolução'/, 'Rótulo deve distinguir primeira avaliação, reavaliação e evolução');
+assert.match(linha,/!clinica\.temAvaliacao&&modoDestino!=='avaliacao'/,'Adicionar avaliação apenas sem avaliação concluída, sem duplicar ação de agendamento avaliativo');
 assert.match(linha,/abrirRegistroClinico\(agendamento\.paciente_id,modoDestino,agendamento\.id\)/, 'A ação deve preservar o vínculo com o agendamento');
 
 const excluirSeguro = bloco(deletion,'async function excluirPacienteNuvemSeguro','async function excluirArquivosLocaisPaciente');
@@ -46,8 +47,10 @@ assert.ok(pagamentos < cobrancas && cobrancas < agendamentos && agendamentos < p
 assert.match(sql,/revoke all on function public\.kinesys_excluir_paciente_completo_interno_v1112\(text\) from public, anon, authenticated/i,'Função interna deve permanecer inacessível ao cliente');
 assert.match(sql,/grant execute on function public\.kinesys_excluir_paciente_completo\(text\) to authenticated/i,'Wrapper seguro deve permanecer disponível ao usuário autenticado');
 
-assert.match(index,/src\/core\/script-1\.18\.0\.js\?v=20260910-hma-perf-r3&patient_self_service=20260910-r1[^"']*core_mod=20260911-phase4[a-z]+-r\d+/,'Script precisa invalidar cache sem perder o contrato anterior');
+const asset=path=>new URL(index.match(new RegExp('src="('+path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\?[^"\\s]+)"'))?.[1]||'', 'https://app.fisiofixfisioterapia.com/');
+const coreAsset=asset('src/core/script-1.18.0.js'),homeAsset=asset('src/home/home_fisioterapeuta_util-1.24.0.js');
+assert(coreAsset.searchParams.get('v'),'Script precisa ter revisão explícita');assert.equal(coreAsset.searchParams.get('patient_self_service'),'20260910-r1');assert(coreAsset.searchParams.get('core_mod'),'Preservar contrato modular');
 assert.match(index,/src\/patient\/patient_deletion_core-1\.0\.0\.js\?v=20260911-phase4m-r1/,'Módulo de exclusão precisa estar no runtime');
-assert.match(index,/src\/home\/home_fisioterapeuta_util-1\.24\.0\.js\?v=20260910-r3&fisio_home=20260910-r1/,'Home fisioterapeuta precisa invalidar cache');
+assert.equal(homeAsset.searchParams.get('v'),coreAsset.searchParams.get('v'),'Home e notificação de avaliação devem pertencer à mesma publicação');assert.equal(homeAsset.searchParams.get('fisio_home'),'20260910-r1');
 
 console.log('Fisio home + patient self-service contract: OK');

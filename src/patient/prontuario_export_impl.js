@@ -57,6 +57,9 @@ function valorCurto(v){
 function chaveBonita(k){
     const mapa={
         hma:'História da moléstia atual', eva:'EVA', evaInicial:'EVA inicial', eva_inicial:'EVA inicial',
+        hipertenso:'Hipertensão',diabetico:'Diabetes',tabagista:'Tabagismo',etilista:'Consumo de álcool',yellow_flags_observacao:'Aspectos psicossociais relatados',
+        exposicoesOcupacionais:'Exposição ocupacional',exposicoesEsportivas:'Exposição esportiva',fatoresPsicossociais:'Fatores psicossociais',fatoresPiora:'Fatores de piora',
+        contexto_cirurgia_data:'Data de cirurgia',orientacoesCirurgiao:'Orientações do cirurgião',restricaoADM:'Restrição de amplitude',proibicoes:'Restrições informadas',statusCarga:'Apoio de carga',
         estadoClinico:'Estado clínico', estado_clinico:'Estado clínico', relatoLivre:'Relato livre', relato_livre:'Relato livre',
         respostaCarga:'Resposta à carga', resposta_carga:'Resposta à carga', dadosEstruturados:'Dados estruturados', dados_estruturados:'Dados estruturados',
         mapeamento:'Exame direcionado', comorbidades:'Comorbidades', cirurgias:'Cirurgias', medicamentos:'Medicamentos', esporte:'Esporte / atividade',
@@ -127,24 +130,82 @@ function blocoCadastro(p){
     ].filter(([,v])=>!vazio(v));
     return `<section><h2>1. Identificação e cadastro</h2><table class="kv"><tbody>${rows.map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table></section>`;
 }
-function blocoAvaliacao(av,i,detalhado){
+function blocoAvaliacao(av,i,detalhado,pacienteId=''){
     const tipo=av.tipo||'Avaliação fisioterapêutica';
-    const conteudo=achatar(av);
+    const conteudo=conteudoClinicoAvaliacao(av,pacienteId);
     const meta=detalhado?`<div class="trace"><div><b>Realizada:</b> ${esc(dataHora(obterRealizado(av)))}</div><div><b>Profissional:</b> ${esc(profissional(av))}</div><div><b>Salva no banco:</b> ${esc(dataHora(obterSalvo(av)))}</div><div><b>Janela de edição até:</b> ${esc(dataHora(obterLimite(av)))}</div>${(av.ultimaEdicaoEm||av.ultima_edicao_em)?`<div><b>Última edição:</b> ${esc(dataHora(av.ultimaEdicaoEm||av.ultima_edicao_em))}${(av.ultimaEdicaoPorNome||av.ultima_edicao_por_nome)?` · ${esc(av.ultimaEdicaoPorNome||av.ultima_edicao_por_nome)}`:''}</div>`:''}<div><b>ID do registro:</b> ${esc(av.id||'—')}</div></div>`:'';
     const resumo=[];
-    if(av.dataAvaliacao||av.data_avaliacao) resumo.push(`<span>Data: <b>${esc(av.dataAvaliacao||av.data_avaliacao)}</b></span>`);
+    if(av.dataAvaliacao||av.data_avaliacao) resumo.push(`<span>Data: <b>${esc(dataSomente(av.dataAvaliacao||av.data_avaliacao))}</b></span>`);
     if(av.status) resumo.push(`<span>Status: <b>${esc(av.status)}</b></span>`);
     if(av.evaInicial!==undefined||av.eva_inicial!==undefined) resumo.push(`<span>EVA inicial: <b>${esc(av.evaInicial??av.eva_inicial)}</b></span>`);
-    return `<article class="record"><div class="record-head"><div><span class="index">Avaliação ${i+1}</span><h3>${esc(tipo)}</h3></div><div class="record-summary">${resumo.join('')}</div></div>${meta}${tabelaCampos(conteudo)}</article>`;
+    return `<article class="record"><div class="record-head"><div><span class="index">Avaliação ${i+1}</span><h3>${esc(tipo)}</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(av)||av.dataAvaliacao||av.data_avaliacao,false))} · ${esc(profissional(av))}</p>${meta}${conteudo}${detalhado?'<details class="technical"><summary>Apêndice técnico do registro original</summary>'+tabelaCampos(achatar(av))+'</details>':''}</article>`;
 }
 function blocoEvolucao(ev,i,detalhado){
-    const conteudo=achatar(ev);
+    const conteudo=conteudoClinicoEvolucao(ev);
     const meta=detalhado?`<div class="trace"><div><b>Realizada:</b> ${esc(dataHora(obterRealizado(ev)))}</div><div><b>Profissional:</b> ${esc(profissional(ev))}</div><div><b>Salva no banco:</b> ${esc(dataHora(obterSalvo(ev)))}</div><div><b>Janela de edição até:</b> ${esc(dataHora(obterLimite(ev)))}</div>${(ev.ultimaEdicaoEm||ev.ultima_edicao_em)?`<div><b>Última edição:</b> ${esc(dataHora(ev.ultimaEdicaoEm||ev.ultima_edicao_em))}${(ev.ultimaEdicaoPorNome||ev.ultima_edicao_por_nome)?` · ${esc(ev.ultimaEdicaoPorNome||ev.ultima_edicao_por_nome)}`:''}</div>`:''}<div><b>ID do registro:</b> ${esc(ev.id||'—')}</div></div>`:'';
     const resumo=[];
     if(ev.data) resumo.push(`<span>Data: <b>${esc(dataSomente(ev.data))}</b></span>`);
     if(ev.eva!==undefined) resumo.push(`<span>EVA: <b>${esc(ev.eva)}</b></span>`);
     const estado=ev.dadosEstruturados?.estadoClinico||ev.dados_estruturados?.estadoClinico;if(estado) resumo.push(`<span>Estado: <b>${esc(estado)}</b></span>`);
-    return `<article class="record"><div class="record-head"><div><span class="index">Evolução ${i+1}</span><h3>Evolução fisioterapêutica</h3></div><div class="record-summary">${resumo.join('')}</div></div>${meta}${tabelaCampos(conteudo)}</article>`;
+    return `<article class="record"><div class="record-head"><div><span class="index">Evolução ${i+1}</span><h3>Evolução fisioterapêutica</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(ev)||ev.data,false))} · ${esc(profissional(ev))}</p>${meta}${conteudo}${detalhado?'<details class="technical"><summary>Apêndice técnico do registro original</summary>'+tabelaCampos(achatar(ev))+'</details>':''}</article>`;
+}
+
+function textoClinico(titulo,texto){
+    return String(texto??'').trim()?`<div class="clinical-block"><h4>${esc(titulo)}</h4><div class="clinical-text">${esc(texto)}</div></div>`:'';
+}
+function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>typeof v==='string'?v:v?.texto||v?.exibicao||v?.nome||'').filter(Boolean).join('; ');}
+function conteudoClinicoAvaliacao(av,pacienteId=''){
+    const m=av.mapeamento||{},c=m.clinicaEstruturada||{};
+    const laudoOriginal=c.laudo||{};
+    const laudoOutroPaciente=pacienteId&&laudoOriginal.contextoPaciente?.pacienteId&&String(laudoOriginal.contextoPaciente.pacienteId)!==String(pacienteId);
+    const l=laudoOutroPaciente?{}:laudoOriginal;
+    // Apenas o texto salvo desta avaliação; não recompõe a narrativa nem executa o motor.
+    let fonte={};try{const valor=JSON.parse(l.fonte||'{}');if(valor&&typeof valor==='object'&&!Array.isArray(valor))fonte=valor;}catch(_){}
+    const labels={contexto_saude_observacao:'Saúde e hábitos',contexto_cirurgia_regiao:'Cirurgia: região e lado',contexto_cirurgia_data:'Cirurgia: data informada',contexto_trauma_observacao:'Traumas, limitações e orientações',contexto_medicamento_observacao:'Uso de medicamentos e infiltrações',contexto_trabalho_tarefa:'Atividade ocupacional',contexto_trabalho_tempo:'Tempo de exposição',contexto_trabalho_frequencia:'Frequência de exposição',contexto_trabalho_observacao:'Observações ocupacionais'};
+    const contexto=c.contextoAnamnese||fonte.contextoAnamnese||{};
+    const campos=contexto.campos||{},comorbidades=av.comorbidades||{};
+    let html=textoClinico('História da moléstia atual',av.hma)+textoClinico('Antecedentes assinalados',Object.entries(comorbidades).filter(([,v])=>v===true).map(([k])=>chaveBonita(k)).join('; '));
+    html+=textoClinico('Cirurgias e procedimentos relatados',itensClinicos(av.cirurgias))+textoClinico('Medicamentos relatados',itensClinicos(av.medicamentos))+textoClinico('Atividade física',av.esporte);
+    Object.entries(campos).forEach(([k,v])=>{html+=textoClinico(labels[k]||chaveBonita(k.replace(/^contexto_/,'')),v);});
+    Object.entries(fonte.gruposAnamnese||{}).filter(([k])=>k!=='comorbidades').forEach(([k,v])=>{html+=textoClinico(chaveBonita(k),itensClinicos(v));});
+    ['yellow_flags_observacao','esporte_frequencia','esporte_duracao','esporte_nivel','esporte_mudanca_carga','origem_informacao_clinica'].forEach(k=>{html+=textoClinico(chaveBonita(k),fonte.campos?.[k]);});
+    const grupos={saude:'Saúde e hábitos',cirurgias:'Cirurgias e traumas',medicamentos:'Medicamentos e infiltrações',exames:'Exames de imagem',trabalho:'Trabalho e rotina',atividade:'Atividade física',psicossocial:'Fatores psicossociais'};
+    const estados={nega:'Negativa explicitamente registrada',relata:'Relato registrado',nao_informado:'Não informado'};
+    const linhasEstado=Object.entries(contexto.estados||{}).filter(([k])=>grupos[k]).map(([k,v])=>[grupos[k],estados[v]||v]);
+    if(linhasEstado.length)html+=`<div class="clinical-block"><h4>Contexto da entrevista</h4>${tabelaCampos(linhasEstado)}</div>`;
+    html+=textoClinico('Exames de imagem'+(c.examesImagem?.fonte==='laudo_conferido'?' (documento conferido)':' (origem: relato, salvo indicação no registro)'),c.examesImagem?.descricao||fonte.campos?.exames_imagem_descricao);
+    const r=c.restricoesPosOperatorias||{};
+    if(r.ativo)html+=`<div class="clinical-block"><h4>Restrições pós-operatórias registradas</h4>${tabelaCampos(achatar(r).filter(([k])=>k!=='ativo'))}</div>`;
+    const achados=Array.isArray(fonte.achados)?fonte.achados:[];
+    const testes=achados.flatMap(a=>(a.achados||[]).filter(t=>t.resultado&&t.resultado!=='nao_avaliado').map(t=>[`${a.regiao||a.regiaoId||'Exame'} - ${t.texto||t.nome||'Teste'}`,chaveBonita(t.resultado)]));
+    if(!testes.length)(m.resumoPorRegiao||[]).forEach(reg=>{
+        (reg.sinteseClinica?.hipoteses||[]).forEach(h=>(h.proveniencia?.exame||[]).filter(t=>t.resultado&&t.resultado!=='nao_avaliado').forEach(t=>{
+            const linha=[`${reg.regiao||'Exame'} - ${t.teste||t.texto||'Teste'}`,chaveBonita(t.resultado)];
+            if(!testes.some(x=>x[0]===linha[0]&&x[1]===linha[1]))testes.push(linha);
+        }));
+    });
+    if(testes.length)html+=`<div class="clinical-block"><h4>Achados do exame registrados</h4>${tabelaCampos(testes)}</div>`;
+    else if(Object.values(m.detalhes||{}).some(r=>Object.values(r?.resultados||{}).some(Boolean)))html+='<p class="warning">Há resultados legados sem rótulos de teste disponíveis nesta visualização. Consulte a avaliação original ou o apêndice técnico do PDF detalhado para conferi-los.</p>';
+    (m.resumoPorRegiao||[]).forEach(reg=>{
+        html+=textoClinico(reg.regiao||'Síntese do exame',reg.textoDocumento||reg.hipotese||reg.nomeHipotese);
+        html+=textoClinico('Sinais de alerta',itensClinicos(reg.redFlags))+textoClinico('Conduta e justificativa de segurança',[reg.redflagConduta,reg.redflagJustificativa].filter(Boolean).join('\n'));
+    });
+    ['medidasObjetivas','psfs','outcomes','objetivosPlano'].forEach(k=>{if(!vazio(c[k]))html+=`<div class="clinical-block"><h4>${esc(chaveBonita(k))}</h4>${tabelaCampos(achatar(c[k]))}</div>`;});
+    html+=textoClinico('Relatório salvo pelo profissional',l.texto);
+    if(l.validacao?.ok===false||l.revisado===false)html+='<p class="warning">O relatório salvo requer revisão profissional. O texto acima foi preservado sem alterações.</p>';
+    if(laudoOutroPaciente)html+='<p class="warning">Relatório com vínculo divergente não exibido. Revise a avaliação original.</p>';
+    return html||'<p class="muted">Nenhum conteúdo clínico preenchido neste registro.</p>';
+}
+function conteudoClinicoEvolucao(ev){
+    const d=ev.dadosEstruturados||ev.dados_estruturados||{},det=d.mudancasDetalhes||{};
+    const relato=ev.relatoLivre??ev.relato_livre;
+    let html=textoClinico('Relato e conduta da sessão',String(relato||'').trim()?relato:ev.relato);
+    const labels={novoExame:'Novo exame ou laudo',novaIntercorrencia:'Nova intercorrência',mudancaMedicacao:'Mudança de medicação',novoAlerta:'Novo sinal de alerta'};
+    Object.entries(labels).forEach(([k,label])=>{html+=textoClinico(label,det[k]||(d[k]?'Sinalizado, sem detalhamento registrado.':''));});
+    html+=textoClinico('Outras mudanças registradas',d.mudancas);
+    if(!vazio(d.respostaCarga))html+=`<div class="clinical-block"><h4>Resposta à carga</h4>${tabelaCampos(achatar(d.respostaCarga))}</div>`;
+    if(d.atendimentoSemAvaliacaoFinalizada)html+=textoClinico('Exceção: atendimento sem avaliação finalizada',d.justificativaExcecao||'Sem justificativa registrada.');
+    return html||'<p class="muted">Nenhum conteúdo clínico preenchido nesta sessão.</p>';
 }
 
 function limparParaDiff(v){
@@ -189,24 +250,29 @@ async function consultarAuditoria(pacienteId){
 function cssDocumento(){return `
 :root{--ink:#183B43;--muted:#60757A;--line:#DDE8E5;--soft:#F5F9F8;--accent:#2A8078;--warn:#FFF7E8}
 *{box-sizing:border-box}body{margin:0;background:#EEF3F2;color:#24383D;font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.42}.toolbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px 18px;background:#173B45;color:#fff}.toolbar .label{margin-right:auto;font-weight:700}.toolbar button{border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:8px 12px;background:#fff;color:#173B45;font-weight:700;cursor:pointer}.toolbar button.secondary{background:transparent;color:#fff}.paper{width:210mm;min-height:297mm;margin:18px auto;background:#fff;padding:18mm 17mm;box-shadow:0 10px 35px rgba(20,55,60,.12)}.doc-head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px}.brand{font-size:18pt;font-weight:800;letter-spacing:.02em;color:var(--ink)}.brand small{display:block;font-size:8.5pt;font-weight:600;color:var(--muted);margin-top:3px}.doc-type{text-align:right}.doc-type strong{display:block;font-size:13pt;color:var(--ink)}.doc-type span{font-size:8.5pt;color:var(--muted)}.patient-banner{display:grid;grid-template-columns:1fr auto;gap:15px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:17px}.patient-banner h1{font-size:16pt;margin:0;color:var(--ink)}.patient-banner p{margin:3px 0 0;color:var(--muted);font-size:9pt}.patient-banner .counts{text-align:right;font-size:9pt;color:var(--muted)}.patient-banner .counts b{color:var(--ink)}section{margin:0 0 20px}h2{font-size:12.5pt;color:var(--ink);margin:0 0 9px;padding-bottom:5px;border-bottom:1px solid var(--line)}h3{font-size:11.5pt;color:var(--ink);margin:2px 0 0}.record{border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin:0 0 11px;break-inside:avoid-page}.record-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:8px}.index{font-size:7.8pt;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:800}.record-summary{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;color:var(--muted);font-size:8.5pt}.record-summary span{white-space:nowrap}.trace{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;background:#F2F8F7;border-left:3px solid var(--accent);padding:8px 10px;margin:7px 0 10px;font-size:8.4pt;color:#4B6267}.kv,.diff{width:100%;border-collapse:collapse;table-layout:fixed}.kv th,.kv td,.diff th,.diff td{border-bottom:1px solid #E8EFED;padding:5px 6px;vertical-align:top;overflow-wrap:anywhere}.kv th{width:31%;text-align:left;color:#526A6F;font-size:8.7pt;font-weight:700}.kv td{font-size:9pt}.diff thead th{background:#F4F8F7;color:var(--ink);font-size:8pt;text-align:left}.diff tbody th{width:26%;text-align:left;color:#526A6F;font-size:8pt}.diff td{font-size:8pt}.audit-section{page-break-before:auto}.audit{border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:9px;break-inside:avoid-page}.audit-head{display:flex;justify-content:space-between;gap:10px;color:var(--ink);font-size:9pt}.audit-meta{color:var(--muted);font-size:8.2pt;margin:3px 0 7px}.section-note,.muted{color:var(--muted);font-size:8.5pt}.warning{background:var(--warn);border:1px solid #ECD9AE;border-radius:7px;padding:10px;font-size:9pt}.footer{margin-top:24px;padding-top:9px;border-top:1px solid var(--line);font-size:7.8pt;color:var(--muted);display:flex;justify-content:space-between;gap:15px}.privacy{margin-top:7px;font-size:7.5pt;color:#718286}.page-break{page-break-before:always}
-@page{size:A4;margin:12mm}@media print{body{background:#fff}.toolbar{display:none!important}.paper{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}.record,.audit{break-inside:avoid-page}a{color:inherit;text-decoration:none}}
-@media(max-width:850px){.paper{width:auto;min-height:0;margin:0;padding:18px}.trace{grid-template-columns:1fr}.patient-banner{grid-template-columns:1fr}.doc-head{flex-direction:column}.doc-type{text-align:left}}
+.record{break-inside:auto}.record-head,h2,h3,h4{break-after:avoid-page}.clinical-block{margin:12px 0}.clinical-block h4{margin:0 0 5px;font-size:10pt;color:var(--ink)}.clinical-text{white-space:pre-wrap;overflow-wrap:anywhere;orphans:3;widows:3}.record-author{color:var(--muted);font-size:8.5pt;margin:0 0 10px}.technical{margin-top:18px;border-top:1px dashed var(--line);padding-top:10px}.technical summary{font-weight:700;cursor:pointer}.kv tr{break-inside:avoid-page}
+@page{size:A4;margin:14mm}@media print{body{background:#fff}.toolbar{display:none!important}.paper{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}.record,.audit{break-inside:auto}.technical{display:block}.technical:not([open])>*:not(summary){display:block}a{color:inherit;text-decoration:none}}
+@media screen and (max-width:850px){.paper{width:auto;min-height:0;margin:0;padding:18px}.trace{grid-template-columns:1fr}.patient-banner{grid-template-columns:1fr}.doc-head{flex-direction:column}.doc-type{text-align:left}}
 `;}
 
 function montarDocumento(p,auditoria,modo,erroAuditoria=''){
     const detalhado=modo==='detalhado';
-    const avs=(typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):(p.avaliacoes||[])).slice().sort((a,b)=>String(obterRealizado(a)||a.dataAvaliacao||'').localeCompare(String(obterRealizado(b)||b.dataAvaliacao||'')));
-    const evs=(p.evolucoes||[]).slice().sort((a,b)=>String(obterRealizado(a)||a.data||'').localeCompare(String(obterRealizado(b)||b.data||'')));
+    const consulta=['avaliacoes','evolucoes'].includes(modo);
+    const proprio=r=>(!r.paciente_id||String(r.paciente_id)===String(p.id))&&(!r.clinica_id||!p.clinica_id||String(r.clinica_id)===String(p.clinica_id));
+    const avs=(typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):(p.avaliacoes||[])).filter(proprio).sort((a,b)=>String(obterRealizado(a)||a.dataAvaliacao||'').localeCompare(String(obterRealizado(b)||b.dataAvaliacao||'')));
+    const evs=(p.evolucoes||[]).filter(proprio).sort((a,b)=>String(obterRealizado(a)||a.data||'').localeCompare(String(obterRealizado(b)||b.data||'')));
     const idade=idadePaciente(p);
     const emitidoPor=usuarioAtual()?.nome||'Usuário não identificado';
-    const titulo=detalhado?'Prontuário completo detalhado':'Prontuário completo simplificado';
+    if(consulta){avs.reverse();evs.reverse();}
+    const titulo=modo==='avaliacoes'?'Consulta de avaliações':modo==='evolucoes'?'Histórico de evoluções':detalhado?'Prontuário completo detalhado':'Prontuário completo simplificado';
     return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(titulo)} — ${esc(p.nome||'Paciente')}</title><style>${cssDocumento()}</style></head><body>
     <div class="toolbar"><div class="label">Pré-visualização · ${esc(titulo)}</div><button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button><button class="secondary" onclick="window.close()">Fechar</button></div>
     <main class="paper"><header class="doc-head"><div class="brand">FISIOFIX<small>Fisioterapia · Reabilitação · Movimento</small></div><div class="doc-type"><strong>${esc(titulo)}</strong><span>Gerado em ${esc(dataHora(new Date().toISOString()))}</span></div></header>
+    ${p.__dadosLocaisPendentes?'<p class="warning">Há dados locais pendentes de sincronização. A integralidade dos registros na nuvem não foi confirmada.</p>':''}
     <div class="patient-banner"><div><h1>${esc(p.nome||'Paciente')}</h1><p>${esc([idade?`${idade} anos`:'',p.profissao||'',p.cpf?`CPF ${p.cpf}`:''].filter(Boolean).join(' · '))}</p></div><div class="counts"><div><b>${avs.length}</b> avaliação(ões)</div><div><b>${evs.length}</b> evolução(ões)</div></div></div>
-    ${blocoCadastro(p)}
-    <section><h2>2. Avaliações fisioterapêuticas</h2>${avs.length?avs.map((a,i)=>blocoAvaliacao(a,i,detalhado)).join(''):'<p class="muted">Nenhuma avaliação registrada.</p>'}</section>
-    <section><h2>3. Evoluções fisioterapêuticas</h2>${evs.length?evs.map((e,i)=>blocoEvolucao(e,i,detalhado)).join(''):'<p class="muted">Nenhuma evolução registrada.</p>'}</section>
+    ${consulta?'<p class="section-note">Consulta somente leitura · do mais recente para o mais antigo. Nenhum registro será editado.</p>':blocoCadastro(p)}
+    ${modo==='evolucoes'?'':`<section><h2>${consulta?'':'2. '}Avaliações fisioterapêuticas</h2>${avs.length?avs.map((a,i)=>blocoAvaliacao(a,i,detalhado,p.id)).join(''):'<p class="muted">Nenhuma avaliação registrada.</p>'}</section>`}
+    ${modo==='avaliacoes'?'':`<section><h2>${consulta?'':'3. '}Evoluções fisioterapêuticas</h2>${evs.length?evs.map((e,i)=>blocoEvolucao(e,i,detalhado)).join(''):'<p class="muted">Nenhuma evolução registrada.</p>'}</section>`}
     ${detalhado?blocoAuditoria(auditoria,erroAuditoria):''}
     <footer class="footer"><span>Emitido por ${esc(emitidoPor)}${usuarioAtual()?.registro?` · ${esc(usuarioAtual()?.registro)}`:''}</span><span>KineSys Clinical · ${detalhado?'Documento com rastreabilidade':'Resumo integral do prontuário'}</span></footer>
     <div class="privacy">Documento contendo dados pessoais e clínicos. Manter sob guarda e compartilhamento compatíveis com a finalidade assistencial e documental.</div></main></body></html>`;
@@ -222,14 +288,20 @@ function abrirJanelaCarregando(){
 async function gerar(pacienteId,modo='simplificado',janelaPreparada=null){
     const id=String(pacienteId||'').trim();
     if(!id){alert('⚠️ Selecione um paciente antes de gerar o prontuário.');return;}
+    if(!['simplificado','detalhado','avaliacoes','evolucoes'].includes(modo))return;
+    if(['avaliacoes','evolucoes'].includes(modo)&&typeof window.telaPermitida==='function'&&!window.telaPermitida(modo==='avaliacoes'?'tela_avaliacao':'tela_evolucao'))return;
     if(modo==='detalhado'&&!podeDetalhado()){
         alert('🔒 O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.');return;
     }
     const w=janelaPreparada||abrirJanelaCarregando();if(!w)return;
+    const perfil=usuarioAtual(),perfilId=String(perfil?.id||''),clinicaId=String(perfil?.clinica_id||'');
+    const contextoValido=()=>!w.closed&&String(usuarioAtual()?.id||'')===perfilId&&String(usuarioAtual()?.clinica_id||'')===clinicaId;
     try{
         const lista=await window.obterPacientesSalvos();
         const p=(lista||[]).find(x=>String(x.id)===id);
         if(!p) throw new Error('Paciente não encontrado.');
+        if(!contextoValido())return;
+        if(p.clinica_id&&String(p.clinica_id)!==clinicaId)throw new Error('Prontuário indisponível nesta clínica.');
         let auditoria=[], erroAuditoria='';
         if(modo==='detalhado'){
             try{ auditoria=await consultarAuditoria(id); }
@@ -241,9 +313,11 @@ async function gerar(pacienteId,modo='simplificado',janelaPreparada=null){
                     : msg;
             }
         }
+        if(!contextoValido())return;
         const html=montarDocumento(p,auditoria,modo,erroAuditoria);
         w.document.open();w.document.write(html);w.document.close();w.focus();
     }catch(e){
+        if(!contextoValido())return;
         console.error('KineSys: falha ao montar prontuário para impressão.',e);
         w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Erro</title></head><body style="font-family:Arial;padding:32px"><h2>Não foi possível montar o prontuário.</h2><p>${esc(e?.message||e)}</p></body></html>`);w.document.close();
     }

@@ -2288,6 +2288,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     pacienteObjeto.avaliadoPor=dadosAvaliacao.profissionalNome;
     const sucesso=await salvarPacienteNaNuvem(pacienteObjeto,{exigirRastreabilidadeClinica:true});
     if(!sucesso)return;
+    if(typeof document.dispatchEvent==='function'&&typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('kinesys:avaliacao-salva',{detail:{pacienteId:String(pacienteObjeto.id),clinicaId:String(contextoSalvar.clinicaId||'')}}));
     if(!window.contextoAvaliacaoContinuaKineSys(contextoSalvar))return;
     if(dadosAvaliacao.agendamentoId) limparAgendamentoClinicoContexto();
     if(registroEmEdicao){

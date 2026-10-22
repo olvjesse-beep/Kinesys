@@ -8,7 +8,7 @@
 'use strict';
 
 const VERSION='1.0.0-phase4e';
-const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20260910-phase4e-r1';
+const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261022-prontuario-clinico-r1';
 const PERFIS_DETALHADO=new Set(['MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','FISIOTERAPEUTA','PROFISSIONAL']);
 let carregamento=null;
 
@@ -94,6 +94,7 @@ async function abrirEscolhaProxy(pacienteId){
 async function gerarProxy(pacienteId,modo='simplificado'){
     const id=String(pacienteId||'').trim();
     if(!id){alert('⚠️ Selecione um paciente antes de gerar o prontuário.');return false;}
+    if(['avaliacoes','evolucoes'].includes(modo)&&typeof window.telaPermitida==='function'&&!window.telaPermitida(modo==='avaliacoes'?'tela_avaliacao':'tela_evolucao'))return false;
     if(modo==='detalhado'&&!podeDetalhado()){
         alert('🔒 O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.');
         return false;

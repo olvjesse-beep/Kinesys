@@ -17,6 +17,7 @@
     let ultimoMotivoCargaPainelFisioterapeuta = '';
     let cargaInicialSolicitada = false;
     let totalRenderizacoes = 0;
+    let prontuarioHomeDesatualizado = false;
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
@@ -146,7 +147,65 @@
         try {
             lista=typeof obterAvaliacoes==='function' ? (obterAvaliacoes(paciente)||[]) : (paciente?.avaliacoes||[]);
         } catch(_) { lista=paciente?.avaliacoes||[]; }
-        return lista.filter(a=>String(a?.status||'').toLowerCase()!=='rascunho');
+        const clinica=String(paciente?.clinica_id||'');
+        return lista.filter(a=>a&&(!a.paciente_id||String(a.paciente_id)===String(paciente?.id))&&(!a.clinica_id||!clinica||String(a.clinica_id)===clinica)&&String(a.status||a.mapeamento?.status||a.mapeamento?.meta?.status||'').toLowerCase()!=='rascunho');
+    }
+
+    // Somente fontes documentais do próprio paciente; não gera contraindicações.
+    function cuidadosPaciente(paciente){
+        const avaliacoes=avaliacoesFinalizadas(paciente).slice().sort((a,b)=>dataRegistro(b).localeCompare(dataRegistro(a)));
+        const itens=[],vistos=new Set();
+        const adicionar=(texto,tipo,av,campo)=>{
+            const valor=String(texto||'').trim();
+            const chave=tipo+':'+normalizarTexto(valor);
+            if(!valor||vistos.has(chave))return;
+            vistos.add(chave);itens.push({texto:valor,tipo,data:dataRegistro(av),campo});
+        };
+        const frases=texto=>String(texto||'').split(/[\n;.!?]+/).map(s=>s.trim()).filter(Boolean);
+        const relevante=texto=>/\bartrodese\b|\bartroplastia\b|\bprotese\b.*\b(quadril|bacia|joelho|ombro)\b|\b(amputacao|osteossintese|marca[ -]?passo)\b/.test(normalizarTexto(texto));
+        // Conservador: uma frase negativa, familiar, planejada ou hipotética não vira antecedente próprio.
+        const antecedenteProprio=texto=>! /\b(nega|negou|sem|nao|nunca|mae|pai|irmao|irma|familiar|familia|filho|filha|esposa|marido|indicacao|indicad[oa]|programad[oa]|agendad[oa]|planejad[oa]|aguarda|aguardando|possivel|suspeita|avaliar|se realizar|sera|vai realizar|para artroplastia|para artrodese|recomendad[oa])\b/.test(normalizarTexto(texto));
+        const afirmacaoHMA=texto=>/^(artrodese|artroplastia|protese|amputacao|osteossintese|marca[ -]?passo)\b|\b(tem|possui|usa|apresenta|realizou|submetid[oa]|operad[oa]|antecedente de|historico de|historia de|pos[ -]operatorio)\b|\bcom (?:uma? )?(?:artrodese|protese|marca[ -]?passo)\b/.test(normalizarTexto(texto));
+        avaliacoes.forEach(av=>{
+            (Array.isArray(av.cirurgias)?av.cirurgias:[]).forEach(c=>{
+                const texto=typeof c==='string'?c:c?.texto||c?.exibicao||c?.nome||'';
+                if(relevante(texto)&&antecedenteProprio(texto))adicionar(texto,'Antecedente registrado',av,'cirurgias');
+            });
+            frases(av.hma).forEach(texto=>{
+                if(relevante(texto)&&antecedenteProprio(texto)&&afirmacaoHMA(texto))adicionar(texto,'Relato a conferir',av,'HMA');
+            });
+        });
+        // Restrições vigentes vêm apenas da avaliação mais recente, nunca de um pós-op antigo.
+        const recente=avaliacoes[0],clinica=recente?.mapeamento?.clinicaEstruturada||{};
+        const nota=clinica.contextoAnamnese?.campos?.contexto_trauma_observacao;
+        if(nota&&frases(nota).some(t=>antecedenteProprio(t)))adicionar(nota,'Limitações e orientações registradas',recente,'Cirurgias e traumas');
+        const r=clinica.restricoesPosOperatorias;
+        if(r?.ativo){
+            const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'};
+            const partes=[r.procedimento,r.dataCirurgia&&`Cirurgia: ${r.dataCirurgia}`,carga[r.statusCarga],r.ortese&&`Órtese: ${r.ortese}`,r.restricaoADM&&`ADM: ${r.restricaoADM}`,r.proibicoes&&`Restrições: ${r.proibicoes}`,r.orientacoesCirurgiao&&`Orientações: ${r.orientacoesCirurgiao}`,r.observacoes,r.retornoMedico&&`Retorno: ${r.retornoMedico}`].filter(Boolean);
+            adicionar(partes.join(' · ')||'Pós-operatório ativo sem detalhes; conferir orientações.','Pós-operatório registrado como ativo',recente,'Restrições pós-operatórias');
+        }
+        return itens.sort((a,b)=>Number(b.tipo.startsWith('Pós-operatório'))-Number(a.tipo.startsWith('Pós-operatório'))||Number(b.tipo.startsWith('Limitações'))-Number(a.tipo.startsWith('Limitações')));
+    }
+
+    function montarCuidados(paciente){
+        const itens=cuidadosPaciente(paciente);
+        if(!itens.length)return null; // Ausência de dados não equivale a liberação técnica.
+        const box=document.createElement('details');box.className='ks-fisio-day-safety';
+        const summary=document.createElement('summary');
+        summary.textContent=`Cuidados clínicos · ${itens.length} registro(s)`;
+        const preview=document.createElement('div');preview.className='ks-fisio-day-safety-preview';
+        preview.textContent=itens.slice(0,2).map(i=>i.texto).join(' · ');
+        const list=document.createElement('ul');
+        itens.forEach(item=>{
+            const li=document.createElement('li'),text=document.createElement('span'),source=document.createElement('small');
+            text.textContent=item.texto;
+            source.textContent=`${item.tipo} · ${item.campo}${item.data?' · '+item.data.split('-').reverse().join('/'):''}`;
+            li.append(text,source);list.appendChild(li);
+        });
+        const hint=document.createElement('p');hint.textContent='Confira lado, nível, data e orientações atuais no prontuário. Antecedentes não estabelecem contraindicações automaticamente.';
+        box.append(summary,list,hint);
+        const wrapper=document.createElement('div');wrapper.className='ks-fisio-day-care';wrapper.append(preview,box);return wrapper;
     }
 
     function evolucoesPaciente(paciente){
@@ -195,6 +254,7 @@
 
         return {
             modo,
+            temAvaliacao,
             registroHoje,
             detalhe,
             rotuloSessao:sequencia.rotulo,
@@ -450,14 +510,18 @@
         const content=document.createElement('div');content.className='ks-fisio-day-content';
         const patientName=document.createElement('strong');patientName.className='ks-fisio-day-patient-name';patientName.textContent=nome;
         const category=document.createElement('div');category.className='ks-fisio-day-category';category.textContent=clinica.rotuloSessao;
-        const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=clinica.detalhe;content.append(patientName,category,detail);
+        const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=paciente?clinica.detalhe:'Prontuário indisponível · atualize para verificar avaliação e cuidados';
+        content.appendChild(patientName);
+        const cuidados=paciente&&montarCuidados(paciente);if(cuidados)content.appendChild(cuidados);
+        content.append(category,detail);
         const actions=document.createElement('div');actions.className='ks-fisio-day-actions';
         const status=String(agendamento.status||'').toLowerCase();
         const bloqueiaAcao=STATUS_AUSENCIA.has(status)||status==='cancelado';
-        if(!bloqueiaAcao){
+        if(!bloqueiaAcao&&paciente&&!paciente.__dadosLocaisPendentes){
             const modoDestino=clinica.familia==='avaliacao' ? 'avaliacao' : 'evolucao';
-            const labelDestino=modoDestino==='avaliacao' ? 'Avaliação' : 'Evolução';
+            const labelDestino=modoDestino==='avaliacao' ? (clinica.temAvaliacao?'Reavaliar':'Realizar avaliação') : 'Evolução';
             if(paciente)actions.appendChild(criarBotao('Análise da evolução','btn-secondary ks-fisio-analysis-btn',()=>abrirAnaliseEvolucao(paciente,nome)));
+            if(!clinica.temAvaliacao&&modoDestino!=='avaliacao')actions.appendChild(criarBotao('Realizar avaliação','btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,'avaliacao',agendamento.id)));
             actions.appendChild(criarBotao(labelDestino,'btn-primary',()=>abrirRegistroClinico(agendamento.paciente_id,modoDestino,agendamento.id)));
             if(clinica.registroHoje){const done=document.createElement('span');done.className='ks-fisio-record-done';done.textContent='Registro concluído';actions.appendChild(done);}
         }
@@ -593,7 +657,7 @@
         });
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
-        const mapaPacientes=new Map((pacientes||[]).map(p=>[String(p.id||''),p]));
+        const mapaPacientes=new Map((pacientes||[]).filter(p=>!p.clinica_id||String(p.clinica_id)===String(perfilInicial?.clinica_id||'')).map(p=>[String(p.id||''),p]));
         const historico=await carregarHistoricoAgenda(atendimentos,hoje,profissionalId);
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
@@ -615,13 +679,14 @@
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
         aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes});
+        prontuarioHomeDesatualizado=false;
         painelFisioterapeutaInicializado=true;
         document.dispatchEvent(new CustomEvent('kinesys:meu-dia-atualizado'));
         return true;
     }
 
     function atualizarPainelFisioterapeuta(opcoes={}){
-        if(cargaPainelFisioterapeutaEmAndamento&&opcoes.motivo!=='agenda')return cargaPainelFisioterapeutaEmAndamento;
+        if(cargaPainelFisioterapeutaEmAndamento&&!['agenda','prontuario'].includes(opcoes.motivo))return cargaPainelFisioterapeutaEmAndamento;
         const carga=Promise.resolve(carregarPainelFisioterapeutaUtil(opcoes))
             .finally(()=>{if(cargaPainelFisioterapeutaEmAndamento===carga)cargaPainelFisioterapeutaEmAndamento=null;});
         cargaPainelFisioterapeutaEmAndamento=carga;
@@ -629,6 +694,7 @@
     }
 
     function garantirPainelFisioterapeuta(){
+        if(prontuarioHomeDesatualizado)return atualizarPainelFisioterapeuta({motivo:'prontuario'});
         if(cargaInicialSolicitada)return cargaPainelFisioterapeutaEmAndamento||Promise.resolve(painelFisioterapeutaInicializado);
         if(!perfilFisioterapeuta())return Promise.resolve(false);
         cargaInicialSolicitada=true;
@@ -643,6 +709,7 @@
             cargaPainelFisioterapeutaEmAndamento=null;
             painelFisioterapeutaInicializado=false;
             contextoAgendaHomeFisioterapeuta=null;
+            prontuarioHomeDesatualizado=false;
             return;
         }
         if(id==='tela_home'){
@@ -655,9 +722,16 @@
     }
 
     document.addEventListener('kinesys:tela-ativada',aoAtivarTelaMeuDia);
+    document.addEventListener('kinesys:avaliacao-salva',event=>{
+        const perfil=typeof usuarioLogado!=='undefined'?usuarioLogado:null;
+        if(!perfilFisioterapeuta()||String(event.detail?.clinicaId||'')!==String(perfil?.clinica_id||''))return;
+        prontuarioHomeDesatualizado=true;
+        revisaoCargaPainelFisioterapeuta++; // Uma resposta anterior ao salvamento não pode recolocar o botão.
+        if(document.getElementById('tela_home')?.classList.contains('ativa'))garantirPainelFisioterapeuta().catch(()=>false);
+    });
 
     window.KineSysMeuDiaClinico=Object.freeze({
-        version:'1.25.0-single-owner',
+        version:'1.26.0-avaliacao-cuidados',
         refresh:atualizarPainelFisioterapeuta,
         ensure:garantirPainelFisioterapeuta,
         status(){
