@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const source=fs.readFileSync('src/clinical/evaluation_workspace-1.17.0.js','utf8').replace(/\r\n/g,'\n');
 function field(id,value,type='text'){return {id,value,type,tagName:'INPUT',disabled:false,labels:[{textContent:id,querySelector:()=>null}],classList:{contains:()=>false},closest:()=>null};}
 function tag(value){return {textContent:value+'✕',cloneNode(){const copy={textContent:value+'remover✕',querySelectorAll:()=>[{remove(){copy.textContent=value;}}]};return copy;}};}
-function fixture(){
+function fixture({semanticGraph=true}={}){
  const fields=[field('paciente_nome','Paciente Exemplo'),field('paciente_idade','38'),field('paciente_hma','Pacient erelata que no dia 3 de maio a mesma relata que sentiu dor no pescoço para o ombro, a mesma relata que a dor não passou a mesma relata que a dor irradiou para escapula. A memsa relata que fez mais de um mês a dor. Nega dormencia no braço direito. Paciente relata que a dor acorda a mesma anoite. Refere piora ao dormir e dor de 3.5/10.','textarea')];
  const nodes=Object.fromEntries(fields.map(f=>[f.id,f]));nodes['ks-laudo-texto']={value:''};nodes['ks-laudo-status']={textContent:''};nodes['ks-laudo-revisado']={checked:false};nodes.avaliacao_realizado_em={value:'2026-10-21T09:00'};
  nodes.tags_cirurgias={children:[tag('Procedimento A'),tag('Procedimento B')],textContent:'Procedimento A✕Procedimento B✕'};
@@ -14,7 +14,7 @@ function fixture(){
  let tests=[{regiaoId:'cervical',regiao:'Coluna cervical',id:'radiculopatia_cervical',nome:'Radiculopatia Cervical',achados:[{texto:'Spurling / compressão foraminal reproduz sintomas radiculares típicos',resultado:'positivo'},{texto:'Distração cervical reduz sintomas radiculares',resultado:'positivo'},{texto:'ULTT1 / teste neurodinâmico do nervo mediano compatível com os sintomas',resultado:'positivo'}]}];
  const regions=[{dataset:{regiao:'cervical'}},{dataset:{regiao:'cefaleia'}}];
  const c={console,usuarioLogado:{nome:'Profissional Exemplo',registro:'CREFITO-TESTE'},BANCO_MAPEAMENTO_CLINICO:{cervical:{nome:'Coluna cervical'},cefaleia:{nome:'Cabeça / Cefaleia — triagem'}},window:{coletarAchadosLaudoKineSys:()=>tests,validarSegurancaParaFinalizacao:()=>({ok:true}),KineSysContextoAnamnese:{coletar:()=>context},KineSysMotorClinico3:{ultimoPlano:{versao:'sintética',hipoteses:[{id:'radiculopatia_cervical',nome:'Radiculopatia Cervical',regiaoId:'cervical',limiar:3}],exame:{testesPrioritarios:[]}}}},document:{readyState:'loading',addEventListener(){},querySelectorAll:s=>s.startsWith('#subtela_triagem')?fields:s==='#grupo_regioes_mapeamento input:checked'?regions:[],getElementById:id=>nodes[id]||null},gerarSinteseMapeamento:()=>({resumoPorRegiao:[{regiao:'Coluna cervical',codigoHipotese:'radiculopatia_cervical',nomeHipotese:'Radiculopatia Cervical',nivel:'positivo',redFlags:[]}],segurancaGlobal:{pistasGlobais:[]}}),coletarRestricoesPosOperatorias:()=>({ativo:false})};
- vm.createContext(c);vm.runInContext(source.slice(0,source.indexOf('\n\n/* Product Design')),c);
+ vm.createContext(c);if(semanticGraph)vm.runInContext(fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8'),c);vm.runInContext(source.slice(0,source.indexOf('\n\n/* Product Design')),c);
  const render=()=>{c.window.preencherLaudoAvaliacaoKineSys(null);c.window.renderizarLaudoAvaliacaoKineSys();return c.window.coletarLaudoAvaliacaoKineSys();};
  return {c,fields,nodes,context,regions,notes,render,set tests(value){tests=value;}};
 }

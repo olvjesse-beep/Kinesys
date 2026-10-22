@@ -14,8 +14,8 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.9-biblioteca-cientifica';
-    const MAX_REGIOES=2;
+    const VERSION='3.0.10-multiqueixas';
+    const MAX_REGIOES_FALLBACK=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
     const STOPWORDS=new Set(['dor','com','para','sem','por','uma','das','dos','de','do','da','em','no','na','e','ou','hipotese','suspeita','sindrome','padrao','clinico','clinica','relacionada','relacionado','possivel','lombar','lombossacra','cervical','toracica','coluna','ombro','cotovelo','punho','mao','quadril','virilha','joelho','tornozelo','perna','braco']);
@@ -126,10 +126,10 @@
         catch(_) { return {}; }
     }
     function hmaAtual(){ return document.getElementById('paciente_hma')?.value?.trim()||''; }
-    function analisarHistoria(contexto){
+    function analisarHistoria(contexto,texto=hmaAtual()){
         if(typeof window.analisarHMAClinicaKineSys!=='function') return null;
         try {
-            return window.analisarHMAClinicaKineSys(hmaAtual(),{
+            return window.analisarHMAClinicaKineSys(texto,{
                 origemIrradiacao:contexto?.origemIrradiacao||'',
                 irradiacao:contexto?.irradiacao||''
             })||null;
@@ -222,11 +222,21 @@
         const out=[]; const seen=new Set();
         selecionadas.filter(id=>{const campo=document.getElementById('chk_regiao_'+id);return campo?.dataset.tocadoManualmente==='true'||campo?.dataset.sugeridaPelaHMA!=='true';}).forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'selecionada',score:99,motivos:['selecionada pelo fisioterapeuta']});}});
         const texto=[hmaAtual(),contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
+        const relato=window.KineSysSemanticGraph?.analisar(hmaAtual());
+        const explicitas=uniq(arr(relato?.problemas).map(p=>p.regiaoId));
+        // Queixas independentes explícitas não disputam somente duas vagas.
+        // Um destino de irradiação, uma negativa ou antecedente familiar não
+        // cria uma nova condição local por conta própria.
+        if(explicitas.length){
+            explicitas.forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'problema_documentado',score:5,motivos:['queixa ou diagnóstico relatado com vínculo anatômico explícito']});}});
+            return out;
+        }
+        if(arr(relato?.proposicoes).some(p=>p.regiaoId))return out;
         Object.entries(B).map(([id,reg])=>scoreRegiao(id,reg,hmaResultado,texto,contexto)).sort((a,b)=>b.score-a.score)
             // Um sintoma genérico (por exemplo, "formigamento") não pode criar
             // sozinho uma segunda região sem apoio anatômico ou da hipótese da HMA.
-            .filter(x=>x.score>=1.6).forEach(x=>{if(out.length<MAX_REGIOES&&!seen.has(x.id)){seen.add(x.id);out.push({...x,origem:'hma'});}});
-        return out.slice(0,MAX_REGIOES);
+            .filter(x=>x.score>=1.6).forEach(x=>{if(out.length<MAX_REGIOES_FALLBACK&&!seen.has(x.id)){seen.add(x.id);out.push({...x,origem:'hma'});}});
+        return out.slice(0,MAX_REGIOES_FALLBACK);
     }
 
     function listaNormalizada(v){ return arr(v).map(n).filter(Boolean); }
@@ -237,10 +247,11 @@
 
     function scoreHistoriaItem(item,grupo,idRegiao,contexto,hmaResultado){
         const contrib=[]; let score=0;
-        const textoHMA=n(hmaAtual());
+        const historiaRegional=contexto?.hmaRegional??hmaAtual();
+        const textoHMA=n(historiaRegional);
         const pesos={palavraChave:.65,mecanismo:1.25,fatorPiora:.45,comorbidade:.45,medicamento:.45,idade:.35,cirurgia:1.5,...(item?.pesos||{})};
-        const evidencia=evidenciasDaHistoria(hmaAtual(),item?.palavrasChaveHMA);
-        const sinonimos=evidenciasDaHistoria(hmaAtual(),item?.sinonimos);
+        const evidencia=evidenciasDaHistoria(historiaRegional,item?.palavrasChaveHMA);
+        const sinonimos=evidenciasDaHistoria(historiaRegional,item?.sinonimos);
         if(sinonimos.positivas.length){score+=3.2;contrib.push('termo clínico reconhecido na história; hipótese a verificar pelo exame');}
         if(sinonimos.negadas.length&&!sinonimos.positivas.length){score-=3.2;contrib.push('menos compatível: hipótese explicitamente negada na história');}
         const kw=evidencia.positivas.slice(0,3);
@@ -418,7 +429,8 @@
         });
         const selecionados=[],cobertas=new Set();
         // Primeiro oferece uma verificação específica para cada hipótese; depois completa o conjunto.
-        hipoteses.forEach(h=>{
+        const primeiras=uniq(hipoteses.map(h=>h.regiaoId)).map(id=>hipoteses.find(h=>h.regiaoId===id));
+        [...primeiras,...hipoteses.filter(h=>!primeiras.includes(h))].forEach(h=>{
             if(cobertas.has(chaveHipotese(h))||selecionados.length>=limite)return;
             const t=candidatos.filter(t=>!selecionados.includes(t)&&t.hipoteseIds.includes(h.id)&&t.regiaoIds.includes(h.regiaoId))
                 .sort((a,b)=>Number(b.discriminativo)-Number(a.discriminativo)||b.prioridade-a.prioridade)[0];
@@ -459,7 +471,16 @@
             return ultimoPlano;
         }
         const regioes=inferirRegioes(hmaResultado,contexto);
-        const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contexto,hmaResultado)).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
+        const semantica=window.KineSysSemanticGraph?.analisar(hma),hmaPorRegiao={},leiturasPorRegiao={},contextoIrradiacaoPorRegiao={};
+        const origensExplicitas=window.KineSysSemanticGraph?.entidades(String(contexto.origemIrradiacao||'').replace(/_/g,' ')).map(e=>e.regiaoId)||[];
+        regioes.forEach(r=>{
+            if(!semantica){hmaPorRegiao[r.id]=hma;leiturasPorRegiao[r.id]=hmaResultado;contextoIrradiacaoPorRegiao[r.id]={origemIrradiacao:contexto.origemIrradiacao||'',irradiacao:contexto.irradiacao||''};return;}
+            contextoIrradiacaoPorRegiao[r.id]=origensExplicitas.includes(r.id)?{origemIrradiacao:contexto.origemIrradiacao||'',irradiacao:contexto.irradiacao||''}:{origemIrradiacao:'',irradiacao:''};
+            hmaPorRegiao[r.id]=window.KineSysSemanticGraph.porRegiao(semantica,r.id).map(f=>f.compartilhado?f.proposicoes.filter(p=>p.estado!=='indeterminado').map(p=>`${p.estado==='negado'?'Nega':'Refere'} ${p.termo||p.conceito} ${p.contextoLocal||p.local||r.nome}${p.lado?' '+p.lado:''}`).join('. '):f.texto).join('. ');
+            leiturasPorRegiao[r.id]=analisarHistoria({...contexto,...contextoIrradiacaoPorRegiao[r.id]},hmaPorRegiao[r.id])||{sinais:[],diferenciais:[],lacunas:[]};
+        });
+        const contextoDaRegiao=r=>semantica?{...contexto,hmaRegional:hmaPorRegiao[r.id],...contextoIrradiacaoPorRegiao[r.id]}:contexto;
+        const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id])).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
         const modificadores=modificadoresContextuais(contexto);
         const exame=construirExame(hipoteses,hmaResultado,modificadores);
         let planoGerado={
@@ -468,7 +489,7 @@
             insuficiente:false,
             fonteHMA:String(hmaResultado?.versaoMotor||window.KINESYS_HMA_ENGINE_VERSION||''),
             contextoResumo:{idade:contexto?.idade||null,mecanismo:contexto?.mecanismo||'',medicamentos:contexto?.textoMedicamentos||'',cirurgias:contexto?.textoCirurgias||''},
-            hmaResultado,regioes,hipoteses,exame,
+            hmaResultado,regioes,hipoteses,exame,hmaPorRegiao,contextoIrradiacaoPorRegiao,problemas:semantica?.problemas||[],
             lacunas:uniq(arr(hmaResultado?.lacunas)),
             aviso:'Prioridade de investigação; não representa probabilidade diagnóstica nem substitui decisão profissional.'
         };
@@ -487,7 +508,7 @@
             const grupo=arr(reg?.clusters).some(i=>i.id===h.id)?'cluster':arr(reg?.diferenciais).some(i=>i.id===h.id)?'diferencial':h.grupo;
             return {...h,grupo};
         });
-        const todos=regioes.flatMap(r=>candidatosRegiao(r,contexto,hmaResultado,true));
+        const todos=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],true));
         catalogoHipoteses=Array.from(new Map([...todos,...arr(planoGerado.hipoteses)].map(h=>[chaveHipotese(h),h])).values())
             .filter(h=>regioesAtivas.has(h.regiaoId));
         const porChave=new Map(arr(planoGerado.hipoteses).filter(h=>regioesAtivas.has(h.regiaoId)).map(h=>[chaveHipotese(h),h]));
@@ -500,6 +521,7 @@
             .forEach(h=>{if(!porChave.has(chaveHipotese(h)))porChave.set(chaveHipotese(h),h);});
         planoGerado.hipoteses=[...porChave.values()].filter(h=>!hipotesesDescartadas.has(chaveHipotese(h))&&!arr(window.obterEstadoRegiao?.(h.regiaoId)?.hipotesesDescartadas).includes(`${h.grupo}::${h.id}`))
             .map(h=>atualizarHipotesePeloExame(h,registrados))
+            .map(h=>({...h,problemaIds:arr(semantica?.problemas).filter(p=>p.regiaoId===h.regiaoId).map(p=>p.id)}))
             .sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));
         planoGerado.regioes=arr(planoGerado.regioes).filter(r=>regioesAtivas.has(r.id));
         // Exames e clusters derivam exclusivamente das hipóteses ainda abertas.
@@ -530,7 +552,9 @@
                 (arr(t.hipoteses).includes(h.nome)||familias.some(f=>f.id===h.motor31?.condicaoId)));
             return {...t,hipoteseIds:uniq([...arr(t.hipoteseIds),...vinculadas.map(h=>h.id)]),regiaoIds:uniq([...arr(t.regiaoIds),...vinculadas.map(h=>h.regiaoId)])};
         });
-        planoGerado.exame.testesPrioritarios=priorizarTestes([...testesEspecialistas,...reconstruido.testesPrioritarios],planoGerado.hipoteses);
+        planoGerado.exame.testesPrioritarios=priorizarTestes([...testesEspecialistas,...reconstruido.testesPrioritarios],planoGerado.hipoteses,Math.max(MAX_TESTES,regioesAtivas.size*2));
+        planoGerado.exame.coberturaPorRegiao=planoGerado.regioes.map(r=>({regiaoId:r.id,hipoteses:planoGerado.hipoteses.filter(h=>h.regiaoId===r.id).length,testesPriorizados:planoGerado.exame.testesPrioritarios.filter(t=>t.regiaoIds.includes(r.id)).length}));
+        planoGerado.exame.coberturaPorRegiao.filter(r=>!r.hipoteses).forEach(r=>planoGerado.lacunas.push(`${banco()[r.regiaoId]?.nome||r.regiaoId}: queixa registrada, sem hipótese específica suficientemente caracterizada; complementar história e exame.`));
         const grupos={};planoGerado.exame.testesPrioritarios.forEach(t=>{(grupos[t.tipo]||(grupos[t.tipo]=[])).push(t);});
         planoGerado.exame.analises=Object.entries(grupos).map(([tipo,itens])=>({tipo,titulo:ROTULOS_ANALISE[tipo]||tipo,itens}));
         planoGerado.exame.clusters=arr(planoGerado.exame.clusters).filter(h=>chavesAbertas.has(chaveHipotese(h)));
@@ -542,14 +566,16 @@
     function renderBridge(plano){
         const host=document.getElementById('ks30_hma_bridge'); if(!host)return;
         if(!plano||plano.insuficiente){host.hidden=true;host.innerHTML='';return;}
-        const top=plano.hipoteses.slice(0,3);
+        const top=plano.regioes.map(r=>plano.hipoteses.find(h=>h.regiaoId===r.id)).filter(Boolean);
+        const outras=plano.hipoteses.filter(h=>!top.includes(h));
         const regioes=plano.regioes.map(r=>r.nome).join(' · ');
         const mod=plano.exame.modificadores.slice(0,3);
         host.hidden=false;
         host.innerHTML=`
             <div class="ks30-bridge-head"><div><strong>Direção para o exame</strong><span>História + contexto clínico</span></div><span class="ks30-count">${plano.exame.testesPrioritarios.length} itens priorizados</span></div>
             <div class="ks30-bridge-regions">${regioes?`<span>Regiões orientadas: <strong>${esc(regioes)}</strong></span>`:'<span>Região ainda não definida com segurança pela história.</span>'}</div>
-            <div class="ks30-bridge-hypotheses">${top.map((h,i)=>chip(`${i===0?'Prioridade':'Diferencial'} · ${h.nome}${h.exameAtual?.respondidos?' · '+h.exameAtual.rotulo:''}`,i===0?'is-primary':'')).join('')}</div>
+            <div class="ks30-bridge-hypotheses">${top.map(h=>chip(`${h.regiaoNome||h.regiaoId} · ${h.nome}${h.exameAtual?.respondidos?' · '+h.exameAtual.rotulo:''}`,'is-primary')).join('')}</div>
+            ${outras.length?`<details><summary>Outras hipóteses em investigação (${outras.length})</summary><div class="ks30-bridge-hypotheses">${outras.map(h=>chip(`${h.regiaoNome||h.regiaoId} · ${h.nome}`)).join('')}</div></details>`:''}
             ${mod.length?`<div class="ks30-bridge-modifiers"><strong>Modificadores</strong><span>${mod.map(x=>esc(x.titulo)).join(' · ')}</span></div>`:''}
             <small>O exame deve confirmar, enfraquecer ou manter abertas essas hipóteses. Nenhuma hipótese é fechada apenas pela HMA.</small>`;
     }

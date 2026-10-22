@@ -240,7 +240,8 @@ async function enviarWhatsApp(tipo) {
     const mensagemCodificada = encodeURIComponent(mensagem);
     const url = 'https://web.whatsapp.com/send?phone=' + numeroLimpo + '&text=' + mensagemCodificada;
 
-    // Técnica da âncora invisível para forçar o reuso da aba
+    // Link direto à aplicação Web. Não é possível detectar a sessão/aba de outro
+    // domínio: o próprio WhatsApp reaproveita o login deste perfil do navegador.
     const link = document.createElement('a');
     link.href = url;
     link.target = 'whatsapp_unico_crm';

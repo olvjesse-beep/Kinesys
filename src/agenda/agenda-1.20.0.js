@@ -3832,7 +3832,8 @@ async function enviarLembreteAgendamentoAtual() {
         ? await obterMensagemPadraoConfigurada('agenda_lembrete_sessao', contextoMensagem, true)
         : `${saudacaoMensagem}! Passando para lembrar da sessão de ${a.procedimentos?.nome || 'atendimento'} no dia ${dataFormatada} às ${horaCurta(a.hora_inicio)}. ${chamadaConfirmacao}`;
     const numeroCompleto = telefone.length <= 11 ? '55' + telefone : telefone;
-    const url = `https://wa.me/${numeroCompleto}?text=${encodeURIComponent(mensagem)}`;
+    // Abrir a aplicação Web diretamente; wa.me redireciona para a tela intermediária.
+    const url = `https://web.whatsapp.com/send?phone=${numeroCompleto}&text=${encodeURIComponent(mensagem)}`;
 
     const link = document.createElement('a');
     link.href = url;
@@ -4093,7 +4094,7 @@ async function abrirOfertaListaEspera(profissionalId, dataISO, horaInicio, horaF
 
     if (telefone) {
         const numeroCompleto = telefone.length <= 11 ? '55' + telefone : telefone;
-        const url = `https://wa.me/${numeroCompleto}?text=${encodeURIComponent(mensagem)}`;
+        const url = `https://web.whatsapp.com/send?phone=${numeroCompleto}&text=${encodeURIComponent(mensagem)}`;
         const link = document.createElement('a');
         link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
         document.body.appendChild(link); link.click(); document.body.removeChild(link);

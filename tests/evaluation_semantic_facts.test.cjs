@@ -8,7 +8,7 @@ function preparar(hma){const f=fixture();f.fields[2].value=hma;return f;}
 caso('fatos, planejamento, equivalência e origem imutável',()=>{
  const original='Paciente relata que no dia 3 de maio a mesma relata que sentiu uma fisgada no pescoço para o ombro. Relata que a dor não passou. Refere que fez mais de um mês a dor. Relata que a dor irradiou para escapula. A memsa relata que a mesma apresenta cefaleia cervicogenica. A mesma relata que a dor piora ao dormir. Paciente relata que a dor acorda a mesma anoite. Paciente relata que usa muito telefone. Paciente relata que sofreu queimadura na coxa.';
  const t=preparar(original),r=t.render(),s=r.semantica;
- assert.equal(t.fields[2].value,original);assert.equal(s.origemHMA,original);assert.equal(r.versaoTexto,21);
+ assert.equal(t.fields[2].value,original);assert.equal(s.origemHMA,original);assert.equal(r.versaoTexto,22);
  assert(s.fatos.some(f=>f.tipo==='relato'&&f.categoria==='antecedentes'));assert(s.fatos.some(f=>f.tipo==='relato'&&f.categoria==='rotina'));
  assert(s.relacoes.some(r=>r.tipo==='detalhado_por'));assert(s.relacoes.some(r=>r.tipo==='mesmo_comportamento_dos_sintomas'));
  assert(r.texto.includes('A dor piora ao dormir e provoca despertares noturnos.'));

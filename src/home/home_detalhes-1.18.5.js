@@ -719,7 +719,7 @@ else iniciarHomeDetalhesVisivel();
         }
         $('ks_admin_message_recipient').textContent=`Destinatário: ${contact.nomeDestinatario||patient.nome}${contact.usaResponsavel?' (responsável)':''}`;
         $('ks_admin_message_text').value=text;const link=$('ks_admin_whatsapp_link');
-        const update=()=>{link.href=`https://wa.me/${phone}?text=${encodeURIComponent($('ks_admin_message_text').value)}`;};
+        const update=()=>{link.href=`https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent($('ks_admin_message_text').value)}`;};
         $('ks_admin_message_text').oninput=update;update();messageOrigin=button;
         const dialog=$('ks_admin_message_dialog');dialog.onclose=()=>messageOrigin?.isConnected&&messageOrigin.focus();dialog.showModal();$('ks_admin_message_text').focus();
     }
