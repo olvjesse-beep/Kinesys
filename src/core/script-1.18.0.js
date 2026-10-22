@@ -1347,7 +1347,7 @@ const KINESYS_ANATOMIA_SEGMENTADA = Object.freeze({
     coxa_lateral:{macro:'coxa', cadeia:'mi', ordem:2, rotulo:'lateral da coxa', termos:['parte de fora da coxa','lado de fora da coxa','lateral da coxa']},
     coxa:        {macro:'coxa', cadeia:'mi', ordem:2, rotulo:'coxa', termos:['posterior da coxa','anterior da coxa','parte de tras da coxa','parte da frente da coxa','coxa']},
     joelho:      {macro:'joelho', cadeia:'mi', ordem:3, rotulo:'joelho', termos:['articulacao do joelho','patela','rotula','joelho']},
-    perna:       {macro:'perna', cadeia:'mi', ordem:4, rotulo:'perna', termos:['parte de baixo das pernas','parte de baixo da perna','pernas','canela','perna']},
+    perna:       {macro:'perna', cadeia:'mi', ordem:4, rotulo:'perna', termos:['parte de baixo das pernas','parte de baixo da perna','pernas','canelas','canela','perna']},
     panturrilha: {macro:'perna', cadeia:'mi', ordem:4, rotulo:'panturrilha', termos:['panturrilha','batata da perna']},
     tornozelo:   {macro:'tornozelo_pe', cadeia:'mi', ordem:5, rotulo:'tornozelo', termos:['articulacao do tornozelo','maleolo','tornozelo']},
     pe:          {macro:'tornozelo_pe', cadeia:'mi', ordem:6, rotulo:'pé', termos:['dorso dos pes','dorso do pe','planta dos pes','planta do pe','antepe','mediope','calcaneo','calcanhar','pes','pe']},
@@ -4233,7 +4233,7 @@ document.addEventListener('click', e => {
 (function () {
   'use strict';
 
-  var VERSAO_MOTOR_HMA = '11.3.0-evidencias-contextuais';
+  var VERSAO_MOTOR_HMA = '11.3.1-canela-anatomia';
   window.KINESYS_HMA_ENGINE_VERSION = VERSAO_MOTOR_HMA;
 
   var LEXICO = {
@@ -12496,6 +12496,15 @@ document.addEventListener('click', e => {
     }
     function localizar(trecho) {
       var m = String(trecho || '').match(/\b(joelho|perna|panturrilha|lombar|coluna|quadril|virilha|gl[uú]teo|coxa|ombro|bra[cç]o|antebra[cç]o|cotovelo|punho|m[aã]o|dedos?|pesco[cç]o|cervical|tor[aá]cica|t[oó]rax|costela|tornozelo|p[eé]|calcanhar|cabe[cç]a)\b/i);
+      // A topologia já conhece "canela". O resumo não deve ignorá-la por
+      // consultar apenas a lista histórica de nomes de articulações.
+      var mencao=typeof extrairMencoesAnatomicasKineSys==='function'?extrairMencoesAnatomicasKineSys(trecho).find(function(x){return /^canelas?$/.test(x.termo);}):null;
+      if(mencao&&(!m||mencao.inicio<m.index)){
+        var antes=removerAcentos(String(trecho).slice(0,mencao.inicio));
+        var depois=removerAcentos(String(trecho).slice(mencao.fim));
+        var sub=antes.match(/\b(lateral|medial|anterior|posterior)\s+(?:d[ao]s?\s+)?$/)?.[1]||depois.match(/^\s+(lateral|medial|anterior|posterior)\b/)?.[1]||'';
+        return (sub?'região '+sub+' da ':'')+'perna (canela)';
+      }
       return m ? m[1].toLowerCase() : 'não especificado';
     }
     (clausulas || []).forEach(function (clausula) {
@@ -12554,7 +12563,7 @@ document.addEventListener('click', e => {
     };
 
     var dorPrincipal = eventos.find(function (e) { return e.tipo === 'sintoma' && e.sintoma === 'dor' && e.status === 'presente'; });
-    if (dorPrincipal) add('Sintoma principal', 'Dor em ' + (dorPrincipal.local || 'região não definida'));
+    if (dorPrincipal) add('Sintoma principal', (/^região /.test(dorPrincipal.local||'')?'Dor na ':'Dor em ') + (dorPrincipal.local || 'região não definida'));
     eventos.filter(function (e) { return e.tipo === 'mecanismo'; }).forEach(function (e) { add('Mecanismo relevante', String(e.rotulo || '').replace(/^Mecanismo:\s*/i, '')); });
     eventos.filter(function (e) { return e.tipo === 'fator de piora'; }).forEach(function (e) { add('Comportamento dos sintomas', e.rotulo); });
     eventos.filter(function (e) { return e.tipo === 'padrão temporal'; }).forEach(function (e) { add('Padrão temporal', String(e.rotulo || '').replace(/^Padrão temporal:\s*/i, '')); });

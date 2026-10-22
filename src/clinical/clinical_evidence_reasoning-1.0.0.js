@@ -3,7 +3,7 @@
  * Ausente, negado, incompatível e desconhecido são estados diferentes. */
 (function(root){
  'use strict';
- const version='1.0.0',n=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),uniq=a=>[...new Set(a.filter(Boolean))];
+ const version='1.0.1',n=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),uniq=a=>[...new Set(a.filter(Boolean))];
  const CONCEITOS={
   plantar_calcanhar:['dor plantar/medial no calcâneo','(?:plantar|planta|sola|medial).{0,35}(?:calcanhar|calcaneo)|(?:calcanhar|calcaneo).{0,35}(?:plantar|medial|planta)'],
   calcanhar:['dor no calcanhar','calcanhar|calcaneo'],
@@ -47,7 +47,7 @@
      const sites=root.KineSysSemanticGraph.entidades(raw),site=sites.filter(s=>s.inicio<=m.index).at(-1)||sites[0];
      const ps=f.proposicoes.filter(p=>p.regiaoId===site?.regiaoId),lados=uniq(ps.map(p=>p.lado));
      evidencias.push({id:`${f.id}:${conceito}:${m.index}`,conceito,rotulo,estado,sujeito:familiar?'outra_pessoa':'paciente',temporalidade:remoto?'anterior':recente?'recente':tempoInformado?'tempo_informado':'nao_especificada',tempoInformado,relacaoComSintomas,
-      fatoId:f.id,regiaoIds:site?.regiaoId?[site.regiaoId]:[],lados,origem:{campo:'paciente_hma',inicio:f.origens[0].inicio+m.index,fim:f.origens[0].inicio+m.index+m[0].length,trecho:raw.slice(m.index,m.index+m[0].length),clausula:raw}});
+      fatoId:f.id,regiaoIds:site?.regiaoId?[site.regiaoId]:[],segmentoId:site?.segmentoId||'',lados,origem:{campo:'paciente_hma',inicio:f.origens[0].inicio+m.index,fim:f.origens[0].inicio+m.index+m[0].length,trecho:raw.slice(m.index,m.index+m[0].length),clausula:raw}});
     }
    });
   });
@@ -57,7 +57,7 @@
  }
  function analisar(texto){
   const catalogo=root.KineSysEvidenceProfiles,extra=extrair(String(texto||''));if(!catalogo||!extra.graph)return null;
-  const todas=extra.evidencias.filter(e=>e.sujeito==='paciente'&&(!e.regiaoIds.length||e.regiaoIds.includes('tornozelo_pe'))),atuais=todas.filter(e=>e.estado==='relatado'&&e.temporalidade!=='anterior'),has=id=>atuais.some(e=>e.conceito===id),possui=id=>todas.some(e=>e.conceito===id&&e.estado==='relatado');
+  const todas=extra.evidencias.filter(e=>e.sujeito==='paciente'&&e.segmentoId!=='perna'&&(!e.regiaoIds.length||e.regiaoIds.includes('tornozelo_pe'))),atuais=todas.filter(e=>e.estado==='relatado'&&e.temporalidade!=='anterior'),has=id=>atuais.some(e=>e.conceito===id),possui=id=>todas.some(e=>e.conceito===id&&e.estado==='relatado');
   const eventosPe=todas.filter(e=>e.conceito==='entorse'&&e.estado==='relatado');
   const cronologiaPe={eventos:eventosPe,relacaoComSintomas:eventosPe.some(e=>e.relacaoComSintomas==='relatada')?'relatada':'nao_esclarecida',perguntarData:eventosPe.some(e=>!e.tempoInformado),perguntarRelacao:eventosPe.some(e=>e.relacaoComSintomas==='nao_esclarecida')};
   const anatomicas=['plantar_calcanhar','calcanhar','lateral_tornozelo','retromaleolar_lateral','acima_tornozelo','profunda_tornozelo','posterior_tornozelo','sinus_tarsi'];
@@ -97,6 +97,12 @@
   if(has('entorse')&&!has('inversao'))add('entorse');
   if(has('dor_persistente')&&!has('travamento'))add('mecanica');
   if(hipoteses.some(h=>h.estado==='lateralidade_pendente'))qs.unshift({id:'lados',texto:'Separar a localização, o início e o comportamento dos sintomas de cada lado antes de associar os achados.',distingue:hipoteses.filter(h=>h.estado==='lateralidade_pendente').map(h=>h.id)});
+  const perna=extra.graph.proposicoes.filter(p=>p.segmentoId==='perna'&&p.estado==='relatado'&&p.sujeito==='paciente'&&!['destino_trajeto','movimento_modificador'].includes(p.papel));
+  if(perna.length){
+   if(perna.some(p=>!p.lado))qs.push({id:'lado:perna',texto:'Qual perna apresenta o sintoma: direita, esquerda ou ambas?',distingue:[]});
+   if(!perna.some(p=>p.tempo.length))qs.push({id:'tempo:perna',texto:'Quando começou a dor na perna (canela) e como evoluiu?',distingue:[]});
+   if(extra.evidencias.some(e=>e.conceito==='eversao'&&e.segmentoId==='perna'&&e.estado==='relatado'&&e.sujeito==='paciente'))qs.push({id:'local:perna:eversao',texto:'Em que ponto da perna a eversão reproduz a dor? O sintoma também envolve o tornozelo ou o pé?',distingue:[]});
+  }
   // Localização fina e cronologia são perguntas gerais para qualquer região.
   extra.graph.problemas.filter(p=>p.regiaoId!=='tornozelo_pe').forEach(p=>{
    const props=extra.graph.proposicoes.filter(x=>p.proposicaoIds.includes(x.id)),textos=props.map(x=>n(x.contextoLocal||x.origem.trecho)).join(' ');

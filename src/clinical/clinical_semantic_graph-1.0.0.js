@@ -6,7 +6,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.0.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const VERSION='1.0.1',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const uniq=a=>Array.from(new Set(a.filter(Boolean))),copy=o=>JSON.parse(JSON.stringify(o));
  const natural=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' e '+a.at(-1);
  const sentence=t=>{t=String(t||'').trim().replace(/[.;,\s]+$/,'');return t?t[0].toUpperCase()+t.slice(1)+'.':'';};
@@ -36,7 +36,7 @@
  function entidades(text){
   const t=norm(text),out=[];
   Object.entries(REGIOES).forEach(([regiaoId,rx])=>matches(t,rx).forEach(e=>out.push({...e,regiaoId,trecho:text.slice(e.inicio,e.fim)})));
-  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|pernas?|membro superior|membro inferior)\b/g).forEach(e=>out.push({...e,regiaoId:'',trecho:text.slice(e.inicio,e.fim)}));
+  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|canelas?|pernas?|membro superior|membro inferior)\b/g).forEach(e=>out.push({...e,regiaoId:'',segmentoId:/^(?:canelas?|pernas?)$/.test(e.texto)?'perna':'',trecho:text.slice(e.inicio,e.fim)}));
   return out.sort((a,b)=>a.inicio-b.inicio||b.fim-a.fim).filter((e,i,a)=>!a.slice(0,i).some(o=>o.inicio<=e.inicio&&o.fim>=e.fim));
  }
  function lados(text){return uniq((norm(text).match(/\b(?:direit[oa]s?|esquerd[oa]s?|bilateral(?:mente)?|ambos|ambas)\b/g)||[]).map(x=>/^direit/.test(x)?'direito':/^esquerd/.test(x)?'esquerdo':'bilateral'));}
@@ -63,7 +63,7 @@
    if(/\b(?:dr|dra|sr|sra|prof|aprox|min|max)\.$/i.test(antes)&&m[0]==='.')continue;
    cuts.add(m.index+m[0].length);
   }
-  for(const m of raw.matchAll(/\b(?:mas|porém|porem|entretanto|enquanto|além disso|alem disso)\b|\be\s+(?=(?:nega|negou|refere|relata|informa|apresenta|hoje|atualmente)\b)/gi))cuts.add(m.index);
+  for(const m of raw.matchAll(/\b(?:mas|porém|porem|entretanto|enquanto|além disso|alem disso)\b|(?<![\p{L}\p{N}_])e\s+(?=(?:nega|negou|refere|relata|informa|apresenta|hoje|atualmente)\b)/giu))cuts.add(m.index);
   const xs=[...cuts].sort((a,b)=>a-b),out=[];
   for(let i=1;i<xs.length;i++){
    let inicio=xs[i-1],fim=xs[i];while(inicio<fim&&/\s/.test(raw[inicio]))inicio++;
@@ -94,7 +94,7 @@
    if(site&&/\b(?:biopsia|cirurgia|procedimento|operacao|infiltracao)(?:\s+(?:na|no|da|do|de))?\s+$/.test(t.slice(Math.max(0,a-40),a)))papel='procedimento_modificador';
    const prefixo=site&&!sites.some(s=>s.inicio>c.inicio&&s.inicio<site.inicio)?texto.slice(c.fim,site.inicio):'';
    const termo=texto.slice(c.inicio,c.fim),nt=norm(termo),qualidade=c.conceito==='parestesia'?/dorm|adorm/.test(nt)?'dormencia':/formig/.test(nt)?'formigamento':/choque/.test(nt)?'choque':'nao_especificada':c.conceito==='dor'&&/fisgada|pontada|desconforto/.test(nt)?nt:'';
-   out.push({id,fatoId,tipo:'sintoma',conceito:c.conceito,qualidade,termo,regiaoId:site?.regiaoId||'',local:site?.trecho||'',contextoLocal:site?(prefixo+' '+texto.slice(site.inicio,fimContexto)).trim():'',lado:lado[0]||'',
+   out.push({id,fatoId,tipo:'sintoma',conceito:c.conceito,qualidade,termo,regiaoId:site?.regiaoId||'',segmentoId:site?.segmentoId||'',local:site?.trecho||'',contextoLocal:site?(prefixo+' '+texto.slice(site.inicio,fimContexto)).trim().replace(/\s+/g,' '):'',lado:lado[0]||'',
     ...ep,temporalidade:temporal.estado,tempo:temporal.expressoes,marcadoresTemporais:temporal.marcadores,papel,
     quantificadores:numericos(local),origem:{inicio:base+Math.min(c.inicio,a),fim:base+Math.max(c.fim,b),trecho:texto.slice(Math.min(c.inicio,a),Math.max(c.fim,b))}});
   }
@@ -146,7 +146,7 @@
     atributos:{conceitos:props.map(p=>({nome:p.conceito,estado:p.estado})),regioes:uniq(props.map(p=>p.regiaoId)),lados:uniq(props.map(p=>p.lado)),temporalidade:tempo(parte.trecho).estado,incerteza:props.some(p=>p.certeza==='hipotetica'||p.estado==='indeterminado'),quantificadores:uniq(props.flatMap(p=>p.quantificadores))},
     origens:[{campo:opcoes.campo||'paciente_hma',indice,inicio:parte.inicio,fim:parte.fim,trecho:origem.slice(parte.inicio,parte.fim),trechoNormalizado:parte.trecho}]};
    if(/\b(?:esse|essa|isso|ela|ele)\b/.test(norm(parte.trecho))&&props.length===0)pendencias.push({fatoId:id,tipo:'referencia_nao_resolvida',mensagem:'Referência sem vínculo anatômico inequívoco; mantida a redação de origem.'});
-   if(props.some(p=>!p.regiaoId&&p.tipo==='sintoma'))pendencias.push({fatoId:id,tipo:'local_nao_especificado',mensagem:'Há sintoma sem localização inequívoca.'});
+   if(props.some(p=>!p.regiaoId&&!p.segmentoId&&p.tipo==='sintoma'))pendencias.push({fatoId:id,tipo:'local_nao_especificado',mensagem:'Há sintoma sem localização inequívoca.'});
    fatos.push(fato);proposicoes.push(...props);
   });
   const problemas=new Map();
@@ -199,9 +199,10 @@
   });
   return blocos;
  }
- function assinatura(p){return [p.tipo,p.conceito,p.qualidade||'',p.rotuloDiagnostico||'',p.procedimento||'',p.medicamento||'',p.dose||'',p.unidade||'',p.regiaoId,p.lado,p.estado,p.sujeito,p.certeza,p.temporalidade,p.papel].join('|');}
+ function assinatura(p){return [p.tipo,p.conceito,p.qualidade||'',p.rotuloDiagnostico||'',p.procedimento||'',p.medicamento||'',p.dose||'',p.unidade||'',p.regiaoId,p.segmentoId||'',p.lado,p.estado,p.sujeito,p.certeza,p.temporalidade,p.papel].join('|');}
  function compativel(a,b){
   if(a.tipo!==b.tipo||a.conceito!==b.conceito||a.regiaoId!==b.regiaoId||a.lado!==b.lado||a.estado!==b.estado||a.sujeito!==b.sujeito)return false;
+  if((a.segmentoId||'')!==(b.segmentoId||''))return false;
   if((a.qualidade||'')!==(b.qualidade||'')||(a.medicamento||'')!==(b.medicamento||'')||(a.dose||'')!==(b.dose||'')||(a.unidade||'')!==(b.unidade||''))return false;
   if((a.rotuloDiagnostico||'')!==(b.rotuloDiagnostico||'')||(a.procedimento||'')!==(b.procedimento||''))return false;
   if(a.certeza!==b.certeza||a.temporalidade!==b.temporalidade)return false;
