@@ -71,6 +71,7 @@ jobs:
           node tests/home_avaliacao_cuidados.test.cjs
           node --check src/patient/prontuario_export_impl.js
           node tests/prontuario_clinico.test.cjs
+          node tests/prontuario_export_lazy.contract.js
           node --check src/ui/input_helpers_core-1.0.0.js
           node --check src/clinical/evaluation_context_panels-1.18.3.js
           node tests/input_helpers_modularization.contract.js

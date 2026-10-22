@@ -9,16 +9,20 @@ const facade=fs.readFileSync('src/patient/prontuario_export.js','utf8');
 const impl=fs.readFileSync('src/patient/prontuario_export_impl.js','utf8');
 const design=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');
 
-assert.match(html,/src\/patient\/prontuario_export\.js\?v=20260910-phase4e-r1/,'index deve invalidar cache da fachada Phase 4E');
+const facadeURL=new URL(html.match(/src="(src\/patient\/prontuario_export\.js\?[^"\s]+)"/)?.[1]||'', 'https://app.fisiofixfisioterapia.com/');
+const designURL=new URL(html.match(/src="(src\/core\/design_system-1\.20\.1\.js\?[^"\s]+)"/)?.[1]||'', 'https://app.fisiofixfisioterapia.com/');
+const implPath=facade.match(/const IMPLEMENTACAO='([^']+)'/)?.[1];
+assert(facadeURL.searchParams.get('v'),'Fachada deve ter revisão explícita');
 assert.doesNotMatch(html,/src\/patient\/prontuario_export_impl\.js/,'implementação pesada não pode voltar ao bootstrap');
-assert.match(html,/src\/core\/design_system-1\.20\.1\.js\?v=20260910-phase4e-r1/,'design system modificado deve ter cache invalidado');
+assert.equal(designURL.searchParams.get('v'),facadeURL.searchParams.get('v'),'Atalhos e fachada devem pertencer à mesma publicação');
 assert.ok(fs.statSync('src/patient/prontuario_export.js').size<9000,'fachada eager deve permanecer pequena');
 assert.ok(fs.statSync('src/patient/prontuario_export_impl.js').size>25000,'implementação pesada deve permanecer fora do bootstrap');
 
 for(const nome of ['podeExportarProntuarioDetalhado','abrirEscolhaProntuarioPDF','gerarProntuarioCompletoPDF']){
     assert.ok(facade.includes(`window.${nome}=`),`${nome} deve continuar publicado pela fachada eager`);
 }
-assert.match(facade,/src\/patient\/prontuario_export_impl\.js\?v=20260910-phase4e-r1/,'fachada deve registrar implementação sob demanda');
+assert(implPath?.startsWith('src/patient/prontuario_export_impl.js?'),'fachada deve registrar implementação sob demanda');
+assert.equal(new URL(implPath,'https://app.fisiofixfisioterapia.com/').searchParams.get('v'),facadeURL.searchParams.get('v'),'Implementação lazy e fachada devem usar revisão coerente');
 assert.match(impl,/async function gerar\(pacienteId,modo='simplificado',janelaPreparada=null\)/,'implementação deve aceitar janela pré-aberta sem quebrar os dois parâmetros públicos');
 assert.match(impl,/const w=janelaPreparada\|\|abrirJanelaCarregando\(\);if\(!w\)return;/,'implementação deve reutilizar janela aberta no gesto do usuário');
 assert.match(design,/return window\.abrirEscolhaProntuarioPDF\(pacienteId\);/,'design system deve aguardar a fachada de escolha');
@@ -66,7 +70,7 @@ assert.strictEqual(context.window.podeExportarProntuarioDetalhado(),true,'permis
 const primeira=context.window.gerarProntuarioCompletoPDF('pac-1','simplificado');
 assert.strictEqual(openCount,1,'primeiro clique deve abrir a janela sincronamente, antes do módulo chegar');
 assert.strictEqual(appended,scriptEl,'primeiro uso deve anexar exatamente o script lazy');
-assert.match(scriptEl.src,/src\/patient\/prontuario_export_impl\.js\?v=20260910-phase4e-r1/);
+assert.equal(scriptEl.src,implPath);
 context.window.abrirEscolhaProntuarioPDF=function realAbrir(){};
 context.window.gerarProntuarioCompletoPDF=function realGerar(id,modo,janela){recebido={id,modo,janela};return 'ok';};
 listeners.load();
