@@ -309,7 +309,7 @@
   };
 
   function textoContexto(c=contexto()){
-    return [hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
+    return [c?.hmaRegional??hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
   }
 
   function pontuar(cond,texto,c){
@@ -419,8 +419,8 @@
     if(!plano||plano.insuficiente)return plano;
     const temOmbro=arr(plano.regioes).some(r=>r.id==='ombro');
     if(!temOmbro)return plano;
-    const c=contexto(); const texto=textoContexto(c);
-    const relatoDecubito=PADRAO_DECUBITO_OMBRO.test(norm(hmaTexto()));
+    const c={...contexto(),...(plano.hmaPorRegiao?{hmaRegional:plano.hmaPorRegiao.ombro||'',origemIrradiacao:'',irradiacao:'',...plano.contextoIrradiacaoPorRegiao?.ombro}:{})}; const texto=textoContexto(c);
+    const relatoDecubito=PADRAO_DECUBITO_OMBRO.test(norm(c.hmaRegional??hmaTexto()));
     const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);
     const fortes=avaliadas.filter(x=>x.hits.length||x.score>=2.5).slice(0,6);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x,c));

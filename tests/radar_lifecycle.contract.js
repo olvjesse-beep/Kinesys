@@ -121,7 +121,7 @@ vm.runInContext(helpersPaciente.slice(helpersPaciente.indexOf('function removerA
 vm.runInContext(core.slice(core.indexOf('const TERMOS_REGIAO_ESTRITOS'),core.indexOf('function analisarPadroesIrradiacao')),real);
 vm.runInContext(core.slice(core.indexOf('function trechoDesdeUltimaQuebraNegacao'),core.indexOf('function detectarAlertasTextuaisHMA')),real);
 vm.runInContext(core.slice(inicio,fim),real);
-for(const arquivo of ['database/mapeamento_clinico.js','database/regioes/ombro-ext-1.0.0.js','src/clinical/clinical_reasoning_hma-3.0.0.js','src/clinical/clinical_reasoning_shoulder-3.1.0.js','src/clinical/clinical_reasoning_elbow-3.1.0.js','src/clinical/clinical_reasoning_cervical-3.1.0.js'])vm.runInContext(fs.readFileSync(arquivo,'utf8'),real);
+for(const arquivo of ['database/mapeamento_clinico.js','database/regioes/ombro-ext-1.0.0.js','src/clinical/clinical_semantic_graph-1.0.0.js','src/clinical/clinical_reasoning_hma-3.0.0.js','src/clinical/clinical_reasoning_shoulder-3.1.0.js','src/clinical/clinical_reasoning_elbow-3.1.0.js','src/clinical/clinical_reasoning_cervical-3.1.0.js'])vm.runInContext(fs.readFileSync(arquivo,'utf8'),real);
 const casosReais=[
  ['Dor cervical que desce pelo braço até a mão com dormência e fraqueza.','cervical'],
  ['Dor lombar que irradia para perna e pé com formigamento.','lombar'],

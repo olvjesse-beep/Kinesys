@@ -80,7 +80,7 @@
 
   const relatoTerceiro=(v='')=>/(?:minha|meu)\s+(?:mae|pai|esposa|marido|companheira|companheiro|irma|irmao|avo|filha|filho)\b/.test(norm(v));
   const hmaPacienteAtual=()=>String(hmaTexto()).split(/[.!?;\n]+/).filter(x=>x.trim()&&!relatoTerceiro(x)).join(' ');
-  function textoContexto(c=contexto()){return [hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');}
+  function textoContexto(c=contexto()){return [c?.hmaRegional??hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');}
   function pontuar(cond,texto){
     const t=norm(texto);let hits=contem(texto,cond.termos).slice(0,6);let score=Math.min(9,hits.length*1.35);
     const negado=(termo)=>new RegExp(`(?:sem|nega(?:do|ou)?|nao(?:\\s+(?:tem|tenho|teve|tive|houve|sinto|sente|sentiu|apresenta|apresentou|esta|estou|ficou|teve))?|nem)\\s*.{0,38}(?:${termo})`).test(t);
@@ -198,7 +198,7 @@
   function planoCotoveloEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
     const textoHma=norm(hmaTexto());const temCotovelo=arr(plano.regioes).some(r=>r.id==='cotovelo');if(!temCotovelo)return plano;
-    const c=contexto();const texto=textoContexto(c);const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);let fortes=avaliadas.filter(x=>{if(x.cond.id==='cotovelo_lateral'||x.cond.id==='cotovelo_medial')return x.evidenciaForte&&x.score>=2.5;return x.hits.length||x.score>=2.5;}).slice(0,7);
+    const c={...contexto(),...(plano.hmaPorRegiao?{hmaRegional:plano.hmaPorRegiao.cotovelo||'',origemIrradiacao:'',irradiacao:'',...plano.contextoIrradiacaoPorRegiao?.cotovelo}:{})};const texto=textoContexto(c);const avaliadas=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score);let fortes=avaliadas.filter(x=>{if(x.cond.id==='cotovelo_lateral'||x.cond.id==='cotovelo_medial')return x.evidenciaForte&&x.score>=2.5;return x.hits.length||x.score>=2.5;}).slice(0,7);
     const especialistas=fortes.map(x=>criarHipotese(x.cond,x));const existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='cotovelo');const cotoveloBase=arr(plano.hipoteses).filter(h=>h.regiaoId==='cotovelo');const mapa=new Map();
     [...especialistas,...cotoveloBase].forEach(h=>{const k=norm(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
     const cotoveloFinal=Array.from(mapa.values()).sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0)).slice(0,7);plano.hipoteses=[...cotoveloFinal,...existentes].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));

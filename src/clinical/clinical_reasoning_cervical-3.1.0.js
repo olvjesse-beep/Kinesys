@@ -94,7 +94,7 @@
   };
 
   function textoContexto(c=contexto()){
-    return [hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
+    return [c?.hmaRegional??hmaPacienteAtual(),c?.origemIrradiacao||'',c?.irradiacao||'',c?.textoMedicamentos||'',c?.textoCirurgias||'',arr(c?.comorbidades).join(' '),c?.textoComorbidades||''].join(' ');
   }
   function negado(t,padrao){return new RegExp('(?:sem|nega(?:do|ou)?|nao(?:\\s+(?:houve|tem|tenho|teve|tive|sinto|sente|sentiu|apresenta|apresentou|esta|estou|ficou|e))?|nem)\\s*.{0,42}(?:'+padrao+')').test(t);}
   function hit(t,lista){return arr(lista).filter(x=>t.includes(n(x)));}
@@ -255,7 +255,7 @@
   function planoCervicalEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
     const t=n(hma()),tem=arr(plano.regioes).some(r=>r.id==='cervical');if(!tem)return plano;
-    const c=contexto(),texto=textoContexto(c),fortes=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=Number(x.cond.minScore||2.2)).slice(0,10);
+    const c={...contexto(),...(plano.hmaPorRegiao?{hmaRegional:plano.hmaPorRegiao.cervical||'',origemIrradiacao:'',irradiacao:'',...plano.contextoIrradiacaoPorRegiao?.cervical}:{})},texto=textoContexto(c),fortes=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=Number(x.cond.minScore||2.2)).slice(0,10);
     const especialistas=fortes.map(x=>hipotese(x.cond,x)),existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='cervical'),base=arr(plano.hipoteses).filter(h=>h.regiaoId==='cervical'),mapa=new Map();
     [...especialistas,...base].forEach(h=>{const k=h.motor31?.condicaoId||h.id||n(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
     const finais=[...mapa.values()].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0)).slice(0,10);plano.hipoteses=[...finais,...existentes].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));

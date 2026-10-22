@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261021-relatorio-isolado-r2';
+    const ASSET_REVISION='20261022-semantica-multiqueixas-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -34,13 +34,14 @@
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
+                'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261022-semantica-multiqueixas-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261021-relatorio-isolado-r2',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261022-semantica-multiqueixas-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js?v=20261020-contexto-indice-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261015-radar-cientifico-r1',
-                'src/clinical/clinical_region_loader-1.0.0.js?v=20261015-radar-cientifico-r1'
+                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261022-semantica-multiqueixas-r1',
+                'src/clinical/clinical_region_loader-1.0.0.js?v=20261022-semantica-multiqueixas-r1'
             ]),
             afterLoad(){
                 window.inicializarSugestoesAvaliacaoKineSys?.();
@@ -77,7 +78,7 @@
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
             scripts:Object.freeze([
-                'src/agenda/agenda-1.20.0.js?v=20261020-sem-confirmacao-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
+                'src/agenda/agenda-1.20.0.js?v=20261022-whatsapp-direto-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
                 'src/agenda/agenda_lifecycle-1.0.0.js?v=20260914-postgrid-r41'

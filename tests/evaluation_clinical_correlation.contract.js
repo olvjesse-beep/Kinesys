@@ -14,7 +14,7 @@ assert.match(src,/BANCO_SEMANTICO_LAUDO/,'o laudo deve possuir um banco semânti
 assert.match(src,/coletarContextoIntegradoAvaliacaoKineSys/,'o fluxo deve expor uma fonte clínica integrada');
 assert.match(src,/gruposAnamnese=\{/,'campos repetidos sem id devem ser preservados em grupos clínicos');
 assert.match(src,/grupoCampo\(el\)/,'a coleta deve classificar fatores de piora, exposições, comorbidades e fatores psicossociais');
-assert.match(src,/versaoTexto:21/,'a base automática anterior deve ser atualizada com segurança');
+assert.match(src,/versaoTexto:22/,'a base automática anterior deve ser atualizada com segurança');
 assert.match(src,/function construirFatosClinicos\(d\)/,'o relatório deve nascer de fatos clínicos estruturados');
 assert.match(src,/function validarNarrativaClinica\(d,secoes\)/,'o texto final deve ser validado contra os fatos registrados');
 assert.match(src,/function conflitosDoExame\(d\)/,'resultados contraditórios devem ser detectados antes da conclusão');
@@ -64,6 +64,7 @@ const context={
   console
 };
 context.window.window=context.window;
+vm.runInNewContext(fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8'),context);
 vm.runInNewContext(src.slice(0,src.indexOf('\n\n/* Product Design')),context);
 context.window.preencherLaudoAvaliacaoKineSys('rascunho-legado-invalido');
 context.window.renderizarLaudoAvaliacaoKineSys();

@@ -38,21 +38,21 @@
     const REGIOES=Object.freeze({
         ombro:Object.freeze({
             styles:Object.freeze(['styles/clinical_reasoning_shoulder-3.1.0.css?v=20260910-r2']),
-            scripts:Object.freeze(['src/clinical/clinical_reasoning_shoulder-3.1.0.js?v=20261012-exame-testes-r1'])
+            scripts:Object.freeze(['src/clinical/clinical_reasoning_shoulder-3.1.0.js?v=20261022-semantica-multiqueixas-r1'])
         }),
         cotovelo:Object.freeze({
             styles:Object.freeze(['styles/clinical_reasoning_elbow-3.1.0.css?v=20260910-r1']),
-            scripts:Object.freeze(['src/clinical/clinical_reasoning_elbow-3.1.0.js?v=20261012-exame-testes-r1'])
+            scripts:Object.freeze(['src/clinical/clinical_reasoning_elbow-3.1.0.js?v=20261022-semantica-multiqueixas-r1'])
         }),
         punho_mao:Object.freeze({
             depends:Object.freeze(['cotovelo']),
             styles:Object.freeze(['styles/clinical_reasoning_wrist-3.1.0.css?v=20260910-r1']),
-            scripts:Object.freeze(['src/clinical/clinical_reasoning_wrist-3.1.0.js?v=20261012-exame-testes-r1'])
+            scripts:Object.freeze(['src/clinical/clinical_reasoning_wrist-3.1.0.js?v=20261022-semantica-multiqueixas-r1'])
         }),
         cervical:Object.freeze({
             depends:Object.freeze(['cotovelo']),
             styles:Object.freeze(['styles/clinical_reasoning_cervical-3.1.0.css?v=20260911-r1']),
-            scripts:Object.freeze(['src/clinical/clinical_reasoning_cervical-3.1.0.js?v=20261012-exame-testes-r1'])
+            scripts:Object.freeze(['src/clinical/clinical_reasoning_cervical-3.1.0.js?v=20261022-semantica-multiqueixas-r1'])
         })
     });
     const ORDEM=Object.freeze(['ombro','cotovelo','punho_mao','cervical']);

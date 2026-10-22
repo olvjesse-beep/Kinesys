@@ -89,7 +89,7 @@
     punho_sobrecarga_tendinea:{essencial:['Localização, contração resistida e tolerância à carga'],complementar:['ADM, força e função comparativa'],evitar:['Nomear tendão específico sem achados concordantes']}
   };
 
-  function textoContexto(c){return [hma(),c?.origemIrradiacao,c?.irradiacao,c?.textoComorbidades,c?.textoMedicamentos,c?.textoCirurgias,...arr(c?.comorbidades),...arr(c?.medicamentos),...arr(c?.cirurgias).map(x=>typeof x==='string'?x:(x?.texto||x?.nome||''))].filter(Boolean).join(' ');}
+  function textoContexto(c){return [c?.hmaRegional??hma(),c?.origemIrradiacao,c?.irradiacao,c?.textoComorbidades,c?.textoMedicamentos,c?.textoCirurgias,...arr(c?.comorbidades),...arr(c?.medicamentos),...arr(c?.cirurgias).map(x=>typeof x==='string'?x:(x?.texto||x?.nome||''))].filter(Boolean).join(' ');}
   function negado(t,padrao){return new RegExp('(?:sem|nega(?:do|ou)?|nao(?:\\s+(?:houve|tem|tenho|teve|tive|sinto|sente|esta|estou|ficou|e))?|nem)\\s*.{0,38}(?:'+padrao+')').test(t);}
   function hit(t,lista){return arr(lista).filter(x=>t.includes(n(x)));}
 
@@ -174,7 +174,7 @@
   function planoPunhoMaoEspecialista(plano){
     if(!plano||plano.insuficiente)return plano;
     const t=n(hma()),tem=arr(plano.regioes).some(r=>r.id==='punho_mao')||/(punho|mao|dedo|polegar|carpo|escafoide|tabaqueira|cmc|tfcc|guyon)/.test(t);if(!tem)return plano;
-    const c=contexto(),texto=textoContexto(c),fortes=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=2).slice(0,8);
+    const c={...contexto(),...(plano.hmaPorRegiao?{hmaRegional:plano.hmaPorRegiao.punho_mao||'',origemIrradiacao:'',irradiacao:'',...plano.contextoIrradiacaoPorRegiao?.punho_mao}:{})},texto=textoContexto(c),fortes=CONDICOES.map(cond=>({cond,...pontuar(cond,texto,c)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=2).slice(0,8);
     const especialistas=fortes.map(x=>hipotese(x.cond,x)), existentes=arr(plano.hipoteses).filter(h=>h.regiaoId!=='punho_mao'), base=arr(plano.hipoteses).filter(h=>h.regiaoId==='punho_mao'), mapa=new Map();
     [...especialistas,...base].forEach(h=>{const k=h.motor31?.condicaoId||h.id||n(h.nome);if(!mapa.has(k))mapa.set(k,h);else if(h.motor31)mapa.set(k,{...mapa.get(k),...h});});
     const finais=[...mapa.values()].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0)).slice(0,8);plano.hipoteses=[...finais,...existentes].sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));

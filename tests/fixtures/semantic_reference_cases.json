@@ -1,0 +1,25 @@
+{
+ "schemaVersion": 1,
+ "provenance": "Casos inteiramente fictícios, não derivados de prontuários identificáveis.",
+ "professionalReview": "pending",
+ "referenceNarratives": {
+  "lados-negativa":"Nega dor no ombro direito. Refere dormência na mão esquerda.",
+  "dois-tempos":"Refere dor no ombro direito há 3 meses e no joelho esquerdo há 2 dias.",
+  "familiar":"Minha irmã apresenta dor no joelho esquerdo. Relata dor no ombro direito.",
+  "bilateral":"Refere dor bilateral nos cotovelos. Relata dor no quadril esquerdo. Refere dormência na mão direita.",
+  "indicacao-nao-operacao":"Aguarda cirurgia indicada para o quadril direito.",
+  "irradia-e-queixa-local":"Relata dor cervical que irradia para a mão esquerda. Refere dor no joelho direito ao agachar.",
+  "hipotese-relatada":"Refere suspeita de diagnóstico de doença cervical.",
+  "mesmo-local-momentos-distintos":"No passado tinha dor no ombro direito. Atualmente nega dor no ombro direito."
+ },
+ "cases": [
+  {"id":"lados-negativa","hma":"Nega dor no ombro direito e refere dormência na mão esquerda.","expected":[{"conceito":"dor","regiaoId":"ombro","lado":"direito","estado":"negado"},{"conceito":"parestesia","regiaoId":"punho_mao","lado":"esquerdo","estado":"relatado"}],"regions":["punho_mao"]},
+  {"id":"dois-tempos","hma":"Dor no ombro direito há 3 meses e no joelho esquerdo há 2 dias.","expected":[{"conceito":"dor","regiaoId":"ombro","lado":"direito","tempo":["há 3 meses"]},{"conceito":"dor","regiaoId":"joelho","lado":"esquerdo","tempo":["há 2 dias"]}],"regions":["ombro","joelho"]},
+  {"id":"familiar","hma":"Minha irmã apresenta dor no joelho esquerdo. Refere dor no ombro direito.","expected":[{"conceito":"dor","regiaoId":"joelho","sujeito":"outra_pessoa"},{"conceito":"dor","regiaoId":"ombro","sujeito":"paciente"}],"regions":["ombro"]},
+  {"id":"bilateral","hma":"Dor bilateral nos cotovelos. Dor no quadril esquerdo. Dormência na mão direita.","expected":[{"conceito":"dor","regiaoId":"cotovelo","lado":"bilateral"},{"conceito":"dor","regiaoId":"quadril","lado":"esquerdo"},{"conceito":"parestesia","regiaoId":"punho_mao","lado":"direito"}],"regions":["cotovelo","quadril","punho_mao"]},
+  {"id":"indicacao-nao-operacao","hma":"Aguarda cirurgia indicada para o quadril direito.","expected":[{"tipo":"procedimento","regiaoId":"quadril","certeza":"planejada","temporalidade":"futura"}],"regions":[]},
+  {"id":"irradia-e-queixa-local","hma":"Dor cervical que irradia para a mão esquerda. Além disso, dor no joelho direito ao agachar.","expected":[{"conceito":"dor","regiaoId":"cervical","papel":"origem_trajeto"},{"conceito":"dor","regiaoId":"punho_mao","papel":"destino_trajeto"},{"conceito":"dor","regiaoId":"joelho","papel":"local"}],"regions":["cervical","joelho"]},
+  {"id":"hipotese-relatada","hma":"Refere suspeita de diagnóstico de doença cervical.","expected":[{"tipo":"diagnostico_relatado","regiaoId":"cervical","certeza":"hipotetica"}],"regions":[]},
+  {"id":"mesmo-local-momentos-distintos","hma":"No passado tinha dor no ombro direito. Atualmente nega dor no ombro direito.","expected":[{"conceito":"dor","regiaoId":"ombro","temporalidade":"anterior","estado":"relatado"},{"conceito":"dor","regiaoId":"ombro","temporalidade":"atual","estado":"negado"}],"regions":[]}
+ ]
+}
