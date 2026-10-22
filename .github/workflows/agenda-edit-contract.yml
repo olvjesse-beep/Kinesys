@@ -89,6 +89,10 @@ jobs:
           node tests/evaluation_semantic_graph.test.cjs
           node tests/evaluation_multicomplaint.test.cjs
           node tests/radar_multicomplaint.test.cjs
+          node --check database/clinical_evidence_profiles-1.0.0.js
+          node --check src/clinical/clinical_evidence_reasoning-1.0.0.js
+          node tests/clinical_evidence_reasoning.test.cjs
+          node tests/clinical_evidence_integration.test.cjs
           node tests/radar_lifecycle.contract.js
           node tests/clinical_reasoning_cervical.regression.js
           node tests/clinical_reasoning_cervical.adversarial.js

@@ -15,6 +15,8 @@ const fragment=fs.readFileSync(fragmentPath,'utf8');
 
 const lazyScripts=[
   'src/clinical/clinical_semantic_graph-1.0.0.js',
+  'database/clinical_evidence_profiles-1.0.0.js',
+  'src/clinical/clinical_evidence_reasoning-1.0.0.js',
   'src/clinical/clinical_engine-1.17.0.js',
   'src/clinical/evaluation_workspace-1.17.0.js',
   'src/clinical/proms_escalas.js',

@@ -14,7 +14,7 @@
 (function instalarKineSysMotorClinico3(){
     'use strict';
 
-    const VERSION='3.0.10-multiqueixas';
+    const VERSION='3.0.11-evidencias-compartilhadas';
     const MAX_REGIOES_FALLBACK=2;
     const MAX_HIPOTESES_POR_REGIAO=4;
     const MAX_TESTES=9;
@@ -83,9 +83,9 @@
         return {positivas:uniq(positivas),negadas:uniq(negadas)};
     }
     function contribuicaoSemanticaFunil(item,hmaResultado){
-        const perfis=nomeHipotesesHMA(hmaResultado),itemFamiliaTexto=[item?.nome||'',...arr(item?.palavrasChaveHMA)].join(' '),itemTexto=[itemFamiliaTexto,...arr(item?.testes).map(textoTeste),item?.interpretacao||''].join(' ');
+        const perfis=hipotesesCompativeisComItem(item,hmaResultado),itemFamiliaTexto=[item?.nome||'',...arr(item?.palavrasChaveHMA)].join(' '),itemTexto=[itemFamiliaTexto,...arr(item?.testes).map(textoTeste),item?.interpretacao||''].join(' ');
         const familiasItem=new Set(familiasClinicas(itemFamiliaTexto));
-        const principal=hmaResultado?.suspeitaPrincipal||null;
+        const principal=perfis.includes(hmaResultado?.suspeitaPrincipal)?hmaResultado.suspeitaPrincipal:null;
         if(principal){
             const texto=textoHipoteseHMA(principal),sim=similaridade(itemFamiliaTexto,texto),familiasPrincipal=familiasClinicas(principal?.nome||'');
             const compartilha=familiasPrincipal.some(id=>familiasItem.has(id));
@@ -223,7 +223,7 @@
         selecionadas.filter(id=>{const campo=document.getElementById('chk_regiao_'+id);return campo?.dataset.tocadoManualmente==='true'||campo?.dataset.sugeridaPelaHMA!=='true';}).forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'selecionada',score:99,motivos:['selecionada pelo fisioterapeuta']});}});
         const texto=[hmaAtual(),contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
         const relato=window.KineSysSemanticGraph?.analisar(hmaAtual());
-        const explicitas=uniq(arr(relato?.problemas).map(p=>p.regiaoId));
+        const explicitas=uniq([...arr(relato?.problemas).map(p=>p.regiaoId),...arr(hmaResultado?.raciocinio?.hipoteses).filter(h=>h.estado==='compativel_com_relato').map(h=>h.regiaoId)]);
         // Queixas independentes explícitas não disputam somente duas vagas.
         // Um destino de irradiação, uma negativa ou antecedente familiar não
         // cria uma nova condição local por conta própria.
@@ -242,7 +242,16 @@
     function listaNormalizada(v){ return arr(v).map(n).filter(Boolean); }
     function contemAlgum(texto,lista){ const t=n(texto); return listaNormalizada(lista).filter(x=>x&&t.includes(x)); }
     function nomeHipotesesHMA(hmaResultado){
-        return [hmaResultado?.suspeitaPrincipal,...arr(hmaResultado?.diferenciais)].filter(Boolean);
+        // Conservar diferenciais no Radar, mas não contar incompatibilidade ou
+        // dado ainda não esclarecido como apoio positivo à seleção automática.
+        return [hmaResultado?.suspeitaPrincipal,...arr(hmaResultado?.diferenciais)]
+            .filter(h=>h&&(!h.estadoInvestigacao||h.estadoInvestigacao==='compativel_com_relato'));
+    }
+    function hipotesesCompativeisComItem(item,hmaResultado){
+        const contextual=window.KineSysEvidenceProfiles?.perfis.some(p=>p.id===item?.id);
+        // Títulos comuns ("dor", "investigar") não tornam duas condições
+        // documentadas diferentes evidência positiva uma da outra.
+        return nomeHipotesesHMA(hmaResultado).filter(h=>!contextual||!h.evidenciasCompartilhadas||h.evidenciasCompartilhadas.id===item.id);
     }
 
     function scoreHistoriaItem(item,grupo,idRegiao,contexto,hmaResultado){
@@ -305,7 +314,7 @@
         );
         if(cirurgiaRelacionada){score+=Math.min(2,Number(pesos.cirurgia)||1.5);contrib.push('cirurgia prévia relacionada à região/hipótese');}
 
-        const hmas=nomeHipotesesHMA(hmaResultado);
+        const hmas=hipotesesCompativeisComItem(item,hmaResultado);
         let melhor=null,sim=0;
         hmas.forEach(h=>{const pesoPapel=h===hmaResultado?.suspeitaPrincipal?1:.45,s=similaridade(item?.nome||'',h?.nome||'')*pesoPapel;if(s>sim){sim=s;melhor=h;}});
         if(sim>=.5){score+=2.4;contrib.push('corresponde à hipótese extraída da HMA');}
@@ -333,12 +342,13 @@
         return itens;
     }
 
-    function candidatosRegiao(regiaoInfo,contexto,hmaResultado,incluirTodos=false){
+    function candidatosRegiao(regiaoInfo,contexto,hmaResultado,incluirTodos=false,raciocinio=hmaResultado?.raciocinio){
         const reg=banco()[regiaoInfo.id]; if(!reg)return[];
         const todos=[...arr(reg.clusters).map(item=>({grupo:'cluster',item})),...arr(reg.diferenciais).map(item=>({grupo:'diferencial',item}))];
         return todos.map(({grupo,item})=>{
             const s=scoreHistoriaItem(item,grupo,regiaoInfo.id,contexto,hmaResultado);
             const match=s.hmaMatch||null;
+            const evidenciasCompartilhadas=arr(raciocinio?.hipoteses).find(h=>h.id===item.id&&h.regiaoId===regiaoInfo.id);
             return {
                 id:item.id,
                 regiaoId:regiaoInfo.id,
@@ -346,6 +356,7 @@
                 grupo,
                 nome:item.nome||item.id,
                 prioridadeOrdenacao:s.score,
+                evidenciasCompartilhadas,
                 aFavor:uniq([...(arr(match?.aFavor)),...s.contrib.filter(x=>!/menos compatível/.test(x))]),
                 contra:uniq([...(arr(match?.contra)),...s.contrib.filter(x=>/menos compatível/.test(x))]),
                 aConfirmar:uniq([...(arr(match?.aConfirmar)),...arr(item.testes).map(textoTeste).filter(Boolean).slice(0,4)]),
@@ -356,8 +367,10 @@
                 origemHMA:!!match,
                 item
             };
-        }).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao)
-          .filter(x=>incluirTodos||x.prioridadeOrdenacao>=1.2)
+        }).sort((a,b)=>(a.evidenciasCompartilhadas?.prioridade||0)-(b.evidenciasCompartilhadas?.prioridade||0)||b.prioridadeOrdenacao-a.prioridadeOrdenacao)
+          // Uma pergunta/exame pode esclarecer uma hipótese ainda pendente,
+          // sem atribuir a ela bônus positivo por correspondência nominal.
+          .filter(x=>incluirTodos||x.prioridadeOrdenacao>=1.2||['compativel_com_relato','localizacao_pendente','lateralidade_pendente','cronologia_pendente'].includes(x.evidenciasCompartilhadas?.estado))
           .slice(0,incluirTodos?Number.MAX_SAFE_INTEGER:MAX_HIPOTESES_POR_REGIAO);
     }
 
@@ -457,6 +470,7 @@
     }
 
     function gerarPlano(){
+        window.KineSysEvidenceProfiles?.instalarBanco(banco());
         const pacienteId=String(document.getElementById('select_paciente_precadastro')?.value||
             (typeof pacienteAtualId!=='undefined'?pacienteAtualId:'')||document.getElementById('paciente_nome')?.value||'').trim();
         if(pacienteId&&pacienteDasHipoteses&&pacienteId!==pacienteDasHipoteses){
@@ -480,7 +494,7 @@
             leiturasPorRegiao[r.id]=analisarHistoria({...contexto,...contextoIrradiacaoPorRegiao[r.id]},hmaPorRegiao[r.id])||{sinais:[],diferenciais:[],lacunas:[]};
         });
         const contextoDaRegiao=r=>semantica?{...contexto,hmaRegional:hmaPorRegiao[r.id],...contextoIrradiacaoPorRegiao[r.id]}:contexto;
-        const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id])).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
+        const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],false,hmaResultado.raciocinio)).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
         const modificadores=modificadoresContextuais(contexto);
         const exame=construirExame(hipoteses,hmaResultado,modificadores);
         let planoGerado={
@@ -508,7 +522,7 @@
             const grupo=arr(reg?.clusters).some(i=>i.id===h.id)?'cluster':arr(reg?.diferenciais).some(i=>i.id===h.id)?'diferencial':h.grupo;
             return {...h,grupo};
         });
-        const todos=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],true));
+        const todos=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],true,hmaResultado.raciocinio));
         catalogoHipoteses=Array.from(new Map([...todos,...arr(planoGerado.hipoteses)].map(h=>[chaveHipotese(h),h])).values())
             .filter(h=>regioesAtivas.has(h.regiaoId));
         const porChave=new Map(arr(planoGerado.hipoteses).filter(h=>regioesAtivas.has(h.regiaoId)).map(h=>[chaveHipotese(h),h]));
@@ -524,6 +538,7 @@
             .map(h=>({...h,problemaIds:arr(semantica?.problemas).filter(p=>p.regiaoId===h.regiaoId).map(p=>p.id)}))
             .sort((a,b)=>Number(b.prioridadeOrdenacao||0)-Number(a.prioridadeOrdenacao||0));
         planoGerado.regioes=arr(planoGerado.regioes).filter(r=>regioesAtivas.has(r.id));
+        if(window.KineSysEvidenceReasoning)planoGerado=window.KineSysEvidenceReasoning.enriquecerPlano(planoGerado,hma);
         // Exames e clusters derivam exclusivamente das hipóteses ainda abertas.
         const exameAtual=planoGerado.exame||{};
         const reconstruido=construirExame(planoGerado.hipoteses,hmaResultado,modificadores,Number.MAX_SAFE_INTEGER);

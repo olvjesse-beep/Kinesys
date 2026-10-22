@@ -64,3 +64,4 @@ caso('trajeto do campo estruturado não vaza de cervical para joelho',()=>{
  }finally{env.coletarContextoClinico=anterior;}
 });
 console.log(`${total} cenários com analisador HMA e bancos clínicos reais OK.`);
+module.exports={env,gerar,limpar(){selecionadas=[];controles=[];achados=[];}};
