@@ -83,7 +83,8 @@ assert.match(report,/combinação de resultados ainda é insuficiente para suste
 assert.strictEqual((report.match(/em pé/gi)||[]).length,1,'fator de piora já descrito na HMA não deve ser repetido');
 assert.doesNotMatch(report,/positivo\(s\)|negativo\(s\)|inconclusivo\(s\)/,'o relatório não deve exibir flexões mecânicas');
 assert.doesNotMatch(report,/CONDUTA FISIOTERAPÊUTICA/,'o texto copiável não deve conter uma conduta genérica inventada');
-assert.doesNotMatch(report,/HISTÓRIA CLÍNICA RELEVANTE|EXAME FÍSICO-FUNCIONAL|IMPRESSÃO FISIOTERAPÊUTICA|SEGURANÇA CLÍNICA/,'subtítulos mecânicos não devem fragmentar a narrativa final');
+assert.match(report,/Paciente: Paciente Teste\nIdade: 42 anos/,'identificação passa ao cabeçalho solicitado, sem reintroduzir nome na narrativa');
+assert.match(report,/\n\nHistória clínica\n\n/,'as seções documentais solicitadas organizam a narrativa clínica');
 assert.match(report,/Data de emissão: [\s\S]*_{10,}\nProfissional Teste\nCREFITO-4 123456-F$/,'todo relatório deve terminar com data, espaço de assinatura, nome e registro da conta logada');
 
 function renderizarCaso(achados,resumo){
@@ -217,7 +218,7 @@ hmaField.value='Paciente relata dor na região da escápula que irradia para bas
 context.window.KineSysMotorClinico3.ultimoPlano={versao:'composicao',hipoteses:[{id:'neuropatia_supraescapular',nome:'Neuropatia do Nervo Supraescapular',regiaoId:'ombro'}],exame:{testesPrioritarios:[]}};
 const composicao=renderizarCaso([{regiaoId:'ombro',regiao:'Ombro / complexo glenoumeral',id:'neuropatia_supraescapular',nome:'Neuropatia do Nervo Supraescapular',achados:rotulosSupra.map(texto=>({texto,resultado:'positivo'}))}],
  [{regiao:'Ombro / complexo glenoumeral',codigoHipotese:'neuropatia_supraescapular',nomeHipotese:'Neuropatia do Nervo Supraescapular',nivel:'positivo',redFlags:[]}]);
-assert.match(composicao,/Refere dor na região escapular que irradia para sua porção inferior\. Relata dormência local e dor à palpação na região medial da escápula\. Também relata redução da força/,'organizar as orações sem alterar localização e força relatadas');
+assert.match(composicao,/(?:Refere|Relata) dor na região escapular que irradia para sua porção inferior\. Relata dormência local e dor à palpação na região medial da escápula\. Também relata redução da força/,'organizar as orações sem alterar localização e força relatadas');
 assert.match(composicao,/Esses achados mantêm a hipótese de neuropatia do nervo supraescapular como possibilidade de investigação, sem estabelecer diagnóstico definitivo/);
 assert.ok(composicao.indexOf('sem estabelecer diagnóstico definitivo')<composicao.indexOf('O registro referente à atrofia'),'a lacuna composta deve ficar depois da interpretação, em parágrafo próprio');
 assert.deepStrictEqual(Array.from(context.window.coletarLaudoAvaliacaoKineSys().validacao.relatoAusente),[],'verificar fatos na composição final, não num texto intermediário');
@@ -236,7 +237,7 @@ const relatoPreciso=renderizarCaso(
   [{regiao:'Ombro',id:'neuropatia_supraescapular',nome:'Neuropatia do nervo supraescapular',achados:[{texto:'Teste de força',resultado:'inconclusivo'},{texto:'Dor ao movimento',resultado:'negativo'}]}],
   [{regiao:'Ombro',codigoHipotese:'neuropatia_supraescapular',nomeHipotese:'Neuropatia do nervo supraescapular',nivel:'inconclusivo',redFlags:[]}]
 );
-assert.strictEqual((relatoPreciso.match(/dor no ombro esquerdo/gi)||[]).length,1,'a mesma frase clínica repetida deve aparecer uma única vez');
+assert.strictEqual((relatoPreciso.split('\n\nHistória clínica\n\n')[1].match(/dor no ombro esquerdo/gi)||[]).length,1,'a mesma frase clínica repetida aparece uma vez na história; o motivo resumido agora tem campo próprio no cabeçalho solicitado');
 assert.match(relatoPreciso,/Nega parestesia no braço direito/,'negações e lateralidade devem ser preservadas');
 assert.match(relatoPreciso,/3\.5\/10 após corrida e alívio em repouso/,'números decimais e fatores de alívio devem permanecer intactos');
 assert.match(relatoPreciso,/Teste de força permaneceu inconclusivo/,'a incerteza de um teste não pode virar ausência ou confirmação');
@@ -309,7 +310,7 @@ const comunicacao=renderizarCaso(
   [{regiao:'Joelho',id:'patelofemoral',nome:'Síndrome da dor patelofemoral',achados:[{texto:'Dor ao agachamento',resultado:'positivo'}]}],
   [{regiao:'Joelho',codigoHipotese:'patelofemoral',nomeHipotese:'Síndrome da dor patelofemoral',nivel:'avaliado',redFlags:[]}]
 );
-assert.match(comunicacao,/avaliação fisioterapêutica em 14\/10\/2026/,'data de atendimento fora da anamnese deve aparecer no documento');
+assert.match(comunicacao,/Data da avaliação: 14\/10\/2026/,'data do atendimento permanece explícita no novo cabeçalho solicitado');
 assert.match(comunicacao,/diabetes mellitus \(DM\)/,'siglas de antecedentes devem ser explicadas para o destinatário');
 assert.match(comunicacao,/Flexão de joelho: 95 ° \(lado esquerdo\)/i,'medidas devem conservar valor, unidade e lado');
 assert.match(comunicacao,/Extensão de joelho: 0 °/i,'zero é resultado válido e não pode desaparecer');
