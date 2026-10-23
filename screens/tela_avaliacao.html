@@ -34,23 +34,6 @@
                 </div>
             </div>
 
-    <!-- RADAR KINESYS — indicador inline; nunca sobrepõe o conteúdo clínico -->
-    <div id="radar_flutuante_container" class="radar-dock" aria-live="polite" aria-label="Radar KineSys">
-        <button type="button" id="radar_launcher" class="radar-launcher" aria-expanded="false" aria-controls="radar_painel" title="Abrir Radar KineSys">
-            <span class="radar-launcher-glyph" aria-hidden="true"></span>
-            <span class="radar-launcher-label">Radar KineSys</span>
-            <span id="radar_badge" class="radar-badge" aria-label="0 alertas">0</span>
-        </button>
-        <aside id="radar_painel" class="radar-painel" aria-hidden="true" aria-label="Alertas do Radar KineSys">
-            <div class="radar-painel-header">
-                <div><span class="eyebrow">RADAR KINESYS</span><strong>Alertas clínicos em contexto</strong></div>
-                <button type="button" id="radar_fechar" class="radar-painel-fechar" aria-label="Fechar Radar KineSys">×</button>
-            </div>
-            <div id="radar_painel_resumo" class="radar-painel-resumo">Nenhum alerta ativo.</div>
-            <div id="radar_alertas_lista" class="radar-lista"></div>
-        </aside>
-    </div>
-
             <div class="avaliacao-draft-toolbar">
                 <span>Rascunho automático neste dispositivo</span>
                 <button type="button" id="btn_descartar_rascunho_avaliacao" class="btn-secondary avaliacao-draft-discard" onclick="descartarRascunhoAvaliacaoKineSys()">Descartar rascunho</button>
@@ -117,6 +100,7 @@
                             <div id="ks20_hma_insights"></div>
                             <small>Revise e confirme os achados durante o exame. O radar não estabelece diagnóstico.</small>
                         </section>
+                        <div id="ks_radar_hma_host" class="ks-radar-inline-host" aria-label="Alertas da anamnese"></div>
                         <div class="ks-eval-radar-guide" aria-label="Como o Radar KineSys apoia a avaliação">
                             <div class="ks-eval-radar-guide-item"><span aria-hidden="true">01</span><div><strong>Identificar padrões clínicos</strong><small>Analisa o relato e destaca padrões relevantes da queixa atual.</small></div></div>
                             <div class="ks-eval-radar-guide-item"><span aria-hidden="true">02</span><div><strong>Sugerir diferenciais</strong><small>Apresenta hipóteses e diferenciais a explorar no exame físico.</small></div></div>
@@ -232,8 +216,32 @@
                     <div id="ks-regions-selected" aria-label="Regiões selecionadas"></div>
                     <div class="checkbox-group region-chips" id="grupo_regioes_mapeamento" hidden></div>
                 </div>
-                <div id="painel_integracao_multirregional" class="kinesys-integration-panel" style="display:none;"></div>
+                <section id="ks_radar_exam_host" class="ks-exam-support" aria-label="Apoio clínico ao exame">
+                    <div><strong>Radar KineSys · apoio ao exame</strong><p>Consulte os alertas em contexto, sem interromper o registro dos testes.</p><button type="button" id="ks_exame_livre_atalho" class="btn-link-compacto">Registrar teste ou achado livre</button></div>
+                    <div id="radar_flutuante_container" class="radar-dock" aria-live="polite" aria-label="Radar KineSys">
+                        <button type="button" id="radar_launcher" class="radar-launcher" aria-expanded="false" aria-controls="radar_painel" title="Abrir Radar KineSys">
+                            <span class="radar-launcher-glyph" aria-hidden="true"></span><span class="radar-launcher-label">Ver alertas</span>
+                            <span id="radar_badge" class="radar-badge" aria-label="0 alertas">0</span>
+                        </button>
+                        <aside id="radar_painel" class="radar-painel" aria-hidden="true" aria-label="Alertas do Radar KineSys">
+                            <div class="radar-painel-header"><div><span class="eyebrow">RADAR KINESYS</span><strong>Alertas clínicos em contexto</strong></div><button type="button" id="radar_fechar" class="radar-painel-fechar" aria-label="Fechar Radar KineSys">×</button></div>
+                            <div id="radar_painel_resumo" class="radar-painel-resumo">Nenhum alerta ativo.</div><div id="radar_alertas_lista" class="radar-lista"></div>
+                        </aside>
+                    </div>
+                </section>
                 <div id="container_clusters_regioes"></div>
+                <section id="ks_exame_livre" class="ks-free-exam" aria-labelledby="ks_exame_livre_titulo">
+                    <h2 id="ks_exame_livre_titulo">Testes e achados complementares</h2>
+                    <p class="ks-free-exam-intro">Descreva o que examinou, inclusive em pacientes com várias queixas. Cada registro mantém a região, o lado e o resultado, e acompanha a avaliação e o relatório.</p>
+                    <div class="grid-2">
+                        <div class="input-group"><label for="ks_exame_livre_regiaoId">Região examinada</label><select id="ks_exame_livre_regiaoId"><option value="">Sem região definida</option></select></div>
+                        <div class="input-group"><label for="ks_exame_livre_lado">Lado examinado</label><select id="ks_exame_livre_lado"><option value="">Não informado</option><option value="direito">Direito</option><option value="esquerdo">Esquerdo</option><option value="bilateral">Bilateral</option><option value="nao_aplicavel">Não se aplica</option></select></div>
+                    </div>
+                    <div class="input-group"><label for="ks_exame_livre_texto">Testes realizados e achados</label><textarea id="ks_exame_livre_texto" rows="4" placeholder="Descreva teste, resposta observada, lado e medidas relevantes. Para queixas de regiões diferentes, adicione registros separados." aria-describedby="ks_exame_livre_ajuda"></textarea><small id="ks_exame_livre_ajuda">O texto original é preservado. O sistema não presume resultados nem diagnóstico a partir de um nome de teste.</small></div>
+                    <div class="input-group"><label for="ks_exame_livre_resultado">Resultado deste registro</label><select id="ks_exame_livre_resultado"><option value="">Não classificado</option><option value="positivo">Positivo</option><option value="negativo">Negativo</option><option value="inconclusivo">Inconclusivo</option></select></div>
+                    <details><summary>Correlacionar com um teste do catálogo (opcional)</summary><div class="input-group"><label for="ks_exame_livre_vinculo">Hipótese e critério efetivamente examinados</label><select id="ks_exame_livre_vinculo"><option value="">Sem vínculo ao catálogo</option></select><small>Vincule somente se realizou o critério completo descrito. Achados livres sem correspondência entram na narrativa, mas não somam critérios de confirmação.</small></div></details>
+                    <button type="button" class="btn-secondary" id="ks_exame_livre_adicionar">Adicionar ao exame</button><p id="ks_exame_livre_status" role="status"></p><div id="ks_exame_livre_registros" aria-label="Registros complementares do exame"></div>
+                </section>
                 <div class="cluster-focus-actions">
                     <button class="btn-secondary" onclick="irParaSubtela('subtela_triagem')">◀ Voltar à Anamnese</button>
                     <button class="btn-primary" onclick="avancarParaDiagnostico()">Ver relatório</button>
@@ -241,6 +249,8 @@
             </div>
 
             <div id="subtela_diagnostico" class="subtela" role="tabpanel" aria-labelledby="step_indicador_3">
+                <div id="ks_radar_report_host" class="ks-radar-inline-host" aria-label="Alertas em revisão no relatório"></div>
+                <div id="ks_exam_safety_review" aria-label="Revisão de segurança antes de finalizar"></div>
                 <div class="card" id="card_alertas_consolidados" hidden style="display:none !important">
                     <div class="card-header">
                         <h2>Segurança e alertas</h2>

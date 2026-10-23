@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261022-meudia-cuidados-r1';
+    const ASSET_REVISION='20261023-exame-livre-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -17,7 +17,7 @@
     const BUNDLES=Object.freeze({
         tela_avaliacao:Object.freeze({
             id:'avaliacao',
-            fragment:'screens/tela_avaliacao.html?v=20261020-contexto-indice-r1',
+            fragment:'screens/tela_avaliacao.html?v=20261023-exame-livre-r1',
             styles:Object.freeze([
                 'styles/design_clinical.css?v=20261012-visual-harmony-r1',
                 'styles/design_clinical_direction-1.17.0.css',
@@ -26,7 +26,8 @@
                 'styles/avaliacao_experiencia-1.22.0.css?v=20261013-evaluation-option3-r2',
                 'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
                 'styles/radar_clinico_focus-3.0.0.css?v=20260910-r1',
-                'styles/dialog_rascunho_focus-1.0.0.css?v=20260910-r1'
+                'styles/dialog_rascunho_focus-1.0.0.css?v=20260910-r1',
+                'styles/evaluation_free_exam-1.0.0.css?v=20261023-exame-livre-r1'
             ]),
             scripts:Object.freeze([
                 'src/clinical/cirurgias-1.18.0.js?v=20260902-r1',
@@ -37,8 +38,9 @@
                 'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261022-canela-anatomia-r1',
                 'database/clinical_evidence_profiles-1.0.0.js?v=20261022-radar-evidencias-r1',
                 'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261022-canela-anatomia-r1',
-                'src/clinical/clinical_engine-1.17.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261022-radar-evidencias-r1',
+                'src/clinical/clinical_engine-1.17.0.js?v=20261023-exame-livre-r1',
+                'src/clinical/evaluation_free_exam-1.0.0.js?v=20261023-exame-livre-r1',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261023-exame-livre-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js?v=20261020-contexto-indice-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
