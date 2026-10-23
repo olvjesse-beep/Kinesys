@@ -163,6 +163,14 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - PDF simplificado apresenta conteúdo clínico em seções; fingerprints, caches, planos internos e JSON de rastreamento não são conteúdo narrativo. O detalhado mantém o apêndice técnico e auditoria. Não regenerar nem alterar texto profissional salvo. Preservar detalhes das intercorrências, exames, medicações e alertas nas evoluções. Resultados legados sem rótulos exigem aviso, nunca omissão silenciosa ou interpretação inventada.
 - Executar `home_avaliacao_cuidados.test.cjs` e `prontuario_clinico.test.cjs` na barreira hospedada, além de todas as suítes anteriores. Conferir notebook e mobile. Remover estas decisões somente por solicitação explícita do usuário.
 
+## 16. Exame complementar e Radar contextual
+
+- Preservar os registros e o texto em preenchimento de `clinicaEstruturada.exameLivre` no JSON clínico existente, com região/lado/resultado/origem. Registros sem resultado ou sem vínculo válido são descrições, não testes positivos presumidos. Troca de pessoa/avaliação limpa o estado e ações antigas não podem adicionar registros ao contexto novo.
+- Vínculo a critério do catálogo deve ser explícito, atual e coerente. Não criar limiares, duplicar testes, somar lados distintos, combinar checklist sem lado com registro unilateral, nem usar resultados divergentes para confirmar hipótese. Alteração de HMA/catalogo exige revisão, sem apagar a descrição.
+- Testes e achados livres entram na base documental do relatório e sua auditoria; texto profissional/revisado não é sobrescrito automaticamente. Preservar chaves clínicas anteriores ao salvar/reabrir.
+- Não recolocar o bloco visual de integração multirregional na etapa 2. Revisão de segurança pertence à etapa 3, mantendo critérios/condutas/bloqueios. O único Radar acompanha o contexto das etapas sem duplicar IDs nem cobrir o cabeçalho.
+- Executar `evaluation_free_exam.test.cjs` junto às suítes anteriores na barreira hospedada. Mudança destas decisões somente por pedido explícito do usuário.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

@@ -1,0 +1,24 @@
+#tela_avaliacao .ks-exam-support{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin:12px 0 18px;padding:16px 18px;background:var(--kds-surface);border:1px solid var(--kds-line);border-radius:12px}
+#tela_avaliacao .ks-exam-support>div:first-child{min-width:0;flex:1}
+#tela_avaliacao .ks-exam-support p{margin:5px 0 0;color:var(--kds-muted);font-size:var(--kds-font-metadata)}
+#tela_avaliacao .ks-exam-support #radar_flutuante_container{position:static;inset:auto;transform:none;z-index:auto;width:auto;margin:0;max-width:100%;justify-content:flex-end;flex:0 1 440px}
+#tela_avaliacao .ks-exam-support .radar-painel{width:100%;max-width:100%;flex-basis:100%;margin:0}
+#tela_avaliacao .ks-radar-inline-host:empty{display:none}
+#tela_avaliacao .ks-radar-inline-host #radar_flutuante_container{position:static;inset:auto;transform:none;z-index:auto;margin:12px 0;width:100%;max-width:100%;justify-content:flex-start}
+#tela_avaliacao .ks-radar-inline-host .radar-painel{width:100%;max-width:100%;flex-basis:100%;margin:0}
+#tela_avaliacao .ks-free-exam{margin:20px 0;padding:20px;background:var(--kds-surface);border:1px solid var(--kds-line);border-radius:12px;min-width:0}
+#tela_avaliacao .ks-free-exam h2{margin:0 0 6px;font-size:var(--kds-font-heading-sm)}
+#tela_avaliacao .ks-free-exam .ks-free-exam-intro{margin:0 0 16px;color:var(--kds-muted);line-height:1.5}
+#tela_avaliacao .ks-free-exam textarea{width:100%;min-height:120px;resize:vertical}
+#tela_avaliacao .ks-free-exam .grid-2{align-items:start}
+#tela_avaliacao .ks-free-exam details{margin:8px 0 14px;padding:12px;border:1px solid var(--kds-line);border-radius:8px}
+#tela_avaliacao .ks-free-exam details summary{cursor:pointer;font-weight:700}
+#tela_avaliacao .ks-free-exam select{width:100%;min-width:0;max-width:100%}
+#tela_avaliacao .ks-free-exam details .input-group{margin-top:12px}
+#tela_avaliacao .ks-free-exam [role=status]{font-size:var(--kds-font-metadata);color:var(--kds-muted);margin:8px 0}
+#tela_avaliacao .ks-free-exam-record{padding:14px 0;border-top:1px solid var(--kds-line);overflow-wrap:anywhere}
+#tela_avaliacao .ks-free-exam-record p{white-space:pre-wrap;margin:8px 0}
+#tela_avaliacao .ks-free-exam-record small{display:block;color:var(--kds-muted);margin-bottom:10px}
+#tela_avaliacao #ks_exam_safety_review{margin:16px 0}
+#tela_avaliacao #ks_exam_safety_review .ks-safety-dock{padding:14px;border:1px solid var(--kds-line);border-radius:12px;background:var(--kds-surface)}
+@media(max-width:700px){#tela_avaliacao .ks-exam-support{flex-direction:column}#tela_avaliacao .ks-exam-support #radar_flutuante_container{width:100%;flex:auto;justify-content:flex-start}#tela_avaliacao .ks-free-exam{padding:16px}#tela_avaliacao .ks-free-exam .grid-2{grid-template-columns:1fr}}

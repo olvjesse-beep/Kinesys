@@ -993,18 +993,26 @@
         estado.modoDirecao='fenotipo';estado.fenotipoOperacional=fen;estado.incertezaEspecifica=true;estado.incertezaClinicaAceita=false;estado.incertezaClinicaMotivo='rota_pos_operatoria';estado.hipotesePrincipalAtiva=null;estado.idClusterSuspeitaEscolhido=null;estado.diferencialAtivo=null;
     }
 
+    function atualizarRevisaoSegurancaNoRelatorio(contexto){
+        const host=document.getElementById('ks_exam_safety_review');
+        if(host)host.replaceChildren(construirPainelSegurancaGlobal(contexto));
+    }
+    window.revisarSegurancaAvaliacaoKineSys=function(){
+        atualizarRevisaoSegurancaNoRelatorio(coletarContextoClinico());
+        document.getElementById('ks_exam_safety_review')?.querySelector('.ks-safety-toggle')?.click();
+    };
     window.renderizarMapeamentoRegioes = function(){
         const container=document.getElementById('container_clusters_regioes');if(!container)return;
         const contexto=coletarContextoClinico();renderizarPainelIntegracaoMultirregional(contexto);container.innerHTML='';
         const overview=document.createElement('details');overview.className='ks-evaluation-overview';const summary=document.createElement('summary');summary.textContent='Visão geral da investigação';overview.append(summary,construirPainelDirecao(contexto));container.appendChild(overview);
         const regioes=regioesSelecionadas();
         window.atualizarRegioesCompactasKineSys?.(regioes);
-        if(!regioes.length){const vazio=document.createElement('div');vazio.className='ks-exam-empty';vazio.innerHTML='<strong>Região não definida</strong><span></span>';const b=document.createElement('button');b.type='button';b.className='btn-primary';b.textContent='Ir para resumo clínico';b.addEventListener('click',window.avancarParaDiagnostico);vazio.appendChild(b);container.appendChild(vazio);container.appendChild(construirPainelSegurancaGlobal(contexto));if(modalInvestigacao232.aberto)fecharModalInvestigacao232();return;}
+        if(!regioes.length){const vazio=document.createElement('div');vazio.className='ks-exam-empty';vazio.innerHTML='<strong>Região não definida</strong><span></span>';const b=document.createElement('button');b.type='button';b.className='btn-primary';b.textContent='Ir para resumo clínico';b.addEventListener('click',window.avancarParaDiagnostico);vazio.appendChild(b);container.appendChild(vazio);atualizarRevisaoSegurancaNoRelatorio(contexto);if(modalInvestigacao232.aberto)fecharModalInvestigacao232();return;}
         const ativa=window.atualizarRegioesCompactasKineSys?.(regioes)||regioes[0];
         container.appendChild(window.construirCardRegiao(ativa,contexto));
-        // A segurança fecha a etapa como uma ação compacta, depois do exame.
-        // O detalhe só abre quando há algo para revisar ou registrar.
-        container.appendChild(construirPainelSegurancaGlobal(contexto));
+        // A revisão permanece obrigatória, mas sua ação pertence ao Relatório, não à etapa 2.
+        atualizarRevisaoSegurancaNoRelatorio(contexto);
+        window.KineSysExameLivre?.atualizarOpcoes();
         regioes.forEach(id=>{window.obterEstadoRegiao(id).ferramentaScrollPendente='';});
     };
 
@@ -1220,6 +1228,7 @@
     };
 
     window.renderizarAlertasConsolidados = function(){
+        atualizarRevisaoSegurancaNoRelatorio(coletarContextoClinico());
         const container=document.getElementById('container_alertas_consolidados'),card=document.getElementById('card_alertas_consolidados');if(!container)return;
         const contexto=coletarContextoClinico(),itens=[],g=obterEstadoSegurancaGlobal();
 
@@ -1254,7 +1263,7 @@
         if(!valid.ok){
             const b=document.createElement('button');b.type='button';b.className='btn-secondary';
             b.textContent=valid.tipo==='revisao_global'?'Confirmar revisão':'Revisar segurança';
-            b.addEventListener('click',()=>{if(valid.tipo==='revisao_global')window.confirmarSegurancaGlobalKineSys();else window.navegarAvaliacaoEtapaKineSys('subtela_mapeamento');});
+            b.addEventListener('click',()=>{window.revisarSegurancaAvaliacaoKineSys();});
             status.appendChild(b);
         }
         container.appendChild(status);
