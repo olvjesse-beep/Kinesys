@@ -64,6 +64,10 @@ jobs:
           node --check src/core/mensagens_config.js
           node tests/mensagens_config_bootstrap.contract.js
           node tests/agendamento_online_admin_config.contract.js
+          node --check agendamento/agendamento-publico-v2.js
+          node --check agendamento/calendario-publico.js
+          node tests/agendamento_online_public_portal.contract.js
+          node tests/agendamento_publico_modelo2.test.cjs
           node tests/access_management.contract.js
           node --check src/home/home_detalhes-1.18.5.js
           node tests/home_atendimentos_24h.contract.js

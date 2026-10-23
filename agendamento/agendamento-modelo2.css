@@ -1,0 +1,161 @@
+/* Modelo 2 aprovado: masthead KineSys, calendário amplo e resumo lateral.
+   Exclusivo do portal público; nenhuma regra alcança a Agenda interna. */
+html,body{min-width:0}
+.ks-public-page{width:100%;padding:0;overflow-x:clip}
+.ks-public-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;min-height:228px;padding:24px max(5vw,env(safe-area-inset-left)) 28px;background:var(--kds-petrol-deep) url('./banner-kinesys.png') center/cover no-repeat;border:0;color:var(--kds-surface)}
+.ks-public-brand{color:var(--kds-surface);align-self:start;justify-self:start}
+.ks-public-brand-name{font-size:var(--kds-font-kpi)}
+.ks-public-brand-name span{color:var(--kds-teal-soft)}
+.ks-public-brand small{color:var(--kds-teal-soft);font-size:var(--kds-font-content);margin-top:2px}
+.ks-public-clinic{max-width:100%;color:var(--kds-surface);font-size:var(--kds-font-body);align-self:start;padding-top:8px}
+.ks-public-intro{grid-column:1/-1;padding:24px 0 0}
+.ks-public-intro h1{color:var(--kds-surface);font-size:clamp(28px,3.55vw,52px);font-weight:750;line-height:1.15;margin:0 0 10px;letter-spacing:-.025em}
+.ks-public-intro p{color:var(--kds-teal-soft);font-size:var(--kds-font-heading-sm);max-width:65ch}
+.ks-public-flow{padding:0}
+.ks-public-progress{background:var(--kds-accent-soft);margin:0;padding:23px max(5vw,env(safe-area-inset-right));border-bottom:1px solid var(--kds-line)}
+.ks-public-progress-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.ks-public-progress-track{display:flex;align-items:center;justify-content:center;gap:24px;list-style:none;margin:0 auto;padding:0;max-width:1120px}
+.ks-public-progress-track li{display:flex;align-items:center;gap:14px;flex:1;min-width:0;font-size:var(--kds-font-body);color:var(--kds-muted)}
+.ks-public-progress-track li:not(:last-child)::after{content:'';height:1px;background:var(--kds-line);flex:1;min-width:12px;margin-left:12px}
+.ks-public-progress-track li.concluido::after{background:var(--kds-focus-line)}
+.ks-public-progress-track span{height:auto;border-radius:0;background:transparent}
+.ks-public-progress-track .ks-public-step-number{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border:1px solid var(--kds-line);border-radius:50%;background:var(--kds-surface-soft);font-size:var(--kds-font-body);font-weight:700}
+.ks-public-progress-track li.ativo{color:var(--kds-text);font-weight:700}
+.ks-public-progress-track li.ativo .ks-public-step-number{background:var(--kds-accent);border-color:var(--kds-accent);color:var(--kds-surface)}
+.ks-public-progress-track li.concluido{color:var(--kds-text)}
+.ks-public-step-check{display:none;width:22px;height:22px;filter:invert(1)}
+.ks-public-progress-track li.concluido .ks-public-step-number{background:var(--kds-accent);border-color:var(--kds-accent);font-size:0}
+.ks-public-progress-track li.concluido .ks-public-step-check{display:block}
+.ks-public-layout{grid-template-columns:minmax(0,1.5fr) minmax(330px,1fr);gap:48px;max-width:1440px;margin:auto;padding:30px max(5vw,env(safe-area-inset-right)) 12px;align-items:start}
+.ks-public-booking-panel{order:1;position:static;border:0;border-radius:0;box-shadow:none;background:transparent;padding:0;min-width:0}
+.ks-public-profile-panel{order:2;position:sticky;top:24px;min-width:0;padding:24px;background:var(--kds-accent-soft);border:1px solid var(--kds-line-soft);border-radius:var(--kds-radius-lg)}
+.ks-public-summary-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.ks-public-summary-head h2{font-size:var(--kds-font-heading-lg);letter-spacing:-.02em;margin:0}
+.ks-public-summary-head .ks-public-back{display:flex;align-items:center;gap:7px;min-height:44px;margin:0;max-width:50%;line-height:1.3;font-size:var(--kds-font-label)}
+.ks-public-icon{width:26px;height:26px;flex:0 0 26px;object-fit:contain}
+.ks-public-summary-head .ks-public-icon{width:19px;height:19px;flex-basis:19px}
+.ks-public-profile-hero{grid-template-columns:80px minmax(0,1fr);gap:18px;padding:0 0 22px}
+.ks-public-avatar,.ks-public-profile-photo{width:80px;height:80px}
+.ks-public-avatar{background:var(--kds-teal-soft);font-size:var(--kds-font-kpi)}
+.ks-public-profile-main h3{font-size:var(--kds-font-heading-md);letter-spacing:-.02em;line-height:1.25;margin:0 0 4px;overflow-wrap:anywhere}
+.ks-public-profile-kicker{font-size:var(--kds-font-label);font-weight:600;letter-spacing:0;color:var(--kds-muted);margin-bottom:5px}
+.ks-public-profile-main p::first-letter{text-transform:uppercase}
+.ks-public-profile-main small{margin-top:10px;background:transparent}
+.ks-public-profile-section{padding:20px 0}
+.ks-public-profile-section h2,.ks-public-profile-section h3{font-size:var(--kds-font-label);font-weight:600;line-height:1.4;color:var(--kds-muted);margin:0 0 6px}
+.ks-public-profile-section p{font-size:var(--kds-font-content);line-height:1.55}
+.ks-public-summary-row,#ks_public_profile_location{display:flex;align-items:flex-start;gap:18px}
+.ks-public-summary-row>div,#ks_public_profile_location>div{min-width:0}
+.ks-public-summary-row strong{display:block;font-size:var(--kds-font-heading-sm);line-height:1.4;overflow-wrap:anywhere}
+.ks-public-summary-row strong::first-letter{text-transform:uppercase}
+.ks-public-summary-meta{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.ks-public-insurances{border:0;padding:0 0 18px 44px}
+.ks-public-insurances h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.ks-public-chip{min-height:28px;padding:3px 9px;font-weight:600;border-color:var(--kds-line-strong);background:transparent}
+.ks-public-selection{display:flex;flex-direction:column;align-items:stretch;gap:20px;border-top:0;margin:0;padding-top:4px}
+.ks-public-selection strong,.ks-public-selection small{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.ks-public-selection span{font-size:var(--kds-font-label);margin-bottom:5px}
+.ks-public-selection strong{font-size:var(--kds-font-heading-sm);line-height:1.5}
+.ks-public-selection strong::first-letter,.ks-public-times-area h3::first-letter{text-transform:uppercase}
+.ks-public-selection small{margin-top:5px}
+.ks-public-selection .ks-public-btn{display:flex;align-items:center;justify-content:center;gap:22px;width:100%;min-height:54px;font-size:var(--kds-font-heading-sm)}
+.ks-public-btn-primary .ks-public-icon{filter:invert(1)}
+.ks-public-step-head h2{font-size:var(--kds-font-heading-lg);line-height:1.3;margin-bottom:8px}
+.ks-public-step-head p{font-size:var(--kds-font-content);max-width:65ch}
+.ks-public-step-head{margin-bottom:24px}
+#ks_public_app[data-booking-step="horario"] #ks_public_step_horario>.ks-public-back,#ks_public_app[data-booking-step="horario"] #ks_public_step_horario>.ks-public-step-head{display:none}
+.ks-public-options{gap:12px}
+.ks-public-option{min-height:76px;padding:16px 20px;background:var(--kds-surface-soft)}
+.ks-public-option-copy strong{font-size:var(--kds-font-heading-sm)}
+.ks-public-option-copy span{font-size:var(--kds-font-content);margin-top:4px}
+.ks-public-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;min-height:48px}
+.ks-public-calendar-head h2{font-size:var(--kds-font-kpi);margin:0;letter-spacing:-.025em;line-height:1.2}
+.ks-public-calendar-nav{display:flex;gap:12px}
+.ks-public-calendar-nav .ks-public-btn{width:48px;min-height:48px;padding:10px;display:grid;place-items:center}
+.ks-public-calendar-nav .ks-public-btn:disabled{opacity:.45}
+.ks-public-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--kds-line);border-bottom:0;border-radius:var(--kds-radius-md) var(--kds-radius-md) 0 0;overflow:hidden;background:var(--kds-surface-soft)}
+.ks-public-weekdays span{text-align:center;font-weight:600;font-size:var(--kds-font-content);padding:15px 2px;border-right:1px solid var(--kds-line-soft)}
+.ks-public-weekdays span:last-child{border:0}
+.ks-public-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;padding:0;border:1px solid var(--kds-line);border-radius:0 0 var(--kds-radius-md) var(--kds-radius-md);overflow:hidden;background:var(--kds-surface)}
+.ks-public-date,.ks-public-date-empty{min-width:0;min-height:60px;border:0;border-right:1px solid var(--kds-line-soft);border-bottom:1px solid var(--kds-line-soft);border-radius:0;display:grid;place-items:center;padding:4px;text-align:center;background:var(--kds-surface-soft);color:var(--kds-faint)}
+.ks-public-date strong{font-size:var(--kds-font-body);font-weight:500;line-height:1}
+.ks-public-date:not(:disabled){background:var(--kds-teal-soft);color:var(--kds-accent-hover);cursor:pointer;box-shadow:inset 0 0 0 3px var(--kds-surface)}
+.ks-public-date:not(:disabled) strong{font-weight:700}
+.ks-public-date:not(:disabled):hover{background:var(--kds-line-strong)}
+.ks-public-date[aria-pressed="true"]{background:var(--kds-accent);color:var(--kds-surface);border:0}
+.ks-public-date:focus-visible{outline-offset:-4px;position:relative;z-index:1}
+.ks-public-date:disabled{cursor:not-allowed}
+.ks-public-calendar-help{font-size:var(--kds-font-metadata);color:var(--kds-muted);margin:8px 0 0}
+.ks-public-times-area{margin-top:22px;padding-top:24px;border-top:1px solid var(--kds-line)}
+.ks-public-times-area h3{font-size:var(--kds-font-heading-sm);margin:0 0 6px}
+.ks-public-times-area>p{font-size:var(--kds-font-content);color:var(--kds-muted);margin:0 0 12px}
+.ks-public-times{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.ks-public-time{min-height:48px}
+.ks-public-footer{max-width:1440px;margin:0 auto;padding:22px max(5vw,env(safe-area-inset-left)) 24px;font-size:var(--kds-font-metadata);color:var(--kds-muted)}
+.ks-public-state{max-width:1000px;margin:auto;padding-left:24px;padding-right:24px}
+.ks-public-form{gap:16px}
+.ks-public-form input,.ks-public-form select{min-height:48px}
+@media (max-width:1180px){
+ .ks-public-layout{grid-template-columns:minmax(0,1.4fr) minmax(310px,1fr);gap:28px;padding-left:32px;padding-right:32px}
+ .ks-public-profile-panel{padding:20px}
+ .ks-public-profile-hero{grid-template-columns:60px minmax(0,1fr);gap:12px}
+ .ks-public-avatar,.ks-public-profile-photo{width:60px;height:60px}
+ .ks-public-summary-head{align-items:flex-start;flex-direction:column;gap:4px;margin-bottom:18px}
+ .ks-public-summary-head .ks-public-back{max-width:100%}
+}
+@media (max-width:900px){
+ .ks-public-page{max-width:none}
+ .ks-public-layout{grid-template-columns:1fr;max-width:760px;gap:28px;padding:26px 24px 12px}
+ .ks-public-booking-panel{order:1;padding:0;background:transparent;border:0}
+ .ks-public-profile-panel{order:2;position:static;padding:24px}
+ .ks-public-summary-head{flex-direction:row;align-items:center}
+ .ks-public-progress-track{gap:12px}
+ .ks-public-progress-track li{gap:8px;font-size:var(--kds-font-label)}
+ .ks-public-progress-track li:not(:last-child)::after{margin-left:0}
+ .ks-public-header{min-height:220px;padding-left:24px;padding-right:24px}
+ .ks-public-intro h1{font-size:36px}
+ .ks-public-progress{padding-left:24px;padding-right:24px}
+}
+@media (max-width:620px){
+ .ks-public-header{min-height:216px;padding:20px max(20px,env(safe-area-inset-right)) 26px max(20px,env(safe-area-inset-left))}
+ .ks-public-brand-name{font-size:var(--kds-font-heading-lg)}
+ .ks-public-brand small{font-size:var(--kds-font-label)}
+ .ks-public-clinic{font-size:var(--kds-font-label);padding-top:2px}
+ .ks-public-intro{padding-top:26px}
+ .ks-public-intro h1{font-size:var(--kds-font-title-mobile-lg)}
+ .ks-public-intro p{font-size:var(--kds-font-content)}
+ .ks-public-progress{padding:18px 16px}
+ .ks-public-progress-track{gap:8px;align-items:start}
+ .ks-public-progress-track li{flex-direction:column;gap:8px;font-size:11.5px;line-height:1.3;text-align:center;flex:1}
+ .ks-public-progress-track li:not(:last-child)::after{display:none}
+ .ks-public-progress-track .ks-public-step-number{width:32px;height:32px;flex-basis:32px;font-size:var(--kds-font-label)}
+ .ks-public-layout{padding:22px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left))}
+ .ks-public-calendar-head h2{font-size:var(--kds-font-heading-lg)}
+ .ks-public-calendar-nav{gap:6px}
+ .ks-public-calendar-nav .ks-public-btn{width:44px;min-height:44px;padding:8px}
+ .ks-public-calendar-head{gap:8px;margin-bottom:14px}
+ .ks-public-weekdays span{font-size:var(--kds-font-metadata);padding:12px 0}
+ .ks-public-dates{display:grid;overflow:hidden;scroll-snap-type:none;padding:0}
+ .ks-public-date,.ks-public-date-empty{min-width:0;min-height:48px;padding:2px}
+ .ks-public-date strong{font-size:var(--kds-font-content)}
+ .ks-public-time{min-height:48px}
+ .ks-public-profile-panel{padding:20px}
+ .ks-public-summary-head{flex-wrap:wrap}
+ .ks-public-summary-head h2{font-size:var(--kds-font-heading-md)}
+ .ks-public-form{grid-template-columns:1fr}
+ .ks-public-field-wide{grid-column:1}
+ .ks-public-selection strong,.ks-public-selection small{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+ .ks-public-footer{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+}
+@media (max-width:430px){
+ .ks-public-header{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+ .ks-public-brand{width:auto;flex:1}
+ .ks-public-clinic{width:auto;max-width:46%;text-align:right;line-height:1.4}
+ .ks-public-intro{flex-basis:100%;padding-top:16px}
+ .ks-public-profile-hero{grid-template-columns:58px minmax(0,1fr)}
+ .ks-public-avatar,.ks-public-profile-photo{width:58px;height:58px}
+ .ks-public-profile-main h3{font-size:var(--kds-font-heading-sm)}
+ .ks-public-summary-row,#ks_public_profile_location{gap:12px}
+ .ks-public-insurances{padding-left:38px}
+ .ks-public-progress-track li{font-size:var(--kds-font-metadata)}
+}

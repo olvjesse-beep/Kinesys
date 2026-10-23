@@ -1,0 +1,7 @@
+'use strict';
+// Somente demonstração e testes locais: nunca consulta nem grava produção.
+const profile = { api_slug: 'demo', clinica: { nome: 'Clínica de demonstração', endereco: 'Rua de demonstração, 324 — Centro' }, mensagem_confirmacao: 'Reserva simulada. Nenhum agendamento foi criado.', profissionais: [{ id: 'prof-demo', nome: 'Profissional de demonstração', titulo_publico: 'Fisioterapeuta', registro: 'Registro de demonstração' }] };
+const catalog = { aberto: true, titulo: 'Agende seu atendimento', descricao: 'Escolha o profissional, o atendimento e um horário disponível.', clinica: profile.clinica, profissionais: profile.profissionais, procedimentos: [{ id: 'osteo-demo', nome: 'Osteopatia', duracao_minutos: 60, profissionais_ids: ['prof-demo'] }, { id: 'av-demo', nome: 'Avaliação', duracao_minutos: 60, profissionais_ids: ['prof-demo'] }] };
+const slot = inicio => ({ inicio, fim: `${String(Number(inicio.slice(0, 2)) + 1).padStart(2, '0')}:00` });
+const slots = { dias: [{ data: '2026-10-26', horarios: [slot('11:00')] }, { data: '2026-10-27', horarios: [slot('08:00'), slot('09:00'), slot('10:00')] }, { data: '2026-10-28', horarios: [slot('08:00'), slot('09:00')] }, { data: '2026-10-29', horarios: [slot('08:00'), slot('09:00'), slot('10:00')] }, { data: '2026-10-30', horarios: [slot('08:00'), slot('09:00')] }, { data: '2026-11-03', horarios: [slot('09:00')] }] };
+module.exports = { profile, catalog, slots };

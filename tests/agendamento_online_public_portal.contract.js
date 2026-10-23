@@ -3,6 +3,7 @@ const assert = require('assert');
 
 const html = fs.readFileSync('agendamento/index.html', 'utf8');
 const css = fs.readFileSync('agendamento/agendamento-publico.css', 'utf8');
+const modelCss = fs.readFileSync('agendamento/agendamento-modelo2.css', 'utf8');
 const js = fs.readFileSync('agendamento/agendamento-publico-v2.js', 'utf8');
 const edge = fs.readFileSync('supabase/functions/agendamento-publico/index.ts', 'utf8');
 const profileEdge = fs.readFileSync('supabase/functions/agendamento-publico-perfil/index.ts', 'utf8');
@@ -14,8 +15,9 @@ assert(html.includes('Seu atendimento foi agendado!'),
   'confirmação deve usar a mensagem principal definida para o paciente');
 assert(html.includes('ks_public_profile_insurances') && html.includes('Convênios atendidos'),
   'portal deve reservar área pública para convênios do profissional');
-assert(html.includes('agendamento-publico-v2.js?v=20260913-v3'),
-  'portal deve carregar explicitamente o controller V2');
+const controller = html.match(/agendamento-publico-v2\.js\?v=([^" ]+)/);
+assert(controller && html.includes(`calendario-publico.js?v=${controller[1]}`) && html.includes(`agendamento-modelo2.css?v=${controller[1]}`),
+  'controller, calendário e layout público devem carregar a mesma revisão');
 
 assert(css.includes('env(safe-area-inset-bottom)'), 'portal deve proteger safe-area inferior no celular');
 assert(css.includes('env(safe-area-inset-left)') && css.includes('env(safe-area-inset-right)'),
@@ -23,8 +25,8 @@ assert(css.includes('env(safe-area-inset-left)') && css.includes('env(safe-area-
 assert(css.includes('min-height:44px') || css.includes('min-height: 44px'), 'controles touch devem manter alvo confortável');
 assert(css.includes('font-size:16px'), 'campos mobile devem manter 16px para legibilidade e evitar zoom automático');
 assert(css.includes('var(--kds-font-body)'), 'portal deve reutilizar a escala tipográfica oficial do KDS');
-assert(css.includes('grid-template-columns:minmax(0,1fr) minmax(360px,430px)'),
-  'desktop deve manter perfil do profissional e agenda em duas colunas proporcionais');
+assert(modelCss.includes('grid-template-columns:minmax(0,1.5fr) minmax(330px,1fr)') && modelCss.includes('.ks-public-booking-panel{order:1') && modelCss.includes('.ks-public-profile-panel{order:2'),
+  'modelo 2 deve manter calendário amplo à esquerda e resumo à direita');
 assert(css.includes('@media (max-width:900px)') && css.includes('.ks-public-booking-panel{order:1') && css.includes('.ks-public-profile-panel{order:2'),
   'em tablet/celular inclusive paisagem a ação de agendar deve vir antes do perfil longo do profissional');
 assert(css.includes('@media (max-width:620px)') && css.includes('.ks-public-form{grid-template-columns:1fr}'),
