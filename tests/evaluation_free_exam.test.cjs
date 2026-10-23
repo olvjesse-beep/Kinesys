@@ -63,7 +63,8 @@ function setup(){
     const f=setup();f.add(0);const salvo=JSON.parse(JSON.stringify(f.api.coletar()));
     f.api.preencher(salvo);assert.equal(f.api.registros()[0].texto,salvo.registros[0].texto);
     f.changeHMA();assert.equal(f.api.integrar([]).length,0,'HMA alterada exige revisão do vínculo');
-    assert(f.t.render().texto.includes('história clínica foi modificada'));
+    const revisao=f.t.render();assert(revisao.texto.includes('pendente de revisão profissional'));
+    assert(revisao.validacao.exameLivrePendente.some(t=>t.includes('história clínica mudou')),'o aviso técnico continua disponível fora do texto copiável');
     f.next();assert.equal(f.api.coletar().registros.length,0,'troca de pessoa limpa registro imediatamente');
     assert.equal(f.api.registros().length,0);
 }

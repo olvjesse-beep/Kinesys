@@ -171,6 +171,13 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Não recolocar o bloco visual de integração multirregional na etapa 2. Revisão de segurança pertence à etapa 3, mantendo critérios/condutas/bloqueios. O único Radar acompanha o contexto das etapas sem duplicar IDs nem cobrir o cabeçalho.
 - Executar `evaluation_free_exam.test.cjs` junto às suítes anteriores na barreira hospedada. Mudança destas decisões somente por pedido explícito do usuário.
 
+## 17. Documento clínico e exame livre narrado
+
+- Preservar cabeçalho de identificação e seções do relatório solicitados pelo usuário. Não recolocar nome/idade numa abertura burocrática da história nem inventar motivo, diagnóstico, plano ou detalhes de antecedente.
+- Organizar achados digitados sem perder texto original, medidas, dose, lado, negação ou fonte. Localização documental pelo nome do teste não confirma critério nem substitui a região selecionada pelo profissional. Teste planejado/não realizado não conta como exame realizado. Não nomear uma manobra mais específica do que a descrita.
+- Avisos técnicos continuam no painel/auditoria e ressalvas clínicas necessárias no documento; não ocultar revisão pendente. Texto manual/revisado permanece protegido e atualização de base exige confirmação.
+- Executar `evaluation_report_document.test.cjs` na barreira hospedada junto às suítes anteriores. Preservar deduplicação da história, adjacência exame/interpretação regional e isolamento entre pacientes.
+
 ## Regra de segurança prioritária
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

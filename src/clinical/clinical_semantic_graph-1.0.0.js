@@ -174,7 +174,7 @@
   const chaves=porProblema?[...grupos.keys()].filter(k=>k.startsWith('problema:')).concat(ordem.filter(k=>grupos.has(k))):ordem.filter(k=>grupos.has(k));
   chaves.forEach(chave=>{
    const tipo=chave.startsWith('problema:')?'queixa':chave;
-   const fs=grupos.get(chave),simples=fs.filter(f=>/^Relata dor (?:no|na|nos|nas|em ambos|em ambas) [^.;]+\.$/.test(f.redacao)&&!f.atributos.incerteza&&f.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado'));
+   const fs=grupos.get(chave),simples=fs.filter(f=>/^Relata dor (?:no|na|nos|nas|em ambos|em ambas) [^.;]+\.$/.test(f.redacao)&&!f.atributos.incerteza&&!/\b(?:e|mas|com|porém|após|quando|há|desde|durante)\b|,/i.test(f.redacao.slice(11,-1))&&f.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado'));
    const omitidos=new Set(),textos=new Map();
    const primeiras=new Map();fs.forEach(f=>{const chave=norm(f.redacao),primeira=primeiras.get(chave);if(primeira){omitidos.add(f.id);f.realizacoes=[primeira.redacao];relato.relacoes.push({tipo:'mesmo_fato_repetido',de:f.id,para:primeira.id});}else primeiras.set(chave,f);});
    if(simples.length>1&&!relato.manterOrdem){
