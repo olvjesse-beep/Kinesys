@@ -385,6 +385,7 @@
             return;
         }
         if(acao==='editar'){
+            if(typeof window.telaPermitida==='function'&&!window.telaPermitida('tela_cadastro')){toast('Seu perfil não tem acesso a esta área.','seguranca');return;}
             if(typeof window.editarCadastro!=='function'){toast('Não foi possível abrir a edição deste paciente.','erro');return;}
             await window.editarCadastro(pacienteId);
             return;
@@ -560,7 +561,7 @@
         const acoes=r.querySelector('.ks-prontuario-actions');
         if(acoes){
             const extra=document.createDocumentFragment();
-            [['consultar_avaliacao','Consultar avaliação','tela_avaliacao'],['historico_evolucao','Histórico de evoluções','tela_evolucao'],['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
+            [['editar','Editar cadastro','tela_cadastro'],['consultar_avaliacao','Consultar avaliação','tela_avaliacao'],['historico_evolucao','Histórico de evoluções','tela_evolucao'],['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
                 if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
                 const b=document.createElement('button');b.type='button';b.className='btn-secondary';b.dataset.ksPatientAction=acao;b.textContent=label;extra.append(b);
             });
