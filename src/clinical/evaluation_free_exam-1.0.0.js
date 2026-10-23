@@ -32,7 +32,8 @@
         estado.versao=1;estado.registros=Array.isArray(estado.registros)?estado.registros.filter(r=>r&&typeof r.texto==='string'):[];
         estado.rascunho=estado.rascunho&&typeof estado.rascunho==='object'?estado.rascunho:{};
         limparCampos();atualizarOpcoes();
-        ['regiaoId','texto','resultado','vinculo','lado'].forEach(chave=>{const el=node('ks_exame_livre_'+chave);if(el)el.value=estado.rascunho[chave]||'';if(chave==='regiaoId')atualizarVinculos();});
+        ['regiaoId','texto','resultado','vinculo','lado'].forEach(chave=>{const el=node('ks_exame_livre_'+chave),valor=estado.rascunho[chave]||'';if(el)el.value=chave==='resultado'&&!resultadoValido(valor)?'':valor;if(chave==='regiaoId')atualizarVinculos();});
+        const status=node('ks_exame_livre_status');if(status)status.textContent=estado.rascunho.id?'Registro em edição: use Adicionar ao exame para salvar este registro.':'';
         renderLista();
     }
     function adicionar(value){

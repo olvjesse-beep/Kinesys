@@ -80,6 +80,14 @@ function setup(){
     assert.equal(f.api.registros().length,1,'editar conserva identidade e carimbo original sem duplicar o registro');
 }
 {
+    const f=setup(),get=f.t.c.document.getElementById,resultado={value:''},status={textContent:'Registro anterior'};
+    f.t.c.document.getElementById=id=>id==='ks_exame_livre_resultado'?resultado:id==='ks_exame_livre_status'?status:get(id);
+    f.api.preencher({registros:[],rascunho:{id:'registro-sintetico',texto:'Achado descritivo.',resultado:'descritivo'}});
+    assert.equal(resultado.value,'','descrição reabre com a opção Não classificado, sem select vazio');
+    assert(status.textContent.includes('Registro em edição'));
+    f.api.preencher();assert.equal(status.textContent,'','limpar cadastro também limpa aviso do paciente anterior');
+}
+{
     const f=setup();f.api.preencher({versao:1,registros:[],rascunho:{regiaoId:'cervical',texto:'Palpação dolorosa na região cervical, sem classificação.',lado:'direito'}});
     const r=f.t.render();assert(r.texto.includes('Palpação dolorosa'));assert(r.validacao.exameLivrePendente.length);assert.equal(f.api.integrar([]).length,0);
     f.t.c.window.preencherLaudoAvaliacaoKineSys({...r,texto:'Texto profissional preservado.',textoAutomatico:false});
