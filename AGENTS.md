@@ -180,6 +180,15 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 
 ## Regra de segurança prioritária
 
+### Analisador documental local
+
+- Preservar o fluxo local: inventário tipado da avaliação completa, unidades com origem, grafo/escopo, roteiro por assunto, realização gramatical e validação de significado. Não voltar a usar somente substituições de palavras ou copiar a HMA como relatório final. Nenhum serviço de IA/API externa faz parte deste fluxo.
+- A gramática tem cobertura finita: se a realização mudar local, lado, tempo, negação, sujeito, dose ou certeza, conservar a origem e exigir revisão. Texto desconhecido não autoriza completar lacunas, trocar testes, diagnosticar ou criar causalidade. Preservar texto manual/revisado, cabeçalho e seções clínicas úteis, sem títulos por frase nem metadados de auditoria na narrativa.
+- Deduplicação textual exige conteúdo documental completo equivalente e mantém todas as origens. Não fundir repetição com hipótese nova, outro momento, outro lado, outra dose ou outro paciente. Executar `clinical_document_analyzer.test.cjs` na barreira hospedada sem reduzir os testes anteriores.
+- Cada queixa tem localização/lado e episódios próprios; início, duração, repercussões e modificadores só pertencem à sua fonte explícita. Um fator sem queixa definida requer esclarecimento, não distribuição automática entre regiões. Troca de sujeito explícito não transfere negação ou história familiar para o paciente.
+- Matriz documental mantém cada hipótese e seus testes explicitamente vinculados, com critérios atendidos/não atendidos/inconclusivos e limites. Resultado positivo não é diagnóstico; negativo não é exclusão e correspondência regional não é confirmação. Não alterar critérios científicos para produzir uma conclusão mais forte.
+- Perguntas de esclarecimento e indicadores de qualidade ficam fora da narrativa/PDF. Revisão direciona ao campo de origem, sem respostas presumidas, sem gravação automática e com guarda de contexto contra paciente anterior. Indicadores são contagens documentais, não probabilidades ou certificação de acurácia clínica. Executar `semantic_six_improvements.test.cjs` e `evaluation_document_review.test.cjs` na barreira hospedada.
+
 ### Catálogo medicamentoso individual
 
 - Novas sugestões representam um produto por opção, com nome e campo integral de princípios ativos da fonte Anvisa. Não agrupar marcas alternativas, converter expressões vagas em fármacos específicos, decompor vírgulas em associações presumidas nem inventar dose/indicação. Naproxeno deve permanecer pesquisável.

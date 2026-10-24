@@ -93,6 +93,11 @@ jobs:
           node tests/evaluation_clinical_correlation.contract.js
           node tests/evaluation_report_integration.test.cjs
           node tests/evaluation_report_document.test.cjs
+          node --check src/clinical/clinical_document_analyzer-1.0.0.js
+          node tests/clinical_document_analyzer.test.cjs
+          node --check src/clinical/evaluation_document_review-1.0.0.js
+          node tests/evaluation_document_review.test.cjs
+          node tests/semantic_six_improvements.test.cjs
           node --check src/clinical/evaluation_free_exam-1.0.0.js
           node tests/evaluation_free_exam.test.cjs
           node tests/evaluation_semantic_facts.test.cjs
