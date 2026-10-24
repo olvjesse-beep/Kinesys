@@ -183,6 +183,7 @@ const autocompletesAvaliacaoKineSys=new WeakMap();
 function normalizarBuscaClinicaKineSys(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
 function buscarSugestoesClinicasKineSys(tipo,termo){
  const q=normalizarBuscaClinicaKineSys(termo);if(q.length<2)return [];
+ if(tipo==='medicamento'&&globalThis.KineSysMedicamentos)return globalThis.KineSysMedicamentos.buscar(termo);
  const base=tipo==='medicamento'?(typeof dicionarioMedicamentos==='undefined'?null:dicionarioMedicamentos):tipo==='cirurgia'?(typeof dicionarioCirurgias==='undefined'?null:dicionarioCirurgias):(typeof dicionarioOcupacoesEsportes==='undefined'?null:dicionarioOcupacoesEsportes);
  if(!base)return null;
  const results=new Map(),map=tipo==='cirurgia'?OPCOES_INDIVIDUAIS_CIRURGIAS:OPCOES_INDIVIDUAIS_OCUPACAO_ESPORTE;
@@ -217,7 +218,11 @@ function conectarAutocompleteAvaliacaoKineSys(input,box,tipo){
  function render(){
   const query=input.value||'';if(normalizarBuscaClinicaKineSys(query).length<2){hide();return;}
   state.items=buscarSugestoesClinicasKineSys(tipo,query)||[];state.selected=-1;state.box.innerHTML='';state.box.setAttribute('role','listbox');
-  state.items.forEach((item,i)=>{const option=document.createElement('div');option.id=state.box.id+'-op-'+i;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.textContent=item.texto;option.onmousedown=e=>e.preventDefault();option.onclick=e=>{e.stopPropagation();choose(item);};state.box.appendChild(option);});
+  state.items.forEach((item,i)=>{const option=document.createElement('div');option.id=state.box.id+'-op-'+i;option.setAttribute('role','option');option.setAttribute('aria-selected','false');
+   if(tipo==='medicamento'&&item.nome){
+    const name=document.createElement('strong'),detail=document.createElement('small');name.textContent=item.nome;detail.textContent=item.detalhe;option.appendChild(name);option.appendChild(detail);option.className='ks-medication-option';
+   }else option.textContent=item.texto;
+   option.onmousedown=e=>e.preventDefault();option.onclick=e=>{e.stopPropagation();choose(item);};state.box.appendChild(option);});
   if(!state.items.length){const message=document.createElement('p');message.className='helper-text';message.textContent=buscarSugestoesClinicasKineSys(tipo,query)===null?'Carregando catálogo. Aguarde a avaliação terminar de abrir.':'Nenhum item encontrado. '+(['cirurgia','medicamento'].includes(tipo)?'Pressione Enter para registrar o texto informado.':'Você pode manter a atividade ou profissão informada.');state.box.appendChild(message);}
   state.box.style.display='block';input.setAttribute('aria-expanded','true');
  }

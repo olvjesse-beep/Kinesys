@@ -180,4 +180,10 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 
 ## Regra de segurança prioritária
 
+### Catálogo medicamentoso individual
+
+- Novas sugestões representam um produto por opção, com nome e campo integral de princípios ativos da fonte Anvisa. Não agrupar marcas alternativas, converter expressões vagas em fármacos específicos, decompor vírgulas em associações presumidas nem inventar dose/indicação. Naproxeno deve permanecer pesquisável.
+- Preservar literalmente medicamentos já salvos e texto profissional. Não migrar nem reinterpretar descrições legadas ambíguas automaticamente. Seleção deve continuar independente, sem duplicar tags, com teclado e sob carga tardia.
+- Atualizações da base passam pelo importador reprodutível, com hash, data, filtro de registros ativos e fonte documentados. Executar `medication_catalog.test.cjs` junto aos contratos da Anamnese, relatório e Agenda. Dados de catálogo não são prescrição nem comprovam disponibilidade comercial.
+
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.
