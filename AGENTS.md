@@ -180,6 +180,12 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 
 ## Regra de segurança prioritária
 
+### Analisador documental local
+
+- Preservar o fluxo local: inventário tipado da avaliação completa, unidades com origem, grafo/escopo, roteiro por assunto, realização gramatical e validação de significado. Não voltar a usar somente substituições de palavras ou copiar a HMA como relatório final. Nenhum serviço de IA/API externa faz parte deste fluxo.
+- A gramática tem cobertura finita: se a realização mudar local, lado, tempo, negação, sujeito, dose ou certeza, conservar a origem e exigir revisão. Texto desconhecido não autoriza completar lacunas, trocar testes, diagnosticar ou criar causalidade. Preservar texto manual/revisado, cabeçalho e seções clínicas úteis, sem títulos por frase nem metadados de auditoria na narrativa.
+- Deduplicação textual exige conteúdo documental completo equivalente e mantém todas as origens. Não fundir repetição com hipótese nova, outro momento, outro lado, outra dose ou outro paciente. Executar `clinical_document_analyzer.test.cjs` na barreira hospedada sem reduzir os testes anteriores.
+
 ### Catálogo medicamentoso individual
 
 - Novas sugestões representam um produto por opção, com nome e campo integral de princípios ativos da fonte Anvisa. Não agrupar marcas alternativas, converter expressões vagas em fármacos específicos, decompor vírgulas em associações presumidas nem inventar dose/indicação. Naproxeno deve permanecer pesquisável.

@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261024-medicamentos-individuais-r1';
+    const ASSET_REVISION='20261024-analisador-documental-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -36,12 +36,13 @@
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
-                'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261023-relatorio-documento-r1',
+                'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261024-analisador-documental-r1',
+                'src/clinical/clinical_document_analyzer-1.0.0.js?v=20261024-analisador-documental-r1',
                 'database/clinical_evidence_profiles-1.0.0.js?v=20261022-radar-evidencias-r1',
                 'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261022-canela-anatomia-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261023-exame-livre-r1',
                 'src/clinical/evaluation_free_exam-1.0.0.js?v=20261023-exame-livre-r1',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261023-relatorio-documento-r1',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261024-analisador-documental-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js?v=20261020-contexto-indice-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',

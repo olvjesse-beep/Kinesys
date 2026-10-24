@@ -13,7 +13,8 @@ caso('fatos, planejamento, equivalência e origem imutável',()=>{
  assert(s.relacoes.some(r=>r.tipo==='detalhado_por'));assert(s.relacoes.some(r=>r.tipo==='mesmo_comportamento_dos_sintomas'));
  assert(r.texto.includes('A dor piora ao dormir e provoca despertares noturnos.'));
  assert(!r.texto.includes('Refere persistência da dor.'));assert(r.texto.includes('há mais de um mês'));
- assert(r.texto.indexOf('fisgada')<r.texto.indexOf('cefaleia'));assert(r.texto.indexOf('cefaleia')<r.texto.indexOf('queimadura'));
+ const narrativaNormalizada=r.texto.toLocaleLowerCase('pt-BR');
+ assert(narrativaNormalizada.indexOf('fisgada')<narrativaNormalizada.indexOf('cefaleia'));assert(narrativaNormalizada.indexOf('cefaleia')<narrativaNormalizada.indexOf('queimadura'));
  assert(s.fatos.filter(f=>f.tipo==='relato').every(f=>f.origens[0].campo==='paciente_hma'));
  assert.equal(s.validacao.ausentes.length,0);assert.equal(r.validacao.relatoAusente.length,0);
  assert(!/A Refere|memsa|a mesma|atingindo o critério|atingiu o critério/.test(r.texto));
