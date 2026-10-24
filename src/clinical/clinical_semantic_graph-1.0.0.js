@@ -160,8 +160,14 @@
   return props.length&&!props.some(p=>p.conceito==='dor')?'associados':'queixa';
  }
  function analisar(value,opcoes={}){
-  const origem=String(value||''),fatos=[],proposicoes=[],relacoes=[],pendencias=[];
+  const origem=String(value||''),fatos=[],proposicoes=[],relacoes=[],pendencias=[],marcadoresEstruturais=[];
   recortes(origem).forEach((parte,indice)=>{
+   const structure=root.KineSysClinicalLanguage?.separarEstrutura(parte.trecho);
+   if(structure?.marcador){
+    marcadoresEstruturais.push({campo:opcoes.campo||'paciente_hma',inicio:parte.inicio,fim:parte.inicio+structure.offset,trecho:origem.slice(parte.inicio,parte.inicio+structure.offset),tipo:'rotulo_documental',uso:'estrutura_nao_achado'});
+    parte={...parte,inicio:parte.inicio+structure.offset,trecho:structure.conteudo};
+    if(!parte.trecho.trim())return;
+   }
    const id=`hma:${indice}`,redacao=opcoes.realizar?opcoes.realizar(parte.trecho):sentence(parte.trecho.replace(/^(?:mas|porém|porem|entretanto|além disso|alem disso|e)\s+/i,''));
    const props=proposicoesDaFrase(parte.trecho,parte.inicio,id);
    const fato={id,tipo:'relato',redacao,categoria:categoria(parte.trecho,props),proposicoes:props,
@@ -190,7 +196,7 @@
    if(!a.regiaoId||a.tipo!==b.tipo||a.conceito!==b.conceito||a.regiaoId!==b.regiaoId||a.lado!==b.lado||a.sujeito!==b.sujeito||a.temporalidade!==b.temporalidade||JSON.stringify(a.tempo)!==JSON.stringify(b.tempo))return;
    if(new Set([a.estado,b.estado]).has('relatado')&&new Set([a.estado,b.estado]).has('negado')&&a.certeza==='relatada'&&b.certeza==='relatada')relacoes.push({tipo:'possivel_contradicao',de:a.fatoId,para:b.fatoId,proposicoes:[a.id,b.id]});
   }));
-  return {versao:VERSION,origem,fatos,proposicoes,problemas:[...problemas.values()],relacoes,pendencias,manterOrdem:fatos.some(f=>f.categoria==='continuidade')||pendencias.some(p=>p.tipo==='referencia_nao_resolvida')};
+  return {versao:VERSION,origem,fatos,proposicoes,problemas:[...problemas.values()],relacoes,pendencias,marcadoresEstruturais,manterOrdem:fatos.some(f=>f.categoria==='continuidade')||pendencias.some(p=>p.tipo==='referencia_nao_resolvida')};
  }
  function planejar(relato){
   const ordem=['queixa','associados','repercussoes','diagnosticos_relatados','indicacoes_relatadas','antecedentes','informacoes_complementares','rotina','continuidade'],grupos=new Map();

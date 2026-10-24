@@ -87,6 +87,13 @@
   }
   return cuts;
  }
+ function noteStructure(text){
+  // Closed list of document labels only. Never strip an arbitrary colon,
+  // diagnostic name, dose, clinical finding or unfamiliar heading.
+  const label=/^\s*(?:#{1,6}\s*)?(HMA|História da Moléstia Atual|História clínica|Queixa principal|Sintomas associados|Exame físico|Exame clínico)\s*:\s*/iu;
+  let offset=0,m;while((m=label.exec(text.slice(offset))))offset+=m[0].length;
+  return {conteudo:text.slice(offset),offset,marcador:text.slice(0,offset)};
+ }
  const referenceRules=['essa dor','esta dor','a mesma dor','essa dormência','esta dormência','esse formigamento','este formigamento','esse sintoma','este sintoma'].map(compile);
  function resolveReferences(document,callbacks){
   const facts=document.fatos;
@@ -135,5 +142,5 @@
    document.pendencias=document.pendencias.filter(q=>q.fatoId!==f.id||!['referencia_nao_resolvida','local_nao_especificado'].includes(q.tipo));
   }
  }
- root.KineSysClinicalLanguage=Object.freeze({version:VERSION,tokenizar:tokens,extrair:lexical,analisarOracao:clause,cortesOracoes:clauseCuts,comportamento:behavior,qualificadoresLocal:localQualifiers,alvoDeMovimento:motionSite,resolverReferencias:resolveReferences});
+ root.KineSysClinicalLanguage=Object.freeze({version:VERSION,tokenizar:tokens,extrair:lexical,analisarOracao:clause,cortesOracoes:clauseCuts,separarEstrutura:noteStructure,comportamento:behavior,qualificadoresLocal:localQualifiers,alvoDeMovimento:motionSite,resolverReferencias:resolveReferences});
 })(typeof window==='undefined'?globalThis:window);

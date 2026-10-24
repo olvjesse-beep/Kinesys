@@ -15,6 +15,10 @@
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
   const negative=new RegExp('^Nega\\s+(?:sentir|apresentar|ter)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(base.replace(/[.;\s]+$/,''));
   if(negative)return {modelo:'sintoma_negado',corpo:negative[1]};
+  const activity=new RegExp('^(Ao\\s+[^,.;]+),\\s*(?:'+ '(?:o|a) paciente\\s+)?(?:refere\\s+|relata\\s+)?(?:sentir|sente|apresenta)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(body);
+  if(activity)return {modelo:'sintoma_com_circunstancia',predicado:activity[2],circunstancia:activity[1],corpo:body};
+  const descriptor=/^(?:(?:(?:o|a) paciente|paciente)\s+(?:refere que\s+|relata que\s+)?)?(?:o|a)\s+(.+?)\s+(?:está|esta|permanece)\s+(dolorid[oa]|adormecid[oa]|inchad[oa])([\s\S]*)$/iu.exec(body);
+  if(descriptor)return {modelo:'descritor_local_relatado',local:descriptor[1],predicado:descriptor[2],complemento:descriptor[3],corpo:body};
   const m=symptoms.exec(body);
   if(m)return {modelo:'sintoma_referido',predicado:m[1],complemento:m[2],corpo:body};
   const course=/^(?:o mesmo |a mesma )?(a dor(?:[^.;]*?)?|os sintomas(?:[^.;]*?)?)\s+(piora(?:m)?|melhora(?:m)?|aumenta(?:m)?|irradia(?:m)?|persiste(?:m)?|iniciou|começou)\b([\s\S]*)$/iu.exec(body);
@@ -23,6 +27,8 @@
  }
  function realize(model){
   if(model.modelo==='sintoma_negado')return sentence('Nega '+model.corpo);
+  if(model.modelo==='sintoma_com_circunstancia')return sentence('Relata '+model.predicado+', '+model.circunstancia[0].toLowerCase()+model.circunstancia.slice(1));
+  if(model.modelo==='descritor_local_relatado')return sentence('Relata '+model.local+' '+model.predicado+model.complemento);
   if(model.modelo==='sintoma_referido')return sentence('Relata '+model.predicado+model.complemento);
   if(model.modelo==='comportamento_explicito')return sentence(model.sujeito+' '+model.predicado+model.complemento);
   return model.corpo;
@@ -33,7 +39,7 @@
   const protectedScope=propositions.some(p=>p.sujeito!=='paciente'||p.estado!=='relatado'||p.certeza!=='relatada'||p.tipo==='diagnostico_relatado'||p.tipo==='procedimento'||p.tipo==='medicamento');
   // A symptom grammar cannot remove hypothesis, denial, family history, causality,
   // medication scope or a dependent temporal reference from its source.
-  const guards=/\b(?:nega|negou|n[aã]o|sem|suspeita|poss[ií]vel|talvez|investiga|diagn[oó]stico|m[aã]e|pai|irm[aã]o?|cirurgia|operad[oa]|ap[oó]s isso|desde ent[aã]o|causad[oa]|devido|secund[aá]ri[oa])\b/i.test(base);
+  const guards=/["“”]|\b(?:nega|negou|n[aã]o|sem|suspeita|poss[ií]vel|talvez|investiga|diagn[oó]stico|m[aã]e|pai|irm[aã]o?|cirurgia|operad[oa]|ap[oó]s isso|desde ent[aã]o|causad[oa]|devido|secund[aá]ri[oa])\b/i.test(base);
   let candidate=realize(model),status='realizado',check=null;
   const negativeSafe=model.modelo==='sintoma_negado'&&propositions.length&&propositions.every(p=>p.tipo==='sintoma'&&p.estado==='negado'&&p.sujeito==='paciente'&&p.certeza==='relatada');
   if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe)||!graph||!propositions.length){candidate=base;status='preservado';}
@@ -44,7 +50,7 @@
    if(!check.ok){candidate=original;status='revisar';}
   }
   return {versao:VERSION,modelo:model.modelo,slots:model,estado:status,origem:String(original||''),base:String(base||''),texto:candidate,
-   proposicoes:clone(propositions),validacao:check?clone(check):null,
+   proposicoes:clone(propositions),validacao:check?clone(check):null,interpretacaoPendente:model.modelo==='preservacao_documental'&&!propositions.length,
    ambiguidades:(parsed?.pendencias||[]).map(p=>({tipo:p.tipo,mensagem:p.mensagem}))};
  }
  function redactContext(value,field){
@@ -152,6 +158,7 @@
   };
   for(const f of facts.filter(f=>f.tipo==='relato')){
    const raw=f.origens?.[0]?.trecho||f.redacao||'',t=norm(raw);
+   if(f.analiseDocumental?.interpretacaoPendente)add('interpretacao_pendente',f.id,'Este trecho foi preservado, mas não recebeu interpretação automática. Confira e esclareça sua informação clínica na origem.',[f.id]);
    for(const p of f.proposicoes||[]){
     if(p.sujeito!=='paciente'||p.estado!=='relatado')continue;
     if(p.tipo==='sintoma'&&!p.regiaoId&&!p.segmentoId&&p.papel!=='movimento_modificador'&&!f.linguagem?.pendencias?.length&&!['febre','cefaleia'].includes(p.conceito)&&!(/\bao dor\b|\bcom para\b/.test(t)))add('localizacao',f.id,'Em qual localização ocorre '+(p.termo||'esse sintoma')+'?',[f.id]);
@@ -194,7 +201,7 @@
     textoDocumental:f.redacao||'',proposicoes:props,realizacao:clone(f.analiseDocumental||null),
     linguagem:clone(f.linguagem||null),referencias:clone(f.referencias||[]),textoInterpretado:f.textoInterpretado||'',
     registrosDeExame:clone(f.trechosDocumentais||[]),
-    revisaoNecessaria:f.analiseDocumental?.estado==='revisar'||(parsed.pendencias||[]).some(p=>p.tipo==='referencia_nao_resolvida')};
+    revisaoNecessaria:f.analiseDocumental?.estado==='revisar'||!!f.analiseDocumental?.interpretacaoPendente||(parsed.pendencias||[]).some(p=>p.tipo==='referencia_nao_resolvida')};
   });
   const itinerary=(plan.blocos||[]).map((b,i)=>({ordem:i,assunto:b.tipo,fatos:Array.from(new Set(b.fatos||[])),texto:b.texto}));
   const covered=new Set(itinerary.flatMap(p=>p.fatos));
@@ -204,7 +211,7 @@
   const problems=problemModel(plan),evidence=evidenceModel(plan);
   return {versao:VERSION,tipo:'analisador_documental_local',semServicoExterno:true,entrada:input||null,unidades:units,roteiro:itinerary,
    problemasClinicos:problems,matrizEvidencias:evidence,perguntas:clarificationQuestions(plan,problems,evidence),
-   fontes:clone(plan.fontes||[]),relacoes:clone(plan.relacoes||[]),
+   fontes:clone(plan.fontes||[]),relacoes:clone(plan.relacoes||[]),marcadoresEstruturais:clone(plan.marcadoresEstruturais||[]),
    fatosSemRoteiro:units.filter(u=>!covered.has(u.id)).map(u=>u.id),
    trechosParaRevisar:units.filter(u=>u.revisaoNecessaria).map(u=>u.id)};
  }

@@ -591,7 +591,7 @@
         adicionar('funcional',secaoFuncional(d),[{campo:'medidasObjetivas/psfs/outcomes'}]);
         adicionar('plano',secaoPlanoRegistrado(d),[{campo:'objetivosPlano'}]);
         adicionar('seguranca',secaoSeguranca(d),[{campo:'sintese.segurancaGlobal'}]);
-        const plano={versao:4,fontes,fatos,relacoes,blocos,proposicoes:relato.proposicoes||[],problemas:relato.problemas||[],coberturaProblemas,raciocinio:d.plano?.raciocinio||null,pendenciasInterpretacao:relato.pendencias||[],correlacoes:correlacoes.map(c=>({...c,criterioAtendido:estadoDoCriterio(c)})),origemHMA:relato.origem};
+        const plano={versao:4,fontes,fatos,relacoes,blocos,proposicoes:relato.proposicoes||[],problemas:relato.problemas||[],marcadoresEstruturais:relato.marcadoresEstruturais||[],coberturaProblemas,raciocinio:d.plano?.raciocinio||null,pendenciasInterpretacao:relato.pendencias||[],correlacoes:correlacoes.map(c=>({...c,criterioAtendido:estadoDoCriterio(c)})),origemHMA:relato.origem};
         plano.analiseDocumental=window.KineSysDocumentAnalyzer?.analisarDocumento(plano,analiseEntrada)||null;
         return plano;
     }

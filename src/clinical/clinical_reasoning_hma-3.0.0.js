@@ -628,7 +628,7 @@
             input.checked=sugerida;
             input.dataset.sugeridaPelaHMA=sugerida?'true':'false';
         });
-        const primeira=controles.find(input=>input.checked)?.dataset.regiao;
+        const primeira=arr(plano?.hipoteses).find(h=>ids.has(h.regiaoId))?.regiaoId||arr(plano?.regioes).map(r=>typeof r==='string'?r:r?.id).find(id=>ids.has(id));
         if(primeira)window.definirRegiaoAtivaAvaliacaoKineSys?.(primeira);
     }
 
