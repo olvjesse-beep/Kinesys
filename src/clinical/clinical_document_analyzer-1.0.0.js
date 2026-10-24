@@ -4,7 +4,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.1.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+ const VERSION='1.2.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
  const uniq=a=>Array.from(new Set(a.filter(x=>x!==undefined&&x!==null&&x!=='')));
  const regionNames={cervical:'coluna cervical',ombro:'ombro',cotovelo:'cotovelo',punho_mao:'punho e mão',coluna_toracica:'coluna torácica',lombar:'coluna lombar',quadril:'quadril',joelho:'joelho',tornozelo_pe:'tornozelo e pé',cefaleia:'cabeça / cefaleia',atm:'ATM',perna:'perna'};
  const clone=x=>JSON.parse(JSON.stringify(x)),sentence=s=>{s=String(s||'').trim().replace(/[.;\s]+$/,'');return s?s[0].toUpperCase()+s.slice(1)+'.':'';};
@@ -15,6 +15,10 @@
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
   const negative=new RegExp('^Nega\\s+(?:sentir|apresentar|ter)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(base.replace(/[.;\s]+$/,''));
   if(negative)return {modelo:'sintoma_negado',corpo:negative[1]};
+  const activity=new RegExp('^(Ao\\s+[^,.;]+),\\s*(?:'+ '(?:o|a) paciente\\s+)?(?:refere\\s+|relata\\s+)?(?:sentir|sente|apresenta)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(body);
+  if(activity)return {modelo:'sintoma_com_circunstancia',predicado:activity[2],circunstancia:activity[1],corpo:body};
+  const descriptor=/^(?:(?:(?:o|a) paciente|paciente)\s+(?:refere que\s+|relata que\s+)?)?(?:o|a)\s+(.+?)\s+(?:está|esta|permanece)\s+(dolorid[oa]|adormecid[oa]|inchad[oa])([\s\S]*)$/iu.exec(body);
+  if(descriptor)return {modelo:'descritor_local_relatado',local:descriptor[1],predicado:descriptor[2],complemento:descriptor[3],corpo:body};
   const m=symptoms.exec(body);
   if(m)return {modelo:'sintoma_referido',predicado:m[1],complemento:m[2],corpo:body};
   const course=/^(?:o mesmo |a mesma )?(a dor(?:[^.;]*?)?|os sintomas(?:[^.;]*?)?)\s+(piora(?:m)?|melhora(?:m)?|aumenta(?:m)?|irradia(?:m)?|persiste(?:m)?|iniciou|começou)\b([\s\S]*)$/iu.exec(body);
@@ -23,6 +27,8 @@
  }
  function realize(model){
   if(model.modelo==='sintoma_negado')return sentence('Nega '+model.corpo);
+  if(model.modelo==='sintoma_com_circunstancia')return sentence('Relata '+model.predicado+', '+model.circunstancia[0].toLowerCase()+model.circunstancia.slice(1));
+  if(model.modelo==='descritor_local_relatado')return sentence('Relata '+model.local+' '+model.predicado+model.complemento);
   if(model.modelo==='sintoma_referido')return sentence('Relata '+model.predicado+model.complemento);
   if(model.modelo==='comportamento_explicito')return sentence(model.sujeito+' '+model.predicado+model.complemento);
   return model.corpo;
@@ -33,7 +39,7 @@
   const protectedScope=propositions.some(p=>p.sujeito!=='paciente'||p.estado!=='relatado'||p.certeza!=='relatada'||p.tipo==='diagnostico_relatado'||p.tipo==='procedimento'||p.tipo==='medicamento');
   // A symptom grammar cannot remove hypothesis, denial, family history, causality,
   // medication scope or a dependent temporal reference from its source.
-  const guards=/\b(?:nega|negou|n[aã]o|sem|suspeita|poss[ií]vel|talvez|investiga|diagn[oó]stico|m[aã]e|pai|irm[aã]o?|cirurgia|operad[oa]|ap[oó]s isso|desde ent[aã]o|causad[oa]|devido|secund[aá]ri[oa])\b/i.test(base);
+  const guards=/["“”]|\b(?:nega|negou|n[aã]o|sem|suspeita|poss[ií]vel|talvez|investiga|diagn[oó]stico|m[aã]e|pai|irm[aã]o?|cirurgia|operad[oa]|ap[oó]s isso|desde ent[aã]o|causad[oa]|devido|secund[aá]ri[oa])\b/i.test(base);
   let candidate=realize(model),status='realizado',check=null;
   const negativeSafe=model.modelo==='sintoma_negado'&&propositions.length&&propositions.every(p=>p.tipo==='sintoma'&&p.estado==='negado'&&p.sujeito==='paciente'&&p.certeza==='relatada');
   if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe)||!graph||!propositions.length){candidate=base;status='preservado';}
@@ -44,7 +50,7 @@
    if(!check.ok){candidate=original;status='revisar';}
   }
   return {versao:VERSION,modelo:model.modelo,slots:model,estado:status,origem:String(original||''),base:String(base||''),texto:candidate,
-   proposicoes:clone(propositions),validacao:check?clone(check):null,
+   proposicoes:clone(propositions),validacao:check?clone(check):null,interpretacaoPendente:model.modelo==='preservacao_documental'&&!propositions.length,
    ambiguidades:(parsed?.pendencias||[]).map(p=>({tipo:p.tipo,mensagem:p.mensagem}))};
  }
  function redactContext(value,field){
@@ -106,8 +112,8 @@
    // not another independent complaint. Historical episodes remain separate.
    if(p.tipo!=='sintoma'||p.sujeito!=='paciente'||p.estado!=='relatado'||p.certeza!=='relatada'||!['local','origem_trajeto'].includes(p.papel))continue;
    const region=p.regiaoId||p.segmentoId;if(!region)continue;
-   const key=region+'|'+(p.lado||'nao_informado');
-   if(!groups.has(key))groups.set(key,{id:'queixa:'+key,regiaoId:region,regiao:regionNames[region]||p.local,lado:p.lado||'',fatoIds:[],sintomas:[],episodios:[],hipoteses:[]});
+   const qualifiers=p.qualificadoresLocal||[],key=region+'|'+(p.lado||'nao_informado')+(p.estruturaId?'|'+p.estruturaId:'')+(qualifiers.length?'|'+qualifiers.join(','):'');
+   if(!groups.has(key))groups.set(key,{id:'queixa:'+key,regiaoId:region,regiao:(p.estruturaId?(regionNames[region]||region)+' — '+p.local:regionNames[region]||p.local)+(qualifiers.length?' ('+qualifiers.join(', ')+')':''),estruturaId:p.estruturaId||'',qualificadoresLocal:clone(qualifiers),lado:p.lado||'',fatoIds:[],sintomas:[],episodios:[],hipoteses:[]});
    const group=groups.get(key),source=fact.origens?.[0],text=source?.trecho||fact.redacao;
    group.fatoIds=uniq([...group.fatoIds,fact.id]);
    group.sintomas.push({proposicaoId:p.id,conceito:p.conceito,termo:p.termo,qualidade:p.qualidade||'',origem:clone(source||{}),papel:p.papel});
@@ -152,9 +158,10 @@
   };
   for(const f of facts.filter(f=>f.tipo==='relato')){
    const raw=f.origens?.[0]?.trecho||f.redacao||'',t=norm(raw);
+   if(f.analiseDocumental?.interpretacaoPendente)add('interpretacao_pendente',f.id,'Este trecho foi preservado, mas não recebeu interpretação automática. Confira e esclareça sua informação clínica na origem.',[f.id]);
    for(const p of f.proposicoes||[]){
     if(p.sujeito!=='paciente'||p.estado!=='relatado')continue;
-    if(p.tipo==='sintoma'&&!p.regiaoId&&!p.segmentoId&&!['febre','cefaleia'].includes(p.conceito)&&!(/\bao dor\b|\bcom para\b/.test(t)))add('localizacao',f.id,'Em qual localização ocorre '+(p.termo||'esse sintoma')+'?',[f.id]);
+    if(p.tipo==='sintoma'&&!p.regiaoId&&!p.segmentoId&&p.papel!=='movimento_modificador'&&!f.linguagem?.pendencias?.length&&!['febre','cefaleia'].includes(p.conceito)&&!(/\bao dor\b|\bcom para\b/.test(t)))add('localizacao',f.id,'Em qual localização ocorre '+(p.termo||'esse sintoma')+'?',[f.id]);
     if(p.tipo==='sintoma'&&(p.regiaoId||p.segmentoId)&&!p.lado&&!['cefaleia'].includes(p.conceito))add('lado',f.id+'|'+(p.regiaoId||p.segmentoId),'O sintoma em '+(regionNames[p.regiaoId||p.segmentoId]||p.local)+' ocorre à direita, à esquerda ou dos dois lados?',[f.id]);
    }
    if(/\bao dor\b|\bcom para\b/.test(t))add('expressao_incompleta',f.id,'Qual era o sentido deste trecho incompleto? Reescreva-o na HMA.',[f.id]);
@@ -163,7 +170,10 @@
    const locais=uniq((f.proposicoes||[]).filter(p=>p.tipo==='sintoma'&&p.sujeito==='paciente'&&p.estado==='relatado'&&['local','origem_trajeto'].includes(p.papel)).map(p=>(p.regiaoId||p.segmentoId)+'|'+p.lado));
    if(locais.length>1&&/\b(?:piora|melhora|aumenta|alivia|dificuldade|limitacao|acorda)\b/.test(t))add('escopo_multiplas_queixas',f.id,'Nesta frase há mais de uma queixa. Qual delas apresenta o fator de piora, melhora ou limitação? Separe as informações por localização.',[f.id]);
   }
-  for(const pending of plan.pendenciasInterpretacao||[])if(pending.tipo==='referencia_nao_resolvida')add('referencia',pending.fatoId,'A quem ou a qual queixa esta referência se refere? Esclareça a frase na HMA.',[pending.fatoId]);
+  for(const pending of plan.pendenciasInterpretacao||[]){
+   if(pending.tipo==='referencia_nao_resolvida')add('referencia',pending.fatoId,pending.pergunta||'A quem ou a qual queixa esta referência se refere? Esclareça a frase na HMA.',[pending.fatoId]);
+   if(pending.tipo==='vocabulario_ambiguo')add('vocabulario',pending.fatoId+'|'+pending.inicio,pending.pergunta,[pending.fatoId]);
+  }
   for(const relation of plan.relacoes||[])if(relation.tipo==='possivel_contradicao')add('divergencia',[relation.de,relation.para].sort().join('|'),'Esses registros se referem ao mesmo momento e local? Confira a informação afirmada e a negada.',[relation.de,relation.para]);
   for(const item of evidence){
    if(item.conclusao==='sem_vinculo')add('vinculo_exame',item.id,'Quais testes foram realizados e explicitamente vinculados à hipótese '+item.hipotese+'?',[],'subtela_mapeamento',{hipoteseId:item.hipoteseId});
@@ -189,8 +199,9 @@
    return {id:f.id,tipo:f.tipo,assunto:f.categoria||f.tipo,origens:origins,
     textoFonte:f.textoOriginal||origins.map(o=>o.trecho||'').filter(Boolean).join(' ')||f.redacao||'',
     textoDocumental:f.redacao||'',proposicoes:props,realizacao:clone(f.analiseDocumental||null),
+    linguagem:clone(f.linguagem||null),referencias:clone(f.referencias||[]),textoInterpretado:f.textoInterpretado||'',
     registrosDeExame:clone(f.trechosDocumentais||[]),
-    revisaoNecessaria:f.analiseDocumental?.estado==='revisar'||(parsed.pendencias||[]).some(p=>p.tipo==='referencia_nao_resolvida')};
+    revisaoNecessaria:f.analiseDocumental?.estado==='revisar'||!!f.analiseDocumental?.interpretacaoPendente||(parsed.pendencias||[]).some(p=>p.tipo==='referencia_nao_resolvida')};
   });
   const itinerary=(plan.blocos||[]).map((b,i)=>({ordem:i,assunto:b.tipo,fatos:Array.from(new Set(b.fatos||[])),texto:b.texto}));
   const covered=new Set(itinerary.flatMap(p=>p.fatos));
@@ -200,7 +211,7 @@
   const problems=problemModel(plan),evidence=evidenceModel(plan);
   return {versao:VERSION,tipo:'analisador_documental_local',semServicoExterno:true,entrada:input||null,unidades:units,roteiro:itinerary,
    problemasClinicos:problems,matrizEvidencias:evidence,perguntas:clarificationQuestions(plan,problems,evidence),
-   fontes:clone(plan.fontes||[]),relacoes:clone(plan.relacoes||[]),
+   fontes:clone(plan.fontes||[]),relacoes:clone(plan.relacoes||[]),marcadoresEstruturais:clone(plan.marcadoresEstruturais||[]),
    fatosSemRoteiro:units.filter(u=>!covered.has(u.id)).map(u=>u.id),
    trechosParaRevisar:units.filter(u=>u.revisaoNecessaria).map(u=>u.id)};
  }

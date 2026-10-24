@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{fixture}=require('./evaluation_report_integration.test.cjs');
 const c={};c.window=c;vm.createContext(c);
-for(const file of ['clinical_semantic_graph-1.0.0.js','clinical_document_analyzer-1.0.0.js'])vm.runInContext(fs.readFileSync('src/clinical/'+file,'utf8'),c);
+for(const file of ['clinical_language_rules-1.0.0.js','clinical_semantic_graph-1.0.0.js','clinical_document_analyzer-1.0.0.js'])vm.runInContext(fs.readFileSync('src/clinical/'+file,'utf8'),c);
 const graph=c.KineSysSemanticGraph,api=c.KineSysDocumentAnalyzer;
 function analyze(text){
  const parsed=graph.analisar(text,{realizar:t=>api.analisarFrase(t).texto});

@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const src=fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8');
-const c={window:{}};vm.createContext(c);vm.runInContext(src,c);const api=c.window.KineSysSemanticGraph;
+const c={window:{}};vm.createContext(c);vm.runInContext(fs.readFileSync('src/clinical/clinical_language_rules-1.0.0.js','utf8'),c);vm.runInContext(src,c);const api=c.window.KineSysSemanticGraph;
 const library=JSON.parse(fs.readFileSync('tests/fixtures/semantic_reference_cases.json','utf8'));
 let total=0;function caso(nome,fn){fn();total++;console.log('Grafo semântico: '+nome+' OK');}
 for(const ref of library.cases)caso('referência '+ref.id,()=>{

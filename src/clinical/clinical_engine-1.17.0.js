@@ -932,18 +932,22 @@
         configs.forEach(([cat,label,count])=>{const b=document.createElement('button');b.type='button';b.className='ks-investigation-action';b.disabled=!count;b.innerHTML=`<span>${escapeHTML(label)}</span><small>${count?`${count} opção(ões)`:'Sem itens disponíveis'}</small><b> abrir</b>`;b.addEventListener('click',()=>abrirModalInvestigacao232(idRegiao,cat,b));grid.appendChild(b);});wrap.appendChild(grid);return wrap;
     }
 
-    function construirHipotesesSugeridas232(idRegiao,contexto,estado){
+    function hipotesesDoRadarParaExame232(idRegiao,contexto,estado){
         const descartadas=new Set(estado.hipotesesDescartadas||[]);
-        const ordenadas=ordenarHipotesesRegiaoKineSys(idRegiao,contexto).filter(c=>!descartadas.has(chaveHipoteseKineSys(c)));
         const catalogo=catalogoRegiao232(idRegiao);
         const ativa=estado.hipotesePrincipalAtiva?catalogo.find(c=>chaveHipoteseKineSys(c)===estado.hipotesePrincipalAtiva):null;
-        // A etapa 2 deve preservar a ordem clínica definida pelo Radar na HMA.
-        // O classificador regional permanece como complemento, sem substituir o funil.
-        const idsRadar=(window.KineSysMotorClinico3?.ultimoPlano?.hipoteses||[])
-            .filter(h=>h?.regiaoId===idRegiao).map(h=>h.id);
-        const sugeridasRadar=idsRadar.map(id=>catalogo.find(c=>c.item.id===id)).filter(Boolean)
+        const plano=window.KineSysMotorClinico3?.ultimoPlano;
+        const sugeridasRadar=(plano?.hipoteses||[]).filter(h=>h?.regiaoId===idRegiao)
+            .map(h=>catalogo.find(c=>c.item.id===h.id&&c.grupo===h.grupo)).filter(Boolean)
             .filter(c=>!descartadas.has(chaveHipoteseKineSys(c)));
-        const candidatos=[...(ativa?[ativa]:[]),...sugeridasRadar,...ordenadas].filter((c,i,t)=>t.findIndex(x=>chaveHipoteseKineSys(x)===chaveHipoteseKineSys(c))===i).slice(0,4);
+        // Once the canonical plan exists, another regional ranking is not a
+        // Radar suggestion. It stays available only through the full library.
+        const fallback=plano?[]:ordenarHipotesesRegiaoKineSys(idRegiao,contexto);
+        return [...sugeridasRadar,...(ativa?[ativa]:[]),...fallback].filter(c=>!descartadas.has(chaveHipoteseKineSys(c)))
+            .filter((c,i,t)=>t.findIndex(x=>chaveHipoteseKineSys(x)===chaveHipoteseKineSys(c))===i);
+    }
+    function construirHipotesesSugeridas232(idRegiao,contexto,estado){
+        const candidatos=hipotesesDoRadarParaExame232(idRegiao,contexto,estado);
         const secao=document.createElement('section');secao.className='ks-suggested-hypotheses';
         const cabecalho=document.createElement('div');cabecalho.className='ks-investigation-actions-head';
         cabecalho.innerHTML='<div><span class="ks-kicker">SUGESTÕES DO RADAR KINESYS</span><strong>Hipóteses e testes indicados pela anamnese</strong><p>Registre cada achado como positivo, negativo ou inconclusivo. O relatório é atualizado a partir destes resultados.</p></div>';
@@ -980,7 +984,8 @@
 
     window.construirCardRegiao = function(idRegiao,contexto){
         const regiao=BANCO_MAPEAMENTO_CLINICO[idRegiao],estado=window.obterEstadoRegiao(idRegiao),card=document.createElement('section');card.className='cluster-region-card ks-route-region-card';
-        const header=document.createElement('div');header.className='cluster-region-header';header.innerHTML=`<div><span class="ks-kicker">REGIÃO DEFINIDA PELO RADAR</span><h2>${escapeHTML(regiao.nome)}</h2></div><span class="ks-region-mode">Radar KineSys</span>`;card.appendChild(header);
+        const manual=Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input[data-regiao]')).some(input=>input.dataset.tocadoManualmente==='true');
+        const header=document.createElement('div');header.className='cluster-region-header';header.innerHTML=`<div><span class="ks-kicker">${manual?'REGIÃO SELECIONADA PELO PROFISSIONAL':'REGIÃO DEFINIDA PELO RADAR'}</span><h2>${escapeHTML(regiao.nome)}</h2></div><span class="ks-region-mode">Radar KineSys</span>`;card.appendChild(header);
         if(mapeamentoAvaliacaoAnterior?.detalhes?.[idRegiao]){const resumo=(mapeamentoAvaliacaoAnterior.resumoPorRegiao||[]).find(r=>r.regiao===regiao.nome);const b=document.createElement('div');b.className='ks-prior-eval';b.textContent=`Última avaliação (${mapeamentoAvaliacaoAnterior.data}): ${resumo?(resumo.direcaoInvestigacao||resumo.hipotese):'resultados prévios disponíveis.'}`;card.appendChild(b);}
         const nota=construirNotaTopologiaKineSys(idRegiao,contexto);if(nota)card.appendChild(nota);
         const cirurgia=obterCirurgiaRelacionadaRegiao(idRegiao);
@@ -1038,13 +1043,13 @@
         const controles=Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input[data-regiao]'));
         if(!controles.length)return[];
         const selecionadas=controles.filter(input=>input.checked).map(input=>input.dataset.regiao);
-        if(selecionadas.length||controles.some(input=>input.dataset.tocadoManualmente==='true'))return selecionadas;
-        const ids=[...new Set((plano?.regioes||[]).map(regiao=>regiao?.id).filter(Boolean))]
+        if(controles.some(input=>input.dataset.tocadoManualmente==='true'))return selecionadas;
+        const permitidas=new Set((plano?.regioes||[]).map(regiao=>regiao?.id).filter(Boolean));
+        const ids=[...new Set([...(plano?.hipoteses||[]).map(h=>h.regiaoId).filter(id=>permitidas.has(id)),...permitidas])]
             .filter(id=>document.getElementById('chk_regiao_'+id));
-        ids.forEach(id=>{
-            const input=document.getElementById('chk_regiao_'+id);
-            input.checked=true;
-            input.dataset.sugeridaPelaHMA='true';
+        controles.forEach(input=>{
+            input.checked=ids.includes(input.dataset.regiao);
+            input.dataset.sugeridaPelaHMA=input.checked?'true':'false';
         });
         if(ids.length){
             window.definirRegiaoAtivaAvaliacaoKineSys?.(ids[0]);
@@ -1056,6 +1061,7 @@
     window.avancarParaMapa = async function(){
         const nome=document.getElementById('paciente_nome')?.value.trim();
         if(!nome){alert('Informe ao menos o nome do paciente antes de avançar para o Exame clínico.');return;}
+        const contextoOrigem=JSON.stringify(window.obterContextoAvaliacaoKineSys?.()||{}),hmaOrigem=document.getElementById('paciente_hma')?.value||'';
         processarRadarEmTempoReal();
         const grupo=document.getElementById('grupo_regioes_mapeamento');
         if(grupo&&grupo.children.length===0) renderizarSeletorRegioes();
@@ -1067,6 +1073,11 @@
         if(regioesRadar.length&&window.KineSysClinicalRegionLoader?.ensure){
             await window.KineSysClinicalRegionLoader.ensure(regioesRadar);
         }
+        if(contextoOrigem!==JSON.stringify(window.obterContextoAvaliacaoKineSys?.()||{})||hmaOrigem!==(document.getElementById('paciente_hma')?.value||''))return;
+        // Lazy banks may have been absent when the HMA plan was produced.
+        // Rebuild the same canonical plan before rendering hypothesis/test IDs.
+        const planoCarregado=window.KineSysMotorClinico3?.atualizar?.(true)||window.gerarPlanoClinicoHMAKineSys?.()||plano;
+        window.aplicarRegioesDoRadarKineSys(planoCarregado);
         window.renderizarMapeamentoRegioes();
         irParaSubtela('subtela_mapeamento');
     };
