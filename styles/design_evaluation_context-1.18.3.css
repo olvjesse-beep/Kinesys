@@ -57,6 +57,13 @@ body.ks-design-ready #tela_avaliacao .context-panel .checkbox-pill span,body.ks-
 #tela_avaliacao .box-sugestoes>[role=option]:hover,#tela_avaliacao .box-sugestoes>[aria-selected=true]{background:var(--kds-accent-soft);color:var(--kds-accent)}
 #tela_avaliacao .ks-context-card button:focus-visible,#tela_avaliacao .context-panel input:focus-visible{outline:3px solid var(--kds-focus-ring);outline-offset:2px}
 /* Scoped overrides beat legacy form polish without changing the shared theme. */
+#tela_avaliacao .box-sugestoes>.ks-medication-option{display:flex;flex-direction:column;gap:4px;white-space:normal;overflow-wrap:anywhere;min-width:0}
+#tela_avaliacao .ks-medication-option>strong{font-size:inherit;color:inherit}
+#tela_avaliacao .ks-medication-option>small{display:block;font-size:var(--kds-font-metadata);line-height:1.5;color:var(--kds-muted);font-weight:400}
+#tela_avaliacao #tags_medicamentos>div{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+#tela_avaliacao #tags_medicamentos>div>span{flex-shrink:0}
+/* While selecting a medication, the sticky actions must not cover the list. */
+#tela_avaliacao .ks-context-card:has(#input_medicamento[aria-expanded="true"])>.clinical-actions{position:static!important}
 body.ks-design-ready #tela_avaliacao .context-index-copy strong,body.ks-design-ready #tela_avaliacao .context-panel .checkbox-pill span,body.ks-design-ready #tela_avaliacao .context-states label{font-size:var(--kds-font-content)!important;line-height:var(--kds-leading-ui)!important}
 body.ks-design-ready #tela_avaliacao .context-panel-heading h3{font-size:var(--kds-font-heading-md)!important}
 #tela_avaliacao .context-states{justify-content:space-between;margin-bottom:14px}

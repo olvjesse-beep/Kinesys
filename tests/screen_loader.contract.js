@@ -208,6 +208,7 @@ for(const file of agendaLazyStyles)assertLazyAsset(file,'style');
 
 const evaluationDatabaseLazyScripts=[
   'src/clinical/cirurgias-1.18.0.js',
+  'database/medicamentos_anvisa-20261024.js',
   'database/medicamentos.js',
   'database/irradiacao_clinica.js',
   'database/mapeamento_regioes-1.0.0.js',

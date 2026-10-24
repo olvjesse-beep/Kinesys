@@ -66,7 +66,7 @@ assert.equal(env.buscarSugestoesClinicasKineSys('esporte','prof').length,0,'prof
 console.log('Autocomplete late catalog, ranking, keyboard, deduplication and accessible dismissal: OK');
 
 const catalogEnv={window:{},console,document:{readyState:'loading',getElementById:()=>null,addEventListener(){}},obterTextoExibicao:x=>typeof x==='string'?x:x.exibicao};
-const catalogs=['medicamentos','cirurgias','ocupacoes_esportes'].map(name=>fs.readFileSync('database/'+name+'.js','utf8')).join('\n');
+const catalogs=['medicamentos_anvisa-20261024','medicamentos','cirurgias','ocupacoes_esportes'].map(name=>fs.readFileSync('database/'+name+'.js','utf8')).join('\n');
 vm.runInNewContext(catalogs+'\n'+mod,catalogEnv);
 assert.match(catalogEnv.buscarSugestoesClinicasKineSys('medicamento','dipi')[0].texto,/Dipirona/);
 assert.ok(catalogEnv.buscarSugestoesClinicasKineSys('cirurgia','artro').some(x=>/Artroscopia/.test(x.texto)));

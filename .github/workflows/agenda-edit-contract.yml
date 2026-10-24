@@ -81,6 +81,9 @@ jobs:
           node --check src/ui/input_helpers_core-1.0.0.js
           node --check src/clinical/evaluation_context_panels-1.18.3.js
           node tests/input_helpers_modularization.contract.js
+          node --check database/medicamentos.js
+          node --check database/medicamentos_anvisa-20261024.js
+          node tests/medication_catalog.test.cjs
           node tests/evaluation_context_lifecycle.contract.js
           node tests/evaluation_context_model2.test.cjs
           node --check src/core/script-1.18.0.js

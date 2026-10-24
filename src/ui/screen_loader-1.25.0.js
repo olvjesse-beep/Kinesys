@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261023-relatorio-documento-r1';
+    const ASSET_REVISION='20261024-medicamentos-individuais-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -17,12 +17,12 @@
     const BUNDLES=Object.freeze({
         tela_avaliacao:Object.freeze({
             id:'avaliacao',
-            fragment:'screens/tela_avaliacao.html?v=20261023-relatorio-documento-r1',
+            fragment:'screens/tela_avaliacao.html?v=20261024-medicamentos-individuais-r1',
             styles:Object.freeze([
                 'styles/design_clinical.css?v=20261012-visual-harmony-r1',
                 'styles/design_clinical_direction-1.17.0.css',
                 'styles/design_evaluation_workspace-1.18.0.css?v=20261014-relatorio-assinatura-r2',
-                'styles/design_evaluation_context-1.18.3.css?v=20261020-contexto-indice-r1',
+                'styles/design_evaluation_context-1.18.3.css?v=20261024-medicamentos-individuais-r1',
                 'styles/avaliacao_experiencia-1.22.0.css?v=20261013-evaluation-option3-r2',
                 'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1',
                 'styles/radar_clinico_focus-3.0.0.css?v=20260910-r1',
@@ -31,6 +31,7 @@
             ]),
             scripts:Object.freeze([
                 'src/clinical/cirurgias-1.18.0.js?v=20260902-r1',
+                'database/medicamentos_anvisa-20261024.js',
                 'database/medicamentos.js',
                 'database/irradiacao_clinica.js',
                 'database/mapeamento_regioes-1.0.0.js?v=20260911-phase3b-r1',
