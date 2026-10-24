@@ -10,6 +10,7 @@
         laudo=null;carregamentoLaudo=null;contextoDoLaudo=JSON.stringify(contextoAtual());
         const editor=document.getElementById('ks-laudo-texto'),review=document.getElementById('ks-laudo-revisado'),status=document.getElementById('ks-laudo-status');
         if(editor)editor.value='';if(review)review.checked=false;if(status)status.textContent='Preencha e revise a avaliação deste paciente para gerar o relatório.';
+        const revisao=document.getElementById('ks-laudo-revisao-documental');if(revisao){revisao.replaceChildren();revisao.hidden=true;}
     }
     function conferirContextoLaudo(){
         if(contextoDoLaudo!==JSON.stringify(contextoAtual())){limparLaudoDoContexto();return false;}return true;
@@ -617,7 +618,9 @@
         const significado=window.KineSysSemanticGraph&&plano.proposicoes?.length?window.KineSysSemanticGraph.validar({origem:plano.origemHMA,proposicoes:plano.proposicoes,pendencias:plano.pendenciasInterpretacao||[]},corpo,plano.fatos.filter(f=>f.tipo!=='relato').map(f=>f.redacao)):null;
         const problemasSemExame=(plano.coberturaProblemas||[]).filter(p=>!p.possuiExameRegistrado);
         const correlacoesDivergentes=(plano.correlacoes||[]).filter(c=>c.resultados.length&&['menos_compativel','localizacao_pendente','lateralidade_pendente','cronologia_pendente','dados_divergentes'].includes(c.evidenciasCompartilhadas?.estado));
-        return {ok:!ausentes.length&&!contradicoes.length&&!palavras.length&&!problemasSemExame.length&&!correlacoesDivergentes.length&&!plano.pendenciasInterpretacao?.length&&(!significado||significado.ok),cobertura,ausentes,contradicoes,qualidade:palavras,numerosSemOrigem,significado,problemasSemExame,correlacoesDivergentes};
+        const indicadores=window.KineSysDocumentAnalyzer?.avaliarQualidade(plano,corpo)||null;
+        const esclarecimentos=plano.analiseDocumental?.perguntas||[];
+        return {ok:!ausentes.length&&!contradicoes.length&&!palavras.length&&!problemasSemExame.length&&!correlacoesDivergentes.length&&!plano.pendenciasInterpretacao?.length&&!esclarecimentos.length&&(!significado||significado.ok),cobertura,ausentes,contradicoes,qualidade:palavras,numerosSemOrigem,significado,problemasSemExame,correlacoesDivergentes,indicadores,esclarecimentos};
     }
     window.analisarSemanticaAvaliacaoKineSys=function(){const d=dadosAtuais(),p=construirPlanoNarrativo(d);return clone({...p,validacao:validarPlanoSemantico(p,comporDocumentoSemantico(p).join('\n\n'))});};
     window.validarTextoSemanticoAvaliacaoKineSys=function(texto){return clone(validarPlanoSemantico(construirPlanoNarrativo(dadosAtuais()),String(texto||'')));};
@@ -1018,8 +1021,8 @@
     function textoBase(d){
         const semantica=construirPlanoNarrativo(d),secoes=comporDocumentoSemantico(semantica),validacao=validarNarrativaClinica(d,secoes);
         semantica.validacao=validarPlanoSemantico(semantica,secoes.join('\n\n'));
-        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:3,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
-        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:3,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:4,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:4,validacao,semantica,atualizadoEm:new Date().toISOString()};
     }
     window.preencherLaudoAvaliacaoKineSys=function(value){
         limparLaudoDoContexto();
@@ -1064,7 +1067,7 @@
             (textoLaudo.includes('foi avaliado(a) pela fisioterapia')&&textoLaudo.includes('Com base nos dados registrados, recomenda-se'))||
             (textoLaudo.startsWith('RELATÓRIO FISIOTERAPÊUTICO')&&textoLaudo.includes('Quanto à queixa atual, registra-se:')&&textoLaudo.includes('O exame físico ainda não contém resultados de testes registrados.')&&textoLaudo.includes('A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.'))
         );
-        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==3)))laudo=textoBase(d);
+        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==4)))laudo=textoBase(d);
         laudo.contextoPaciente=clone(contextoAtual());
         const mudou=laudo.fonte!==d.fonte;
         if(mudou)laudo.revisado=false;
@@ -1088,8 +1091,15 @@
         if(sv?.problemasSemExame?.length)avisos.push('Queixas ainda sem exame registrado: '+unirNatural(valoresUnicos(sv.problemasSemExame.map(p=>p.regiao))));
         if(sv?.correlacoesDivergentes?.length)avisos.push('Há hipótese examinada com localização ou história ainda não concordante; confira as evidências do Radar');
         if(laudo.semantica?.pendenciasInterpretacao?.length)avisos.push('Há localizações ou referências no relato que precisam ser esclarecidas antes de associá-las a uma hipótese');
-        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==3;
+        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==4;
         document.getElementById('ks-laudo-status').textContent=mudou||motorAnterior?'A avaliação mudou ou há uma nova base semântica. Seu texto foi preservado: use Atualizar base da avaliação ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:v.ambiguidades?.length?'O relatório requer revisão: um item positivo reúne achados alternativos. Especifique no texto qual achado foi observado.':(laudo.modo==='revisao'||sv&&!sv.ok)?`O relatório requer revisão. ${avisos.length?avisos.map(a=>String(a).replace(/[.\s]+$/,'')).join('. ')+'.':'Confira os achados divergentes ou os trechos do relato que precisam de revisão.'}`:'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';
+        const analiseRevisao=mudou||motorAnterior?construirPlanoNarrativo(d).analiseDocumental:laudo.semantica?.analiseDocumental;
+        window.KineSysDocumentReview?.renderizar({host:document.getElementById('ks-laudo-revisao-documental'),analise:analiseRevisao,
+            contexto:JSON.stringify(contextoAtual()),contextoAtual:()=>JSON.stringify(contextoAtual()),onRevisar:campo=>{
+                if(!conferirContextoLaudo())return;
+                if(typeof irParaSubtela==='function')irParaSubtela(campo==='subtela_mapeamento'?'subtela_mapeamento':'subtela_triagem');
+                if(campo!=='subtela_mapeamento'){const origem=document.getElementById('paciente_hma');origem?.focus();origem?.scrollIntoView?.({block:'center',behavior:'smooth'});}
+            }});
     };
     let workspaceInicializado=false;
     function inicializarWorkspaceAvaliacaoKineSys(){

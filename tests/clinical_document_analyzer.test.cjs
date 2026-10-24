@@ -36,14 +36,14 @@ function prepared(hma){const f=fixture();f.fields[2].value=hma;return f;}
 const f=prepared('Paciente apresenta dor no ombro direito há 3 meses. A paciente informa que está com dormência na mão direita. Nega febre.');
 f.notes.contexto_saude_observacao='Hipertensão informada';f.notes.contexto_trabalho_observacao='Sem afastamento do trabalho';
 const original=f.fields[2].value,r=f.render(),analysis=r.semantica.analiseDocumental;
-assert.equal(r.revisaoSemantica,3);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
+assert.equal(r.revisaoSemantica,4);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
 assert.equal(analysis.entrada.hma,original);assert.equal(f.fields[2].value,original);
 assert(analysis.entrada.entradas.some(x=>x.campo==='contexto_saude_observacao'&&x.valor==='Hipertensão informada'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='tags_medicamentos[1]'&&x.valor==='Medicamento B'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='mapeamento.radiculopatia_cervical.0'&&x.resultado==='positivo'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='contextoAnamnese.estados.atividade'&&x.valor==='nega'));
 assert(analysis.unidades.every(x=>x.id&&x.origens.length));assert.equal(analysis.fatosSemRoteiro.length,0);
-assert.match(r.texto,/Relata dor no ombro direito há 3 meses\.\s+Dormência referida na mão direita\. Nega febre\./);
+assert.match(r.texto,/Relata dor no ombro direito há 3 meses\.\s+Dormência referida na mão direita\.\s+Nega febre\./);
 assert(!r.texto.includes('Sobre os antecedentes de saúde, foi informado:'));assert(r.texto.includes('Antecedentes referidos: Hipertensão informada'));
 assert.equal(r.validacao.relatoAusente.length,0);assert.equal(r.validacao.contextoAusente.length,0);
 assert.equal(r.semantica.validacao.significado.ausentes.length,0,JSON.stringify(r.semantica.validacao.significado));

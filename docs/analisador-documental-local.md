@@ -19,9 +19,20 @@ Os termos clínicos e valores registrados necessariamente reaparecem no document
 
 ## Persistência e compatibilidade
 
-A análise fica em `laudo.semantica.analiseDocumental`, no JSON já existente, com a entrada, unidades, roteiro e relações. A fonte da HMA permanece literal. A revisão semântica passou a 3; a versão documental 22 e seu cabeçalho/seções foram preservados. Texto profissional ou revisado de versões anteriores nunca é regenerado automaticamente: atualizar a base continua exigindo confirmação. Avaliação nova não herda o relatório ou sua análise de outra pessoa.
+A análise fica em `laudo.semantica.analiseDocumental`, no JSON já existente, com a entrada, unidades, roteiro e relações. A fonte da HMA permanece literal. A revisão semântica passou a 4; a versão documental 22 e seu cabeçalho/seções foram preservados. Texto profissional ou revisado de versões anteriores nunca é regenerado automaticamente: atualizar a base continua exigindo confirmação. Avaliação nova não herda o relatório ou sua análise de outra pessoa.
 
-Não há migração, alteração de Supabase, nova tabela, gravação em prontuários reais ou alteração da interface nesta entrega. O fluxo de salvamento, cópia e PDF continua usando o mesmo texto final e metadados existentes.
+Não há migração, alteração de Supabase, nova tabela ou gravação em prontuários reais. O painel de conferência documental foi adicionado exclusivamente antes do editor do relatório. O fluxo de salvamento, cópia e PDF continua usando o mesmo texto final e metadados existentes.
+
+## Seis aprimoramentos da revisão 4
+
+1. `problemasClinicos`: queixas independentes por região/segmento e lado, com episódios, duração, momentos, modificadores e repercussões rastreáveis. Não distribuir um fator de piora sem localização entre todas as queixas. Destino de irradiação, familiar, negativa e local cirúrgico não criam nova queixa.
+2. `matrizEvidencias`: critérios positivos/negativos/inconclusivos do vínculo já registrado, hipótese por hipótese. O texto da HMA é contexto, não evidência confirmatória por mera presença de uma região. Preserva divergências e combinação de critérios existente, sem inventar um escore.
+3. Troca de sujeito explícito inicia escopo próprio em orações independentes, inclusive sem ponto. Negativas dependentes e fala entre aspas não usam essa divisão. Preserva hipótese relatada, antecedente e indicação cirúrgica. Gramática de negativa simples só é aceita após validação.
+4. `perguntas`: localização/lado pendente, referência, expressão incompleta, modificador sem queixa, divergência e vínculo de exame. Cada pergunta mostra a fonte e leva à HMA ou ao exame para que o profissional responda no local original. Não escreve na avaliação, não escolhe uma resposta e não afirma que toda ambiguidade do português é detectável.
+5. História organizada por localização/lado/episódio quando cada fato tem vínculo inequívoco. Conteúdo sem vínculo seguro e dependências temporais mantêm fonte e ordem. Cabeçalho, seções úteis, exame/interpretação regional e conclusão profissional continuam preservados; perguntas e contagens não entram no relatório.
+6. `validacao.indicadores`: contagens de proposições, omissões, introduções, causalidade nova, repetição literal e verbos de relato. Não há nota ou probabilidade de acerto clínico. O corpus sintético verifica alterações de significado, múltiplas queixas, família, tempo, sintomas, doses, revisão e reabertura. `semantic_six_improvements.test.cjs` e `evaluation_document_review.test.cjs` complementam todas as barreiras anteriores.
+
+A separação entre problemas, achados, fontes e síntese é compatível conceitualmente com o [escopo do FHIR ClinicalImpression](https://hl7.org/fhir/clinicalimpression.html), mas não constitui exportação FHIR, certificação ou validação diagnóstica.
 
 ## Evidência e limites
 
