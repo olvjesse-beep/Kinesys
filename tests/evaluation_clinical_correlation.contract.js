@@ -64,6 +64,7 @@ const context={
   console
 };
 context.window.window=context.window;
+vm.runInNewContext(fs.readFileSync('src/clinical/clinical_language_rules-1.0.0.js','utf8'),context);
 vm.runInNewContext(fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8'),context);
 vm.runInNewContext(src.slice(0,src.indexOf('\n\n/* Product Design')),context);
 context.window.preencherLaudoAvaliacaoKineSys('rascunho-legado-invalido');

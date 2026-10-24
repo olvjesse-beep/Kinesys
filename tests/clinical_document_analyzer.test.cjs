@@ -3,7 +3,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {fixture}=require('./evaluation_report_integration.test.cjs');
 const code=fs.readFileSync('src/clinical/clinical_document_analyzer-1.0.0.js','utf8');
-const env={window:{}};vm.createContext(env);vm.runInContext(fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8'),env);vm.runInContext(code,env);
+const env={window:{}};vm.createContext(env);vm.runInContext(fs.readFileSync('src/clinical/clinical_language_rules-1.0.0.js','utf8'),env);vm.runInContext(fs.readFileSync('src/clinical/clinical_semantic_graph-1.0.0.js','utf8'),env);vm.runInContext(code,env);
 const api=env.window.KineSysDocumentAnalyzer,graph=env.window.KineSysSemanticGraph;
 for(const [original,expected] of [
  ['Paciente apresenta dor no ombro direito há 3 meses.','Relata dor no ombro direito há 3 meses.'],
@@ -36,7 +36,7 @@ function prepared(hma){const f=fixture();f.fields[2].value=hma;return f;}
 const f=prepared('Paciente apresenta dor no ombro direito há 3 meses. A paciente informa que está com dormência na mão direita. Nega febre.');
 f.notes.contexto_saude_observacao='Hipertensão informada';f.notes.contexto_trabalho_observacao='Sem afastamento do trabalho';
 const original=f.fields[2].value,r=f.render(),analysis=r.semantica.analiseDocumental;
-assert.equal(r.revisaoSemantica,4);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
+assert.equal(r.revisaoSemantica,5);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
 assert.equal(analysis.entrada.hma,original);assert.equal(f.fields[2].value,original);
 assert(analysis.entrada.entradas.some(x=>x.campo==='contexto_saude_observacao'&&x.valor==='Hipertensão informada'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='tags_medicamentos[1]'&&x.valor==='Medicamento B'));

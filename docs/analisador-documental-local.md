@@ -19,7 +19,7 @@ Os termos clínicos e valores registrados necessariamente reaparecem no document
 
 ## Persistência e compatibilidade
 
-A análise fica em `laudo.semantica.analiseDocumental`, no JSON já existente, com a entrada, unidades, roteiro e relações. A fonte da HMA permanece literal. A revisão semântica passou a 4; a versão documental 22 e seu cabeçalho/seções foram preservados. Texto profissional ou revisado de versões anteriores nunca é regenerado automaticamente: atualizar a base continua exigindo confirmação. Avaliação nova não herda o relatório ou sua análise de outra pessoa.
+A análise fica em `laudo.semantica.analiseDocumental`, no JSON já existente, com a entrada, unidades, roteiro e relações. A fonte da HMA permanece literal. A revisão semântica atual é 5, com a camada de [linguagem contextual](linguagem-clinica-contextual.md); a versão documental 22 e seu cabeçalho/seções foram preservados. Texto profissional ou revisado de versões anteriores nunca é regenerado automaticamente: atualizar a base continua exigindo confirmação. Avaliação nova não herda o relatório ou sua análise de outra pessoa.
 
 Não há migração, alteração de Supabase, nova tabela ou gravação em prontuários reais. O painel de conferência documental foi adicionado exclusivamente antes do editor do relatório. O fluxo de salvamento, cópia e PDF continua usando o mesmo texto final e metadados existentes.
 
