@@ -35,7 +35,7 @@ assert.match(team,/update\(\{ ativo: false, aparece_na_agenda: false \}\)/,'perf
 assert.match(team,/from\('equipe'\)\.delete\(\)/,'perfil sem histórico deve manter caminho de exclusão existente');
 assert.doesNotMatch(team,/service_role|SUPABASE_SERVICE_ROLE_KEY/i,'módulo frontend não pode conter segredo administrativo');
 
-const teamTag='src/admin/team_management_core-1.0.0.js?v=20260911-phase4o-r1';
+const teamTag='src/admin/team_management_core-1.0.0.js?v=20261025-interface-audit-r1';
 const teamPos=index.indexOf(teamTag);
 const corePos=index.indexOf('src/core/script-1.18.0.js');
 assert.ok(teamPos>=0,'index deve carregar o módulo de Gestão de Equipe');

@@ -145,7 +145,7 @@ function blocoEvolucao(ev,i,detalhado){
     const meta=detalhado?`<div class="trace"><div><b>Realizada:</b> ${esc(dataHora(obterRealizado(ev)))}</div><div><b>Profissional:</b> ${esc(profissional(ev))}</div><div><b>Salva no banco:</b> ${esc(dataHora(obterSalvo(ev)))}</div><div><b>Janela de edição até:</b> ${esc(dataHora(obterLimite(ev)))}</div>${(ev.ultimaEdicaoEm||ev.ultima_edicao_em)?`<div><b>Última edição:</b> ${esc(dataHora(ev.ultimaEdicaoEm||ev.ultima_edicao_em))}${(ev.ultimaEdicaoPorNome||ev.ultima_edicao_por_nome)?` · ${esc(ev.ultimaEdicaoPorNome||ev.ultima_edicao_por_nome)}`:''}</div>`:''}<div><b>ID do registro:</b> ${esc(ev.id||'—')}</div></div>`:'';
     const resumo=[];
     if(ev.data) resumo.push(`<span>Data: <b>${esc(dataSomente(ev.data))}</b></span>`);
-    if(ev.eva!==undefined) resumo.push(`<span>EVA: <b>${esc(ev.eva)}</b></span>`);
+    resumo.push(`<span>EVA: <b>${esc(ev.eva??'Não avaliada')}</b></span>`);
     const estado=ev.dadosEstruturados?.estadoClinico||ev.dados_estruturados?.estadoClinico;if(estado) resumo.push(`<span>Estado: <b>${esc(estado)}</b></span>`);
     return `<article class="record"><div class="record-head"><div><span class="index">Evolução ${i+1}</span><h3>Evolução fisioterapêutica</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(ev)||ev.data,false))} · ${esc(profissional(ev))}</p>${meta}${conteudo}${detalhado?'<details class="technical"><summary>Apêndice técnico do registro original</summary>'+tabelaCampos(achatar(ev))+'</details>':''}</article>`;
 }

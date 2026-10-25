@@ -8,7 +8,7 @@
 'use strict';
 
 const VERSION='1.0.0-phase4e';
-const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261025-relatorio-cirurgias-r1';
+const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261025-interface-audit-r1';
 const PERFIS_DETALHADO=new Set(['MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','FISIOTERAPEUTA','PROFISSIONAL']);
 let carregamento=null;
 

@@ -35,15 +35,21 @@ if (sliderEVA) {
 }
 
 const sliderEvo = document.getElementById("eva_slider_evo");
-const valorEvo = document.getElementById("eva_valor_evo");
+
+function atualizarEvaEvolucaoKineSys(){
+    const slider=document.getElementById('eva_slider_evo'),valor=document.getElementById('eva_valor_evo');
+    if(!slider)return;
+    const avaliada=!!document.getElementById('evo_eva_avaliada')?.checked;
+    slider.disabled=!avaliada;
+    if(valor){
+        valor.textContent=avaliada?'Nível '+Number(slider.value):'Não avaliada';
+        aplicarClasseEvaKineSys(valor,avaliada?Number(slider.value):0);
+    }
+}
 
 if (sliderEvo) {
     sliderEvo.addEventListener("input", function() {
-        const val = parseInt(this.value) || 0;
-        if (valorEvo) {
-            valorEvo.innerText = "Nível " + val;
-            aplicarClasseEvaKineSys(valorEvo, val);
-        }
+        atualizarEvaEvolucaoKineSys();
     });
 }
 

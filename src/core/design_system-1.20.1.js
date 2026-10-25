@@ -117,7 +117,7 @@
             wrap.addEventListener('click',e=>{if(e.target===wrap)resolverDialog(false);});
         }
     }
-    function textoLimpo(msg){ return String(msg??'').replace(/^[✅✓⚠️❌🔒🛡️💾⧉📌]\s*/,'').trim(); }
+    function textoLimpo(msg){ return String(msg??'').replace(/^(?:(?:✅|✓|⚠|❌|🔒|🛡|💾|⧉|📌)\uFE0F?\s*)+/u,'').trim(); }
     function classificar(msg){
         const s=String(msg||'');
         if(/✅|^✓|sucesso|salv[oa] com sucesso|registrad[oa]\.?$/i.test(s)) return 'sucesso';
@@ -544,7 +544,7 @@
             c.innerHTML=paginaItens.map(p=>{
                 const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):p.avaliacoes||[];const ev=p.evolucoes||[];const av=avs[avs.length-1];const ult=ev.slice().sort((a,b)=>String(b.data||b.dataHoraISO||'').localeCompare(String(a.data||a.dataHoraISO||'')))[0];const id=escapeHTMLDS(p.id);const idade=typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade;
                 const contagemAvaliacoes=`${avs.length} ${avs.length===1?'avaliação':'avaliações'}`;
-                return `<article class="ks-patient-card ${String(p.id)===String(pacienteContextoId)?'active':''}"><button type="button" class="ks-patient-card-main" data-ks-patient-action="selecionar" data-patient-id="${id}"><span class="ks-patient-initial">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><span class="ks-patient-card-copy"><strong>${escapeHTMLDS(p.nome||'Paciente')}</strong><small>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||''].filter(Boolean).join(' · ')||'Cadastro administrativo')}</small><em>${av?contagemAvaliacoes:'Sem avaliação finalizada'}${ult?` · Última evolução ${escapeHTMLDS(ult.data||'')}`:''}</em></span></button><div class="ks-patient-card-actions"><button type="button" data-ks-patient-action="evolucao" data-patient-id="${id}">Evolução</button><button type="button" data-ks-patient-action="documentos" data-patient-id="${id}">Documentos</button><button type="button" data-ks-patient-action="prontuario" data-patient-id="${id}">Exportar PDF</button><button type="button" class="ks-more" data-ks-patient-action="editar" data-patient-id="${id}">Editar</button></div></article>`;
+                return `<article class="ks-patient-card ${String(p.id)===String(pacienteContextoId)?'active':''}"><button type="button" class="ks-patient-card-main" data-ks-patient-action="selecionar" data-patient-id="${id}"><span class="ks-patient-initial">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><span class="ks-patient-card-copy"><strong>${escapeHTMLDS(p.nome||'Paciente')}</strong><small>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||''].filter(Boolean).join(' · ')||'Cadastro administrativo')}</small><em>${av?contagemAvaliacoes:'Sem avaliação finalizada'}${ult?` · Última evolução ${escapeHTMLDS(formatarDataDiretorio(ult.data||ult.realizadoEm||ult.dataHoraISO))}`:''}</em></span></button><div class="ks-patient-card-actions"><button type="button" data-ks-patient-action="evolucao" data-patient-id="${id}">Evolução</button><button type="button" data-ks-patient-action="documentos" data-patient-id="${id}">Documentos</button><button type="button" data-ks-patient-action="prontuario" data-patient-id="${id}">Exportar PDF</button><button type="button" class="ks-more" data-ks-patient-action="editar" data-patient-id="${id}">Editar</button></div></article>`;
             }).join('');
             if(paginacao){
                 paginacao.hidden=false;
@@ -697,7 +697,7 @@
     function prepararRelatorio(){
         const tela=document.getElementById('tela_relatorio');if(!tela||document.getElementById('ks_report_workspace'))return;const card=tela.querySelector(':scope > .card');if(!card)return;
         card.classList.add('ks-report-shell');const oldHead=card.querySelector(':scope > .card-header');if(oldHead)oldHead.remove();
-        const workspace=document.createElement('div');workspace.id='ks_report_workspace';workspace.className='ks-report-workspace';const left=document.createElement('div');left.className='ks-report-config';const right=document.createElement('div');right.className='ks-report-editor';right.innerHTML='<div class="ks-report-placeholder"><span class="ks-eyebrow">DOCUMENTO</span><h3>Seu relatório aparecerá aqui</h3><p>Escolha o paciente e o tipo de documento. Para relatórios, gere ou edite o texto antes de montar para impressão.</p></div>';
+        const workspace=document.createElement('div');workspace.id='ks_report_workspace';workspace.className='ks-report-workspace';const left=document.createElement('div');left.className='ks-report-config';const right=document.createElement('div');right.className='ks-report-editor';right.innerHTML='<div class="ks-report-placeholder"><span class="ks-eyebrow">DOCUMENTO</span><h3>A prévia do documento aparecerá aqui</h3><p>Escolha o paciente e o tipo de documento. Para relatórios, gere ou edite o texto antes de montar para impressão.</p></div>';
         const official=document.getElementById('bloco_relatorio_oficial');if(official){right.appendChild(official);official.classList.add('ks-report-official');}
         [...card.children].forEach(ch=>{if(ch!==workspace && ch!==official)left.appendChild(ch);});workspace.append(left,right);card.appendChild(workspace);
         const bloco=document.getElementById('bloco_ia');if(bloco&&!bloco.querySelector('.ks-report-advanced')){
@@ -777,6 +777,10 @@
             const fn=window[nome];if(typeof fn!=='function'||fn.__ksContextWrapped)return;
             const wrapped=async function(id,...rest){const carga=id?definirPacienteContexto(id):null,revisao=contextoRevisao;await carga;if(revisao!==contextoRevisao)return;return fn.call(this,id,...rest);};wrapped.__ksContextWrapped=true;window[nome]=wrapped;
         });
+    }
+    function formatarDataDiretorio(valor){
+        const data=String(valor||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:T|$)/);
+        return data?`${data[3]}/${data[2]}/${data[1]}`:String(valor||'Não informada');
     }
     function prepararFinanceiro(){const tela=document.getElementById('tela_financeiro');if(!tela)return;tela.querySelector('.finance-hero')?.classList.add('ks-section-hero');}
     function limparTitulosEmoji(){document.querySelectorAll('.card-header h2,.finance-hero h2,.midia-hero-head h2').forEach(h=>{h.textContent=h.textContent.replace(/^[^\p{L}\p{N}]+/u,'').trim();});}
@@ -904,13 +908,17 @@
 
     const original = window.navegarPara;
     if (typeof original !== 'function' || original.__ksA11yWrapped) return;
+    let revisaoAnuncio=0;
     const wrapped = function(idTela, ...args){
+      const revisao=++revisaoAnuncio;
       const result = original.call(this, idTela, ...args);
-      if (idTela !== 'tela_login') {
+      const concluir=resultado=>{
+        if(resultado===false||idTela==='tela_login')return resultado;
         requestAnimationFrame(() => {
+          if(revisao!==revisaoAnuncio)return;
           const target = document.getElementById(idTela);
           if (!target || !target.classList.contains('ativa')) return;
-          const heading = target.querySelector('h1,h2');
+          const heading = document.getElementById('ks_page_title') || target.querySelector('h1,h2');
           const live = document.getElementById('ks_route_status');
           const label = heading ? heading.textContent.trim() : 'Tela atualizada';
           if (live) live.textContent = label;
@@ -919,8 +927,9 @@
             heading.focus({preventScroll:true});
           }
         });
-      }
-      return result;
+        return resultado;
+      };
+      return result&&typeof result.then==='function'?result.then(concluir):concluir(result);
     };
     wrapped.__ksA11yWrapped = true;
     wrapped.__original = original;

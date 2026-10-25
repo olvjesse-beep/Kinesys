@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261025-relatorio-cirurgias-r1';
+    const ASSET_REVISION='20261025-interface-audit-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();

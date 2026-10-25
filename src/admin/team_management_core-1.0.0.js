@@ -270,19 +270,28 @@ async function cadastrarNovoFuncionario() {
             return;
         }
         if (/aparece_na_agenda|schema cache/i.test(msg)) {
-            alert('⚠️ O banco ainda não possui o controle de profissionais da Agenda. Execute a migration SUPABASE_SQL/SUPABASE_MIGRACAO_PROFISSIONAIS_AGENDA_v1.11.2.sql no Supabase e tente novamente.');
+            alert('⚠️ O banco ainda não possui o controle de profissionais da Agenda. Peça ao administrador responsável pela instalação para atualizar o sistema e tente novamente.');
             return;
         }
         alert('⚠️ Não foi possível salvar o profissional. ' + (err.message || 'Verifique a conexão com o servidor.'));
     }
 }
 
+let equipeListaRevisao=0;
 async function carregarListaEquipe() {
+    const revisao=++equipeListaRevisao;
     const tbody = document.getElementById('lista_equipe_corpo');
     if (!tbody) return;
     if (!_supabase) { tbody.innerHTML = `<tr><td colspan="7" class="kds-u-ta-center">Servidor indisponível. A equipe não é cadastrada offline.</td></tr>`; return; }
-    const { data, error } = await _supabase.from('equipe').select(CAMPOS_PUBLICOS_PERFIL);
-    if (error || !data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="kds-u-ta-center">Nenhum funcionário cadastrado.</td></tr>`; return; }
+    const identidade=typeof usuarioLogado==='undefined'?'':String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    tbody.innerHTML='<tr><td colspan="7" role="status">Carregando equipe…</td></tr>';
+    let resposta;
+    try { resposta=await _supabase.from('equipe').select(CAMPOS_PUBLICOS_PERFIL); }
+    catch(error) { resposta={error}; }
+    if(revisao!==equipeListaRevisao||identidade!==(typeof usuarioLogado==='undefined'?'':String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'')))return;
+    const {data,error}=resposta;
+    if(error){tbody.innerHTML='<tr><td colspan="7" role="status">Não foi possível carregar a equipe. <button type="button" class="btn-secondary" onclick="carregarListaEquipe()">Tentar novamente</button></td></tr>';return;}
+    if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="kds-u-ta-center">Nenhum usuário cadastrado.</td></tr>`; return; }
     const ordenados = data.slice().sort((a,b) => {
         const ai = a.ativo === false ? 1 : 0;
         const bi = b.ativo === false ? 1 : 0;

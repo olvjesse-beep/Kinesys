@@ -29,6 +29,7 @@
         montado: false,
         carregado: false,
         carregando: false,
+        erroCarga: false,
         salvando: false,
         sujo: false,
         clinicaId: '',
@@ -163,6 +164,10 @@
     function renderizarCoresProcedimentos() {
         const lista = document.getElementById('ks_cores_procedimentos');
         if (!lista) return;
+        const salvar=document.getElementById('ks_agenda_cores_salvar');
+        if(salvar)salvar.disabled=!state.carregado||state.carregando||state.erroCarga;
+        if(state.erroCarga){lista.innerHTML='<p class="field-help" role="status">Não foi possível carregar os procedimentos. <button type="button" class="btn-secondary" onclick="KineSysConfiguracoesAgendaOnline.refresh()">Tentar novamente</button></p>';return;}
+        if(!state.carregado&&!state.procedimentos.length){lista.innerHTML='<p class="field-help" role="status">Carregando procedimentos…</p>';return;}
         const cores = lerCoresProcedimentos();
         lista.innerHTML = state.procedimentos.length ? `<div class="ks-config-table-scroll"><table class="ks-config-procedure-table"><thead><tr><th>Procedimento</th><th>Duração</th><th>Valor</th><th>Cor</th><th>Ações</th></tr></thead><tbody>${state.procedimentos.map(p => {
             const tipo = /osteo/i.test(p.nome) ? 'osteopatia' : 'fisioterapia';
@@ -263,7 +268,7 @@
             antecedencia_minima_minutos: 120,
             horizonte_dias: 30,
             titulo_publico: 'Agende seu atendimento',
-            descricao_publica: 'Escolha o atendimento, o profissional e um horário disponível.',
+            descricao_publica: 'Escolha o profissional, o atendimento e um horário disponível.',
             mensagem_fechado: 'O agendamento online está temporariamente indisponível. Entre em contato com a clínica para agendar.',
             mostrar_valores: false
         };
@@ -608,11 +613,14 @@
         if (!ehAdministrador() || state.carregando || (state.carregado && !forcar)) return;
         const client = sb();
         if (!client) {
-            setStatus('Supabase indisponível. Recarregue a página e tente novamente.', 'erro');
+            state.erroCarga=true;renderizarCoresProcedimentos();
+            setStatus('Serviço indisponível. Recarregue a página e tente novamente.', 'erro');
             return;
         }
 
         state.carregando = true;
+        state.erroCarga=false;
+        renderizarCoresProcedimentos();
         setStatus('Carregando configuração do agendamento online…', 'neutro');
         try {
             state.clinicaId = await resolverClinicaId();
@@ -658,6 +666,7 @@
             marcarLimpo();
             setStatus('', 'neutro');
         } catch (err) {
+            state.erroCarga=true;
             console.error('KineSys: erro ao carregar configuração de agendamento online', err);
             const mensagem = /column|schema cache|does not exist|not found/i.test(String(err?.message || err))
                 ? 'A estrutura administrativa do agendamento online ainda não está disponível no banco.'
@@ -665,6 +674,7 @@
             setStatus(mensagem, 'erro');
         } finally {
             state.carregando = false;
+            renderizarCoresProcedimentos();
         }
     }
 

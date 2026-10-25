@@ -151,12 +151,12 @@ async function salvarMensagemPadraoConfigurada(chave, titulo, mensagem) {
     return Array.isArray(data) ? data[0] : data;
 }
 
-const KINESYS_MENSAGENS_UI_REVISION = '20261016-config-paginas-r1';
+const KINESYS_MENSAGENS_UI_REVISION = '20261025-interface-audit-r1';
 function renderizarListaMensagensConfiguracao() {
     const lista = document.getElementById('cfg_msg_lista');
     if (!lista) return;
     const ordem = ['agenda_lembrete_sessao', 'crm_lembrete_sessao', 'crm_checkin_24h', 'crm_exercicios_3d', 'agenda_oferta_lista_espera'];
-    const nomes = { agenda_lembrete_sessao: 'Lembrete de sessão', crm_lembrete_sessao: 'Lembrete pela Home', crm_checkin_24h: 'Check-in após atendimento', crm_exercicios_3d: 'Orientações de exercícios', agenda_oferta_lista_espera: 'Lista de espera' };
+    const nomes = { agenda_lembrete_sessao: 'Lembrete de sessão', crm_lembrete_sessao: 'Lembrete pelo Início', crm_checkin_24h: 'Check-in após atendimento', crm_exercicios_3d: 'Orientações de exercícios', agenda_oferta_lista_espera: 'Lista de espera' };
     const itens = [...KINESYS_MENSAGENS_PADRAO].sort((a,b) => ordem.indexOf(a.chave) - ordem.indexOf(b.chave)).map(base => {
         const cfg = kinesysMensagensCache.get(base.chave) || base;
         const ativo = base.chave === kinesysMensagemEditando ? ' ativa' : '';
@@ -244,7 +244,7 @@ async function abrirConfiguracoesMensagens() {
                 : 'Não foi possível atualizar as mensagens na nuvem agora. Os textos locais continuam disponíveis.';
             status.className = 'ks-msg-status aviso';
         } else {
-            status.textContent = 'Mensagens sincronizadas com o Supabase. Alterações salvas passam a valer para os demais funcionários.';
+            status.textContent = 'Mensagens sincronizadas com a clínica. Alterações salvas passam a valer para os demais funcionários.';
             status.className = 'ks-msg-status ok';
         }
     }
