@@ -198,4 +198,12 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Preservar literalmente medicamentos já salvos e texto profissional. Não migrar nem reinterpretar descrições legadas ambíguas automaticamente. Seleção deve continuar independente, sem duplicar tags, com teclado e sob carga tardia.
 - Atualizações da base passam pelo importador reprodutível, com hash, data, filtro de registros ativos e fonte documentados. Executar `medication_catalog.test.cjs` junto aos contratos da Anamnese, relatório e Agenda. Dados de catálogo não são prescrição nem comprovam disponibilidade comercial.
 
+### Piloto opcional de IA local — Avaliação
+
+- O usuário autorizou em 24/10/2026 a instalação isolada de Ollama/Qwen3 4B no HD NOVO, `G:\KineSys-IA`, para testar somente a Avaliação com dados fictícios. Isso não autoriza publicação, treinamento, upload de prontuários, uso automático com pacientes reais ou alteração de Financeiro/Agenda/Evolução.
+- Preservar o analisador determinístico e o texto profissional. O conector opcional não é carregado no produto publicado; o laboratório não acessa o banco nem grava avaliações. Não ativar silenciosamente a IA nem usar fallback em nuvem.
+- Conector somente em loopback, nuvem do Ollama desativada, origem restrita, pareamento temporário e token em memória. Capturar contexto paciente/clínica/avaliação/revisão e invalidar respostas após alteração. Não registrar conteúdo clínico ou tokens em logs.
+- Toda saída é rascunho com fontes e revisão obrigatória. Regras locais e formato JSON não garantem veracidade, cobertura integral ou acurácia clínica. Contexto excedido é erro explícito, nunca truncamento silencioso. Não confirmar diagnósticos ou alterar critérios por resultado de IA.
+- Executar `evaluation_local_ai.test.cjs` na barreira hospedada, sem baixar modelos nem enviar dados a modelos no CI. Uma futura ativação no KineSys exige integração, consentimento/segurança e validação clínica próprios.
+
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.

@@ -98,6 +98,11 @@ jobs:
           node --check src/clinical/clinical_language_rules-1.0.0.js
           node tests/clinical_language_rules.test.cjs
           node tests/report_radar_consistency.test.cjs
+          node --check src/clinical/evaluation_local_ai-1.0.0.js
+          node --check tools/local_ai/server.cjs
+          node --check tools/local_ai/start.cjs
+          node --check tools/local_ai/ui/app.js
+          node tests/evaluation_local_ai.test.cjs
           node --check src/clinical/evaluation_document_review-1.0.0.js
           node tests/evaluation_document_review.test.cjs
           node tests/semantic_six_improvements.test.cjs
