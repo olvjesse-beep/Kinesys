@@ -95,6 +95,8 @@ jobs:
           node tests/evaluation_report_document.test.cjs
           node --check src/clinical/clinical_document_analyzer-1.0.0.js
           node tests/clinical_document_analyzer.test.cjs
+          node tests/evaluation_history_surgery_dates.test.cjs
+          node --check tests/helpers/free_exam_preview.cjs
           node --check src/clinical/clinical_language_rules-1.0.0.js
           node tests/clinical_language_rules.test.cjs
           node tests/report_radar_consistency.test.cjs

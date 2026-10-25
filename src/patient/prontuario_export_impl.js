@@ -153,7 +153,7 @@ function blocoEvolucao(ev,i,detalhado){
 function textoClinico(titulo,texto){
     return String(texto??'').trim()?`<div class="clinical-block"><h4>${esc(titulo)}</h4><div class="clinical-text">${esc(texto)}</div></div>`:'';
 }
-function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>typeof v==='string'?v:v?.texto||v?.exibicao||v?.nome||'').filter(Boolean).join('; ');}
+function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>{if(typeof v==='string')return v;const nome=v?.texto||v?.exibicao||v?.nome||'';return nome+(nome&&v?.dataCirurgia?' (data informada: '+v.dataCirurgia+')':'');}).filter(Boolean).join('; ');}
 function conteudoClinicoAvaliacao(av,pacienteId=''){
     const m=av.mapeamento||{},c=m.clinicaEstruturada||{};
     const laudoOriginal=c.laudo||{};

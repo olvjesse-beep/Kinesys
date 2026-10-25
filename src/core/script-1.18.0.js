@@ -803,6 +803,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
 
         if (avaliacaoRecente.mapeamento?.clinicaEstruturada) preencherClinicaEstruturada({...avaliacaoRecente.mapeamento.clinicaEstruturada,laudo:avaliacaoIdEditar?avaliacaoRecente.mapeamento.clinicaEstruturada.laudo:null});
         else preencherClinicaEstruturada({});
+        window.preencherCirurgiasAvaliacaoKineSys?.(avaliacaoRecente.mapeamento?.clinicaEstruturada?.cirurgias||avaliacaoRecente.cirurgias||[]);
 
         if (document.getElementById('eva_slider') && avaliacaoRecente.evaInicial != null) {
             document.getElementById('eva_slider').value = avaliacaoRecente.evaInicial;
@@ -1578,9 +1579,9 @@ function obterCirurgiaRelacionadaRegiao(idRegiao) {
     const regiao = BANCO_MAPEAMENTO_CLINICO[idRegiao];
     const tags = document.querySelectorAll('#tags_cirurgias .tag-cirurgia');
     for (const tag of tags) {
-        const texto = removerAcentos(tag.textContent.replace('✕', '').trim());
+        const texto = removerAcentos(tag.dataset.exibicao||tag.textContent.replace('✕', '').trim());
         if (regiao.palavrasChave.some(p => texto.includes(removerAcentos(p)))) {
-            return tag.textContent.replace('✕', '').trim();
+            return tag.dataset.exibicao||tag.textContent.replace('✕', '').trim();
         }
     }
     return null;
@@ -2187,9 +2188,9 @@ function coletarRestricoesPosOperatorias(){return{ativo:!!document.getElementByI
 function atualizarVisibilidadeRestricoesPosOp(){const box=document.getElementById('posop_campos');if(box)box.style.display=document.getElementById('posop_ativo')?.checked?'block':'none';}
 function preencherRestricoesPosOperatorias(d={}){const mapa={posop_ativo:!!d.ativo,posop_procedimento:d.procedimento||'',posop_data_cirurgia:d.dataCirurgia||'',posop_carga:d.statusCarga||'',posop_ortese:d.ortese||'',posop_adm:d.restricaoADM||'',posop_proibicoes:d.proibicoes||'',posop_orientacoes:d.orientacoesCirurgiao||'',posop_retorno_medico:d.retornoMedico||'',posop_protocolo:d.protocoloDisponivel||'nao_informado',posop_obs:d.observacoes||''};Object.entries(mapa).forEach(([id,v])=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v;});atualizarVisibilidadeRestricoesPosOp();}
 let clinicaEstruturadaPreservada = {};
-function coletarClinicaEstruturada(){return{...JSON.parse(JSON.stringify(clinicaEstruturadaPreservada)),exameLivre:window.KineSysExameLivre?.coletar()||clinicaEstruturadaPreservada.exameLivre||null,contextoAnamnese:window.KineSysContextoAnamnese?.coletar()||clinicaEstruturadaPreservada.contextoAnamnese||null,restricoesPosOperatorias:coletarRestricoesPosOperatorias(),examesImagem:{descricao:document.getElementById('exames_imagem_descricao')?.value.trim()||'',fonte:document.getElementById('exames_imagem_fonte')?.value||'relato'},laudo:window.coletarLaudoAvaliacaoKineSys?.()||null};}
+function coletarClinicaEstruturada(){return{...JSON.parse(JSON.stringify(clinicaEstruturadaPreservada)),cirurgias:window.coletarCirurgiasAvaliacaoKineSys?.()||clinicaEstruturadaPreservada.cirurgias||[],exameLivre:window.KineSysExameLivre?.coletar()||clinicaEstruturadaPreservada.exameLivre||null,contextoAnamnese:window.KineSysContextoAnamnese?.coletar()||clinicaEstruturadaPreservada.contextoAnamnese||null,restricoesPosOperatorias:coletarRestricoesPosOperatorias(),examesImagem:{descricao:document.getElementById('exames_imagem_descricao')?.value.trim()||'',fonte:document.getElementById('exames_imagem_fonte')?.value||'relato'},laudo:window.coletarLaudoAvaliacaoKineSys?.()||null};}
 function limparClinicaEstruturada(){clinicaEstruturadaPreservada={};window.KineSysExameLivre?.preencher();window.KineSysContextoAnamnese?.preencher();window.preencherLaudoAvaliacaoKineSys?.(null);['lista_medidas_objetivas','lista_psfs','lista_outcomes','lista_objetivos_terapeuticos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});['exames_imagem_descricao','plano_terapeutico','plano_frequencia','plano_criterios','criterios_alta','previsao_alta','posop_procedimento','posop_data_cirurgia','posop_ortese','posop_adm','posop_proibicoes','posop_orientacoes','posop_retorno_medico','posop_obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const ativo=document.getElementById('posop_ativo');if(ativo)ativo.checked=false;const carga=document.getElementById('posop_carga');if(carga)carga.value='';const prot=document.getElementById('posop_protocolo');if(prot)prot.value='nao_informado';atualizarVisibilidadeRestricoesPosOp();atualizarPSFSMedia();}
-function preencherClinicaEstruturada(d={}){limparClinicaEstruturada();clinicaEstruturadaPreservada=JSON.parse(JSON.stringify(d||{}));preencherRestricoesPosOperatorias(d.restricoesPosOperatorias||{});const imagem=d.examesImagem||{};const descricao=document.getElementById('exames_imagem_descricao');if(descricao)descricao.value=imagem.descricao||'';const fonte=document.getElementById('exames_imagem_fonte');if(fonte)fonte.value=imagem.descricao?(imagem.fonte==='laudo_conferido'?'laudo_conferido':'relato'):'';window.KineSysExameLivre?.preencher(d.exameLivre||null);window.preencherLaudoAvaliacaoKineSys?.(d.laudo||null);window.KineSysContextoAnamnese?.preencher(d.contextoAnamnese||{});}
+function preencherClinicaEstruturada(d={}){limparClinicaEstruturada();clinicaEstruturadaPreservada=JSON.parse(JSON.stringify(d||{}));window.preencherCirurgiasAvaliacaoKineSys?.(d.cirurgias||[]);preencherRestricoesPosOperatorias(d.restricoesPosOperatorias||{});const imagem=d.examesImagem||{};const descricao=document.getElementById('exames_imagem_descricao');if(descricao)descricao.value=imagem.descricao||'';const fonte=document.getElementById('exames_imagem_fonte');if(fonte)fonte.value=imagem.descricao?(imagem.fonte==='laudo_conferido'?'laudo_conferido':'relato'):'';window.KineSysExameLivre?.preencher(d.exameLivre||null);window.preencherLaudoAvaliacaoKineSys?.(d.laudo||null);window.KineSysContextoAnamnese?.preencher(d.contextoAnamnese||{});}
 
 function montarContextoMotorParaSalvar() {
     return {
@@ -2238,7 +2239,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     if(avaliacaoEdicaoId&&!registroEmEdicao){alert('⚠️ A avaliação em edição não foi encontrada. Reabra o prontuário.');avaliacaoEdicaoId=null;return;}
     if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
 
-    const tagsCirurgiasArr=[];document.querySelectorAll('#tags_cirurgias .tag-cirurgia').forEach(tag=>tagsCirurgiasArr.push({chave:tag.dataset.chave,texto:tag.textContent.replace('✕','').trim()}));
+    const tagsCirurgiasArr=window.coletarCirurgiasAvaliacaoKineSys?.()||[];
     const tagsMedArr=[];document.querySelectorAll('#tags_medicamentos div').forEach(tag=>tagsMedArr.push(tag.textContent.replace('✕','').trim()));
     const mapeamento=coletarDadosMapeamentoParaSalvar()||registroEmEdicao?.mapeamento||{resumoPorRegiao:[],detalhes:{}};
     mapeamento.contextoMotor=montarContextoMotorParaSalvar();
@@ -2529,7 +2530,7 @@ function coletarContextoClinico() {
     const cirurgias = [];
     document.querySelectorAll('#tags_cirurgias .tag-cirurgia').forEach(tag => cirurgias.push({
         chave: tag.dataset.chave || '',
-        texto: tag.textContent.replace('✕','').trim()
+        texto: tag.dataset.exibicao||tag.textContent.replace('✕','').trim()
     }));
     const fonte = obterConfiabilidadeFonte();
     const comorbidades = {

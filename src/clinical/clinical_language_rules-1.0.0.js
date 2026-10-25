@@ -92,7 +92,11 @@
   // diagnostic name, dose, clinical finding or unfamiliar heading.
   const label=/^\s*(?:#{1,6}\s*)?(HMA|História da Moléstia Atual|História clínica|Queixa principal|Sintomas associados|Exame físico|Exame clínico)\s*:\s*/iu;
   let offset=0,m;while((m=label.exec(text.slice(offset))))offset+=m[0].length;
-  return {conteudo:text.slice(offset),offset,marcador:text.slice(0,offset)};
+  // Only a closed, standalone conversational transition. The exact source is
+  // retained in the ledger; clinical text, quotes and arbitrary headings stay.
+  const transition=/^\s*(?:outra coisa|outra queixa|mais uma queixa)\s*[.:]\s*/iu.exec(text.slice(offset));
+  if(transition)offset+=transition[0].length;
+  return {conteudo:text.slice(offset),offset,marcador:text.slice(0,offset),tipo:transition?'transicao_discursiva':'rotulo_documental'};
  }
  const referenceRules=['essa dor','esta dor','a mesma dor','essa dormência','esta dormência','esse formigamento','este formigamento','esse sintoma','este sintoma'].map(compile);
  function resolveReferences(document,callbacks){

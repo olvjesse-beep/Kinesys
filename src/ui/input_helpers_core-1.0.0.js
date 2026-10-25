@@ -256,17 +256,39 @@ function inicializarAutocompleteCirurgia(){
     conectarAutocompleteAvaliacaoKineSys(inputCirurgia,sugestaoBoxCirurgia,'cirurgia');
 }
 
-function adicionarTagCirurgia(chave, termoExibicao) {
+function registroCirurgiaKineSys(tag) {
+    const preservado=tag.ksCirurgiaOriginal||{};
+    return {...preservado,chave:tag.dataset.chave||'',texto:tag.dataset.exibicao||preservado.texto||'',dataCirurgia:String(tag.querySelector?.('.ks-cirurgia-data')?.value??tag.dataset.dataCirurgia??'').trim()};
+}
+function coletarCirurgiasAvaliacaoKineSys() {
+    return Array.from(document.getElementById('tags_cirurgias')?.children||[]).filter(tag=>tag.dataset?.exibicao).map(registroCirurgiaKineSys);
+}
+let restaurandoCirurgiasKineSys=false;
+function preencherCirurgiasAvaliacaoKineSys(registros=[]) {
+    const container=document.getElementById('tags_cirurgias');if(!container)return;
+    container.innerHTML='';
+    restaurandoCirurgiasKineSys=true;
+    try{(Array.isArray(registros)?registros:[]).forEach(item=>{const r=typeof item==='string'?{texto:item}:item||{};const texto=r.texto||r.exibicao||r.nome||'';if(texto)adicionarTagCirurgia(r.chave||'relato_livre',texto,r);});}finally{restaurandoCirurgiasKineSys=false;}
+}
+function adicionarTagCirurgia(chave, termoExibicao, registro={}) {
     const container = document.getElementById('tags_cirurgias');
-    if(container&&Array.from(container.children).some(e=>e.dataset.chave===chave&&e.dataset.exibicao===termoExibicao)){if(inputCirurgia)inputCirurgia.value='';fecharSugestoesAvaliacaoKineSys();return;}
+    const data=String(registro.dataCirurgia||'').trim();
+    const existente=Array.from(container?.children||[]).find(e=>e.dataset.chave===chave&&e.dataset.exibicao===termoExibicao&&(!data||e.dataset.dataCirurgia===data));
+    if(existente){if(inputCirurgia)inputCirurgia.value='';fecharSugestoesAvaliacaoKineSys();existente.querySelector?.('.ks-cirurgia-data')?.focus();return;}
     if (container) {
         const tag = document.createElement('div');
         tag.className = 'tag-cirurgia';
         tag.dataset.chave = chave;
         tag.dataset.exibicao = termoExibicao;
-
-        const textoTag = document.createTextNode(termoExibicao + " ");
-        const botaoRemover = document.createElement('span');
+        tag.dataset.dataCirurgia = data;
+        tag.ksCirurgiaOriginal=JSON.parse(JSON.stringify(registro||{}));
+        const textoTag = document.createElement('span');textoTag.className='ks-cirurgia-nome';textoTag.textContent=termoExibicao;
+        const dataLabel=document.createElement('label');dataLabel.className='ks-cirurgia-data-label';
+        const dataCaption=document.createElement('span');dataCaption.textContent='Data (opcional)';
+        const dataInput=document.createElement('input');dataInput.type='text';dataInput.className='ks-cirurgia-data';dataInput.value=data;dataInput.maxLength=40;dataInput.placeholder='Dia/mês/ano ou ano';dataInput.autocomplete='off';dataInput.dataset.contextUi='true';dataInput.setAttribute('aria-label','Data ou período de '+termoExibicao);
+        dataInput.addEventListener('input',()=>{tag.dataset.dataCirurgia=dataInput.value.trim();notificarSugestaoAvaliacaoKineSys(dataInput);if(typeof agendarAutosaveKineSys==='function')agendarAutosaveKineSys();});
+        dataLabel.appendChild(dataCaption);dataLabel.appendChild(dataInput);
+        const botaoRemover = document.createElement('button');botaoRemover.type='button';botaoRemover.className='ks-cirurgia-remover';botaoRemover.setAttribute('aria-label','Remover '+termoExibicao);
         botaoRemover.title = "Remover";
         botaoRemover.textContent = "✕";
         botaoRemover.onclick = function() {
@@ -276,14 +298,16 @@ function adicionarTagCirurgia(chave, termoExibicao) {
         };
 
         tag.appendChild(textoTag);
+        tag.appendChild(dataLabel);
         tag.appendChild(botaoRemover);
         container.appendChild(tag);
     }
     if (inputCirurgia) inputCirurgia.value = '';
     if (sugestaoBoxCirurgia) sugestaoBoxCirurgia.style.display = 'none';
-    notificarSugestaoAvaliacaoKineSys(inputCirurgia);
-    if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
+    if(!restaurandoCirurgiasKineSys){notificarSugestaoAvaliacaoKineSys(inputCirurgia);if(typeof processarRadarEmTempoReal==='function')processarRadarEmTempoReal();}
 }
+window.coletarCirurgiasAvaliacaoKineSys=coletarCirurgiasAvaliacaoKineSys;
+window.preencherCirurgiasAvaliacaoKineSys=preencherCirurgiasAvaliacaoKineSys;
 
 // --- AUTOCOMPLETE: PROFISSÕES ---
 let inputProfissao = null;

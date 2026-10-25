@@ -164,7 +164,7 @@
   recortes(origem).forEach((parte,indice)=>{
    const structure=root.KineSysClinicalLanguage?.separarEstrutura(parte.trecho);
    if(structure?.marcador){
-    marcadoresEstruturais.push({campo:opcoes.campo||'paciente_hma',inicio:parte.inicio,fim:parte.inicio+structure.offset,trecho:origem.slice(parte.inicio,parte.inicio+structure.offset),tipo:'rotulo_documental',uso:'estrutura_nao_achado'});
+    marcadoresEstruturais.push({campo:opcoes.campo||'paciente_hma',inicio:parte.inicio,fim:parte.inicio+structure.offset,trecho:origem.slice(parte.inicio,parte.inicio+structure.offset),tipo:structure.tipo||'rotulo_documental',uso:'estrutura_nao_achado'});
     parte={...parte,inicio:parte.inicio+structure.offset,trecho:structure.conteudo};
     if(!parte.trecho.trim())return;
    }
@@ -229,6 +229,10 @@
    }
    let bloco={tipo,fatos:[],texto:''};
    fs.filter(f=>!omitidos.has(f.id)).forEach(f=>{
+    const anterior=bloco.fatos.length?relato.fatos.find(x=>x.id===bloco.fatos.at(-1)):null;
+    const inicio=f.origens?.[0]?.inicio,fimAnterior=anterior?.origens?.at(-1)?.fim;
+    const transicao=(relato.marcadoresEstruturais||[]).some(m=>m.tipo==='transicao_discursiva'&&m.inicio>=(fimAnterior??Infinity)&&m.fim<=(inicio??-1));
+    if(bloco.texto&&transicao){blocos.push(bloco);bloco={tipo,fatos:[],texto:''};}
     const base=textos.get(f.id)||f.redacao;
     const texto=root.KineSysDocumentAnalyzer?.redigirFatoPlanejado(f,base,!!bloco.texto||blocos.length>0)||base;
     if(bloco.texto&&bloco.texto.length+texto.length>550){blocos.push(bloco);bloco={tipo,fatos:[],texto:''};}
