@@ -365,6 +365,8 @@ function navegarPara(idTela, contextoEdicao = false) {
     }
 
     if (idTela === 'tela_cadastro' && !contextoEdicao) {
+        delete document.getElementById('tela_cadastro').dataset.editandoPaciente;
+        const cancelar=document.getElementById('cad_cancelar_edicao');if(cancelar)cancelar.hidden=true;
         pacienteAtualId = null; 
         if (document.getElementById('titulo_tela_cadastro')) document.getElementById('titulo_tela_cadastro').innerText = "Cadastro geral do paciente";
         ['cad_nome','cad_cpf','cad_nascimento','cad_idade','cad_sexo','cad_estado_civil','cad_telefone','cad_profissao','cad_responsavel_nome','cad_responsavel_parentesco','cad_responsavel_telefone','cad_cep','cad_endereco'].forEach(id => {
@@ -451,7 +453,7 @@ function navegarPara(idTela, contextoEdicao = false) {
     }
     if (idTela === 'tela_financeiro') {
         if (typeof inicializarFinanceiro === 'function') {
-            window.financeiroInicializacaoPendente = Promise.resolve(inicializarFinanceiro(pacienteAtualId || '')).catch(err => console.error('KineSys Financeiro:', err));
+            window.financeiroInicializacaoPendente = Promise.resolve(inicializarFinanceiro(pacienteAtualId || '')).catch(err => {console.error('KineSys Financeiro:', err);return false;});
         }
     }
     if (idTela === 'tela_avaliacao') {
@@ -3462,7 +3464,11 @@ async function requisitarGeminiRelatorioModelo(modelo, systemPrompt, contents, m
                 maxOutputTokens
             }
         });
-        if (invokeError) throw new Error(invokeError.message || 'A função segura de relatório não respondeu.');
+        if(invokeError){
+            const status=Number(invokeError.context?.status||invokeError.status||0);
+            const erro=new Error(status===401||status===403?'Sua sessão não permite acessar o gerador externo. Entre novamente e tente outra vez.':status===429?'O gerador externo atingiu seu limite de uso. Tente novamente mais tarde.':status===404?'O gerador externo de relatórios não está configurado. A avaliação e a edição manual continuam disponíveis.':'Não foi possível conectar ao gerador externo de relatórios. Verifique a conexão ou a configuração do serviço.');
+            erro.status=status;erro.conexaoRelatorio=status!==400;throw erro;
+        }
         if (!corpo) throw new Error('A função segura de relatório retornou uma resposta vazia.');
         const bloqueio = corpo?.promptFeedback?.blockReason;
         if (bloqueio) throw new Error(`A solicitação foi bloqueada pela API (${bloqueio}).`);
@@ -3546,6 +3552,7 @@ async function chamarGeminiRelatorio(systemPrompt, textoUsuario) {
                 integridade: 'completo'
             };
         } catch (erro) {
+            if(erro?.conexaoRelatorio)throw erro;
             if (erro?.name === 'AbortError') {
                 ultimoErro = new Error(`Tempo limite excedido ao consultar ${modelo}.`);
                 continue;
@@ -3583,7 +3590,7 @@ async function testarConexaoGemini() {
     } catch (e) {
         console.error('Teste Gemini:', e);
         if (status) {
-            status.textContent = `Gemini indisponível: ${e.message}`;
+            status.textContent = e?.conexaoRelatorio?e.message:'O gerador externo está indisponível. A avaliação e a edição manual continuam disponíveis. Tente novamente ou solicite a revisão da conexão à administração.';
             status.classList.remove('ks-status-success','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-error');
         }
         return false;

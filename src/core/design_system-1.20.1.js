@@ -262,7 +262,8 @@
         labels.forEach(label=>{let n=label.nextElementSibling,vis=false;while(n&&!n.classList.contains('ks-nav-label')&&!n.classList.contains('ks-nav-logout')){if(n.dataset.telaMenu&&getComputedStyle(n).display!=='none')vis=true;n=n.nextElementSibling;}label.style.display=vis?'block':'none';});
     }
     function atualizarPaginaAtiva(id){
-        const [tit,sub]=TITULOS[id]||['KineSys',''];
+        let [tit,sub]=TITULOS[id]||['KineSys',''];
+        if(id==='tela_cadastro'&&document.getElementById('tela_cadastro')?.dataset.editandoPaciente){tit='Editar cadastro';sub='Dados cadastrais do paciente selecionado';}
         const t=document.getElementById('ks_page_title'),s=document.getElementById('ks_page_subtitle'); if(t)t.textContent=tit;if(s)s.textContent=sub;
         document.querySelectorAll('#dropdownContent li[data-tela-menu]').forEach(li=>li.classList.toggle('ks-active',li.dataset.telaMenu===id));
         document.querySelectorAll('#ks_patient_context [data-patient-target]').forEach(b=>b.classList.toggle('active',b.dataset.patientTarget===id));
@@ -337,9 +338,10 @@
         const meta=[]; const idade=(typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade)||''; if(idade)meta.push(String(idade).replace(/\s*anos?/i,'')+' anos');if(p.profissao)meta.push(p.profissao);const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):(p.avaliacoes||[]);if(avs.length)meta.push(`${avs.length} ${avs.length===1?'avaliação':'avaliações'}`);ctx.querySelector('#ks_patient_meta').textContent=meta.join(' · ')||'Prontuário ativo';ctx.querySelector('.ks-patient-avatar').textContent=(p.nome||'P').trim().charAt(0).toUpperCase();
         ctx.querySelectorAll('[data-patient-target]').forEach(b=>{b.hidden=typeof window.telaPermitida==='function'&&!window.telaPermitida(b.dataset.patientTarget);});
     }
-    async function selecionarPacienteControle(idControle, pacienteId, disparar=true){
+    async function selecionarPacienteControle(idControle, pacienteId, disparar=true, aindaAtual=()=>true){
         if(!idControle||!pacienteId)return false;
         for(let i=0;i<12;i++){
+            if(!aindaAtual())return false;
             const sel=document.getElementById(idControle);
             if(sel&&[...sel.options].some(o=>String(o.value)===String(pacienteId))){
                 if(String(sel.value)!==String(pacienteId)){sel.value=pacienteId;if(disparar)sel.dispatchEvent(new Event('change',{bubbles:true}));}
@@ -352,6 +354,8 @@
     }
     async function aplicarContextoNaTela(tela){
         if(!pacienteContextoId)return;
+        const id=pacienteContextoId,revisao=contextoRevisao;
+        const aindaAtual=()=>id===pacienteContextoId&&revisao===contextoRevisao&&document.getElementById(tela)?.classList.contains('ativa');
         const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};
         // A lista da Avaliação é carregada de forma assíncrona e historicamente
         // filtrava pacientes já avaliados. Aguarda sua reconstrução antes de
@@ -359,7 +363,7 @@
         if(tela==='tela_avaliacao'&&typeof window.atualizarSelectPacientesPreCadastro==='function'){
             await window.atualizarSelectPacientesPreCadastro();
         }
-        if(ids[tela])await selecionarPacienteControle(ids[tela],pacienteContextoId,true);
+        if(ids[tela])await selecionarPacienteControle(ids[tela],id,true,aindaAtual);
     }
     async function abrirPacienteNaTela(tela){
         const p=await obterPacienteContexto();if(!p)return;
@@ -557,7 +561,7 @@
         const r=document.getElementById('ks_prontuario_resumo');if(!r)return;const revisao=contextoRevisao;const p=await obterPacienteContexto();if(revisao!==contextoRevisao)return;if(!p){r.hidden=true;r.replaceChildren();return;}r.hidden=false;
         const avs=typeof window.obterAvaliacoes==='function'?window.obterAvaliacoes(p):p.avaliacoes||[];const ev=p.evolucoes||[];const av=avs[avs.length-1];const idade=typeof window.idadeNumericaPaciente==='function'?window.idadeNumericaPaciente(p):p.idade;
         const podeExcluir=typeof window.usuarioEhMaster==='function'&&window.usuarioEhMaster();
-        r.innerHTML=`<div class="ks-prontuario-summary-main"><span class="ks-patient-initial lg">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><div><span class="ks-eyebrow">PRONTUÁRIO ATIVO</span><h2>${escapeHTMLDS(p.nome||'Paciente')}</h2><p>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||'',p.telefone||''].filter(Boolean).join(' · '))}</p></div></div><div class="ks-prontuario-metrics"><div><span>Avaliações</span><strong>${avs.length}</strong></div><div><span>Evoluções</span><strong>${ev.length}</strong></div><div><span>Última avaliação</span><strong>${escapeHTMLDS(av?.dataAvaliacao||'—')}</strong></div></div><div class="ks-prontuario-actions"><button type="button" class="btn-primary" data-ks-patient-action="evolucao">Registrar evolução</button><button type="button" class="btn-secondary" data-ks-patient-action="avaliacao">Nova avaliação</button><button type="button" class="btn-secondary" data-ks-patient-action="documentos">Documentos</button><button type="button" class="btn-secondary" data-ks-patient-action="prontuario_simples">PDF simplificado</button>${(typeof window.podeExportarProntuarioDetalhado==='function'&&window.podeExportarProntuarioDetalhado())?'<button type="button" class="btn-secondary" data-ks-patient-action="prontuario_detalhado">PDF detalhado</button>':''}${podeExcluir?'<button type="button" class="btn-danger ks-patient-delete" data-ks-patient-action="excluir" title="Excluir cadastro e todo o histórico">Excluir cadastro</button>':''}</div>`;
+        r.innerHTML=`<div class="ks-prontuario-summary-main"><span class="ks-patient-initial lg">${escapeHTMLDS((p.nome||'P').charAt(0))}</span><div><span class="ks-eyebrow">PRONTUÁRIO ATIVO</span><h2>${escapeHTMLDS(p.nome||'Paciente')}</h2><p>${escapeHTMLDS([idade?String(idade).replace(/\s*anos?/i,'')+' anos':'',p.profissao||'',p.telefone||''].filter(Boolean).join(' · '))}</p></div></div><div class="ks-prontuario-metrics"><div><span>Avaliações</span><strong>${avs.length}</strong></div><div><span>Evoluções</span><strong>${ev.length}</strong></div><div><span>Última avaliação</span><strong>${escapeHTMLDS(formatarDataDiretorio(av?.dataAvaliacao))}</strong></div></div><div class="ks-prontuario-actions"><button type="button" class="btn-primary" data-ks-patient-action="evolucao">Registrar evolução</button><button type="button" class="btn-secondary" data-ks-patient-action="avaliacao">Nova avaliação</button><button type="button" class="btn-secondary" data-ks-patient-action="documentos">Documentos</button><button type="button" class="btn-secondary" data-ks-patient-action="prontuario_simples">PDF simplificado</button>${(typeof window.podeExportarProntuarioDetalhado==='function'&&window.podeExportarProntuarioDetalhado())?'<button type="button" class="btn-secondary" data-ks-patient-action="prontuario_detalhado">PDF detalhado</button>':''}${podeExcluir?'<button type="button" class="btn-danger ks-patient-delete" data-ks-patient-action="excluir" title="Excluir cadastro e todo o histórico">Excluir cadastro</button>':''}</div>`;
         const acoes=r.querySelector('.ks-prontuario-actions');
         if(acoes){
             const extra=document.createDocumentFragment();
@@ -581,7 +585,7 @@
     }
 
     function prepararBuscasPaciente(){
-        ['evo_paciente_select','rel_paciente_select','midia_paciente_select'].forEach(id=>{
+        ['evo_paciente_select','rel_paciente_select','midia_paciente_select','esp_paciente_select'].forEach(id=>{
             const select=document.getElementById(id);
             if(!select||select.dataset.ksBuscaInstalada)return;
             select.dataset.ksBuscaInstalada='1';
@@ -597,7 +601,7 @@
             const opcoes=()=>Array.from(select.options).filter(option=>option.value).sort((a,b)=>nomeOpcao(a).localeCompare(nomeOpcao(b),'pt-BR',{sensitivity:'base'}));
             const fechar=()=>{list.hidden=true;input.setAttribute('aria-expanded','false');};
             const escolher=option=>{select.value=option.value;input.value=nomeOpcao(option);fechar();select.dispatchEvent(new Event('change',{bubbles:true}));};
-            const mostrar=()=>{const busca=normalizar(input.value);const itens=opcoes().filter(option=>!busca||normalizar(nomeOpcao(option)).includes(busca)).slice(0,20);list.replaceChildren();if(!itens.length){const empty=document.createElement('span');empty.className='ks-patient-picker-empty';empty.textContent='Nenhum paciente encontrado';list.append(empty);}else itens.forEach(option=>{const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.textContent=nomeOpcao(option);button.addEventListener('mousedown',event=>event.preventDefault());button.addEventListener('click',()=>escolher(option));list.append(button);});list.hidden=false;input.setAttribute('aria-expanded','true');};
+            const mostrar=()=>{const busca=normalizar(input.value);const rank=option=>{const nome=normalizar(nomeOpcao(option).split(' · ')[0]);return nome===busca?0:nome.startsWith(busca)?1:nome.split(/\s+/).some(p=>p.startsWith(busca))?2:3;};const itens=opcoes().filter(option=>!busca||normalizar(nomeOpcao(option)).includes(busca)).sort((a,b)=>(busca?rank(a)-rank(b):0)||nomeOpcao(a).localeCompare(nomeOpcao(b),'pt-BR',{sensitivity:'base'})).slice(0,20);list.replaceChildren();if(!itens.length){const empty=document.createElement('span');empty.className='ks-patient-picker-empty';empty.textContent='Nenhum paciente encontrado';list.append(empty);}else itens.forEach(option=>{const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.textContent=nomeOpcao(option);button.addEventListener('mousedown',event=>event.preventDefault());button.addEventListener('click',()=>escolher(option));list.append(button);});list.hidden=false;input.setAttribute('aria-expanded','true');};
             const sincronizar=()=>{const option=select.selectedOptions[0];input.value=option&&option.value?nomeOpcao(option):'';fechar();};
             input.addEventListener('focus',mostrar);
             input.addEventListener('input',()=>{if(select.value&&normalizar(nomeOpcao(select.selectedOptions[0]))!==normalizar(input.value)){const digitado=input.value;select.value='';select.dispatchEvent(new Event('change',{bubbles:true}));input.value=digitado;}mostrar();});
@@ -721,7 +725,7 @@
         const ctl=document.createElement('div');ctl.id='ks_agenda_controls';ctl.className='ks-agenda-controls';
         ctl.innerHTML=`<div class="ks-segmented"><button class="active" data-agenda-view="agenda_painel">Semana</button><button data-agenda-view="agenda_lista_espera">Lista de espera</button></div><div class="ks-agenda-config-wrap"><button type="button" class="btn-secondary" id="ks_agenda_config_btn">Configurações</button><div class="ks-agenda-config-menu" id="ks_agenda_config_menu" hidden><button data-agenda-view="agenda_procedimentos">Procedimentos</button><button data-agenda-view="agenda_horarios">Horários de atendimento</button><button data-agenda-view="agenda_bloqueios">Bloqueios e folgas</button></div></div>`;
         tela.insertBefore(ctl,painel);
-        ctl.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{if(typeof window.irParaSubtelaAgenda==='function')window.irParaSubtelaAgenda(b.dataset.agendaView);if(b.dataset.agendaView==='agenda_horarios'&&typeof window.carregarEditorGradeSemanal==='function')window.carregarEditorGradeSemanal();ctl.querySelectorAll('.ks-segmented button').forEach(x=>x.classList.toggle('active',x.dataset.agendaView===b.dataset.agendaView));document.getElementById('ks_agenda_config_menu').hidden=true;}));
+        ctl.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{if(typeof window.irParaSubtelaAgenda==='function')window.irParaSubtelaAgenda(b.dataset.agendaView);if(b.dataset.agendaView==='agenda_horarios'&&typeof window.carregarEditorGradeSemanal==='function')window.carregarEditorGradeSemanal();ctl.querySelectorAll('.ks-segmented button').forEach(x=>x.classList.toggle('active',x.dataset.agendaView===b.dataset.agendaView));const menuAtual=document.getElementById('ks_agenda_config_menu');if(menuAtual)menuAtual.hidden=true;}));
         const cfg=ctl.querySelector('#ks_agenda_config_btn'),menu=ctl.querySelector('#ks_agenda_config_menu');cfg.onclick=()=>menu.hidden=!menu.hidden;
     }
 
@@ -753,7 +757,8 @@
     /* -------------------------- Cadastro / geral -------------------------- */
     function prepararCadastro(){
         const tela=document.getElementById('tela_cadastro');if(!tela||tela.dataset.ksPrepared)return;tela.dataset.ksPrepared='1';
-        const card=tela.querySelector('.card');if(!card)return;card.classList.add('ks-form-surface');const h=card.querySelector('.card-header h2');if(h)h.textContent='Dados do paciente';
+        const card=tela.querySelector('.card');if(!card)return;card.classList.add('ks-form-surface');
+        const acoes=card.querySelector('.actions');if(acoes&&!document.getElementById('cad_cancelar_edicao')){const cancelar=document.createElement('button');cancelar.id='cad_cancelar_edicao';cancelar.type='button';cancelar.className='btn-secondary';cancelar.textContent='Cancelar edição';cancelar.hidden=!tela.dataset.editandoPaciente;cancelar.onclick=()=>window.cancelarEdicaoCadastro?.();acoes.prepend(cancelar);} const h=card.querySelector('.card-header h2');if(h)h.textContent='Dados do paciente';
         const grid=card.querySelector(':scope > .grid-2');if(!grid)return;
         const inserirTitulo=(texto,antes)=>{if(!antes)return;const d=document.createElement('div');d.className='ks-form-section-title ks-span-2';d.textContent=texto;grid.insertBefore(d,antes);};
         const nome=document.getElementById('cad_nome')?.closest('.input-group');

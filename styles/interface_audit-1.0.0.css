@@ -16,13 +16,13 @@ html body.ks-design-ready #tela_evolucao .evo-status-grid .checkbox-pill span{mi
 html body.ks-design-ready #tela_evolucao .evo-status-grid input[value=""]:checked+span{background:#e8efee!important;border-color:#5b777b!important;color:#23474e!important}
 html body.ks-design-ready #tela_evolucao .evo-status-grid input:focus-visible+span{outline:3px solid var(--kds-accent)!important;outline-offset:3px}
 html body.ks-design-ready #tela_evolucao .eva-numero{white-space:normal;overflow-wrap:normal;font-size:14px!important}
-html body.ks-design-ready #tela_equipe .ks-team-list{overflow-x:auto!important;overscroll-behavior-inline:contain}
-html body.ks-design-ready #tela_equipe .ks-team-list .tabela-pacientes{display:table!important;min-width:1000px;table-layout:auto!important}
-html body.ks-design-ready #tela_equipe .ks-team-list :is(th,td){white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;vertical-align:top}
-html body.ks-design-ready #tela_equipe .ks-team-list th:first-child{min-width:160px}
-html body.ks-design-ready #tela_equipe .ks-team-list td:nth-child(2){min-width:180px;overflow-wrap:anywhere!important}
-html body.ks-design-ready #tela_equipe .ks-team-list td:last-child{min-width:235px}
-html body.ks-design-ready #tela_equipe .ks-team-list td:last-child button{width:auto!important;min-width:max-content!important;white-space:nowrap!important;overflow-wrap:normal!important}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list{overflow-x:auto!important;overscroll-behavior-inline:contain}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list .tabela-pacientes{display:table!important;min-width:1000px;table-layout:auto!important}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list :is(th,td){white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;vertical-align:top}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list th:first-child{min-width:160px}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list td:nth-child(2){min-width:180px;overflow-wrap:anywhere!important}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list td:last-child{min-width:235px}
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_list) .ks-team-list td:last-child button{width:auto!important;min-width:max-content!important;white-space:nowrap!important;overflow-wrap:normal!important}
 html body.ks-design-ready #tela_configuracoes .ks-config-table-scroll{max-width:100%;overflow-x:auto!important;overscroll-behavior-inline:contain}
 html body.ks-design-ready #tela_configuracoes .ks-config-procedure-table{min-width:660px!important;width:100%!important;table-layout:auto!important}
 html body.ks-design-ready #tela_configuracoes .ks-config-procedure-table :is(th,td){white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
@@ -32,3 +32,9 @@ html body.ks-design-ready #tela_configuracoes .ks-config-procedure-table button{
   html body.ks-design-ready #tela_equipe .ks-team-hero>div{flex:0 1 auto!important}
   html body.ks-design-ready #tela_equipe .ks-team-hero{gap:16px!important}
 }
+
+html body.ks-design-ready :is(#tela_equipe,#ks_config_team_form) :is(#grp_eq_senha,#grp_eq_confirmar_senha)[hidden],html body.ks-design-ready #tela_configuracoes #ks_config_team_form[hidden],html body.ks-design-ready #tela_cadastro #cad_cancelar_edicao[hidden]{display:none!important}
+html body.ks-design-ready #ks_config_team_list{min-width:0;max-width:100%}
+html body.ks-design-ready #ks_config_team_form .ks-team-hero{gap:16px!important}
+html body.ks-design-ready #ks_config_busca_status{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+html body.ks-design-ready .ks-patient-history-identity{overflow-wrap:anywhere;color:var(--kds-text);font-weight:650}

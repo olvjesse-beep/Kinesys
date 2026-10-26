@@ -462,7 +462,7 @@
             body.innerHTML='<div class="ks-fisio-evolution-empty"><strong>Ainda não há dados suficientes para o gráfico</strong><span>Registre a avaliação com EVA ou uma evolução para iniciar a curva clínica.</span></div>';
         }else{
             const primeiro=pontos[0],ultimo=pontos[pontos.length-1],variacao=ultimo.eva-primeiro.eva;
-            const tendencia=variacao<0?`redução de ${Math.abs(variacao)} ponto(s)`:variacao>0?`aumento de ${variacao} ponto(s)`:'estabilidade';
+            const tendencia=pontos.length<2?'Dados insuficientes para tendência':variacao<0?`redução de ${Math.abs(variacao)} ponto(s)`:variacao>0?`aumento de ${variacao} ponto(s)`:'estabilidade';
             body.innerHTML=`<div class="ks-fisio-evolution-summary"><span><small>Registros</small><strong>${pontos.length}</strong></span><span><small>EVA mais recente</small><strong>${ultimo.eva}/10</strong></span><span><small>Tendência</small><strong>${tendencia}</strong></span></div>${graficoEvolucaoSVG(pontos)}<div class="ks-fisio-evolution-legend"><span><i></i>EVA registrada</span><small>A curva apresenta a intensidade da dor documentada em avaliações e evoluções.</small></div>`;
         }
         if(!dialog.open)dialog.showModal();

@@ -176,10 +176,20 @@
             const sit=await obterSituacaoPagamentoAgendamento(a);
             if(!atual())return false;
             if(!sit?.verificado||String(sit.agendamentoId)!==String(a.id))throw Error('Não foi possível confirmar a situação financeira deste agendamento.');
-            fecharModal('modal_detalhe_agendamento');
-            if(!document.getElementById('tela_financeiro')?.classList.contains('ativa')&&typeof navegarPara==='function')await navegarPara('tela_financeiro');
-            await window.financeiroInicializacaoPendente;
+            // O contexto global e a inicialização lazy devem apontar para a
+            // ocorrência escolhida, nunca reaplicar o prontuário anterior.
+            if(typeof window.definirPacienteContexto==='function')await window.definirPacienteContexto(String(a.paciente_id));
             if(!atual())return false;
+            if(typeof pacienteAtualId!=='undefined')pacienteAtualId=String(a.paciente_id);
+            fecharModal('modal_detalhe_agendamento');
+            if(!document.getElementById('tela_financeiro')?.classList.contains('ativa')&&typeof navegarPara==='function'){
+                const navegou=await navegarPara('tela_financeiro');
+                if(navegou===false)throw Error('A abertura do Financeiro foi interrompida. Abra novamente o pagamento pela Agenda.');
+            }
+            const inicializado=await window.financeiroInicializacaoPendente;
+            if(inicializado===false)throw Error('Não foi possível carregar o Financeiro. Tente abrir o pagamento novamente.');
+            if(!atual())return false;
+            window.KineSysFinanceiroLancamentos?.sair?.();
             if(typeof alternarAbaFinanceiro==='function')alternarAbaFinanceiro('paciente');
             await popularPacientesFinanceiro(a.paciente_id);
             if(!atual())return false;

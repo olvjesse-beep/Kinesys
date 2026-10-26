@@ -113,6 +113,12 @@ async function abrirHistoricoAgendamentosPaciente(pacienteId, pagina=0) {
     dialog.querySelector('[data-close-history]').onclick=()=>{historicoAgendamentosPacienteRevisao++;dialog.close();};
     if(!dialog.open)dialog.showModal();
     const atual=()=>revisao===historicoAgendamentosPacienteRevisao&&dialog.open&&clinica===String(typeof usuarioLogado!=='undefined'?usuarioLogado?.clinica_id||'':'');
+    const identidade=document.createElement('p');identidade.className='ks-patient-history-identity';identidade.textContent='Paciente · '+String(pacienteId);dialog.querySelector('header').after(identidade);
+    if(typeof obterPacientesBasicos==='function')Promise.resolve(obterPacientesBasicos()).then(pacientes=>{
+        if(!atual())return;
+        const paciente=(pacientes||[]).find(p=>String(p.id)===String(pacienteId));
+        if(paciente)identidade.textContent=String(paciente.nome||'Paciente')+' · '+String(pacienteId);
+    }).catch(()=>{});
     try{
         const inicio=Math.max(0,pagina)*50;
         const {data,error}=await _supabase.from('agendamentos')

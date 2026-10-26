@@ -35,6 +35,10 @@ html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-row:has(in
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-message{display:block;color:var(--kds-warning);font-size:var(--kds-font-label);line-height:var(--kds-leading-text)}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-change-message:empty{display:none}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-load-details{background:transparent!important;border-top:1px solid var(--kds-line)!important;padding-top:12px!important}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .evo-mini-grid{align-items:stretch!important}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .evo-mini-grid>.input-group{display:flex!important;flex-direction:column!important;min-width:0}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .evo-mini-grid>.input-group>label{flex:1;display:flex;align-items:flex-end}
+html body.ks-design-ready #tela_evolucao.ks-evo-model1 .evo-mini-grid>.input-group>input{margin-top:auto}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 .ks-evo-main>.actions{border-top:1px solid var(--kds-line)!important;padding-top:20px!important;gap:14px!important}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1>.ks-collapsible-card{margin:0!important}
 html body.ks-design-ready #tela_evolucao.ks-evo-model1 :is(textarea,input,button):focus-visible{outline:3px solid var(--kds-focus-ring);outline-offset:2px}

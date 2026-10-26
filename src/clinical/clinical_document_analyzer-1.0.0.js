@@ -141,7 +141,8 @@
   return [...groups.values()];
  }
  function evidenceModel(plan){
-  return (plan.correlacoes||[]).map((c,index)=>{
+  // Regiões ainda sem hipótese ou exame não são hipóteses anônimas.
+  return (plan.correlacoes||[]).filter(c=>c.hipoteseId||c.hipoteseAnamnese||(c.resultados||[]).length).map((c,index)=>{
    const results=[],seen=new Map();
    for(const r of c.resultados||[]){
     const key=JSON.stringify([r.eixoId,r.teste,r.resultado,r.lado||'']);if(seen.has(key)){seen.get(key).indices=uniq([...seen.get(key).indices,r.indice]);continue;}
@@ -152,7 +153,7 @@
    const history=(plan.fatos||[]).filter(f=>f.tipo==='relato'&&(f.proposicoes||[]).some(p=>p.regiaoId===c.regiaoId&&p.sujeito==='paciente'&&!['movimento_modificador','procedimento_modificador'].includes(p.papel))).map(f=>({fatoId:f.id,texto:f.origens?.[0]?.trecho||f.redacao,papel:'contexto_documental_nao_confirmatorio'}));
    const state=c.evidenciasCompartilhadas?.estado||'nao_classificada';
    const divergent=['menos_compativel','localizacao_pendente','lateralidade_pendente','cronologia_pendente','dados_divergentes'].includes(state);
-   return {id:'correlacao:'+(c.hipoteseId||index),hipoteseId:c.hipoteseId||'',hipotese:c.hipoteseAnamnese||'Hipótese sem nome registrado',regiaoId:c.regiaoId||'',regiao:c.regiao||regionNames[c.regiaoId]||'',
+   return {id:'correlacao:'+(c.hipoteseId||index),hipoteseId:c.hipoteseId||'',hipotese:c.hipoteseAnamnese||'Exame complementar registrado',regiaoId:c.regiaoId||'',regiao:c.regiao||regionNames[c.regiaoId]||'',
     historia:history,resultados:results,criterioAtendido:c.criterioAtendido??null,estadoHistoria:state,
     conclusao:c.semVinculo||!results.length?'sem_vinculo':divergent?'esclarecer_historia':c.criterioAtendido===true?'criterio_registrado_atendido':c.criterioAtendido===false?'criterio_registrado_nao_atendido':'interpretacao_pendente',
     limites:['resultado_positivo_nao_e_diagnostico','negativo_nao_exclui_isoladamente','correspondencia_regional_nao_e_causalidade']};

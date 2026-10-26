@@ -363,8 +363,19 @@
             const normalizar = valor => valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
             const termo = normalizar(evento.target.value.trim());
             const aliases = { online: 'agenda horarios intervalos encaixes servicos cores aparencia ausencias procedimentos', mensagens: 'comunicacao whatsapp mensagens lembretes', dados: 'dados seguranca backup exportar restaurar', documentos: 'documentos relatorios assinatura registro', equipe: 'equipe profissionais acessos permissoes', clinica: 'clinica identidade endereco', integracoes: 'integracoes google calendar whatsapp api' };
-            tabs.querySelectorAll('[data-config-tab]').forEach(button => { button.hidden = !!termo && !normalizar(aliases[button.dataset.configTab] || button.textContent).includes(termo); });
-            document.getElementById('ks_config_busca_status').textContent = termo && !tabs.querySelector('[data-config-tab]:not([hidden])') ? 'Nenhum ajuste encontrado. Tente horários, mensagens ou backup.' : '';
+            const resultados = [...tabs.querySelectorAll('[data-config-tab]')].filter(button => !termo || normalizar(aliases[button.dataset.configTab] || button.textContent).includes(termo));
+            // A busca não esconde a aba cujo conteúdo continua aberto.
+            tabs.querySelectorAll('[data-config-tab]').forEach(button => { button.hidden = false; });
+            const statusBusca=document.getElementById('ks_config_busca_status');
+            statusBusca.replaceChildren();
+            if(termo){
+                statusBusca.append(document.createTextNode(resultados.length?'Abrir ajustes encontrados: ':'Nenhum ajuste encontrado. Tente horários, mensagens ou backup.'));
+                resultados.forEach(button=>{const resultado=document.createElement('button');resultado.type='button';resultado.className='btn-secondary';resultado.textContent=button.textContent.trim();resultado.addEventListener('click',()=>{
+                    abrirAba(button.dataset.configTab);
+                    if(button.dataset.configTab==='online'&&/cor|aparencia/.test(termo))abrirAba('aparencia');
+                    else if(button.dataset.configTab==='online')window.KineSysConfiguracoesAgendaOnlineLayout?.showStage?.(/ausencia/.test(termo)?'ausencias':/horario|intervalo/.test(termo)?'horarios':/servico|procedimento/.test(termo)?'servicos':'geral');
+                });statusBusca.append(resultado);});
+            }
         });
         tabs.insertAdjacentHTML('afterend', '<p id="ks_config_busca_status" role="status" aria-live="polite"></p>');
 

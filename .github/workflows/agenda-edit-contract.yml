@@ -90,6 +90,7 @@ jobs:
           node tests/evolution_persistence.contract.js
           node tests/evolution_model1_roundtrip.test.cjs
           node tests/interface_audit_regression.test.cjs
+          node tests/interface_audit_full.test.cjs
           node --check src/auth/login_access-1.18.0.js
           node tests/access_management.contract.js
           node --check src/clinical/evaluation_workspace-1.17.0.js

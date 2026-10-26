@@ -266,7 +266,14 @@
                 const [area,key] = alvo.dataset.configContext.split(':');
                 if (area === 'agenda') { window.KineSysConfiguracoesAgendaOnline?.abrirAba(key === 'procedimentos' ? 'aparencia' : 'online'); if (key !== 'procedimentos') mostrarStage(key); }
                 else if (area === 'clinica') { showClinicSection(key); }
-                else if (area === 'equipe') { if (key !== 'profissionais' && form) form.hidden = false; document.getElementById(key === 'acessos' ? 'eq_nivel_acesso' : key === 'registros' ? 'eq_tipo_registro' : 'ks_config_team_search')?.focus(); }
+                else if (area === 'equipe') {
+                    if(form)form.hidden=true;
+                    const titulos={profissionais:['Profissionais da clínica','Organize profissionais e vínculos. Use Editar para alterar um cadastro.'],registros:['Registros profissionais','Consulte conselho, regional e registro na tabela. Use Editar no profissional para atualizar esses dados.'],acessos:['Perfis de acesso','Consulte os perfis e a situação dos usuários. Use Editar para revisar o acesso de uma pessoa.']};
+                    const [titulo,descricao]=titulos[key]||titulos.profissionais;
+                    const cabecalho=document.querySelector('#ks_config_content_equipe .ks-config-page-heading');
+                    if(cabecalho){cabecalho.querySelector('h2').textContent=titulo;cabecalho.querySelector('p').textContent=descricao;}
+                    document.getElementById('ks_config_team_search')?.focus();
+                }
                 else if (area === 'documentos') { if (key === 'clinica') window.KineSysConfiguracoesAgendaOnline?.abrirAba('clinica'); if (key === 'relatorios') window.navegarPara?.('tela_relatorio'); }
                 else if (area === 'dados') { if (key === 'acessos') window.KineSysConfiguracoesAgendaOnline?.abrirAba('equipe'); else { if (key === 'inventario') document.getElementById('ks_config_data_advanced').open=true; document.getElementById(key === 'inventario' ? 'ks_dados_inventory' : 'ks_dados_backup_btn')?.scrollIntoView({block:'center',behavior:'smooth'}); } }
                 else if (area === 'integracoes') { const id = key === 'google' ? 1 : 0; const detalhe = document.querySelectorAll('#ks_config_panel_integracoes details')[id]; if (detalhe && key !== 'geral') { detalhe.open = true; detalhe.scrollIntoView({block:'center',behavior:'smooth'}); } }

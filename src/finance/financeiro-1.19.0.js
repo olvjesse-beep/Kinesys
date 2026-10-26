@@ -768,6 +768,8 @@ function alternarPersonalizacaoContrato() {
 }
 
 function configurarCabecalhoModalPlanoFinanceiro(modo='novo', plano=null) {
+    const paciente=document.getElementById('fin_plano_paciente');
+    if(paciente)paciente.textContent=document.getElementById('financeiro_paciente_select')?.selectedOptions?.[0]?.textContent||'Paciente selecionado';
     const titulo=document.getElementById('fin_plano_titulo');
     const contexto=document.getElementById('fin_plano_contexto');
     const salvar=document.getElementById('fin_plano_salvar_btn');

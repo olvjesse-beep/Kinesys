@@ -317,7 +317,7 @@
 /* Despesas — alinhamento de filtros e ação */
 #tela_financeiro .finance-expense-toolbar{
   display:grid!important;
-  grid-template-columns:minmax(180px,210px) minmax(220px,250px) minmax(320px,1fr) auto!important;
+  grid-template-columns:minmax(140px,.8fr) minmax(160px,1fr) minmax(160px,1.2fr) max-content!important;
   align-items:end!important;
   column-gap:12px!important;
   row-gap:12px!important;
@@ -332,6 +332,9 @@
   min-height:var(--fin-control-height)!important;
 }
 #tela_financeiro .finance-expense-toolbar>.btn-primary{
+  width:auto!important;
+  min-width:max-content!important;
+  flex-shrink:0!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -345,7 +348,7 @@
 }
 @media(max-width:980px){
   #tela_financeiro .finance-expense-toolbar{
-    grid-template-columns:minmax(170px,210px) minmax(210px,250px) minmax(260px,1fr)!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
   }
   #tela_financeiro .finance-expense-toolbar>.btn-primary{
     grid-column:1/-1!important;

@@ -28,6 +28,7 @@ function fixture() {
   context.window = context;
   context.telaPermitida = screen => screen !== 'tela_cadastro' || allowed;
   vm.createContext(context);
+  vm.runInContext(design.slice(design.indexOf('    function formatarDataDiretorio('),design.indexOf('    function prepararFinanceiro(')),context);
   vm.runInContext(registration.slice(registration.indexOf('async function editarCadastro('), registration.indexOf('// APIs históricas')), context);
   const canonicalEdit = context.editarCadastro;
   context.editarCadastro = async id => { edits.push(id); return canonicalEdit(id); };
@@ -61,6 +62,9 @@ async function main() {
   assert.deepEqual(f.edits, [f.a.id, f.b.id], 'troca de paciente usa o ID atual, nunca o último editado');
   assert.equal(f.fields.cad_nome.value, f.b.nome);
   assert.equal(f.context.pacienteAtualId, f.b.id);
+  let voltou=false;f.context.abrirPacienteNaTela=async tela=>{assert.equal(tela,'tela_buscar');assert.equal(f.context.pacienteContextoId,f.b.id);voltou=true;};
+  await f.context.cancelarEdicaoCadastro();assert(voltou,'cancelar volta ao prontuário por ID');assert.equal(f.fields.cad_cancelar_edicao.hidden,true);assert.equal(f.fields.tela_cadastro.dataset.editandoPaciente,undefined);
+  f.a.avaliacoes=[{dataAvaliacao:'2026-10-21'}];f.select(f.a);await f.context.atualizarResumoPacienteContexto();assert.match(f.summary.innerHTML,/21\/10\/2026/,'última avaliação usa data brasileira');
   const denied = fixture(); denied.deny();
   await denied.context.atualizarResumoPacienteContexto();
   assert(!denied.added.some(b => b.dataset.ksPatientAction === 'editar'), 'perfil sem cadastro não recebe atalho');

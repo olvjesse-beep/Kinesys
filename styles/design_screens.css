@@ -524,6 +524,7 @@ html body.ks-design-ready :is(.modal-overlay,.ks-dialog-overlay,.ks-drawer-overl
   overscroll-behavior:contain;
 }
 html body.ks-modal-open{overflow:hidden!important}
+html body.ks-design-ready #ks_admin_message_dialog [data-admin-action="close-message"]{flex:0 0 auto!important;width:auto!important;min-width:76px!important;font-size:var(--kds-font-ui)!important;white-space:nowrap!important;padding:0 14px!important;overflow-wrap:normal!important}
 html body.ks-design-ready :is(.modal-fechar,.ks-dialog-x,.ks-drawer-close,.ks-eval-dialog-close,.ks-context-close,.ks-investigation-close,.ks-agenda-prof-picker-close,.ks-home-pending-head button,.ks-prof-dialog-head button){
   flex:0 0 44px!important;
   width:44px!important;

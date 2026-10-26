@@ -76,16 +76,17 @@ const vm = require('vm');
 (async()=>{
   const source=fs.readFileSync('src/patient/patient_records_browse_core-1.0.0.js','utf8');
   for(const financeiro of [true,false]){
-    const chamadas=[],status={outerHTML:'',textContent:'',append(){}},botao={};
-    const dialog={open:false,innerHTML:'',className:'',setAttribute(){},showModal(){this.open=true;},close(){this.open=false;},querySelector:s=>s==='[role="status"]'?status:botao};
+    const chamadas=[],status={outerHTML:'',textContent:'',append(){}},botao={},identidade={textContent:''},header={after(node){assert.equal(node,identidade);}};
+    const dialog={open:false,innerHTML:'',className:'',setAttribute(){},showModal(){this.open=true;},close(){this.open=false;},querySelector:s=>s==='[role="status"]'?status:s==='header'?header:botao};
     const a={id:'ag-fixture',data:'2026-10-13',hora_inicio:'18:00',hora_fim:'19:00',status:'atendido',procedimentos:{nome:'Osteopatia'},equipe:{nome:'Equipe fixture'}};
     let financeiroConsultado=0;
     const query={select(){return this;},eq(k,v){chamadas.push(['eq',k,v]);return this;},order(k,v){chamadas.push(['order',k,v.ascending]);return this;}};
     // Transporte fake devolve registro explícito; nenhuma gravação é oferecida.
     query.range=async(inicio,fim)=>{chamadas.push(['range',inicio,fim]);return {data:[a],error:null};};
-    const c={console,document:{getElementById:()=>null,createElement:()=>dialog,body:{append(){}}},usuarioLogado:{clinica_id:'clinic-fixture'},telaPermitida:t=>t!=='tela_financeiro'||financeiro,_supabase:{from:t=>{chamadas.push(['from',t]);return query;}},escapeHTML:v=>String(v),obterMapaPagamentoAgendamentos:async()=>{financeiroConsultado++;return new Map([['ag-fixture',{verificado:true,pago:false,parcial:true}]]);}};
+    const c={console,document:{getElementById:()=>null,createElement:tag=>tag==='p'?identidade:dialog,body:{append(){}}},usuarioLogado:{clinica_id:'clinic-fixture'},telaPermitida:t=>t!=='tela_financeiro'||financeiro,obterPacientesBasicos:async()=>[{id:'pac-fixture',nome:'Paciente sintético'}],_supabase:{from:t=>{chamadas.push(['from',t]);return query;}},escapeHTML:v=>String(v),obterMapaPagamentoAgendamentos:async()=>{financeiroConsultado++;return new Map([['ag-fixture',{verificado:true,pago:false,parcial:true}]]);}};
     c.window=c;vm.createContext(c);vm.runInContext(source.slice(source.indexOf('let historicoAgendamentosPacienteRevisao'),source.indexOf('if (document.readyState')),c);
     await c.abrirHistoricoAgendamentosPaciente('pac-fixture',2);
+    assert.equal(identidade.textContent,'Paciente sintético · pac-fixture','histórico identifica nome e ID sem depender do fundo do modal');
     assert(chamadas.some(x=>x[0]==='eq'&&x[1]==='clinica_id'&&x[2]==='clinic-fixture'));
     assert(chamadas.some(x=>x[0]==='eq'&&x[1]==='paciente_id'&&x[2]==='pac-fixture'));
     assert.deepEqual(chamadas.filter(x=>x[0]==='order').map(x=>x.slice(1)),[['data',false],['hora_inicio',false],['id',false]]);

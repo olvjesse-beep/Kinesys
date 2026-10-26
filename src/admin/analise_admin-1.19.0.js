@@ -575,7 +575,7 @@ function renderizarAnaliseAtendimentos(resumo) {
     );
     analiseRenderKPIs([
         { label:'Atendimentos realizados', valor:analiseInteiro(resumo.atendidosTotal), ajuda:'Sessões marcadas como atendidas ou concluídas.' },
-        { label:'Faltas injustificadas', valor:analiseInteiro(resumo.faltasNaoTotal), ajuda:'Seu “ralo de agenda”.' },
+        { label:'Faltas injustificadas', valor:analiseInteiro(resumo.faltasNaoTotal), ajuda:'Atendimentos perdidos por falta sem justificativa.' },
         { label:'Faltas justificadas', valor:analiseInteiro(resumo.faltasJustTotal), ajuda:'Ausências reconhecidas e não penalizadas.' },
         { label:'Agendamentos cancelados', valor:analiseInteiro(resumo.canceladosTotal), ajuda:'Quantidade de agendamentos com status cancelado, independentemente da origem do cancelamento.' },
         { label:'Taxa de comparecimento', valor:analisePercentual(resumo.taxaComparecimento), ajuda:'Quanto maior, mais saudável está a operação.' },
@@ -608,7 +608,7 @@ function renderizarAnaliseNovosPacientes(resumo) {
     const ativacao = resumo.novosSelecionados.length ? (resumo.selecionadosComAtendimento / resumo.novosSelecionados.length) * 100 : 0;
     analiseSetTitulos(
         'Cadastros x novos pacientes selecionados',
-        'Nem todo cadastro vira novo paciente estratégico — aqui quem manda é a curadoria do ADM.',
+        'O indicador considera os cadastros selecionados pela administração.',
         'Situação dos novos pacientes selecionados',
         'Mostra quantos já iniciaram atendimento e quantos ainda precisam ser ativados.',
         'Curadoria de novos pacientes',
@@ -616,7 +616,7 @@ function renderizarAnaliseNovosPacientes(resumo) {
     );
     analiseRenderKPIs([
         { label:'Cadastros do ano', valor:analiseInteiro(resumo.candidatosNovos.length), ajuda:'Todos os pacientes cadastrados no ano analisado.' },
-        { label:'Selecionados como novos pacientes', valor:analiseInteiro(resumo.novosSelecionados.length), ajuda:'Este número é manual, do jeitinho que você pediu.' },
+        { label:'Selecionados como novos pacientes', valor:analiseInteiro(resumo.novosSelecionados.length), ajuda:'Total de pacientes incluídos manualmente neste indicador.' },
         { label:'Selecionados neste mês', valor:analiseInteiro(thisMonth), ajuda:'Mostra o fôlego mais recente da captação.' },
         { label:'Com 1º atendimento realizado', valor:analiseInteiro(resumo.selecionadosComAtendimento), ajuda:'Ajuda a medir ativação real do novo paciente.' },
         { label:'Taxa de ativação', valor:analisePercentual(ativacao), ajuda:'Selecionados que já viraram atendimento de fato.' }

@@ -27,13 +27,14 @@ console.log('PASS: diálogos financeiros disponíveis sem carregar Agenda.');
 
 // Abertura real com formulário derivado dos IDs publicados, sem substitutos
 // para elementos ausentes: detecta regressões de HTML antes da publicação.
-const camposPlano={financeiro_paciente_select:{value:'pac-fixture'}};
+const camposPlano={financeiro_paciente_select:{value:'pac-fixture',selectedOptions:[{textContent:'Paciente sintético'}]}};
 for(const match of html.matchAll(/id="(fin_plano_[^"]+)"/g))camposPlano[match[1]]={value:'',checked:false,disabled:false,hidden:false,textContent:'',innerHTML:'',selectedOptions:[{dataset:{sessoes:'10',valor:'800'}}]};
 let abriuPlano=false;
 const abertura={document:{getElementById:id=>camposPlano[id]||null},financeiroPlanoRenovacaoOrigemId:'',financeiroPlanosCache:[],gerarOperacaoFinanceiraId:()=> 'op-fixture',definirFormasPagamentoSelecionadas(){},numeroFinanceiro:v=>Number(String(v||0).replace(',','.')),moedaBR:v=>String(v),abrirModal:id=>{assert.equal(id,'modal_fin_plano');abriuPlano=true;},alert:message=>{throw Error(message);}};
 vm.createContext(abertura);
 vm.runInContext(financeiro.slice(financeiro.indexOf('function calcularValorFinalPlano'),financeiro.indexOf('async function abrirRenovacaoPlanoFinanceiro')),abertura);
 abertura.abrirModalNovoPlano();assert.equal(abriuPlano,true);assert.equal(camposPlano.fin_plano_sessoes.disabled,true);
+assert.equal(camposPlano.fin_plano_paciente.textContent,'Paciente sintético','novo plano identifica o paciente dentro da caixa');
 camposPlano.fin_plano_personalizar.checked=true;abertura.alternarPersonalizacaoContrato();assert.equal(camposPlano.fin_plano_sessoes.disabled,false);
 assert.equal(camposPlano.fin_plano_operacao.value,'op-fixture');
 console.log('PASS: abertura real do plano e personalização compatíveis com o HTML publicado.');
@@ -99,6 +100,18 @@ async function testarContextoPagamento(){
  }
  const nav=harness(),ready=nav.gate();nav.c.financeiroInicializacaoPendente=ready.promise;
  const abrindo=nav.c.abrirPagamentoAgendamentoIntegrado('b');await new Promise(resolve=>setImmediate(resolve));assert.equal(nav.counts().abertos,0,'aguarda inicialização financeira da navegação');ready.resolve();assert.equal(await abrindo,true);
+ // A primeira entrada lazy deve receber o paciente da Agenda e abandonar
+ // o livro-caixa antes de selecionar a conta, inclusive com outro prontuário ativo.
+ const lazy=harness(),init=lazy.gate();let contexto='pac-a',saiu=false;
+ lazy.c.pacienteAtualId='pac-a';lazy.campos.financeiro_paciente_select.value='pac-a';
+ lazy.c.definirPacienteContexto=async id=>{contexto=id;};
+ lazy.c.KineSysFinanceiroLancamentos={sair(){saiu=true;}};
+ lazy.c.navegarPara=async()=>{assert.equal(contexto,'pac-b');assert.equal(lazy.c.pacienteAtualId,'pac-b');lazy.c.financeiroInicializacaoPendente=init.promise;return true;};
+ const primeiraAbertura=lazy.c.abrirPagamentoAgendamentoIntegrado('b');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(lazy.counts().abertos,0);init.resolve();assert.equal(await primeiraAbertura,true);
+ assert(saiu);assert.equal(lazy.campos.financeiro_paciente_select.value,'pac-b');assert.match(lazy.campos.fin_pag_contexto_agendamento.innerHTML,/Paciente b/);
+ const falhaInit=harness();falhaInit.c.financeiroInicializacaoPendente=Promise.resolve(false);
+ assert.equal(await falhaInit.c.abrirPagamentoAgendamentoIntegrado('b'),false);assert.equal(falhaInit.counts().abertos,0);assert.match(falhaInit.alertas.join(' '),/carregar o Financeiro/);
  const styles=fs.readFileSync('styles/financeiro_agendamento-1.21.0.css','utf8');assert.match(styles,/\.fin-ag-context\[hidden\],\.fin-ag-values\[hidden\]\{display:none!important\}/,'hidden deve prevalecer sobre display:grid');
  for(const id of ['fin_pag_plano_grupo','fin_pag_parcelas_grupo','fin_pag_credito_box'])assert(styles.includes('#'+id+'[hidden]'),'grupos não aplicáveis permanecem ocultos');
  console.log('PASS: unitário → pacote → genérico, dados limpos, vínculo imutável, troca rápida, fechamento, clínica, retry e duplo clique.');
