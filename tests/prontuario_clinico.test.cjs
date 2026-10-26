@@ -36,6 +36,10 @@ async function run(){
  assert.equal(JSON.stringify(contexto),guard,'exportação não modifica registro original');
  a.mapeamento.resumoPorRegiao.push({regiao:'Quadro geral',textoDocumento:'Achado clínico geral efetivamente documentado.'});assert(render(contexto,[],'simplificado').includes('Achado clínico geral efetivamente documentado.'));
  c.contextoAnamnese.estados.exames='relata';c.examesImagem={};assert(render(contexto,[],'simplificado').includes('Detalhamento não disponível no registro'),'não inventar detalhes ausentes');
+ const legado=fixture(),al=legado.avaliacoes[0];al.mapeamento.clinicaEstruturada.laudo.fonte='{}';al.mapeamento.contextoMotor={yellowFlags:{itens:['sono_ruim'],observacao:'Acorda várias vezes'},cargaEsportiva:{frequenciaSemanal:0,duracaoMinutos:30,nivel:'alto_rendimento',mudancaCarga4Semanas:'nao',exposicoes:['forca_alta']}};
+ const antesLegado=JSON.stringify(legado),tl=render(legado,[],'simplificado').split('<h4>Contexto da entrevista</h4>')[1].split('</table>')[0];
+ for(const v of ['Sono ruim','Acorda várias vezes','Frequência semanal: 0 sessões/semana','Duração média: 30 min/sessão','Nível: Alto rendimento','Mudança de carga: Sem aumento relevante','Força alta'])assert(tl.includes(v),v);
+ assert.equal(JSON.stringify(legado),antesLegado,'Leitura legada não altera dados');assert(!tl.includes('alto_rendimento'));assert(!tl.includes('Relato registrado'));
  const evol=render(p,[],'evolucoes');assert(!evol.includes('Relato original preservado'));assert(evol.includes('somente leitura'));assert(evol.indexOf('Sessão recente')<evol.indexOf('Sessão antiga'));
  const assessments=render(p,[],'avaliacoes');assert(assessments.includes('Relato original preservado'));assert(!assessments.includes('Sessão recente'));
  const wrong=fixture();wrong.avaliacoes[0].mapeamento.clinicaEstruturada.laudo.contextoPaciente.pacienteId='outro';assert(!render(wrong,[],'simplificado').includes('RELATÓRIO SALVO'));assert(render(wrong,[],'simplificado').includes('vínculo divergente'));
