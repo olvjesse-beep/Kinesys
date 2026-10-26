@@ -87,3 +87,62 @@ body.ks-design-ready #tela_avaliacao .ks-context-card>.clinical-actions{margin-t
 #tela_avaliacao .ks-cirurgia-data{width:100%;min-width:0;box-sizing:border-box;margin:0;padding:8px 10px;font-size:14px}
 #tela_avaliacao .ks-cirurgia-remover{padding:8px;min-width:36px;min-height:36px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
 @media(max-width:600px){#tela_avaliacao #tags_cirurgias>.tag-cirurgia{grid-template-columns:minmax(0,1fr) auto;gap:8px}#tela_avaliacao .ks-cirurgia-data-label{grid-column:1;grid-row:2}#tela_avaliacao .ks-cirurgia-remover{grid-column:2;grid-row:1 / span 2;min-width:44px;min-height:44px}}
+
+/* EVA inicial e Radar light glass: somente Antecedentes em diante. */
+#tela_avaliacao #context-panel-dor .context-states{border:0;border-bottom:1px solid var(--kds-line-soft);border-radius:0;background:transparent;padding:0 0 18px;margin-bottom:20px}
+#tela_avaliacao .context-eva>label{display:block;font-size:var(--kds-font-label);font-weight:700;margin-bottom:8px}
+#tela_avaliacao .context-eva #eva_valor{display:block;margin:12px 0 28px;color:var(--kds-accent);font-size:48px;line-height:1.1;font-weight:650;letter-spacing:-1px}
+#tela_avaliacao .context-eva #eva_slider{display:block;appearance:none;width:100%;height:5px;min-height:0;padding:0;margin:0;background:var(--kds-line);border:0;border-radius:4px;box-shadow:none;cursor:pointer;touch-action:pan-y}
+#tela_avaliacao .context-eva #eva_slider::-webkit-slider-thumb{appearance:none;width:24px;height:24px;border-radius:50%;background:var(--kds-accent);border:3px solid white;box-shadow:0 0 0 1px var(--kds-line)}
+#tela_avaliacao .context-eva #eva_slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--kds-accent);border:3px solid white;box-shadow:0 0 0 1px var(--kds-line)}
+#tela_avaliacao .context-eva #eva_slider:disabled{opacity:.45;cursor:default}
+#tela_avaliacao .context-eva-ticks{display:flex;justify-content:space-between;color:var(--kds-muted);margin:12px 0 8px;font-size:var(--kds-font-metadata)}
+#tela_avaliacao .context-eva-extremos{display:flex;justify-content:space-between;gap:20px;color:var(--kds-muted);font-size:var(--kds-font-label)}
+#tela_avaliacao .context-eva-extremos span:last-child{text-align:right}
+#tela_avaliacao .context-eva-chart{border:1px solid var(--kds-line);border-radius:var(--kds-radius-sm);padding:16px;margin:22px 0 12px;min-width:0}
+#tela_avaliacao .context-eva-chart h4{font-size:var(--kds-font-content);margin:0 0 12px}
+#tela_avaliacao .context-eva-chart p{font-size:var(--kds-font-label);line-height:1.5;color:var(--kds-muted);margin:8px 0}
+#tela_avaliacao .context-eva-chart button{display:block;margin-left:auto;min-height:44px;white-space:normal;text-align:right}
+#tela_avaliacao #avaliacao_eva_previa{color:var(--kds-muted);font-size:var(--kds-font-label);min-height:80px;display:grid;align-items:center}
+#tela_avaliacao .context-eva-chart .ks-fisio-evolution-chart{display:block;width:100%;height:auto;max-height:none;border:0;background:transparent;border-radius:0;overflow:visible}
+#tela_avaliacao .context-eva-chart .ks-fisio-chart-grid line{stroke:var(--kds-line);stroke-dasharray:3 4}
+#tela_avaliacao .context-eva-chart svg text{fill:var(--kds-muted);font-family:inherit;font-size:13px}
+#tela_avaliacao .context-eva-chart .ks-fisio-chart-line{fill:none;stroke:var(--kds-accent);stroke-width:2}
+#tela_avaliacao .context-eva-chart circle{fill:var(--kds-accent);stroke:white;stroke-width:2}
+#tela_avaliacao #avaliacao_eva_status:empty{display:none}
+#tela_avaliacao .ks-context-radar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 20px;position:relative;isolation:isolate;min-width:0;margin:18px 0 0;padding:18px 22px;border:1px solid rgba(255,255,255,.86);border-left:2px solid rgba(213,139,51,.55);border-radius:14px;background:rgba(255,248,238,.48);backdrop-filter:blur(18px) saturate(110%);-webkit-backdrop-filter:blur(18px) saturate(110%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 14px rgba(64,83,78,.035);color:var(--kds-text)}
+#tela_avaliacao .ks-context-radar>header{display:flex;align-items:flex-start;gap:14px;grid-column:1;grid-row:1;min-width:0}
+#tela_avaliacao .ks-context-radar>header>img{width:26px;height:26px;opacity:.75;flex:0 0 26px}
+#tela_avaliacao .ks-context-radar h3{margin:0 0 4px;font-size:var(--kds-font-content);color:var(--kds-text)}
+#tela_avaliacao .ks-context-radar p{margin:0;color:var(--kds-muted);font-size:var(--kds-font-label);line-height:1.5}
+#tela_avaliacao #ks_radar_context_resumo{grid-column:1/-1;grid-row:2;min-width:0}
+#tela_avaliacao .context-radar-row{display:grid;grid-template-columns:minmax(140px,25%) minmax(0,1fr);gap:12px 24px;border-top:1px solid rgba(92,113,109,.13);padding:12px 0;min-width:0;overflow-wrap:anywhere}
+#tela_avaliacao .context-radar-row strong{font-size:var(--kds-font-label)}
+#tela_avaliacao .context-radar-row[data-nivel=critico] strong{color:var(--kds-danger,#a53b33)}
+#tela_avaliacao #ks_radar_context_host #radar_flutuante_container.radar-ativo.radar-contexto-avaliacao{display:contents}
+#tela_avaliacao #ks_radar_context_host .radar-launcher{grid-column:2;grid-row:1;align-self:start;margin:0;background:transparent;border:0;box-shadow:none;animation:none;color:var(--kds-accent);min-height:40px}
+#tela_avaliacao #ks_radar_context_host .radar-launcher-glyph{display:none}
+#tela_avaliacao #ks_radar_context_host .radar-painel{grid-column:1/-1;grid-row:3;width:100%;margin:0;box-shadow:none;background:rgba(255,255,255,.7)}
+#tela_avaliacao .context-final-actions{background:transparent;border:0!important;box-shadow:none!important;padding:16px 0!important;margin:0!important;border-radius:0;justify-content:flex-end}
+@supports not (backdrop-filter:blur(1px)){#tela_avaliacao .ks-context-radar{background:#faf8f3}}
+@media(prefers-reduced-transparency:reduce){#tela_avaliacao .ks-context-radar{background:#faf8f3;backdrop-filter:none}}
+@media(max-width:760px){#tela_avaliacao .context-eva #eva_valor{font-size:40px}#tela_avaliacao .context-eva-chart{padding:12px}#tela_avaliacao .ks-context-radar{padding:16px;grid-template-columns:minmax(0,1fr)}#tela_avaliacao .context-radar-row{grid-template-columns:minmax(0,1fr);gap:6px}#tela_avaliacao #ks_radar_context_host .radar-launcher{grid-column:1;grid-row:3;justify-self:start}#tela_avaliacao #ks_radar_context_host .radar-painel{grid-row:4}#tela_avaliacao .context-final-actions{flex-wrap:wrap}#tela_avaliacao .context-final-actions button{flex:1;min-width:180px}}
+
+#tela_avaliacao #context-panel-dor .context-states{justify-content:flex-start}
+#tela_avaliacao #context-panel-dor .context-states label{flex:0 0 auto;width:auto}
+#tela_avaliacao .ks-context-card .context-index-item{min-height:70px;padding-top:12px;padding-bottom:12px}
+
+#tela_avaliacao #context-panel-dor .context-panel-heading p{margin-bottom:12px}
+#tela_avaliacao #context-panel-dor .context-states{padding-bottom:12px;margin-bottom:14px}
+#tela_avaliacao .context-eva #eva_valor{margin:8px 0 20px}
+#tela_avaliacao .context-eva-chart{padding:12px;margin-top:18px}
+#tela_avaliacao .context-eva-chart-footer{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#tela_avaliacao .context-eva-chart-footer p{flex:1;min-width:180px;margin:0}
+#tela_avaliacao .context-eva-chart-footer button{flex:0 1 auto}
+
+#tela_avaliacao .context-final-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#tela_avaliacao .context-final-actions .context-source{margin:0 auto 0 0;padding:0;border:0;max-width:380px;flex:1 1 280px}
+#tela_avaliacao .context-final-actions .context-source .input-group{display:flex;align-items:center;gap:12px}
+#tela_avaliacao .ks-context-radar{gap:8px 20px;padding:16px 22px}
+#tela_avaliacao .context-radar-row{padding:10px 0}
+@media(max-width:760px){#tela_avaliacao .context-final-actions .context-source{max-width:none;flex-basis:100%;margin:0}#tela_avaliacao .context-final-actions .context-source .input-group{align-items:stretch;flex-direction:column;gap:6px}}

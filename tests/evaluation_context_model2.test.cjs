@@ -20,7 +20,7 @@ const extraDetails={open:false,querySelectorAll:()=>[extra]};
 const card={querySelectorAll:selector=>selector==='details.context-extra'?[extraDetails]:[extra]},screen={classList:{contains:()=>true}};
 const env={console,window:{},document:{readyState:'loading',visibilityState:'visible',getElementById:id=>nodes[id]||null,addEventListener(k,fn){events[k]=fn;}},setInterval(fn){const id=++nextTimer;intervals.add(id);return id;},clearInterval(id){intervals.delete(id);}};
 // Test-only access to private state; production contains no debug hooks.
-vm.runInNewContext(source.replace('window.KineSysContextoAnamnese={','window.contextTest={set(p,c,s){paineis=p;card=c;avaliacaoAtivaRef=s;},abrir,atualizar,mudarEstado,estado,iniciarSincronizacaoContexto,pararSincronizacaoContexto};window.KineSysContextoAnamnese={'),env);
+vm.runInNewContext(source.replace('window.KineSysContextoAnamnese={','window.contextTest={set(p,c,s){paineis=p;card=c;avaliacaoAtivaRef=s;},abrir,abrirAnalise,atualizar,mudarEstado,estado,iniciarSincronizacaoContexto,pararSincronizacaoContexto};window.KineSysContextoAnamnese={'),env);
 const api=env.window.KineSysContextoAnamnese,t=env.window.contextTest;t.set(panels,card,screen);
 api.preencher();assert.equal(panels[0].status.textContent,'Não informado');
 const imagingDefault=makeField('exames_imagem_fonte','relato');panels[3].fields.push(imagingDefault);t.atualizar(panels[3]);assert.equal(panels[3].status.textContent,'Não informado','default source is not an exam');
@@ -47,3 +47,47 @@ persistence.preencherClinicaEstruturada(payload);const collected=JSON.parse(JSON
 assert.equal(collected.unknownExistingField.keep,true);assert.equal(collected.contextoAnamnese.estados.saude,'nega');assert.equal(collected.contextoAnamnese.campos.contexto_trabalho_tarefa,'Trabalho informado');
 persistence.preencherClinicaEstruturada({});assert.equal(extra.value,'');assert.equal(persistence.coletarClinicaEstruturada().contextoAnamnese.estados.saude,'nao_informado');
 console.log('Real structured-clinical save/reopen hooks preserve new context and legacy payload; empty patient clears previous state OK');
+
+// EVA executa os helpers e a normalização reais: ausência não pode virar zero.
+const evaNodes={};for(const id of ['eva_slider','eva_valor','context_state_dor_relata','context_state_dor_nao_informado','avaliacao_realizado_em','avaliacao_eva_previa','avaliacao_eva_analise'])evaNodes[id]={value:'',checked:false,disabled:false,dataset:{},textContent:'',setAttribute(k,v){this[k]=v;},addEventListener(){}};
+evaNodes.eva_slider.value='0';evaNodes.eva_slider.disabled=true;evaNodes.context_state_dor_nao_informado.checked=true;evaNodes.avaliacao_realizado_em.value='2026-10-26T09:00';
+const evaEnv={document:{getElementById:id=>evaNodes[id]||null},console};evaEnv.window=evaEnv;
+vm.createContext(evaEnv);const helper=fs.readFileSync('src/ui/input_helpers_core-1.0.0.js','utf8');vm.runInContext(helper.slice(0,helper.indexOf('const sliderEvo =')),evaEnv);
+assert.equal(evaEnv.obterEvaAvaliacaoKineSys(),null);
+for(const valor of [0,6,10,null,undefined,'',-1,11]){evaEnv.preencherEvaAvaliacaoKineSys(valor);const esperado=typeof valor==='number'&&valor>=0&&valor<=10?valor:null;assert.equal(evaEnv.obterEvaAvaliacaoKineSys(),esperado);assert.equal(evaNodes.eva_slider.disabled,esperado===null);}
+evaEnv.preencherEvaAvaliacaoKineSys(6);evaNodes.context_state_dor_relata.checked=false;evaEnv.atualizarEvaAvaliacaoKineSys();assert.equal(evaEnv.obterEvaAvaliacaoKineSys(),null);assert.equal(Number(evaNodes.eva_slider.value),6,'desmarcar não apaga o valor da interface');
+env.window.obterEvaAvaliacaoKineSys=evaEnv.obterEvaAvaliacaoKineSys;env.window.preencherEvaAvaliacaoKineSys=evaEnv.preencherEvaAvaliacaoKineSys;
+evaEnv.preencherEvaAvaliacaoKineSys(7);const comEva=JSON.parse(JSON.stringify(api.coletar()));assert.equal(comEva.dorAvaliacao.valor,7);evaEnv.preencherEvaAvaliacaoKineSys(null);api.preencher(comEva);assert.equal(evaEnv.obterEvaAvaliacaoKineSys(),7);api.limpar();assert.equal(evaEnv.obterEvaAvaliacaoKineSys(),null,'trocar paciente limpa a EVA');
+const normEnv={console};vm.createContext(normEnv);vm.runInContext(fs.readFileSync('src/patient/patient_data_normalization_core-1.0.0.js','utf8'),normEnv);
+for(const valor of [null,0,6,10])assert.equal(normEnv.normalizarPacienteDoBanco({id:'qa',avaliacoes:[{eva_inicial:valor}]}).avaliacoes[0].evaInicial,valor);
+assert.match(core,/eva_inicial: av\.evaInicial !== undefined \? av\.evaInicial/,'transporte não pode converter ausência em zero');
+assert.match(core,/evaInicial:window\.obterEvaAvaliacaoKineSys\?\.\(\) \?\? null/,'salvamento usa o mesmo valor canônico da interface');
+assert.match(core,/window\.atualizarEvaAvaliacaoKineSys\?\.\(\);\s+sincronizarBuscaPacientePreCadastro/,'restauração de rascunho atualiza estado e prévia');
+assert.equal((html.match(/id="eva_slider"/g)||[]).length,1);assert(html.indexOf('id="eva_slider"')>html.indexOf('Antecedentes e fatores modificadores'));
+assert(html.indexOf('id="ks_radar_context_host"')>html.indexOf('data-context-key="psicossocial"'));
+console.log('EVA: nula/zero/valores extremos, normalização, ida e volta no JSON, limpeza entre pacientes e transporte real OK');
+
+const home=fs.readFileSync('src/home/home_fisioterapeuta_util-1.24.0.js','utf8');
+const extrair=(src,start,end)=>{const i=src.indexOf(start),j=src.indexOf(end,i+start.length);assert(i>=0&&j>i,start);return src.slice(i,j);};
+const chartEnv={};vm.createContext(chartEnv);
+vm.runInContext(extrair(home,'    function dataRegistro(','    // Somente fontes')+extrair(home,'    function evolucoesPaciente(','    function formatarDiaMes(')+extrair(home,'    function numeroClinico(','    function garantirDialogAnaliseEvolucao('),chartEnv);
+const registro={id:'qa',clinica_id:'c1',avaliacoes:[{id:'a1',paciente_id:'qa',evaInicial:6,status:'finalizada',dataAvaliacao:'2026-10-26'},{id:'a2',evaInicial:8,status:'rascunho',dataAvaliacao:'2026-10-25'},{id:'a3',evaInicial:null,status:'finalizada',dataAvaliacao:'2026-10-23'}],evolucoes:[{id:'e1',paciente_id:'qa',clinica_id:'c1',eva:0,data:'2026-10-27'},{id:'e2',eva:null,data:'2026-10-28'},{id:'e3',paciente_id:'outro',eva:10,data:'2026-10-29'},{id:'e4',clinica_id:'outra',eva:10,data:'2026-10-30'}]};
+const pontos=JSON.parse(JSON.stringify(chartEnv.pontosEvolucaoPaciente(registro)));assert.deepEqual(pontos.map(p=>p.eva),[6,0]);assert.deepEqual(pontos.map(p=>p.tipo),['Avaliação','Evolução']);
+const transporte=extrair(core,'                const avData = {','                const { error: avError }');
+for(const valor of [null,0,6]){const x={av:{id:'a1',evaInicial:valor},id:'qa',usuarioLogado:null};vm.runInNewContext(transporte+'resultado=avData;',x);assert.equal(x.resultado.eva_inicial,valor);assert.equal(normEnv.normalizarPacienteDoBanco({id:'qa',avaliacoes:[x.resultado]}).avaliacoes[0].evaInicial,valor);}
+console.log('Gráfico e payload: EVA inicial e evolução zero, ausência e rascunho excluídos, isolamento por paciente/clínica e roundtrip de transporte OK');
+
+assert.equal(normEnv.normalizarPacienteDoBanco({id:'qa',avaliacoes:[{evaInicial:null,eva_inicial:8}]}).avaliacoes[0].evaInicial,null,'nulo explícito não recupera coluna legada');
+
+(async()=>{
+ let contexto={pacienteId:'qa-a',clinicaId:'c1',avaliacaoId:'a1',revisao:1},resolve,aberturas=0;
+ nodes.tela_avaliacao=screen;nodes.avaliacao_eva_status={textContent:''};
+ env.window.obterContextoAvaliacaoKineSys=()=>({...contexto});env.window.KineSysAnaliseEvolucao={abrir(){aberturas++;}};
+ for(const tipo of ['pacienteId','clinicaId','avaliacaoId','revisao']){
+  contexto={pacienteId:'qa-a',clinicaId:'c1',avaliacaoId:'a1',revisao:1};env.obterPacienteCompletoPorId=()=>new Promise(r=>resolve=r);
+  const pending=t.abrirAnalise();contexto[tipo]='outro';resolve({id:'qa-a',nome:'Paciente sintético'});await pending;assert.equal(aberturas,0,'resposta antiga de '+tipo+' não abre outro prontuário');
+ }
+ contexto={pacienteId:'qa-a',clinicaId:'c1',avaliacaoId:'a1',revisao:2};env.obterPacienteCompletoPorId=async()=>({id:'qa-a',nome:'Paciente sintético'});await t.abrirAnalise();assert.equal(aberturas,1);
+ env.obterPacienteCompletoPorId=async()=>{throw Error('offline');};await t.abrirAnalise();assert.match(nodes.avaliacao_eva_status.textContent,/Tente novamente/);assert.equal(aberturas,1);
+ console.log('Análise da avaliação: isolamento de respostas atrasadas por paciente, clínica, avaliação e revisão; recuperação de falha OK');
+})().catch(e=>{console.error(e);process.exitCode=1;});

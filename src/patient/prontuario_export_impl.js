@@ -137,8 +137,8 @@ function blocoAvaliacao(av,i,detalhado,pacienteId=''){
     const resumo=[];
     if(av.dataAvaliacao||av.data_avaliacao) resumo.push(`<span>Data: <b>${esc(dataSomente(av.dataAvaliacao||av.data_avaliacao))}</b></span>`);
     if(av.status) resumo.push(`<span>Status: <b>${esc(av.status)}</b></span>`);
-    if(av.evaInicial!==undefined||av.eva_inicial!==undefined) resumo.push(`<span>EVA inicial: <b>${esc(av.evaInicial??av.eva_inicial)}</b></span>`);
-    return `<article class="record"><div class="record-head"><div><span class="index">Avaliação ${i+1}</span><h3>${esc(tipo)}</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(av)||av.dataAvaliacao||av.data_avaliacao,false))} · ${esc(profissional(av))}</p>${meta}${conteudo}${detalhado?'<details class="technical"><summary>Apêndice técnico do registro original</summary>'+tabelaCampos(achatar(av))+'</details>':''}</article>`;
+    if(av.evaInicial!==undefined||av.eva_inicial!==undefined) resumo.push(`<span>EVA inicial: <b>${esc((av.evaInicial!==undefined?av.evaInicial:av.eva_inicial)??'Não avaliada')}</b></span>`);
+    return `<article class="record"><div class="record-head"><div><span class="index">Avaliação ${i+1}</span><h3>${esc(tipo)}</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(av)||av.dataAvaliacao||av.data_avaliacao,false))} · ${esc(profissional(av))}</p>${meta}${conteudo}</article>`;
 }
 function blocoEvolucao(ev,i,detalhado){
     const conteudo=conteudoClinicoEvolucao(ev);
@@ -147,13 +147,33 @@ function blocoEvolucao(ev,i,detalhado){
     if(ev.data) resumo.push(`<span>Data: <b>${esc(dataSomente(ev.data))}</b></span>`);
     resumo.push(`<span>EVA: <b>${esc(ev.eva??'Não avaliada')}</b></span>`);
     const estado=ev.dadosEstruturados?.estadoClinico||ev.dados_estruturados?.estadoClinico;if(estado) resumo.push(`<span>Estado: <b>${esc(estado)}</b></span>`);
-    return `<article class="record"><div class="record-head"><div><span class="index">Evolução ${i+1}</span><h3>Evolução fisioterapêutica</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(ev)||ev.data,false))} · ${esc(profissional(ev))}</p>${meta}${conteudo}${detalhado?'<details class="technical"><summary>Apêndice técnico do registro original</summary>'+tabelaCampos(achatar(ev))+'</details>':''}</article>`;
+    return `<article class="record"><div class="record-head"><div><span class="index">Evolução ${i+1}</span><h3>Evolução fisioterapêutica</h3></div><div class="record-summary">${resumo.join('')}</div></div><p class="record-author">${esc(dataHora(obterRealizado(ev)||ev.data,false))} · ${esc(profissional(ev))}</p>${meta}${conteudo}</article>`;
 }
 
 function textoClinico(titulo,texto){
     return String(texto??'').trim()?`<div class="clinical-block"><h4>${esc(titulo)}</h4><div class="clinical-text">${esc(texto)}</div></div>`:'';
 }
 function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>{if(typeof v==='string')return v;const nome=v?.texto||v?.exibicao||v?.nome||'';return nome+(nome&&v?.dataCirurgia?' (data informada: '+v.dataCirurgia+')':'');}).filter(Boolean).join('; ');}
+function detalhesEntrevista(av,c,fonte,campos){
+    const motor=av.mapeamento?.contextoMotor||{},grupos=fonte.gruposAnamnese||{},f=fonte.campos||{};
+    const juntar=(...v)=>[...new Set(v.flatMap(x=>Array.isArray(x)?x:typeof x==='object'&&x?x.itens||x.exposicoes||[]:[x]).map(x=>typeof x==='string'?x.trim():x?.texto||x?.nome||'').filter(Boolean))];
+    const rotulos={sono_ruim:'Sono ruim',medo_movimento:'Medo de movimento/relesão',catastrofizacao:'Catastrofização',baixa_autoeficacia:'Baixa autoeficácia',evitacao:'Evitação',estresse:'Estresse elevado',afastamento:'Barreiras de retorno',expectativa_negativa:'Expectativa negativa',em_pe_prolongado:'Ortostatismo prolongado',sentado_prolongado:'Sedestação prolongada',acima_cabeca:'Atividades acima da cabeça',flexao_rotacao_carga:'Flexão/rotação com carga',repeticao_maos:'Repetição de mãos/punhos',vibracao:'Vibração',manejo_pacientes:'Manejo de pacientes'};
+    const lista=v=>juntar(v).map(x=>rotulos[x]||x);
+    return {
+        saude:juntar(Object.entries(av.comorbidades||{}).filter(([k,v])=>v===true&&!['cirurgia','corticoide','corticoide_sistemico','corticoide_infiltracao','aine_recente'].includes(k)).map(([k])=>chaveBonita(k)),campos.contexto_saude_observacao),
+        cirurgias:juntar(itensClinicos(av.cirurgias||c.cirurgias),campos.contexto_cirurgia_regiao,campos.contexto_cirurgia_data,campos.contexto_trauma_observacao),
+        medicamentos:juntar(itensClinicos(av.medicamentos),campos.contexto_medicamento_observacao),
+        exames:juntar(c.examesImagem?.descricao,f.exames_imagem_descricao),
+        trabalho:juntar(lista(grupos.exposicoesOcupacionais||motor.exposicoesOcupacionais),campos.contexto_trabalho_tarefa,campos.contexto_trabalho_tempo,campos.contexto_trabalho_frequencia,campos.contexto_trabalho_observacao),
+        atividade:juntar(av.esporte,f.paciente_esporte,lista(grupos.exposicoesEsportivas||motor.cargaEsportiva?.exposicoes),f.esporte_frequencia,f.esporte_duracao,f.esporte_nivel,f.esporte_mudanca_carga),
+        psicossocial:juntar(lista(grupos.fatoresPsicossociais||motor.yellowFlags),f.yellow_flags_observacao,c.yellowFlags?.observacao)
+    };
+}
+function sinteseRegionalParaDocumento(reg){
+    const texto=String(reg.textoDocumento||reg.hipotese||reg.nomeHipotese||'');
+    const normalizado=texto.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+    return /^(quadro geral[:. ]*)?investigacao em aberto, sem regiao especifica selecionada\. a decisao clinica permanece com o fisioterapeuta\.?$/.test(normalizado)?'':texto;
+}
 function conteudoClinicoAvaliacao(av,pacienteId=''){
     const m=av.mapeamento||{},c=m.clinicaEstruturada||{};
     const laudoOriginal=c.laudo||{};
@@ -170,8 +190,11 @@ function conteudoClinicoAvaliacao(av,pacienteId=''){
     Object.entries(fonte.gruposAnamnese||{}).filter(([k])=>k!=='comorbidades').forEach(([k,v])=>{html+=textoClinico(chaveBonita(k),itensClinicos(v));});
     ['yellow_flags_observacao','esporte_frequencia','esporte_duracao','esporte_nivel','esporte_mudanca_carga','origem_informacao_clinica'].forEach(k=>{html+=textoClinico(chaveBonita(k),fonte.campos?.[k]);});
     const grupos={saude:'Saúde e hábitos',cirurgias:'Cirurgias e traumas',medicamentos:'Medicamentos e infiltrações',exames:'Exames de imagem',trabalho:'Trabalho e rotina',atividade:'Atividade física',psicossocial:'Fatores psicossociais'};
-    const estados={nega:'Negativa explicitamente registrada',relata:'Relato registrado',nao_informado:'Não informado'};
-    const linhasEstado=Object.entries(contexto.estados||{}).filter(([k])=>grupos[k]).map(([k,v])=>[grupos[k],estados[v]||v]);
+    const detalhes=detalhesEntrevista(av,c,fonte,campos);
+    const linhasEstado=Object.keys(grupos).filter(k=>contexto.estados?.[k]||detalhes[k].length).map(k=>{
+        const estado=contexto.estados?.[k],texto=detalhes[k].join('; ');
+        return [grupos[k],texto?(texto+(estado==='nega'?' · Há também negativa registrada; conferir a avaliação original.':'')):estado==='nega'?'Negativa explicitamente registrada':estado==='relata'?'Detalhamento não disponível no registro':'Não informado'];
+    });
     if(linhasEstado.length)html+=`<div class="clinical-block"><h4>Contexto da entrevista</h4>${tabelaCampos(linhasEstado)}</div>`;
     html+=textoClinico('Exames de imagem'+(c.examesImagem?.fonte==='laudo_conferido'?' (documento conferido)':' (origem: relato, salvo indicação no registro)'),c.examesImagem?.descricao||fonte.campos?.exames_imagem_descricao);
     const r=c.restricoesPosOperatorias||{};
@@ -185,9 +208,9 @@ function conteudoClinicoAvaliacao(av,pacienteId=''){
         }));
     });
     if(testes.length)html+=`<div class="clinical-block"><h4>Achados do exame registrados</h4>${tabelaCampos(testes)}</div>`;
-    else if(Object.values(m.detalhes||{}).some(r=>Object.values(r?.resultados||{}).some(Boolean)))html+='<p class="warning">Há resultados legados sem rótulos de teste disponíveis nesta visualização. Consulte a avaliação original ou o apêndice técnico do PDF detalhado para conferi-los.</p>';
+    else if(Object.values(m.detalhes||{}).some(r=>Object.values(r?.resultados||{}).some(Boolean)))html+='<p class="warning">Há resultados legados sem rótulos de teste disponíveis nesta visualização. Consulte a avaliação original para conferi-los.</p>';
     (m.resumoPorRegiao||[]).forEach(reg=>{
-        html+=textoClinico(reg.regiao||'Síntese do exame',reg.textoDocumento||reg.hipotese||reg.nomeHipotese);
+        html+=textoClinico(reg.regiao||'Síntese do exame',sinteseRegionalParaDocumento(reg));
         html+=textoClinico('Sinais de alerta',itensClinicos(reg.redFlags))+textoClinico('Conduta e justificativa de segurança',[reg.redflagConduta,reg.redflagJustificativa].filter(Boolean).join('\n'));
     });
     ['medidasObjetivas','psfs','outcomes','objetivosPlano'].forEach(k=>{if(!vazio(c[k]))html+=`<div class="clinical-block"><h4>${esc(chaveBonita(k))}</h4>${tabelaCampos(achatar(c[k]))}</div>`;});
@@ -250,8 +273,8 @@ async function consultarAuditoria(pacienteId){
 function cssDocumento(){return `
 :root{--ink:#183B43;--muted:#60757A;--line:#DDE8E5;--soft:#F5F9F8;--accent:#2A8078;--warn:#FFF7E8}
 *{box-sizing:border-box}body{margin:0;background:#EEF3F2;color:#24383D;font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.42}.toolbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px 18px;background:#173B45;color:#fff}.toolbar .label{margin-right:auto;font-weight:700}.toolbar button{border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:8px 12px;background:#fff;color:#173B45;font-weight:700;cursor:pointer}.toolbar button.secondary{background:transparent;color:#fff}.paper{width:210mm;min-height:297mm;margin:18px auto;background:#fff;padding:18mm 17mm;box-shadow:0 10px 35px rgba(20,55,60,.12)}.doc-head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px}.brand{font-size:18pt;font-weight:800;letter-spacing:.02em;color:var(--ink)}.brand small{display:block;font-size:8.5pt;font-weight:600;color:var(--muted);margin-top:3px}.doc-type{text-align:right}.doc-type strong{display:block;font-size:13pt;color:var(--ink)}.doc-type span{font-size:8.5pt;color:var(--muted)}.patient-banner{display:grid;grid-template-columns:1fr auto;gap:15px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:17px}.patient-banner h1{font-size:16pt;margin:0;color:var(--ink)}.patient-banner p{margin:3px 0 0;color:var(--muted);font-size:9pt}.patient-banner .counts{text-align:right;font-size:9pt;color:var(--muted)}.patient-banner .counts b{color:var(--ink)}section{margin:0 0 20px}h2{font-size:12.5pt;color:var(--ink);margin:0 0 9px;padding-bottom:5px;border-bottom:1px solid var(--line)}h3{font-size:11.5pt;color:var(--ink);margin:2px 0 0}.record{border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin:0 0 11px;break-inside:avoid-page}.record-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:8px}.index{font-size:7.8pt;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:800}.record-summary{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;color:var(--muted);font-size:8.5pt}.record-summary span{white-space:nowrap}.trace{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;background:#F2F8F7;border-left:3px solid var(--accent);padding:8px 10px;margin:7px 0 10px;font-size:8.4pt;color:#4B6267}.kv,.diff{width:100%;border-collapse:collapse;table-layout:fixed}.kv th,.kv td,.diff th,.diff td{border-bottom:1px solid #E8EFED;padding:5px 6px;vertical-align:top;overflow-wrap:anywhere}.kv th{width:31%;text-align:left;color:#526A6F;font-size:8.7pt;font-weight:700}.kv td{font-size:9pt}.diff thead th{background:#F4F8F7;color:var(--ink);font-size:8pt;text-align:left}.diff tbody th{width:26%;text-align:left;color:#526A6F;font-size:8pt}.diff td{font-size:8pt}.audit-section{page-break-before:auto}.audit{border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:9px;break-inside:avoid-page}.audit-head{display:flex;justify-content:space-between;gap:10px;color:var(--ink);font-size:9pt}.audit-meta{color:var(--muted);font-size:8.2pt;margin:3px 0 7px}.section-note,.muted{color:var(--muted);font-size:8.5pt}.warning{background:var(--warn);border:1px solid #ECD9AE;border-radius:7px;padding:10px;font-size:9pt}.footer{margin-top:24px;padding-top:9px;border-top:1px solid var(--line);font-size:7.8pt;color:var(--muted);display:flex;justify-content:space-between;gap:15px}.privacy{margin-top:7px;font-size:7.5pt;color:#718286}.page-break{page-break-before:always}
-.record{break-inside:auto}.record-head,h2,h3,h4{break-after:avoid-page}.clinical-block{margin:12px 0}.clinical-block h4{margin:0 0 5px;font-size:10pt;color:var(--ink)}.clinical-text{white-space:pre-wrap;overflow-wrap:anywhere;orphans:3;widows:3}.record-author{color:var(--muted);font-size:8.5pt;margin:0 0 10px}.technical{margin-top:18px;border-top:1px dashed var(--line);padding-top:10px}.technical summary{font-weight:700;cursor:pointer}.kv tr{break-inside:avoid-page}
-@page{size:A4;margin:14mm}@media print{body{background:#fff}.toolbar{display:none!important}.paper{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}.record,.audit{break-inside:auto}.technical{display:block}.technical:not([open])>*:not(summary){display:block}a{color:inherit;text-decoration:none}}
+.record{break-inside:auto}.record-head,h2,h3,h4{break-after:avoid-page}.clinical-block{margin:12px 0}.clinical-block h4{margin:0 0 5px;font-size:10pt;color:var(--ink)}.clinical-text{white-space:pre-wrap;overflow-wrap:anywhere;orphans:3;widows:3}.record-author{color:var(--muted);font-size:8.5pt;margin:0 0 10px}.kv tr{break-inside:avoid-page}
+@page{size:A4;margin:14mm}@media print{body{background:#fff}.toolbar{display:none!important}.paper{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}.record,.audit{break-inside:auto}a{color:inherit;text-decoration:none}}
 @media screen and (max-width:850px){.paper{width:auto;min-height:0;margin:0;padding:18px}.trace{grid-template-columns:1fr}.patient-banner{grid-template-columns:1fr}.doc-head{flex-direction:column}.doc-type{text-align:left}}
 `;}
 

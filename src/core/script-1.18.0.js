@@ -395,10 +395,7 @@ function navegarPara(idTela, contextoEdicao = false) {
             if(document.getElementById(id)) document.getElementById(id).checked = false;
         });
         if(document.getElementById('bloco_cirurgias')) document.getElementById('bloco_cirurgias').style.display = 'none';
-        if (document.getElementById('eva_slider')) {
-            document.getElementById('eva_slider').value = 0;
-            document.getElementById('eva_slider').dispatchEvent(new Event('input'));
-        }
+        window.preencherEvaAvaliacaoKineSys?.(null);
         estadoMapeamento = {};
         mapeamentoAvaliacaoAnterior = null;
         if (document.getElementById('grupo_regioes_mapeamento')) document.getElementById('grupo_regioes_mapeamento').innerHTML = "";
@@ -563,7 +560,7 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
                     comorbidades: av.comorbidades || {},
                     cirurgias: av.cirurgias || [],
                     medicamentos: av.medicamentos || [],
-                    eva_inicial: av.evaInicial || 0,
+                    eva_inicial: av.evaInicial !== undefined ? av.evaInicial : (av.eva_inicial ?? null),
                     hma: av.hma || '',
                     mapeamento: av.mapeamento || null,
                     tipo: av.tipo || 'Avaliação Inicial'
@@ -808,10 +805,7 @@ async function carregarPacienteParaEdicao(id, avaliacaoIdEditar = null) {
         else preencherClinicaEstruturada({});
         window.preencherCirurgiasAvaliacaoKineSys?.(avaliacaoRecente.mapeamento?.clinicaEstruturada?.cirurgias||avaliacaoRecente.cirurgias||[]);
 
-        if (document.getElementById('eva_slider') && avaliacaoRecente.evaInicial != null) {
-            document.getElementById('eva_slider').value = avaliacaoRecente.evaInicial;
-            document.getElementById('eva_slider').dispatchEvent(new Event('input'));
-        }
+        window.preencherEvaAvaliacaoKineSys?.(avaliacaoRecente.evaInicial !== undefined ? avaliacaoRecente.evaInicial : (avaliacaoRecente.eva_inicial ?? null));
 
         if (obterAvaliacoes(p).length > 0) {
             const btnSalvar = document.getElementById('btn_salvar_avaliacao_rapida');
@@ -2058,6 +2052,7 @@ function processarRadarEmTempoReal() {
     else if (yf >= 2) alertasMatriz.push({nivel:'medio', titulo:'Yellow Flags — atenção contextual', desc:`${yf} fatores contextuais foram marcados e podem influenciar adesão, comportamento e recuperação.`});
 
     ultimoRadarAlertas = alertasMatriz;
+    window.KineSysContextoAnamnese?.atualizarAlertas?.(alertasMatriz);
 
     const launcher = document.getElementById('radar_launcher');
     const badge = document.getElementById('radar_badge');
@@ -2281,7 +2276,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
         esporte:document.getElementById('paciente_esporte')?.value||'',
         comorbidades:{tabagista:!!document.getElementById('chk_tabagista')?.checked,etilista:!!document.getElementById('chk_etilista')?.checked,hipertenso:!!document.getElementById('chk_hipertenso')?.checked,diabetico:!!document.getElementById('chk_diabetico')?.checked,corticoide:!!document.getElementById('chk_corticoide_sistemico')?.checked||!!document.getElementById('chk_corticoide_infiltracao')?.checked,corticoide_sistemico:!!document.getElementById('chk_corticoide_sistemico')?.checked,corticoide_infiltracao:!!document.getElementById('chk_corticoide_infiltracao')?.checked,aine_recente:!!document.getElementById('chk_aine_recente')?.checked,cirurgia:!!document.getElementById('chk_cirurgia')?.checked},
         cirurgias:tagsCirurgiasArr,medicamentos:tagsMedArr,
-        evaInicial:document.getElementById('eva_slider')?parseInt(document.getElementById('eva_slider').value,10)||0:0,
+        evaInicial:window.obterEvaAvaliacaoKineSys?.() ?? null,
         hma:document.getElementById('paciente_hma')?.value||'',hmaInsights:obterInsightsHMAKineSys(),sinteseKinesys20:{diagnosticoCinetico:document.getElementById('ks20_diagnostico_cinetico')?.value||'',hipoteseMedica:document.getElementById('ks20_hipotese_medica')?.value||''},mapeamento
     };
     if(registroEmEdicao){
@@ -2447,6 +2442,7 @@ async function restaurarRascunhoKineSys() {
             if(possuiAchado)estado.exameContextFingerprint=fpRascunho;
         });
     }
+    window.atualizarEvaAvaliacaoKineSys?.();
     sincronizarBuscaPacientePreCadastro();
     processarRadarEmTempoReal(); atualizarStatusAutosave('✓ Rascunho restaurado');
     return true;
@@ -2526,7 +2522,7 @@ function coletarContextoClinico() {
     const mecanismo = val('paciente_mecanismo_lesao');
     const esporte = val('paciente_esporte');
     const ocupacao = val('paciente_ocupacao');
-    const eva = document.getElementById('eva_slider') ? parseInt(document.getElementById('eva_slider').value, 10) || 0 : 0;
+    const eva = window.obterEvaAvaliacaoKineSys?.() ?? null;
     const idade = parseInt(val('paciente_idade'), 10) || 0;
     const fatoresPiora = obterValoresMarcados('.chk_fator_piora');
     const exposicoesOcupacionais = obterValoresMarcados('.chk_exposicao_ocupacional');

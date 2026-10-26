@@ -403,11 +403,13 @@
     function pontosEvolucaoPaciente(paciente){
         const pontos=[];
         avaliacoesFinalizadas(paciente).forEach(av=>{
-            const eva=numeroClinico(av?.evaInicial??av?.eva_inicial);
+            const eva=numeroClinico(av?.evaInicial!==undefined?av.evaInicial:av?.eva_inicial);
             if(eva===null)return;
             pontos.push({data:dataRegistro(av),eva,tipo:'Avaliação',estado:'Avaliação inicial'});
         });
         evolucoesPaciente(paciente).forEach(ev=>{
+            if(ev?.paciente_id&&String(ev.paciente_id)!==String(paciente?.id))return;
+            if(ev?.clinica_id&&paciente?.clinica_id&&String(ev.clinica_id)!==String(paciente.clinica_id))return;
             const eva=numeroClinico(ev?.eva);
             if(eva===null)return;
             const estado=String(ev?.dadosEstruturados?.estadoClinico||'').trim();
@@ -435,9 +437,9 @@
         return dialog;
     }
 
-    function graficoEvolucaoSVG(pontos){
+    function graficoEvolucaoSVG(pontos,opcoes={}){
         const escaparSVG=valor=>String(valor??'').replace(/[&<>"']/g,caractere=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[caractere]));
-        const largura=640,altura=260,margem={top:20,right:24,bottom:44,left:42};
+        const largura=640,altura=opcoes.compacto?150:260,margem={top:20,right:24,bottom:44,left:42};
         const areaW=largura-margem.left-margem.right,areaH=altura-margem.top-margem.bottom;
         const x=i=>margem.left+(pontos.length<=1?areaW/2:(i*areaW/(pontos.length-1)));
         const y=eva=>margem.top+((10-eva)/10)*areaH;
@@ -729,6 +731,8 @@
         revisaoCargaPainelFisioterapeuta++; // Uma resposta anterior ao salvamento não pode recolocar o botão.
         if(document.getElementById('tela_home')?.classList.contains('ativa'))garantirPainelFisioterapeuta().catch(()=>false);
     });
+
+    window.KineSysAnaliseEvolucao=Object.freeze({pontos:pontosEvolucaoPaciente,grafico:graficoEvolucaoSVG,abrir:abrirAnaliseEvolucao});
 
     window.KineSysMeuDiaClinico=Object.freeze({
         version:'1.26.0-avaliacao-cuidados',

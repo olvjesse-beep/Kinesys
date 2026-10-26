@@ -18,20 +18,48 @@ function notificarSugestaoAvaliacaoKineSys(input){
 let sliderEVA = null;
 let valorEVA = null;
 
+function obterEvaAvaliacaoKineSys(){
+    const slider=document.getElementById('eva_slider'),estado=document.getElementById('context_state_dor_relata');
+    if(!slider||slider.disabled||(estado&&!estado.checked)||slider.value==='')return null;
+    const valor=Number(slider.value);
+    return Number.isInteger(valor)&&valor>=0&&valor<=10?valor:null;
+}
+function atualizarEvaAvaliacaoKineSys(){
+    const slider=document.getElementById('eva_slider'),estado=document.getElementById('context_state_dor_relata'),saida=document.getElementById('eva_valor');
+    if(!slider)return;
+    if(estado)slider.disabled=!estado.checked;
+    const valor=obterEvaAvaliacaoKineSys();
+    if(saida)saida.textContent=valor===null?'Não avaliada':valor+'/10';
+    slider.setAttribute('aria-valuetext',valor===null?'Dor não avaliada':valor+' de 10');
+    const previa=document.getElementById('avaliacao_eva_previa'),data=document.getElementById('avaliacao_realizado_em')?.value||'';
+    const grafico=window.KineSysAnaliseEvolucao?.grafico;
+    if(previa){
+        const chave=JSON.stringify([valor,data,!!grafico]);
+        if(previa.dataset.evaPrevia!==chave){
+            previa.dataset.evaPrevia=chave;
+            if(valor!==null&&data&&grafico)previa.innerHTML=grafico([{data,eva:valor,tipo:'Avaliação',estado:'Prévia da avaliação, ainda não salva'}],{compacto:true});
+            else previa.textContent=valor===null?'Marque Avaliada para registrar a intensidade da dor.':valor+'/10 · Informe a data da avaliação para visualizar o ponto inicial.';
+        }
+    }
+    const botao=document.getElementById('avaliacao_eva_analise');
+    if(botao)botao.disabled=!window.obterContextoAvaliacaoKineSys?.()?.pacienteId;
+}
+function preencherEvaAvaliacaoKineSys(valor){
+    const valido=valor!==null&&valor!==undefined&&valor!==''&&Number.isInteger(Number(valor))&&Number(valor)>=0&&Number(valor)<=10;
+    const sim=document.getElementById('context_state_dor_relata'),nao=document.getElementById('context_state_dor_nao_informado'),slider=document.getElementById('eva_slider');
+    const status=document.getElementById('avaliacao_eva_status');if(status)status.textContent='';
+    if(sim)sim.checked=valido;if(nao)nao.checked=!valido;
+    if(slider){slider.value=valido?Number(valor):0;slider.disabled=!valido;}
+    atualizarEvaAvaliacaoKineSys();
+    window.KineSysContextoAnamnese?.atualizar();
+}
 function inicializarEvaAvaliacao(){
     sliderEVA=document.getElementById('eva_slider');valorEVA=document.getElementById('eva_valor');
     if(!sliderEVA||sliderEVA.dataset.ksEva==='true')return;
     sliderEVA.dataset.ksEva='true';
-if (sliderEVA) {
-    sliderEVA.addEventListener("input", function() {
-        const val = parseInt(this.value) || 0;
-        if (valorEVA) {
-            valorEVA.innerText = val + "/10";
-            aplicarClasseEvaKineSys(valorEVA, val);
-        }
-    });
-}
-
+    sliderEVA.addEventListener('input',atualizarEvaAvaliacaoKineSys);
+    document.getElementById('avaliacao_realizado_em')?.addEventListener('change',atualizarEvaAvaliacaoKineSys);
+    atualizarEvaAvaliacaoKineSys();
 }
 
 const sliderEvo = document.getElementById("eva_slider_evo");

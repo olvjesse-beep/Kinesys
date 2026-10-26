@@ -2,8 +2,8 @@
  * sem clonar IDs, alterar valores canônicos ou consultar pacientes. */
 (function(){
  'use strict';
- const icons={saude:'heart',cirurgias:'bandage',medicamentos:'pill',exames:'photo',trabalho:'briefcase',atividade:'barbell',psicossocial:'users'};
- let card,paineis=[],aberto=null,activeKey='saude',sincronizacaoTimer=null,avaliacaoAtivaRef=null,navegacao,preservado={};
+ const icons={dor:'heart',saude:'heart',cirurgias:'bandage',medicamentos:'pill',exames:'photo',trabalho:'briefcase',atividade:'barbell',psicossocial:'users'};
+ let card,paineis=[],aberto=null,activeKey='dor',sincronizacaoTimer=null,avaliacaoAtivaRef=null,navegacao,preservado={};
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  function icon(name){const img=el('img','context-icon');img.src='assets/vendor/tabler/'+name+'.svg';img.alt='';img.setAttribute('aria-hidden','true');return img;}
  function campos(item){return Array.from(item.details.querySelectorAll('input,select,textarea')).filter(e=>e.dataset.contextUi!=='true'&&e.type!=='hidden'&&e.id!=='chk_corticoide'&&!['exames_imagem_fonte','input_cirurgia','input_medicamento'].includes(e.id));}
@@ -17,10 +17,17 @@
  function setEstado(item,value){item.radios.forEach(r=>r.checked=r.value===value);}
  function mudarEstado(item,value){
   item.message.textContent='';
+  if(item.key==='dor'){setEstado(item,value);atualizar(item);return true;}
   if(value!=='relata'&&valores(item).length){setEstado(item,'relata');item.message.textContent='Existem informações registradas. Revise-as antes de declarar negativa ou não informado; nenhum dado foi apagado.';atualizar(item);return false;}
   setEstado(item,value);atualizar(item);return true;
  }
  function atualizar(item){
+  if(item.key==='dor'){
+   window.atualizarEvaAvaliacaoKineSys?.();
+   const valor=window.obterEvaAvaliacaoKineSys?.();
+   item.status.textContent=valor==null?'Não avaliada':valor+'/10';
+   item.button.classList.toggle('has-data',valor!=null);item.body.hidden=false;return;
+  }
   const data=valores(item);if(data.length&&estado(item)!=='relata')setEstado(item,'relata');
   const state=estado(item);
   item.status.textContent=data.length?data.slice(0,2).join(' · ')+(data.length>2?' · +'+(data.length-2):''):state==='nega'?'Nega os itens investigados':state==='relata'?'Relata · selecione ou detalhe':'Não informado';
@@ -46,7 +53,7 @@
  function coletar(){
   const estados={};paineis.forEach(p=>{atualizar(p);estados[p.key]=estado(p);});
   const camposExtras={};card?.querySelectorAll('[data-context-field][id]').forEach(e=>camposExtras[e.id]=String(e.value||''));
-  return {...preservado,versao:1,estados:{...preservado.estados,...estados},campos:{...preservado.campos,...camposExtras}};
+  return {...preservado,versao:1,dorAvaliacao:{valor:window.obterEvaAvaliacaoKineSys?.()??null},estados:{...preservado.estados,...estados},campos:{...preservado.campos,...camposExtras}};
  }
  function preencher(data={}){
   preservado=JSON.parse(JSON.stringify(data||{}));
@@ -54,13 +61,14 @@
   card?.querySelectorAll('[data-context-field][id]').forEach(e=>{e.value=typeof data.campos?.[e.id]==='string'?data.campos[e.id]:'';});
   card?.querySelectorAll('details.context-extra').forEach(d=>{d.open=Array.from(d.querySelectorAll('input,textarea')).some(e=>String(e.value||'').trim());});
   paineis.forEach(atualizar);
+  if(data.dorAvaliacao)window.preencherEvaAvaliacaoKineSys?.(data.dorAvaliacao.valor);
  }
  function limpar(){
   paineis.forEach(p=>{campos(p).forEach(e=>{if(e.type==='checkbox')e.checked=false;else e.value='';});p.details.querySelectorAll('#tags_cirurgias,#tags_medicamentos').forEach(e=>e.replaceChildren());});
   ['input_cirurgia','input_medicamento'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
   const fonte=document.getElementById('origem_informacao_clinica');if(fonte)fonte.value='relato_paciente';
   const confirmacao=document.getElementById('confirmacao_documental');if(confirmacao)confirmacao.value='nao_verificado';
-  preencher();window.fecharSugestoesAvaliacaoKineSys?.();
+  preencher();atualizarAlertas(null);window.preencherEvaAvaliacaoKineSys?.(null);window.fecharSugestoesAvaliacaoKineSys?.();
  }
  function iniciar(){
   const next=document.getElementById('chk_tabagista')?.closest('.clinical-secondary-card');
@@ -76,33 +84,56 @@
    const button=el('button','context-index-item');button.type='button';button.id='context-tab-'+key;button.setAttribute('role','tab');button.setAttribute('aria-controls','context-panel-'+key);
    const label=el('span','context-index-copy'),strong=el('strong','',title),status=el('span','context-index-status','Não informado');label.append(strong,status);button.append(icon(icons[key]),label,icon('chevron-right'));index.append(button);
    details.id='context-panel-'+key;details.setAttribute('role','tabpanel');details.setAttribute('aria-labelledby',button.id);details.classList.add('context-panel');details.open=true;summary.hidden=true;
-   const head=el('header','context-panel-heading');head.append(el('h3','',title),el('p','',description));const body=details.querySelector('.disclosure-body');
+   const head=el('header','context-panel-heading');head.append(el('h3','',key==='dor'?'Dor no momento da avaliação':title),el('p','',description));const body=details.querySelector('.disclosure-body');
    const states=el('fieldset','context-states'),legend=el('legend','clinical-visually-hidden','Informação sobre '+title);states.append(legend);
-   const radios=[['nao_informado','Não informado'],['nega','Nega'],['relata','Relata']].map(([value,text])=>{const l=el('label'),r=el('input');r.type='radio';r.name='context_state_'+key;r.id='context_state_'+key+'_'+value;r.dataset.contextUi='true';r.value=value;r.checked=value==='nao_informado';l.append(r,document.createTextNode(text));states.append(l);return r;});
+   const escolhas=key==='dor'?[['relata','Avaliada'],['nao_informado','Não avaliada']]:[['nao_informado','Não informado'],['nega','Nega'],['relata','Relata']];
+   const radios=escolhas.map(([value,text])=>{const l=el('label'),r=el('input');r.type='radio';r.name='context_state_'+key;r.id='context_state_'+key+'_'+value;r.dataset.contextUi='true';r.value=value;r.checked=value==='nao_informado';l.append(r,document.createTextNode(text));states.append(l);return r;});
    const message=el('p','context-message');message.setAttribute('role','status');
    const hint=el('p','context-hint','Sem marcação não significa ausência. Detalhe somente o que foi informado.');
    hint.prepend(icon('info-circle'));
-   details.insertBefore(head,body);details.insertBefore(states,body);details.append(message,hint);content.append(details);
+   details.insertBefore(head,body);details.insertBefore(states,body);details.append(message);if(key!=='dor')details.append(hint);content.append(details);
    const item={key,details,body,button,status,radios,message};paineis.push(item);
    button.addEventListener('click',()=>abrir(item));
    button.addEventListener('keydown',e=>{const keys=['ArrowDown','ArrowUp','ArrowRight','ArrowLeft','Home','End'];if(!keys.includes(e.key))return;e.preventDefault();const offset=['ArrowDown','ArrowRight'].includes(e.key)?1:-1;const at=e.key==='Home'?0:e.key==='End'?paineis.length-1:(i+offset+paineis.length)%paineis.length;abrir(paineis[at],true);});
    radios.forEach(r=>r.addEventListener('change',()=>{mudarEstado(item,r.value);if(typeof agendarAutosaveKineSys==='function')agendarAutosaveKineSys();}));
    details.addEventListener('input',()=>atualizar(item));details.addEventListener('change',()=>atualizar(item));
   });
-  const source=el('div','context-source'),sourceBody=fonte.querySelector('.disclosure-body');source.append(sourceBody);content.append(source);fonte.remove();
+  const source=el('div','context-source'),sourceBody=fonte.querySelector('.disclosure-body');source.append(sourceBody);const footer=document.querySelector('#subtela_triagem > .context-final-actions');if(footer)footer.prepend(source);else content.append(source);fonte.remove();
   card.querySelectorAll('.context-extra>summary').forEach(s=>s.prepend(icon('plus')));
   const sourceLabel=source.querySelector('label');if(sourceLabel){sourceLabel.classList.remove('clinical-visually-hidden');sourceLabel.textContent='Fonte dos dados';}
   // One canonical physical-activity input, moved rather than copied or replaced.
   const activity=paineis.find(p=>p.key==='atividade'),sports=document.getElementById('paciente_esporte')?.closest('.input-group');
   if(activity&&sports)activity.body.prepend(sports);
   card.querySelectorAll('.checkbox-pill').forEach(l=>{const input=l.querySelector('input');if(input?.id)l.htmlFor=input.id;input?.removeAttribute('aria-label');});
-  window.inicializarSugestoesAvaliacaoKineSys?.();
+  window.inicializarSugestoesAvaliacaoKineSys?.();window.inicializarEvaAvaliacao?.();
+  document.getElementById('avaliacao_eva_analise')?.addEventListener('click',abrirAnalise);
   const triagem=document.getElementById('subtela_triagem');avaliacaoAtivaRef=document.getElementById('tela_avaliacao');
   navegacao=new MutationObserver(()=>{if(aberto&&!triagem.classList.contains('ativa'))fechar(false);});
   navegacao.observe(triagem,{attributes:true,attributeFilter:['class']});
   abrir(paineis.find(p=>p.key===activeKey)||paineis[0]);iniciarSincronizacaoContexto();
  }
- window.KineSysContextoAnamnese={coletar,preencher,limpar,atualizar:()=>paineis.forEach(atualizar)};
+ async function abrirAnalise(){
+  const contexto=window.obterContextoAvaliacaoKineSys?.(),status=document.getElementById('avaliacao_eva_status');
+  if(!contexto?.pacienteId)return;
+  const mesmaAvaliacao=()=>JSON.stringify(contexto)===JSON.stringify(window.obterContextoAvaliacaoKineSys?.())&&document.getElementById('tela_avaliacao')?.classList.contains('ativa');
+  if(status)status.textContent='Carregando registros salvos deste paciente…';
+  try{
+   const paciente=await obterPacienteCompletoPorId(contexto.pacienteId);
+   if(!mesmaAvaliacao())return;
+   if(!paciente||String(paciente.id)!==String(contexto.pacienteId))throw new Error('Paciente não encontrado.');
+   if(!window.KineSysAnaliseEvolucao?.abrir)throw new Error('Análise indisponível.');
+   window.KineSysAnaliseEvolucao.abrir(paciente,paciente.nome);if(status)status.textContent='A análise exibe somente avaliações finalizadas e evoluções salvas.';
+  }catch(_){if(mesmaAvaliacao()&&status)status.textContent='Não foi possível carregar a análise. Tente novamente; nenhum dado foi alterado.';}
+ }
+ function atualizarAlertas(alertas){
+  const root=document.getElementById('ks_radar_context_resumo');if(!root)return;
+  root.replaceChildren();
+  if(!Array.isArray(alertas)){root.append(el('p','context-radar-empty','Os alertas serão atualizados a partir das informações desta avaliação.'));return;}
+  if(!alertas.length){root.append(el('p','context-radar-empty','Nenhum alerta ativo nas informações registradas. Isso não substitui o exame clínico.'));return;}
+  alertas.slice(0,2).forEach(alerta=>{const row=el('div','context-radar-row');row.dataset.nivel=alerta.nivel;row.append(el('strong','',alerta.titulo),el('p','',alerta.desc));root.append(row);});
+  if(alertas.length>2)root.append(el('p','context-radar-more','Mais '+(alertas.length-2)+' alerta(s). Abra Ver alertas para revisar todos.'));
+ }
+ window.KineSysContextoAnamnese={coletar,preencher,limpar,atualizarAlertas,atualizar:()=>paineis.forEach(atualizar)};
  document.addEventListener('kinesys:tela-dom-pronta',e=>{if(e.detail?.id==='tela_avaliacao')iniciar();});
  document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_avaliacao'){iniciar();iniciarSincronizacaoContexto();}});
  document.addEventListener('kinesys:tela-desativada',event=>{if(event.detail?.id==='tela_avaliacao'){pararSincronizacaoContexto();if(aberto)fechar(false);}});

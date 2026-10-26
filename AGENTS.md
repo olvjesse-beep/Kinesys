@@ -160,7 +160,7 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Após salvamento bem-sucedido, invalidar a fotografia clínica da Home usando a clínica de origem. Respostas anteriores ao salvamento ou à troca de perfil/clínica não podem recolocar ações ou cuidados desatualizados.
 - Cuidados abaixo do nome são registros com origem, não prescrições nem contraindicações automáticas. Diferenciar antecedente, relato a conferir e restrição explicitamente documentada. Não promover negativa, história familiar, cirurgia indicada ou rascunho a antecedente próprio. Restrições ativas usam a avaliação finalizada mais recente, não um pós-operatório antigo.
 - Preservar “Consultar avaliação” e “Histórico de evoluções” no paciente selecionado, com permissões e consulta somente leitura, do mais recente ao mais antigo. Não abrir o formulário de edição ao consultar.
-- PDF simplificado apresenta conteúdo clínico em seções; fingerprints, caches, planos internos e JSON de rastreamento não são conteúdo narrativo. O detalhado mantém o apêndice técnico e auditoria. Não regenerar nem alterar texto profissional salvo. Preservar detalhes das intercorrências, exames, medicações e alertas nas evoluções. Resultados legados sem rótulos exigem aviso, nunca omissão silenciosa ou interpretação inventada.
+- PDF simplificado apresenta conteúdo clínico em seções; fingerprints, caches, planos internos e JSON de rastreamento não são conteúdo narrativo. O detalhado mantém carimbos e trilha de alterações, sem apêndice técnico bruto, conforme solicitação de 26/10/2026. Não regenerar nem alterar texto profissional salvo. Preservar detalhes das intercorrências, exames, medicações e alertas nas evoluções. Resultados legados sem rótulos exigem aviso, nunca omissão silenciosa ou interpretação inventada.
 - Executar `home_avaliacao_cuidados.test.cjs` e `prontuario_clinico.test.cjs` na barreira hospedada, além de todas as suítes anteriores. Conferir notebook e mobile. Remover estas decisões somente por solicitação explícita do usuário.
 
 ## 16. Exame complementar e Radar contextual
@@ -225,3 +225,11 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 - Executar `tests/interface_audit_full.test.cjs` e os testes financeiros ampliados na barreira hospedada, preservando as demais suítes. Dados e evidências reais de pacientes continuam fora do Git.
 
 A separação entre `public_html` e `public_html/app` é uma invariável de produção. Qualquer deploy, script, sincronização, restauração ou limpeza que possa atravessar essa fronteira deve ser interrompido antes de executar. Nunca use o repositório KineSys como fonte do site institucional.
+
+### EVA inicial e Radar light glass — 26/10/2026
+
+- Preservar integralmente a HMA e a interface anterior a Antecedentes e fatores modificadores. Dor (EVA) é um painel adicional no mesmo índice, sem excluir os sete grupos existentes. Ausência é nula, distinta de zero explícito, no formulário, rascunho, transporte, normalização, relatório e gráfico.
+- A curva usa avaliações finalizadas e evoluções do próprio paciente/clínica. A prévia da EVA não salva nem inventa histórico ou tendência; abrir a análise ignora respostas antigas após troca de contexto. Não reintroduzir valor legado quando a medida atual estiver explicitamente nula.
+- Alertas da anamnese ficam no final dos antecedentes em light glass suave, com severidade e conteúdo reais do Radar, sem alterar os critérios clínicos ou retirar acesso a todos os alertas.
+- Prontuário completo não exibe apêndice técnico bruto nem o texto automático de Quadro geral sem região investigada. Contexto da entrevista apresenta o conteúdo registrado (inclusive sono, trabalho, cirurgias e medicações), não a etiqueta Relato registrado. Falta de detalhe continua explícita; texto original, laudo profissional e auditoria permanecem preservados.
+- Manter os casos de EVA e prontuário ampliados nas suítes existentes evaluation_context_model2.test.cjs, prontuario_clinico.test.cjs e prontuario_export_lazy.contract.js; executar também meu_dia_lifecycle.contract.js na barreira hospedada. Nenhum arquivo de correção adicional é necessário.

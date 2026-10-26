@@ -132,6 +132,23 @@
 
                 <div class="card clinical-secondary-card">
                     <div class="clinical-section-heading compact-heading"><h2>Antecedentes e fatores modificadores</h2></div>
+                    <details class="clinical-disclosure" data-context-key="dor">
+                        <summary><span>Dor (EVA)</span><small>Intensidade da dor no momento da avaliação.</small></summary>
+                        <div class="disclosure-body context-eva">
+                            <label for="eva_slider">Intensidade da dor (EVA)</label>
+                            <output id="eva_valor" for="eva_slider" aria-live="polite">Não avaliada</output>
+                            <input type="range" id="eva_slider" min="0" max="10" step="1" value="0" disabled aria-describedby="avaliacao_eva_ajuda">
+                            <div class="context-eva-ticks" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+                            <div class="context-eva-extremos"><span>Sem dor</span><span>Pior dor imaginável</span></div>
+                            <section class="context-eva-chart" aria-labelledby="avaliacao_eva_grafico_titulo">
+                                <h4 id="avaliacao_eva_grafico_titulo">Análise de evolução</h4>
+                                <div id="avaliacao_eva_previa" aria-live="polite">Marque Avaliada para registrar a intensidade da dor.</div>
+                                <div class="context-eva-chart-footer"><p id="avaliacao_eva_ajuda">Esta EVA entra no gráfico do paciente após finalizar e salvar. Prévia sem gravação.</p>
+                                <button type="button" class="btn-link-compacto" id="avaliacao_eva_analise" disabled>Ver análise de evolução</button></div>
+                                <p id="avaliacao_eva_status" role="status"></p>
+                            </section>
+                        </div>
+                    </details>
                     <details class="clinical-disclosure" data-context-key="saude"><summary><span>Saúde e hábitos</span><small>Condições e hábitos informados na entrevista.</small></summary><div class="disclosure-body"><div class="checkbox-group compact-chips"><label class="checkbox-pill"><input type="checkbox" id="chk_hipertenso"><span>Hipertensão</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_diabetico"><span>Diabetes</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_tabagista"><span>Tabagismo</span></label><label class="checkbox-pill"><input type="checkbox" id="chk_etilista"><span>Consumo de álcool</span></label></div><div class="input-group"><label for="contexto_saude_observacao">Outras condições ou observações (opcional)</label><textarea id="contexto_saude_observacao" data-context-field rows="2" placeholder="Registre apenas o que foi informado…"></textarea></div></div></details>
 
                     <details class="clinical-disclosure" data-context-key="cirurgias"><summary><span>Cirurgias e traumas</span><small>Registre o procedimento ou evento, sem presumir detalhes.</small></summary><div class="disclosure-body"><div class="checkbox-group compact-chips"><label class="checkbox-pill" onchange="toggleCirurgias(this)"><input type="checkbox" id="chk_cirurgia"><span>Cirurgia ou trauma anterior</span></label></div><div id="bloco_cirurgias"><div class="input-group"><label for="input_cirurgia">Cirurgia ou procedimento</label><input type="text" id="input_cirurgia" placeholder="Digite como o paciente relatou..." autocomplete="off"><div id="sugestao_box" class="box-sugestoes"></div></div><div id="tags_cirurgias"></div><div class="grid-2"><div class="input-group"><label for="contexto_cirurgia_regiao">Região e lado (se informados)</label><input id="contexto_cirurgia_regiao" data-context-field placeholder="Região / lado"></div><div class="input-group"><label for="contexto_cirurgia_data">Data aproximada (opcional)</label><input id="contexto_cirurgia_data" data-context-field placeholder="Mês/ano, se souber"></div></div></div><div class="input-group"><label for="contexto_trauma_observacao">Detalhes do trauma ou restrições informadas (opcional)</label><textarea id="contexto_trauma_observacao" data-context-field rows="2" placeholder="Descreva o evento ou a orientação recebida…"></textarea></div></div></details>
@@ -200,8 +217,12 @@
                         <div class="disclosure-body"><div class="input-group"><label for="origem_informacao_clinica" class="clinical-visually-hidden">Fonte principal da informação clínica</label><select id="origem_informacao_clinica" onchange="atualizarFonteDadosCompacta()"><option value="relato_paciente">Relato do paciente</option><option value="relato_documento">Relato + documento/exame conferido</option><option value="laudo">Documento / laudo / exame</option><option value="achado_fisioterapeuta">Achados da avaliação fisioterapêutica</option></select><input type="hidden" id="confirmacao_documental" value="nao_verificado"></div></div>
                     </details>
 
-                    <div class="actions clinical-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para exame clínico</button></div>
                 </div>
+                <section id="ks_radar_context_host" class="ks-context-radar ks-radar-inline-host" aria-labelledby="ks_radar_context_titulo">
+                    <header><img src="assets/vendor/tabler/info-circle.svg" alt="" aria-hidden="true"><div><h3 id="ks_radar_context_titulo">Radar KineSys · Pontos de atenção</h3><p>Revise as informações antes do exame.</p></div></header>
+                    <div id="ks_radar_context_resumo" aria-live="polite"><p>Os alertas serão atualizados a partir das informações desta avaliação.</p></div>
+                </section>
+                <div class="actions clinical-actions context-final-actions"><button class="btn-secondary" onclick="salvarAvaliacaoAtual(false)" id="btn_salvar_avaliacao_rapida">Salvar rascunho</button><button class="btn-primary" onclick="avancarParaMapa()">Avançar para exame clínico</button></div>
             </div>
 
             <div id="subtela_mapeamento" class="subtela cluster-focus-ui" role="tabpanel" aria-labelledby="step_indicador_2">
