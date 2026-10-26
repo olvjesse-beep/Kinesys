@@ -157,16 +157,19 @@ function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>{if(
 function detalhesEntrevista(av,c,fonte,campos){
     const motor=av.mapeamento?.contextoMotor||{},grupos=fonte.gruposAnamnese||{},f=fonte.campos||{};
     const juntar=(...v)=>[...new Set(v.flatMap(x=>Array.isArray(x)?x:typeof x==='object'&&x?x.itens||x.exposicoes||[]:[x]).map(x=>typeof x==='string'?x.trim():x?.texto||x?.nome||'').filter(Boolean))];
-    const rotulos={sono_ruim:'Sono ruim',medo_movimento:'Medo de movimento/relesão',catastrofizacao:'Catastrofização',baixa_autoeficacia:'Baixa autoeficácia',evitacao:'Evitação',estresse:'Estresse elevado',afastamento:'Barreiras de retorno',expectativa_negativa:'Expectativa negativa',em_pe_prolongado:'Ortostatismo prolongado',sentado_prolongado:'Sedestação prolongada',acima_cabeca:'Atividades acima da cabeça',flexao_rotacao_carga:'Flexão/rotação com carga',repeticao_maos:'Repetição de mãos/punhos',vibracao:'Vibração',manejo_pacientes:'Manejo de pacientes'};
+    const rotulos={sono_ruim:'Sono ruim',medo_movimento:'Medo de movimento/relesão',catastrofizacao:'Catastrofização',baixa_autoeficacia:'Baixa autoeficácia',evitacao:'Evitação',estresse:'Estresse elevado',afastamento:'Barreiras de retorno',expectativa_negativa:'Expectativa negativa',em_pe_prolongado:'Ortostatismo prolongado',sentado_prolongado:'Sedestação prolongada',acima_cabeca:'Atividades acima da cabeça',flexao_rotacao_carga:'Flexão/rotação com carga',repeticao_maos:'Repetição de mãos/punhos',vibracao:'Vibração',manejo_pacientes:'Manejo de pacientes',impacto:'Impacto',forca_alta:'Força alta',overhead:'Atividades acima da cabeça',rotacao:'Rotação/pivô',endurance:'Endurance',recreacional:'Recreacional',competitivo:'Competitivo',alto_rendimento:'Alto rendimento',nao:'Sem aumento relevante',leve:'Aumento leve',moderado:'Aumento moderado',acentuado:'Aumento acentuado'};
     const lista=v=>juntar(v).map(x=>rotulos[x]||x);
+    const campo=(nome,legado)=>Object.hasOwn(f,nome)?f[nome]:legado;
+    const detalhe=(nome,v,unidade='')=>v===null||v===undefined||String(v).trim()===''?'':nome+': '+(rotulos[v]||v)+unidade;
+    const carga=motor.cargaEsportiva||{};
     return {
         saude:juntar(Object.entries(av.comorbidades||{}).filter(([k,v])=>v===true&&!['cirurgia','corticoide','corticoide_sistemico','corticoide_infiltracao','aine_recente'].includes(k)).map(([k])=>chaveBonita(k)),campos.contexto_saude_observacao),
-        cirurgias:juntar(itensClinicos(av.cirurgias||c.cirurgias),campos.contexto_cirurgia_regiao,campos.contexto_cirurgia_data,campos.contexto_trauma_observacao),
+        cirurgias:juntar(itensClinicos(av.cirurgias||c.cirurgias),detalhe('Região e lado',campos.contexto_cirurgia_regiao),detalhe('Data informada',campos.contexto_cirurgia_data),campos.contexto_trauma_observacao),
         medicamentos:juntar(itensClinicos(av.medicamentos),campos.contexto_medicamento_observacao),
         exames:juntar(c.examesImagem?.descricao,f.exames_imagem_descricao),
-        trabalho:juntar(lista(grupos.exposicoesOcupacionais||motor.exposicoesOcupacionais),campos.contexto_trabalho_tarefa,campos.contexto_trabalho_tempo,campos.contexto_trabalho_frequencia,campos.contexto_trabalho_observacao),
-        atividade:juntar(av.esporte,f.paciente_esporte,lista(grupos.exposicoesEsportivas||motor.cargaEsportiva?.exposicoes),f.esporte_frequencia,f.esporte_duracao,f.esporte_nivel,f.esporte_mudanca_carga),
-        psicossocial:juntar(lista(grupos.fatoresPsicossociais||motor.yellowFlags),f.yellow_flags_observacao,c.yellowFlags?.observacao)
+        trabalho:juntar(lista(grupos.exposicoesOcupacionais||motor.exposicoesOcupacionais),detalhe('Tarefa',campos.contexto_trabalho_tarefa),detalhe('Tempo de exposição',campos.contexto_trabalho_tempo),detalhe('Frequência',campos.contexto_trabalho_frequencia),campos.contexto_trabalho_observacao),
+        atividade:juntar(av.esporte,f.paciente_esporte,lista(grupos.exposicoesEsportivas||motor.cargaEsportiva?.exposicoes),detalhe('Frequência semanal',campo('esporte_frequencia',carga.frequenciaSemanal),' sessões/semana'),detalhe('Duração média',campo('esporte_duracao',carga.duracaoMinutos),' min/sessão'),detalhe('Nível',campo('esporte_nivel',carga.nivel)),detalhe('Mudança de carga',campo('esporte_mudanca_carga',carga.mudancaCarga4Semanas))),
+        psicossocial:juntar(lista(grupos.fatoresPsicossociais||motor.yellowFlags),campo('yellow_flags_observacao',c.yellowFlags?.observacao??motor.yellowFlags?.observacao))
     };
 }
 function sinteseRegionalParaDocumento(reg){
