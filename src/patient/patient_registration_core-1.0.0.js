@@ -33,7 +33,7 @@ async function salvarCadastroSomente(redirecionar = true) {
             p.cpf && somenteDigitos(p.cpf) === somenteDigitos(cpfDigitado)
         );
         if (cpfConflito) {
-            alert(`⚠️ Já existe um paciente cadastrado com este CPF: "${cpfConflito.nome}".\n\nAbra o prontuário dele na tela "Prontuários" para editar, em vez de criar um cadastro novo.`);
+            alert(`⚠️ Já existe um paciente cadastrado com este CPF: "${cpfConflito.nome}".\n\nAbra o prontuário dele na tela "Pacientes" para editar, em vez de criar um cadastro novo.`);
             return null;
         }
     }

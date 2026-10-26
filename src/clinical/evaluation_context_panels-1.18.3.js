@@ -10,7 +10,7 @@
  function valores(item){
   const texts=campos(item).filter(e=>!['checkbox','radio'].includes(e.type)&&String(e.value||'').trim()).map(e=>e.tagName==='SELECT'?e.selectedOptions[0]?.textContent:String(e.value).trim()).filter(Boolean);
   const marcados=campos(item).filter(e=>e.type==='checkbox'&&e.checked).map(e=>e.closest('label')?.querySelector('span')?.textContent?.trim()||e.value);
-  const tags=Array.from(item.details.querySelectorAll('#tags_cirurgias > *,#tags_medicamentos > *')).map(e=>e.textContent.replace(/[✕×]/g,'').trim());
+  const tags=Array.from(item.details.querySelectorAll('#tags_cirurgias > *,#tags_medicamentos > *')).map(e=>e.dataset?.exibicao?e.dataset.exibicao+(e.dataset.dataCirurgia?' · '+e.dataset.dataCirurgia:''):e.textContent.replace(/[✕×]/g,'').trim());
   return [...marcados,...tags,...texts];
  }
  function estado(item){return item.radios.find(e=>e.checked)?.value||'nao_informado';}

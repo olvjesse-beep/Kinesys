@@ -282,7 +282,7 @@
     });
   }
 
-  const decorativeEmoji=/[📌📱📲🏋️📅🗓️💳👥🛠️🏠👤🩺📂📷📈📄🚪🔔]/g;
+  const decorativeEmoji=/(?:📌|📱|📲|🏋|📅|🗓|💳|👥|🛠|🏠|👤|🩺|📂|📷|📈|📄|🚪|🔔)\uFE0F?/gu;
   function cleanEmojiIn(root=document){
     const targets=[];
     if(root.nodeType===1&&root.matches?.('.tela button,.modal-box button,.card-header h2')) targets.push(root);

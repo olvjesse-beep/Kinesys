@@ -89,12 +89,15 @@ jobs:
           node --check src/core/script-1.18.0.js
           node tests/evolution_persistence.contract.js
           node tests/evolution_model1_roundtrip.test.cjs
+          node tests/interface_audit_regression.test.cjs
           node --check src/clinical/evaluation_workspace-1.17.0.js
           node tests/evaluation_clinical_correlation.contract.js
           node tests/evaluation_report_integration.test.cjs
           node tests/evaluation_report_document.test.cjs
           node --check src/clinical/clinical_document_analyzer-1.0.0.js
           node tests/clinical_document_analyzer.test.cjs
+          node tests/evaluation_history_surgery_dates.test.cjs
+          node --check tests/helpers/free_exam_preview.cjs
           node --check src/clinical/clinical_language_rules-1.0.0.js
           node tests/clinical_language_rules.test.cjs
           node tests/report_radar_consistency.test.cjs

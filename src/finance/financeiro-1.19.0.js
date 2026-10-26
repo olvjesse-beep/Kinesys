@@ -515,6 +515,9 @@ async function sincronizarFinanceiroLocalPaciente(pacienteId) {
 async function inicializarFinanceiro(preSelecionado = '') {
     const tela = document.getElementById('tela_financeiro');
     if (!tela) return;
+    // Permissões já são conhecidas antes da consulta; evita abas surgindo tardiamente.
+    if(typeof configurarAcessoBalancoFinanceiro==='function')configurarAcessoBalancoFinanceiro();
+    if(typeof configurarAcessoRelatorioDescontos==='function')configurarAcessoRelatorioDescontos();
     if (!financeiroPodeEditar()) {
         const painel = document.getElementById('financeiro_conteudo');
         if (painel) painel.innerHTML = '<div class="finance-empty">Seu perfil não possui permissão para lançar pagamentos.</div>';

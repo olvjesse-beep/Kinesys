@@ -15,6 +15,7 @@ let financeiroPendenciasCache = [];
 let financeiroPendenciasFiltro = 'todos';
 let financeiroPendenciasUltimaCarga = 0;
 let financeiroPendenciasCarregando = false;
+let financeiroPendenciasErroCarga = false;
 let financeiroPendenciasAvisoParcial = '';
 
 function normalizarTextoPendencias(valor='') {
@@ -216,14 +217,20 @@ async function carregarDadosPendenciasFinanceiras() {
 
 function atualizarResumoPendenciasFinanceiras() {
     const l=financeiroPendenciasCache||[];
-    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=String(v)};
+    const set=(id,v)=>{const el=document.getElementById(id);if(el){el.textContent=String(v);el.removeAttribute('aria-label');}};
     set('fin_pen_stat_ativos',l.filter(x=>x.ativo).length);
     set('fin_pen_stat_cobrar',l.filter(x=>x.aCobrar).length);
     set('fin_pen_stat_atender',l.filter(x=>x.clinicaDeve).length);
     set('fin_pen_stat_renovar',l.filter(x=>x.aguardaRenovacao).length);
     set('fin_pen_stat_semhorario',l.filter(x=>x.semProximo).length);
     const count=document.getElementById('financeiro_pendencias_count');
-    if(count) count.textContent=String(l.filter(x=>x.aCobrar||x.aguardaRenovacao||x.semProximo).length);
+    if(count){count.textContent=String(l.filter(x=>x.aCobrar||x.aguardaRenovacao||x.semProximo).length);count.removeAttribute('aria-label');}
+}
+
+function marcarPendenciasNaoConfirmadas(mensagem){
+    ['financeiro_pendencias_count','fin_pen_stat_ativos','fin_pen_stat_cobrar','fin_pen_stat_atender','fin_pen_stat_renovar','fin_pen_stat_semhorario'].forEach(id=>{
+        const el=document.getElementById(id);if(el){el.textContent='—';el.setAttribute('aria-label',mensagem);}
+    });
 }
 
 function filtroPendenciaAceita(item,filtro) {
@@ -238,6 +245,7 @@ function filtroPendenciaAceita(item,filtro) {
 function renderizarPendenciasFinanceiras() {
     const lista=document.getElementById('financeiro_pendencias_lista');
     if(!lista)return;
+    if(financeiroPendenciasErroCarga)return;
     const busca=normalizarTextoPendencias(document.getElementById('financeiro_pendencias_busca')?.value||'');
     const filtrados=(financeiroPendenciasCache||[]).filter(x=>filtroPendenciaAceita(x,financeiroPendenciasFiltro)).filter(x=>{
         if(!busca)return true;
@@ -281,10 +289,12 @@ function filtrarPendenciasFinanceiras(filtro='todos') {
 async function carregarPendenciasFinanceiras(forcar=false) {
     if(financeiroPendenciasCarregando)return;
     const agora=Date.now();
-    if(!forcar && financeiroPendenciasCache.length && (agora-financeiroPendenciasUltimaCarga)<60000){
+    if(!forcar && !financeiroPendenciasErroCarga && financeiroPendenciasCache.length && (agora-financeiroPendenciasUltimaCarga)<60000){
         atualizarResumoPendenciasFinanceiras();renderizarPendenciasFinanceiras();return;
     }
     financeiroPendenciasCarregando=true;
+    financeiroPendenciasErroCarga=false;
+    if(!financeiroPendenciasUltimaCarga)marcarPendenciasNaoConfirmadas('Carregando pendências');
     const feedback=document.getElementById('financeiro_pendencias_feedback');
     const lista=document.getElementById('financeiro_pendencias_lista');
     if(feedback){feedback.className='finance-feedback info';feedback.textContent='Atualizando pendências de todos os pacientes…';}
@@ -297,10 +307,12 @@ async function carregarPendenciasFinanceiras(forcar=false) {
         renderizarPendenciasFinanceiras();
         if(feedback){
             feedback.className='finance-feedback '+(financeiroPendenciasAvisoParcial?'aviso':'sucesso');
-            feedback.textContent=financeiroPendenciasAvisoParcial||`Lista atualizada: ${financeiroPendenciasCache.length} paciente(s) com atividade ou pendência.`;
+            feedback.textContent=financeiroPendenciasAvisoParcial||`Lista atualizada: ${financeiroPendenciasCache.length} ${financeiroPendenciasCache.length===1?'paciente':'pacientes'} com atividade ou pendência.`;
         }
     }catch(err){
         console.error('KineSys Pendências:',err);
+        financeiroPendenciasErroCarga=true;
+        marcarPendenciasNaoConfirmadas('Não foi possível consultar as pendências');
         if(feedback){feedback.className='finance-feedback erro';feedback.textContent='Não foi possível montar a lista de pendências. Verifique a conexão e tente novamente.';}
         if(lista)lista.innerHTML='<div class="finance-empty erro">Falha ao carregar as pendências.</div>';
     }finally{financeiroPendenciasCarregando=false;}

@@ -104,13 +104,8 @@
         return alternador;
     }
 
-    function removerControlesSuperioresMobileAgenda(){
+    function preservarNavegacaoMobileAgenda(){
         if(!modoMobileAgenda())return false;
-        const nav=document.querySelector('#tela_agenda .agenda-semana-nav');
-        if(nav){
-            registrarOrigemMobile(nav);
-            nav.remove();
-        }
         prepararAlternadorListaEsperaMobile();
         return true;
     }
@@ -170,7 +165,7 @@
                 return true;
             }
 
-            removerControlesSuperioresMobileAgenda();
+            preservarNavegacaoMobileAgenda();
 
             const tela=document.getElementById('tela_agenda');
             const tabs=document.getElementById('ks_agenda_controls');
@@ -185,12 +180,16 @@
             const hostPosGrade=garantirHostPosGrade(painel);
             const visoes=painel.querySelector('.agenda-visoes')||document.querySelector('#ks_agenda_mobile_order .agenda-visoes');
             const novo=painel.querySelector('.ks-new-appointment')||document.querySelector('#ks_agenda_mobile_order .ks-new-appointment');
+            const nav=document.querySelector('#tela_agenda .agenda-semana-nav');
+            const data=document.getElementById('agenda_data_input')?.closest('.input-group');
             const historico=document.querySelector('#tela_agenda .agenda-audit-btn');
 
-            [visoes,novo,tabs,historico].filter(Boolean).forEach(registrarOrigemMobile);
+            [visoes,nav,data,novo,tabs,historico].filter(Boolean).forEach(registrarOrigemMobile);
 
             if(hostTopo){
                 if(visoes&&visoes.parentElement!==hostTopo)hostTopo.appendChild(visoes);
+                if(nav&&nav.parentElement!==hostTopo)hostTopo.appendChild(nav);
+                if(data&&data.parentElement!==hostTopo){data.classList.add('ks-agenda-mobile-date');hostTopo.appendChild(data);}
                 if(novo&&novo.parentElement!==hostTopo)hostTopo.appendChild(novo);
             }
 
@@ -337,7 +336,7 @@
 
     requestAnimationFrame(()=>{
         if(modoMobileAgenda()){
-            removerControlesSuperioresMobileAgenda();
+            preservarNavegacaoMobileAgenda();
             organizarControlesMobileAgenda();
             observarEstruturaMobileAgenda();
         }
@@ -362,7 +361,7 @@
                 listeners:listenersAtivos,
                 mobileOrder:!!topo,
                 postGrid:!!pos,
-                topNavigationRemoved:modoMobileAgenda()&&!document.querySelector('#tela_agenda .agenda-semana-nav'),
+                topNavigationAvailable:!!document.querySelector('#tela_agenda .agenda-semana-nav'),
                 clinicProfessionalOnTop:!!topo&&topo.contains(visoes),
                 newAppointmentOnTop:!!topo&&topo.contains(novo),
                 waitlistAfterAgenda:!!pos&&pos.contains(tabs),

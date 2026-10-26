@@ -13,6 +13,12 @@
  const wrapper=/^(?:(?:o|a)\s+)?paciente\s+(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+|^(?:também\s+)?(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+/i;
  function slots(text){
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
+  const radiation=/^(dor)\s+(.+?)\s+que\s+irradia\s+(para\s+.+)$/iu.exec(body);
+  if(radiation)return {modelo:'sintoma_com_irradiacao',predicado:radiation[1],origemLocal:radiation[2],trajeto:radiation[3],corpo:body};
+  const sublocation=/^dor(?:\s+referida)?\s+na região\s+(d[oa]\s+.+?),\s*principalmente\s+(?:na\s+)?porção\s+(medial|lateral|anterior|posterior)$/iu.exec(body);
+  if(sublocation)return {modelo:'sintoma_com_sublocalizacao',local:sublocation[1],qualificador:sublocation[2],corpo:body};
+  const coordinated=/^((?:essa|esta|a) dor(?:\s+n[oa]\s+[^.;]+?)?)\s+piora\s+(.+?)\s+e\s+(?:agrava|piora|aumenta)\s+(.+)$/iu.exec(body);
+  if(coordinated)return {modelo:'agravantes_coordenados',sujeito:coordinated[1],circunstancias:[coordinated[2],coordinated[3]],corpo:body};
   const negative=new RegExp('^Nega\\s+(?:sentir|apresentar|ter)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(base.replace(/[.;\s]+$/,''));
   if(negative)return {modelo:'sintoma_negado',corpo:negative[1]};
   const activity=new RegExp('^(Ao\\s+[^,.;]+),\\s*(?:'+ '(?:o|a) paciente\\s+)?(?:refere\\s+|relata\\s+)?(?:sentir|sente|apresenta)\\s+('+noun+'\\b[\\s\\S]*)$','iu').exec(body);
@@ -26,6 +32,9 @@
   return {modelo:'preservacao_documental',corpo:base};
  }
  function realize(model){
+  if(model.modelo==='sintoma_com_irradiacao')return sentence('Relata '+model.predicado+' '+model.origemLocal+', com irradiação '+model.trajeto);
+  if(model.modelo==='sintoma_com_sublocalizacao')return sentence('Relata dor na região '+model.local+', principalmente na porção '+model.qualificador);
+  if(model.modelo==='agravantes_coordenados')return sentence(model.sujeito+' piora '+model.circunstancias.join(' e '));
   if(model.modelo==='sintoma_negado')return sentence('Nega '+model.corpo);
   if(model.modelo==='sintoma_com_circunstancia')return sentence('Relata '+model.predicado+', '+model.circunstancia[0].toLowerCase()+model.circunstancia.slice(1));
   if(model.modelo==='descritor_local_relatado')return sentence('Relata '+model.local+' '+model.predicado+model.complemento);
