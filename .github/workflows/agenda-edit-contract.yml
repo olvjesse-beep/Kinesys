@@ -86,6 +86,7 @@ jobs:
           node tests/medication_catalog.test.cjs
           node tests/evaluation_context_lifecycle.contract.js
           node tests/evaluation_context_model2.test.cjs
+          node tests/meu_dia_lifecycle.contract.js
           node --check src/core/script-1.18.0.js
           node tests/evolution_persistence.contract.js
           node tests/evolution_model1_roundtrip.test.cjs

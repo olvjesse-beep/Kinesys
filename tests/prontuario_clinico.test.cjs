@@ -21,7 +21,21 @@ async function run(){
  for(const internal of ['INTERNAL_FINGERPRINT','INTERNAL_CACHE','INTERNAL_ORIGIN','Modo Direcao','Apêndice técnico','&quot;ctx&quot;'])assert(!html.includes(internal),'Não expor cache interno: '+internal);
  assert(!html.includes('<script>'));assert(html.includes('&lt;script&gt;'));assert(!html.includes('Diabetico'),'Checkbox não marcado não vira negativa clínica');
  assert(html.includes('Negativa explicitamente registrada'),'Negativa explícita deve ser preservada');
- const detailed=render(p,[],'detalhado');assert(detailed.includes('Apêndice técnico'));assert(detailed.includes('INTERNAL_CACHE'));assert(detailed.includes('Trilha de alterações'));
+ const detailed=render(p,[],'detalhado');assert(!detailed.includes('Apêndice técnico'));assert(!detailed.includes('INTERNAL_CACHE'));assert(detailed.includes('Trilha de alterações'));
+ const contexto=fixture(),a=contexto.avaliacoes[0],c=a.mapeamento.clinicaEstruturada;
+ c.contextoAnamnese.estados.psicossocial='relata';
+ const origem=JSON.parse(c.laudo.fonte);origem.gruposAnamnese.fatoresPsicossociais=['Sono ruim'];c.laudo.fonte=JSON.stringify(origem);
+ c.contextoAnamnese.estados.trabalho='relata';c.contextoAnamnese.campos.contexto_trabalho_tarefa='Tarefa sintética confirmada';
+ a.mapeamento.resumoPorRegiao.push({regiao:'Quadro geral',textoDocumento:'Quadro geral: investigação em aberto, sem região específica selecionada. A decisão clínica permanece com o fisioterapeuta.'});
+ const guard=JSON.stringify(contexto);
+ for(const modo of ['simplificado','detalhado','avaliacoes']){
+  const texto=render(contexto,[],modo),tabela=texto.split('<h4>Contexto da entrevista</h4>')[1].split('</table>')[0];
+  assert(tabela.includes('Sono ruim'));assert(tabela.includes('Tarefa sintética confirmada'));assert(tabela.includes('Artrodese lombar'));assert(!tabela.includes('Relato registrado'));
+  assert(!texto.includes('Quadro geral'));assert(!texto.includes('Apêndice técnico'));assert(!texto.includes('INTERNAL_CACHE'));
+ }
+ assert.equal(JSON.stringify(contexto),guard,'exportação não modifica registro original');
+ a.mapeamento.resumoPorRegiao.push({regiao:'Quadro geral',textoDocumento:'Achado clínico geral efetivamente documentado.'});assert(render(contexto,[],'simplificado').includes('Achado clínico geral efetivamente documentado.'));
+ c.contextoAnamnese.estados.exames='relata';c.examesImagem={};assert(render(contexto,[],'simplificado').includes('Detalhamento não disponível no registro'),'não inventar detalhes ausentes');
  const evol=render(p,[],'evolucoes');assert(!evol.includes('Relato original preservado'));assert(evol.includes('somente leitura'));assert(evol.indexOf('Sessão recente')<evol.indexOf('Sessão antiga'));
  const assessments=render(p,[],'avaliacoes');assert(assessments.includes('Relato original preservado'));assert(!assessments.includes('Sessão recente'));
  const wrong=fixture();wrong.avaliacoes[0].mapeamento.clinicaEstruturada.laudo.contextoPaciente.pacienteId='outro';assert(!render(wrong,[],'simplificado').includes('RELATÓRIO SALVO'));assert(render(wrong,[],'simplificado').includes('vínculo divergente'));
@@ -30,7 +44,7 @@ async function run(){
  await t.ctx.window.gerarProntuarioCompletoPDF('p1','avaliacoes');assert(t.writes.at(-1).includes('Consulta de avaliações'));assert(!t.writes.at(-1).includes('Sessão recente'));
  let resolve;t.pending=new Promise(r=>resolve=r);const request=t.ctx.window.gerarProntuarioCompletoPDF('p1','evolucoes');const n=t.writes.length;t.ctx.usuarioLogado={...t.ctx.usuarioLogado,clinica_id:'c2'};resolve([fixture()]);await request;assert.equal(t.writes.length,n,'Resposta de outra clínica não pode preencher janela');
  const design=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');for(const s of ['Consultar avaliação','Histórico de evoluções',"acao==='consultar_avaliacao'", "acao==='historico_evolucao'"])assert(design.includes(s));
- console.log('PASS Prontuário: conteúdo clínico organizado, texto manual preservado, técnicos separados, consultas somente leitura, ordem e isolamento.');
+ console.log('PASS Prontuário: conteúdo clínico organizado, texto manual preservado, sem apêndice técnico, consultas somente leitura, ordem e isolamento.');
 }
 module.exports={fixture,setup};
 if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1;});

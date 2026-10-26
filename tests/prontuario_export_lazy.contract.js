@@ -23,6 +23,7 @@ for(const nome of ['podeExportarProntuarioDetalhado','abrirEscolhaProntuarioPDF'
 }
 assert(implPath?.startsWith('src/patient/prontuario_export_impl.js?'),'fachada deve registrar implementação sob demanda');
 assert.equal(new URL(implPath,'https://app.fisiofixfisioterapia.com/').searchParams.get('v'),facadeURL.searchParams.get('v'),'Implementação lazy e fachada devem usar revisão coerente');
+assert.equal(new URL(implPath,'https://app.fisiofixfisioterapia.com/').searchParams.get('eva'),facadeURL.searchParams.get('eva'),'Revisão do prontuário deve invalidar fachada e implementação juntas');
 assert.match(impl,/async function gerar\(pacienteId,modo='simplificado',janelaPreparada=null\)/,'implementação deve aceitar janela pré-aberta sem quebrar os dois parâmetros públicos');
 assert.match(impl,/const w=janelaPreparada\|\|abrirJanelaCarregando\(\);if\(!w\)return;/,'implementação deve reutilizar janela aberta no gesto do usuário');
 assert.match(design,/return window\.abrirEscolhaProntuarioPDF\(pacienteId\);/,'design system deve aguardar a fachada de escolha');

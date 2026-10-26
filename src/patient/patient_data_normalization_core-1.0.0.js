@@ -110,7 +110,7 @@ function normalizarPacienteDoBanco(p) {
             ultimaEdicaoPorId: av.ultimaEdicaoPorId || av.ultima_edicao_por_id || null,
             ultimaEdicaoPorNome: av.ultimaEdicaoPorNome || av.ultima_edicao_por_nome || '',
             realizadoPor: av.realizadoPor || av.realizado_por || av.profissional_nome || '',
-            evaInicial: av.evaInicial ?? av.eva_inicial ?? 0,
+            evaInicial: av.evaInicial !== undefined ? av.evaInicial : (av.eva_inicial ?? null),
             idade: av.idade || idadeNormalizada,
             status: av.status || av.mapeamento?.status || av.mapeamento?.meta?.status || ''
         })),

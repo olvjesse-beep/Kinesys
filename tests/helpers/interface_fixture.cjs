@@ -3,15 +3,29 @@
 const fs=require('node:fs'),path=require('node:path');
 module.exports=function fixture(root){
  let html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+ html=html.replace(/(<section id="tela_avaliacao"[^>]*>)[\s\S]*?<\/section>/,'$1'+fs.readFileSync(path.join(root,'screens/tela_avaliacao.html'),'utf8')+'</section>');
+ html=html.replace('</head>', ['styles/design_clinical.css','styles/design_evaluation_workspace-1.18.0.css','styles/design_evaluation_context-1.18.3.css','styles/avaliacao_experiencia-1.22.0.css'].map(src=>'<link rel="stylesheet" href="/'+src+'">').join('')+'</head>');
+ const exportFixture=require('../prontuario_clinico.test.cjs'),patient=exportFixture.fixture();
+ const clin=patient.avaliacoes[0].mapeamento.clinicaEstruturada;clin.contextoAnamnese.estados.psicossocial='relata';const fonte=JSON.parse(clin.laudo.fonte);fonte.gruposAnamnese.fatoresPsicossociais=['Sono ruim'];clin.laudo.fonte=JSON.stringify(fonte);
+ const report=exportFixture.setup().ctx.window.__test.montarDocumento(patient,[],'detalhado');
+ const core=fs.readFileSync(path.join(root,'src/core/script-1.18.0.js'),'utf8').replace(/\r\n/g,'\n');
+ const radarStart=core.indexOf('    const launcher =',core.indexOf('    ultimoRadarAlertas = alertasMatriz;'));
+ const radarUI=core.slice(radarStart,core.indexOf('\n}\n\n/* função construirBlocoRedFlags',radarStart));
+ const radarClose=core.slice(core.indexOf('function fecharRadarKineSys('),core.indexOf('function sincronizarCicloVidaRadar('));
  const setup=`
+var radarAlertasJaApresentados=new Set();
+${radarClose}
+function qaRadar(alertasMatriz){const containerFlutuante=document.getElementById('radar_flutuante_container');${radarUI}}
 var usuarioLogado={id:'qa-admin',clinica_id:'qa-clinica',tipo:'MASTER',nome:'Administrador de demonstração'};
-var pacienteAtualId=null, KINESYS_APP_VERSION='prévia', CAMPOS_PUBLICOS_PERFIL='id,nome,tipo';
+var pacienteAtualId=null, BANCO_MAPEAMENTO_CLINICO={}, KINESYS_APP_VERSION='prévia', CAMPOS_PUBLICOS_PERFIL='id,nome,tipo';
 function rotuloPerfil(){return 'Administrador';} function usuarioEhMaster(){return true;} function telaPermitida(){return true;}
 function escapeHTML(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fecharMenu(){} function idadeNumericaPaciente(p){return p.idade;} function removerAcentos(x){return String(x).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();}
-function obterPacientesSalvos(){return Promise.resolve([]);} function obterAvaliacoes(){return [];} function obterAvaliacaoMaisRecente(){return null;}
+function obterPacientesSalvos(){return Promise.resolve([]);} function obterAvaliacoes(p){return p?.avaliacoes||[];} function obterAvaliacaoMaisRecente(){return null;}
 function carregarHistoricoEvolucao(){} function renderizarLinhaTempoClinicaCompleta(){} function onTipoDocumentoChange(){document.getElementById('campos_comparecimento').style.display='block';document.getElementById('bloco_ia').style.display='none';}
 function renderizarPainelAgenda(){} function atualizarIndicadorEscopoAgenda(){} function atualizarMarcadorAgoraAgenda(){}
+function obterContextoAvaliacaoKineSys(){return {pacienteId:'qa1',clinicaId:'qa-clinica',usuarioId:'qa-admin',avaliacaoId:'',revisao:1};} function agendarAutosaveKineSys(){}
+function obterPacienteCompletoPorId(){return Promise.resolve({id:'qa1',nome:'Paciente de demonstração',avaliacoes:[{id:'qa-av1',status:'finalizada',realizadoEm:'2026-10-26T09:00',evaInicial:6}],evolucoes:[]});}
 function navegarPara(id){document.querySelectorAll('.tela').forEach(e=>e.classList.toggle('ativa',e.id===id));document.body.dataset.tela=id;document.dispatchEvent(new CustomEvent('kinesys:tela-ativada',{detail:{id}}));if(id==='tela_equipe')carregarListaEquipe();return true;}
 function irParaSubtela(){} function mostrarFeedbackLogin(){} function alternarPainelNotificacoes(){}
 function abrirConfiguracoesCoresAgenda(){navegarPara('tela_configuracoes');window.KineSysConfiguracoesAgendaOnline.abrirAba('aparencia');}
@@ -23,16 +37,23 @@ const qaEquipe=[{id:'qa1',nome:'Profissional de demonstração',email:'exemplo@e
 const qaProcedimentos=[{id:'p1',nome:'Avaliação',duracao_minutos:60,valor:100,ativo:true},{id:'p2',nome:'Sessão de Fisioterapia - Individual',duracao_minutos:60,valor:89.90,ativo:true}];
 var _supabase={from(table){let single=false;const q={select(){return q;},eq(){return q;},order(){return q;},maybeSingle(){single=true;return q;},then(ok){return Promise.resolve({data:single?null:table==='equipe'?qaEquipe:table==='procedimentos'?qaProcedimentos:[],error:null}).then(ok);}};return q;},rpc(){return Promise.resolve({data:'qa-clinica',error:null});}};
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+ if(new URLSearchParams(location.search).get('prontuario')==='1'){document.open();document.write(${JSON.stringify(report)});document.close();return;}
  document.getElementById('header_welcome').hidden=false;document.getElementById('lbl_usuario_logado').textContent=usuarioLogado.nome;
  document.body.removeAttribute('data-ks-startup');document.getElementById('ks_startup')?.remove();
  document.querySelectorAll('[data-tela-menu]').forEach(e=>{e.hidden=false;e.style.display='';});
  document.getElementById('agenda_painel').classList.add('ativa');document.getElementById('agenda_dia_titulo').textContent='26 out – 01 nov de 2026';
  document.getElementById('agenda_data_input').value='2026-10-26';document.getElementById('agenda_semana_grade').innerHTML='<div class="agenda-vazio">Prévia de layout — sem agendamentos reais</div>';
  navegarPara(new URLSearchParams(location.search).get('tela')||'tela_relatorio');
+ if(new URLSearchParams(location.search).get('tela')==='tela_avaliacao'){
+  const eva=new URLSearchParams(location.search).get('eva');if(eva!==null)preencherEvaAvaliacaoKineSys(Number(eva));
+  document.getElementById('avaliacao_realizado_em').value='2026-10-26T09:00';atualizarEvaAvaliacaoKineSys();
+  const qaAlertas=[{nivel:'medio',titulo:'Limitação informada',desc:'Conferir as orientações já registradas no prontuário.'},{nivel:'medio',titulo:'Informação a esclarecer',desc:'Detalhar o comportamento noturno dos sintomas.'}];
+  KineSysContextoAnamnese.atualizarAlertas(qaAlertas);const dock=document.getElementById('radar_flutuante_container');document.getElementById('ks_radar_context_host').append(dock);dock.classList.add('radar-contexto-avaliacao');qaRadar(qaAlertas);
+ }
  document.querySelectorAll('[onclick*="salvar"],[onclick*="cadastrar"],[onclick*="excluir"],[onclick*="Pagamento"],[onclick*="gerarProntuario"]').forEach(b=>b.disabled=true);
  document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
 },50));
 `;
- const scripts=['src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
+ const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
  return html.replace('</body>',`<script>${setup}</script>${scripts.map(src=>'<script defer src="/'+src+'"></script>').join('')}</body>`);
 };

@@ -145,7 +145,7 @@
     function posicionarRadar(){
         const etapa=document.querySelector?.('#tela_avaliacao .subtela.ativa')?.id||'subtela_triagem';
         const destino={subtela_triagem:'ks_radar_hma_host',subtela_mapeamento:'ks_radar_exam_host',subtela_diagnostico:'ks_radar_report_host'}[etapa];
-        const host=node(destino),radar=node('radar_flutuante_container');
+        const host=(etapa==='subtela_triagem'&&node('ks_radar_context_host'))||node(destino),radar=node('radar_flutuante_container');
         if(host&&radar&&radar.parentElement!==host){window.fecharRadarKineSys?.();host.appendChild(radar);}
     }
     const coletorBase=window.coletarAchadosLaudoKineSys;
