@@ -180,15 +180,29 @@
     function iniciar() {
         const tab=porId('financeiro_tab_lancamentos'); if(!tab)return;
         tab.hidden=!podeVer();
+        const alternarBase=global.alternarAbaFinanceiro;
+        if(typeof alternarBase==='function'&&!alternarBase.__livroCaixaWrapped){
+            const alternar=function(aba='paciente'){
+                sairDaVisaoLancamentos();
+                if(aba==='lancamentos')return abrir();
+                return alternarBase.apply(this,arguments);
+            };
+            alternar.__livroCaixaWrapped=true;global.alternarAbaFinanceiro=alternar;
+        }
         document.querySelectorAll('.finance-workspace-tab:not(#financeiro_tab_lancamentos)').forEach(botao=>botao.addEventListener('click',sairDaVisaoLancamentos));
         const busca=porId('fin_lan_busca'); if(busca) busca.addEventListener('input',()=>{estado.busca=busca.value;renderizar();renderizarSugestoesPacientes();});
         const sugestoes=porId('fin_lan_paciente_sugestoes');if(sugestoes)sugestoes.addEventListener('click',e=>{const botao=e.target.closest('[data-fin-ledger-paciente]');if(botao)abrirPaciente(botao.dataset.finLedgerPaciente);});
         const menu=porId('menu_financeiro');
-        if(menu) menu.addEventListener('click',()=>setTimeout(()=>{tab.hidden=!podeVer();if(podeVer())abrir();},120));
+        if(menu) menu.addEventListener('click',()=>{
+            tab.hidden=!podeVer();
+            if(!podeVer())return;
+            try{sessionStorage.setItem('kinesys_financeiro_aba','lancamentos');}catch(_){}
+            if(porId('tela_financeiro')?.classList.contains('ativa'))abrir();
+        });
         const tela=porId('tela_financeiro');
         if(tela) new MutationObserver(()=>{if(estado.ativa)imporVisaoLancamentos();}).observe(tela,{subtree:true,attributes:true,attributeFilter:['hidden','class','aria-selected']});
     }
 
-    global.KineSysFinanceiroLancamentos = { abrir, carregar, filtrar, mesAnterior, novaEntrada, novaSaida, estado };
+    global.KineSysFinanceiroLancamentos = { abrir, sair:sairDaVisaoLancamentos, carregar, filtrar, mesAnterior, novaEntrada, novaSaida, estado };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
 })(window);

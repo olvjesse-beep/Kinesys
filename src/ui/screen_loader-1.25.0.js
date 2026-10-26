@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261026-inicializacao-r1';
+    const ASSET_REVISION='20261026-auditoria-completa-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -38,7 +38,7 @@
                 'database/mapeamento_clinico_core-1.0.0.js?v=20260911-phase3e-r1',
                 'src/clinical/clinical_language_rules-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2',
                 'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2',
-                'src/clinical/clinical_document_analyzer-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2',
+                'src/clinical/clinical_document_analyzer-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&audit=20261026-completa-r1',
                 'src/clinical/evaluation_document_review-1.0.0.js?v=20261024-semantica-seis-r2',
                 'database/clinical_evidence_profiles-1.0.0.js?v=20261022-radar-evidencias-r1',
                 'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261022-canela-anatomia-r1',
@@ -64,15 +64,15 @@
             styles:Object.freeze([
                 'styles/financeiro_workspace-1.20.1.css?v=20260901-r1',
                 'styles/financeiro_lancamentos-1.20.0.css?v=20260901-r2',
-                'styles/financeiro_alignment.css?v=20260909-align-r4'
+                'styles/financeiro_alignment.css?v=20260909-align-r4&audit=20261026-completa-r1'
             ]),
             scripts:Object.freeze([
-                'src/finance/pendencias_financeiras-1.19.0.js?v=20260901-r2',
+                'src/finance/pendencias_financeiras-1.19.0.js?v=20260901-r2&audit=20261026-completa-r1',
                 'src/finance/descontos_financeiros-1.20.0.js?v=20260909-r2',
                 'src/finance/balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
-                'src/admin/analise_admin-1.19.0.js?v=20260901-r2',
+                'src/admin/analise_admin-1.19.0.js?v=20260901-r2&audit=20261026-completa-r1',
                 'src/finance/financeiro_workspace-1.20.1.js?v=20260901-r1',
-                'src/finance/financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1'
+                'src/finance/financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1&audit=20261026-completa-r1'
             ])
         }),
         tela_agenda:Object.freeze({
@@ -87,7 +87,7 @@
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
             scripts:Object.freeze([
-                'src/agenda/agenda-1.20.0.js?v=20261026-inicializacao-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1',
+                'src/agenda/agenda-1.20.0.js?v=20261026-inicializacao-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
                 'src/agenda/agenda_lifecycle-1.0.0.js?v=20260914-postgrid-r41'

@@ -1265,7 +1265,7 @@ function renderizarListaProcedimentos() {
         const quemAtende = (p.profissionais_ids && p.profissionais_ids.length)
             ? p.profissionais_ids.map(id => agendaEquipeCache.find(e => e.id === id)?.nome || '—').join(', ')
             : 'Qualquer profissional';
-        const valor = (p.valor !== null && p.valor !== undefined) ? `· R$ ${Number(p.valor).toFixed(2)}` : '';
+        const valor = (p.valor !== null && p.valor !== undefined) ? `· ${Number(p.valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}` : '';
         return `
             <div class="item-config ${p.ativo ? '' : 'inativo'}">
                 <div class="item-config-info">
@@ -1644,7 +1644,7 @@ function renderizarListaBloqueios() {
         return;
     }
     container.innerHTML = agendaBloqueiosCache.map(b => {
-        const prof = b.profissional_id ? (agendaEquipeCache.find(e => e.id === b.profissional_id)?.nome || '—') : 'Toda a clínica';
+        const prof = b.profissional_id ? (agendaEquipeCache.find(e => e.id === b.profissional_id)?.nome || 'Profissional não disponível no cadastro atual') : 'Toda a clínica';
         const tipoBloqueio = b.profissional_id ? 'Ausência individual' : 'Bloqueio da clínica';
         const periodo = (b.hora_inicio && b.hora_fim) ? `${horaCurta(b.hora_inicio)} – ${horaCurta(b.hora_fim)}` : 'Dia todo';
         const dataFormatada = new Date(b.data + 'T00:00:00').toLocaleDateString('pt-BR');
@@ -3523,7 +3523,7 @@ async function abrirDetalheAgendamento(id) {
         <p><strong>Contato:</strong> ${escapeHTML((() => { const c = obterContatoAgendaPaciente(a.pacientes); return c.telefone ? c.telefone + (c.usaResponsavel ? ' · Responsável: ' + c.nomeDestinatario : '') : 'Não informado'; })())}</p>
         <p><strong>Profissional:</strong> ${escapeHTML(a.equipe?.nome || '—')}</p>
         <p><strong>Procedimento:</strong> ${escapeHTML(a.procedimentos?.nome || '—')}</p>
-        <p><strong>Horário:</strong> ${horaCurta(a.hora_inicio)} – ${horaCurta(a.hora_fim)} ${agendamentoEhHorarioExtraordinario(a) ? '<span class="badge agenda-extra-badge">Horário extraordinário</span>' : ''}</p>
+        <p><strong>Data e horário:</strong> ${escapeHTML(formatarDataAgendaBR(a.data))} · ${horaCurta(a.hora_inicio)} – ${horaCurta(a.hora_fim)} ${agendamentoEhHorarioExtraordinario(a) ? '<span class="badge agenda-extra-badge">Horário extraordinário</span>' : ''}</p>
         <p><strong>Status atual:</strong> <span class="badge badge-${escapeHTML(classeStatusAgenda(a.status))}">${escapeHTML(rotuloStatusAgenda(a.status))}</span></p>
         ${linhaPagamento}
         ${a.resposta_em ? `<p><strong>Resposta registrada em:</strong> ${new Date(a.resposta_em).toLocaleString('pt-BR')}</p>` : ''}

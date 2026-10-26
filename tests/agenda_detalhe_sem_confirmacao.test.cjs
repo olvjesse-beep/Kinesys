@@ -6,19 +6,20 @@ const end=source.indexOf('async function abrirProntuarioAgendamentoAtual()',star
 assert(start>=0&&end>start);
 async function run(){
  for(const response of [null,true,false]){
-  const a={id:'fixture',paciente_id:'patient-fixture',pacientes:{nome:'Paciente de teste'},equipe:{nome:'Profissional de teste'},procedimentos:{nome:'Osteopatia'},hora_inicio:'16:00:00',hora_fim:'17:00:00',status:'confirmado',confirmado_pelo_paciente:response,status_atualizado_em:'2026-10-20T12:00:00Z',status_atualizado_por:'Profissional de teste'};
+  const a={id:'fixture',data:'2026-10-20',paciente_id:'patient-fixture',pacientes:{nome:'Paciente de teste'},equipe:{nome:'Profissional de teste'},procedimentos:{nome:'Osteopatia'},hora_inicio:'16:00:00',hora_fim:'17:00:00',status:'confirmado',confirmado_pelo_paciente:response,status_atualizado_em:'2026-10-20T12:00:00Z',status_atualizado_por:'Profissional de teste'};
   const before=JSON.stringify(a),body={innerHTML:''};let opened='';
   const c={agendaAgendamentosSemanaCache:[a],agendaAgendamentosDoDiaCache:[],document:{getElementById:()=>body},
    atualizarControlesAgendaPorPerfil(){},usuarioPodeVerAgendaClinicaToda:()=>true,
    obterPlanosAtivosPaciente:async()=>[],configStatusAgenda:()=>({consomeSessao:false}),
    statusAgendaPermiteObservacao:()=>false,situacaoPagamentoAgenda:()=>({pago:false,verificado:true}),
    escapeHTML:s=>String(s),telaPermitida:()=>true,obterContatoAgendaPaciente:()=>({telefone:''}),
-   horaCurta:s=>s.slice(0,5),agendamentoEhHorarioExtraordinario:()=>false,
+   formatarDataAgendaBR:s=>s.split('-').reverse().join('/'),horaCurta:s=>s.slice(0,5),agendamentoEhHorarioExtraordinario:()=>false,
    classeStatusAgenda:()=> 'confirmado',rotuloStatusAgenda:()=> 'Confirmado',
    opcoesStatusAgenda:()=> '<option>Confirmado</option>',statusAgendaPermiteReagendamento:()=>false,
    usuarioEhAdministradorAgenda:()=>true,financeiroPodeEditar:()=>false,abrirModal:id=>{opened=id;}};
   vm.createContext(c);vm.runInContext(source.slice(start,end),c);await c.abrirDetalheAgendamento('fixture');
   assert.equal(opened,'modal_detalhe_agendamento');
+  assert.match(body.innerHTML,/Data e horário:[\s\S]*20\/10\/2026/,'a data da ocorrência deve acompanhar o horário');
   assert.doesNotMatch(body.innerHTML,/Confirmação:|Ainda sem resposta|Paciente confirmou presença|Paciente avisou/);
   for(const text of ['Paciente de teste','Osteopatia','16:00','17:00','Status atual:','Confirmado','Status atualizado:','Histórico de status','Editar agendamento','Salvar status','Pagamento:','pendente','Abrir prontuário']) assert(body.innerHTML.includes(text),text+' must remain');
   assert.equal(JSON.stringify(a),before,'Presentation-only change must not mutate appointment/confirmation');

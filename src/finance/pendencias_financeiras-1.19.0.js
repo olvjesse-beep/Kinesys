@@ -364,7 +364,9 @@ if (typeof inicializarFinanceiro === 'function' && !inicializarFinanceiro.__pend
         const r=await inicializarFinanceiroBase.apply(this,args);
         let aba='paciente';
         try{aba=sessionStorage.getItem('kinesys_financeiro_aba')||'paciente';}catch(_){}
-        alternarAbaFinanceiro(aba==='pendencias'?'pendencias':'paciente');
+        const abas=['paciente','pendencias','descontos','gastos','balanco','analise','lancamentos'];
+        if(aba==='lancamentos'&&window.KineSysFinanceiroLancamentos)window.KineSysFinanceiroLancamentos.abrir();
+        else alternarAbaFinanceiro(abas.includes(aba)?aba:'paciente');
         carregarPendenciasFinanceiras(false).catch(err=>console.warn('Pendências financeiras:',err));
         return r;
     };

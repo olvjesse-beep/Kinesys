@@ -131,6 +131,8 @@ async function editarCadastro(id) {
     if (!p) return;
 
     pacienteAtualId = p.id;
+    document.getElementById('tela_cadastro').dataset.editandoPaciente=String(p.id);
+    const cancelar=document.getElementById('cad_cancelar_edicao');if(cancelar)cancelar.hidden=false;
 
     document.getElementById('titulo_tela_cadastro').innerText = "Editar Cadastro do Paciente";
 
@@ -152,10 +154,20 @@ async function editarCadastro(id) {
     definirStatusCEP('', '');
     definirUltimoCEPPesquisadoKineSys(p.cep || '');
 
-    navegarPara('tela_cadastro', true);
+    await navegarPara('tela_cadastro', true);
     alternarCamposResponsavel();
     atualizarAcoesCadastroPorPerfil();
 }
+
+async function cancelarEdicaoCadastro(){
+    const tela=document.getElementById('tela_cadastro'),id=tela?.dataset.editandoPaciente||'';
+    if(tela)delete tela.dataset.editandoPaciente;
+    const cancelar=document.getElementById('cad_cancelar_edicao');if(cancelar)cancelar.hidden=true;
+    if(id&&typeof window.definirPacienteContexto==='function')await window.definirPacienteContexto(id);
+    if(id&&typeof window.abrirPacienteNaTela==='function')return window.abrirPacienteNaTela('tela_buscar');
+    await navegarPara('tela_buscar');
+}
+window.cancelarEdicaoCadastro=cancelarEdicaoCadastro;
 
 // APIs históricas preservadas para HTML e módulos existentes.
 window.salvarCadastroSomente = salvarCadastroSomente;
