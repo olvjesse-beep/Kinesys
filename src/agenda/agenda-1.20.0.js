@@ -637,7 +637,7 @@ function renderizarHistoricoStatusAgenda(lista = []) {
 
 async function abrirHistoricoStatusAgenda(agendamentoId = null) {
     if (!usuarioEhAdministradorAgenda()) {
-        alert('🔒 O histórico de alterações de status é exclusivo dos administradores.');
+        alert('O histórico de alterações de status é exclusivo dos administradores.', 'seguranca');
         return;
     }
     const modal = document.getElementById('modal_historico_status_agenda');
@@ -1329,8 +1329,8 @@ async function salvarProcedimento() {
     const valor = valorRaw !== '' ? parseFloat(valorRaw) : null;
     const profissionaisIds = Array.from(document.querySelectorAll('.proc-prof-check:checked')).map(c => c.value);
 
-    if (!nome) { alert('⚠️ Informe o nome do procedimento.'); return; }
-    if (!duracao || duracao < 5) { alert('⚠️ Informe uma duração válida (mínimo 5 minutos).'); return; }
+    if (!nome) { alert('Informe o nome do procedimento.', 'aviso'); return; }
+    if (!duracao || duracao < 5) { alert('Informe uma duração válida (mínimo 5 minutos).', 'aviso'); return; }
 
     const sessoes_pacote=Number(document.getElementById('proc_sessoes_pacote').value);
     if(!Number.isInteger(sessoes_pacote)||sessoes_pacote<1){alert('Informe uma quantidade válida de sessões.');return;}
@@ -1355,7 +1355,7 @@ async function salvarProcedimento() {
         await carregarProcedimentos();
         await window.KineSysConfiguracoesAgendaOnline?.refreshProcedures?.().catch(error => console.warn('Procedimento salvo; reabra Configurações para atualizar a lista de cores.', error));
     } catch (err) {
-        alert('❌ Erro ao salvar procedimento: ' + (err.message || err));
+        alert('Erro ao salvar procedimento: ' + (err.message || err), 'erro');
     } finally {
         agendaSalvandoProcedimento = false;
         if (botaoSalvar) botaoSalvar.disabled = false;
@@ -1364,7 +1364,7 @@ async function salvarProcedimento() {
 
 async function alternarAtivoProcedimento(id, novoValor) {
     const { error } = await _supabase.from('procedimentos').update({ ativo: novoValor }).eq('id', id);
-    if (error) { alert('❌ Erro ao atualizar procedimento.'); return; }
+    if (error) { alert('Erro ao atualizar procedimento.', 'erro'); return; }
     invalidarCacheProcedimentosAgenda();
     await carregarProcedimentos();
 }
@@ -1372,7 +1372,7 @@ async function alternarAtivoProcedimento(id, novoValor) {
 async function excluirProcedimento(id) {
     if (!(await confirmarKineSys('Excluir este procedimento definitivamente? Agendamentos já feitos com ele não serão apagados.', {titulo:'Excluir procedimento', confirmar:'Excluir', destrutivo:true}))) return;
     const { error } = await _supabase.from('procedimentos').delete().eq('id', id);
-    if (error) { alert('❌ Não foi possível excluir (pode haver agendamentos vinculados). Considere apenas desativar.'); return; }
+    if (error) { alert('Não foi possível excluir (pode haver agendamentos vinculados). Considere apenas desativar.', 'erro'); return; }
     invalidarCacheProcedimentosAgenda();
     await carregarProcedimentos();
 }
@@ -1508,11 +1508,11 @@ function coletarGradeSemanalEditor(containerId = 'agenda_grade_semanal_editor') 
 }
 
 async function salvarGradeSemanalAlvo(profissionalId, containerId, feedbackId, nomeAlvo) {
-    if (!_supabase) { alert('❌ Agenda indisponível: conexão com o banco não inicializada.'); return; }
+    if (!_supabase) { alert('Agenda indisponível: conexão com o banco não inicializada.', 'erro'); return; }
     const {registros, erros} = coletarGradeSemanalEditor(containerId);
     if (erros.length) {
         feedbackGradeSemanalAlvo(feedbackId, erros[0], 'erro');
-        alert('⚠️ ' + erros[0]);
+        alert('' + erros[0], 'aviso');
         return;
     }
 
@@ -1528,7 +1528,7 @@ async function salvarGradeSemanalAlvo(profissionalId, containerId, feedbackId, n
             const nomeDia = DIAS_SEMANA_NOMES[foraDaClinica.dia_semana];
             const msg = `${nomeDia}: a jornada do profissional precisa ficar dentro do horário de funcionamento da clínica.`;
             feedbackGradeSemanalAlvo(feedbackId, msg, 'erro');
-            alert('⚠️ ' + msg);
+            alert('' + msg, 'aviso');
             return;
         }
     }
@@ -1548,11 +1548,11 @@ async function salvarGradeSemanalAlvo(profissionalId, containerId, feedbackId, n
         await carregarHorarios();
         await renderizarPainelAgenda();
         feedbackGradeSemanalAlvo(feedbackId, 'Grade semanal salva.','sucesso');
-        alert('✅ Grade semanal salva com sucesso.');
+        alert('Grade semanal salva com sucesso.', 'sucesso');
     } catch (err) {
         console.error('Erro ao salvar grade semanal:', err);
         feedbackGradeSemanalAlvo(feedbackId, 'Não foi possível salvar a grade semanal.','erro');
-        alert('❌ Não foi possível salvar a grade semanal. ' + (err.message || err));
+        alert('Não foi possível salvar a grade semanal. ' + (err.message || err), 'erro');
     }
 }
 
@@ -1571,7 +1571,7 @@ async function salvarGradeProfissional() {
     const profissionalId = document.getElementById('agenda_grade_profissional')?.value || '';
     if (!profissionalId) {
         feedbackGradeSemanalAlvo('agenda_grade_profissional_feedback', 'Selecione um profissional antes de salvar.', 'erro');
-        alert('⚠️ Selecione um profissional.');
+        alert('Selecione um profissional.', 'aviso');
         return;
     }
     const nomeAlvo = agendaEquipeCache.find(p=>String(p.id)===String(profissionalId))?.nome || 'profissional';
@@ -1598,8 +1598,8 @@ async function salvarHorario() {
     const inicio = document.getElementById('hor_inicio').value;
     const fim = document.getElementById('hor_fim').value;
 
-    if (!inicio || !fim) { alert('⚠️ Informe início e fim da janela.'); return; }
-    if (horaParaMinutos(inicio) >= horaParaMinutos(fim)) { alert('⚠️ O horário de início precisa ser antes do horário de fim.'); return; }
+    if (!inicio || !fim) { alert('Informe início e fim da janela.', 'aviso'); return; }
+    if (horaParaMinutos(inicio) >= horaParaMinutos(fim)) { alert('O horário de início precisa ser antes do horário de fim.', 'aviso'); return; }
 
     try {
         const { error } = await _supabase.from('horarios_atendimento').insert([{
@@ -1609,14 +1609,14 @@ async function salvarHorario() {
         fecharModal('modal_horario');
         await carregarHorarios();
     } catch (err) {
-        alert('❌ Erro ao salvar janela de horário: ' + (err.message || err));
+        alert('Erro ao salvar janela de horário: ' + (err.message || err), 'erro');
     }
 }
 
 async function excluirHorario(id) {
     if (!(await confirmarKineSys('Remover esta janela de atendimento?', {titulo:'Remover horário', confirmar:'Remover', destrutivo:true}))) return;
     const { error } = await _supabase.from('horarios_atendimento').delete().eq('id', id);
-    if (error) { alert('❌ Erro ao excluir horário.'); return; }
+    if (error) { alert('Erro ao excluir horário.', 'erro'); return; }
     await carregarHorarios();
 }
 
@@ -1679,9 +1679,9 @@ async function salvarBloqueio() {
     const fim = document.getElementById('bloq_fim').value || null;
     const motivo = document.getElementById('bloq_motivo').value.trim();
 
-    if (!data) { alert('⚠️ Informe a data do bloqueio.'); return; }
-    if ((inicio && !fim) || (!inicio && fim)) { alert('⚠️ Informe início e fim, ou deixe os dois vazios para bloquear o dia todo.'); return; }
-    if (inicio && fim && horaParaMinutos(inicio) >= horaParaMinutos(fim)) { alert('⚠️ O início da ausência precisa ser anterior ao fim.'); return; }
+    if (!data) { alert('Informe a data do bloqueio.', 'aviso'); return; }
+    if ((inicio && !fim) || (!inicio && fim)) { alert('Informe início e fim, ou deixe os dois vazios para bloquear o dia todo.', 'aviso'); return; }
+    if (inicio && fim && horaParaMinutos(inicio) >= horaParaMinutos(fim)) { alert('O início da ausência precisa ser anterior ao fim.', 'aviso'); return; }
 
     try {
         const { error } = await _supabase.from('bloqueios_agenda').insert([{
@@ -1692,14 +1692,14 @@ async function salvarBloqueio() {
         await carregarBloqueios();
         await renderizarPainelAgenda();
     } catch (err) {
-        alert('❌ Erro ao salvar bloqueio: ' + (err.message || err));
+        alert('Erro ao salvar bloqueio: ' + (err.message || err), 'erro');
     }
 }
 
 async function excluirBloqueio(id) {
     if (!(await confirmarKineSys('Remover este bloqueio?', {titulo:'Remover bloqueio', confirmar:'Remover', destrutivo:true}))) return;
     const { error } = await _supabase.from('bloqueios_agenda').delete().eq('id', id);
-    if (error) { alert('❌ Erro ao excluir bloqueio.'); return; }
+    if (error) { alert('Erro ao excluir bloqueio.', 'erro'); return; }
     await carregarBloqueios();
     await renderizarPainelAgenda();
 }
@@ -3107,7 +3107,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
         return { encontrou: true, removeu: true };
     } catch (err) {
         console.warn('Agendamento salvo, mas não foi possível revisar a lista de espera:', err);
-        alert('⚠️ O agendamento foi salvo, mas não foi possível verificar/atualizar a lista de espera. Revise a fila manualmente.');
+        alert('O agendamento foi salvo, mas não foi possível verificar/atualizar a lista de espera. Revise a fila manualmente.', 'aviso');
         return { encontrou: false, removeu: false, erro: err };
     }
 }
@@ -3478,7 +3478,7 @@ Deseja realmente realizar esse agendamento?`,
         console.error('Erro ao salvar agendamento/recorrência:', err);
         const mensagemErro = mensagemErroSalvarAgenda(err);
         mostrarFeedbackAgendaModal('Erro ao salvar: ' + mensagemErro, 'erro');
-        alert('❌ Não foi possível concluir o agendamento. ' + mensagemErro);
+        alert('Não foi possível concluir o agendamento. ' + mensagemErro, 'erro');
     } finally {
         agendaSalvando = false;
         if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Agendamento'; }
@@ -3690,7 +3690,7 @@ async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
         }
         if (planoAutoLocal) delete payloadLocal.plano_id;
         salvo = atualizarPayloadAgendamentoPendenteSync(agendamentoDetalheAtualId, payloadLocal);
-        if (!salvo) { alert('❌ Não foi possível preservar a mudança de status neste computador.'); return; }
+        if (!salvo) { alert('Não foi possível preservar a mudança de status neste computador.', 'erro'); return; }
     } else {
         let resposta = await _supabase.from('agendamentos').update(alteracoes).eq('id', agendamentoDetalheAtualId);
         const erroColunasNovas = resposta.error && /status_observacao|status_atualizado|status_atualizado_por_id|status_atualizado_por_tipo|chegada_em|atendido_em|schema cache|column .* does not exist/i.test(String(resposta.error.message||''));
@@ -3712,7 +3712,7 @@ async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
             }
             resposta = await _supabase.from('agendamentos').update(fallback).eq('id', agendamentoDetalheAtualId);
         }
-        if (resposta.error) { alert('❌ Erro ao atualizar status: ' + (resposta.error.message || resposta.error)); return; }
+        if (resposta.error) { alert('Erro ao atualizar status: ' + (resposta.error.message || resposta.error), 'erro'); return; }
         salvo = true;
     }
 
@@ -3770,7 +3770,7 @@ async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
                         tipo: 'aviso'
                     });
                 } else {
-                    alert('⚠️ Atendimento concluído, mas esta sessão ainda não está paga. Registre o pagamento ou faça a cobrança da paciente.');
+                    alert('Atendimento concluído, mas esta sessão ainda não está paga. Registre o pagamento ou faça a cobrança da paciente.', 'aviso');
                 }
             }
         } catch (err) {
@@ -3805,7 +3805,7 @@ async function enviarLembreteAgendamentoAtual() {
     if (!a) return;
     const contato = obterContatoAgendaPaciente(a.pacientes);
     const telefone = (contato.telefone || '').replace(/\D/g, '');
-    if (!telefone) { alert(contato.usaResponsavel ? '⚠️ O telefone do responsável não está cadastrado.' : '⚠️ Este paciente não tem telefone cadastrado.'); return; }
+    if (!telefone) { alert(contato.usaResponsavel ? 'O telefone do responsável não está cadastrado.' : 'Este paciente não tem telefone cadastrado.', 'aviso'); return; }
 
     const dataFormatada = new Date(a.data + 'T00:00:00').toLocaleDateString('pt-BR');
     const podeConfirmarPorLink = !!CONFIRMACAO_BASE_URL && !!a.token_confirmacao;
@@ -4026,11 +4026,11 @@ async function salvarListaEspera() {
     const periodo = document.getElementById('esp_periodo').value;
     const observacoesUsuario = document.getElementById('esp_observacoes').value.trim();
 
-    if (!pacienteId) { alert('⚠️ Selecione o paciente.'); return; }
+    if (!pacienteId) { alert('Selecione o paciente.', 'aviso'); return; }
     if (dataInicio && !dataFim) dataFim = dataInicio;
     if (dataFim && !dataInicio) dataInicio = dataFim;
     if (dataInicio && dataFim && dataFim < dataInicio) {
-        alert('⚠️ A data final da preferência não pode ser anterior à data inicial.');
+        alert('A data final da preferência não pode ser anterior à data inicial.', 'aviso');
         return;
     }
 
@@ -4050,14 +4050,14 @@ async function salvarListaEspera() {
         await carregarListaEspera();
         await renderizarPainelAgenda();
     } catch (err) {
-        alert('❌ Erro ao adicionar à lista de espera: ' + (err.message || err));
+        alert('Erro ao adicionar à lista de espera: ' + (err.message || err), 'erro');
     }
 }
 
 async function removerListaEspera(id) {
     if (!(await confirmarKineSys('Remover este paciente da lista de espera?', {titulo:'Remover da lista de espera', confirmar:'Remover', destrutivo:true}))) return;
     const { error } = await _supabase.from('lista_espera').update({ status: 'cancelado' }).eq('id', id);
-    if (error) { alert('❌ Erro ao remover.'); return; }
+    if (error) { alert('Erro ao remover.', 'erro'); return; }
     await carregarListaEspera();
     await renderizarPainelAgenda();
 }
@@ -4099,7 +4099,7 @@ async function abrirOfertaListaEspera(profissionalId, dataISO, horaInicio, horaF
         link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     } else {
-        alert(contato.usaResponsavel ? '⚠️ O responsável deste paciente não tem telefone cadastrado — contate por outro meio.' : '⚠️ Este paciente da fila não tem telefone cadastrado — contate por outro meio.');
+        alert(contato.usaResponsavel ? 'O responsável deste paciente não tem telefone cadastrado — contate por outro meio.' : 'Este paciente da fila não tem telefone cadastrado — contate por outro meio.', 'aviso');
     }
 
     if (await confirmarKineSys(`Confirmar agora o agendamento de ${candidato.pacientes?.nome} para ${horaInicio}–${horaFim}? Faça isso somente depois que o paciente aceitar o horário.`, {titulo:'Confirmar reencaixe', confirmar:'Confirmar agendamento'})) {
@@ -4113,14 +4113,14 @@ async function abrirOfertaListaEspera(profissionalId, dataISO, horaInicio, horaF
                 criado_por: usuarioLogado?.nome || 'Desconhecido'
             }]);
             if (erroInsert) {
-                if (erroEhConflitoAgenda(erroInsert)) { alert('⚠️ Esse horário se sobrepõe a outro agendamento ativo. O reencaixe não pôde ser concluído automaticamente.'); return; }
+                if (erroEhConflitoAgenda(erroInsert)) { alert('Esse horário se sobrepõe a outro agendamento ativo. O reencaixe não pôde ser concluído automaticamente.', 'aviso'); return; }
                 throw erroInsert;
             }
             await _supabase.from('lista_espera').update({ status: 'atendido' }).eq('id', candidato.id);
             await carregarListaEspera();
             await renderizarPainelAgenda();
         } catch (err) {
-            alert('❌ Erro ao confirmar reencaixe: ' + (err.message || err));
+            alert('Erro ao confirmar reencaixe: ' + (err.message || err), 'erro');
         }
     }
 }

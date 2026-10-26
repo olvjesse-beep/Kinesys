@@ -8,7 +8,7 @@
 'use strict';
 
 const VERSION='1.0.0-phase4e';
-const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261025-interface-audit-r1';
+const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261026-inicializacao-r1';
 const PERFIS_DETALHADO=new Set(['MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','FISIOTERAPEUTA','PROFISSIONAL']);
 let carregamento=null;
 
@@ -23,7 +23,7 @@ function esc(v){
 }
 function abrirJanelaCarregando(){
     const w=window.open('','_blank');
-    if(!w){alert('⚠️ O navegador bloqueou a janela de impressão. Permita pop-ups para o KineSys e tente novamente.');return null;}
+    if(!w){alert('O navegador bloqueou a janela de impressão. Permita pop-ups para o KineSys e tente novamente.', 'aviso');return null;}
     w.document.open();
     w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Preparando prontuário…</title><style>body{font-family:Arial,sans-serif;padding:36px;color:#173B45}small{color:#60757A}</style></head><body><h2>Preparando prontuário…</h2><small>Carregando o módulo de exportação e os registros do paciente.</small></body></html>');
     w.document.close();
@@ -93,10 +93,10 @@ async function abrirEscolhaProxy(pacienteId){
 }
 async function gerarProxy(pacienteId,modo='simplificado'){
     const id=String(pacienteId||'').trim();
-    if(!id){alert('⚠️ Selecione um paciente antes de gerar o prontuário.');return false;}
+    if(!id){alert('Selecione um paciente antes de gerar o prontuário.', 'aviso');return false;}
     if(['avaliacoes','evolucoes'].includes(modo)&&typeof window.telaPermitida==='function'&&!window.telaPermitida(modo==='avaliacoes'?'tela_avaliacao':'tela_evolucao'))return false;
     if(modo==='detalhado'&&!podeDetalhado()){
-        alert('🔒 O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.');
+        alert('O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.', 'seguranca');
         return false;
     }
     const janela=abrirJanelaCarregando();

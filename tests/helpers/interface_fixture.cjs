@@ -24,6 +24,7 @@ const qaProcedimentos=[{id:'p1',nome:'Avaliação',duracao_minutos:60,valor:100,
 var _supabase={from(table){let single=false;const q={select(){return q;},eq(){return q;},order(){return q;},maybeSingle(){single=true;return q;},then(ok){return Promise.resolve({data:single?null:table==='equipe'?qaEquipe:table==='procedimentos'?qaProcedimentos:[],error:null}).then(ok);}};return q;},rpc(){return Promise.resolve({data:'qa-clinica',error:null});}};
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  document.getElementById('header_welcome').hidden=false;document.getElementById('lbl_usuario_logado').textContent=usuarioLogado.nome;
+ document.body.removeAttribute('data-ks-startup');document.getElementById('ks_startup')?.remove();
  document.querySelectorAll('[data-tela-menu]').forEach(e=>{e.hidden=false;e.style.display='';});
  document.getElementById('agenda_painel').classList.add('ativa');document.getElementById('agenda_dia_titulo').textContent='26 out – 01 nov de 2026';
  document.getElementById('agenda_data_input').value='2026-10-26';document.getElementById('agenda_semana_grade').innerHTML='<div class="agenda-vazio">Prévia de layout — sem agendamentos reais</div>';

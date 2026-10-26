@@ -37,7 +37,12 @@ async function run(){
  const update=home.match(/const update=\(\)=>\{link\.href=.*?\};/)?.[0];assert(update);
  const link={};const h={link,phone,encodeURIComponent,$:()=>({value:text})};vm.createContext(h);vm.runInContext(update+'update();',h);expectURL(link.href);
  const html=fs.readFileSync('index.html','utf8'),loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');
- assert(html.includes('home_detalhes-1.18.5.js?v=20261022-whatsapp-direto-r1'));assert(html.includes('crm_relationship_core-1.0.0.js?v=20261022-whatsapp-direto-r1'));assert(loader.includes('agenda-1.20.0.js?v=20261022-whatsapp-direto-r1'));
+ for(const path of ['src/home/home_detalhes-1.18.5.js','src/core/crm_relationship_core-1.0.0.js']){
+  const tag=html.split('\n').find(line=>line.includes('src="'+path+'?'));
+  assert(tag,'consumidor WhatsApp deve carregar no bootstrap: '+path);
+  const url=tag.match(/src="([^\"]+)"/)?.[1];assert(new URL(url,'https://kinesys.example').searchParams.get('v'),'consumidor deve ter revisão explícita');
+ }
+ assert(/agenda-1\.20\.0\.js\?v=[^'"\s]+/.test(loader),'Agenda deve ter revisão explícita no bundle lazy');
  console.log('WhatsApp: Agenda, fila, CRM e Home abrem /send diretamente; número, texto, confirmação e cache preservados. Nenhuma mensagem enviada.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});

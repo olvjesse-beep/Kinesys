@@ -67,13 +67,13 @@ async function excluirArquivosLocaisPaciente(id) {
 
 async function excluirPaciente(id) {
     if (!usuarioEhMaster()) {
-        alert('🔒 Apenas Administrador pode excluir definitivamente um cadastro de paciente.');
+        alert('Apenas Administrador pode excluir definitivamente um cadastro de paciente.', 'seguranca');
         return false;
     }
     invalidarCachePacientesBasicos();
     const lista = await obterPacientesBasicos();
     const paciente = lista.find(p => String(p.id) === String(id));
-    if (!paciente) { alert('⚠️ Paciente não encontrado. Atualize a lista e tente novamente.'); return false; }
+    if (!paciente) { alert('Paciente não encontrado. Atualize a lista e tente novamente.', 'aviso'); return false; }
 
     const nome = paciente.nome || 'este paciente';
     const confirmado = await confirmarKineSys(
@@ -103,14 +103,14 @@ async function excluirPaciente(id) {
         if (typeof popularPacientesFinanceiro === 'function') await popularPacientesFinanceiro('');
 
         if (arquivosLocais.ok) {
-            alert(`✅ Cadastro e todo o histórico de ${nome} foram excluídos definitivamente.`);
+            alert(`Cadastro e todo o histórico de ${nome} foram excluídos definitivamente.`, 'sucesso');
         } else {
-            alert(`✅ Cadastro e histórico do sistema de ${nome} foram excluídos.\n⚠️ O KineSys Local não confirmou a remoção dos arquivos físicos deste computador/backup. Se houver fotos ou documentos locais, atualize/reinicie o KineSys Local desta versão e confira a pasta de dados.`);
+            alert(`Cadastro e histórico do sistema de ${nome} foram excluídos.\n O KineSys Local não confirmou a remoção dos arquivos físicos deste computador/backup. Se houver fotos ou documentos locais, atualize/reinicie o KineSys Local desta versão e confira a pasta de dados.`, 'sucesso');
         }
         return true;
     } catch (err) {
         console.error('KineSys: falha ao excluir paciente:', err);
-        alert('❌ A exclusão não foi concluída. Nenhum dado foi removido parcialmente.\n\n' + (err.message || String(err)));
+        alert('A exclusão não foi concluída. Nenhum dado foi removido parcialmente.\n\n' + (err.message || String(err)), 'erro');
         return false;
     }
 }

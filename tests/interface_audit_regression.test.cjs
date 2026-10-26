@@ -55,6 +55,8 @@ function presentation(){
  const date=design.slice(design.indexOf('    function formatarDataDiretorio('),design.indexOf('    function prepararFinanceiro('));
  vm.runInNewContext(clean+'\n'+date,env);
  for(const mark of ['⚠️','✅','🔒','🛡️','💾','📌','✓'])assert.equal(env.textoLimpo(mark+' Ação válida'),'Ação válida');
+ vm.runInNewContext(design.slice(design.indexOf('    function classificar('),design.indexOf('    function toast(')),env);
+ for(const [text,hint,expected] of [['Dados inválidos','aviso','aviso'],['Perfil restrito','seguranca','seguranca'],['Cadastro concluído','sucesso','sucesso'],['O registro não foi salvo','erro','erro'],['Não foi possível consultar','aviso','erro'],['Falha parcial','sucesso','sucesso']])assert.equal(env.classificar(text,hint),expected,'remover emoji não perde a prioridade de gravidade');
  assert.equal(env.textoLimpo('⚠️ 🔒 Aviso'),'Aviso');assert.equal(env.textoLimpo('Texto 🧑‍⚕️ preservado'),'Texto 🧑‍⚕️ preservado');
  assert.equal(env.formatarDataDiretorio('2026-10-23T00:00:00Z'),'23/10/2026');assert.equal(env.formatarDataDiretorio('2026-10-23'),'23/10/2026');
  const css=read('styles/interface_audit-1.0.0.css');assert.match(css,/clip-path:none!important/);assert.match(css,/flex:0 1 auto!important/);assert.match(css,/min-width:660px/);assert.match(css,/overflow-x:auto/);
@@ -64,6 +66,7 @@ function presentation(){
  const bootstrap=lifecycle.slice(lifecycle.lastIndexOf('    requestAnimationFrame(()=>{'),lifecycle.indexOf('    window.KineSysAgendaLifecycle='));
  let organized=0;vm.runInNewContext(bootstrap,{requestAnimationFrame:callback=>callback(),modoMobileAgenda:()=>true,preservarNavegacaoMobileAgenda(){organized++;},organizarControlesMobileAgenda(){organized++;},observarEstruturaMobileAgenda(){organized++;}});assert.equal(organized,3,'bootstrap mobile executa sem referência obsoleta');
  const html=read('index.html');assert.match(html,/evo_eva_avaliada/);assert.match(html,/eva_slider_evo" disabled/);assert.match(html,/value="" checked><span>Não informado/);assert.match(html,/interface_audit-1\.0\.0\.css/);
+ assert.doesNotMatch(html,/\p{Extended_Pictographic}/u,'HTML de entrada não contém emojis decorativos');
  assert.match(read('src/core/script-1.18.0.js'),/eva: ev\.eva \?\? null/,'transporte não transforma ausência em zero');
 }
 (async()=>{presentation();await navigation();await team();await finance();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});

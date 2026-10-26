@@ -228,7 +228,7 @@ function renderizarCatalogoPROM() {
         return texto.includes(busca);
     });
     if(!defs.length){grid.innerHTML='<div class="clinical-note proms-empty-state">Nenhuma escala encontrada com estes filtros.</div>';return;}
-    grid.innerHTML=defs.map(([key,d])=>`<button type="button" class="prom-card" onclick="abrirEscalaPROM('${key}')"><span class="prom-code">${escapeHTML(d.key)}</span><strong>${escapeHTML(d.nome)}</strong><small>${escapeHTML(descricaoCurtaPROM(d))}</small><small class="prom-cat">${escapeHTML(d.categoria)}</small><span class="prom-action">Preencher escala ↗</span></button>`).join('');
+    grid.innerHTML=defs.map(([key,d])=>`<button type="button" class="prom-card" onclick="abrirEscalaPROM('${key}')"><span class="prom-code">${escapeHTML(d.key)}</span><strong>${escapeHTML(d.nome)}</strong><small>${escapeHTML(descricaoCurtaPROM(d))}</small><small class="prom-cat">${escapeHTML(d.categoria)}</small><span class="prom-action">Preencher escala </span></button>`).join('');
 }
 
 function inicializarCatalogoPROM() {
@@ -269,7 +269,7 @@ function adicionarOutcome(dados={}) {
     const valor=dados.valor??'';
     const obs=dados.observacao||'';
     const ro=calculado?'readonly':'';
-    row.innerHTML=`<div><label>Instrumento</label><input class="out_nome" ${ro} value="${escapeHTML(nome)}"></div><div><label>Resultado</label><input class="out_valor" type="number" step="0.1" ${ro} value="${escapeHTML(valor)}"></div><div><label>Faixa</label><input class="out_faixa" ${ro} value="${escapeHTML(faixa)}"></div><div><label>Direção</label><select class="out_direcao"><option value="maior_melhor" ${direcao==='maior_melhor'?'selected':''}>Maior = melhor</option><option value="menor_melhor" ${direcao==='menor_melhor'?'selected':''}>Menor = melhor</option></select></div><div><label>Observação</label><input class="out_obs" value="${escapeHTML(obs)}"></div><div class="prom-result-actions">${def?`<button type="button" class="btn-secondary" onclick="abrirEscalaPROM('${key}', '${row.dataset.id}')">↗ Reabrir</button>`:''}<button type="button" class="btn-secondary" title="Remover resultado" onclick="this.closest('.outcome-row').remove();if(typeof agendarAutosaveKineSys==='function')agendarAutosaveKineSys()">✕</button></div>`;
+    row.innerHTML=`<div><label>Instrumento</label><input class="out_nome" ${ro} value="${escapeHTML(nome)}"></div><div><label>Resultado</label><input class="out_valor" type="number" step="0.1" ${ro} value="${escapeHTML(valor)}"></div><div><label>Faixa</label><input class="out_faixa" ${ro} value="${escapeHTML(faixa)}"></div><div><label>Direção</label><select class="out_direcao"><option value="maior_melhor" ${direcao==='maior_melhor'?'selected':''}>Maior = melhor</option><option value="menor_melhor" ${direcao==='menor_melhor'?'selected':''}>Menor = melhor</option></select></div><div><label>Observação</label><input class="out_obs" value="${escapeHTML(obs)}"></div><div class="prom-result-actions">${def?`<button type="button" class="btn-secondary" onclick="abrirEscalaPROM('${key}', '${row.dataset.id}')"> Reabrir</button>`:''}<button type="button" class="btn-secondary" title="Remover resultado" onclick="this.closest('.outcome-row').remove();if(typeof agendarAutosaveKineSys==='function')agendarAutosaveKineSys()">✕</button></div>`;
     c.appendChild(row);
 }
 

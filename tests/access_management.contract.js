@@ -51,7 +51,39 @@ assert.ok(index.indexOf('src/auth/login_access-1.18.0.js')<index.indexOf('src/ad
 console.log('Access management contract OK: unified profile login, dedicated recovery and MASTER-only server-side password reset.');
 // Chrome novo, cache antigo ou preferência de movimento reduzido não podem
 // depender de uma animação para revelar o login ou a aplicação.
-assert.doesNotMatch(index, /<body[^>]*\bks-app-booting\b/, 'HTML novo deve iniciar visível sem aguardar JavaScript');
+assert.doesNotMatch(index, /<body[^>]*\bks-app-booting\b/, 'não ocultar o body inteiro nem depender de animação');
 assert.doesNotMatch(fs.readFileSync('styles/design_screens.css','utf8'), /body\.ks-app-booting\s*\{[^}]*visibility:\s*hidden/i, 'CSS não pode esconder o body durante o bootstrap');
 assert.match(fs.readFileSync('src/core/design_system-1.20.1.js','utf8'), /classList\.remove\('ks-app-booting'\)/, 'HTML legado em cache deve ser revelado sem depender de animação');
-console.log('Boot visibility: login visível por padrão e compatibilidade com HTML legado OK.');
+assert.match(index,/<body data-ks-startup="pending">/,'a primeira pintura mostra somente a apresentação neutra');
+assert.match(index,/id="ks_startup" role="status"/,'a inicialização deve explicar o que está acontecendo');
+assert.match(index,/<noscript>/,'navegador sem JavaScript recebe uma instrução explícita');
+const startupCss=fs.readFileSync('styles/login_access-1.18.0.css','utf8');
+assert.match(startupCss,/body\[data-ks-startup="pending"\]>:not\(#ks_startup\)/,'não exibir telas intermediárias antes de restaurar o acesso');
+assert.match(startupCss,/#ks_startup \[hidden\]/,'respeitar hidden na ação de recarregar');
+assert.match(login,/finally\{[\s\S]*removeAttribute\('data-ks-startup'\)/,'sucesso, sessão ausente e falha concluem a apresentação');
+const foundation=fs.readFileSync('styles/design_foundation.css','utf8');
+assert.match(foundation,/:is\(h1,h2,h3,h4,h5,h6\):not\(\[role="button"\]\):not\(\[role="link"\]\):not\(\[tabindex="0"\]\):focus\{outline:none/,'remover contorno somente de títulos de leitura, mesmo após remoção do tabindex');
+assert.doesNotMatch(foundation,/(?:^|\n)\s*(?:\*|body)\s*:focus/,'não apagar o foco dos controles de teclado');
+console.log('Boot visibility: apresentação neutra, compatibilidade e foco de leitura OK.');
+
+// Exercita o controlador real com respostas sintéticas, sem chamadas à nuvem.
+const vm=require('node:vm');
+function startupHarness(options={}){
+ const nodes=new Map(),frames=[],timers=new Map(),messages=[];let serial=0,authEvent;
+ const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:true,style:{},value:'',textContent:'',replaceChildren(){},remove(){this.removed=true;}});return nodes.get(id);};
+ const body={pending:true,removeAttribute(name){if(name==='data-ks-startup')this.pending=false;}};
+ const session=options.session||(()=>Promise.resolve({data:{session:null},error:null}));
+ const env={console,Promise,URLSearchParams,Option:function(text,value){this.text=text;this.value=value;},document:{body,getElementById:node,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}},localStorage:{removeItem(){if(options.storageError)throw Error('storage indisponível');}},location:{search:options.search||'',reload(){}},autenticacaoInicializada:false,authStateSubscription:null,usuarioLogado:null,loginPerfisDisponiveis:[],loginCredencialChave:'',loginEmAndamento:false,persistirSessao(){},sincronizarEstadoAutenticacaoVisual(){},mostrarFeedbackLogin(...args){messages.push(args);},mensagemErroAutenticacao:()=>'',navegarPara(route){env.route=route;},liberarAcessoSistema(){env.route='tela_home';env.entries=(env.entries||0)+1;return options.navigation?.();},requestAnimationFrame:fn=>frames.push(fn),setTimeout(fn,ms){const id=++serial;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
+ env._supabase=options.offline?null:{auth:{onAuthStateChange(fn){authEvent=fn;return {data:{subscription:{}}};},getSession:session},rpc:options.rpc||(()=>Promise.resolve({data:{id:'perfil-qa',tipo:'MASTER',nome:'Demonstração'},error:null}))};
+ vm.runInNewContext(login+'\nthis.loginController=KineSysLogin;',env);
+ return {env,node,body,frames,timers,messages,event:value=>authEvent(value),async settle(task){for(let i=0;i<15;i++){await Promise.resolve();frames.splice(0).forEach(fn=>fn());}await task;}};
+}
+(async()=>{
+ const absent=startupHarness();await absent.settle(absent.env.loginController.start());assert(!absent.body.pending);assert.equal(absent.env.route,'tela_login');assert.equal(absent.env.usuarioLogado,null);
+ let finishNavigation;const active=startupHarness({session:async()=>({data:{session:{}},error:null}),navigation:()=>new Promise(resolve=>finishNavigation=resolve)});const starting=active.env.loginController.start();for(let i=0;i<12;i++)await Promise.resolve();assert(active.body.pending,'não revelar painel durante navegação inicial');assert.equal(active.env.entries,1);finishNavigation();await active.settle(starting);assert(!active.body.pending);assert.equal(active.env.route,'tela_home');assert.equal(active.env.usuarioLogado.id,'perfil-qa');
+ for(const options of [{offline:true},{storageError:true},{session:async()=>{throw Error('falha de rede');}}]){const h=startupHarness(options);await h.settle(h.env.loginController.start());assert(!h.body.pending);assert.equal(h.env.usuarioLogado,null);assert(h.messages.some(x=>/recuperar o acesso/.test(x[0])));}
+ const recovery=startupHarness({search:'?recuperar=1'});await recovery.settle(recovery.env.loginController.start());assert(!recovery.body.pending);assert.equal(recovery.node('login_acesso_nova_senha').hidden,false);assert.equal(recovery.env.entries,undefined);
+ let finishProfile;const race=startupHarness({session:async()=>({data:{session:{}},error:null}),rpc:()=>new Promise(resolve=>finishProfile=resolve)});const loading=race.env.loginController.start();for(let i=0;i<12;i++)await Promise.resolve();race.event('SIGNED_OUT');finishProfile({data:{id:'antigo',tipo:'MASTER'},error:null});await race.settle(loading);assert.equal(race.env.usuarioLogado,null);assert.equal(race.env.entries,undefined);assert.equal(race.env.route,'tela_login');
+ let finishSession;const slow=startupHarness({session:()=>new Promise(resolve=>finishSession=resolve)});const waiting=slow.env.loginController.start();[...slow.timers.values()].find(t=>t.ms===12000).fn();assert.equal(slow.node('ks_startup_retry').hidden,false);assert.match(slow.node('ks_startup_message').textContent,/demorando/);assert(slow.body.pending);finishSession({data:{session:null},error:null});await slow.settle(waiting);assert(!slow.body.pending);assert.equal(slow.timers.size,0);
+ console.log('Startup runtime: sessão válida/ausente, rede, storage, recuperação, saída concorrente e espera prolongada OK.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

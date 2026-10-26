@@ -117,7 +117,7 @@ async function obterPacientesSalvos() {
                     return resultado;
                 }
             } catch (err) {
-                console.warn("⚠️ Conexão com a nuvem falhou. Carregando dados locais preservados...", err);
+                console.warn("Conexão com a nuvem falhou. Carregando dados locais preservados...", err);
             }
         }
         return locais.map(p => normalizarPacienteDoBanco({ ...p, __dadosLocaisPendentes: true }));

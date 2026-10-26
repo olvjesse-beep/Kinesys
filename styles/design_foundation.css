@@ -6,6 +6,8 @@
    Nenhuma regra clínica, de banco, permissões ou persistência é alterada.
    ========================================================================== */
 body.ks-design-ready .input-group{min-width:0}
+/* Títulos recebem foco de leitura ao navegar; controles conservam foco visível. */
+body.ks-design-ready :is(h1,h2,h3,h4,h5,h6):not([role="button"]):not([role="link"]):not([tabindex="0"]):focus{outline:none!important;box-shadow:none!important}
 body.ks-design-ready .field-help, body.ks-design-ready .helper-text, body.ks-design-ready .clinical-note{font-size:var(--kds-font-metadata);line-height:1.5;color:var(--kds-muted-refined)}
 body.ks-design-ready .grid-2, body.ks-design-ready .grid-3{gap:16px}
 body.ks-design-ready .actions{gap:10px;flex-wrap:wrap;align-items:center}

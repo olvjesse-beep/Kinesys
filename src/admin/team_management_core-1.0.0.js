@@ -151,12 +151,12 @@ function limparFormularioEquipe() {
 
 async function abrirEdicaoFuncionario(id) {
     if (!usuarioEhMaster()) { alert('Apenas Administrador pode editar a equipe.'); return; }
-    if (!_supabase) { alert('⚠️ Servidor indisponível. A equipe não pode ser editada offline.'); return; }
+    if (!_supabase) { alert('Servidor indisponível. A equipe não pode ser editada offline.', 'aviso'); return; }
     try {
         const { data, error } = await _supabase.from('equipe').select(CAMPOS_PUBLICOS_PERFIL).eq('id', id).limit(1);
         if (error) throw error;
         const f = data && data[0];
-        if (!f) { alert('⚠️ Funcionário não encontrado.'); return; }
+        if (!f) { alert('Funcionário não encontrado.', 'aviso'); return; }
         const set = (elId, value) => { const el = document.getElementById(elId); if (el) el.value = value ?? ''; };
         set('eq_edit_id', f.id);
         set('eq_nome', f.nome);
@@ -178,7 +178,7 @@ async function abrirEdicaoFuncionario(id) {
         window.dispatchEvent(new CustomEvent('kinesys:equipe-editar', { detail: { id: f.id, nome: f.nome, tipo: normalizarNivelAcessoEquipe(f.tipo) } }));
     } catch (err) {
         console.error('Erro ao abrir edição da equipe:', err);
-        alert('⚠️ Não foi possível abrir este cadastro para edição. ' + (err.message || ''));
+        alert('Não foi possível abrir este cadastro para edição. ' + (err.message || ''), 'aviso');
     }
 }
 
@@ -195,22 +195,22 @@ async function cadastrarNovoFuncionario() {
     const regional = document.getElementById('eq_regional')?.value.trim() || '';
     const numeroRegistro = document.getElementById('eq_num_registro')?.value.trim() || '';
     const apareceNaAgenda = !!document.getElementById('eq_aparece_na_agenda')?.checked;
-    if (!nome || !email) { alert('⚠️ Nome e e-mail são obrigatórios.'); return; }
-    if (!editId && senha.length < 8) { alert('⚠️ A senha deve ter pelo menos 8 caracteres.'); document.getElementById('eq_senha')?.focus(); return; }
-    if (!editId && !/[a-z]/.test(senha)) { alert('⚠️ A senha deve conter pelo menos uma letra minúscula.'); return; }
-    if (!editId && !/[A-Z]/.test(senha)) { alert('⚠️ A senha deve conter pelo menos uma letra maiúscula.'); return; }
-    if (!editId && !/\d/.test(senha)) { alert('⚠️ A senha deve conter pelo menos um número.'); return; }
-    if (!editId && senha !== confirmarSenha) { alert('⚠️ A confirmação da senha não confere.'); document.getElementById('eq_confirmar_senha')?.focus(); return; }
+    if (!nome || !email) { alert('Nome e e-mail são obrigatórios.', 'aviso'); return; }
+    if (!editId && senha.length < 8) { alert('A senha deve ter pelo menos 8 caracteres.', 'aviso'); document.getElementById('eq_senha')?.focus(); return; }
+    if (!editId && !/[a-z]/.test(senha)) { alert('A senha deve conter pelo menos uma letra minúscula.', 'aviso'); return; }
+    if (!editId && !/[A-Z]/.test(senha)) { alert('A senha deve conter pelo menos uma letra maiúscula.', 'aviso'); return; }
+    if (!editId && !/\d/.test(senha)) { alert('A senha deve conter pelo menos um número.', 'aviso'); return; }
+    if (!editId && senha !== confirmarSenha) { alert('A confirmação da senha não confere.', 'aviso'); document.getElementById('eq_confirmar_senha')?.focus(); return; }
     if (!validarCPFInput('eq_cpf')) {
         document.getElementById('eq_cpf')?.focus();
-        alert('⚠️ Corrija o CPF destacado em vermelho antes de salvar o profissional.');
+        alert('Corrija o CPF destacado em vermelho antes de salvar o profissional.', 'aviso');
         return;
     }
-    if (tipoRegistro !== 'SECRETARIA' && !numeroRegistro) { alert('⚠️ Informe o número do registro profissional.'); return; }
-    if (tipoRegistro === 'CREFITO' && !regional) { alert('⚠️ Informe o regional do CREFITO (ex.: 4).'); return; }
+    if (tipoRegistro !== 'SECRETARIA' && !numeroRegistro) { alert('Informe o número do registro profissional.', 'aviso'); return; }
+    if (tipoRegistro === 'CREFITO' && !regional) { alert('Informe o regional do CREFITO (ex.: 4).', 'aviso'); return; }
     const registro = formatarRegistroProfissional(tipoRegistro, regional, numeroRegistro);
     if (['CRO','CRP'].includes(tipoRegistro) && !['MASTER','SECRETARIA'].includes(nivelAcesso)) {
-        alert('⚠️ Este conselho ainda não possui fluxo clínico específico. Use um nível administrativo/consultivo compatível até que o fluxo próprio seja implementado.');
+        alert('Este conselho ainda não possui fluxo clínico específico. Use um nível administrativo/consultivo compatível até que o fluxo próprio seja implementado.', 'aviso');
         return;
     }
     // Um administrador cadastrado pela equipe pode editar os próprios dados, mas não
@@ -218,13 +218,13 @@ async function cadastrarNovoFuncionario() {
     if (editId && usuarioLogado && String(usuarioLogado.id || '') === String(editId)) {
         const nivelAtual = normalizarNivelAcessoEquipe(usuarioLogado.tipo);
         if (nivelAcesso !== nivelAtual) {
-            alert('⚠️ Por segurança, um administrador não pode alterar o próprio nível de acesso. Faça essa mudança usando outro administrador.');
+            alert('Por segurança, um administrador não pode alterar o próprio nível de acesso. Faça essa mudança usando outro administrador.', 'aviso');
             return;
         }
     }
     try {
         const dup = await verificarDuplicidadeFuncionario({email, cpf, registro, nivelAcesso, excluirId: editId});
-        if (dup) { alert(`⚠️ Alteração bloqueada: já existe ${dup.campo} cadastrado para ${dup.funcionario.nome || 'outro funcionário'} com a mesma função (${rotuloPerfil(nivelAcesso)}). Para a mesma pessoa em outra função, escolha um nível de acesso diferente.`); return; }
+        if (dup) { alert(`Alteração bloqueada: já existe ${dup.campo} cadastrado para ${dup.funcionario.nome || 'outro funcionário'} com a mesma função (${rotuloPerfil(nivelAcesso)}). Para a mesma pessoa em outra função, escolha um nível de acesso diferente.`, 'aviso'); return; }
         const payload = {
             nome, email, cpf,
             tipo: nivelAcesso,
@@ -245,7 +245,7 @@ async function cadastrarNovoFuncionario() {
                 const lblUsuario = document.getElementById('lbl_usuario_logado');
                 if (lblUsuario) lblUsuario.innerText = usuarioLogado.nome;
             }
-            alert('✅ Cadastro da equipe atualizado com sucesso!');
+            alert('Cadastro da equipe atualizado com sucesso!', 'sucesso');
             window.dispatchEvent(new CustomEvent('kinesys:equipe-salva', { detail: { id: editId, tipo: nivelAcesso, editado: true } }));
         } else {
             const { data: resultado, error } = await _supabase.functions.invoke('cadastrar-equipe', {
@@ -256,8 +256,8 @@ async function cadastrarNovoFuncionario() {
             const novoFuncionario = resultado?.perfil;
             if (!novoFuncionario?.id) throw new Error('O servidor não confirmou a criação do usuário.');
             alert(resultado?.conta_criada
-                ? '✅ Usuário cadastrado. O profissional já pode entrar com o e-mail e a senha definidos.'
-                : '✅ Novo perfil vinculado à conta que já existia para este e-mail. A senha anterior da conta foi preservada.');
+                ? 'Usuário cadastrado. O profissional já pode entrar com o e-mail e a senha definidos.'
+                : 'Novo perfil vinculado à conta que já existia para este e-mail. A senha anterior da conta foi preservada.', 'sucesso');
             window.dispatchEvent(new CustomEvent('kinesys:equipe-salva', { detail: { id: novoFuncionario.id, tipo: novoFuncionario.tipo, editado: false } }));
         }
         limparFormularioEquipe();
@@ -266,14 +266,14 @@ async function cadastrarNovoFuncionario() {
         console.error('Erro ao salvar equipe:', err);
         const msg = String(err?.message || err?.details || '');
         if (/functions|cadastrar-equipe|edge function|failed to send|non-2xx/i.test(msg)) {
-            alert('⚠️ O cadastro automático ainda não está disponível. Tente novamente em instantes.');
+            alert('O cadastro automático ainda não está disponível. Tente novamente em instantes.', 'aviso');
             return;
         }
         if (/aparece_na_agenda|schema cache/i.test(msg)) {
-            alert('⚠️ O banco ainda não possui o controle de profissionais da Agenda. Peça ao administrador responsável pela instalação para atualizar o sistema e tente novamente.');
+            alert('O banco ainda não possui o controle de profissionais da Agenda. Peça ao administrador responsável pela instalação para atualizar o sistema e tente novamente.', 'aviso');
             return;
         }
-        alert('⚠️ Não foi possível salvar o profissional. ' + (err.message || 'Verifique a conexão com o servidor.'));
+        alert('Não foi possível salvar o profissional. ' + (err.message || 'Verifique a conexão com o servidor.'), 'aviso');
     }
 }
 
@@ -356,7 +356,7 @@ async function reativarFuncionario(id) {
         if (data?.length !== 1) throw new Error('O banco não confirmou a reativação.');
         await carregarListaEquipe();
         if (typeof carregarProfissionaisAgenda === 'function') await carregarProfissionaisAgenda();
-        alert('✅ Perfil reativado. Se a senha não for conhecida, use “Definir nova senha”.');
+        alert('Perfil reativado. Se a senha não for conhecida, use “Definir nova senha”.', 'sucesso');
         return true;
     } catch (err) {
         console.error('KineSys: falha ao reativar funcionário:', err);

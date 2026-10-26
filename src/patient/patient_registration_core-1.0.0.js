@@ -8,7 +8,7 @@
 async function salvarCadastroSomente(redirecionar = true) {
     const nome = document.getElementById('cad_nome').value.trim();
     if (!nome) {
-        alert("⚠️ O campo Nome Completo é obrigatório.");
+        alert("O campo Nome Completo é obrigatório.", 'aviso');
         return null;
     }
 
@@ -21,7 +21,7 @@ async function salvarCadastroSomente(redirecionar = true) {
     if (!cadastroValido) {
         const primeiroErro = document.querySelector('#tela_cadastro .input-group.has-error input');
         if (primeiroErro) primeiroErro.focus();
-        alert('⚠️ Corrija os campos destacados em vermelho antes de salvar o cadastro.');
+        alert('Corrija os campos destacados em vermelho antes de salvar o cadastro.', 'aviso');
         return null;
     }
 
@@ -33,7 +33,7 @@ async function salvarCadastroSomente(redirecionar = true) {
             p.cpf && somenteDigitos(p.cpf) === somenteDigitos(cpfDigitado)
         );
         if (cpfConflito) {
-            alert(`⚠️ Já existe um paciente cadastrado com este CPF: "${cpfConflito.nome}".\n\nAbra o prontuário dele na tela "Pacientes" para editar, em vez de criar um cadastro novo.`);
+            alert(`Já existe um paciente cadastrado com este CPF: "${cpfConflito.nome}".\n\nAbra o prontuário dele na tela "Pacientes" para editar, em vez de criar um cadastro novo.`, 'aviso');
             return null;
         }
     }
@@ -77,7 +77,7 @@ async function salvarCadastroSomente(redirecionar = true) {
 
     if (sucesso) {
         if (redirecionar) {
-            alert(pacienteAtualId ? "✅ Cadastro atualizado com sucesso!" : "✅ Cadastro salvo na nuvem e disponível para avaliação!");
+            alert(pacienteAtualId ? "Cadastro atualizado com sucesso!" : "Cadastro salvo na nuvem e disponível para avaliação!", 'sucesso');
             pacienteAtualId = null;
 
             ['cad_nome','cad_cpf','cad_nascimento','cad_idade','cad_sexo','cad_estado_civil','cad_telefone','cad_profissao','cad_responsavel_nome','cad_responsavel_parentesco','cad_responsavel_telefone','cad_cep','cad_endereco'].forEach(id => {
@@ -132,7 +132,7 @@ async function editarCadastro(id) {
 
     pacienteAtualId = p.id;
 
-    document.getElementById('titulo_tela_cadastro').innerText = "✏️ Editar Cadastro do Paciente";
+    document.getElementById('titulo_tela_cadastro').innerText = "Editar Cadastro do Paciente";
 
     document.getElementById('cad_nome').value = p.nome || "";
     document.getElementById('cad_cpf').value = p.cpf || "";

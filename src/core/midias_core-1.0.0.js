@@ -63,7 +63,7 @@ async function verificarKinesysLocal(mostrarErro = false) {
         kinesysLocalStatus = null;
         definirStatusKinesysLocal(false, 'Serviço local não detectado');
         const info = document.getElementById('midia_local_info'); if (info) info.style.display = 'none';
-        if (mostrarErro) alert('⚠️ O KineSys Local não está em execução neste Windows.\n\nAbra a pasta Windows_Local e execute "INICIAR_KINESYS_LOCAL.bat". Na primeira instalação, use "INSTALAR_KINESYS_LOCAL_ADMIN.bat".');
+        if (mostrarErro) alert('O KineSys Local não está em execução neste Windows.\n\nAbra a pasta Windows_Local e execute "INICIAR_KINESYS_LOCAL.bat". Na primeira instalação, use "INSTALAR_KINESYS_LOCAL_ADMIN.bat".', 'aviso');
         return null;
     }
 }
@@ -159,7 +159,7 @@ async function carregarMidiasPacienteSelecionado() {
 
 async function iniciarCapturaComIPhone() {
     const pacienteId = await sincronizarPacienteMidias(false);
-    if (!pacienteId) { alert('⚠️ Selecione o paciente antes de iniciar a captura.'); return; }
+    if (!pacienteId) { alert('Selecione o paciente antes de iniciar a captura.', 'aviso'); return; }
     const st = await verificarKinesysLocal(true); if (!st) return;
     const lista = await obterPacientesBasicos();
     const p = lista.find(x=>String(x.id)===String(pacienteId)); if (!p) { alert('Paciente não encontrado.'); return; }
@@ -172,7 +172,7 @@ async function iniciarCapturaComIPhone() {
         if (msg) msg.innerHTML = `Aguardando foto do iPhone para <strong>${escapeHTML(p.nome)}</strong>…`;
         midiaUltimaQuantidadeLocal = (await obterMidiasLocais(p.id)).length;
         iniciarPollingMidias();
-    } catch (err) { alert('❌ Não foi possível iniciar a captura pelo iPhone.\n\n'+err.message); }
+    } catch (err) { alert('Não foi possível iniciar a captura pelo iPhone.\n\n'+err.message, 'erro'); }
 }
 
 function versaoKinesysLocalNumero(v) {
@@ -182,10 +182,10 @@ function versaoKinesysLocalNumero(v) {
 
 async function abrirSeletorImportacaoComputador() {
     const pacienteId=await sincronizarPacienteMidias(false);
-    if(!pacienteId){alert('⚠️ Selecione o paciente antes de importar um documento.');return;}
+    if(!pacienteId){alert('Selecione o paciente antes de importar um documento.', 'aviso');return;}
     const st=await verificarKinesysLocal(true); if(!st)return;
     if(versaoKinesysLocalNumero(st.version)<11002){
-        alert('⚠️ O KineSys Local deste computador precisa ser atualizado para importar documentos.\n\nNa pasta Windows_Local desta versão, execute novamente INSTALAR_KINESYS_LOCAL_ADMIN.bat e depois reabra o KineSys.');
+        alert('O KineSys Local deste computador precisa ser atualizado para importar documentos.\n\nNa pasta Windows_Local desta versão, execute novamente INSTALAR_KINESYS_LOCAL_ADMIN.bat e depois reabra o KineSys.', 'aviso');
         return;
     }
     const input=document.getElementById('midia_import_input');
@@ -198,19 +198,19 @@ async function importarDocumentosComputador(input) {
     const arquivos=Array.from(input?.files||[]);
     if(!arquivos.length)return;
     const pacienteId=await sincronizarPacienteMidias(false);
-    if(!pacienteId){input.value='';alert('⚠️ Selecione o paciente antes de importar.');return;}
+    if(!pacienteId){input.value='';alert('Selecione o paciente antes de importar.', 'aviso');return;}
     const lista=await obterPacientesBasicos();
     const p=lista.find(x=>String(x.id)===String(pacienteId));
     if(!p){input.value='';alert('Paciente não encontrado.');return;}
     const tipo=document.getElementById('midia_import_tipo')?.value||'documento';
     const tiposPermitidos=['documento','exame','termo','identificacao','guia','outro_admin'];
     if(!tiposPermitidos.includes(tipo)){input.value='';alert('Tipo de documento inválido.');return;}
-    if(arquivos.length>20){input.value='';alert('⚠️ Importe no máximo 20 arquivos por vez.');return;}
+    if(arquivos.length>20){input.value='';alert('Importe no máximo 20 arquivos por vez.', 'aviso');return;}
     const extOk=/\.(pdf|jpe?g|png|webp|tiff?|bmp|docx?|xlsx?|txt|rtf)$/i;
     const invalidos=arquivos.filter(f=>!extOk.test(f.name)||f.size<=0||f.size>50*1024*1024);
     if(invalidos.length){
         input.value='';
-        alert('⚠️ Há arquivo vazio, maior que 50 MB ou em formato não suportado:\n\n'+invalidos.map(f=>'• '+f.name).join('\n')+'\n\nUse PDF, JPG, PNG, WEBP, TIFF, BMP, DOC/DOCX, XLS/XLSX, TXT ou RTF.');
+        alert('Há arquivo vazio, maior que 50 MB ou em formato não suportado:\n\n'+invalidos.map(f=>'• '+f.name).join('\n')+'\n\nUse PDF, JPG, PNG, WEBP, TIFF, BMP, DOC/DOCX, XLS/XLSX, TXT ou RTF.', 'aviso');
         return;
     }
     const btn=document.getElementById('btn_importar_documento_pc');
@@ -413,7 +413,7 @@ async function salvarConfiguracaoBackupLocal(){
     const st=await verificarKinesysLocal(true);if(!st)return;
     const path=document.getElementById('midia_backup_path')?.value.trim()||'';
     try{const r=await kinesysLocalFetch('/api/config',{method:'POST',body:{backup_root:path}},4000);await verificarKinesysLocal(false);alert(path?'✓ Pasta de backup configurada.':'✓ Backup automático desativado.');}
-    catch(err){alert('❌ Não foi possível salvar a configuração de backup.\n'+err.message);}
+    catch(err){alert('Não foi possível salvar a configuração de backup.\n'+err.message, 'erro');}
 }
-async function executarBackupLocal(){try{const r=await kinesysLocalFetch('/api/backup/run',{method:'POST',body:{}},15000);await atualizarGaleriaMidias(true);alert(`✓ Backup concluído. ${r.copied||0} arquivo(s) copiado(s); ${r.failed||0} falha(s).`);}catch(err){alert('❌ Falha no backup local.\n'+err.message);}}
+async function executarBackupLocal(){try{const r=await kinesysLocalFetch('/api/backup/run',{method:'POST',body:{}},15000);await atualizarGaleriaMidias(true);alert(`✓ Backup concluído. ${r.copied||0} arquivo(s) copiado(s); ${r.failed||0} falha(s).`);}catch(err){alert('Falha no backup local.\n'+err.message, 'erro');}}
 
