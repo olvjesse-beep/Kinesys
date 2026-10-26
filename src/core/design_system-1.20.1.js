@@ -118,12 +118,12 @@
         }
     }
     function textoLimpo(msg){ return String(msg??'').replace(/^(?:(?:✅|✓|⚠|❌|🔒|🛡|💾|⧉|📌)\uFE0F?\s*)+/u,'').trim(); }
-    function classificar(msg){
+    function classificar(msg,tipoInformado){
         const s=String(msg||'');
-        if(/✅|^✓|sucesso|salv[oa] com sucesso|registrad[oa]\.?$/i.test(s)) return 'sucesso';
-        if(/❌|erro|falha|indisponível|não foi possível/i.test(s)) return 'erro';
-        if(/🔒|🛡️|bloquead|não tem acesso|não pode/i.test(s)) return 'seguranca';
-        if(/⚠️|atenção|corrija|informe|selecione|nenhum/i.test(s)) return 'aviso';
+        if(tipoInformado==='sucesso'||/✅|^✓|sucesso|salv[oa] com sucesso|registrad[oa]\.?$/i.test(s)) return 'sucesso';
+        if(tipoInformado==='erro'||/❌|erro|falha|indisponível|não foi possível/i.test(s)) return 'erro';
+        if(tipoInformado==='seguranca'||/🔒|🛡️|bloquead|não tem acesso|não pode/i.test(s)) return 'seguranca';
+        if(tipoInformado==='aviso'||/⚠️|atenção|corrija|informe|selecione|nenhum/i.test(s)) return 'aviso';
         return 'info';
     }
     function toast(msg,tipo='info',tempo){
@@ -162,8 +162,8 @@
     window.confirmarKineSys=function(mensagem,opcoes={}){
         return abrirDialog({titulo:opcoes.titulo||'Confirmar ação',mensagem,confirmar:opcoes.confirmar||'Confirmar',cancelar:opcoes.cancelar||'Cancelar',tipo:opcoes.tipo||'aviso',destrutivo:!!opcoes.destrutivo});
     };
-    window.alert=function(mensagem){
-        const tipo=classificar(mensagem);
+    window.alert=function(mensagem,tipoInformado){
+        const tipo=classificar(mensagem,tipoInformado);
         // Erros de acesso/segurança ou mensagens longas merecem diálogo; feedback comum vira toast e não interrompe o fluxo.
         if(tipo==='seguranca' || (tipo==='erro' && String(mensagem).length>150)){
             abrirDialog({titulo:tipo==='seguranca'?'Acesso restrito':'Não foi possível concluir',mensagem,confirmar:'Entendi',apenasOk:true,tipo});

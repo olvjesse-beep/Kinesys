@@ -1,5 +1,5 @@
 if (typeof dicionarioOcupacoesEsportes === 'undefined') {
-    console.error("🚨 KineSys: 'database/ocupacoes_esportes.js' não foi carregado corretamente no HTML!");
+    console.error("KineSys: 'database/ocupacoes_esportes.js' não foi carregado corretamente no HTML!");
 }
 
 if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -270,8 +270,9 @@ function liberarAcessoSistema() {
     atualizarSelectsPacientes();
     popularSelectCRM();
     const rotaSalva = window.location.hash.slice(1);
-    navegarPara(rotaSalva && document.getElementById(rotaSalva) && telaPermitida(rotaSalva) ? rotaSalva : 'tela_home');
+    const abertura=navegarPara(rotaSalva && document.getElementById(rotaSalva) && telaPermitida(rotaSalva) ? rotaSalva : 'tela_home');
     if (typeof iniciarNotificacoesAgenda === 'function') setTimeout(() => iniciarNotificacoesAgenda(), 0);
+    return abertura;
 }
 
 function rotuloPerfil(tipo) {
@@ -324,7 +325,7 @@ function navegarPara(idTela, contextoEdicao = false) {
     if (!usuarioLogado && idTela !== 'tela_login') idTela = 'tela_login';
 
     if (usuarioLogado && !telaPermitida(idTela)) {
-        alert('🔒 Seu perfil (' + rotuloPerfil(usuarioLogado.tipo) + ') não tem acesso a esta tela.');
+        alert('Seu perfil (' + rotuloPerfil(usuarioLogado.tipo) + ') não tem acesso a esta tela.', 'seguranca');
         idTela = 'tela_home';
     }
 
@@ -608,16 +609,16 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
                 const msg=String(err?.message||err||'');
                 const dica=/realizado_em|salvo_em|edicao_limite_em|profissional_nome|ultima_edicao/i.test(msg)
                     ? '\n\nExecute primeiro a migration SUPABASE_SQL/SUPABASE_MIGRACAO_RASTREABILIDADE_CLINICA_24H_v1.11.2.sql no Supabase.' : '';
-                if (!opcoes.silenciarErro) alert('❌ O registro clínico NÃO foi considerado salvo. A gravação na nuvem é obrigatória para manter o carimbo de rastreabilidade.'+dica+'\n\nDetalhe: '+msg);
+                if (!opcoes.silenciarErro) alert('O registro clínico NÃO foi considerado salvo. A gravação na nuvem é obrigatória para manter o carimbo de rastreabilidade.'+dica+'\n\nDetalhe: '+msg, 'erro');
                 return false;
             }
-            alert("⚠️ Atenção: O prontuário foi salvo neste PC, mas houve falha ao enviar para a nuvem.");
+            alert("Atenção: O prontuário foi salvo neste PC, mas houve falha ao enviar para a nuvem.", 'aviso');
             salvarLocalStorage(pacienteObjeto);
             return true;
         }
     } else {
         if (opcoes.somenteNuvem || opcoes.exigirRastreabilidadeClinica) {
-            if (!opcoes.silenciarErro) alert('❌ O registro clínico NÃO foi salvo. É necessária conexão com o Supabase para gerar o carimbo confiável de data/hora.');
+            if (!opcoes.silenciarErro) alert('O registro clínico NÃO foi salvo. É necessária conexão com o Supabase para gerar o carimbo confiável de data/hora.', 'erro');
             return false;
         }
         salvarLocalStorage(pacienteObjeto);
@@ -694,9 +695,9 @@ function profissionalRegistroClinico(reg={}) {
 function validarRealizacaoClinicaInput(idCampo) {
     const el = document.getElementById(idCampo);
     const iso = datetimeLocalParaISO(el?.value || '');
-    if (!iso) { alert('⚠️ Informe a data e a hora em que o atendimento foi realizado.'); el?.focus(); return null; }
+    if (!iso) { alert('Informe a data e a hora em que o atendimento foi realizado.', 'aviso'); el?.focus(); return null; }
     const t = new Date(iso).getTime();
-    if (t > Date.now() + 5*60*1000) { alert('⚠️ A data/hora de realização não pode estar no futuro.'); el?.focus(); return null; }
+    if (t > Date.now() + 5*60*1000) { alert('A data/hora de realização não pode estar no futuro.', 'aviso'); el?.focus(); return null; }
     return iso;
 }
 function metadadosProfissionalLogado() {
@@ -713,14 +714,14 @@ function renderizarRegistrosAvaliacao(p) {
     c.style.display='block';
     c.innerHTML=`<div class="kds-u-jc-between kds-u-gap-12px kds-u-ai-center kds-u-mb-8px kds-u-d-flex"><strong class="kds-u-fs-meta kds-u-text-petrol">Rastreabilidade das avaliações</strong><span class="kds-u-fs-meta kds-u-text-muted">Edição: até 24 h da realização</span></div>`+avs.map(av=>{
         const pode=registroClinicoPodeEditar(av), salvo=obterSalvoEmRegistro(av), realizado=obterRealizadoEmRegistro(av);
-        return `<div class="kds-u-p-10px-12px kds-u-border-1px-solid-e4ece9 kds-u-br-9px kds-u-bg-mint-surface kds-u-mt-7px kds-u-gap-12px kds-u-jc-between kds-u-ai-center kds-u-d-flex"><div class="kds-u-minw-0"><div class="kds-u-fw-750 kds-u-fs-meta kds-u-text-petrol">${escapeHTML(av.tipo||'Avaliação')} · ${escapeHTML(av.status||'registrada')}</div><div class="kds-u-fs-meta kds-u-text-muted kds-u-mt-3px">Realizada: ${escapeHTML(formatarDataHoraClinica(realizado))} · ${escapeHTML(profissionalRegistroClinico(av))}</div><div class="kds-u-fs-meta kds-u-text-muted">Salva: ${escapeHTML(formatarDataHoraClinica(salvo,true))} · ${escapeHTML(textoJanelaEdicaoRegistro(av))}${av.ultimaEdicaoEm?` · Última edição: ${escapeHTML(formatarDataHoraClinica(av.ultimaEdicaoEm,true))}${av.ultimaEdicaoPorNome?` por ${escapeHTML(av.ultimaEdicaoPorNome)}`:''}`:''}</div></div>${pode?`<button type="button" class="btn-secondary kds-u-p-6px-10px kds-u-fs-meta kds-u-ws-nowrap" onclick="editarAvaliacaoClinica('${escapeHTML(p.id)}','${escapeHTML(av.id)}')">✏️ Editar</button>`:`<span class="kds-u-fs-meta kds-u-text-lock kds-u-ws-nowrap">🔒 Bloqueada</span>`}</div>`;
+        return `<div class="kds-u-p-10px-12px kds-u-border-1px-solid-e4ece9 kds-u-br-9px kds-u-bg-mint-surface kds-u-mt-7px kds-u-gap-12px kds-u-jc-between kds-u-ai-center kds-u-d-flex"><div class="kds-u-minw-0"><div class="kds-u-fw-750 kds-u-fs-meta kds-u-text-petrol">${escapeHTML(av.tipo||'Avaliação')} · ${escapeHTML(av.status||'registrada')}</div><div class="kds-u-fs-meta kds-u-text-muted kds-u-mt-3px">Realizada: ${escapeHTML(formatarDataHoraClinica(realizado))} · ${escapeHTML(profissionalRegistroClinico(av))}</div><div class="kds-u-fs-meta kds-u-text-muted">Salva: ${escapeHTML(formatarDataHoraClinica(salvo,true))} · ${escapeHTML(textoJanelaEdicaoRegistro(av))}${av.ultimaEdicaoEm?` · Última edição: ${escapeHTML(formatarDataHoraClinica(av.ultimaEdicaoEm,true))}${av.ultimaEdicaoPorNome?` por ${escapeHTML(av.ultimaEdicaoPorNome)}`:''}`:''}</div></div>${pode?`<button type="button" class="btn-secondary kds-u-p-6px-10px kds-u-fs-meta kds-u-ws-nowrap" onclick="editarAvaliacaoClinica('${escapeHTML(p.id)}','${escapeHTML(av.id)}')"> Editar</button>`:`<span class="kds-u-fs-meta kds-u-text-lock kds-u-ws-nowrap"> Bloqueada</span>`}</div>`;
     }).join('');
 }
 async function editarAvaliacaoClinica(pacienteId, avaliacaoId) {
     const p=await obterPacienteCompletoPorId(pacienteId);
     const av=p?obterAvaliacoes(p).find(x=>String(x.id)===String(avaliacaoId)):null;
-    if(!p||!av){alert('⚠️ Avaliação não encontrada.');return;}
-    if(!registroClinicoPodeEditar(av)){alert(`🔒 O prazo de edição desta avaliação terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(av))}. O registro permanece disponível apenas para consulta.`);return;}
+    if(!p||!av){alert('Avaliação não encontrada.', 'aviso');return;}
+    if(!registroClinicoPodeEditar(av)){alert(`O prazo de edição desta avaliação terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(av))}. O registro permanece disponível apenas para consulta.`, 'seguranca');return;}
     await carregarPacienteParaEdicao(p.id, av.id);
 }
 
@@ -997,8 +998,8 @@ async function editarEvolucaoClinica(evolucaoId){
     const pacienteId=obterPacienteIdEvolucaoAtivo();if(!pacienteId)return;sincronizarSelectPacienteEvolucao(pacienteId);
     const p=await obterPacienteCompletoPorId(pacienteId),e=(p?.evolucoes||[]).find(x=>String(x.id)===String(evolucaoId));
     if(String(obterPacienteIdEvolucaoAtivo()||'')!==String(pacienteId))return;
-    if(!e){alert('⚠️ Evolução não encontrada.');return;}
-    if(!registroClinicoPodeEditar(e)){alert(`🔒 O prazo de edição desta evolução terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(e))}.`);return;}
+    if(!e){alert('Evolução não encontrada.', 'aviso');return;}
+    if(!registroClinicoPodeEditar(e)){alert(`O prazo de edição desta evolução terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(e))}.`, 'seguranca');return;}
     evolucaoEdicaoId=e.id;
     const realizado=document.getElementById('evo_realizado_em');if(realizado){realizado.value=valorDatetimeLocalAgora(obterRealizadoEmRegistro(e));realizado.disabled=true;}
     const data=document.getElementById('evo_data');if(data){data.value=String(obterRealizadoEmRegistro(e)||e.data||'').slice(0,10);data.disabled=true;}
@@ -1056,11 +1057,11 @@ async function carregarHistoricoEvolucao() {
             <div class="kds-u-p-15px kds-u-bl-4px-solid-verde-cirurgico kds-u-bg-soft-slate kds-u-mb-15px kds-u-br-4px">
                 <div class="kds-u-jc-between kds-u-gap-12px kds-u-ai-start kds-u-mb-7px kds-u-d-flex">
                     <div>
-                        <div class="kds-u-fw-800 kds-u-fs-label kds-u-text-petrol">📅 Atendimento: ${escapeHTML(formatarDataHoraClinica(obterRealizadoEmRegistro(evo)))} · EVA ${escapeHTML(evo.eva??'não avaliada')}${evo.dadosEstruturados?.estadoClinico ? ` · ${escapeHTML(({melhor:'Melhor',igual:'Igual',pior:'Pior'})[evo.dadosEstruturados.estadoClinico]||evo.dadosEstruturados.estadoClinico)}` : ''}</div>
+                        <div class="kds-u-fw-800 kds-u-fs-label kds-u-text-petrol"> Atendimento: ${escapeHTML(formatarDataHoraClinica(obterRealizadoEmRegistro(evo)))} · EVA ${escapeHTML(evo.eva??'não avaliada')}${evo.dadosEstruturados?.estadoClinico ? ` · ${escapeHTML(({melhor:'Melhor',igual:'Igual',pior:'Pior'})[evo.dadosEstruturados.estadoClinico]||evo.dadosEstruturados.estadoClinico)}` : ''}</div>
                         <div class="kds-u-fs-meta kds-u-text-slate-text kds-u-mt-3px">Profissional: ${escapeHTML(profissionalRegistroClinico(evo))}</div>
                         <div class="kds-u-fs-meta kds-u-text-slate-text">Salva: ${escapeHTML(formatarDataHoraClinica(obterSalvoEmRegistro(evo),true))} · ${escapeHTML(textoJanelaEdicaoRegistro(evo))}${evo.ultimaEdicaoEm?` · Última edição: ${escapeHTML(formatarDataHoraClinica(evo.ultimaEdicaoEm,true))}${evo.ultimaEdicaoPorNome?` por ${escapeHTML(evo.ultimaEdicaoPorNome)}`:''}`:''}</div>
                     </div>
-                    ${registroClinicoPodeEditar(evo)?`<button type="button" class="btn-secondary kds-u-p-6px-10px kds-u-fs-meta kds-u-ws-nowrap" onclick="editarEvolucaoClinica('${escapeHTML(evo.id)}')">✏️ Editar</button>`:`<span class="kds-u-fs-meta kds-u-text-lock kds-u-ws-nowrap">🔒 Bloqueada</span>`}
+                    ${registroClinicoPodeEditar(evo)?`<button type="button" class="btn-secondary kds-u-p-6px-10px kds-u-fs-meta kds-u-ws-nowrap" onclick="editarEvolucaoClinica('${escapeHTML(evo.id)}')"> Editar</button>`:`<span class="kds-u-fs-meta kds-u-text-lock kds-u-ws-nowrap"> Bloqueada</span>`}
                 </div>
                 <p class="kds-u-m-0 kds-u-fs-ui kds-u-text-primary kds-u-ws-pre-wrap">${escapeHTML(relatoExibicao)}</p>
             </div>
@@ -1176,7 +1177,7 @@ function irParaSubtela(idSubtela) {
 function avancarParaMapa() {
     const nome = document.getElementById('paciente_nome').value.trim();
     if (!nome) {
-        alert("⚠️ Informe ao menos o nome do paciente antes de avançar para o mapeamento.");
+        alert("Informe ao menos o nome do paciente antes de avançar para o mapeamento.", 'aviso');
         return;
     }
     processarRadarEmTempoReal();
@@ -1629,7 +1630,7 @@ function renderizarFaseSuspeita(card, idRegiao, clustersOrdenados, estado) {
     const scoreHint = document.createElement('div');
     scoreHint.className = 'score-hint';
     scoreHint.classList.add('kds-u-mb-10px');
-    scoreHint.innerHTML = `🧠 Priorização heurística baseada no relato, padrão de dor, mecanismo, fatores de piora, idade e contexto clínico; esporte/profissão têm peso apenas contextual — <strong class="${rotulo.classe}">${rotulo.texto}</strong> <span class="kds-u-opacity-0p6">(índice heurístico: ${escolhido.score}; não representa probabilidade diagnóstica)</span>.`;
+    scoreHint.innerHTML = `Priorização heurística baseada no relato, padrão de dor, mecanismo, fatores de piora, idade e contexto clínico; esporte/profissão têm peso apenas contextual — <strong class="${rotulo.classe}">${rotulo.texto}</strong> <span class="kds-u-opacity-0p6">(índice heurístico: ${escolhido.score}; não representa probabilidade diagnóstica)</span>.`;
     card.appendChild(scoreHint);
 
     const status = avaliarCluster(idRegiao, escolhido.item);
@@ -1650,7 +1651,7 @@ function renderizarFaseSuspeita(card, idRegiao, clustersOrdenados, estado) {
 function renderizarFaseDiferencial(card, idRegiao, regiao, clustersOrdenados, contexto, estado) {
     const aviso = document.createElement('div');
     aviso.classList.add('kds-u-bg-fffbeb', 'kds-u-border-1px-solid-f1c40f', 'kds-u-br-6px', 'kds-u-p-10px-14px', 'kds-u-fs-meta', 'kds-u-text-7a5b00', 'kds-u-mb-15px');
-        aviso.textContent = "🔎 O eixo inicialmente priorizado não foi sustentado pelos achados registrados. Seguem outros eixos para investigação, ordenados pelo índice heurístico — não por probabilidade diagnóstica.";
+        aviso.textContent = "O eixo inicialmente priorizado não foi sustentado pelos achados registrados. Seguem outros eixos para investigação, ordenados pelo índice heurístico — não por probabilidade diagnóstica.";
     card.appendChild(aviso);
 
     const idJaTestado = estado.idClusterSuspeitaEscolhido || (clustersOrdenados[0] && clustersOrdenados[0].item.id);
@@ -1693,7 +1694,7 @@ function renderizarFaseDiferencial(card, idRegiao, regiao, clustersOrdenados, co
     const btnVoltar = document.createElement('button');
     btnVoltar.className = 'btn-secondary';
     btnVoltar.classList.add('kds-u-fs-ui', 'kds-u-p-8px-16px');
-    btnVoltar.textContent = "◀ Voltar ao eixo priorizado";
+    btnVoltar.textContent = "Voltar ao eixo priorizado";
     btnVoltar.addEventListener('click', function() { estado.fase = 'suspeita'; renderizarMapeamentoRegioes(); });
     acoes.appendChild(btnVoltar);
 
@@ -1715,7 +1716,7 @@ function renderizarFaseRedFlag(card, idRegiao, regiao, estado, destacar) {
     const btnVoltar = document.createElement('button');
     btnVoltar.className = 'btn-secondary';
     btnVoltar.classList.add('kds-u-fs-ui', 'kds-u-p-8px-16px', 'kds-u-mt-12px');
-    btnVoltar.textContent = "◀ Voltar aos outros eixos";
+    btnVoltar.textContent = "Voltar aos outros eixos";
     btnVoltar.addEventListener('click', function() { estado.fase = 'diferencial'; renderizarMapeamentoRegioes(); });
     card.appendChild(btnVoltar);
 }
@@ -2230,7 +2231,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     const contextoSalvar=JSON.stringify(window.obterContextoAvaliacaoKineSys());
     if(finalizar&&window.prepararFinalizacaoLaudoKineSys&&!window.prepararFinalizacaoLaudoKineSys()){alert('Revise o texto do relatório antes de finalizar.');return;}
     const nome=document.getElementById('paciente_nome')?.value.trim();
-    if(!nome){alert('⚠️ Informe o nome do paciente na avaliação antes de salvar.');return;}
+    if(!nome){alert('Informe o nome do paciente na avaliação antes de salvar.', 'aviso');return;}
     const realizadoInput=validarRealizacaoClinicaInput('avaliacao_realizado_em');
     if(!realizadoInput)return;
     // A triagem segue visível, sem confirmação oculta obrigatória para salvar.
@@ -2240,7 +2241,7 @@ async function salvarAvaliacaoAtual(finalizar=false) {
 
     const historico=pacienteExistente?obterAvaliacoes(pacienteExistente):[];
     const registroEmEdicao=avaliacaoEdicaoId?historico.find(a=>String(a.id)===String(avaliacaoEdicaoId)):null;
-    if(avaliacaoEdicaoId&&!registroEmEdicao){alert('⚠️ A avaliação em edição não foi encontrada. Reabra o prontuário.');avaliacaoEdicaoId=null;return;}
+    if(avaliacaoEdicaoId&&!registroEmEdicao){alert('A avaliação em edição não foi encontrada. Reabra o prontuário.', 'aviso');avaliacaoEdicaoId=null;return;}
     if(registroEmEdicao&&!registroClinicoPodeEditar(registroEmEdicao)){alert(`O prazo de edição terminou em ${formatarDataHoraClinica(obterLimiteEdicaoRegistro(registroEmEdicao))}. Nenhuma alteração foi salva.`);return;}
 
     const tagsCirurgiasArr=window.coletarCirurgiasAvaliacaoKineSys?.()||[];
@@ -2301,12 +2302,12 @@ async function salvarAvaliacaoAtual(finalizar=false) {
     if(registroEmEdicao){
         avaliacaoEdicaoId=null;
         limparRascunhoKineSys();
-        alert(`✅ Avaliação atualizada. O horário original de salvamento foi preservado e a edição ficou registrada em ${formatarDataHoraClinica(agora.toISOString(),true)}.`);
+        alert(`Avaliação atualizada. O horário original de salvamento foi preservado e a edição ficou registrada em ${formatarDataHoraClinica(agora.toISOString(),true)}.`, 'sucesso');
         await carregarPacienteParaEdicao(pacienteObjeto.id);
         return;
     }
     if(finalizar){limparRascunhoKineSys();alert(`${dadosAvaliacao.tipo} finalizada e salva com rastreabilidade (Motor ${KINESYS_MOTOR_VERSION}).`);pacienteAtualId=null;estadoMapeamento={};mapeamentoAvaliacaoAnterior=null;navegarPara('tela_buscar');}
-    else{pacienteAtualId=pacienteObjeto.id;window.preencherLaudoAvaliacaoKineSys?.(dadosAvaliacao.mapeamento.clinicaEstruturada.laudo||null);atualizarStatusAutosave('✓ Rascunho persistido no prontuário');alert('💾 Rascunho da avaliação salvo. A avaliação ainda NÃO está finalizada.');}
+    else{pacienteAtualId=pacienteObjeto.id;window.preencherLaudoAvaliacaoKineSys?.(dadosAvaliacao.mapeamento.clinicaEstruturada.laudo||null);atualizarStatusAutosave('✓ Rascunho persistido no prontuário');alert('Rascunho da avaliação salvo. A avaliação ainda NÃO está finalizada.');}
 }
 
 function chaveUsuarioRascunhoKineSys() {
@@ -2363,7 +2364,7 @@ function agendarAutosaveKineSys() {
     if (autosaveSuspensoKineSys || cargasPacienteAvaliacaoKineSys > 0) return;
     if (!existeContextoRealParaRascunhoKineSys()) { ocultarStatusAutosaveKineSys(); return; }
     atualizarStatusAutosave('Alterações pendentes…');
-    autosaveTimerKineSys=setTimeout(()=>{ const r=coletarRascunhoKineSys(); if(!r){ocultarStatusAutosaveKineSys();return;} try{ localStorage.setItem('kinesys_rascunho_avaliacao_v11',JSON.stringify(r)); atualizarStatusAutosave('✓ Rascunho salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})); }catch(e){ atualizarStatusAutosave('⚠ Falha ao salvar rascunho'); } },1200);
+    autosaveTimerKineSys=setTimeout(()=>{ const r=coletarRascunhoKineSys(); if(!r){ocultarStatusAutosaveKineSys();return;} try{ localStorage.setItem('kinesys_rascunho_avaliacao_v11',JSON.stringify(r)); atualizarStatusAutosave('✓ Rascunho salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})); }catch(e){ atualizarStatusAutosave('Falha ao salvar rascunho'); } },1200);
 }
 document.addEventListener('input',event=>{if(event.target?.id==='exames_imagem_descricao')agendarAutosaveKineSys();});
 document.addEventListener('change',event=>{if(event.target?.id==='exames_imagem_fonte')agendarAutosaveKineSys();});
@@ -2970,7 +2971,7 @@ function fingerprintSeguranca(idRegiao, regiao, contexto) {
 function construirBlocoRedFlags(idRegiao, regiao, destacar=true) {
     const box=document.createElement('div'); box.className='bloco-redflags safety-gate-box';
     const estado=obterEstadoRegiao(idRegiao); const contexto=coletarContextoClinico();
-    const titulo=document.createElement('h4'); titulo.textContent='🛡️ Triagem de segurança obrigatória'; box.appendChild(titulo);
+    const titulo=document.createElement('h4'); titulo.textContent='Triagem de segurança obrigatória'; box.appendChild(titulo);
     const alerts=alertasTextuaisParaRegiaoKineSys(contexto,idRegiao);
     if(alerts.length){
         const aviso=document.createElement('div'); aviso.className='alerta-redflag-ativo';
@@ -2987,7 +2988,7 @@ function construirBlocoRedFlags(idRegiao, regiao, destacar=true) {
     const exigeDecisao = marcadas.length > 0 || alerts.length > 0;
     if(exigeDecisao){
         const gate=document.createElement('div'); gate.className='redflag-gate';
-        gate.innerHTML=`<p><strong>🚨 Revisão de segurança necessária.</strong> ${marcadas.length ? 'Há sinal(is) de alerta marcado(s).' : 'A HMA contém termos que exigem revisão clínica explícita.'} Registre a decisão antes de continuar. O sistema não define urgência médica automaticamente.</p>`;
+        gate.innerHTML=`<p><strong> Revisão de segurança necessária.</strong> ${marcadas.length ? 'Há sinal(is) de alerta marcado(s).' : 'A HMA contém termos que exigem revisão clínica explícita.'} Registre a decisão antes de continuar. O sistema não define urgência médica automaticamente.</p>`;
         const select=document.createElement('select'); select.innerHTML='<option value="">-- Conduta diante do alerta --</option><option value="encaminhamento_urgente">Encaminhamento médico urgente / pronto atendimento</option><option value="encaminhamento_prioritario">Encaminhamento médico prioritário</option><option value="avaliacao_medica_programada">Avaliação médica programada</option><option value="continuar_com_cautela">Continuar avaliação fisioterapêutica com cautela e monitorização</option>'; select.value=estado.redflagConduta||'';
         const ta=document.createElement('textarea'); ta.placeholder='Justificativa clínica / observações relevantes...'; ta.value=estado.redflagJustificativa||'';
         const btn=document.createElement('button'); btn.type='button'; btn.className='btn-primary'; btn.textContent=estado.redflagAcknowledge?'✓ Decisão registrada':'Registrar decisão clínica';
@@ -3119,9 +3120,9 @@ function avancarParaDiagnostico(){
     for(const id of regioes){
         const regiao=BANCO_MAPEAMENTO_CLINICO[id], estado=obterEstadoRegiao(id); const marcadas=(regiao.redFlags||[]).some((_,i)=>estado.resultados['redflag::'+i]);
         const fpAtual=fingerprintSeguranca(id,regiao,contexto);
-        if(!estado.redflagsRevisadas || estado.safetyFingerprint!==fpAtual){ renderizarMapeamentoRegioes(); alert(`🛡️ Revise e confirme novamente a triagem de segurança de ${regiao.nome} antes de avançar. A HMA ou os sinais de alerta podem ter mudado.`); return; }
+        if(!estado.redflagsRevisadas || estado.safetyFingerprint!==fpAtual){ renderizarMapeamentoRegioes(); alert(`Revise e confirme novamente a triagem de segurança de ${regiao.nome} antes de avançar. A HMA ou os sinais de alerta podem ter mudado.`, 'seguranca'); return; }
         const alertasTexto=alertasTextuaisParaRegiaoKineSys(contexto,id);
-        if((marcadas||alertasTexto.length>0)&&!estado.redflagAcknowledge){ renderizarMapeamentoRegioes(); alert(`⚠️ Há sinal/termo de alerta em ${regiao.nome} sem decisão clínica registrada.`); return; }
+        if((marcadas||alertasTexto.length>0)&&!estado.redflagAcknowledge){ renderizarMapeamentoRegioes(); alert(`Há sinal/termo de alerta em ${regiao.nome} sem decisão clínica registrada.`, 'aviso'); return; }
     }
     regioes.forEach(id=>{
         const estado=obterEstadoRegiao(id), candidatos=ordenarHipotesesRegiaoKineSys(id,contexto);
@@ -3199,7 +3200,7 @@ function gerarSinteseMapeamento(){
         }
         resumoPorRegiao.push({regiao:reg.nome,hipotese,nivel,codigoHipotese:codigo,nomeHipotese:nome,hipotesesAssociadas:associadas,fenotipoOperacional:fen?.nome||'',textoDocumento,incertezaClinicaAceita:!!est.incertezaClinicaAceita,incertezaEspecifica:!!est.incertezaEspecifica,incertezaClinicaMotivo:est.incertezaClinicaMotivo||'',redFlags:rf,alertasTextuais:alertasTxt.map(a=>a.id),redflagConduta:est.redflagConduta||'',redflagJustificativa:est.redflagJustificativa||'',segurancaRevisada:!!est.redflagsRevisadas,auditoriaMotor:est.auditoriaMotor||null,sinteseClinica:sintese});
         const c=nivel==='alerta'?'status-alerta':nivel==='positivo'?'status-positivo':(nivel==='fenotipo'||nivel==='indeterminado')?'status-inconclusivo':'status-negativo';
-        html+=`<div class="cluster-card ${c}"><h4>🧩 ${escapeHTML(reg.nome)}</h4><p class="kds-u-fs-label kds-u-m-6px-0-0">${escapeHTML(hipotese)}</p></div>`;
+        html+=`<div class="cluster-card ${c}"><h4> ${escapeHTML(reg.nome)}</h4><p class="kds-u-fs-label kds-u-m-6px-0-0">${escapeHTML(hipotese)}</p></div>`;
     });
     return{html,resumoPorRegiao};
 }
@@ -3567,7 +3568,7 @@ async function testarConexaoGemini() {
     const status = document.getElementById('status_gemini');
     if (status) {
         status.style.display = 'block';
-        status.textContent = '⏳ Testando conexão com o Gemini...';
+        status.textContent = 'Testando conexão com o Gemini...';
     }
     try {
         const r = await chamarGeminiRelatorio(
@@ -3575,14 +3576,14 @@ async function testarConexaoGemini() {
             'Teste técnico de conectividade do KineSys. Responda somente OK.'
         );
         if (status) {
-            status.textContent = `✅ Gemini conectado (${r.modelo}).`;
+            status.textContent = `Gemini conectado (${r.modelo}).`;
             status.classList.remove('ks-status-error','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-success');
         }
         return true;
     } catch (e) {
         console.error('Teste Gemini:', e);
         if (status) {
-            status.textContent = `❌ Gemini indisponível: ${e.message}`;
+            status.textContent = `Gemini indisponível: ${e.message}`;
             status.classList.remove('ks-status-success','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-error');
         }
         return false;
@@ -3604,7 +3605,7 @@ async function gerarDocumentoComIA(){
 
     const tipoDocumento=document.getElementById('rel_tipo_documento')?.value||'relatorio';
     const objetivo=tipoDocumento==='encaminhamento'?'avaliacao_medica':(document.getElementById('rel_objetivo')?.value||'geral');
-    if (!['MASTER','MASTER_FEM','FISIOTERAPEUTA','PROFISSIONAL'].includes(perfilDoUsuario())) { alert('🔒 Seu perfil não pode gerar relatórios clínicos.'); return; }
+    if (!['MASTER','MASTER_FEM','FISIOTERAPEUTA','PROFISSIONAL'].includes(perfilDoUsuario())) { alert('Seu perfil não pode gerar relatórios clínicos.', 'seguranca'); return; }
     const extensao=document.getElementById('rel_extensao')?.value||'medio';
     const qtdEvo=parseInt(document.getElementById('rel_evolucoes_qtd')?.value||'0',10);
     const clin=av?.mapeamento?.clinicaEstruturada||{};
@@ -3632,7 +3633,7 @@ async function gerarDocumentoComIA(){
     if (status) {
         status.style.display = 'block';
         status.classList.remove('ks-status-success','ks-status-error'); status.classList.add('ks-status-muted','kds-u-text-muted');
-        status.textContent = '⏳ Enviando o resumo e os dados registrados para o Gemini...';
+        status.textContent = 'Enviando o resumo e os dados registrados para o Gemini...';
     }
 
     try {
@@ -3646,14 +3647,14 @@ async function gerarDocumentoComIA(){
         setTimeout(()=>validarRelatorioIA(false),0);
         if (status) {
             const ajustes = [resultado.continuacoes ? `${resultado.continuacoes} continuação(ões) automática(s)` : '', resultado.reparos ? `${resultado.reparos} reparo(s) de seção` : ''].filter(Boolean).join(' · ');
-            status.textContent = `✅ Relatório completo e conferido pelo KineSys${ajustes ? ` — ${ajustes}` : ''}. Revise o texto antes da impressão.`;
+            status.textContent = `Relatório completo e conferido pelo KineSys${ajustes ? ` — ${ajustes}` : ''}. Revise o texto antes da impressão.`;
             status.classList.remove('ks-status-error','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-success');
         }
         campo.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (e) {
         console.error('Erro ao gerar relatório com Gemini:', e);
         if (status) {
-            status.textContent = `❌ Falha na IA: ${e.message}`;
+            status.textContent = `Falha na IA: ${e.message}`;
             status.classList.remove('ks-status-success','ks-status-muted','kds-u-text-muted'); status.classList.add('ks-status-error');
         }
         alert('Não foi possível gerar o relatório com o Gemini.\n\n' + e.message);
@@ -3679,7 +3680,7 @@ async function montarDocumentoIAParaImpressao(){
 
 /* ================= 1.6 — PRODUTIVIDADE, ALTA, RESTRIÇÕES, PENDÊNCIAS E AUDITORIA IA ================= */
 
-function renderizarRestricoesPersistentesEvolucao(p){const box=document.getElementById('banner_restricoes_posop');if(!box)return;if(!p){box.style.display='none';box.innerHTML='';return;}const av=obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p),r=av?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias;if(!r?.ativo){box.style.display='none';box.innerHTML='';return;}const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'}[r.statusCarga]||'Não informada';const itens=[r.procedimento&&`Procedimento: ${escapeHTML(r.procedimento)}`,`Carga: ${escapeHTML(carga)}`,r.ortese&&`Órtese: ${escapeHTML(r.ortese)}`,r.restricaoADM&&`ADM: ${escapeHTML(r.restricaoADM)}`,r.proibicoes&&`Proibições: ${escapeHTML(r.proibicoes)}`,r.retornoMedico&&`Retorno médico: ${escapeHTML(formatarDataBR(r.retornoMedico))}`].filter(Boolean);box.innerHTML=`<strong>⚠ Restrições pós-operatórias vigentes</strong><div class="kds-u-mt-5px kds-u-fs-label">${itens.join(' · ')}</div>`;box.style.display='block';}
+function renderizarRestricoesPersistentesEvolucao(p){const box=document.getElementById('banner_restricoes_posop');if(!box)return;if(!p){box.style.display='none';box.innerHTML='';return;}const av=obterAvaliacaoFinalizadaMaisRecente(p)||obterAvaliacaoMaisRecente(p),r=av?.mapeamento?.clinicaEstruturada?.restricoesPosOperatorias;if(!r?.ativo){box.style.display='none';box.innerHTML='';return;}const carga={sem_carga:'Sem carga',toque:'Toque/contato',parcial:'Carga parcial',conforme_tolerado:'Carga conforme tolerado',total:'Carga total'}[r.statusCarga]||'Não informada';const itens=[r.procedimento&&`Procedimento: ${escapeHTML(r.procedimento)}`,`Carga: ${escapeHTML(carga)}`,r.ortese&&`Órtese: ${escapeHTML(r.ortese)}`,r.restricaoADM&&`ADM: ${escapeHTML(r.restricaoADM)}`,r.proibicoes&&`Proibições: ${escapeHTML(r.proibicoes)}`,r.retornoMedico&&`Retorno médico: ${escapeHTML(formatarDataBR(r.retornoMedico))}`].filter(Boolean);box.innerHTML=`<strong> Restrições pós-operatórias vigentes</strong><div class="kds-u-mt-5px kds-u-fs-label">${itens.join(' · ')}</div>`;box.style.display='block';}
 
 async function duplicarUltimaEvolucao(){
     const id=obterPacienteIdEvolucaoAtivo();if(!id){alert('Selecione um paciente.');return;}sincronizarSelectPacienteEvolucao(id);
@@ -3696,7 +3697,7 @@ async function duplicarUltimaEvolucao(){
     window.KineSysEvolucaoUI?.atualizar();alert('Última sessão carregada como base. Revise parâmetros e conduta antes de salvar.');
 }
 
-function renderizarLinhaTempoClinicaCompleta(p){const c=document.getElementById('linha_tempo_clinica_completa');if(!c)return;if(!p){c.innerHTML='<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar a linha do tempo.</p>';return;}const ev=[];if(p.timestampCadastro||p.dataCadastro)ev.push({d:p.timestampCadastro?new Date(p.timestampCadastro).toISOString():p.dataCadastro,t:'cadastro',titulo:'Cadastro do paciente',desc:p.cadastradoPor?`Cadastrado por ${p.cadastradoPor}`:''});(obterAvaliacoes(p)||[]).forEach(a=>ev.push({d:obterRealizadoEmRegistro(a)||a.dataAvaliacao||'',t:'avaliacao',titulo:`${a.tipo||'Avaliação'} · ${a.status||'finalizada'}`,desc:`${profissionalRegistroClinico(a)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(a),true)} · EVA ${a.evaInicial??'N/I'}`}));(p.evolucoes||[]).forEach(e=>ev.push({d:obterRealizadoEmRegistro(e)||e.data||'',t:'evolucao',titulo:'Evolução fisioterapêutica',desc:`${profissionalRegistroClinico(e)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(e),true)} · EVA ${e.eva??'não avaliada'}${e.dadosEstruturados?.estadoClinico?' · '+e.dadosEstruturados.estadoClinico:''}`}));[...(p.documentos||[]),...obterDocumentosTimelineLocal(p.id),...(documentosTimelineNuvemCache.get(String(p.id))||[])].forEach(d=>ev.push({d:d.dataHoraISO||d.data_hora||'',t:'documento',titulo:d.titulo||'Documento',desc:d.emitidoPor||d.emitido_por?`Emitido por ${d.emitidoPor||d.emitido_por}`:''}));const ids=new Set();const eventosSemDuplicata=ev.filter(x=>{const chave=`${x.t}|${x.d}|${x.titulo}`;if(ids.has(chave))return false;ids.add(chave);return true;});eventosSemDuplicata.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const icon={cadastro:'👤',avaliacao:'🩺',evolucao:'📈',documento:'📄'};c.innerHTML=eventosSemDuplicata.length?eventosSemDuplicata.map(x=>`<div class="kds-u-gtc-34px-125px-1fr kds-u-gap-10px kds-u-ai-start-2 kds-u-p-10px-0 kds-u-bb-1px-solid-edf1ef kds-u-d-grid"><div class="kds-u-fs-heading-sm">${icon[x.t]||'•'}</div><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(formatarDataBR(String(x.d).slice(0,10)))}</div><div><strong class="kds-u-fs-label kds-u-text-petrol">${escapeHTML(x.titulo)}</strong><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(x.desc||'')}</div></div></div>`).join(''):'<p>Nenhum evento registrado.</p>';}
+function renderizarLinhaTempoClinicaCompleta(p){const c=document.getElementById('linha_tempo_clinica_completa');if(!c)return;if(!p){c.innerHTML='<p class="kds-u-text-muted kds-u-fs-ui kds-u-ta-center">Selecione um paciente para visualizar a linha do tempo.</p>';return;}const ev=[];if(p.timestampCadastro||p.dataCadastro)ev.push({d:p.timestampCadastro?new Date(p.timestampCadastro).toISOString():p.dataCadastro,t:'cadastro',titulo:'Cadastro do paciente',desc:p.cadastradoPor?`Cadastrado por ${p.cadastradoPor}`:''});(obterAvaliacoes(p)||[]).forEach(a=>ev.push({d:obterRealizadoEmRegistro(a)||a.dataAvaliacao||'',t:'avaliacao',titulo:`${a.tipo||'Avaliação'} · ${a.status||'finalizada'}`,desc:`${profissionalRegistroClinico(a)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(a),true)} · EVA ${a.evaInicial??'N/I'}`}));(p.evolucoes||[]).forEach(e=>ev.push({d:obterRealizadoEmRegistro(e)||e.data||'',t:'evolucao',titulo:'Evolução fisioterapêutica',desc:`${profissionalRegistroClinico(e)} · salvo ${formatarDataHoraClinica(obterSalvoEmRegistro(e),true)} · EVA ${e.eva??'não avaliada'}${e.dadosEstruturados?.estadoClinico?' · '+e.dadosEstruturados.estadoClinico:''}`}));[...(p.documentos||[]),...obterDocumentosTimelineLocal(p.id),...(documentosTimelineNuvemCache.get(String(p.id))||[])].forEach(d=>ev.push({d:d.dataHoraISO||d.data_hora||'',t:'documento',titulo:d.titulo||'Documento',desc:d.emitidoPor||d.emitido_por?`Emitido por ${d.emitidoPor||d.emitido_por}`:''}));const ids=new Set();const eventosSemDuplicata=ev.filter(x=>{const chave=`${x.t}|${x.d}|${x.titulo}`;if(ids.has(chave))return false;ids.add(chave);return true;});eventosSemDuplicata.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const icon={cadastro:'',avaliacao:'',evolucao:'',documento:''};c.innerHTML=eventosSemDuplicata.length?eventosSemDuplicata.map(x=>`<div class="kds-u-gtc-34px-125px-1fr kds-u-gap-10px kds-u-ai-start-2 kds-u-p-10px-0 kds-u-bb-1px-solid-edf1ef kds-u-d-grid"><div class="kds-u-fs-heading-sm">${icon[x.t]||'•'}</div><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(formatarDataBR(String(x.d).slice(0,10)))}</div><div><strong class="kds-u-fs-label kds-u-text-petrol">${escapeHTML(x.titulo)}</strong><div class="kds-u-fs-meta kds-u-text-muted">${escapeHTML(x.desc||'')}</div></div></div>`).join(''):'<p>Nenhum evento registrado.</p>';}
 
 async function abrirAtendimentoDoPainel(pacienteId,tipo){if(!pacienteId)return;try{localStorage.setItem("kinesys_paciente_contexto",String(pacienteId));}catch(_){}await atualizarSelectsPacientes();if(tipo==="evolucao"){sincronizarSelectPacienteEvolucao(pacienteId);navegarPara("tela_evolucao");setTimeout(function(){carregarHistoricoEvolucao();},0);}else{await carregarPacienteParaEdicao(pacienteId);}}
 async function renderizarPendenciasClinicas(){const c=document.getElementById('lista_pendencias_clinicas');if(!c)return;const lista=await obterPacientesSalvos();const hoje=Date.now(),itens=[];for(const p of lista){const avs=obterAvaliacoes(p),av=obterAvaliacaoFinalizadaMaisRecente(p);const ras=avs.find(a=>a.status==='rascunho');if(ras)itens.push({n:p.nome,p:'Avaliação em rascunho',nivel:'alto'});if(!av)itens.push({n:p.nome,p:'Sem avaliação clínica finalizada',nivel:'alto'});if(av){const clin=av.mapeamento?.clinicaEstruturada||{};if(!(clin.psfs?.itens||[]).length)itens.push({n:p.nome,p:'PSFS não registrada',nivel:'baixo'});const objs=clin.objetivosPlano?.objetivos||[];if(objs.some(o=>!['atingido','nao_atingido'].includes(o.status||'')))itens.push({n:p.nome,p:'Objetivos terapêuticos em acompanhamento',nivel:'baixo'});const ro=clin.restricoesPosOperatorias;if(ro?.ativo&&!ro.retornoMedico)itens.push({n:p.nome,p:'Pós-operatório com restrição ativa e retorno médico não informado',nivel:'medio'});}
@@ -3705,7 +3706,7 @@ c.innerHTML=itens.length?itens.slice(0,20).map(i=>`<div class="ks-pending-row ks
 
 function extrairNumerosClinicos(texto){return (String(texto||'').match(/\b\d+(?:[.,]\d+)?\b/g)||[]).map(x=>x.replace(',','.'));}
 function normalizarValidacao(t){return removerAcentos(String(t||'')).replace(/\s+/g,' ').trim();}
-function validarRelatorioIA(mostrar=true){const campo=document.getElementById('rel_documento_oficial'),painel=document.getElementById('painel_validacao_ia');if(!campo)return null;const texto=campo.value.trim();const fonte=window.__kinesysUltimoContextoRelatorio||{};const base=JSON.stringify(fonte.contexto||{})+' '+String(fonte.rascunho||'');const numsBase=new Set(extrairNumerosClinicos(base));const numsTexto=[...new Set(extrairNumerosClinicos(texto))];const naoSustentados=numsTexto.filter(n=>!numsBase.has(n)&&!['1','2','3','4','5','6','7','8','9','10'].includes(n));const nt=normalizarValidacao(texto),nb=normalizarValidacao(base);const criticos=[];if(naoSustentados.length)criticos.push(`Valores numéricos não encontrados no contexto: ${naoSustentados.join(', ')}`);if(/diagnostico confirmado|confirmado o diagnostico|diagnostico definitivo/.test(nt)&&!/diagnostico confirmado|confirmado o diagnostico|diagnostico definitivo/.test(nb))criticos.push('Linguagem de diagnóstico confirmado não está sustentada pelo contexto.');if(/alta fisioterapeutica|recebe alta|alta do tratamento/.test(nt)&&!/alta fisioterapeutica|recebe alta|alta do tratamento/.test(nb))criticos.push('O texto declara alta sem registro correspondente na fonte.');const avisos=[];if(!fonte.contexto)avisos.push('Validação limitada: este texto não foi gerado nesta sessão ou o contexto original não está disponível.');const ok=!criticos.length;const result={ok,criticos,avisos};if(painel){painel.style.display='block';painel.innerHTML=`<strong>${ok?'✅ Validação local sem inconsistências óbvias':'⚠️ Revisão necessária'}</strong>${criticos.length?`<ul class="kds-u-m-8px-0-0-18px">${criticos.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul>`:''}${avisos.length?`<div class="kds-u-mt-8px kds-u-fs-meta kds-u-text-muted">${avisos.map(escapeHTML).join('<br>')}</div>`:''}<div class="kds-u-mt-8px kds-u-fs-meta kds-u-text-muted">Validador heurístico: compara números e afirmações críticas com os dados enviados ao relatório. A revisão profissional continua obrigatória.</div>`;}return result;}
+function validarRelatorioIA(mostrar=true){const campo=document.getElementById('rel_documento_oficial'),painel=document.getElementById('painel_validacao_ia');if(!campo)return null;const texto=campo.value.trim();const fonte=window.__kinesysUltimoContextoRelatorio||{};const base=JSON.stringify(fonte.contexto||{})+' '+String(fonte.rascunho||'');const numsBase=new Set(extrairNumerosClinicos(base));const numsTexto=[...new Set(extrairNumerosClinicos(texto))];const naoSustentados=numsTexto.filter(n=>!numsBase.has(n)&&!['1','2','3','4','5','6','7','8','9','10'].includes(n));const nt=normalizarValidacao(texto),nb=normalizarValidacao(base);const criticos=[];if(naoSustentados.length)criticos.push(`Valores numéricos não encontrados no contexto: ${naoSustentados.join(', ')}`);if(/diagnostico confirmado|confirmado o diagnostico|diagnostico definitivo/.test(nt)&&!/diagnostico confirmado|confirmado o diagnostico|diagnostico definitivo/.test(nb))criticos.push('Linguagem de diagnóstico confirmado não está sustentada pelo contexto.');if(/alta fisioterapeutica|recebe alta|alta do tratamento/.test(nt)&&!/alta fisioterapeutica|recebe alta|alta do tratamento/.test(nb))criticos.push('O texto declara alta sem registro correspondente na fonte.');const avisos=[];if(!fonte.contexto)avisos.push('Validação limitada: este texto não foi gerado nesta sessão ou o contexto original não está disponível.');const ok=!criticos.length;const result={ok,criticos,avisos};if(painel){painel.style.display='block';painel.innerHTML=`<strong>${ok?'Validação local sem inconsistências óbvias':'Revisão necessária'}</strong>${criticos.length?`<ul class="kds-u-m-8px-0-0-18px">${criticos.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul>`:''}${avisos.length?`<div class="kds-u-mt-8px kds-u-fs-meta kds-u-text-muted">${avisos.map(escapeHTML).join('<br>')}</div>`:''}<div class="kds-u-mt-8px kds-u-fs-meta kds-u-text-muted">Validador heurístico: compara números e afirmações críticas com os dados enviados ao relatório. A revisão profissional continua obrigatória.</div>`;}return result;}
 
 // Marca internamente quando o texto gerado pela IA foi editado pelo profissional.
 document.addEventListener('input',function(e){if(e.target?.id==='rel_documento_oficial'){const c=e.target;if(c.dataset.origemDocumento==='ia')c.dataset.origemDocumento='ia_editado';else if(!c.dataset.origemDocumento)c.dataset.origemDocumento='manual';}});
@@ -3930,7 +3931,7 @@ function construirSafetyCompacto(idRegiao,regiao,estado,contexto){
     const details=document.createElement('details');details.className='safety-compact'+(alerta?' alerta':'');
     details.open=alerta;
     const summary=document.createElement('summary');
-    const status=alerta?`🔴 Segurança — ${alerts.length+marcadas.length} alerta(s) para revisar`:estado.redflagsRevisadas?'✓ Segurança revisada — sem sinais selecionados':'🛡 Segurança — revisar';
+    const status=alerta?`Segurança — ${alerts.length+marcadas.length} alerta(s) para revisar`:estado.redflagsRevisadas?'✓ Segurança revisada — sem sinais selecionados':'Segurança — revisar';
     summary.innerHTML=`<span>${status}</span><span class="kds-u-fs-meta kds-u-opacity-p7">${alerta?'aberto automaticamente':'clique para revisar'}</span>`;
     const body=document.createElement('div');body.className='safety-body';body.appendChild(construirBlocoRedFlags(idRegiao,regiao,alerta));
     details.append(summary,body);return details;

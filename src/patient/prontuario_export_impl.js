@@ -266,7 +266,7 @@ function montarDocumento(p,auditoria,modo,erroAuditoria=''){
     if(consulta){avs.reverse();evs.reverse();}
     const titulo=modo==='avaliacoes'?'Consulta de avaliações':modo==='evolucoes'?'Histórico de evoluções':detalhado?'Prontuário completo detalhado':'Prontuário completo simplificado';
     return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(titulo)} — ${esc(p.nome||'Paciente')}</title><style>${cssDocumento()}</style></head><body>
-    <div class="toolbar"><div class="label">Pré-visualização · ${esc(titulo)}</div><button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button><button class="secondary" onclick="window.close()">Fechar</button></div>
+    <div class="toolbar"><div class="label">Pré-visualização · ${esc(titulo)}</div><button onclick="window.print()"> Imprimir / Salvar PDF</button><button class="secondary" onclick="window.close()">Fechar</button></div>
     <main class="paper"><header class="doc-head"><div class="brand">FISIOFIX<small>Fisioterapia · Reabilitação · Movimento</small></div><div class="doc-type"><strong>${esc(titulo)}</strong><span>Gerado em ${esc(dataHora(new Date().toISOString()))}</span></div></header>
     ${p.__dadosLocaisPendentes?'<p class="warning">Há dados locais pendentes de sincronização. A integralidade dos registros na nuvem não foi confirmada.</p>':''}
     <div class="patient-banner"><div><h1>${esc(p.nome||'Paciente')}</h1><p>${esc([idade?`${idade} anos`:'',p.profissao||'',p.cpf?`CPF ${p.cpf}`:''].filter(Boolean).join(' · '))}</p></div><div class="counts"><div><b>${avs.length}</b> avaliação(ões)</div><div><b>${evs.length}</b> evolução(ões)</div></div></div>
@@ -280,18 +280,18 @@ function montarDocumento(p,auditoria,modo,erroAuditoria=''){
 
 function abrirJanelaCarregando(){
     const w=window.open('','_blank');
-    if(!w){ alert('⚠️ O navegador bloqueou a janela de impressão. Permita pop-ups para o KineSys e tente novamente.'); return null; }
+    if(!w){ alert('O navegador bloqueou a janela de impressão. Permita pop-ups para o KineSys e tente novamente.', 'aviso'); return null; }
     w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Preparando prontuário…</title><style>body{font-family:Arial,sans-serif;padding:36px;color:#173B45}small{color:#60757A}</style></head><body><h2>Preparando prontuário…</h2><small>Carregando os registros do paciente.</small></body></html>');w.document.close();
     return w;
 }
 
 async function gerar(pacienteId,modo='simplificado',janelaPreparada=null){
     const id=String(pacienteId||'').trim();
-    if(!id){alert('⚠️ Selecione um paciente antes de gerar o prontuário.');return;}
+    if(!id){alert('Selecione um paciente antes de gerar o prontuário.', 'aviso');return;}
     if(!['simplificado','detalhado','avaliacoes','evolucoes'].includes(modo))return;
     if(['avaliacoes','evolucoes'].includes(modo)&&typeof window.telaPermitida==='function'&&!window.telaPermitida(modo==='avaliacoes'?'tela_avaliacao':'tela_evolucao'))return;
     if(modo==='detalhado'&&!podeDetalhado()){
-        alert('🔒 O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.');return;
+        alert('O prontuário detalhado com trilha de alterações é restrito a administradores e fisioterapeutas.', 'seguranca');return;
     }
     const w=janelaPreparada||abrirJanelaCarregando();if(!w)return;
     const perfil=usuarioAtual(),perfilId=String(perfil?.id||''),clinicaId=String(perfil?.clinica_id||'');
@@ -328,19 +328,19 @@ function garantirModal(){
     let modal=document.getElementById('modal_exportar_prontuario_pdf');
     if(modal)return modal;
     modal=document.createElement('div');modal.id='modal_exportar_prontuario_pdf';modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-box ks-prontuario-export-modal"><button class="modal-fechar" type="button" data-close>✕</button><h2>Imprimir / salvar prontuário</h2><p class="ks-prontuario-export-intro">Escolha o nível de detalhe do documento.</p><div class="ks-prontuario-export-grid"><button type="button" class="btn-secondary ks-prontuario-export-option" data-modo="simplificado"><strong class="ks-prontuario-export-option-title">📄 Completo simplificado</strong><span class="ks-prontuario-export-option-copy">Cadastro do cabeçalho, todas as avaliações e todas as evoluções, sem a trilha técnica de alterações.</span></button><button type="button" class="btn-primary ks-prontuario-export-option" data-modo="detalhado"><strong class="ks-prontuario-export-option-title">🧾 Completo detalhado</strong><span class="ks-prontuario-export-option-copy">Inclui horários, profissionais, carimbos de salvamento e histórico das alterações auditadas.</span></button></div><p data-permissao class="ks-prontuario-export-permission"></p></div>`;
+    modal.innerHTML=`<div class="modal-box ks-prontuario-export-modal"><button class="modal-fechar" type="button" data-close>✕</button><h2>Imprimir / salvar prontuário</h2><p class="ks-prontuario-export-intro">Escolha o nível de detalhe do documento.</p><div class="ks-prontuario-export-grid"><button type="button" class="btn-secondary ks-prontuario-export-option" data-modo="simplificado"><strong class="ks-prontuario-export-option-title"> Completo simplificado</strong><span class="ks-prontuario-export-option-copy">Cadastro do cabeçalho, todas as avaliações e todas as evoluções, sem a trilha técnica de alterações.</span></button><button type="button" class="btn-primary ks-prontuario-export-option" data-modo="detalhado"><strong class="ks-prontuario-export-option-title"> Completo detalhado</strong><span class="ks-prontuario-export-option-copy">Inclui horários, profissionais, carimbos de salvamento e histórico das alterações auditadas.</span></button></div><p data-permissao class="ks-prontuario-export-permission"></p></div>`;
     document.body.appendChild(modal);
     modal.querySelector('[data-close]').onclick=()=>{modal.classList.remove('active');modal.style.display='none';};
     modal.addEventListener('click',e=>{if(e.target===modal){modal.classList.remove('active');modal.style.display='none';}});
     modal.querySelectorAll('[data-modo]').forEach(btn=>btn.addEventListener('click',()=>{
         const id=modal.dataset.pacienteId||'';const modo=btn.dataset.modo;
-        if(modo==='detalhado'&&!podeDetalhado()){alert('🔒 O prontuário detalhado com auditoria é restrito a administradores e fisioterapeutas.');return;}
+        if(modo==='detalhado'&&!podeDetalhado()){alert('O prontuário detalhado com auditoria é restrito a administradores e fisioterapeutas.', 'seguranca');return;}
         modal.classList.remove('active');modal.style.display='none';gerar(id,modo);
     }));
     return modal;
 }
 function abrirEscolha(pacienteId){
-    const id=String(pacienteId||((typeof pacienteAtualId!=='undefined')?pacienteAtualId:'')||'').trim();if(!id){alert('⚠️ Selecione um paciente.');return;}
+    const id=String(pacienteId||((typeof pacienteAtualId!=='undefined')?pacienteAtualId:'')||'').trim();if(!id){alert('Selecione um paciente.', 'aviso');return;}
     const modal=garantirModal();modal.dataset.pacienteId=id;
     const det=modal.querySelector('[data-modo="detalhado"]');const nota=modal.querySelector('[data-permissao]');
     if(det){det.disabled=!podeDetalhado();}

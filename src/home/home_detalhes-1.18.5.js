@@ -283,7 +283,7 @@ window.abrirPacienteHomeDetalhe=abrirPacienteHomeDetalhe;
 
 async function abrirDetalheHome(tipo){
     const mapa={atendimentos:'tela_home_atendimentos',pendencias:'tela_home_pendencias',recentes:'tela_home_recentes'};const tela=mapa[tipo];if(!tela)return;
-    if(typeof telaPermitida==='function'&&!telaPermitida(tela)){alert('🔒 Seu perfil não tem acesso a este detalhamento.');return;}
+    if(typeof telaPermitida==='function'&&!telaPermitida(tela)){alert('Seu perfil não tem acesso a este detalhamento.', 'seguranca');return;}
     navegarPara(tela);
 }
 window.abrirDetalheHome=abrirDetalheHome;

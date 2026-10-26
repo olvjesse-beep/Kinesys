@@ -151,7 +151,7 @@ async function salvarMensagemPadraoConfigurada(chave, titulo, mensagem) {
     return Array.isArray(data) ? data[0] : data;
 }
 
-const KINESYS_MENSAGENS_UI_REVISION = '20261025-interface-audit-r1';
+const KINESYS_MENSAGENS_UI_REVISION = '20261026-inicializacao-r1';
 function renderizarListaMensagensConfiguracao() {
     const lista = document.getElementById('cfg_msg_lista');
     if (!lista) return;
@@ -228,7 +228,7 @@ function inserirVariavelMensagem(token) {
 
 async function abrirConfiguracoesMensagens() {
     if (!usuarioEhAdministradorMensagens()) {
-        alert('🔒 Somente administradores podem acessar a configuração de mensagens padrão.');
+        alert('Somente administradores podem acessar a configuração de mensagens padrão.', 'seguranca');
         if (typeof navegarPara === 'function') navegarPara('tela_home');
         return;
     }

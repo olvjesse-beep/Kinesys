@@ -6,6 +6,7 @@ const KineSysLogin = (() => {
     };
     let area = 'gestao', pending = [], pendingUser = '', busy = false, recovery = false;
     let recoveryBusy = false, resetBusy = false;
+    let entradaPendente = null, sessaoRevisao = 0;
     const el = id => document.getElementById(id);
     const normalize = value => ({MASTER_FEM:'MASTER',PROFISSIONAL:'FISIOTERAPEUTA'})[value] || value;
     const known = value => Object.values(roles).flat().some(([id])=>id === normalize(value));
@@ -56,23 +57,26 @@ const KineSysLogin = (() => {
     }
     function enter(profile) {
         if(!profile?.id || !known(profile.tipo))throw new Error('Perfil não autorizado. Procure o administrador.');
-        if(usuarioLogado?.id===profile.id && usuarioLogado.tipo===normalize(profile.tipo))return;
+        if(usuarioLogado?.id===profile.id && usuarioLogado.tipo===normalize(profile.tipo))return entradaPendente;
         if(usuarioLogado){location.reload();return;}
         usuarioLogado={...profile,tipo:normalize(profile.tipo)};persistirSessao(usuarioLogado);clearPending();
-        mostrarFeedbackLogin('');liberarAcessoSistema();
+        mostrarFeedbackLogin('');entradaPendente=Promise.resolve(liberarAcessoSistema());return entradaPendente;
     }
     async function activate(profile) {
         if(!profile?.id || !known(profile.tipo))throw new Error('Selecione um perfil válido.');
         const expectedType=normalize(profile.tipo);
+        const revisao=sessaoRevisao;
         const active=await rpc('kinesys_ativar_perfil',{p_perfil_id:String(profile.id)});
+        if(revisao!==sessaoRevisao||recovery)throw new Error('Sua sessão mudou. Entre novamente.');
         if(!active || String(active.id)!==String(profile.id) || normalize(active.tipo)!==expectedType)throw new Error('O acesso retornado não corresponde ao perfil solicitado. Saia e entre novamente.');
-        enter(active);return true;
+        await enter(active);return true;
     }
     async function resume() {
         if(recovery)return;
+        const revisao=sessaoRevisao;
         const active=await rpc('kinesys_perfil_sessao');
-        if(recovery)return;
-        if(active)enter(active);
+        if(recovery||revisao!==sessaoRevisao)return;
+        if(active)await enter(active);
         else {if(usuarioLogado){location.reload();return;}usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}
     }
     async function login() {
@@ -133,20 +137,30 @@ const KineSysLogin = (() => {
     }
     async function start(){
         if(autenticacaoInicializada)return;autenticacaoInicializada=true;
-        localStorage.removeItem('kinesys_sessao_logada');
-        recovery=new URLSearchParams(location.search).get('recuperar')==='1';
-        if(!_supabase){mostrarFeedbackLogin('Serviço de autenticação indisponível.','erro');return;}
-        const {data}= _supabase.auth.onAuthStateChange(event=>{
-            if(event==='PASSWORD_RECOVERY'){recoveryView();return;}
-            if(event==='SIGNED_OUT'){usuarioLogado=null;clearPending();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
-            if(event==='SIGNED_IN' && !busy && !recovery){setTimeout(()=>resume().catch(()=>{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}),0);}
-        });authStateSubscription=data?.subscription;
+        const espera=setTimeout(()=>{
+            const mensagem=el('ks_startup_message');if(mensagem)mensagem.textContent='A verificação está demorando. Confira a conexão ou recarregue a página.';
+            const repetir=el('ks_startup_retry');if(repetir)repetir.hidden=false;
+        },12000);
         try{
+            localStorage.removeItem('kinesys_sessao_logada');
+            recovery=new URLSearchParams(location.search).get('recuperar')==='1';
+            if(!_supabase)throw new Error('Serviço de autenticação indisponível.');
+            const {data}= _supabase.auth.onAuthStateChange(event=>{
+                if(event==='PASSWORD_RECOVERY'){sessaoRevisao++;recoveryView();return;}
+                if(event==='SIGNED_OUT'){sessaoRevisao++;entradaPendente=null;usuarioLogado=null;clearPending();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
+                if(event==='SIGNED_IN' && !busy && !recovery){setTimeout(()=>resume().catch(()=>{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}),0);}
+            });authStateSubscription=data?.subscription;
             if(recovery){recoveryView();return;}
             const {data:session,error}=await _supabase.auth.getSession();
             if(error)throw error;
             if(session?.session)await resume();
+            else {sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}
         }catch{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');mostrarFeedbackLogin('Não foi possível recuperar o acesso. Entre novamente.','aviso');}
+        finally{
+            clearTimeout(espera);
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+            document.body.removeAttribute('data-ks-startup');el('ks_startup')?.remove();
+        }
     }
     document.addEventListener('DOMContentLoaded',()=>{
         configureUnifiedLogin();

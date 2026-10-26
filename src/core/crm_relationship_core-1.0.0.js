@@ -174,15 +174,15 @@ async function enviarWhatsApp(tipo) {
     const pacienteEnvio = pacienteCRM;
     const escopoEnvio = escopoPacienteCRM();
     if (!pacienteEnvio || crmEscopoCache !== escopoEnvio) {
-        alert('⚠️ Selecione um paciente no CRM primeiro.');
+        alert('Selecione um paciente no CRM primeiro.', 'aviso');
         return;
     }
     const contato = obterContatoPreferencialPaciente(pacienteEnvio);
     const telefone = contato.telefone;
     if (!telefone) {
         alert(pacienteEhDependente(pacienteCRM)
-            ? '⚠️ Este paciente está marcado como dependente, mas não possui telefone do responsável cadastrado.'
-            : '⚠️ Este paciente não possui telefone cadastrado.');
+            ? 'Este paciente está marcado como dependente, mas não possui telefone do responsável cadastrado.'
+            : 'Este paciente não possui telefone cadastrado.', 'aviso');
         return;
     }
     const numeroLimpo = '55' + telefone.replace(/\D/g, '');
@@ -213,13 +213,13 @@ async function enviarWhatsApp(tipo) {
         case 'sessao': {
             const agendamento = obterProximoAgendamento(pacienteEnvio.id);
             if (!agendamento) {
-                alert('⚠️ Não foi possível obter o próximo agendamento.');
+                alert('Não foi possível obter o próximo agendamento.', 'aviso');
                 return;
             }
             const agora = new Date();
             const diffMs = new Date(agendamento.dataHora) - agora;
             if (diffMs < 0) {
-                alert('⚠️ O agendamento já passou.');
+                alert('O agendamento já passou.', 'aviso');
                 return;
             }
             const horas = Math.floor(diffMs / (1000 * 60 * 60));
