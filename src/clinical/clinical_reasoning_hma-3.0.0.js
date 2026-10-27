@@ -585,10 +585,12 @@
         const outras=plano.hipoteses.filter(h=>!top.includes(h));
         const regioes=plano.regioes.map(r=>r.nome).join(' · ');
         const mod=plano.exame.modificadores.slice(0,3);
+        const condicoes=arr(plano.condicoesInformadas);
         host.hidden=false;
         host.innerHTML=`
             <div class="ks30-bridge-head"><div><strong>Direção para o exame</strong><span>História + contexto clínico</span></div><span class="ks30-count">${plano.exame.testesPrioritarios.length} itens priorizados</span></div>
             <div class="ks30-bridge-regions">${regioes?`<span>Regiões orientadas: <strong>${esc(regioes)}</strong></span>`:'<span>Região ainda não definida com segurança pela história.</span>'}</div>
+            ${condicoes.length?`<details><summary>Condições já informadas (${condicoes.length})</summary><ul>${condicoes.map(c=>`<li><strong>${esc(c.nome)}</strong> — ${esc(c.fase==='pos_operatorio_informado'?'pós-operatório informado':c.temporalidade==='antecedente_informado'?'antecedente informado':'registro da entrevista')}. ${esc(c.limite)}</li>`).join('')}</ul><small>Conferir diagnóstico de origem e orientações individualizadas. Estas condições não representam novos diagnósticos confirmados pelo Radar.</small></details>`:''}
             <div class="ks30-bridge-hypotheses">${top.map(h=>chip(`${h.regiaoNome||h.regiaoId} · ${h.nome}${h.exameAtual?.respondidos?' · '+h.exameAtual.rotulo:''}`,'is-primary')).join('')}</div>
             ${outras.length?`<details><summary>Outras hipóteses em investigação (${outras.length})</summary><div class="ks30-bridge-hypotheses">${outras.map(h=>chip(`${h.regiaoNome||h.regiaoId} · ${h.nome}`)).join('')}</div></details>`:''}
             ${mod.length?`<div class="ks30-bridge-modifiers"><strong>Modificadores</strong><span>${mod.map(x=>esc(x.titulo)).join(' · ')}</span></div>`:''}

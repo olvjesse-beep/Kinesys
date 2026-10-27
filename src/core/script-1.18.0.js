@@ -12719,7 +12719,7 @@ document.addEventListener('click', e => {
       origemIrradiacao: document.getElementById('paciente_origem_irradiacao')?.value?.trim() || '',
       irradiacao: document.getElementById('paciente_irradiacao')?.value?.trim() || ''
     });
-    box.hidden = !(r.achados.length || (r.alertas || []).length || r.suspeitaPrincipal || (r.diferenciais || []).length);
+    box.hidden = !(r.achados.length || (r.alertas || []).length || r.suspeitaPrincipal || (r.diferenciais || []).length || (r.mencoesCondicoes || []).some(function(c){return c.sujeito==='paciente'&&c.estado!=='negado';}));
     if (box.hidden) { lista.innerHTML='';box.dataset.fatos='{}';box.dataset.raciocinio='null';return; }
     var alertas = (r.alertas || []).map(function (a) { return '<div role="alert"><strong>' + escapeHTML(a.nome) + '</strong><br><small>' + escapeHTML(a.acao) + '</small></div>'; }).join('');
     var achados = r.achados.map(function (a) { return '<li><strong>' + escapeHTML(a.titulo) + ':</strong> ' + escapeHTML(a.valor) + '</li>'; }).join('');
@@ -12737,9 +12737,15 @@ document.addEventListener('click', e => {
     var lacunasExame=r.lacunas.filter(function(x){return !(r.perguntasEntrevista||[]).some(function(q){return q.texto===x;});});
     var lacunas = lacunasExame.length ? '<div><strong>Para decidir melhor no exame:</strong><ul>' + lacunasExame.map(function (x) { return '<li>' + escapeHTML(x) + '</li>'; }).join('') + '</ul></div>' : '';
     var entrevista=(r.perguntasEntrevista||[]).length?'<div><strong>Perguntas prioritárias da entrevista</strong><ul>'+r.perguntasEntrevista.map(function(q){return '<li>'+escapeHTML(q.texto)+'</li>';}).join('')+'</ul></div>':'';
-    var fontesRaciocinio=Array.from(new Map((r.raciocinio?.hipoteses||[]).flatMap(function(h){return h.fontes||[];}).map(function(f){return [f.url,f];})).values());
+    var condicoesPaciente=(r.mencoesCondicoes||[]).filter(function(c){return c.sujeito==='paciente'&&c.estado!=='negado';});
+    var condicoesHTML=condicoesPaciente.length?'<div><strong>Diagnósticos e condições informados</strong><p><small>Informações da entrevista; o sistema não confirma estes diagnósticos nem presume a causa das queixas.</small></p>'+condicoesPaciente.map(function(c){
+      var situacao=c.estado==='em_investigacao'?'Suspeita informada — em investigação':c.estado==='mencao_a_esclarecer'?'Menção — confirmar diagnóstico e contexto':c.estado==='procedimento_planejado'?'Procedimento indicado ou programado':c.fase==='pos_operatorio_informado'?'Pós-operatório informado':c.fase==='procedimento_realizado_informado'?'Procedimento realizado informado':c.temporalidade==='antecedente_informado'?'Antecedente informado':'Condição informada';
+      var detalhe=[c.termoInformado,c.lateralidade?'Lado: '+c.lateralidade:'',...(c.tempoInformado||[]),c.fonte==='documento_mencionado'?'Documento mencionado na HMA; conferir original':'Fonte: relato'].filter(Boolean).join(' · ');
+      return '<div><strong>'+escapeHTML(c.nome)+'</strong><br><small>'+escapeHTML(situacao)+(c.divergencia?' · Há informação divergente; esclarecer':'')+'<br>'+escapeHTML(detalhe)+'</small><details><summary>Registro e pontos a esclarecer</summary><p>'+escapeHTML(c.origem.clausula)+'</p><ul>'+c.perguntas.map(function(q){return '<li>'+escapeHTML(q)+'</li>';}).join('')+'</ul><small>'+escapeHTML(c.limite)+'</small></details></div>';
+    }).join('')+'</div>':'';
+    var fontesRaciocinio=Array.from(new Map([...(r.raciocinio?.hipoteses||[]),...condicoesPaciente].flatMap(function(h){return h.fontes||[];}).map(function(f){return [f.url,f];})).values());
     var fontesHTML=fontesRaciocinio.length?'<details><summary>Base científica e limites</summary><ul>'+fontesRaciocinio.map(function(f){return '<li><a target="_blank" rel="noopener noreferrer" href="'+escapeHTML(f.url)+'">'+escapeHTML(f.titulo)+'</a> — '+escapeHTML(f.limite)+'</li>';}).join('')+'</ul></details>':'';
-    lista.innerHTML = alertas +
+    lista.innerHTML = alertas + condicoesHTML +
       (achados ? '<div><strong>Resumo clínico extraído</strong><ul>' + achados + '</ul></div>' : '') +
       (principal ? '<div><strong>Suspeita principal</strong>' + principal + '</div>' : '') +
       (diferenciais ? '<div><strong>Diagnósticos diferenciais a investigar</strong>' + diferenciais + '</div>' : '') +

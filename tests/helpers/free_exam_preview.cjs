@@ -35,6 +35,21 @@ document.addEventListener('DOMContentLoaded',()=>{try{const salvo=sessionStorage
 `;
 const reportDemo=process.argv.includes('--document-report');
 const historySurgeryDemo=process.argv.includes('--history-surgeries');
+const knownConditionsDemo=process.argv.includes('--known-conditions');
+if(knownConditionsDemo){
+ css.push('<link rel="stylesheet" href="/styles/radar_clinico_focus-3.0.0.css">');
+ const helpers=read('src/patient/patient_form_helpers_core-1.0.0.js');
+ const inicio=core.lastIndexOf('(function () {',core.indexOf('var VERSAO_MOTOR_HMA')),fim=core.indexOf('/* ==========================================================================',inicio);
+ setup+=`\nfunction escapeHTML(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}\nfunction coletarContextoClinico(){return {hma:document.getElementById('paciente_hma').value};}\n`+
+  [core.slice(core.indexOf('function kinesysDividirClausulasHMA'),core.indexOf('function confirmarLeituraHMAKineSys')),helpers.slice(helpers.indexOf('function removerAcentos'),helpers.indexOf('function obterTextoExibicao')),core.slice(core.indexOf('const TERMOS_REGIAO_ESTRITOS'),core.indexOf('function analisarPadroesIrradiacao')),core.slice(core.indexOf('function trechoDesdeUltimaQuebraNegacao'),core.indexOf('function detectarAlertasTextuaisHMA')),core.slice(inicio,fim)].join('\n')+`
+ document.addEventListener('DOMContentLoaded',()=>{
+  window.navegarAvaliacaoEtapaKineSys('subtela_triagem');
+  const hma=document.getElementById('paciente_hma');
+  const casos=[['Fratura pós-operatória','Paciente com diagnóstico de fratura de tíbia esquerda em pós-operatório há 20 dias.'],['Condições associadas','Paciente com diagnóstico de artrite reumatoide. Teve chikungunya há 4 anos. Dor no ombro direito ao elevar o braço.'],['Família e suspeita','Minha mãe tem lúpus. O paciente investiga fibromialgia e nega artrite reumatoide.']];
+  for(const [nome,texto] of casos){const b=document.createElement('button');b.textContent=nome;b.type='button';b.addEventListener('click',()=>{hma.value=texto;renderizarRadarHMAKineSys();});document.getElementById('qa').appendChild(b);}
+  hma.value=casos[0][1];renderizarRadarHMAKineSys();hma.addEventListener('input',()=>renderizarRadarHMAKineSys());
+ });`;
+}
 if(historySurgeryDemo)setup+=`
 function obterTextoExibicao(item){return typeof item==='string'?item:item?.exibicao||'';}
 document.getElementById('paciente_hma').value='Relata dor no ombro direito que irradia para mão. Essa dor piora ao deitar à noite e agrava ao elevar o braço. Outra coisa. Dor referida na região do tornozelo, principalmente porção medial. Refere que essa dor piora ao caminhar muito ou ficar muito tempo em pé.';
@@ -61,14 +76,14 @@ window.navegarAvaliacaoEtapaKineSys('subtela_diagnostico');
 document.querySelectorAll('[id^="step_indicador_"]').forEach(b=>b.setAttribute('aria-selected',String(b.id==='step_indicador_3')));
 });
 `;
-const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exame livre — prévia isolada</title>${css.join('')}<style>body{padding:20px!important;display:block!important}#tela_avaliacao{margin:0 auto!important;width:100%!important;max-width:1120px!important}#qa{max-width:1120px;margin:0 auto 16px;padding:12px;background:#17434b;color:white}.precadastro-compacto,.avaliacao-draft-toolbar{display:none!important}</style></head><body class="ks-design-ready"><p id="qa">Prévia isolada · dados fictícios · sem gravações reais no banco</p><section id="tela_avaliacao" class="tela ativa">${fragment}</section><script>${setup}</script><script src="/src/clinical/clinical_language_rules-1.0.0.js"></script><script src="/src/clinical/clinical_document_analyzer-1.0.0.js"></script>${historySurgeryDemo?'<script src="/src/clinical/cirurgias-1.18.0.js"></script><script src="/src/ui/input_helpers_core-1.0.0.js"></script><script src="/src/clinical/evaluation_context_panels-1.18.3.js"></script>':''}<script src="/src/clinical/clinical_semantic_graph-1.0.0.js"></script><script src="/src/clinical/evaluation_free_exam-1.0.0.js"></script><script src="/__workspace.js"></script></body></html>`;
+const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exame livre — prévia isolada</title>${css.join('')}<style>body{padding:20px!important;display:block!important}#tela_avaliacao{margin:0 auto!important;width:100%!important;max-width:1120px!important}#qa{max-width:1120px;margin:0 auto 16px;padding:12px;background:#17434b;color:white}.precadastro-compacto,.avaliacao-draft-toolbar{display:none!important}</style></head><body class="ks-design-ready"><p id="qa">Prévia isolada · dados fictícios · sem gravações reais no banco</p><section id="tela_avaliacao" class="tela ativa">${fragment}</section><script>${setup}</script><script src="/src/clinical/clinical_language_rules-1.0.0.js"></script><script src="/src/clinical/clinical_document_analyzer-1.0.0.js"></script>${historySurgeryDemo?'<script src="/src/clinical/cirurgias-1.18.0.js"></script><script src="/src/ui/input_helpers_core-1.0.0.js"></script><script src="/src/clinical/evaluation_context_panels-1.18.3.js"></script>':''}<script src="/src/clinical/clinical_semantic_graph-1.0.0.js"></script>${knownConditionsDemo?'<script src="/database/clinical_evidence_profiles-1.0.0.js"></script><script src="/src/clinical/clinical_evidence_reasoning-1.0.0.js"></script>':''}<script src="/src/clinical/evaluation_free_exam-1.0.0.js"></script><script src="/__workspace.js"></script></body></html>`;
 http.createServer((req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1');res.setHeader('Cache-Control','no-store');
  if(url.pathname==='/'){res.setHeader('Content-Type','text/html;charset=utf-8');res.end(html);return;}
  if(url.pathname==='/__workspace.js'){res.setHeader('Content-Type','text/javascript');res.end(workspace.slice(0,workspace.indexOf('/* Product Design')));return;}
  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405).end();return;}
  let file;try{file=path.resolve(root,'.'+decodeURIComponent(url.pathname));}catch(_){res.writeHead(400).end();return;}
- const permitido=['styles','assets','src/clinical','src/ui'].some(dir=>file.startsWith(path.join(root,dir)+path.sep));
+ const permitido=['styles','assets','database','src/clinical','src/ui'].some(dir=>file.startsWith(path.join(root,dir)+path.sep));
  if(!permitido||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404).end();return;}
  res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.woff2')?'font/woff2':'application/octet-stream');res.end(fs.readFileSync(file));
 }).listen(Number(process.env.KINESYS_EXAM_PREVIEW_PORT)||(historySurgeryDemo?4199:reportDemo?4186:4185),'127.0.0.1',function(){console.log('Prévia isolada do exame: http://127.0.0.1:'+this.address().port+'/');});

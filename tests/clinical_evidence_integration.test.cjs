@@ -36,6 +36,12 @@ caso('Radar real mostra entrevista, contraprovas e fontes sem duplicar perguntas
   field.value='';env.renderizarRadarHMAKineSys();assert(box.hidden);assert.equal(list.innerHTML,'');assert.equal(box.dataset.raciocinio,'null');
  }finally{env.document.getElementById=old;}
 });
+caso('condições informadas sobrevivem ao JSON do relatório sem confirmar doença',()=>{
+ const hma='Paciente com diagnóstico de artrite reumatoide. Teve chikungunya há 4 anos. Dor plantar medial no calcanhar nos primeiros passos.',t=preparar(hma),r=t.render(),lista=r.semantica.raciocinio.condicoesInformadas;
+ assert.equal(lista.length,2);assert(lista.every(c=>c.confirmacaoPeloSistema===false));assert.equal(lista[1].temporalidade,'antecedente_informado');
+ const salvo=JSON.parse(JSON.stringify(r));t.c.window.preencherLaudoAvaliacaoKineSys(salvo);assert.equal(JSON.stringify(t.c.window.coletarLaudoAvaliacaoKineSys().semantica.raciocinio.condicoesInformadas),JSON.stringify(salvo.semantica.raciocinio.condicoesInformadas));assert.equal(t.fields[2].value,hma);
+ t.fields[2].value='Dor plantar medial no calcanhar nos primeiros passos.';const atualizado=t.render();assert.equal(atualizado.semantica.raciocinio.condicoesInformadas.length,0);
+});
 caso('carregamento lazy, cache e banco após região prontos usam a mesma camada',()=>{
  const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8'),region=fs.readFileSync('src/clinical/clinical_region_loader-1.0.0.js','utf8'),core=fs.readFileSync('src/core/script-1.18.0.js','utf8');
  assert(loader.indexOf('clinical_evidence_profiles-1.0.0.js')<loader.indexOf('clinical_evidence_reasoning-1.0.0.js'));assert(loader.indexOf('clinical_evidence_reasoning-1.0.0.js')<loader.indexOf('clinical_engine-1.17.0.js'));
