@@ -1,6 +1,6 @@
 'use strict';
 // Regressão documental sintética; nenhum prontuário de produção é importado.
-const assert=require('node:assert/strict');
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {fixture}=require('./evaluation_report_integration.test.cjs');
 function exemplo(){
  const f=fixture();f.fields[0].value='Pessoa Exemplo';f.fields[1].value='46';
@@ -72,4 +72,32 @@ function exemplo(){
  const legadoManual='RELATÓRIO FISIOTERAPÊUTICO\nQuanto à queixa atual, registra-se: texto escrito pelo profissional. O exame físico ainda não contém resultados de testes registrados. A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.';
  f.c.window.preencherLaudoAvaliacaoKineSys({...base,texto:legadoManual,textoAutomatico:false,revisado:false,revisaoSemantica:1});f.c.window.renderizarLaudoAvaliacaoKineSys();assert(f.nodes['ks-laudo-texto'].value.startsWith(legadoManual),'nem assinatura de modelo antigo autoriza substituir texto explicitamente manual');
 }
-console.log('Documento clínico: cabeçalho, seções, sintaxe, achados multirregionais, fonte íntegra, revisão, lados/negação e texto profissional preservados OK.');
+{
+ const med={};vm.createContext(med);for(const path of ['database/medicamentos_anvisa-20261024.js','database/medicamentos.js'])vm.runInContext(fs.readFileSync(path,'utf8'),med);
+ const {f}=exemplo();f.c.window.KineSysMedicamentos=med.KineSysMedicamentos;
+ f.fields[2].value='Dor no ombro direito. Apresenta sono ruim. Usa naproxeno 500 mg à noite.';
+ f.c.window.KineSysExameLivre={documentar:()=>[{id:'cirurgia-livre',texto:'Artrodese lombar realizada em 2019.',resultado:'descritivo',situacao:{tipo:'descritivo'}},{id:'exame-livre',texto:'SLR negativo à direita.',resultado:'descritivo',situacao:{tipo:'descritivo'}}]};
+ const original=f.fields[2].value,r=f.render(),contexto=r.texto.split('Antecedentes e contexto\n\n')[1].split('\n\nExame físico-funcional')[0];
+ assert(contexto.includes('Relata sono de má qualidade. Informa uso de naproxeno 500 mg à noite.'));assert(contexto.includes('Artrodese lombar realizada em 2019.'));
+ assert(!r.texto.includes('\n\nApresenta sono ruim\n\n'));assert(!r.texto.includes('\n\nUsa naproxeno'));
+ assert(!/Região não|Achados sem localização|Sem região definida/.test(r.texto));assert(!r.texto.includes('• Artrodese'));
+ const cirurgia=r.semantica.fatos.find(x=>x.assuntoDocumental==='cirurgias');assert(cirurgia);assert.equal(cirurgia.origens[0].registroId,'cirurgia-livre');assert(cirurgia.trechosDocumentais.every(x=>!x.realizado));
+ assert(!r.semantica.fatos.some(x=>x.tipo==='exame_livre'&&x.textoOriginal.includes('Artrodese')));
+ assert(r.texto.includes('SLR negativo à direita'));assert.equal(r.validacao.testesAusentes.length,0);assert.equal(r.semantica.validacao.ausentes.length,0);assert.equal(f.fields[2].value,original);
+ assert(r.semantica.correlacoes.every(x=>x.criterioAtendido!==true));
+ f.c.window.KineSysMedicamentos={buscar:()=>null};assert.doesNotThrow(()=>f.render(),'catálogo ainda carregando não interrompe o relatório');
+}
+{
+ const {f}=exemplo();const raw='Artroplastia de quadril indicada, ainda não realizada; SLR negativo à esquerda; Palpação dolorosa na cicatriz da cirurgia lombar.';
+ f.c.window.KineSysExameLivre={documentar:()=>[{id:'misto',texto:raw,resultado:'descritivo',situacao:{tipo:'descritivo'}}]};
+ const r=f.render(),antecedente=r.semantica.fatos.find(x=>x.assuntoDocumental==='cirurgias'),exame=r.semantica.fatos.find(x=>x.tipo==='exame_livre');
+ assert(antecedente.redacao.includes('indicada, ainda não realizada'));assert(!antecedente.trechosDocumentais[0].realizado);assert(exame.redacao.includes('Palpação dolorosa'));assert.equal(exame.trechosDocumentais.length,2);
+ assert.equal(antecedente.textoOriginal,raw);assert.equal(exame.textoOriginal,raw);assert.equal(r.semantica.validacao.ausentes.length,0);assert(!r.texto.includes('artroplastia realizada'));
+}
+{
+ const {f}=exemplo();f.c.window.KineSysExameLivre={documentar:()=>[{id:'sem-local',texto:'Resistência reduzida durante o movimento avaliado.',situacao:{tipo:'descritivo'}}]};
+ const r=f.render();assert(r.texto.includes('Resistência reduzida durante o movimento avaliado.'));assert(!/Achados sem localização|Região não especificada/.test(r.texto));assert(r.validacao.exameLivrePendente.some(x=>x.includes('localização esclarecida')));
+ f.c.window.KineSysExameLivre={documentar:()=>[{id:'somente-cirurgia',texto:'Artrodese lombar em 2019.',situacao:{tipo:'descritivo'}}]};
+ const somente=f.render();assert.equal(somente.modo,'incompleto');assert(somente.validacao.pendencias.some(x=>x.includes('resultado do exame físico')),'um antecedente não substitui o exame');
+}
+console.log('Documento clínico: assuntos integrados, cirurgia distinta de teste, ausência de região sem título vazio, parágrafos coerentes, origem e texto profissional preservados OK.');
