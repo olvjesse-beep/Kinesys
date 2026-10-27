@@ -79,5 +79,19 @@ caso('planejamento por problema conserva significado e não inventa cabeçalhos'
 caso('biblioteca não se apresenta como aprovada pelo profissional nem envia dados',()=>{
  assert.equal(library.professionalReview,'pending');assert(!/fetch\(|XMLHttpRequest|localStorage|supabase|api[_-]?key|Math\.random/.test(src));
 });
+caso('negação de início súbito não é ausência de cefaleia',()=>{
+ const hma='Dor de cabeça. Nega início súbito da dor de cabeça.',r=api.analisar(hma);
+ assert.equal(r.proposicoes[0].estado,'relatado');assert.equal(r.proposicoes[1].estado,'indeterminado');
+ assert(!r.relacoes.some(x=>x.tipo==='possivel_contradicao'));assert(api.validar(r,hma).ok);
+ assert(!api.validar(r,'Dor de cabeça. Nega dor de cabeça.').ok);
+});
+caso('contradição exige a mesma localização e qualificador anatômico',()=>{
+ for(const hma of ['Dor na lateral do tornozelo direito. Nega dor no calcanhar direito.','Dor na face lateral do joelho direito. Nega dor na face medial do joelho direito.'])assert(!api.analisar(hma).relacoes.some(x=>x.tipo==='possivel_contradicao'));
+ assert(api.analisar('Dor na lateral do tornozelo direito. Nega dor na lateral do tornozelo direito.').relacoes.some(x=>x.tipo==='possivel_contradicao'));
+});
+caso('coordenação bilateral refere-se ao mesmo local, sem misturar dois locais',()=>{
+ assert.equal(api.analisar('Formigamento nas mãos direita e esquerda.').proposicoes[0].lado,'bilateral');
+ const r=api.analisar('Dor no ombro direito e no joelho esquerdo.');assert(r.proposicoes.some(p=>p.regiaoId==='ombro'&&p.lado==='direito'));assert(r.proposicoes.some(p=>p.regiaoId==='joelho'&&p.lado==='esquerdo'));assert(!r.proposicoes.some(p=>p.lado==='bilateral'));
+});
 console.log(`${total} cenários de significado/origem/realização OK.`);
 module.exports={api};

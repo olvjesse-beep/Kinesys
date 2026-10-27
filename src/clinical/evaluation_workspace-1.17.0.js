@@ -293,7 +293,7 @@
             .replace(/\bfraqueza de rotação externa,?\s*e abdução (?:de|do) ombro\b/gi,'redução da força na rotação externa e na abdução do ombro')
             .replace(/\bTambém refere dormência na região e dor à palpação,\s*região medial da escápula/gi,'Relata dormência local e dor à palpação na região medial da escápula')
             .replace(/(região medial da escápula),\s*apresenta\b/gi,'$1. Também relata')
-            .replace(/,\s*(Também refere|Refere|Relata|Apresenta)\b/gi,'. $1')
+            .replace(/,\s*(Também refere|Refere|Relata|Apresenta)\b/gi,(m,v,at,origem)=>/^(?:No momento da avalia[çc][ãa]o|Atualmente|Ap[oó]s[^.!?]*|Desde[^.!?]*|Durante[^.!?]*)$/i.test(origem.slice(0,at).split(/[.!?]/).at(-1).trim())?', '+v.toLowerCase():'. '+v)
             .replace(/\bpaciente relata também\b/gi,'Também refere')
             .replace(/\bpaciente relata\b/gi,'Refere')
             .replace(/\ba mesma relata também\b/gi,'Também refere')
@@ -306,7 +306,7 @@
             .replace(/\bassociad[oa] a (?:isto|isso) apresenta\b/gi,'O quadro associa-se a')
             .replace(/\bO quadro associa-se a (?=perda\b|fraqueza\b|dor\b|limitação\b)/gi,'O quadro associa-se à ')
             .replace(/\bme parece\b/gi,'foi levantada a possibilidade de');
-        texto=texto.replace(/,\s*(Também refere|Refere|Relata)\b/gi,'. $1').replace(/(^|[.!?]\s+)([a-záéíóúâêôãõç])/g,(_,inicio,letra)=>inicio+letra.toUpperCase());
+        texto=texto.replace(/,\s*(Também refere|Refere|Relata)\b/gi,(m,v,at,origem)=>/^(?:No momento da avalia[çc][ãa]o|Atualmente|Ap[oó]s[^.!?]*|Desde[^.!?]*|Durante[^.!?]*)$/i.test(origem.slice(0,at).split(/[.!?]/).at(-1).trim())?', '+v.toLowerCase():'. '+v).replace(/(^|[.!?]\s+)([a-záéíóúâêôãõç])/g,(_,inicio,letra)=>inicio+letra.toUpperCase());
         return texto;
     }
     function paragrafosClinicos(texto,limite=500){
@@ -430,7 +430,11 @@
         const blocos=Array.from(assuntos,([tipo,itens])=>{
             if(tipo!=='exame_livre')return {tipo,trechos:itens,texto:itens.map(t=>t.texto).join(' ')};
             const grupos=new Map();itens.forEach(t=>{const regiao=t.regiaoId?t.regiao:'';if(!grupos.has(regiao))grupos.set(regiao,[]);grupos.get(regiao).push(t.texto);});
-            const linhas=Array.from(grupos,([regiao,textos])=>regiao?`${regiao}:\n${textos.map(t=>'• '+t).join('\n')}`:textos.join(' '));
+            const linhas=Array.from(grupos,([regiao,textos])=>{
+                // O parágrafo muda a apresentação, não reescreve resultados livres.
+                // Mantém localização/lado expressos e cada trecho integral auditável.
+                return regiao?`Na avaliação de ${regiao}, foram registrados os seguintes achados: ${textos.join(' ')}`:textos.join(' ');
+            });
             if(['positivo','negativo','inconclusivo'].includes(registro.resultado))linhas.push(`Classificação informada para o registro: ${registro.resultado}.`);
             if(registro.referencia?.nome)linhas.push(`Vínculo informado pelo profissional: ${nomeClinico(registro.referencia.nome)}.`);
             if(registro.situacao?.mensagem?.includes('lados diferentes'))linhas.push('Os achados de lados distintos foram mantidos separados na interpretação.');
@@ -452,9 +456,40 @@
         });
         return paragrafos.join('\n\n');
     }
+    function organizarParagrafosDaHistoria(blocos,plano){
+        const unidades=[],extras=[];
+        blocos.forEach(b=>{
+            const fatos=plano.fatos.filter(f=>f.tipo==='relato'&&b.fatos.includes(f.id));
+            if(!fatos.length){extras.push(b);return;}
+            const partes=new Map();
+            fatos.forEach(f=>{
+                const texto=[f.redacao,...(f.realizacoes||[])].filter(t=>t&&b.texto.includes(t)).sort((a,z)=>z.length-a.length)[0];
+                if(!texto)return;
+                if(!partes.has(texto))partes.set(texto,{texto,fatos:[]});partes.get(texto).fatos.push(f);
+            });
+            let resto=b.texto;Array.from(partes.keys()).sort((a,z)=>z.length-a.length).forEach(t=>resto=resto.replace(t,''));
+            if(/[\p{L}\p{N}]/u.test(resto)||!partes.size)unidades.push({texto:b.texto,fatos});
+            else unidades.push(...partes.values());
+        });
+        unidades.sort((a,b)=>Math.min(...a.fatos.flatMap(f=>f.origens.map(o=>o.indice??Infinity)))-Math.min(...b.fatos.flatMap(f=>f.origens.map(o=>o.indice??Infinity))));
+        const paragrafos=[];let chaveAtual='';
+        unidades.forEach(u=>{
+            const regioes=valoresUnicos(u.fatos.flatMap(f=>(f.proposicoes||[]).filter(p=>p.tipo==='sintoma'&&p.estado==='relatado'&&p.sujeito==='paciente'&&['local','origem_trajeto'].includes(p.papel)).map(p=>p.regiaoId||p.segmentoId||'')).filter(Boolean));
+            const chave=regioes.length===1?regioes[0]:'';
+            const anterior=paragrafos.at(-1),novaRegiao=chave&&chaveAtual&&chave!==chaveAtual;
+            if(anterior&&!novaRegiao&&anterior.length+u.texto.length<700)paragrafos[paragrafos.length-1]=anterior+' '+u.texto;else paragrafos.push(u.texto);
+            if(chave)chaveAtual=chave;
+        });
+        const territorios=valoresUnicos(unidades.flatMap(u=>u.fatos.flatMap(f=>(f.proposicoes||[]).filter(p=>p.tipo==='sintoma'&&p.sujeito==='paciente'&&p.estado==='relatado'&&['local','origem_trajeto'].includes(p.papel)).map(p=>p.regiaoId||p.segmentoId||'')).filter(Boolean)));
+        extras.sort((a,b)=>(a.tipo==='inicio'?0:1)-(b.tipo==='inicio'?0:1)).forEach((b,i)=>{
+            const anterior=paragrafos.at(-1),separarGlobal=territorios.length>1&&i===0;
+            if(anterior&&!separarGlobal&&anterior.length+b.texto.length<700)paragrafos[paragrafos.length-1]=anterior+' '+b.texto;else paragrafos.push(b.texto);
+        });
+        return paragrafos.join('\n\n');
+    }
     function comporDocumentoSemantico(plano){
         const grupos=[
-            ['História clínica',['queixa','associados','repercussoes','diagnosticos_relatados','indicacoes_relatadas','caracterizacao','continuidade']],
+            ['História clínica',['queixa','associados','repercussoes','diagnosticos_relatados','indicacoes_relatadas','caracterizacao','continuidade','inicio']],
             ['Antecedentes e contexto',['antecedentes','cirurgias','medicamentos','trabalho','atividade','rotina','informacoes_complementares','complemento']],
             ['Exames de imagem',['imagem']],
             ['Exame físico-funcional e correlação clínica',['exame_livre','exame','sintese','limite']],
@@ -465,7 +500,12 @@
         const usados=new Set(),secoes=[];
         const identificacao=plano.blocos.filter(b=>b.tipo==='identificacao');
         if(identificacao.length)secoes.push(identificacao.map(b=>b.texto).join('\n\n'));
-        grupos.forEach(([titulo,tipos])=>{const blocos=plano.blocos.filter(b=>tipos.includes(b.tipo));if(!blocos.length)return;blocos.forEach(b=>usados.add(b));const texto=titulo==='Antecedentes e contexto'?organizarParagrafosDoContexto(blocos):blocos.map(b=>b.texto).join('\n\n');secoes.push(titulo+'\n\n'+texto);});
+        grupos.forEach(([titulo,tipos])=>{
+            const blocos=plano.blocos.filter(b=>tipos.includes(b.tipo));if(!blocos.length)return;blocos.forEach(b=>usados.add(b));
+            const rotina=b=>['trabalho','atividade','rotina'].includes(b.tipo);
+            const texto=titulo==='História clínica'?organizarParagrafosDaHistoria(blocos,plano):titulo==='Antecedentes e contexto'?[organizarParagrafosDoContexto(blocos.filter(b=>!rotina(b))),organizarParagrafosDoContexto(blocos.filter(rotina))].filter(Boolean).join('\n\n'):blocos.map(b=>b.texto).join('\n\n');
+            secoes.push(titulo+'\n\n'+texto);
+        });
         // Um tipo novo nunca desaparece porque ainda não recebeu uma seção.
         const outros=plano.blocos.filter(b=>b.tipo!=='identificacao'&&!usados.has(b));
         if(outros.length)secoes.push('Informações adicionais\n\n'+outros.map(b=>b.texto).join('\n\n'));
@@ -554,7 +594,7 @@
         const contexto=new Map();
         const origensContexto=tipo=>({cirurgias:[{campo:'tags_cirurgias'},{campo:'restricoesPosOperatorias'}],medicamentos:[{campo:'tags_medicamentos'},{campo:'gruposAnamnese.comorbidades'}],imagem:[{campo:'exames_imagem_descricao'},{campo:'exames_imagem_fonte'}],trabalho:[{campo:'gruposAnamnese.exposicoesOcupacionais'}],atividade:[{campo:'paciente_esporte'},{campo:'esporte_frequencia/esporte_duracao/esporte_nivel/esporte_mudanca_carga'},{campo:'gruposAnamnese.exposicoesEsportivas'}],antecedentes:[{campo:'gruposAnamnese.comorbidades'},{campo:'gruposAnamnese.fatoresPsicossociais'},{campo:'eva_slider'},{campo:'gruposAnamnese.fatoresPiora'},{campo:'yellow_flags_observacao'},{campo:'origem_informacao_clinica'}]})[tipo]||[];
         const registrarContexto=(tipo,texto,origens=[])=>{if(!contexto.has(tipo))contexto.set(tipo,[]);contexto.get(tipo).push({texto,origens});};
-        secaoHistoria(semRelato).split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/u).filter(Boolean).forEach(t=>{const tipo=grupoContexto(t);registrarContexto(tipo,t,origensContexto(tipo));});
+        secaoHistoria(semRelato,true).forEach(item=>registrarContexto(item.tipo,item.texto,item.origens.length?item.origens:origensContexto(item.tipo)));
         fatosComplementaresDoContexto(d).itens.forEach(item=>{
             const tipo=/^contexto_medicamento/.test(item.id)?'medicamentos':/^contexto_(?:cirurgia|trauma)/.test(item.id)?'cirurgias':grupoContexto(item.texto);
             registrarContexto(tipo,item.texto,[{campo:item.id.startsWith('negativa_')?'contextoAnamnese.estados.'+item.id.slice(9):item.id}]);
@@ -648,6 +688,15 @@
         if(numerosSemOrigem.length)palavras.push('Quantificadores sem origem registrada: '+unirNatural(numerosSemOrigem));
         // Qualidade é independente da cobertura: texto completo pode continuar mal redigido.
         const significado=window.KineSysSemanticGraph&&plano.proposicoes?.length?window.KineSysSemanticGraph.validar({origem:plano.origemHMA,proposicoes:plano.proposicoes,pendencias:plano.pendenciasInterpretacao||[]},corpo,plano.fatos.filter(f=>f.tipo!=='relato').map(f=>f.redacao)):null;
+        // O motivo repetido no cabeçalho também precisa corresponder à fonte.
+        // Uma ocorrência correta no corpo não encobre lado/sujeito alterado ali.
+        const motivoEsperado=plano.fatos.find(f=>f.tipo==='identificacao')?.redacao.match(/^Motivo da avaliação \(conforme relato\): (.+)$/m)?.[1];
+        const motivoAtual=corpo.match(/^Motivo da avaliação \(conforme relato\): (.+)$/m)?.[1];
+        if(significado&&motivoEsperado&&motivoAtual){
+            const verificado=window.KineSysSemanticGraph.validar(window.KineSysSemanticGraph.analisar(motivoEsperado),motivoAtual);
+            ['ausentes','introduzidas','causalidade'].forEach(chave=>significado[chave].push(...verificado[chave].map(item=>({...item,bloco:'motivo_no_cabecalho'}))));
+            significado.ok=significado.ok&&verificado.ok;
+        }
         const problemasSemExame=(plano.coberturaProblemas||[]).filter(p=>!p.possuiExameRegistrado);
         const correlacoesDivergentes=(plano.correlacoes||[]).filter(c=>c.resultados.length&&['menos_compativel','localizacao_pendente','lateralidade_pendente','cronologia_pendente','dados_divergentes'].includes(c.evidenciasCompartilhadas?.estado));
         const indicadores=window.KineSysDocumentAnalyzer?.avaliarQualidade(plano,corpo)||null;
@@ -773,7 +822,7 @@
         if(data)linhas.push(`Data da avaliação: ${data}`);
         // Reutiliza uma declaração própria explícita, não a hipótese do Radar,
         // um familiar, negativa, destino de irradiação ou prioridade presumida.
-        const motivo=relato?.fatos.find(f=>f.categoria==='queixa'&&f.proposicoes?.length&&f.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado')&&f.proposicoes.some(p=>p.tipo==='sintoma'&&p.papel!=='destino_trajeto'));
+        const motivo=relato?.fatos.find(f=>['queixa','associados'].includes(f.categoria)&&f.proposicoes?.length&&f.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado')&&f.proposicoes.some(p=>p.tipo==='sintoma'&&p.papel!=='destino_trajeto'));
         if(motivo)linhas.push(`Motivo da avaliação (conforme relato): ${fraseClinica(frasesDoRelato(motivo.redacao)[0].replace(/^(?:Refere|Relata)(?: que)?\s+/i,'').replace(/,\s.+$/,''))}`);
         return `RELATÓRIO FISIOTERAPÊUTICO\n\n${linhas.join('\n')}`;
     }
@@ -838,50 +887,52 @@
         (p.objetivos||[]).forEach(o=>{
             if(!o.objetivo)return;
             const detalhes=[o.baseline?`condição inicial: ${o.baseline}`:'',o.meta?`meta: ${o.meta}`:'',o.prazo?`prazo: ${o.prazo}`:'',o.status?`situação: ${termoDocumental('estadoObjetivo',o.status)}`:''].filter(Boolean);
-            frases.push(fraseClinica(`O objetivo registrado é ${o.objetivo}${detalhes.length?`, com ${detalhes.join('; ')}`:''}`));
+            frases.push(fraseClinica(`O objetivo registrado é ${minusculaInicial(o.objetivo)}${detalhes.length?`, com ${detalhes.join('; ')}`:''}`));
         });
         if(p.criterios)frases.push(fraseClinica(`Os critérios de acompanhamento são ${p.criterios}`));
         if(p.criteriosAlta)frases.push(fraseClinica(`Os critérios de alta registrados são ${p.criteriosAlta}`));
         if(p.previsaoAlta)frases.push(fraseClinica(`A previsão de alta registrada é ${dataDocumental(p.previsaoAlta)}`));
         return frases.join(' ');
     }
-    function secaoHistoria(d){
-        const f=construirFatosClinicos(d),paragrafos=[];
-        const queixa=[];if(f.relato.hma){const relato=narrativaDoRelato(f.relato.hma),abertura=/^(?:dor\b|queimação\b|fraqueza\b|parestesia\b|edema\b|rigidez\b|perda\b|limitação\b)/i.test(relato)?`Refere ${minusculaInicial(relato)}`:relato;paragrafos.push(...paragrafosClinicos(abertura));}
-        if(f.relato.eva||f.relato.fatores.length){
-            const intensidade=f.relato.eva?`A intensidade atual foi registrada em ${f.relato.eva}/10 na EVA`:'';
-            const agravantes=f.relato.fatores.length?`${intensidade?'com piora':'Os sintomas pioram'} durante ${unirNatural(f.relato.fatores.map(fatorEmFrase))}`:'';
-            queixa.push(fraseClinica([intensidade,agravantes].filter(Boolean).join(', ')));
+    function secaoHistoria(d,tipada=false){
+        const f=construirFatosClinicos(d),itens=[];
+        const add=(tipo,texto,origens=[])=>{if(String(texto||'').trim())itens.push({tipo,texto,origens});};
+        if(f.relato.hma)add('queixa',narrativaDoRelato(f.relato.hma),[{campo:'paciente_hma'}]);
+        if(f.inicio)add('inicio',fraseClinica(descreverInicio(f.inicio)),[{campo:'paciente_mecanismo_lesao'}]);
+        const intensidade=f.relato.eva?`A intensidade atual foi registrada em ${f.relato.eva}/10 na EVA`:'';
+        const agravantes=f.relato.fatores.length?`${intensidade?'com piora':'Os sintomas pioram'} durante ${unirNatural(f.relato.fatores.map(fatorEmFrase))}`:'';
+        if(intensidade||agravantes)add('caracterizacao',fraseClinica([intensidade,agravantes].filter(Boolean).join(', ')),[{campo:'eva_slider'},{campo:'gruposAnamnese.fatoresPiora'}]);
+        if(f.antecedentes.comorbidades.length)add('antecedentes',fraseClinica(`Entre os antecedentes relevantes, ${f.antecedentes.comorbidades.length===1?'consta':'constam'} ${unirNatural(f.antecedentes.comorbidades.map(x=>termoDocumental('antecedentes',x)))}`));
+        if(f.antecedentes.cirurgias)add('cirurgias',fraseClinica(`Foram registrados os seguintes procedimentos prévios: ${f.antecedentes.cirurgias}`));
+        if(f.antecedentes.medicamentos){
+            const nota=fatosComplementaresDoContexto(d).itens.find(x=>x.id==='contexto_medicamento_observacao');
+            const literal=v=>normalizar(v).replace(/[^a-z0-9]+/g,' ').trim();
+            const cobertos=nota&&d.complementos.medicamentosItens?.length&&(d.complementos.medicamentosItens||[]).every(item=>(' '+literal(nota.valor)+' ').includes(' '+literal(item)+' '));
+            add('medicamentos',cobertos?nota.texto:fraseClinica(`Foi informado o uso de ${f.antecedentes.medicamentos}`),[{campo:'tags_medicamentos'},...(cobertos?[{campo:nota.id}]:[])]);
         }
-        if(queixa.length)paragrafos.push(queixa.join(' '));
-        const contexto=[];
-        if(f.inicio)contexto.push(fraseClinica(descreverInicio(f.inicio)));
-        if(f.ocupacao.exposicoes.length)contexto.push(fraseClinica(`A atividade profissional envolve ${unirNatural(f.ocupacao.exposicoes.map(descreverExposicao))}`));
+        if(f.restricoes.ativo)add('cirurgias',narrativaPosOperatoria(f.restricoes));
+        if(f.imagem.descricao){
+            const negativo=/^(?:n[aã]o (?:apresentou|disp[oõ]e|possui|tem)|sem exames|(?:eletroneuromiografia|radiografia|resson[aâ]ncia|exame|laudo).*(?:n[aã]o apresentad[oa]|n[aã]o dispon[ií]vel))/i.test(f.imagem.descricao);
+            const propria=/^(?:laudo|ultrassonografia|radiografia|resson[aâ]ncia|rm |tomografia|relat[oó]rio cir[uú]rgico|eletroneuromiografia|exame)/i.test(f.imagem.descricao);
+            add(negativo?'antecedentes':'imagem',fraseClinica(negativo||propria?f.imagem.descricao:`${f.imagem.fonte==='laudo_conferido'?'O documento de imagem apresentado descreve':'Segundo o relato, o exame de imagem descreve'} ${f.imagem.descricao}`),[{campo:'exames_imagem_descricao'},{campo:'exames_imagem_fonte'}]);
+        }
+        if(f.contexto.psicossociais.length)add('antecedentes',fraseClinica(`Também há registro de ${unirNatural(f.contexto.psicossociais.map(x=>termoDocumental('contexto',x))).toLowerCase()}`));
+        if(f.contexto.observacao)add('antecedentes',narrativaDoRelato(f.contexto.observacao));
+        if(f.ocupacao.exposicoes.length)add('trabalho',fraseClinica(`A atividade profissional envolve ${unirNatural(f.ocupacao.exposicoes.map(descreverExposicao))}`));
         const a=f.atividade;
-        if(a.nome&&/^(n[aã]o|nenhum|sedent)/i.test(a.nome))contexto.push('Não pratica atividade física.');
+        if(a.nome&&/^(n[aã]o|nenhum|sedent)/i.test(a.nome))add('atividade','Não pratica atividade física.');
         else if(a.nome||a.frequencia||a.duracao||a.nivel||a.mudanca||a.cargas.length){
-            const detalhes=[];
+            const detalhes=[],frases=[];
             if(a.frequencia)detalhes.push(`${a.frequencia} vez${a.frequencia==='1'?'':'es'} por semana`);
             if(a.duracao)detalhes.push(`${a.duracao} minutos por sessão`);
             if(a.nivel)detalhes.push(`em nível ${a.nivel.toLowerCase()}`);
-            contexto.push(fraseClinica(`${a.nome?`Pratica ${a.nome}`:'A atividade física foi caracterizada'}${detalhes.length?`, ${unirNatural(detalhes)}`:''}`));
-            if(a.mudanca)contexto.push(fraseClinica(`Quanto à carga recente, foi registrado ${a.mudanca.toLowerCase()}`));
-            if(a.cargas.length)contexto.push(fraseClinica(`A prática envolve ${unirNatural(a.cargas.map(descreverExposicao))}`));
+            frases.push(fraseClinica(`${a.nome?`Pratica ${minusculaInicial(a.nome)}`:'A atividade física foi caracterizada'}${detalhes.length?`, ${unirNatural(detalhes)}`:''}`));
+            if(a.mudanca)frases.push(fraseClinica(`Quanto à carga recente, foi registrado ${a.mudanca.toLowerCase()}`));
+            if(a.cargas.length)frases.push(fraseClinica(`A prática envolve ${unirNatural(a.cargas.map(descreverExposicao))}`));
+            add('atividade',frases.join(' '));
         }
-        if(contexto.length)paragrafos.push(contexto.join(' '));
-        const modificadores=[];
-        if(f.antecedentes.comorbidades.length)modificadores.push(fraseClinica(`Entre os antecedentes relevantes, ${f.antecedentes.comorbidades.length===1?'consta':'constam'} ${unirNatural(f.antecedentes.comorbidades.map(x=>termoDocumental('antecedentes',x)))}`));
-        if(f.antecedentes.cirurgias)modificadores.push(fraseClinica(`Foram registrados os seguintes procedimentos prévios: ${f.antecedentes.cirurgias}`));
-        if(f.antecedentes.medicamentos)modificadores.push(fraseClinica(`Medicamentos em uso: ${f.antecedentes.medicamentos}`));
-        if(f.restricoes.ativo){const restricoes=narrativaPosOperatoria(f.restricoes);if(restricoes)modificadores.push(restricoes);}
-        if(f.imagem.descricao)modificadores.push(fraseClinica(`${f.imagem.fonte==='laudo_conferido'?'O documento de imagem apresentado descreve':'Segundo o relato, o exame de imagem descreve'} ${f.imagem.descricao}`));
-        if(f.contexto.psicossociais.length||f.contexto.observacao){
-            if(f.contexto.psicossociais.length)modificadores.push(fraseClinica(`Também há registro de ${unirNatural(f.contexto.psicossociais.map(x=>termoDocumental('contexto',x))).toLowerCase()}`));
-            if(f.contexto.observacao)modificadores.push(narrativaDoRelato(f.contexto.observacao));
-        }
-        if(f.contexto.fonte&&!/relato do paciente/i.test(f.contexto.fonte))modificadores.push(fraseClinica(`A informação clínica foi complementada por ${BANCO_SEMANTICO_LAUDO.fonte[f.contexto.fonte]||f.contexto.fonte.toLowerCase()}`));
-        if(modificadores.length)paragrafos.push(modificadores.join(' '));
-        return valoresUnicos(paragrafos).join('\n\n');
+        if(f.contexto.fonte&&!/relato do paciente/i.test(f.contexto.fonte))add('antecedentes',fraseClinica(`A informação clínica foi complementada por ${BANCO_SEMANTICO_LAUDO.fonte[f.contexto.fonte]||f.contexto.fonte.toLowerCase()}`));
+        return tipada?itens:valoresUnicos(itens.map(x=>x.texto)).join('\n\n');
     }
     const ROTULOS_CONTEXTO_LAUDO={saude:'Saúde e hábitos',cirurgias:'Cirurgias e traumas',medicamentos:'Medicamentos e infiltrações',exames:'Exames de imagem',trabalho:'Exposição ocupacional',atividade:'Atividade física',psicossocial:'Fatores psicossociais'};
     const CAMPOS_CONTEXTO_LAUDO=new Set(['contexto_saude_observacao','contexto_cirurgia_regiao','contexto_cirurgia_data','contexto_trauma_observacao','contexto_medicamento_observacao','contexto_trabalho_tarefa','contexto_trabalho_tempo','contexto_trabalho_frequencia','contexto_trabalho_observacao']);
@@ -889,10 +940,11 @@
         const campos={...(d.contextoAnamnese?.campos||{}),...(d.campos||{})},itens=[];
         const add=(id,rotulo,prefixo)=>{
             const valor=limparTextoClinico(campos[id]);if(!valor)return;
-            const redacao=polirRelatoClinico(valor),autossuficiente=/^(?:nega\b|negou\b|refere\b|relata\b|informa\b|sem\b|não\b)/i.test(redacao);
+            const redacao=polirRelatoClinico(valor),autossuficiente=/^(?:nega\b|negou\b|refere\b|relata\b|informa\b|sem\b|não\b|usa\b|utiliza\b|toma\b|faz uso\b|apresenta\b)/i.test(redacao);
             // Uma oração completa não precisa de "foi informado: paciente relata...".
             const base=autossuficiente?fraseClinica(realizarFatoDoRelato(redacao)):fraseClinica(prefixo+valor);
-            itens.push({id,rotulo,valor,texto:window.KineSysDocumentAnalyzer?.redigirContexto(base,id)||base});
+            const frase=window.KineSysDocumentAnalyzer?.analisarFrase(valor,base).texto||base;
+            itens.push({id,rotulo,valor,texto:window.KineSysDocumentAnalyzer?.redigirContexto(frase,id)||frase});
         };
         add('contexto_saude_observacao','Observações de saúde','Sobre os antecedentes de saúde, foi informado: ');
         add('contexto_cirurgia_regiao','Região/lado de cirurgia','No histórico de procedimentos, a região e o lado informados foram: ');
@@ -904,7 +956,7 @@
         if(cirurgiaSemDetalhe)itens.push({id:'antecedente_cirurgia_trauma',rotulo:'Cirurgia ou trauma anterior',valor:'antecedente informado',texto:'Foi informado antecedente de cirurgia ou trauma, sem detalhamento do evento.'});
         const tarefa=limparTextoClinico(campos.contexto_trabalho_tarefa),tempo=limparTextoClinico(campos.contexto_trabalho_tempo),freq=limparTextoClinico(campos.contexto_trabalho_frequencia);
         const detalhes=[tarefa?`atividade de ${tarefa}`:'',tempo?`exposição de ${tempo}`:'',freq?`frequência ${freq}`:''].filter(Boolean);
-        if(detalhes.length)itens.push({id:'contexto_trabalho_detalhes',rotulo:'Detalhes da exposição ocupacional',valor:detalhes.join('; '),texto:fraseClinica(tarefa?`A rotina de trabalho inclui ${tarefa}${tempo?`, com exposição de ${tempo}`:''}${freq?`${tempo?' e':', com'} frequência ${freq}`:''}`:`A exposição ocupacional foi caracterizada por ${unirNatural(detalhes)}`)});
+        if(detalhes.length)itens.push({id:'contexto_trabalho_detalhes',rotulo:'Detalhes da exposição ocupacional',valor:detalhes.join('; '),texto:fraseClinica(tarefa?`A rotina de trabalho inclui ${minusculaInicial(tarefa)}${tempo?`, com exposição de ${tempo}`:''}${freq?`${tempo?' e':', com'} frequência ${freq}`:''}`:`A exposição ocupacional foi caracterizada por ${unirNatural(detalhes)}`)});
         add('contexto_trabalho_observacao','Observação ocupacional','Quanto à carga ocupacional, foi informado: ');
         const negativos={saude:'Na entrevista, negou as condições de saúde e os hábitos investigados',cirurgias:'Na entrevista, negou cirurgias e traumas prévios',medicamentos:'Negou uso dos medicamentos e infiltrações investigados',exames:'Informou não dispor de exames de imagem',trabalho:'Negou as exposições ocupacionais investigadas',atividade:'Informou não praticar atividade física',psicossocial:'Negou os fatores psicossociais investigados'};
         const positivos={saude:comorbidades.some(x=>!/^Cirurgia|corticoide|infiltração|anti-inflamatório|AINE/i.test(x))||!!campos.contexto_saude_observacao,cirurgias:!!d.complementos.cirurgias||cirurgiaSemDetalhe||!!campos.contexto_trauma_observacao||!!campos.contexto_cirurgia_regiao||!!campos.contexto_cirurgia_data,medicamentos:!!d.complementos.medicamentos||!!campos.contexto_medicamento_observacao||comorbidades.some(x=>/corticoide|infiltração|anti-inflamatório|AINE/i.test(x)),exames:!!campos.exames_imagem_descricao,trabalho:!!grupos.exposicoesOcupacionais?.length||detalhes.length>0||!!campos.contexto_trabalho_observacao,atividade:!!primeiroCampo(d,['paciente_esporte','esporte_frequencia','esporte_duracao','esporte_nivel','esporte_mudanca_carga'])||!!grupos.exposicoesEsportivas?.length,psicossocial:!!grupos.fatoresPsicossociais?.length||!!campos.yellow_flags_observacao};
@@ -1054,8 +1106,8 @@
     function textoBase(d){
         const semantica=construirPlanoNarrativo(d),secoes=comporDocumentoSemantico(semantica),validacao=validarNarrativaClinica(d,secoes);
         semantica.validacao=validarPlanoSemantico(semantica,secoes.join('\n\n'));
-        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:7,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
-        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:7,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:8,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:8,validacao,semantica,atualizadoEm:new Date().toISOString()};
     }
     window.preencherLaudoAvaliacaoKineSys=function(value){
         limparLaudoDoContexto();
@@ -1100,7 +1152,7 @@
             (textoLaudo.includes('foi avaliado(a) pela fisioterapia')&&textoLaudo.includes('Com base nos dados registrados, recomenda-se'))||
             (textoLaudo.startsWith('RELATÓRIO FISIOTERAPÊUTICO')&&textoLaudo.includes('Quanto à queixa atual, registra-se:')&&textoLaudo.includes('O exame físico ainda não contém resultados de testes registrados.')&&textoLaudo.includes('A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.'))
         );
-        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==7)))laudo=textoBase(d);
+        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==8)))laudo=textoBase(d);
         laudo.contextoPaciente=clone(contextoAtual());
         const mudou=laudo.fonte!==d.fonte;
         if(mudou)laudo.revisado=false;
@@ -1124,7 +1176,7 @@
         if(sv?.problemasSemExame?.length)avisos.push('Queixas ainda sem exame registrado: '+unirNatural(valoresUnicos(sv.problemasSemExame.map(p=>p.regiao))));
         if(sv?.correlacoesDivergentes?.length)avisos.push('Há hipótese examinada com localização ou história ainda não concordante; confira as evidências do Radar');
         if(laudo.semantica?.pendenciasInterpretacao?.length)avisos.push('Há localizações ou referências no relato que precisam ser esclarecidas antes de associá-las a uma hipótese');
-        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==7;
+        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==8;
         document.getElementById('ks-laudo-status').textContent=mudou||motorAnterior?'A avaliação mudou ou há uma nova base semântica. Seu texto foi preservado: use Atualizar base da avaliação ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:v.ambiguidades?.length?'O relatório requer revisão: um item positivo reúne achados alternativos. Especifique no texto qual achado foi observado.':(laudo.modo==='revisao'||sv&&!sv.ok)?`O relatório requer revisão. ${avisos.length?avisos.map(a=>String(a).replace(/[.\s]+$/,'')).join('. ')+'.':'Confira os achados divergentes ou os trechos do relato que precisam de revisão.'}`:'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';
         const analiseRevisao=mudou||motorAnterior?construirPlanoNarrativo(d).analiseDocumental:laudo.semantica?.analiseDocumental;
         window.KineSysDocumentReview?.renderizar({host:document.getElementById('ks-laudo-revisao-documental'),analise:analiseRevisao,
