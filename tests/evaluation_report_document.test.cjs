@@ -146,32 +146,81 @@ const casosAuditoriaNarrativa=[
   saude:'Refere hipertensão em acompanhamento.',cirurgias:[],medicamentos:['Pregabalina'],obsMedicamento:'Usa pregabalina 75 mg à noite, conforme relato.',psico:['Sono ruim'],trabalho:'Dirigir por períodos prolongados',exposicoes:['Sedestação prolongada'],atividade:'Caminhada',frequencia:'4',duracao:'10',
   exame:[['','Apendicectomia realizada em 1995.'],['lombar','SLR positivo à direita para a dor familiar na perna direita; Slump inconclusivo à direita; Flexão lombar limitada pela dor.']],imagem:'Laudo de RM lombar apresentado: protrusão discal em L4-L5.',meta:'Acompanhar a tolerância à posição sentada e os sintomas na perna direita.'}
 ];
-function gerarAuditoriaDezAvaliacoes(){
+// Segunda rodada: dez histórias diferentes, sem reutilizar HMA da primeira.
+const casosAuditoriaSegundaRodada=[
+ {tema:'Cotovelo lateral e testes vinculados',idade:44,ocupacao:'Mecânico',regioes:['cotovelo'],eva:4,inicio:'Esforço repetitivo / sobrecarga',
+  hma:'Paciente relata dor na face lateral do cotovelo direito há seis semanas, após aumento das tarefas de apertar parafusos. A dor no cotovelo direito piora ao girar a chave e segurar objetos com firmeza. A dor no cotovelo direito melhora ao interromper essas tarefas. Nega dormência na mão direita e trauma recente.',
+  saude:'Refere hipertensão em acompanhamento.',cirurgias:[],medicamentos:['Losartana'],obsMedicamento:'Usa losartana 50 mg pela manhã, segundo relato.',psico:['Sono ruim'],trabalho:'Apertar parafusos e manusear ferramentas',tempo:'7 horas/dia',exposicoes:['Repetição mãos/punhos'],atividade:'Ciclismo',frequencia:'2',duracao:'45',
+  exame:[['cotovelo','Flexão do cotovelo direito de 140 graus; Extensão completa do cotovelo direito, sem dor; Força de preensão de 24 kg à direita e 31 kg à esquerda.']],guiados:[{regiao:'cotovelo',id:'tendinopatia_lateral_cotovelo',resultados:['positivo','positivo','inconclusivo','negativo']}],imagem:'Não apresentou exames de imagem.',meta:'Acompanhar tolerância às ferramentas e capacidade de preensão.'},
+ {tema:'Punho radial esquerdo no pós-parto',idade:32,ocupacao:'Professora',regioes:['punho_mao'],eva:5,inicio:'Esforço repetitivo / sobrecarga',
+  hma:'Refere dor no lado radial do punho esquerdo há dois meses, percebida ao carregar o bebê. A dor no punho esquerdo piora ao levantar o bebê e mover o polegar esquerdo. A dor no punho esquerdo melhora ao apoiar o antebraço e descansar. Nega queda, formigamento e dor no punho direito.',
+  saude:'Refere estar amamentando; não relatou outras doenças.',cirurgias:['Cesariana (data informada: 11/06/2026)'],medicamentos:['Paracetamol'],obsMedicamento:'Refere uso eventual de paracetamol 500 mg; não informou frequência.',psico:['Sono ruim'],trabalho:'Cuidados com o bebê durante licença do trabalho',tempo:'Períodos intercalados ao longo do dia',exposicoes:[],atividade:'Caminhada',frequencia:'2',duracao:'20',
+  exame:[['punho_mao','Dor à palpação da estiloide radial esquerda; Abdução do polegar esquerdo limitada por dor; Sem alteração de sensibilidade descrita na mão esquerda.']],guiados:[{regiao:'punho_mao',id:'dequervain',resultados:['positivo','positivo','inconclusivo']}],imagem:'Ultrassonografia do punho esquerdo apresentada com espessamento tendíneo descrito no laudo.',meta:'Acompanhar a função do punho esquerdo nas tarefas de cuidado do bebê.'},
+ {tema:'ATM e mastigação sem causalidade presumida',idade:27,ocupacao:'Estudante',regioes:['atm'],eva:3,inicio:'Insidioso, sem trauma claro',
+  hma:'Dor na articulação temporomandibular esquerda há três meses. A dor na mandíbula esquerda piora ao mastigar alimentos firmes e ao abrir muito a boca. A dor na mandíbula esquerda melhora ao evitar essas tarefas. Relata apertamento dos dentes durante o estudo. Nega travamento da boca, trauma e dor de dente.',
+  saude:'Refere acompanhamento por ansiedade, sem alteração recente do tratamento.',cirurgias:['Extração de terceiro molar (data informada: 2021)'],medicamentos:['Sertralina'],obsMedicamento:'Usa sertralina 50 mg à noite, conforme relato.',psico:['Estresse elevado'],trabalho:'Estudo e leitura no computador',tempo:'5 horas/dia',exposicoes:['Sedestação prolongada'],atividade:'Natação',frequencia:'2',duracao:'40',
+  exame:[['atm','Abertura máxima de 34 mm, com dor familiar à esquerda; Lateralidade mandibular de 7 mm à direita e 9 mm à esquerda; Palpação do masseter esquerdo reproduz dor familiar.']],guiados:[{regiao:'atm',id:'dtm_dolorosa_muscular',resultados:['positivo','positivo','positivo','nao_avaliado']}],imagem:'Não dispõe de exames de imagem.',meta:'Acompanhar a dor na mastigação e a abertura mandibular funcional.'},
+ {tema:'Coluna torácica e exposição postural',idade:36,ocupacao:'Programador',regioes:['coluna_toracica'],eva:4,inicio:'Insidioso, sem trauma claro',
+  hma:'Paciente relata dor entre as escápulas há cinco meses, sem trauma identificado. A dor torácica piora ao permanecer sentado por mais de uma hora. A dor torácica melhora com pausas e caminhada. Nega dor no peito, falta de ar e febre. Não relata irradiação para os braços.',
+  saude:'Refere asma acompanhada, sem crise recente.',cirurgias:[],medicamentos:['Budesonida'],obsMedicamento:'Refere uso inalatório de budesonida 200 mcg duas vezes ao dia.',psico:['Sono ruim'],trabalho:'Desenvolvimento de software com pausas variáveis',tempo:'8 horas/dia',exposicoes:['Sedestação prolongada'],atividade:'Caminhada',frequencia:'3',duracao:'30',
+  exame:[['coluna_toracica','Rotação torácica à direita limitada pela dor familiar; Palpação paravertebral torácica reproduz dor local; Expansão torácica de 4 cm.']],imagem:'Não apresentou exames de imagem.',meta:'Acompanhar tolerância à posição sentada e mobilidade torácica.'},
+ {tema:'Tendão de Aquiles após aumento de corrida',idade:41,ocupacao:'Vigilante',regioes:['tornozelo_pe'],eva:4,inicio:'Esforço repetitivo / sobrecarga',
+  hma:'Dor na região do tendão de Aquiles esquerdo há dois meses, após aumento da distância de corrida. A dor no tendão de Aquiles esquerdo piora em subidas e ao correr por mais de vinte minutos. A dor no tendão de Aquiles esquerdo melhora com redução da corrida. Nega estalo, trauma ou perda súbita de impulsão.',
+  saude:'Nega outras doenças conhecidas.',cirurgias:[],medicamentos:['Ibuprofeno'],obsMedicamento:'Refere ter tomado ibuprofeno 400 mg por três dias no início do quadro; nega uso atual.',psico:[],trabalho:'Rondas a pé com períodos em pé',tempo:'6 horas/dia',exposicoes:['Ortostatismo prolongado'],atividade:'Corrida',frequencia:'4',duracao:'50',
+  exame:[['tornozelo_pe','Palpação dolorosa no tendão de Aquiles esquerdo, 3 cm acima da inserção; Elevação unilateral do calcanhar esquerdo reproduz dor familiar após 8 repetições; Thompson preservado à esquerda.']],imagem:'Ultrassonografia apresentada com espessamento do tendão de Aquiles esquerdo.',meta:'Acompanhar a tolerância à corrida e às elevações do calcanhar.'},
+ {tema:'Canela em linguagem coloquial e exame sem região selecionada',idade:24,ocupacao:'Entregador',regioes:[],eva:6,inicio:'Insidioso, sem trauma claro',
+  hma:'Paciente relata dor na parte de fora da canela direita há três semanas. Conta que começou devagar e foi aumentando. Essa dor piora ao fazer eversão e depois das entregas. Essa dor melhora ao descansar. Nega dor na sola do pé e no calcanhar direito. Não sofreu entorse.',
+  saude:'Nega outras doenças conhecidas.',cirurgias:[],medicamentos:[],obsMedicamento:'Nega uso atual de medicamentos.',psico:[],trabalho:'Subir e descer da bicicleta e caminhar nas entregas',tempo:'4 horas/dia',exposicoes:[],atividade:'Ciclismo',frequencia:'5',duracao:'60',
+  exame:[['','Palpação dolorosa na lateral da canela direita; Eversão resistida reproduz dor na lateral da canela direita; Sem edema observado na perna direita.']],imagem:'Não apresentou exames de imagem.',meta:'Acompanhar a tolerância às entregas e esclarecer a origem da dor na perna direita.'},
+ {tema:'Pós-operatório de reconstrução do LCA',idade:30,ocupacao:'Técnico de laboratório',regioes:['joelho'],eva:2,inicio:'Pós-cirúrgico / pós-imobilização',
+  hma:'Refere dor e rigidez no joelho direito após reconstrução do ligamento cruzado anterior realizada em 15/08/2026. A dor no joelho direito piora ao descer escadas e ao final do dia. A dor no joelho direito melhora com repouso. Nega novo trauma, febre e secreção na cicatriz.',
+  saude:'Refere acompanhamento pós-operatório com o cirurgião.',cirurgias:['Reconstrução do ligamento cruzado anterior direito (data informada: 15/08/2026)'],medicamentos:[],obsMedicamento:'Nega uso atual de medicamentos.',psico:['Medo de movimento/relesão'],trabalho:'Atividades de laboratório com períodos sentados e em pé',tempo:'6 horas/dia',exposicoes:[],atividade:'Bicicleta ergométrica',frequencia:'3',duracao:'15',
+  exame:[['joelho','Flexão do joelho direito de 112 graus; Extensão do joelho direito com déficit de 5 graus; Perimetria do joelho direito de 39 cm e do esquerdo de 37 cm; Cicatriz fechada, sem secreção observada.']],imagem:'Relatório cirúrgico apresentado com reconstrução do LCA direito em 15/08/2026.',meta:'Acompanhar mobilidade do joelho direito e tolerância às escadas, respeitando as restrições registradas pelo cirurgião.'},
+ {tema:'Cicatriz de queimadura na mão',idade:50,ocupacao:'Cozinheira',regioes:['punho_mao'],eva:3,inicio:'Trauma agudo',
+  hma:'Paciente refere dor e hipersensibilidade na cicatriz da palma da mão direita após queimadura em 02/08/2026. A dor na mão direita piora ao tocar superfícies ásperas e segurar talheres. A dor na mão direita melhora ao retirar o contato. Nega dormência e dor na mão esquerda.',
+  saude:'Refere hipertensão em acompanhamento.',cirurgias:['Enxerto de pele na mão direita (data informada: 12/08/2026)'],medicamentos:['Losartana','Paracetamol'],obsMedicamento:'Usa losartana 50 mg pela manhã. Refere paracetamol 500 mg à noite em dias de dor, sem frequência fixa informada.',psico:['Medo de movimento/relesão'],trabalho:'Preparar alimentos e manusear utensílios',tempo:'6 horas/dia',exposicoes:['Repetição mãos/punhos'],atividade:'Caminhada',frequencia:'2',duracao:'25',
+  exame:[['punho_mao','Cicatriz palmar direita fechada, sem secreção; Dor ao toque leve na cicatriz palmar direita; Extensão do punho direito de 45 graus; Preensão de 14 kg à direita e 23 kg à esquerda.']],imagem:'Não apresentou exames de imagem.',meta:'Acompanhar tolerância ao contato e função da mão direita no manuseio de utensílios.'},
+ {tema:'Queimação plantar bilateral e dose por medicamento',idade:63,ocupacao:'Aposentado',regioes:['tornozelo_pe'],eva:5,inicio:'Insidioso, sem trauma claro',
+  hma:'Refere queimação na sola dos dois pés há um ano. A queimação nos pés piora à noite e melhora parcialmente ao mudar de posição. Relata diagnóstico de diabetes há dez anos e investigação de neuropatia, ainda sem confirmação apresentada. Nega trauma e feridas nos pés.',
+  saude:'Refere diabetes em acompanhamento. A mãe teve neuropatia; o paciente ainda está em investigação.',cirurgias:['Colecistectomia (data informada: 2016)'],medicamentos:['Metformina','Gliclazida'],obsMedicamento:'Usa metformina 850 mg duas vezes ao dia e gliclazida 30 mg pela manhã, conforme relato.',psico:['Sono ruim'],trabalho:'Atividades domésticas e compras',tempo:'2 horas/dia',exposicoes:[],atividade:'Caminhada',frequencia:'3',duracao:'20',
+  exame:[['tornozelo_pe','Monofilamento percebido em 3 de 10 pontos no pé direito e 7 de 10 no pé esquerdo; Pele dos pés íntegra na inspeção; Dorsiflexão de 12 graus à direita e 10 graus à esquerda.']],imagem:'Não apresentou exames de imagem.',meta:'Acompanhar sintomas e função dos pés, mantendo a investigação médica relatada.'},
+ {tema:'Tontura posicional sem diagnóstico presumido',idade:58,ocupacao:'Atendente',regioes:[],eva:null,inicio:'Insidioso, sem trauma claro',
+  hma:'Paciente relata tontura ao virar para a direita na cama há dez dias. Os episódios duram cerca de vinte segundos e melhoram ao permanecer parado. Nega dor, queda, perda de consciência, visão dupla e fraqueza nos membros. Não apresentou diagnóstico para a tontura.',
+  saude:'Refere hipotireoidismo em acompanhamento.',cirurgias:['Tireoidectomia parcial (data informada: 2017)'],medicamentos:['Levotiroxina'],obsMedicamento:'Usa levotiroxina 75 mcg pela manhã, segundo relato.',psico:['Medo de movimento/relesão'],trabalho:'Atendimento ao público',tempo:'6 horas/dia',exposicoes:[],atividade:'Caminhada',frequencia:'2',duracao:'30',
+  exame:[['','Dix-Hallpike à direita reproduz tontura com nistagmo observado por 18 segundos; À esquerda não houve reprodução dos sintomas; Registro descritivo sem diagnóstico etiológico.']],imagem:'Não dispõe de exames de imagem.',meta:'Acompanhar os episódios de tontura e completar a investigação clínica documentada.'}
+];
+function gerarAuditoriaDezAvaliacoes(casos=casosAuditoriaNarrativa,inicioId=1){
  const medication={};vm.createContext(medication);for(const p of ['database/medicamentos_anvisa-20261024.js','database/medicamentos.js'])vm.runInContext(fs.readFileSync(p,'utf8'),medication);
  const campo=(id,value,label,extra={})=>({id,value:String(value??''),type:'text',tagName:'INPUT',disabled:false,labels:[{textContent:label,querySelector:()=>({textContent:label})}],classList:{contains:()=>false},closest:()=>null,...extra});
  const tag=text=>({dataset:{exibicao:text},textContent:text,cloneNode(){return {textContent:text,querySelectorAll:()=>[]};}});
- return casosAuditoriaNarrativa.map((input,index)=>{
-  const f=fixture(),name='Paciente Sintético '+String(index+1).padStart(2,'0');f.fields[0].value=name;f.fields[1].value=String(input.idade);f.fields[2].value=input.hma;
+ return casos.map((input,index)=>{
+  const f=fixture(),name='Paciente Sintético '+String(index+inicioId).padStart(2,'0');f.fields[0].value=name;f.fields[1].value=String(input.idade);f.fields[2].value=input.hma;
   for(const k of Object.keys(f.notes))delete f.notes[k];
-  Object.assign(f.notes,{contexto_saude_observacao:input.saude,contexto_medicamento_observacao:input.obsMedicamento,contexto_trabalho_tarefa:input.trabalho,contexto_trabalho_tempo:'6 horas/dia',contexto_trabalho_frequencia:'5 dias/semana'});
+  Object.assign(f.notes,{contexto_saude_observacao:input.saude,contexto_medicamento_observacao:input.obsMedicamento,contexto_trabalho_tarefa:input.trabalho,contexto_trabalho_tempo:input.tempo||'6 horas/dia',contexto_trabalho_frequencia:'5 dias/semana'});
   f.context.estados={saude:'relata',cirurgias:input.cirurgias.length?'relata':'nao_informado',medicamentos:'relata',trabalho:'relata',atividade:input.atividade?'relata':'nao_informado',exames:'relata',psicossocial:input.psico.length?'relata':'nao_informado'};
-  const fields=[campo('paciente_ocupacao',input.ocupacao,'Profissão'),campo('eva_slider',input.eva,'Dor atual (EVA 0–10)',{type:'range'}),campo('paciente_mecanismo_lesao',input.inicio,'Mecanismo / início'),campo('paciente_esporte',input.atividade,'Atividade física'),campo('esporte_frequencia',input.frequencia||'','Frequência semanal'),campo('esporte_duracao',input.duracao||'','Duração média'),campo('exames_imagem_descricao',input.imagem,'Exames de imagem'),campo('exames_imagem_fonte','laudo_conferido','Origem do exame')];
+  const fields=[campo('paciente_ocupacao',input.ocupacao,'Profissão'),campo('eva_slider',input.eva,'Dor atual (EVA 0–10)',{type:'range',disabled:input.eva===null}),campo('paciente_mecanismo_lesao',input.inicio,'Mecanismo / início'),campo('paciente_esporte',input.atividade,'Atividade física'),campo('esporte_frequencia',input.frequencia||'','Frequência semanal'),campo('esporte_duracao',input.duracao||'','Duração média'),campo('exames_imagem_descricao',input.imagem,'Exames de imagem'),campo('exames_imagem_fonte',input.fonteImagem||'laudo_conferido','Origem do exame')];
   for(const [group,labels] of [['chk_yellow_flag',input.psico],['chk_exposicao_ocupacional',input.exposicoes]])labels.forEach(label=>fields.push(campo('', 'sim',label,{type:'checkbox',checked:true,classList:{contains:c=>c===group}})));
   fields.forEach(x=>{f.fields.push(x);if(x.id)f.nodes[x.id]=x;});f.nodes.avaliacao_realizado_em.value='2026-10-27T09:00';
   f.nodes.tags_cirurgias={children:input.cirurgias.map(tag),textContent:input.cirurgias.join('; ')};f.nodes.tags_medicamentos={children:input.medicamentos.map(tag),textContent:input.medicamentos.join('; ')};
   f.c.window.KineSysMedicamentos=medication.KineSysMedicamentos;f.c.window.KineSysMotorClinico3={ultimoPlano:{hipoteses:[],exame:{testesPrioritarios:[]}}};f.tests=[];
   for(const id of input.regioes)vm.runInContext(fs.readFileSync('database/regioes/'+id+'-base-1.0.0.js','utf8'),f.c);
   f.regions.splice(0,f.regions.length,...input.regioes.map(regiao=>({dataset:{regiao}})));
-  f.c.gerarSinteseMapeamento=()=>({resumoPorRegiao:[],segurancaGlobal:{pistasGlobais:[]}});
+  const guiados=(input.guiados||[]).map(item=>{
+   const regiao=f.c.BANCO_MAPEAMENTO_CLINICO[item.regiao],cluster=regiao.clusters.find(c=>c.id===item.id);assert(cluster,'critério do catálogo existente');
+   f.c.window.KineSysMotorClinico3.ultimoPlano.hipoteses.push({...cluster,regiaoId:item.regiao});
+   return {regiaoId:item.regiao,regiao:regiao.nome,id:cluster.id,nome:cluster.nome,achados:cluster.testes.map((texto,i)=>({texto,resultado:item.resultados[i]||'nao_avaliado'}))};
+  });
+  f.tests=guiados;f.c.gerarSinteseMapeamento=()=>({resumoPorRegiao:guiados.map(g=>({regiao:g.regiao,codigoHipotese:g.id,nomeHipotese:g.nome,nivel:'pendente',redFlags:[]})),segurancaGlobal:{pistasGlobais:[]}});
   f.c.clinicaEstruturadaPreservada={objetivosPlano:{objetivos:[{objetivo:input.meta}]}};
   const registros=input.exame.map(([regiaoId,texto],n)=>({id:'qa-'+index+'-'+n,regiaoId,regiao:f.c.BANCO_MAPEAMENTO_CLINICO[regiaoId]?.nome||'',texto,resultado:'descritivo',situacao:{tipo:'descritivo'}}));
   f.c.window.KineSysExameLivre={documentar:()=>registros};const original=JSON.stringify({hma:input.hma,registros,notes:f.notes}),relatorio=f.render();
   assert.equal(JSON.stringify({hma:f.fields[2].value,registros,notes:f.notes}),original,'auditoria não modifica as origens');
   assert(relatorio.texto.startsWith('RELATÓRIO FISIOTERAPÊUTICO\n\nPaciente: '+name));assert(relatorio.texto.includes('Data da avaliação: 27/10/2026'));
-  return {id:index+1,tema:input.tema,nome:name,entrada:input,relatorio};
+  return {id:index+inicioId,tema:input.tema,nome:name,entrada:input,relatorio};
  });
 }
-module.exports={gerarAuditoriaDezAvaliacoes};
+const gerarSegundaRodadaDezAvaliacoes=()=>gerarAuditoriaDezAvaliacoes(casosAuditoriaSegundaRodada,11);
+module.exports={gerarAuditoriaDezAvaliacoes,gerarSegundaRodadaDezAvaliacoes};
 
 // Esta rodada integra a barreira existente, além da inspeção humana dos textos.
 const rodadaDez=gerarAuditoriaDezAvaliacoes();
@@ -194,3 +243,19 @@ const tres=rodadaDez[8].relatorio.texto;assert(tres.includes('A mãe tem artrite
 const operacao=rodadaDez[9].relatorio;assert(operacao.texto.includes('indicada')||operacao.texto.includes('indicação cirúrgica'));assert(operacao.texto.includes('ainda não realizada'));assert(operacao.texto.includes('Apendicectomia realizada em 1995'));assert(operacao.semantica.fatos.find(f=>f.assuntoDocumental==='cirurgias').trechosDocumentais.every(t=>!t.realizado));
 assert(rodadaDez.filter(x=>x.relatorio.modo==='revisao').every(x=>x.relatorio.semantica.validacao.esclarecimentos.length||x.relatorio.semantica.validacao.significado.limites.length),'dúvidas conservam revisão externa ao documento');
 console.log('PASS: dez avaliações completas com EVA, início, doses/cronologia, negações, múltiplas queixas, cirurgia indicada/realizada, prosa regional e origens preservadas.');
+
+// Conferência de preservação e guardas: não é aprovação editorial/clínica.
+const segundaRodadaDez=gerarSegundaRodadaDezAvaliacoes();
+assert.equal(segundaRodadaDez.length,10);assert.equal(new Set([...rodadaDez,...segundaRodadaDez].map(x=>x.entrada.hma)).size,20,'não reutilizar relatos da primeira rodada');
+for(const {id,entrada,relatorio:r} of segundaRodadaDez){
+ assert(r.texto.includes('Paciente: Paciente Sintético '+id));assert(r.texto.includes('Data da avaliação: 27/10/2026'));
+ for(const k of ['testesAusentes','relatoAusente','contextoAusente','listasAusentes'])assert.equal(r.validacao[k].length,0,JSON.stringify({id,campo:k,valor:r.validacao[k]}));
+ assert.equal(r.semantica.validacao.ausentes.length,0);assert.equal(r.semantica.validacao.numerosSemOrigem.length,0);
+ if(entrada.eva===null)assert(!/\d+\/10 na EVA/.test(r.texto),'não transformar EVA não avaliada em zero');else assert(r.texto.includes(entrada.eva+'/10 na EVA'));
+ if(!entrada.guiados?.length)assert(r.semantica.correlacoes.every(c=>c.criterioAtendido!==true),'texto livre sem vínculo não confirma critérios');
+ else for(const c of r.semantica.correlacoes){const origem=entrada.guiados.find(g=>g.id===c.hipoteseId);assert(origem);assert(c.resultados.every(x=>x.eixoId===origem.id));assert.equal(c.resultados.length,origem.resultados.filter(r=>r!=='nao_avaliado').length);}
+ if(!r.validacao.ok||!r.semantica.validacao.ok)assert.equal(r.modo,'revisao','pendências não são ocultadas para liberar o relatório');
+}
+assert(segundaRodadaDez[6].relatorio.texto.includes('15/08/2026'));assert(segundaRodadaDez[7].relatorio.texto.includes('12/08/2026'));
+const doses=segundaRodadaDez[8].relatorio.texto;assert(doses.includes('metformina 850 mg duas vezes ao dia e gliclazida 30 mg pela manhã'));assert(doses.includes('investigação de neuropatia, ainda sem confirmação'));assert(doses.includes('A mãe teve neuropatia'));
+console.log('Segunda rodada de dez casos executada: preservação das origens/medidas e guardas verificadas; '+segundaRodadaDez.filter(x=>x.relatorio.modo==='revisao').length+' relatórios continuam sujeitos a revisão. Isso não certifica a redação ou acurácia clínica.');
