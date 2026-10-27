@@ -73,6 +73,8 @@
     function situacao(r){
         const t=resolver(r);
         if(r.rascunho)return {tipo:'rascunho',mensagem:'Texto em preenchimento: incluído como descrição, sem confirmar critérios.'};
+        const assunto=window.KineSysDocumentAnalyzer?.classificarAnotacaoLivre?.(r.texto);
+        if(t&&assunto&&assunto.tipo!=='exame_livre')return {tipo:'revisar',mensagem:'O texto registra um antecedente ou contexto, não um resultado de teste. Revise o vínculo; a anotação será preservada no relatório.'};
         if(!t||!resultadoValido(r.resultado))return {tipo:'descritivo',mensagem:'Achado descritivo: preservado no relatório, sem confirmar critérios do catálogo.'};
         if(r.contextoExameFingerprint!==fingerprint())return {tipo:'revisar',mensagem:'A história clínica mudou. Revise o vínculo antes de usá-lo na correlação.'};
         if(conflitosTexto(r,t))return {tipo:'divergente',mensagem:'Texto, lado ou resultado divergentes: confira o registro; sem conclusão automática.'};

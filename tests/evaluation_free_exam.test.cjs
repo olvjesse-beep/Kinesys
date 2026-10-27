@@ -40,6 +40,13 @@ function setup(){
     assert.equal(f.api.integrar([]).length,1,'região não selecionada não é promovida automaticamente');
 }
 {
+    const f=setup();f.add(0,{texto:'Artrodese cervical realizada em 2012.'});
+    assert.equal(f.api.integrar([]).length,0,'uma cirurgia digitada no teste não confirma um critério');
+    assert.equal(f.api.documentar()[0].situacao.tipo,'revisar');
+    assert(f.t.render().validacao.exameLivrePendente.length);
+    assert.equal(f.api.registros()[0].texto,'Artrodese cervical realizada em 2012.');
+}
+{
     const f=setup();f.add(0);f.add(1,{lado:'esquerdo'});f.add(2);
     assert.equal(f.api.integrar([]).length,0,'não soma critérios de lados diferentes');
     assert(f.t.render().texto.includes('lados distintos foram mantidos separados'));

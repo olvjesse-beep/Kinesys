@@ -4,7 +4,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.2.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+ const VERSION='1.3.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
  const uniq=a=>Array.from(new Set(a.filter(x=>x!==undefined&&x!==null&&x!=='')));
  const regionNames={cervical:'coluna cervical',ombro:'ombro',cotovelo:'cotovelo',punho_mao:'punho e mão',coluna_toracica:'coluna torácica',lombar:'coluna lombar',quadril:'quadril',joelho:'joelho',tornozelo_pe:'tornozelo e pé',cefaleia:'cabeça / cefaleia',atm:'ATM',perna:'perna'};
  const clone=x=>JSON.parse(JSON.stringify(x)),sentence=s=>{s=String(s||'').trim().replace(/[.;\s]+$/,'');return s?s[0].toUpperCase()+s.slice(1)+'.':'';};
@@ -13,6 +13,9 @@
  const wrapper=/^(?:(?:o|a)\s+)?paciente\s+(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+|^(?:também\s+)?(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+/i;
  function slots(text){
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
+  if(/^(?:(?:o|a) paciente\s+)?(?:(?:apresenta|tem|relata|refere)\s+)?sono ruim$/iu.test(body))return {modelo:'qualidade_sono_relatada',corpo:body,escopo:'oracao_positiva_explicita'};
+  const use=/^(?:(?:o|a) paciente\s+)?(?:usa|utiliza|toma|faz uso de)\s+(.+)$/iu.exec(body);
+  if(use&&classifyFreeNote(body).medicamentoReconhecido)return {modelo:'uso_medicamentoso_relatado',complemento:use[1],corpo:body,escopo:'oracao_positiva_explicita'};
   const radiation=/^(dor)\s+(.+?)\s+que\s+irradia\s+(para\s+.+)$/iu.exec(body);
   if(radiation)return {modelo:'sintoma_com_irradiacao',predicado:radiation[1],origemLocal:radiation[2],trajeto:radiation[3],corpo:body};
   const sublocation=/^dor(?:\s+referida)?\s+na região\s+(d[oa]\s+.+?),\s*principalmente\s+(?:na\s+)?porção\s+(medial|lateral|anterior|posterior)$/iu.exec(body);
@@ -32,6 +35,8 @@
   return {modelo:'preservacao_documental',corpo:base};
  }
  function realize(model){
+  if(model.modelo==='qualidade_sono_relatada')return 'Relata sono de má qualidade.';
+  if(model.modelo==='uso_medicamentoso_relatado')return sentence('Informa uso de '+model.complemento);
   if(model.modelo==='sintoma_com_irradiacao')return sentence('Relata '+model.predicado+' '+model.origemLocal+', com irradiação '+model.trajeto);
   if(model.modelo==='sintoma_com_sublocalizacao')return sentence('Relata dor na região '+model.local+', principalmente na porção '+model.qualificador);
   if(model.modelo==='agravantes_coordenados')return sentence(model.sujeito+' piora '+model.circunstancias.join(' e '));
@@ -51,7 +56,8 @@
   const guards=/["“”]|\b(?:nega|negou|n[aã]o|sem|suspeita|poss[ií]vel|talvez|investiga|diagn[oó]stico|m[aã]e|pai|irm[aã]o?|cirurgia|operad[oa]|ap[oó]s isso|desde ent[aã]o|causad[oa]|devido|secund[aá]ri[oa])\b/i.test(base);
   let candidate=realize(model),status='realizado',check=null;
   const negativeSafe=model.modelo==='sintoma_negado'&&propositions.length&&propositions.every(p=>p.tipo==='sintoma'&&p.estado==='negado'&&p.sujeito==='paciente'&&p.certeza==='relatada');
-  if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe)||!graph||!propositions.length){candidate=base;status='preservado';}
+  const contextSafe=model.escopo==='oracao_positiva_explicita'&&!guards;
+  if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe&&!contextSafe)||!graph||(!propositions.length&&!contextSafe)){candidate=base;status='preservado';}
   else {
    check=graph.validar(parsed,candidate);
    // Raw note and professionally polished baseline must both retain meaning.
@@ -89,6 +95,25 @@
   fact.realizacoes=Array.from(new Set([...(fact.realizacoes||[]),candidate]));
   fact.analiseDocumental.realizacaoPlanejada={texto:candidate,regra:'sintagma_nominal_com_escopo_preservado',validacao:clone(check)};
   return candidate;
+ }
+ function classifyFreeNote(value){
+  // Classificação documental, não confirmação de diagnóstico ou de procedimento.
+  // O campo onde se digitou não transforma um antecedente em teste realizado.
+  const text=String(value||''),t=norm(text);
+  const exam=/\b(?:teste|manobra|palpacao|amplitude|adm|reflexos?|mensurad[oa]|medida|positivo|negativo|inconclusivo|graus|slr|slump|spurling|faber(?:e)?|patrick|ultt\d*)\b/.test(t);
+  const symptom=/\b(?:dor|dores|parestesia|fraqueza|dormencia|formigamento|edema|limitacao)\b/.test(t);
+  const surgery=/\b(?:cirurgias?|cirurgic[oa]s?|operad[oa]|artrodeses?|artroplastias?|proteses?|cesariana|apendicectomia|mamoplastia|meniscectomia|colecistectomia|histerectomia)\b/.test(t);
+  const usage=/\b(?:usa|usava|utiliza|utilizava|toma|tomava|uso de|em uso)\s+(.+)/i.exec(text);
+  const query=usage?.[1]?.replace(/^(?:de|o|a)\s+/i,'').replace(/[.;]+$/,'').trim();
+  let knownDrug=false;
+  if(query&&root.KineSysMedicamentos?.buscar){
+   const candidates=root.KineSysMedicamentos.buscar(query.split(/\s+/)[0])||[];
+   knownDrug=candidates.some(item=>{const name=norm(item.nome||item.texto);return name&&(norm(query)===name||norm(query).startsWith(name+' '));});
+  }
+  const medication=/\b(?:medicamentos?|medicacao|infiltracao)\b/.test(t)||!!(usage&&(/\b\d+(?:[.,]\d+)?\s*(?:mg|mcg|ml)\b/.test(t)||knownDrug));
+  const sleep=/\b(?:sono|insonia|dormir|dorme)\b/.test(t);
+  const tipo=!exam&&surgery&&!symptom?'cirurgias':!exam&&medication?'medicamentos':!exam&&sleep&&!symptom?'antecedentes':'exame_livre';
+  return {tipo,regra:tipo==='exame_livre'?'registro_de_exame_ou_descricao_a_revisar':'assunto_explicitamente_registrado',medicamentoReconhecido:knownDrug,textoOriginal:text};
  }
  function analyzeAssessment(data){
   const entries=[],add=(field,value,type,extra={})=>{
@@ -225,5 +250,5 @@
    fatosSemRoteiro:units.filter(u=>!covered.has(u.id)).map(u=>u.id),
    trechosParaRevisar:units.filter(u=>u.revisaoNecessaria).map(u=>u.id)};
  }
- root.KineSysDocumentAnalyzer=Object.freeze({version:VERSION,analisarAvaliacao:analyzeAssessment,analisarFrase:analyzeStatement,redigirFatoPlanejado:realizePlannedFact,redigirContexto:redactContext,analisarDocumento:analyzeDocument,avaliarQualidade:qualityMetrics});
+ root.KineSysDocumentAnalyzer=Object.freeze({version:VERSION,classificarAnotacaoLivre:classifyFreeNote,analisarAvaliacao:analyzeAssessment,analisarFrase:analyzeStatement,redigirFatoPlanejado:realizePlannedFact,redigirContexto:redactContext,analisarDocumento:analyzeDocument,avaliarQualidade:qualityMetrics});
 })(typeof window==='undefined'?globalThis:window);
