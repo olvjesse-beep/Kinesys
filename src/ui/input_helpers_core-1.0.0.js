@@ -245,7 +245,7 @@ function conectarAutocompleteAvaliacaoKineSys(input,box,tipo){
  state.hide=hide;
  function choose(item){
   if(tipo==='cirurgia')adicionarTagCirurgia(item.chave,item.texto);
-  else if(tipo==='medicamento')adicionarTagMedicamento(item.texto);
+  else if(tipo==='medicamento')adicionarTagMedicamento(item.texto,{chave:item.chave,nome:item.nome||'',principioAtivo:item.principioAtivo||''});
   else{input.value=item.texto;notificarSugestaoAvaliacaoKineSys(input);if(typeof processarRadarEmTempoReal==='function')processarRadarEmTempoReal();}
   hide();
  }
@@ -370,16 +370,33 @@ function inicializarAutocompleteMedicamento(){
     conectarAutocompleteAvaliacaoKineSys(inputMedicamento,sugestaoBoxMed,'medicamento');
 }
 
-function adicionarTagMedicamento(termo) {
+function coletarMedicamentosAvaliacaoKineSys(){
+    return Array.from(document.getElementById('tags_medicamentos')?.children||[]).map(tag=>({...tag.ksMedicamentoOriginal,texto:tag.dataset?.exibicao||tag.textContent.replace(/[✕×]/g,'').trim(),nome:tag.dataset?.nomeMedicamento||'',dosagem:String(tag.querySelector?.('.ks-medicamento-dose')?.value??tag.dataset?.dosagem??'').trim()})).filter(r=>r.texto);
+}
+let restaurandoMedicamentosKineSys=false;
+function preencherMedicamentosAvaliacaoKineSys(registros=[]){
+    const container=document.getElementById('tags_medicamentos');if(!container)return;
+    container.innerHTML='';restaurandoMedicamentosKineSys=true;
+    try{(Array.isArray(registros)?registros:[]).forEach(item=>{const r=typeof item==='string'?{texto:item}:item||{};if(r.texto||r.nome)adicionarTagMedicamento(r.texto||r.nome,r);});}finally{restaurandoMedicamentosKineSys=false;}
+}
+window.coletarMedicamentosAvaliacaoKineSys=coletarMedicamentosAvaliacaoKineSys;
+window.preencherMedicamentosAvaliacaoKineSys=preencherMedicamentosAvaliacaoKineSys;
+function adicionarTagMedicamento(termo,registro={}) {
     const container = document.getElementById('tags_medicamentos');
-    if(container&&Array.from(container.children).some(e=>normalizarBuscaClinicaKineSys(e.textContent.replace(/[✕×]/g,''))===normalizarBuscaClinicaKineSys(termo))){if(inputMedicamento)inputMedicamento.value='';fecharSugestoesAvaliacaoKineSys();return;}
+    if(container&&Array.from(container.children).some(e=>normalizarBuscaClinicaKineSys(e.dataset?.exibicao||e.textContent.replace(/[✕×]/g,''))===normalizarBuscaClinicaKineSys(termo))){if(inputMedicamento)inputMedicamento.value='';fecharSugestoesAvaliacaoKineSys();return;}
     if (container) {
         const tag = document.createElement('div');
-        tag.classList.add('kds-u-bg-e67e22', 'kds-u-text-white', 'kds-u-p-6px-12px', 'kds-u-br-4px', 'kds-u-fs-label', 'kds-u-fw-bold', 'kds-u-d-flex', 'kds-u-ai-center', 'kds-u-gap-8px');
+        tag.className='tag-medicamento';tag.dataset.exibicao=termo;
+        tag.ksMedicamentoOriginal=JSON.parse(JSON.stringify(registro));
+        const catalogo=globalThis.KineSysMedicamentos?.obter?.(termo);
+        tag.dataset.nomeMedicamento=registro.nome||catalogo?.nome||'';
+        tag.dataset.dosagem=String(registro.dosagem||'');
 
-        const textoTag = document.createTextNode(termo);
-        const botaoRemover = document.createElement('span');
-        botaoRemover.classList.add('kds-u-cursor-pointer', 'kds-u-text-rgba-255-255-255-0p7');
+        const textoTag = document.createElement('span');textoTag.className='ks-medicamento-nome';textoTag.textContent=termo;
+        const doseLabel=document.createElement('label');doseLabel.className='ks-medicamento-dose-label';doseLabel.setAttribute('aria-label','Dosagem de '+(tag.dataset.nomeMedicamento||termo)+' (opcional)');
+        const doseInput=document.createElement('input');doseInput.type='text';doseInput.className='ks-medicamento-dose';doseInput.value=tag.dataset.dosagem;doseInput.placeholder='Dosagem (opcional)';doseInput.maxLength=100;doseInput.autocomplete='off';doseInput.dataset.contextUi='true';doseInput.setAttribute('aria-label','Dosagem de '+(tag.dataset.nomeMedicamento||termo)+' (opcional)');
+        doseInput.addEventListener('input',()=>{tag.dataset.dosagem=doseInput.value.trim();notificarSugestaoAvaliacaoKineSys(doseInput);});doseLabel.appendChild(doseInput);
+        const botaoRemover = document.createElement('button');botaoRemover.type='button';botaoRemover.className='ks-medicamento-remover';botaoRemover.setAttribute('aria-label','Remover '+termo);
         botaoRemover.title = "Remover";
         botaoRemover.textContent = "✕";
         botaoRemover.onclick = function() {
@@ -389,13 +406,13 @@ function adicionarTagMedicamento(termo) {
         };
 
         tag.appendChild(textoTag);
+        tag.appendChild(doseLabel);
         tag.appendChild(botaoRemover);
         container.appendChild(tag);
     }
     if (inputMedicamento) inputMedicamento.value = '';
     if (sugestaoBoxMed) sugestaoBoxMed.style.display = 'none';
-    notificarSugestaoAvaliacaoKineSys(inputMedicamento);
-    if (typeof processarRadarEmTempoReal === 'function') processarRadarEmTempoReal();
+    if(!restaurandoMedicamentosKineSys){notificarSugestaoAvaliacaoKineSys(inputMedicamento);if(typeof processarRadarEmTempoReal==='function')processarRadarEmTempoReal();}
 }
 
 // FECHAMENTO DE CAIXAS AO CLICAR FORA

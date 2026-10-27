@@ -6,7 +6,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.4.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const VERSION='1.5.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const uniq=a=>Array.from(new Set(a.filter(Boolean))),copy=o=>JSON.parse(JSON.stringify(o));
  const natural=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' e '+a.at(-1);
  const sentence=t=>{t=String(t||'').trim().replace(/[.;,\s]+$/,'');return t?t[0].toUpperCase()+t.slice(1)+'.':'';};
@@ -37,7 +37,7 @@
  function entidades(text){
   const t=norm(text),out=[...(root.KineSysClinicalLanguage?.extrair(text).entidades||[])];
   Object.entries(REGIOES).forEach(([regiaoId,rx])=>matches(t,rx).forEach(e=>out.push({...e,regiaoId,trecho:text.slice(e.inicio,e.fim)})));
-  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|canelas?|pernas?|membro superior|membro inferior)\b/g).forEach(e=>out.push({...e,regiaoId:'',segmentoId:/^(?:canelas?|pernas?)$/.test(e.texto)?'perna':/^antebracos?$/.test(e.texto)?'antebraco':/^bracos?$/.test(e.texto)?'braco':/^membro superior$/.test(e.texto)?'membro_superior':/^membro inferior$/.test(e.texto)?'membro_inferior':'',trecho:text.slice(e.inicio,e.fim)}));
+  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|canelas?|pernas?|membros? superiores?|membros? inferiores?|mmii)\b/g).forEach(e=>out.push({...e,regiaoId:'',segmentoId:/^(?:canelas?|pernas?)$/.test(e.texto)?'perna':/^antebracos?$/.test(e.texto)?'antebraco':/^bracos?$/.test(e.texto)?'braco':/^membros? superiores?$/.test(e.texto)?'membro_superior':/^(?:membros? inferiores?|mmii)$/.test(e.texto)?'membro_inferior':'',trecho:text.slice(e.inicio,e.fim)}));
   return out.sort((a,b)=>a.inicio-b.inicio||b.fim-a.fim).filter((e,i,a)=>!a.slice(0,i).some(o=>o.inicio<=e.inicio&&o.fim>=e.fim));
  }
  function lados(text){return uniq((norm(text).match(/\b(?:direit[oa]s?|esquerd[oa]s?|bilateral(?:mente)?|ambos|ambas)\b/g)||[]).map(x=>/^direit/.test(x)?'direito':/^esquerd/.test(x)?'esquerdo':'bilateral'));}
@@ -106,7 +106,7 @@
    const local=texto.slice(inicioContexto,fimContexto),apos=site?texto.slice(b,fimContexto):'';
    let lado=site?lados(apos):[];
    if(!lado.length&&site&&/\b(?:bilateral(?:mente)?(?: nos| nas)?|ambos os|ambas as)\s+$/.test(t.slice(prev?.fim||0,a)))lado=['bilateral'];
-   if(!lado.length&&site&&/\b(?:dois pes|duas maos|ambos os pes|ambas as maos)\b/.test(norm(site.trecho||'')))lado=['bilateral'];
+   if(!lado.length&&site&&/\b(?:dois pes|duas maos|dois gluteos|ambos os pes|ambas as maos)\b/.test(norm(site.trecho||'')))lado=['bilateral'];
    if(!lado.length&&sites.length===1)lado=lados(texto);
    // Adjetivo plural no final de enumeração: ombro e cotovelo esquerdos.
    if(!lado.length&&sites.length>1&&/\b(?:direit[oa]s|esquerd[oa]s)\b/.test(t.slice(sites.at(-1).fim))&&lados(texto).length===1)lado=lados(texto);

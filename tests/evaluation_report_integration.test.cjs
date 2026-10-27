@@ -25,7 +25,7 @@ assert(!/Medicamento BMedicamento|Pacient erelata|memsa|anoite|Spurling\s*\/|ULT
 assert(text.includes('teste de Spurling (compressão foraminal cervical) reproduziu'));
 assert(text.includes('A distração cervical reduziu'));assert(text.includes('teste neurodinâmico do nervo mediano (ULTT1) foi positivo'));
 assert(text.includes('não estabelecem diagnóstico definitivo isoladamente'));
-assert(text.includes('Cabeça / Cefaleia — triagem, mas não há resultados de exame registrados'));
+assert(!text.includes('A avaliação também contempla'),'regiões vazias ficam no painel, conforme solicitação de 27/10');
 assert(!text.includes('Nega cefaleia'));assert.deepEqual(Array.from(report.validacao.regioesPendentes),['Cabeça / Cefaleia — triagem']);
 assert.equal(report.validacao.contextoAusente.length,0);assert.equal(report.validacao.listasAusentes.length,0);assert.equal(report.validacao.relatoAusente.length,0);assert.equal(report.validacao.testesAusentes.length,0);
 assert(t.nodes['ks-laudo-status'].textContent.includes('Regiões sem resultados: Cabeça'));

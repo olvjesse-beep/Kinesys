@@ -34,7 +34,7 @@ function exemplo(){
  assert(t.includes('SLR positivo à esquerda'));assert(t.includes('Spurling positivo para dor irradiada para o ombro'));
  assert(t.includes('Rotação interna associada à flexão'));assert(!t.includes('associado a flexão'));
  assert(!t.includes('Região não especificada'));assert(!t.includes('em preenchimento'));assert(!t.includes('confirmar critérios'));
- assert(t.includes('pendente de revisão profissional'));assert(r.validacao.exameLivrePendente.length);assert.equal(r.modo,'revisao');
+ assert(!t.includes('pendente de revisão profissional'),'estado de edição é aviso do painel, não texto clínico');assert(r.validacao.exameLivrePendente.length);assert.equal(r.modo,'revisao');
  assert(!r.validacao.regioesPendentes.includes('Coluna lombar'),'achados lombares descritos não são omitidos por estarem sem combo regional');
  for(const n of ['Cabeça / Cefaleia — triagem','Ombro','Tornozelo e pé'])assert(r.validacao.regioesPendentes.includes(n));
  assert.equal(r.validacao.testesAusentes.length,0);assert.equal(r.validacao.relatoAusente.length,0);assert.equal(r.semantica.validacao.ausentes.length,0);
@@ -235,7 +235,7 @@ for(const {id,entrada,relatorio:r} of rodadaDez){
  assert(r.semantica.correlacoes.every(c=>c.criterioAtendido!==true),'descrição sem vínculo não confirma hipótese: '+id);
 }
 const historiaMultiplas=rodadaDez[8].relatorio.texto.split('História clínica\n\n')[1].split('\n\nAntecedentes e contexto')[0].split('\n\n');
-assert(historiaMultiplas.at(-1).includes('6/10 na EVA'));assert(!/ombro|joelho|calcanhar/.test(historiaMultiplas.at(-1)),'caracterização global não é atribuída à última queixa regional');
+assert(historiaMultiplas.at(-1).includes('6/10 na EVA'));assert(historiaMultiplas.at(-1).includes('Nesta avaliação, a intensidade atual foi registrada em 6/10 na EVA'),'mensuração é explicitamente da avaliação, sem presumir um vínculo regional');assert(!historiaMultiplas.some(p=>/^Nesta avaliação, a intensidade/.test(p)),'EVA não fica isolada num parágrafo de uma linha');
 assert(rodadaDez[3].relatorio.texto.includes('0/10 na EVA'));assert(rodadaDez[3].relatorio.texto.includes('ausência de dor em repouso'));
 assert(rodadaDez[4].relatorio.texto.includes('ter usado ibuprofeno 400 mg por dois dias'));assert(!rodadaDez[4].relatorio.texto.includes('Medicamentos em uso: Ibuprofeno'));
 assert(rodadaDez[6].relatorio.texto.includes('Motivo da avaliação (conforme relato): Formigamento nas mãos direita e esquerda'));
@@ -285,4 +285,35 @@ console.log('Segunda rodada de dez casos executada: preservação das origens/me
  assert(!porId(11).texto.includes('grip strength'));assert(!porId(12).texto.includes('WHAT test'));assert(!porId(13).texto.includes('Na avaliação de abertura máxima ou movimentos mandibulares reproduzem'));
  assert(!/Essa dor melhora/.test(historia(16)),'retomada única segura não fica sem vínculo por contar uma referência já resolvida como outra queixa');
  console.log('PASS: correções de anatomia, sintomas coordenados, queixa atual, cabeçalho, testes e auditoria da segunda rodada.');
+}
+
+// Fragments, bilateral anatomy, optional individual dose and editorial spelling.
+// Entirely synthetic; no patient identity or production record.
+{
+ const f=fixture();f.fields[0].value='Pessoa Sintética Fragmentos';f.fields[1].value='62';
+ f.fields[2].value='Relata dor no nervo ciático. A 5 meses. A dor começou com um choque na região da canela. Do tornozelo esquerdo. E Atualmente apresenta dor na região dos dois gluteos. Relata dor quando caminha. Relata antecedente de chikungunya há 3 anos (sintomatica).';
+ const original=f.fields[2].value;for(const k of Object.keys(f.notes))f.notes[k]='';
+ f.fields.push({id:'eva_slider',value:'6',type:'range',tagName:'INPUT',disabled:false,labels:[{textContent:'EVA',querySelector:()=>null}],classList:{contains:()=>false},closest:()=>null});
+ f.fields.push({id:'exames_imagem_descricao',value:'Espondilodiscroatrose lombar, caraterziada por desidratação discal em L3-L4 e L5-S1; espondilolise bilateral em L4, anterolistese grau I e protusões foraminais bilaterais sem evidencia de conflito radicular.',type:'textarea',tagName:'TEXTAREA',disabled:false,labels:[{textContent:'Imagem',querySelector:()=>null}],classList:{contains:()=>false},closest:()=>null});
+ f.nodes.tags_cirurgias={children:[],textContent:''};
+ const medicamento=(texto,nome,dosagem)=>({dataset:{exibicao:texto,nomeMedicamento:nome,dosagem},querySelector:()=>null});
+ f.nodes.tags_medicamentos={children:[medicamento('Pregabalina','Pregabalina','50MG'),medicamento('Dorflex (citrato de orfenadrina, dipirona monoidratada, cafeína anidra)','Dorflex','')],textContent:''};
+ f.notes.contexto_medicamento_observacao='25MG';f.context.estados={cirurgias:'nega',medicamentos:'relata'};
+ f.regions.splice(0,f.regions.length,{dataset:{regiao:'quadril'}});f.c.BANCO_MAPEAMENTO_CLINICO.quadril={nome:'Quadril / Virilha / Pelve'};f.tests=[];
+ const exame='Fraqueza muscular em MMII. Dor na tuberosidade isquiatica, bilateralmente.';
+ f.c.window.KineSysExameLivre={documentar:()=>[{id:'sintetico-fragmentos',texto:exame,situacao:{tipo:'rascunho'},resultado:'descritivo'}]};
+ const r=f.render(),t=r.texto,h=t.split('História clínica\n\n')[1].split('\n\nAntecedentes e contexto')[0];
+ assert.equal(f.fields[2].value,original);assert(r.semantica.fatos.some(x=>x.textoOriginal===exame));
+ assert(t.includes('Foi informada duração de 5 meses.'));assert(t.includes('Também foi mencionado o tornozelo esquerdo.'));
+ assert(t.includes('região glútea bilateral'));assert(!t.includes('E Atualmente'));assert(!/\n\nNesta avaliação, a intensidade/.test(h));assert(h.includes('6/10 na EVA'));
+ assert(t.includes('Pregabalina 50 mg e Dorflex.'));assert(!/citrato de orfenadrina|dipirona monoidratada|cafeína anidra/.test(t));assert(!t.includes('Informa uso de: 25MG'));assert(t.includes('anotação medicamentosa adicional informa 25 mg'));
+ assert(!/dose não informada|dosagem não informada|sem dosagem|sem frequência/i.test(t));
+ for(const term of ['espondilodiscoartrose','caracterizada','espondilólise','protrusões','sem evidência de conflito radicular','L3-L4','L5-S1','grau I'])assert(t.includes(term),term);
+ assert(t.includes('membros inferiores'));assert(t.includes('isquiática'));assert(!t.includes('A avaliação também contempla'));assert(!t.includes('pendente de revisão profissional'));
+ assert(r.validacao.exameLivrePendente.length,'a revisão do profissional continua pendente no painel');
+ assert.equal(r.semantica.validacao.ausentes.length,0);assert.equal(r.semantica.validacao.significado.introduzidas.length,0);
+ assert(!f.c.window.validarTextoSemanticoAvaliacaoKineSys(t.replace('Pregabalina 50 mg','Pregabalina 100 mg')).ok);
+ assert(!f.c.window.validarTextoSemanticoAvaliacaoKineSys(t.replace('glútea bilateral','glútea direita')).ok);
+ if(process.env.KINESYS_FRAGMENT_REPORT==='1')console.log(t);
+ console.log('PASS: fragmentos, glútea bilateral, EVA integrada, dose individual opcional, ortografia e avisos fora do documento.');
 }

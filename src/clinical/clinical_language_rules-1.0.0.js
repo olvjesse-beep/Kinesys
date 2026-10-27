@@ -2,9 +2,11 @@
  * source-bound references. No model, external service, diagnosis or learning. */
 (function(root){
  'use strict';
- const VERSION='1.1.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
+ const VERSION='1.2.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
  function tokens(text){return Array.from(String(text||'').matchAll(/[\p{L}\p{M}]+(?:-[\p{L}\p{M}]+)*|\d+(?:[.,]\d+)?|[^\s]/gu)).map(m=>({texto:m[0],normalizado:norm(m[0]),inicio:m.index,fim:m.index+m[0].length}));}
  const anatomy=[
+  ['glutea','quadril','','glutea',['região dos dois glúteos','região dos dois gluteos','região glútea bilateral','glúteos','gluteos','glútea','glutea']],
+  ['isquiatica','quadril','','tuberosidade_isquiatica',['tuberosidade isquiática','tuberosidade isquiatica','tuberosidades isquiáticas']],
   ['interescapular','coluna_toracica','','interescapular',['entre as escápulas','entre escápulas','região interescapular']],
   ['aquiles','tornozelo_pe','','tendao_aquiles',['tendão de Aquiles','tendão calcâneo','Aquiles']],
   ['halux','tornozelo_pe','','halux',['dedão do pé','dedo grande do pé','primeiro dedo do pé','hálux','hallux']],
@@ -39,6 +41,16 @@
   ['tornosselo','Você quis dizer tornozelo? Confira a localização na fonte antes de corrigir.']
  ];
  const compile=phrase=>tokens(phrase).map(t=>t.normalizado);
+ // Closed orthographic/editorial rules only. Never correct a dose, side,
+ // spinal level, grade, negation or uncertain diagnosis by fuzzy matching.
+ function polirDocumento(value){
+  return String(value||'').replace(/\bespondilodiscroatrose\b/gi,'espondilodiscoartrose').replace(/\bcaraterziada\b/gi,'caracterizada')
+   .replace(/\bdesidrata[cç][aã]o\b/gi,'desidratação').replace(/\bosteofitos\b/gi,'osteófitos').replace(/\bespondilolise\b/gi,'espondilólise')
+   .replace(/\bprotus[oõ]es\b/gi,'protrusões').replace(/\bprotus[aã]o\b/gi,'protrusão').replace(/\bsem evidencia\b/gi,'sem evidência').replace(/\bisquiatica\b/gi,'isquiática')
+   .replace(/\bsintomatica\b/gi,'sintomática').replace(/\bregi[aã]o dos dois gl[uú]teos\b/gi,'região glútea bilateral')
+   .replace(/\bMMII\b/g,'membros inferiores').replace(/\b(\d+(?:[.,]\d+)?)\s*(MG|MCG|ML)\b/gi,(_,n,u)=>n+' '+u.toLowerCase())
+   .replace(/^E\s+atualmente\s+apresenta\s+/i,'Atualmente, refere ');
+ }
  function locate(ts,phrase){const pattern=Array.isArray(phrase)?phrase:compile(phrase),out=[];for(let i=0;i<=ts.length-pattern.length;i++)if(pattern.every((t,j)=>ts[i+j].normalizado===t))out.push({inicio:ts[i].inicio,fim:ts[i+pattern.length-1].fim,tokenInicio:i,tokenFim:i+pattern.length});return out;}
  const anatomyRules=anatomy.flatMap(([id,regiaoId,segmentoId,estruturaId,phrases])=>phrases.map(p=>({id,regiaoId,segmentoId,estruturaId,pattern:compile(p)})));
  const symptomRules=vocabulary.flatMap(([conceito,qualidade,phrases])=>phrases.map(p=>({conceito,qualidade,pattern:compile(p)})));
@@ -177,5 +189,5 @@
    }
   }
  }
- root.KineSysClinicalLanguage=Object.freeze({version:VERSION,tokenizar:tokens,extrair:lexical,analisarOracao:clause,cortesOracoes:clauseCuts,separarEstrutura:noteStructure,comportamento:behavior,qualificadoresLocal:localQualifiers,alvoDeMovimento:motionSite,resolverReferencias:resolveReferences});
+ root.KineSysClinicalLanguage=Object.freeze({version:VERSION,polirDocumento,tokenizar:tokens,extrair:lexical,analisarOracao:clause,cortesOracoes:clauseCuts,separarEstrutura:noteStructure,comportamento:behavior,qualificadoresLocal:localQualifiers,alvoDeMovimento:motionSite,resolverReferencias:resolveReferences});
 })(typeof window==='undefined'?globalThis:window);

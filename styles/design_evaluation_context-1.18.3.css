@@ -87,6 +87,14 @@ body.ks-design-ready #tela_avaliacao .ks-context-card>.clinical-actions{margin-t
 #tela_avaliacao .ks-cirurgia-data{width:100%;min-width:0;box-sizing:border-box;margin:0;padding:8px 10px;font-size:14px}
 #tela_avaliacao .ks-cirurgia-remover{padding:8px;min-width:36px;min-height:36px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
 @media(max-width:600px){#tela_avaliacao #tags_cirurgias>.tag-cirurgia{grid-template-columns:minmax(0,1fr) auto;gap:8px}#tela_avaliacao .ks-cirurgia-data-label{grid-column:1;grid-row:2}#tela_avaliacao .ks-cirurgia-remover{grid-column:2;grid-row:1 / span 2;min-width:44px;min-height:44px}}
+#tela_avaliacao #tags_medicamentos{display:grid;gap:8px;min-width:0}
+#tela_avaliacao #tags_medicamentos>.tag-medicamento{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,190px) auto;align-items:center;gap:12px;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--kds-line,#cbdeda);border-radius:12px;background:var(--kds-surface,#f5faf9);color:var(--kds-text,#183f46)}
+#tela_avaliacao .ks-medicamento-nome{min-width:0;overflow-wrap:anywhere;font-size:var(--kds-font-content,14px)}
+#tela_avaliacao #tags_medicamentos .tag-medicamento span{color:inherit;cursor:default}
+#tela_avaliacao .ks-medicamento-dose-label{display:grid;gap:4px;margin:0;min-width:0;font-size:12px}
+#tela_avaliacao .ks-medicamento-dose{width:100%;min-width:0;box-sizing:border-box;margin:0;padding:8px 10px;font-size:14px}
+#tela_avaliacao .ks-medicamento-remover{padding:8px;min-width:36px;min-height:36px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+@media(max-width:600px){#tela_avaliacao #tags_medicamentos>.tag-medicamento{grid-template-columns:minmax(0,1fr) auto;gap:8px}#tela_avaliacao .ks-medicamento-dose-label{grid-column:1;grid-row:2}#tela_avaliacao .ks-medicamento-remover{grid-column:2;grid-row:1 / span 2;min-width:44px;min-height:44px}}
 
 /* EVA inicial e Radar light glass: somente Antecedentes em diante. */
 #tela_avaliacao #context-panel-dor .context-states{border:0;border-bottom:1px solid var(--kds-line-soft);border-radius:0;background:transparent;padding:0 0 18px;margin-bottom:20px}

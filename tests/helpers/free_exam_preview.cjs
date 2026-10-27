@@ -42,9 +42,10 @@ window.coletarAchadosLaudoKineSys=()=>[{regiaoId:'cervical',regiao:'Coluna cervi
 document.addEventListener('DOMContentLoaded',()=>{
  document.getElementById('chk_cirurgia').checked=true;
  window.preencherCirurgiasAvaliacaoKineSys([{chave:'mamoplastia_redutora',texto:'Mamoplastia Redutora',dataCirurgia:'03/2019'},{chave:'apendicectomia',texto:'Apendicectomia',dataCirurgia:'2021'}]);
+ window.preencherMedicamentosAvaliacaoKineSys([{texto:'Pregabalina',nome:'Pregabalina',dosagem:'50 mg à noite'},{texto:'Dorflex (citrato de orfenadrina, dipirona monoidratada, cafeína anidra)',nome:'Dorflex',dosagem:''}]);
  window.navegarAvaliacaoEtapaKineSys('subtela_triagem');
  const bar=document.getElementById('qa');
- for(const [id,text,fn]of [['qa-formulario','Ver formulário',()=>window.navegarAvaliacaoEtapaKineSys('subtela_triagem')],['qa-relatorio','Ver relatório',()=>window.navegarAvaliacaoEtapaKineSys('subtela_diagnostico')],['qa-reabrir','Reabrir dados fictícios',()=>{const saved=JSON.parse(JSON.stringify(window.coletarCirurgiasAvaliacaoKineSys()));window.preencherCirurgiasAvaliacaoKineSys(saved);}]] ){
+ for(const [id,text,fn]of [['qa-formulario','Ver formulário',()=>window.navegarAvaliacaoEtapaKineSys('subtela_triagem')],['qa-relatorio','Ver relatório',()=>window.navegarAvaliacaoEtapaKineSys('subtela_diagnostico')],['qa-reabrir','Reabrir dados fictícios',()=>{const saved=JSON.parse(JSON.stringify(window.coletarCirurgiasAvaliacaoKineSys()));window.preencherCirurgiasAvaliacaoKineSys(saved);const med=JSON.parse(JSON.stringify(window.coletarMedicamentosAvaliacaoKineSys()));window.preencherMedicamentosAvaliacaoKineSys(med);}]] ){
   const b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;b.addEventListener('click',fn);bar.appendChild(b);
  }
 });
@@ -70,4 +71,4 @@ http.createServer((req,res)=>{
  const permitido=['styles','assets','src/clinical','src/ui'].some(dir=>file.startsWith(path.join(root,dir)+path.sep));
  if(!permitido||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404).end();return;}
  res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.woff2')?'font/woff2':'application/octet-stream');res.end(fs.readFileSync(file));
-}).listen(historySurgeryDemo?4199:reportDemo?4186:4185,'127.0.0.1',()=>console.log('Prévia isolada do exame: http://127.0.0.1:'+(historySurgeryDemo?4199:reportDemo?4186:4185)+'/'));
+}).listen(Number(process.env.KINESYS_EXAM_PREVIEW_PORT)||(historySurgeryDemo?4199:reportDemo?4186:4185),'127.0.0.1',function(){console.log('Prévia isolada do exame: http://127.0.0.1:'+this.address().port+'/');});
