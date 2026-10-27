@@ -6,7 +6,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.3.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const VERSION='1.4.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const uniq=a=>Array.from(new Set(a.filter(Boolean))),copy=o=>JSON.parse(JSON.stringify(o));
  const natural=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' e '+a.at(-1);
  const sentence=t=>{t=String(t||'').trim().replace(/[.;,\s]+$/,'');return t?t[0].toUpperCase()+t.slice(1)+'.':'';};
@@ -30,6 +30,7 @@
   cefaleia:/\bcefaleia\b/g,edema:/\b(?:edema|inchaco|inchado)\b/g,
   rigidez:/\brigidez\b/g,instabilidade:/\b(?:instabilidade|falseio)\b/g,
   limitacao:/\b(?:limitacao|incapacidade|dificuldade)\b/g,febre:/\bfebre\b/g,
+  queimacao:/\bqueimacao\b/g,hipersensibilidade:/\bhipersensibilidade\b/g,tontura:/\btontura\b/g,vertigem:/\bvertigem\b/g,
   alteracao_escapular:/\b(?:ombro caido|escapula alada)\b/g
  });
  function matches(text,rx){return Array.from(text.matchAll(new RegExp(rx.source,rx.flags.includes('g')?rx.flags:rx.flags+'g'))).map(m=>({inicio:m.index,fim:m.index+m[0].length,texto:m[0]}));}
@@ -61,7 +62,7 @@
  function recortes(texto){
   const raw=String(texto||''),cuts=new Set([0,raw.length]);
   // Decimal, dose e abreviação não são limites de frases.
-  for(const cut of root.KineSysClinicalLanguage?.cortesOracoes(raw)||[])cuts.add(cut);
+  for(const cut of root.KineSysClinicalLanguage?.cortesOracoes(raw,entidades)||[])cuts.add(cut);
   for(const m of raw.matchAll(/[;\n!?]+|\.(?=\s|$)/g)){
    const antes=raw.slice(Math.max(0,m.index-12),m.index+1);
    if(/\b(?:dr|dra|sr|sra|prof|aprox|min|max)\.$/i.test(antes)&&m[0]==='.')continue;
@@ -105,6 +106,7 @@
    const local=texto.slice(inicioContexto,fimContexto),apos=site?texto.slice(b,fimContexto):'';
    let lado=site?lados(apos):[];
    if(!lado.length&&site&&/\b(?:bilateral(?:mente)?(?: nos| nas)?|ambos os|ambas as)\s+$/.test(t.slice(prev?.fim||0,a)))lado=['bilateral'];
+   if(!lado.length&&site&&/\b(?:dois pes|duas maos|ambos os pes|ambas as maos)\b/.test(norm(site.trecho||'')))lado=['bilateral'];
    if(!lado.length&&sites.length===1)lado=lados(texto);
    // Adjetivo plural no final de enumeração: ombro e cotovelo esquerdos.
    if(!lado.length&&sites.length>1&&/\b(?:direit[oa]s|esquerd[oa]s)\b/.test(t.slice(sites.at(-1).fim))&&lados(texto).length===1)lado=lados(texto);
@@ -124,7 +126,16 @@
   sites.forEach((site,i)=>{
    const proximo=sites[i+1]?.inicio??texto.length;
    const antes=conceitos.filter(c=>c.inicio<=site.inicio),noTrecho=conceitos.filter(c=>c.inicio>=site.fim&&c.inicio<proximo);
-   const c=antes.at(-1)||noTrecho[0];if(c)add(c,site,i);
+   const c=antes.at(-1)||noTrecho[0];if(c){
+    const compartilhados=[c];let anterior=antes.indexOf(c)-1;
+    // Only a direct noun coordination may share this explicit site. Another
+    // location, predicate, dose or date between symptoms stops propagation.
+    while(anterior>=0){const previo=antes[anterior],seguinte=compartilhados[0],ponte=norm(texto.slice(previo.fim,seguinte.inicio));
+     if(!/^\s*(?:(?:intensa|forte|leve|moderada|importante)\s+)?(?:e|,)\s*$/.test(ponte))break;
+     compartilhados.unshift(previo);anterior--;
+    }
+    compartilhados.forEach(item=>add(item,site,i));
+   }
   });
   conceitos.filter(c=>!out.some(p=>p.termo===texto.slice(c.inicio,c.fim))).forEach(c=>add(c,null,-1));
   if(/\b(?:diagnostico|diagnosticad[oa]|hipotese de|suspeita de)\b/.test(t)){
@@ -153,7 +164,8 @@
   const t=norm(text);
   if(props.some(p=>p.tipo==='procedimento'&&p.certeza==='planejada'))return 'indicacoes_relatadas';
   if(props.some(p=>p.tipo==='diagnostico_relatado'))return 'diagnosticos_relatados';
-  if(props.some(p=>p.sujeito==='outra_pessoa')||/^(?:(?:o|a) )?(?:mae|pai|irmao|irma|avo|avo materna|avo paterna)\b/.test(t)||/antecedente|historico|cirurgia|queimadura|pneumonia|septicemia/.test(t))return 'antecedentes';
+  const sintomaAtual=props.some(p=>p.tipo==='sintoma'&&p.sujeito==='paciente'&&p.estado==='relatado'&&p.temporalidade!=='anterior');
+  if(props.some(p=>p.sujeito==='outra_pessoa')||/^(?:(?:o|a) )?(?:mae|pai|irmao|irma|avo|avo materna|avo paterna)\b/.test(t)||!sintomaAtual&&/antecedente|historico|cirurgia|queimadura|pneumonia|septicemia/.test(t))return 'antecedentes';
   if(/\b(?:apos isso|desde entao|por isso|essa dor|o mesmo sintoma)\b/.test(t))return 'continuidade';
   if(/\b(?:ao dormir|sono|despert\w*|acorda|noite|noturn\w*)\b/.test(t))return 'repercussoes';
   if(/\b(?:telefone|celular|rotina|trabalho)\b/.test(t)&&!props.some(p=>p.conceito==='dor'))return 'rotina';
@@ -177,7 +189,7 @@
    fato.linguagem=root.KineSysClinicalLanguage?.analisarOracao(parte.trecho,props,parte.inicio)||null;
    for(const p of fato.linguagem?.pendencias||[])pendencias.push({...p,fatoId:id,inicio:parte.inicio+p.inicio,fim:parte.inicio+p.fim});
    if(/\b(?:esse|essa|isso|ela|ele)\b/.test(norm(parte.trecho))&&props.length===0)pendencias.push({fatoId:id,tipo:'referencia_nao_resolvida',mensagem:'Referência sem vínculo anatômico inequívoco; mantida a redação de origem.'});
-   if(props.some(p=>!p.regiaoId&&!p.segmentoId&&p.tipo==='sintoma'))pendencias.push({fatoId:id,tipo:'local_nao_especificado',mensagem:'Há sintoma sem localização inequívoca.'});
+   if(props.some(p=>!p.regiaoId&&!p.segmentoId&&p.tipo==='sintoma'&&p.estado!=='negado'&&!['tontura','vertigem','febre'].includes(p.conceito)))pendencias.push({fatoId:id,tipo:'local_nao_especificado',mensagem:'Há sintoma sem localização inequívoca.'});
    fatos.push(fato);proposicoes.push(...props);
   });
   if(root.KineSysClinicalLanguage){
@@ -263,7 +275,7 @@
  function validar(relato,texto,adicionais=[]){
   const lido=analisar(texto),originais=[...relato.proposicoes,...adicionais.flatMap(t=>analisar(t).proposicoes)],ausentes=[],introduzidas=[];
   relato.proposicoes.forEach(p=>{const cs=lido.proposicoes.filter(g=>compativel(p,g));if(!cs.length||!(p.marcadoresTemporais||[]).every(m=>cs.some(g=>(g.marcadoresTemporais||[]).includes(m))))ausentes.push({proposicaoId:p.id,fatoId:p.fatoId,esperado:assinatura(p)});});
-  lido.proposicoes.filter(p=>p.regiaoId||p.tipo==='procedimento'||p.tipo==='medicamento').forEach(p=>{const cs=originais.filter(o=>compativel(p,o));if(!cs.length||!(p.marcadoresTemporais||[]).every(m=>cs.some(o=>(o.marcadoresTemporais||[]).includes(m))))introduzidas.push({trecho:p.origem.trecho,observado:assinatura(p)});});
+  lido.proposicoes.filter(p=>p.regiaoId||p.tipo==='procedimento'||p.tipo==='medicamento'||p.tipo==='sintoma'&&['tontura','vertigem','febre'].includes(p.conceito)).forEach(p=>{const cs=originais.filter(o=>compativel(p,o));if(!cs.length||!(p.marcadoresTemporais||[]).every(m=>cs.some(o=>(o.marcadoresTemporais||[]).includes(m))))introduzidas.push({trecho:p.origem.trecho,observado:assinatura(p)});});
   // Associação regional não autoriza escrever causalidade. Marcadores causais
   // novos exigem revisão mesmo quando todas as palavras clínicas estão presentes.
   const causal=/\b(?:causad[oa]s? por|decorrente de|devido a|secundari[oa] a|em decorrencia de|responsavel por)\b/g;

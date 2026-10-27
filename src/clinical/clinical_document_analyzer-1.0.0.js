@@ -4,15 +4,23 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.3.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+ const VERSION='1.4.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
  const uniq=a=>Array.from(new Set(a.filter(x=>x!==undefined&&x!==null&&x!=='')));
  const regionNames={cervical:'coluna cervical',ombro:'ombro',cotovelo:'cotovelo',punho_mao:'punho e mão',coluna_toracica:'coluna torácica',lombar:'coluna lombar',quadril:'quadril',joelho:'joelho',tornozelo_pe:'tornozelo e pé',cefaleia:'cabeça / cefaleia',atm:'ATM',perna:'perna'};
  const clone=x=>JSON.parse(JSON.stringify(x)),sentence=s=>{s=String(s||'').trim().replace(/[.;\s]+$/,'');return s?s[0].toUpperCase()+s.slice(1)+'.':'';};
- const noun='(?:dor(?:es)?|dormência|formigamento|parestesia|fraqueza|rigidez|edema|inchaço|cefaleia|choques?|instabilidade|limitação|dificuldade)';
+ const noun='(?:dor(?:es)?|dormência|formigamento|parestesia|fraqueza|rigidez|edema|inchaço|cefaleia|choques?|instabilidade|limitação|dificuldade|queimação|hipersensibilidade|tontura|vertigem)';
  const symptoms=new RegExp('^(?:(?:o mesmo|a mesma|o paciente|a paciente|paciente)\\s+)?(?:(?:sente|tem|apresenta|está com|esta com|vem apresentando|queixa-se de|se queixa de)\\s+)?((?:muita?\\s+|pouca?\\s+)?'+noun+')\\b([\\s\\S]*)$','iu');
  const wrapper=/^(?:(?:o|a)\s+)?paciente\s+(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+|^(?:também\s+)?(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+/i;
  function slots(text){
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
+  if(/^(?:Conta|Relata|Refere) que começou devagar e foi aumentando$/iu.test(body))return {modelo:'inicio_progressao_relatados',corpo:body,escopo:'oracao_positiva_explicita'};
+  if(/^Os episódios duram (?:cerca de )?(?:[\p{L}]+|[\d.,]+) segundos e melhoram ao permanecer parado$/iu.test(body))return {modelo:'duracao_episodios_literal',corpo:base};
+  // Closed documentary negatives remain literal. Recognition here does not
+  // invent an examination, anatomy, diagnosis or the absent event's cause.
+  const eventosNegados=/^Nega (.+)$/iu.exec(body);
+  if(eventosNegados&&eventosNegados[1].split(/,\s*|\s+(?:e|ou)\s+/iu).every(item=>/^(?:novo trauma|trauma(?: recente)?|queda|estalo|febre|perda s[uú]bita de impuls[aã]o|feridas nos p[eé]s|dor no peito|falta de ar|perda de consci[eê]ncia|vis[aã]o dupla|fraqueza nos membros)$/iu.test(item.trim())))return {modelo:'negativa_eventos_literal',corpo:base};
+  if(/^N[aã]o sofreu (?:entorse|trauma|queda)$/iu.test(body)||/^N[aã]o relata irradia[çc][aã]o para (?:os bra[çc]os|as m[aã]os|as pernas)$/iu.test(body))return {modelo:'negativa_eventos_literal',corpo:base};
+  if(/^apertamento dos dentes(?: durante [\p{L}\s]+)?$/iu.test(body))return {modelo:'habito_mandibular_literal',corpo:base};
   if(/^Nega (?:travamento\b|perda de controle urinário\b)/iu.test(body))return {modelo:'negativa_clinica_literal',corpo:base};
   if(/^(?:A mãe|O pai|A irmã|O irmão) (?:tem|teve|apresenta)\s+.+$/iu.test(body))return {modelo:'antecedente_familiar_literal',corpo:base};
   if(/^(?:(?:o|a) paciente\s+)?(?:(?:apresenta|tem|relata|refere)\s+)?sono ruim$/iu.test(body))return {modelo:'qualidade_sono_relatada',corpo:body,escopo:'oracao_positiva_explicita'};
@@ -37,6 +45,7 @@
   return {modelo:'preservacao_documental',corpo:base};
  }
  function realize(model){
+  if(model.modelo==='inicio_progressao_relatados')return 'O início foi gradual, com aumento progressivo dos sintomas.';
   if(model.modelo==='qualidade_sono_relatada')return 'Relata sono de má qualidade.';
   if(model.modelo==='uso_medicamentoso_relatado')return sentence('Informa uso de '+model.complemento);
   if(model.modelo==='sintoma_com_irradiacao')return sentence('Relata '+model.predicado+' '+model.origemLocal+', com irradiação '+model.trajeto);
@@ -199,8 +208,8 @@
    for(const p of f.proposicoes||[]){
     if(p.sujeito!=='paciente'||p.estado!=='relatado')continue;
     const modificador=['destino_trajeto','movimento_modificador','procedimento_modificador'].includes(p.papel),tarefa=p.conceito==='limitacao'&&/\b(?:para|ao|em) (?:calcar|vestir|caminhar|sentar|subir|descer|levantar|agachar)\b/.test(t);
-    if(p.tipo==='sintoma'&&!p.regiaoId&&!p.segmentoId&&!modificador&&!tarefa&&!f.linguagem?.pendencias?.length&&!['febre','cefaleia'].includes(p.conceito)&&!(/\bao dor\b|\bcom para\b/.test(t)))add('localizacao',f.id,'Em qual localização ocorre '+(p.termo||'esse sintoma')+'?',[f.id]);
-    if(p.tipo==='sintoma'&&(p.regiaoId||p.segmentoId)&&!p.lado&&!modificador&&!['cefaleia'].includes(p.conceito))add('lado',f.id+'|'+(p.regiaoId||p.segmentoId),'O sintoma em '+(regionNames[p.regiaoId||p.segmentoId]||p.local)+' ocorre à direita, à esquerda ou dos dois lados?',[f.id]);
+    if(p.tipo==='sintoma'&&!p.regiaoId&&!p.segmentoId&&!modificador&&!tarefa&&!f.linguagem?.pendencias?.length&&!['febre','cefaleia','tontura','vertigem'].includes(p.conceito)&&!(/\bao dor\b|\bcom para\b/.test(t)))add('localizacao',f.id,'Em qual localização ocorre '+(p.termo||'esse sintoma')+'?',[f.id]);
+    if(p.tipo==='sintoma'&&(p.regiaoId||p.segmentoId)&&!p.lado&&!modificador&&!['cefaleia','tontura','vertigem'].includes(p.conceito))add('lado',f.id+'|'+(p.regiaoId||p.segmentoId),'O sintoma em '+(regionNames[p.regiaoId||p.segmentoId]||p.local)+' ocorre à direita, à esquerda ou dos dois lados?',[f.id]);
    }
    if(/\bao dor\b|\bcom para\b/.test(t))add('expressao_incompleta',f.id,'Qual era o sentido deste trecho incompleto? Reescreva-o na HMA.',[f.id]);
    if(/\bTPG\b/.test(raw))add('sigla',f.id,'Qual é a sigla e o resultado no exame original? Confira sem presumir outra sigla.',[f.id]);
