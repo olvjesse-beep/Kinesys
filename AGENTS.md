@@ -1,5 +1,12 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Condições previamente informadas no Radar — 27/10/2026
+
+- Catálogo nominal de condições e procedimentos é separado dos clusters de investigação. Diagnóstico informado/documento mencionado não é confirmação pelo sistema, resultado de teste ou causa presumida de todas as queixas. Não alterar limiares nem ativar testes positivos por correspondência de nome.
+- Preservar negação, suspeita, familiar, condição antiga, indicação cirúrgica distinta de cirurgia realizada, datas, lados e fonte literal. Fratura de tíbia genérica não equivale a planalto tibial nem autoriza inferir consolidação, material de síntese ou liberação de carga. Chikungunya anterior não define fase atual nem causalidade. Reumatismo/artrite sem subtipo não equivale a artrite reumatoide.
+- Radar e plano compartilham `condicoesInformadas` e `mencoesCondicoes` com origem exata. Condição fora do catálogo explicitamente nomeada permanece como relato a esclarecer; não criar critérios clínicos por isso. Troca de avaliação/HMA limpa o contexto anterior; preservar seleção manual e exames existentes.
+- Ampliar `tests/clinical_evidence_reasoning.test.cjs` e manter a barreira hospedada inteira. Usar dados sintéticos e referências institucionais com limites explícitos; a suíte verifica contratos do software e não certifica acurácia clínica.
+
 Estas instruções são obrigatórias para qualquer agente, automação ou sessão de desenvolvimento que trabalhe neste repositório. Existem **dois projetos independentes** e essa separação deve ser preservada em qualquer edição, configuração ou publicação.
 
 ## 1. Identifique o projeto antes de agir

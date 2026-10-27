@@ -86,5 +86,77 @@ caso('perguntas gerais cobrem outras regiões sem diagnosticar por omissão',()=
  const r=api.analisar('Dor cervical. Dor no ombro direito. Dor no joelho esquerdo.');
  for(const id of ['cervical','ombro','joelho'])assert(r.perguntas.some(q=>q.regiaoId===id));assert.equal(r.hipoteses.length,0);
 });
-console.log(`${total} cenários de evidência compartilhada OK.`);
+caso('catálogo amplo de condições informadas possui IDs e famílias válidos',()=>{
+ const cat=env.KineSysEvidenceProfiles;assert(cat.condicoes.length>=85);assert.equal(new Set(cat.condicoes.map(c=>c.id)).size,cat.condicoes.length);
+ for(const c of cat.condicoes){assert(cat.familiasCondicoes[c.familia]);const r=api.extrairCondicoesInformadas('Paciente com diagnóstico de '+c.nome+'.');assert(r.condicoes.some(x=>x.condicaoId===c.id),c.id);assert(r.condicoes.every(x=>x.confirmacaoPeloSistema===false&&x.relacaoComQueixa==='nao_inferida'));}
+});
+caso('fratura tibial pós-operatória é condição informada e não planalto ou diagnóstico do sistema',()=>{
+ const hma='Paciente com diagnóstico de fratura de tíbia esquerda em pós-operatório há 20 dias.',r=api.analisar(hma),c=r.condicoesInformadas[0];
+ assert.equal(c.condicaoId,'fratura_tibia');assert.equal(c.fase,'pos_operatorio_informado');assert.equal(c.lateralidade,'esquerda');assert.equal(c.tempoInformado[0],'há 20 dias');assert.equal(c.confirmacaoPeloSistema,false);assert(!r.condicoesInformadas.some(x=>/planalto|pilao/.test(x.condicaoId)));assert(c.perguntas.some(p=>/restrições/.test(p)));
+ assert.equal(hma.slice(c.origem.inicio,c.origem.fim),c.origem.trecho);assert.equal(r.origemHMA,hma);
+ for(const s of ['Pós-operatório de fratura de tíbia.','Paciente com fratura da tíbia, pós-operatório.'])assert.equal(api.analisar(s).condicoesInformadas[0].fase,'pos_operatorio_informado');
+});
+caso('menção específica não duplica condição genérica; vocabulário não inventa subtipo',()=>{
+ assert.deepEqual(Array.from(api.analisar('Paciente com artrite reumatoide e fratura do planalto tibial.').condicoesInformadas,c=>c.condicaoId),['artrite_reumatoide','fratura_planalto']);
+ const r=api.analisar('Paciente com reumatismo e artrite.');assert(!r.condicoesInformadas.some(c=>c.condicaoId==='artrite_reumatoide'));assert.equal(r.condicoesInformadas.length,2);
+ assert.equal(api.analisar('Paciente com chikungunha.').condicoesInformadas[0].condicaoId,'chikungunya');
+});
+caso('negativas e incerteza não viram diagnóstico já existente',()=>{
+ for(const s of ['Nega artrite reumatoide.','Não tem artrite reumatoide.','Sem histórico de artrite reumatoide.','Nega diagnóstico de artrite reumatoide.','Não foi diagnosticada com artrite reumatoide.','Nega pós-operatório de fratura de tíbia.','Suspeita de artrite reumatoide.','Investiga artrite reumatoide.','Não sabe se tem artrite reumatoide.','Não nega artrite reumatoide.','Sem diagnóstico confirmado de artrite reumatoide.','Suspeita de diagnóstico de artrite reumatoide.','Artrite reumatoide em investigação.','Artrite reumatoide descartada.','Paciente refere que nega ser portador de artrite reumatoide.','Paciente refere que nega ter diagnóstico de artrite reumatoide.','Paciente tem necessidade de descartar artrite reumatoide.','Paciente tem dor, não está com artrite reumatoide.','Paciente tem artrite reumatoide (possível).'])assert.equal(api.analisar(s).condicoesInformadas.length,0,s);
+});
+caso('negação coordenada e mudança explícita de predicado mantêm escopo',()=>{
+ const r=api.analisar('Nega diabetes e hipertensão. Nega artrite reumatoide, mas tem lúpus.');assert.deepEqual(Array.from(r.condicoesInformadas,c=>c.condicaoId),['lupus']);
+ const outro=api.analisar('Paciente sem febre e com diagnóstico de artrite reumatoide.');assert.equal(outro.condicoesInformadas.length,1);
+});
+caso('histórico familiar não se confunde com o paciente',()=>{
+ for(const s of ['Minha mãe tem artrite reumatoide.','Histórico familiar de artrite reumatoide.','Diagnóstico de artrite reumatoide na mãe.','Meu marido tem chikungunya.'])assert.equal(api.analisar(s).condicoesInformadas.length,0,s);
+ const r=api.analisar('Minha mãe tem lúpus e o paciente tem artrite reumatoide.');assert.deepEqual(Array.from(r.condicoesInformadas,c=>c.condicaoId),['artrite_reumatoide']);
+});
+caso('chikungunya antiga não define fase crônica nem causa da dor',()=>{
+ const r=api.analisar('Teve chikungunya há 4 anos. Dor no ombro direito ao elevar o braço.');const c=r.condicoesInformadas[0];assert.equal(c.temporalidade,'antecedente_informado');assert.equal(c.tempoInformado[0],'há 4 anos');assert.equal(c.relacaoComQueixa,'nao_inferida');assert(!/cronica|ativa/.test(c.fase));assert(!r.hipoteses.some(h=>/chikungunya/.test(h.id)));
+});
+caso('procedimento indicado não é realizado e não ativa pós-operatório',()=>{
+ for(const hma of ['Indicação de artroplastia total de quadril.','Vai realizar artroplastia de quadril.','Artroplastia de quadril programada.']){const r=api.analisar(hma);assert.equal(r.condicoesInformadas.length,0,hma);assert.equal(r.mencoesCondicoes[0].estado,'procedimento_planejado');}
+ const c=api.analisar('Realizou artroplastia de quadril direita em 2023.').condicoesInformadas[0];assert.equal(c.fase,'procedimento_realizado_informado');assert.equal(c.lateralidade,'direita');
+});
+caso('múltiplas condições e datas mantêm identidade e trecho original',()=>{
+ const hma='Paciente com diagnóstico de fratura de tíbia esquerda em 2020. Tem artrite reumatoide desde 2015. Relata osteoporose.',r=api.analisar(hma);assert.equal(r.condicoesInformadas.length,3);
+ for(const c of r.mencoesCondicoes)assert.equal(hma.slice(c.origem.inicio,c.origem.fim),c.origem.trecho);
+ assert.equal(r.condicoesInformadas[0].lateralidade,'esquerda');assert.equal(r.condicoesInformadas[1].lateralidade,'');
+ const composto='Paciente com diagnóstico de fratura de ti\u0301bia.';const cc=api.analisar(composto).condicoesInformadas[0];assert.equal(composto.slice(cc.origem.inicio,cc.origem.fim),cc.origem.trecho);
+ const prefixo='\uD83D\uDCCB Paciente com diagnóstico de fratura de tíbia.';const cp=api.analisar(prefixo).condicoesInformadas[0];assert.equal(prefixo.slice(cp.origem.inicio,cp.origem.fim),cp.origem.trecho);
+});
+caso('diagnóstico não catalogado é conservado como relato sem criar cluster',()=>{
+ const c=api.analisar('Encaminhamento com diagnóstico de condição rara denominada XYZ.').condicoesInformadas[0];assert.equal(c.condicaoId,'outra_condicao');assert.equal(c.fonte,'documento_mencionado');assert.equal(c.termoInformado,'condição rara denominada XYZ');assert(!c.confirmacaoPeloSistema);
+ assert.equal(api.analisar('Picada de carrapato. Dor em várias articulações.').condicoesInformadas.length,0);
+});
+caso('plano conserva condição informada e hipóteses independentes sem testes falsos',()=>{
+ const p=gerar('Paciente com diagnóstico de artrite reumatoide. Dor anterior no joelho direito ao agachar e subir escadas.');assert.equal(p.condicoesInformadas[0].condicaoId,'artrite_reumatoide');assert(p.hipoteses.some(h=>h.regiaoId==='joelho'));assert(!p.hipoteses.some(h=>h.id==='artrite_reumatoide'));assert(p.hipoteses.every(h=>h.exameAtual.positivos===0));
+ assert.equal(gerar('Dor lateral no quadril ao deitar sobre o lado.').condicoesInformadas.length,0);
+});
+caso('afirmação e negativa divergentes ficam auditáveis',()=>{
+ const r=api.analisar('Tem artrite reumatoide. Nega artrite reumatoide.');assert.equal(r.condicoesInformadas.length,1);assert(r.condicoesInformadas[0].divergencia);assert.equal(r.mencoesCondicoes.length,2);
+});
+caso('menção solta pede esclarecimento em vez de afirmar doença',()=>{
+ const r=api.analisar('Fibromialgia? Dor difusa.');assert.equal(r.condicoesInformadas.length,0);assert.equal(r.mencoesCondicoes[0].estado,'mencao_a_esclarecer');
+});
+caso('família continua na frase seguinte até troca explícita de sujeito',()=>{
+ assert.equal(api.analisar('Minha mãe tem lúpus. Tem artrite reumatoide.').condicoesInformadas.length,0);
+ const r=api.analisar('Minha mãe tem lúpus. O paciente tem osteoporose.');assert.deepEqual(Array.from(r.condicoesInformadas,c=>c.condicaoId),['osteoporose']);
+});
+caso('datas anteriores e declaração posterior permanecem documentais',()=>{
+ const c=api.analisar('Em 2020 teve chikungunya.').condicoesInformadas[0];assert.equal(c.tempoInformado[0],'Em 2020');assert.equal(c.temporalidade,'antecedente_informado');
+ assert.equal(api.analisar('Artrite reumatoide diagnosticada em 2023.').condicoesInformadas.length,1);
+ assert.equal(api.analisar('Paciente com artrite reumatoide?').condicoesInformadas.length,0);
+});
+caso('Radar real exibe condições isoladas, escapa fonte e limpa contexto anterior',()=>{
+ const get=env.document.getElementById,box={hidden:true,dataset:{}},lista={innerHTML:''};env.escapeHTML=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ env.document.getElementById=id=>id==='ks20_hma_radar'?box:id==='ks20_hma_insights'?lista:get(id);
+ try{
+  gerar('Paciente com diagnóstico de fratura de tíbia esquerda em pós-operatório.');env.renderizarRadarHMAKineSys();assert.equal(box.hidden,false);assert(lista.innerHTML.includes('Diagnósticos e condições informados'));assert(lista.innerHTML.includes('Pós-operatório informado'));assert(lista.innerHTML.includes('Fratura de tíbia'));
+  gerar('Paciente com diagnóstico de condição rara <img src=x onerror=alert(1)>.');env.renderizarRadarHMAKineSys();assert(!lista.innerHTML.includes('<img'));assert(lista.innerHTML.includes('&lt;img'));assert(!lista.innerHTML.includes('Fratura de tíbia'));
+  gerar('');env.renderizarRadarHMAKineSys();assert.equal(box.hidden,true);assert.equal(lista.innerHTML,'');assert.equal(box.dataset.raciocinio,'null');
+ }finally{env.document.getElementById=get;}
+});
+console.log(`${total} cenários de evidência compartilhada OK; ${env.KineSysEvidenceProfiles.condicoes.length} condições nominais verificadas.`);
 module.exports={api,env,exemplo};

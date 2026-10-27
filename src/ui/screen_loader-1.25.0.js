@@ -40,15 +40,15 @@
                 'src/clinical/clinical_semantic_graph-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&auditoria=20261027-relatorio-dosagens-r1',
                 'src/clinical/clinical_document_analyzer-1.0.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&audit=20261026-completa-r1&narrativa=20261026-assuntos-r1&auditoria=20261027-relatorio-dosagens-r1',
                 'src/clinical/evaluation_document_review-1.0.0.js?v=20261024-semantica-seis-r2',
-                'database/clinical_evidence_profiles-1.0.0.js?v=20261022-radar-evidencias-r1',
-                'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261022-canela-anatomia-r1',
+                'database/clinical_evidence_profiles-1.0.0.js?v=20261027-radar-condicoes-r1',
+                'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261027-radar-condicoes-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261024-linguagem-contextual-r2',
                 'src/clinical/evaluation_free_exam-1.0.0.js?v=20261023-exame-livre-r1&eva=20261026-lightglass-r1&narrativa=20261026-assuntos-r1',
                 'src/clinical/evaluation_workspace-1.17.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&narrativa=20261026-assuntos-r1&auditoria=20261027-relatorio-dosagens-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js?v=20261025-relatorio-cirurgias-r1&anterior=20261020-contexto-indice-r1&eva=20261026-lightglass-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
-                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261024-linguagem-contextual-r2',
+                'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261027-radar-condicoes-r1',
                 'src/clinical/clinical_region_loader-1.0.0.js?v=20261022-radar-evidencias-r1'
             ]),
             afterLoad(){

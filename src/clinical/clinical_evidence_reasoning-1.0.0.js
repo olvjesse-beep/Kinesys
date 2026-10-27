@@ -3,7 +3,7 @@
  * Ausente, negado, incompatível e desconhecido são estados diferentes. */
 (function(root){
  'use strict';
- const version='1.0.1',n=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),uniq=a=>[...new Set(a.filter(Boolean))];
+ const version='1.1.0',n=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),uniq=a=>[...new Set(a.filter(Boolean))];
  const CONCEITOS={
   plantar_calcanhar:['dor plantar/medial no calcâneo','(?:plantar|planta|sola|medial).{0,35}(?:calcanhar|calcaneo)|(?:calcanhar|calcaneo).{0,35}(?:plantar|medial|planta)'],
   calcanhar:['dor no calcanhar','calcanhar|calcaneo'],
@@ -30,6 +30,74 @@
   apoio_impossivel:['incapacidade de apoio relatada','nao consegue apoiar|nao consegue dar quatro passos|incapaz de apoiar']
  };
  const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(16);};
+ const escaparRx=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ let indiceCondicoes=null,catalogoIndexado=null;
+ function extrairCondicoesInformadas(texto){
+  const original=String(texto||''),catalogo=root.KineSysEvidenceProfiles;
+  if(!catalogo?.condicoes)return {condicoes:[],mencoes:[]};
+  // Mapa de offsets também preserva acentos decompostos e a redação original.
+  let t='',mapa=[];for(let i=0;i<original.length;){const ch=String.fromCodePoint(original.codePointAt(i)),normal=n(ch);t+=normal;for(let j=0;j<normal.length;j++)mapa.push(i);i+=ch.length;}mapa.push(original.length);
+  if(catalogoIndexado!==catalogo){indiceCondicoes=catalogo.condicoes.flatMap(c=>uniq(c.aliases.map(n)).map(alias=>({c,alias,rx:new RegExp('(?<![a-z0-9])'+escaparRx(alias)+'(?![a-z0-9])','g')})));catalogoIndexado=catalogo;}
+  const candidatos=[];
+  for(const {c,alias,rx} of indiceCondicoes){rx.lastIndex=0;for(const m of t.matchAll(rx))candidatos.push({c,alias,inicio:m.index,fim:m.index+m[0].length});}
+  // Um nome específico não vira também a condição genérica contida nele.
+  const ocorrencias=[];candidatos.sort((a,b)=>(b.fim-b.inicio)-(a.fim-a.inicio)||a.inicio-b.inicio).forEach(m=>{if(!ocorrencias.some(x=>m.inicio<x.fim&&m.fim>x.inicio))ocorrencias.push(m);});ocorrencias.sort((a,b)=>a.inicio-b.inicio);
+  // Diagnóstico explicitamente nomeado fora do catálogo continua visível como
+  // relato literal a esclarecer. Não se transforma em nova regra diagnóstica.
+  for(const m of t.matchAll(/\b(?:diagnostico (?:de|do|da)|diagnosticad[oa] com)\s+([^.;\n!?]+)/g)){
+   const inicio=m.index+m[0].length-m[1].length,fim=inicio+m[1].length;
+   if(!ocorrencias.some(x=>x.inicio>=inicio&&x.inicio<fim))ocorrencias.push({c:{id:'outra_condicao',nome:'Outro diagnóstico informado',familia:'contexto',tipo:'condicao_informada'},alias:m[1].trim(),inicio,fim});
+  }
+  ocorrencias.sort((a,b)=>a.inicio-b.inicio);
+  const mencoes=ocorrencias.map((m,index)=>{
+   const inicioFrase=Math.max(t.lastIndexOf('.',m.inicio-1),t.lastIndexOf(';',m.inicio-1),t.lastIndexOf('\n',m.inicio-1),t.lastIndexOf('!',m.inicio-1),t.lastIndexOf('?',m.inicio-1))+1;
+   const fimFrase=t.slice(m.fim).search(/[.;\n!?]/),fim=fimFrase<0?t.length:m.fim+fimFrase;
+   const antes=t.slice(inicioFrase,m.inicio),depois=t.slice(m.fim,fim);
+   const pacienteRx=/\b(?:(?:o |a )?paciente|ele|ela|o mesmo|a mesma|comigo|em si)\b/g;
+   const familiarRx=/\b(?:(?:minha |meu |sua |seu )?(?:mae|pai|irma|irmao|filha|filho|esposa|marido|avo|tia|tio)|historico familiar|antecedente familiar)\b/g;
+   const contextoSujeito=t.slice(t.lastIndexOf('\n',m.inicio-1)+1,m.inicio);
+   const paciente=[...contextoSujeito.matchAll(pacienteRx)].at(-1)?.index??-1,familiar=[...contextoSujeito.matchAll(familiarRx)].at(-1)?.index??-1;
+   const familiarDepois=/^\s+(?:na|no|em|da|do)\s+(?:(?:minha|meu|sua|seu) )?(?:mae|pai|irma|irmao|filha|filho|esposa|marido|avo)\b/.test(depois);
+   const sujeito=familiar>paciente||familiarDepois?'outra_pessoa':'paciente';
+   // O último predicado resolve negação/certeza local, incluindo listas. Um
+   // novo sujeito ou "mas tem" encerra o alcance de uma negativa anterior.
+   const pacienteNaFrase=[...antes.matchAll(pacienteRx)].at(-1)?.index??-1;
+   const contexto=antes.slice(Math.max(0,pacienteNaFrase));
+   const marcadores=[...contexto.matchAll(/\b(?:nao nega(?: ter)?|nao sabe se(?: tem| teve| apresenta)?|nao foi diagnosticad[oa] com|nao tem|nao teve|nao apresenta|nao possui|nao ha|nao sofre de|nao e portador[ae]? de|nao esta com|nao confirmado|descartar|afastar|(?:sem|nega|negou) (?:diagnostico|historico|antecedente|evidencia|pos[- ]operatorio) (?:de|do|da)|sem diagnostico confirmado (?:de|do|da)|suspeita de diagnostico (?:de|do|da)|nega|negou|nunca teve|descartad[oa]|sem|suspeita (?:de|do|da)|suspeita|hipotese (?:de|do|da)|possivel|provavel|investiga|investigando|investigacao (?:de|do|da|para)|a esclarecer|diagnosticad[oa] com|diagnostico(?: medico| confirmado| previo)? (?:de|do|da)|portador[ae]? (?:de|do|da)|tem|teve|apresenta|possui|sofreu|tratou|refere|relata|tratamento (?:de|do|da|para)|antecedente (?:de|do|da)|historico (?:de|do|da)|em acompanhamento (?:por|para)|paciente com|paciente e|pos[- ]operatorio (?:de|do|da)|submetid[oa] a|realizou|fez|vai realizar|indicacao (?:de|do|da)|indicad[oa]|programad[oa]|agendad[oa])\b/g)];
+   const marcador=marcadores.at(-1)?.[0]||'';
+   const incerto=/^(?:nao nega|nao sabe se|nao confirmado|descartar|afastar|sem diagnostico confirmado|suspeita|hipotese|possivel|provavel|investig|a esclarecer)/.test(marcador),negado=!incerto&&/^(?:nao (?:tem|teve|apresenta|possui|ha|foi|sofre|e portador|esta)|sem|nega\b|negou\b|nunca|descartad)/.test(marcador);
+   const planejado=/^(?:vai realizar|indicacao|indicad|programad|agendad)/.test(marcador)||/^\s+(?:indicad[oa]|programad[oa]|agendad[oa])\b/.test(depois);
+   const negadoDepois=/^\s*[,:(-]?\s*(?:negad[oa]|descartad[oa]|nao confirmad[oa]|em investigacao|a esclarecer|a confirmar|sob suspeita|possivel|provavel)\b/.exec(depois)?.[0]||'';
+   const prev=ocorrencias[index-1],prox=ocorrencias[index+1];
+   const inicioLocal=prev&&prev.fim>inicioFrase?prev.fim:inicioFrase,fimLocal=prox&&prox.inicio<fim?prox.inicio:fim;
+   // Metadados posteriores pertencem à menção atual; antecedentes de outra
+   // condição na mesma frase não fornecem lateralidade/data à próxima.
+   const prefixo=t.slice(inicioLocal,m.inicio),sufixo=t.slice(m.fim,fimLocal);
+   const pos=/\bpos[- ]operatorio|\boperad[oa]\b/.test(prefixo)||/\b(?:pos[- ]operatorio|operad[oa])\b/.test(sufixo.split(/\b(?:mas|porem|e)\b/)[0]);
+   const cirurgiaRealizada=m.c.tipo==='procedimento_informado'&&/\b(?:submetid[oa]|realizou|fez|operad[oa]|pos[- ]operatorio)\b/.test(prefixo);
+   const temporalidade=/\b(?:teve|tratou|antecedente|historico|antig[oa]|previa|infancia|resolvid[oa]|curad[oa]|consolidad[oa])\b/.test(prefixo)||/\b(?:resolvid[oa]|curad[oa]|consolidad[oa])\b/.test(sufixo)?'antecedente_informado':'nao_esclarecida';
+   const declaradoDepois=/^\s*[,:(-]?\s*(?:diagnosticad[oa]|confirmad[oa])\b/.test(sufixo);
+   let estado=negado?'negado':incerto?'em_investigacao':planejado?'procedimento_planejado':marcador||pos||cirurgiaRealizada||declaradoDepois?'informado':'mencao_a_esclarecer';
+   if(/\b(?:nega|negou)\s+(?:ter(?:\s+diagnostico\s+(?:de|do|da))?|ser\s+portador[ae]?\s+(?:de|do|da))\s*$/.test(contexto))estado='negado';
+   if(negadoDepois)estado=/negad|descartad/.test(negadoDepois)?'negado':'em_investigacao';
+   if(t[fim]==='?'&&estado==='informado')estado='em_investigacao';
+   const fase=estado==='procedimento_planejado'?'planejado':pos?'pos_operatorio_informado':cirurgiaRealizada?'procedimento_realizado_informado':temporalidade;
+   const tempoRx=/\b(?:ha|desde)\s+\d+\s*(?:dias?|semanas?|mes(?:es)?|anos?)\b|\b(?:em|desde)\s+\d{4}\b|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g;
+   const tempo=[...sufixo.matchAll(tempoRx)].map(x=>original.slice(mapa[m.fim+x.index],mapa[m.fim+x.index+x[0].length]));
+   if(!prev||prev.fim<=inicioFrase)for(const x of prefixo.matchAll(tempoRx))tempo.unshift(original.slice(mapa[inicioLocal+x.index],mapa[inicioLocal+x.index+x[0].length]));
+   const lateralidade=/\bbilateral|\bamb[oa]s\b/.test(sufixo)?'bilateral':/\besquerd[oa]\b/.test(sufixo)?'esquerda':/\bdireit[oa]\b/.test(sufixo)?'direita':'';
+   const familia=catalogo.familiasCondicoes[m.c.familia],inicioOriginal=mapa[m.inicio],fimOriginal=mapa[m.fim];
+   return {id:m.c.id+':'+inicioOriginal,condicaoId:m.c.id,nome:m.c.nome,familia:m.c.familia,tipo:m.c.tipo,estado,sujeito,fase,temporalidade,tempoInformado:tempo,lateralidade,
+    termoInformado:original.slice(inicioOriginal,fimOriginal),fonte:/\b(?:laudo|encaminhamento|relatorio medico|documento)\b/.test(prefixo)?'documento_mencionado':'relato',
+    origem:{campo:'paciente_hma',inicio:inicioOriginal,fim:fimOriginal,trecho:original.slice(inicioOriginal,fimOriginal),clausula:original.slice(mapa[inicioFrase],mapa[fim])},
+    perguntas:familia.perguntas.slice(),fontes:[...familia.fontes,...(m.c.id==='fratura_tibia'?['fraturas']:[])].map(k=>catalogo.fontes[k]),limite:familia.limite,
+    confirmacaoPeloSistema:false,relacaoComQueixa:'nao_inferida'};
+  });
+  // Conservar menções divergentes para revisão, sem uma sobrescrever a outra.
+  const condicoes=mencoes.filter(m=>m.sujeito==='paciente'&&m.estado==='informado');
+  for(const c of condicoes)if(mencoes.some(m=>m.condicaoId===c.condicaoId&&m.sujeito==='paciente'&&['negado','em_investigacao'].includes(m.estado))){c.divergencia=true;c.perguntas.unshift('Há registros divergentes sobre esta condição; esclarecer antes de utilizá-la na avaliação.');}
+  return {condicoes,mencoes};
+ }
  function extrair(texto){
   const graph=root.KineSysSemanticGraph?.analisar(texto),fs=graph?.fatos||[],evidencias=[];
   fs.forEach(f=>{
@@ -57,6 +125,7 @@
  }
  function analisar(texto){
   const catalogo=root.KineSysEvidenceProfiles,extra=extrair(String(texto||''));if(!catalogo||!extra.graph)return null;
+  const informadas=extrairCondicoesInformadas(texto);
   const todas=extra.evidencias.filter(e=>e.sujeito==='paciente'&&e.segmentoId!=='perna'&&(!e.regiaoIds.length||e.regiaoIds.includes('tornozelo_pe'))),atuais=todas.filter(e=>e.estado==='relatado'&&e.temporalidade!=='anterior'),has=id=>atuais.some(e=>e.conceito===id),possui=id=>todas.some(e=>e.conceito===id&&e.estado==='relatado');
   const eventosPe=todas.filter(e=>e.conceito==='entorse'&&e.estado==='relatado');
   const cronologiaPe={eventos:eventosPe,relacaoComSintomas:eventosPe.some(e=>e.relacaoComSintomas==='relatada')?'relatada':'nao_esclarecida',perguntarData:eventosPe.some(e=>!e.tempoInformado),perguntarRelacao:eventosPe.some(e=>e.relacaoComSintomas==='nao_esclarecida')};
@@ -109,7 +178,7 @@
    if(!/medial|lateral|anterior|posterior|plantar|dorsal|radial|ulnar|interlinha|peripatelar/.test(textos))qs.push({id:'local:'+p.id,regiaoId:p.regiaoId,texto:`Na região ${p.regiaoId.replace(/_/g,' ')}, onde exatamente ocorre o sintoma e qual tarefa o reproduz?`,distingue:[]});
    if(!props.some(x=>x.tempo.length))qs.push({id:'tempo:'+p.id,regiaoId:p.regiaoId,texto:`Quando começou a queixa em ${p.regiaoId.replace(/_/g,' ')} e como evoluiu?`,distingue:[]});
   });
-  return {versao:version,fonteId:'hma:'+hash(texto),origemHMA:String(texto||''),evidencias:extra.evidencias,problemas:extra.graph.problemas,cronologia:extra.cronologia,hipoteses,perguntas:qs,
+  return {versao:version,fonteId:'hma:'+hash(texto),origemHMA:String(texto||''),condicoesInformadas:informadas.condicoes,mencoesCondicoes:informadas.mencoes,evidencias:extra.evidencias,problemas:extra.graph.problemas,cronologia:extra.cronologia,hipoteses,perguntas:qs,
    limite:'Prioridade de investigação, não probabilidade diagnóstica. HMA isolada não confirma diagnóstico.'};
  }
  function refinarLeitura(resultado,texto){
@@ -125,7 +194,7 @@
   const principal=aptas[0]||null;
   const mecanismoPendente=r.cronologia.eventos.some(e=>e.temporalidade!=='recente');
   const achados=(resultado.achados||[]).map(a=>a.titulo==='Mecanismo relevante'&&mecanismoPendente?{...a,titulo:'Evento relatado — cronologia a esclarecer'}:a);
-  return {...resultado,achados,suspeitaPrincipal:principal,diferenciais:candidatas.filter(h=>h!==principal),raciocinio:r,perguntasEntrevista:r.perguntas,
+  return {...resultado,achados,condicoesInformadas:r.condicoesInformadas,mencoesCondicoes:r.mencoesCondicoes,suspeitaPrincipal:principal,diferenciais:candidatas.filter(h=>h!==principal),raciocinio:r,perguntasEntrevista:r.perguntas,
    lacunas:uniq([...r.perguntas.map(q=>q.texto),...resultado.lacunas||[]]).slice(0,12)};
  }
  function enriquecerPlano(plano,texto){
@@ -133,12 +202,12 @@
   root.KineSysEvidenceProfiles.instalarBanco(typeof BANCO_MAPEAMENTO_CLINICO==='undefined'?null:BANCO_MAPEAMENTO_CLINICO);
   const avPor=h=>r.hipoteses.find(p=>p.id===h.id);
   const proposicoes=root.KineSysSemanticGraph?.analisar(texto)?.proposicoes||[];
-  plano.raciocinio=r;plano.perguntasEntrevista=r.perguntas;
+  plano.raciocinio=r;plano.perguntasEntrevista=r.perguntas;plano.condicoesInformadas=r.condicoesInformadas;plano.mencoesCondicoes=r.mencoesCondicoes;
   plano.hipoteses=plano.hipoteses.map(h=>{const av=avPor(h),props=proposicoes.filter(p=>p.regiaoId===h.regiaoId&&p.estado==='relatado'&&p.sujeito==='paciente');
    const evidencias=av||{id:h.id,regiaoId:h.regiaoId,estado:props.length?'a_investigar':'historia_insuficiente',aFavor:props.map(p=>({texto:p.origem.trecho,evidenciaIds:[p.id],origem:p.origem})),contra:[],faltantes:['Correlacionar a hipótese com localização, história e exame específicos.'],fontes:[],limite:r.limite};
    return {...h,...(av?{aFavor:av.aFavor.map(e=>e.texto),contra:av.contra.map(e=>e.texto),aConfirmar:uniq([...av.faltantes,...h.aConfirmar||[]])}:{}),evidenciasCompartilhadas:evidencias,fonteRaciocinio:r.fonteId};
   }).sort((a,b)=>(avPor(a)?.prioridade||0)-(avPor(b)?.prioridade||0)||b.prioridadeOrdenacao-a.prioridadeOrdenacao);
   return plano;
  }
- root.KineSysEvidenceReasoning=Object.freeze({version,analisar,extrair,refinarLeitura,enriquecerPlano});
+ root.KineSysEvidenceReasoning=Object.freeze({version,analisar,extrair,extrairCondicoesInformadas,refinarLeitura,enriquecerPlano});
 })(typeof window==='undefined'?globalThis:window);
