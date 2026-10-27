@@ -8,7 +8,7 @@
 'use strict';
 
 const VERSION='1.0.0-phase4e';
-const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261026-inicializacao-r1&eva=20261026-lightglass-r1&contexto=20261026-conteudo-r2';
+const IMPLEMENTACAO='src/patient/prontuario_export_impl.js?v=20261026-inicializacao-r1&eva=20261026-lightglass-r1&contexto=20261026-conteudo-r2&doses=20261027-relatorio-dosagens-r1';
 const PERFIS_DETALHADO=new Set(['MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','FISIOTERAPEUTA','PROFISSIONAL']);
 let carregamento=null;
 

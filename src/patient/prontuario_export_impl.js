@@ -153,7 +153,7 @@ function blocoEvolucao(ev,i,detalhado){
 function textoClinico(titulo,texto){
     return String(texto??'').trim()?`<div class="clinical-block"><h4>${esc(titulo)}</h4><div class="clinical-text">${esc(texto)}</div></div>`:'';
 }
-function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>{if(typeof v==='string')return v;const nome=v?.texto||v?.exibicao||v?.nome||'';return nome+(nome&&v?.dataCirurgia?' (data informada: '+v.dataCirurgia+')':'');}).filter(Boolean).join('; ');}
+function itensClinicos(itens){return (Array.isArray(itens)?itens:[]).map(v=>{if(typeof v==='string')return v;const nome=v?.texto||v?.exibicao||v?.nome||'';return nome+(nome&&v?.dataCirurgia?' (data informada: '+v.dataCirurgia+')':'')+(nome&&v?.dosagem?' '+v.dosagem:'');}).filter(Boolean).join('; ');}
 function detalhesEntrevista(av,c,fonte,campos){
     const motor=av.mapeamento?.contextoMotor||{},grupos=fonte.gruposAnamnese||{},f=fonte.campos||{};
     const juntar=(...v)=>[...new Set(v.flatMap(x=>Array.isArray(x)?x:typeof x==='object'&&x?x.itens||x.exposicoes||[]:[x]).map(x=>typeof x==='string'?x.trim():x?.texto||x?.nome||'').filter(Boolean))];
@@ -165,7 +165,7 @@ function detalhesEntrevista(av,c,fonte,campos){
     return {
         saude:juntar(Object.entries(av.comorbidades||{}).filter(([k,v])=>v===true&&!['cirurgia','corticoide','corticoide_sistemico','corticoide_infiltracao','aine_recente'].includes(k)).map(([k])=>chaveBonita(k)),campos.contexto_saude_observacao),
         cirurgias:juntar(itensClinicos(av.cirurgias||c.cirurgias),detalhe('Região e lado',campos.contexto_cirurgia_regiao),detalhe('Data informada',campos.contexto_cirurgia_data),campos.contexto_trauma_observacao),
-        medicamentos:juntar(itensClinicos(av.medicamentos),campos.contexto_medicamento_observacao),
+        medicamentos:juntar(itensClinicos(c.medicamentos||av.medicamentos),campos.contexto_medicamento_observacao),
         exames:juntar(c.examesImagem?.descricao,f.exames_imagem_descricao),
         trabalho:juntar(lista(grupos.exposicoesOcupacionais||motor.exposicoesOcupacionais),detalhe('Tarefa',campos.contexto_trabalho_tarefa),detalhe('Tempo de exposição',campos.contexto_trabalho_tempo),detalhe('Frequência',campos.contexto_trabalho_frequencia),campos.contexto_trabalho_observacao),
         atividade:juntar(av.esporte,f.paciente_esporte,lista(grupos.exposicoesEsportivas||motor.cargaEsportiva?.exposicoes),detalhe('Frequência semanal',campo('esporte_frequencia',carga.frequenciaSemanal),' sessões/semana'),detalhe('Duração média',campo('esporte_duracao',carga.duracaoMinutos),' min/sessão'),detalhe('Nível',campo('esporte_nivel',carga.nivel)),detalhe('Mudança de carga',campo('esporte_mudanca_carga',carga.mudancaCarga4Semanas))),
@@ -188,7 +188,7 @@ function conteudoClinicoAvaliacao(av,pacienteId=''){
     const contexto=c.contextoAnamnese||fonte.contextoAnamnese||{};
     const campos=contexto.campos||{},comorbidades=av.comorbidades||{};
     let html=textoClinico('História da moléstia atual',av.hma)+textoClinico('Antecedentes assinalados',Object.entries(comorbidades).filter(([,v])=>v===true).map(([k])=>chaveBonita(k)).join('; '));
-    html+=textoClinico('Cirurgias e procedimentos relatados',itensClinicos(av.cirurgias))+textoClinico('Medicamentos relatados',itensClinicos(av.medicamentos))+textoClinico('Atividade física',av.esporte);
+    html+=textoClinico('Cirurgias e procedimentos relatados',itensClinicos(av.cirurgias))+textoClinico('Medicamentos relatados',itensClinicos(c.medicamentos||av.medicamentos))+textoClinico('Atividade física',av.esporte);
     Object.entries(campos).forEach(([k,v])=>{html+=textoClinico(labels[k]||chaveBonita(k.replace(/^contexto_/,'')),v);});
     Object.entries(fonte.gruposAnamnese||{}).filter(([k])=>k!=='comorbidades').forEach(([k,v])=>{html+=textoClinico(chaveBonita(k),itensClinicos(v));});
     ['yellow_flags_observacao','esporte_frequencia','esporte_duracao','esporte_nivel','esporte_mudanca_carga','origem_informacao_clinica'].forEach(k=>{html+=textoClinico(chaveBonita(k),fonte.campos?.[k]);});

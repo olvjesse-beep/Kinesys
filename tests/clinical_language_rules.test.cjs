@@ -168,4 +168,15 @@ test('movement targets and chained unique references do not create another compl
  const text='Dor na parte de fora da canela direita. Essa dor piora na eversão. Essa dor melhora ao descansar.',chained=graph.analisar(text);assert.equal(references(chained).length,2);assert(chained.fatos.slice(1).every(f=>f.proposicoes.some(p=>p.qualificadoresLocal.includes('lateral'))));assert.equal(chained.origem,text);
  assert(!graph.validar(chained,graph.planejar(chained).map(b=>b.texto).join(' ').replaceAll('lateral','medial')).ok);
 });
+test('closed editorial spelling preserves levels, grades, scope and unknown terms',()=>{
+ const raw='Espondilodiscroatrose caraterziada por espondilolise em L4, anterolistese grau I, protusões sem evidencia de conflito radicular; 75MG.';
+ const polished=api.polirDocumento(raw);assert(polished.includes('espondilodiscoartrose'));assert(polished.includes('L4'));assert(polished.includes('grau I'));assert(polished.includes('sem evidência de conflito radicular'));assert(polished.includes('75 mg'));
+ assert.equal(api.polirDocumento('O teste evidencia dor.'),'O teste evidencia dor.','não transformar verbo em substantivo');
+ assert.equal(api.polirDocumento('Possível espondilodiscroatrose em L3-L4.'),'Possível espondilodiscoartrose em L3-L4.');
+ assert.equal(api.polirDocumento('Termo clínico desconhecido; dose de 0,5 mg.'),'Termo clínico desconhecido; dose de 0,5 mg.');
+ for(const text of ['Dor na região dos dois gluteos.','Nega dor na região dos dois gluteos.','Minha mãe tem dor na região dos dois gluteos.']){
+  const source=graph.analisar(text),out=api.polirDocumento(text);assert(source.proposicoes.some(p=>p.lado==='bilateral'&&p.estruturaId==='glutea'));assert(graph.validar(source,out).ok);assert(!graph.validar(source,out.replace('bilateral','direita')).ok);
+ }
+ assert(graph.validar(graph.analisar('Fraqueza em MMII.'),api.polirDocumento('Fraqueza em MMII.')).ok);
+});
 console.log(count+' priority 1/2/4 synthetic language scenarios OK');

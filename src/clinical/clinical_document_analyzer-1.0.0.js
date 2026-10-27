@@ -4,7 +4,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.4.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+ const VERSION='1.5.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
  const uniq=a=>Array.from(new Set(a.filter(x=>x!==undefined&&x!==null&&x!=='')));
  const regionNames={cervical:'coluna cervical',ombro:'ombro',cotovelo:'cotovelo',punho_mao:'punho e mão',coluna_toracica:'coluna torácica',lombar:'coluna lombar',quadril:'quadril',joelho:'joelho',tornozelo_pe:'tornozelo e pé',cefaleia:'cabeça / cefaleia',atm:'ATM',perna:'perna'};
  const clone=x=>JSON.parse(JSON.stringify(x)),sentence=s=>{s=String(s||'').trim().replace(/[.;\s]+$/,'');return s?s[0].toUpperCase()+s.slice(1)+'.':'';};
@@ -13,6 +13,10 @@
  const wrapper=/^(?:(?:o|a)\s+)?paciente\s+(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+|^(?:também\s+)?(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+/i;
  function slots(text){
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
+  const duracao=/^(?:A|Há|Ha)\s+(\d+)\s+(dias?|semanas?|m[eê]s(?:es)?|anos?)$/iu.exec(body);
+  if(duracao)return {modelo:'duracao_informada',quantidade:duracao[1],unidade:duracao[2].toLowerCase(),escopo:'oracao_positiva_explicita'};
+  const localSolto=/^D[oa]\s+(tornozelo|joelho|quadril|ombro|punho)\s+(esquerdo|direito)$/iu.exec(body);
+  if(localSolto)return {modelo:'local_mencionado',local:localSolto[1].toLowerCase(),lado:localSolto[2].toLowerCase(),escopo:'oracao_positiva_explicita'};
   if(/^(?:Conta|Relata|Refere) que começou devagar e foi aumentando$/iu.test(body))return {modelo:'inicio_progressao_relatados',corpo:body,escopo:'oracao_positiva_explicita'};
   if(/^Os episódios duram (?:cerca de )?(?:[\p{L}]+|[\d.,]+) segundos e melhoram ao permanecer parado$/iu.test(body))return {modelo:'duracao_episodios_literal',corpo:base};
   // Closed documentary negatives remain literal. Recognition here does not
@@ -45,6 +49,8 @@
   return {modelo:'preservacao_documental',corpo:base};
  }
  function realize(model){
+  if(model.modelo==='duracao_informada')return `Foi informada duração de ${model.quantidade} ${model.unidade}.`;
+  if(model.modelo==='local_mencionado')return `Também foi mencionado o ${model.local} ${model.lado}.`;
   if(model.modelo==='inicio_progressao_relatados')return 'O início foi gradual, com aumento progressivo dos sintomas.';
   if(model.modelo==='qualidade_sono_relatada')return 'Relata sono de má qualidade.';
   if(model.modelo==='uso_medicamentoso_relatado')return sentence('Informa uso de '+model.complemento);

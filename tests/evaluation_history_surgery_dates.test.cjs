@@ -24,7 +24,7 @@ class Node {
  appendChild(n){this.children.push(n);n.parent=this;return n;}
  setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];}
  addEventListener(k,fn){(this.handlers[k]||=[]).push(fn);}dispatchEvent(e){for(const fn of this.handlers[e.type]||[])fn(e);}
- querySelectorAll(selector){const all=this.children.flatMap(c=>[c,...(c.querySelectorAll?.('*')||[])]);return all.filter(c=>selector==='*'||selector==='.ks-cirurgia-data'&&c.className==='ks-cirurgia-data'||selector.includes('button')&&c.tagName==='BUTTON');}
+ querySelectorAll(selector){const all=this.children.flatMap(c=>[c,...(c.querySelectorAll?.('*')||[])]);return all.filter(c=>selector==='*'||selector.startsWith('.')&&c.className===selector.slice(1)||selector.includes('button')&&c.tagName==='BUTTON');}
  querySelector(s){return this.querySelectorAll(s)[0]||null;}focus(){env.document.activeElement=this;}remove(){this.parent.children=this.parent.children.filter(c=>c!==this);}
 }
 const env={window:{},console,Event:class{constructor(type){this.type=type;}},document:{readyState:'loading',getElementById:id=>nodes[id]||null,querySelectorAll:()=>[],createElement:tag=>new Node(tag),createTextNode:text=>({textContent:text}),addEventListener(k,fn){events[k]=fn;}}};
@@ -55,3 +55,20 @@ const exportLine=fs.readFileSync('src/patient/prontuario_export_impl.js','utf8')
 const exported=vm.runInNewContext(exportLine+'; itensClinicos('+JSON.stringify(saved)+')');assert(exported.includes('Procedimento sintético A (data informada: 15/03/2019)'));assert(exported.includes('Procedimento sintético B (data informada: 2021)'));
 assert(fs.readFileSync('styles/design_evaluation_context-1.18.3.css','utf8').includes('#tela_avaliacao #tags_cirurgias .tag-cirurgia span{color:inherit;cursor:default}'),'legacy white tag spans must not hide the surgery name or date label');
 console.log('História clínica: redação por estrutura, transições auditadas, escopo e original preservados. Cirurgias: datas individuais, JSON/reabertura, legado, remoção e isolamento OK.');
+
+// Individual medication doses use the same existing clinical JSON and guards.
+for(const id of ['tags_medicamentos','input_medicamento','sugestao_box_med'])nodes[id]=new Node(id==='input_medicamento'?'input':'div');
+let autosaves=0;env.agendarAutosaveKineSys=()=>autosaves++;
+env.preencherMedicamentosAvaliacaoKineSys([{texto:'Produto sintético A (composição de avaliação)',nome:'Produto sintético A',dosagem:'25 mg à noite',extra:{preservar:true}},{texto:'Produto sintético B',nome:'Produto sintético B',dosagem:''}]);
+assert.equal(autosaves,0,'restaurar não dispara autosave');
+let meds=env.coletarMedicamentosAvaliacaoKineSys();assert.equal(meds[0].dosagem,'25 mg à noite');assert.equal(meds[1].dosagem,'');assert(meds[0].extra.preservar);
+const dose=nodes.tags_medicamentos.children[0].querySelector('.ks-medicamento-dose');dose.value='50 mg pela manhã';dose.dispatchEvent(new env.Event('input'));assert.equal(autosaves,1);
+meds=JSON.parse(JSON.stringify(env.coletarMedicamentosAvaliacaoKineSys()));env.preencherClinicaEstruturada({medicamentos:meds,legado:{preservar:true}});
+const medJson=JSON.parse(JSON.stringify(env.coletarClinicaEstruturada()));assert.equal(medJson.medicamentos[0].dosagem,'50 mg pela manhã');assert.equal(medJson.medicamentos[1].dosagem,'');assert(medJson.legado.preservar);assert.equal(autosaves,1);
+env.preencherClinicaEstruturada(medJson);assert.deepEqual(JSON.parse(JSON.stringify(env.coletarMedicamentosAvaliacaoKineSys())),meds);
+env.adicionarTagMedicamento(meds[0].texto);assert.equal(nodes.tags_medicamentos.children.length,2,'não duplica ao escolher novamente');assert.equal(env.coletarMedicamentosAvaliacaoKineSys()[0].dosagem,'50 mg pela manhã');
+nodes.tags_medicamentos.children[1].children.at(-1).onclick();assert.equal(env.coletarMedicamentosAvaliacaoKineSys().length,1);
+env.preencherClinicaEstruturada({});assert.equal(env.coletarMedicamentosAvaliacaoKineSys().length,0,'troca de contexto limpa doses e produtos');
+env.preencherMedicamentosAvaliacaoKineSys(['Rótulo legado com descrição integral']);assert.equal(env.coletarMedicamentosAvaliacaoKineSys()[0].texto,'Rótulo legado com descrição integral');assert.equal(env.coletarMedicamentosAvaliacaoKineSys()[0].dosagem,'');
+const medExport=vm.runInNewContext(exportLine+'; itensClinicos('+JSON.stringify(meds)+')');assert(medExport.includes('50 mg pela manhã'));assert(!medExport.includes('não informada'));
+console.log('Medicamentos: dose individual opcional, edição, roundtrip JSON, remoção, legado, exportação e isolamento OK.');

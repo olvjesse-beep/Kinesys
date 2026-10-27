@@ -36,7 +36,7 @@ function prepared(hma){const f=fixture();f.fields[2].value=hma;return f;}
 const f=prepared('Paciente apresenta dor no ombro direito há 3 meses. A paciente informa que está com dormência na mão direita. Nega febre.');
 f.notes.contexto_saude_observacao='Hipertensão informada';f.notes.contexto_trabalho_observacao='Sem afastamento do trabalho';
 const original=f.fields[2].value,r=f.render(),analysis=r.semantica.analiseDocumental;
-assert.equal(r.revisaoSemantica,9);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
+assert.equal(r.revisaoSemantica,10);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
 assert.equal(analysis.entrada.hma,original);assert.equal(f.fields[2].value,original);
 assert(analysis.entrada.entradas.some(x=>x.campo==='contexto_saude_observacao'&&x.valor==='Hipertensão informada'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='tags_medicamentos[1]'&&x.valor==='Medicamento B'));
@@ -63,7 +63,7 @@ assert(dr.semantica.fatos.some(x=>x.origens.some(o=>o.campo==='contexto_saude_ob
 const chronology=prepared('Paciente apresenta dor no ombro direito há 3 meses Refere dormência na mão direita. Nega febre. A mãe apresenta artrite. Refere dor no joelho esquerdo.').render();
 assert(chronology.texto.includes('Relata dor no ombro direito há 3 meses.'));
 assert(!chronology.texto.includes('há 3 meses e no joelho'));
-assert(!chronology.texto.includes('punho_mao'));assert(chronology.texto.includes('punho e mão'));
+assert(!chronology.texto.includes('punho_mao'));assert(chronology.semantica.coberturaProblemas.some(p=>p.regiaoId==='punho_mao'),'queixa da mão continua auditada sem aviso de região vazia no documento');
 assert.equal(chronology.semantica.validacao.significado.ausentes.length,0);
 assert.equal(chronology.semantica.fatos.find(x=>x.textoOriginal==='A mãe apresenta artrite.'||x.origens?.some(o=>o.trecho==='A mãe apresenta artrite.')).categoria,'antecedentes');
 

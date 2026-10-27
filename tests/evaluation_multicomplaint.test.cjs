@@ -31,7 +31,7 @@ caso('exame de outra região não confirma hipótese nem apaga a queixa sem exam
  const t=report('Dor no ombro direito. Dor no joelho esquerdo.');
  const r=t.render();assert(r.texto.includes('ombro direito'));assert(r.texto.includes('joelho esquerdo'));
  assert(!r.semantica.correlacoes.some(c=>c.regiao==='Joelho'&&c.criterioAtendido===true));
- assert(r.texto.includes('ainda não dispõem de resultados de exame registrados'));assert.equal(r.modo,'revisao');
+ assert(!r.texto.includes('ainda não dispõem de resultados de exame registrados'),'lacunas continuam no painel e não no documento');assert.equal(r.modo,'revisao');
  assert(t.nodes['ks-laudo-status'].textContent.includes('Queixas ainda sem exame registrado'));
  assert.deepEqual(Array.from(r.semantica.coberturaProblemas,p=>p.regiaoId).sort(),['joelho','ombro']);
  assert(r.semantica.coberturaProblemas.every(p=>!p.possuiExameRegistrado));
