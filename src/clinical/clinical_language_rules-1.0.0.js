@@ -2,9 +2,11 @@
  * source-bound references. No model, external service, diagnosis or learning. */
 (function(root){
  'use strict';
- const VERSION='1.0.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
+ const VERSION='1.1.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
  function tokens(text){return Array.from(String(text||'').matchAll(/[\p{L}\p{M}]+(?:-[\p{L}\p{M}]+)*|\d+(?:[.,]\d+)?|[^\s]/gu)).map(m=>({texto:m[0],normalizado:norm(m[0]),inicio:m.index,fim:m.index+m[0].length}));}
  const anatomy=[
+  ['interescapular','coluna_toracica','','interescapular',['entre as escápulas','entre escápulas','região interescapular']],
+  ['aquiles','tornozelo_pe','','tendao_aquiles',['tendão de Aquiles','tendão calcâneo','Aquiles']],
   ['halux','tornozelo_pe','','halux',['dedão do pé','dedo grande do pé','primeiro dedo do pé','hálux','hallux']],
   ['polegar','punho_mao','','polegar',['dedão da mão','dedo polegar','polegar']],
   ['dedo_minimo_mao','punho_mao','','dedo_minimo_mao',['dedinho da mão','mindinho da mão','dedo mínimo da mão']],
@@ -14,7 +16,7 @@
   ['lombar','lombar','','',['região lombar','parte lombar']],
   ['calcanhar','tornozelo_pe','','',['calcanhar do pé']],
   ['palma','punho_mao','','',['palma da mão']],
-  ['planta','tornozelo_pe','','',['sola do pé','planta do pé']]
+  ['planta','tornozelo_pe','','',['sola do pé','planta do pé','sola dos pés','sola dos dois pés','solas dos pés','planta dos pés','planta de ambos os pés']]
  ];
  const vocabulary=[
   ['parestesia','formigamento',['formigando','formigação','formigacoes']],
@@ -55,13 +57,14 @@
  function behavior(text){const ts=tokens(text),out=[];for(const rule of behaviorRules)for(const span of locate(ts,rule.pattern)){const before=ts.slice(Math.max(0,span.tokenInicio-2),span.tokenInicio).map(t=>t.normalizado);const denied=!rule.persistencia&&before.some(t=>['nao','sem','nega','negou'].includes(t));out.push(rule.relacao+':'+(denied?'negado':'relatado'));}return Array.from(new Set(out)).sort();}
  function motionSite(text,site){
   const before=norm(text.slice(Math.max(0,site.inicio-65),site.inicio)),after=norm(text.slice(site.fim));
-  return /\b(?:ao |para |durante |quando )?(?:elevar|levantar|estender|flexionar|girar|rodar|movimentar|apertar|flexao d[eo]|extensao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(before)||/\b(?:piora|melhora|agrava|alivia)\b/.test(norm(text))&&(/\bapoio (?:d[oa]|a[oa])\s*$/.test(before)||/\bcom (?:o|a|os|as)\s*$/.test(before)&&/^\s+(?:elevad[oa]s?|levantad[oa]s?)\b/.test(after));
+  return /\b(?:ao |para |durante |quando )?(?:elevar|levantar|estender|flexionar|girar|rodar|mover|movimentar|apoiar|apertar|flexao d[eo]|extensao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(before)||/\b(?:piora|melhora|agrava|alivia)\b/.test(norm(text))&&(/\bapoio (?:d[oa]|a[oa])\s*$/.test(before)||/\bcom (?:o|a|os|as)\s*$/.test(before)&&/^\s+(?:elevad[oa]s?|levantad[oa]s?)\b/.test(after));
  }
  function localQualifiers(text,site){
   if(!site)return [];
   const terms='lateral|medial|anterior|posterior|superior|inferior|proximal|distal',out=[];
   const before=norm(text.slice(0,site.inicio)),inside=norm(text.slice(site.inicio,site.fim)),after=norm(text.slice(site.fim));
   const prefix=new RegExp('\\b('+terms+')\\s+(?:d[ao]s?|n[ao]s?)\\s*$').exec(before),suffix=new RegExp('^\\s+(?:(?:direit[oa]|esquerd[oa])\\s+)?('+terms+')\\b').exec(after);
+  if(/^(?:canelas?|pernas?|joelhos?|tornozelos?)$/.test(norm(site.trecho||''))){if(/\bparte de fora d[ao]\s*$/.test(before))out.push('lateral');if(/\bparte de dentro d[ao]\s*$/.test(before))out.push('medial');}
   if(prefix)out.push(prefix[1]);if(suffix)out.push(suffix[1]);for(const m of inside.matchAll(new RegExp('\\b(?:'+terms+')\\b','g')))out.push(m[0]);
   return Array.from(new Set(out)).sort();
  }
@@ -77,14 +80,18 @@
    predicado:copy(uniqueVerbs.filter(v=>v.inicio<=((p.origem?.fim??text.length+base)-base)).at(-1)||null),origem:copy(p.origem||{})}));
   return {...lex,modelo:'gramatica_superficial_finita',predicados:uniqueVerbs,quadros:frames};
  }
- function clauseCuts(text){
+ function clauseCuts(text,entityReader){
   const ts=tokens(text),cuts=[];
-  for(let i=0;i<ts.length-1;i++)if(ts[i].normalizado==='e'&&/^(?:dor|dores|dormencia|formigamento|fraqueza|edema|inchaco|rigidez|cefaleia)$/.test(ts[i+1].normalizado)){
+  for(let i=0;i<ts.length-1;i++)if(ts[i].normalizado==='e'&&/^(?:dor|dores|dormencia|formigamento|fraqueza|edema|inchaco|rigidez|cefaleia|queimacao|hipersensibilidade|tontura|vertigem)$/.test(ts[i+1].normalizado)){
    const before=text.slice(0,ts[i].inicio),tail=norm(before.split(/[.!?;\n]/).at(-1));
    let quoted=false;for(const ch of before){if(ch==='"'||ch==='“')quoted=!quoted;else if(ch==='”')quoted=false;}
    if(quoted||/\b(?:nega|negou|nao|sem|ausencia|suspeita|talvez|possivel|se|mae|pai|irma|irmao)\b/.test(tail))continue;
    // Only a new symptom with an explicit location. Bare coordinated words may
    // share qualifiers or negation, so their scope must remain together.
+   // Bare coordinated symptoms share the location stated after the pair.
+   // Do not turn 'dor e rigidez no joelho' into an unlocated 'dor.' fragment.
+   const hasLocation=typeof entityReader==='function'?entityReader(tail).length:lexical(tail).entidades.length;
+   if(!hasLocation)continue;
    const after=ts.slice(i+2,i+5).map(t=>t.normalizado).join(' ');
    if(/^(?:no|na|nos|nas|em)\b/.test(after)){cuts.push(ts[i].inicio,ts[i+1].inicio);}
   }
@@ -119,6 +126,7 @@
    const candidates=new Map();let blocked=refs.length!==1||!safePredicate||protectedScope||explicitSites.length>0||!!f.linguagem?.pendencias.length;
    for(const previous of facts.slice(0,i)){
     for(const p of previous.proposicoes||[]){
+     if(p.referenciaOrigem)continue; // A resolved reference is not another independent episode.
      if(p.tipo!=='sintoma'||refType&&p.conceito!==refType||refQuality&&p.qualidade!==refQuality)continue;
      if(['destino_trajeto','movimento_modificador','procedimento_modificador'].includes(p.papel)){if(p.papel==='destino_trajeto')blocked=true;continue;}
      if(p.sujeito!=='paciente'||p.estado!=='relatado'||p.certeza!=='relatada'||p.temporalidade==='anterior'||!p.regiaoId&&!p.segmentoId||p.lado==='bilateral'||previous.linguagem?.pendencias.length){blocked=true;continue;}
@@ -153,7 +161,7 @@
   // Não acrescenta duração, intensidade, causalidade ou palavras à HMA.
   for(let i=0;i<facts.length;i++){
    const f=facts[i],raw=f.origens[0].trecho,t=norm(raw);
-   if(!/^(?:a dor|o formigamento|a dormencia)\b/.test(t)||!(/\b(?:piora|melhora|aumenta|diminui|persiste|continua|comecou|iniciou)\b/.test(t))||/["“”]|\b(?:nova|novo|outra|outro|ontem|hoje|nega|nao|sem|mae|pai)\b/.test(t))continue;
+   if(!/^(?:a dor|o formigamento|a dormencia|a queimacao|a hipersensibilidade)\b/.test(t)||!(/\b(?:piora|melhora|aumenta|diminui|persiste|continua|comecou|iniciou)\b/.test(t))||/["“”]|\b(?:nova|novo|outra|outro|ontem|hoje|nega|nao|sem|mae|pai)\b/.test(t))continue;
    for(const p of f.proposicoes||[]){
     if(p.tipo!=='sintoma'||p.lado||p.sujeito!=='paciente'||p.estado!=='relatado'||!p.regiaoId||!['local','origem_trajeto'].includes(p.papel))continue;
     const candidates=new Map();

@@ -55,7 +55,7 @@ function exemplo(){
 }
 {
  const {f,registro}=exemplo();registro.regiaoId='ombro';registro.regiao='Ombro';registro.lado='direito';registro.texto='Teste descritivo, com 15 graus de limitação.';registro.situacao={tipo:'descritivo'};
- const r=f.render(),a=r.semantica.fatos.find(x=>x.tipo==='exame_livre');assert(r.texto.includes('Ombro — lado direito'));assert.equal(a.trechosDocumentais[0].origemLocalizacao,'registro');
+ const r=f.render(),a=r.semantica.fatos.find(x=>x.tipo==='exame_livre');assert(r.texto.includes('ombro — lado direito'));assert.equal(a.trechosDocumentais[0].origemLocalizacao,'registro');
  registro.texto='SLR negativo à esquerda';const explicito=f.render().semantica.fatos.find(x=>x.tipo==='exame_livre');
  assert.equal(explicito.trechosDocumentais[0].regiaoId,'ombro','a organização não sobrescreve a região expressamente selecionada pelo profissional');
  assert(explicito.trechosDocumentais[0].localizacaoDivergente);assert(f.render().validacao.exameLivrePendente.length);
@@ -216,7 +216,7 @@ function gerarAuditoriaDezAvaliacoes(casos=casosAuditoriaNarrativa,inicioId=1){
   f.c.window.KineSysExameLivre={documentar:()=>registros};const original=JSON.stringify({hma:input.hma,registros,notes:f.notes}),relatorio=f.render();
   assert.equal(JSON.stringify({hma:f.fields[2].value,registros,notes:f.notes}),original,'auditoria não modifica as origens');
   assert(relatorio.texto.startsWith('RELATÓRIO FISIOTERAPÊUTICO\n\nPaciente: '+name));assert(relatorio.texto.includes('Data da avaliação: 27/10/2026'));
-  return {id:index+inicioId,tema:input.tema,nome:name,entrada:input,relatorio};
+  return {id:index+inicioId,tema:input.tema,nome:name,entrada:input,relatorio,validarTexto:texto=>f.c.window.validarTextoSemanticoAvaliacaoKineSys(texto)};
  });
 }
 const gerarSegundaRodadaDezAvaliacoes=()=>gerarAuditoriaDezAvaliacoes(casosAuditoriaSegundaRodada,11);
@@ -258,4 +258,31 @@ for(const {id,entrada,relatorio:r} of segundaRodadaDez){
 }
 assert(segundaRodadaDez[6].relatorio.texto.includes('15/08/2026'));assert(segundaRodadaDez[7].relatorio.texto.includes('12/08/2026'));
 const doses=segundaRodadaDez[8].relatorio.texto;assert(doses.includes('metformina 850 mg duas vezes ao dia e gliclazida 30 mg pela manhã'));assert(doses.includes('investigação de neuropatia, ainda sem confirmação'));assert(doses.includes('A mãe teve neuropatia'));
-console.log('Segunda rodada de dez casos executada: preservação das origens/medidas e guardas verificadas; '+segundaRodadaDez.filter(x=>x.relatorio.modo==='revisao').length+' relatórios continuam sujeitos a revisão. Isso não certifica a redação ou acurácia clínica.');
+console.log('Segunda rodada de dez casos executada: preservação das origens/medidas e guardas verificadas; '+segundaRodadaDez.filter(x=>x.relatorio.modo==='revisao').length+' relatório(s) continuam sujeitos a revisão. Isso não certifica a redação ou acurácia clínica.');
+
+// Falhas reais da segunda rodada: a aprovação exige organização e significado.
+{
+ const porId=id=>segundaRodadaDez.find(x=>x.id===id).relatorio;
+ const historia=id=>porId(id).texto.split('História clínica\n\n')[1].split('\n\nAntecedentes e contexto')[0];
+ assert(!porId(14).semantica.problemas.some(p=>p.regiaoId==='ombro'),'dor entre escápulas não é uma nova queixa do ombro');
+ assert(!porId(14).texto.includes('queixas relatadas em ombro'));
+ assert(porId(15).semantica.proposicoes.some(p=>p.estruturaId==='tendao_aquiles'&&p.lado==='esquerdo'));
+ assert(!porId(15).semantica.validacao.esclarecimentos.some(q=>q.tipo==='localizacao'));
+ assert(porId(17).texto.includes('Motivo da avaliação (conforme relato): Dor e rigidez no joelho direito'));
+ assert(!historia(17).includes('Relata dor.'));assert(porId(17).semantica.proposicoes.filter(p=>p.tipo==='sintoma'&&['dor','rigidez'].includes(p.conceito)&&p.fatoId==='hma:0').every(p=>p.regiaoId==='joelho'&&p.lado==='direito'));
+ assert(historia(18).includes('hipersensibilidade na cicatriz da palma da mão direita'));assert(porId(18).texto.includes('Motivo da avaliação (conforme relato): Dor e hipersensibilidade'));
+ assert(porId(19).texto.includes('Motivo da avaliação (conforme relato): Queimação na sola dos dois pés'));assert(porId(19).semantica.proposicoes.some(p=>p.conceito==='queimacao'&&p.lado==='bilateral'));
+ assert(porId(20).texto.includes('Motivo da avaliação (conforme relato): Tontura ao virar para a direita'));
+ assert(porId(20).texto.includes('No exame vestibular,'));assert(!porId(20).texto.includes('exame de exame'));
+ assert(!/VPPB|vertigem posicional paroxística benigna|labirintite/i.test(porId(20).texto),'Dix-Hallpike não autoriza diagnóstico presumido');
+ assert(!porId(12).semantica.validacao.significado.introduzidas.length,'rótulo do exame não é sintoma novo');
+ const validar=segundaRodadaDez.find(x=>x.id===12).validarTexto,originalTeste='O teste de Finkelstein reproduziu dor típica.';
+ assert(porId(12).texto.includes(originalTeste));
+ assert(!validar(porId(12).texto.replace(originalTeste,'O teste de Finkelstein não reproduziu dor típica.')).ok,'a guarda não ignora inversão de resultado no exame');
+ assert(!validar(porId(12).texto+'\n\nDor na mão direita.').ok,'uma nova afirmação não é autorizada pelo contexto do exame');
+ assert(!validar(porId(12).texto.replace('paracetamol 500 mg','paracetamol 900 mg')).ok,'alteração da dose não desaparece atrás do contexto estruturado');
+
+ assert(!porId(11).texto.includes('grip strength'));assert(!porId(12).texto.includes('WHAT test'));assert(!porId(13).texto.includes('Na avaliação de abertura máxima ou movimentos mandibulares reproduzem'));
+ assert(!/Essa dor melhora/.test(historia(16)),'retomada única segura não fica sem vínculo por contar uma referência já resolvida como outra queixa');
+ console.log('PASS: correções de anatomia, sintomas coordenados, queixa atual, cabeçalho, testes e auditoria da segunda rodada.');
+}

@@ -139,4 +139,33 @@ test('support and elevation of the arm are modifiers, not another complaint',()=
   assert.equal(r.problemas.length,1);assert(graph.validar(r,source).ok);
  }
 });
+test('specific interscapular and Achilles locations preserve exact anatomy and offsets',()=>{
+ for(const [source,region,structure] of [['Dor entre as escápulas há cinco meses.','coluna_toracica','interescapular'],['Dor no tendão de Aquiles esquerdo há dois meses.','tornozelo_pe','tendao_aquiles']]){
+  const r=graph.analisar(source);assert(r.proposicoes.some(p=>p.regiaoId===region&&p.estruturaId===structure));assert.equal(r.origem,source);
+  for(const f of r.fatos)for(const o of f.origens)assert.equal(source.slice(o.inicio,o.fim),o.trecho);
+  assert(!graph.validar(r,source.replace('entre as escápulas','no ombro').replace('tendão de Aquiles','calcanhar')).ok);
+ }
+ assert(graph.analisar('Dor na escápula direita.').proposicoes.every(p=>p.estruturaId!=='interescapular'),'a localização entre as escápulas não é presumida numa escápula isolada');
+});
+test('direct coordinated symptoms share only their explicitly stated location',()=>{
+ for(const source of ['Refere dor e rigidez no joelho direito.','Nega dor e rigidez no joelho direito.','Minha mãe apresenta dor e rigidez no joelho direito.','No passado tinha dor e rigidez no joelho direito.']){
+  const r=graph.analisar(source);assert.equal(r.fatos.length,1);assert.equal(r.proposicoes.length,2);assert(r.proposicoes.every(p=>p.regiaoId==='joelho'&&p.lado==='direito'));
+  if(source.startsWith('Nega'))assert(r.proposicoes.every(p=>p.estado==='negado'));if(source.startsWith('Minha'))assert(r.proposicoes.every(p=>p.sujeito==='outra_pessoa'));
+  assert(graph.validar(r,source).ok);
+ }
+ const mixed=graph.analisar('Dor no ombro esquerdo e rigidez no joelho direito.');assert(mixed.proposicoes.some(p=>p.conceito==='dor'&&p.regiaoId==='ombro'&&p.lado==='esquerdo'));assert(mixed.proposicoes.some(p=>p.conceito==='rigidez'&&p.regiaoId==='joelho'&&p.lado==='direito'));
+ const differentTimes=graph.analisar('Dor há três meses e rigidez no joelho direito.');assert(differentTimes.proposicoes.some(p=>p.conceito==='dor'&&!p.regiaoId),'tempo exclusivo interrompe a coordenação, sem completar anatomia por suposição');
+});
+test('burning, hypersensitivity and dizziness are symptoms, not diagnoses',()=>{
+ const feet=graph.analisar('Queimação na sola dos dois pés.');assert(feet.proposicoes.some(p=>p.conceito==='queimacao'&&p.regiaoId==='tornozelo_pe'&&p.lado==='bilateral'));assert(!feet.proposicoes.some(p=>p.tipo==='diagnostico_relatado'));
+ const dizzy=graph.analisar('Tontura ao virar para a direita na cama.');assert(dizzy.proposicoes.some(p=>p.conceito==='tontura'&&!p.regiaoId&&!p.lado));assert(!dizzy.pendencias.some(p=>p.tipo==='local_nao_especificado'));assert(!graph.validar(dizzy,'Nega tontura ao virar para a direita na cama.').ok);
+ assert(!graph.validar(graph.analisar('Dor no joelho direito.'),'Dor no joelho direito. Tontura.').ok,'sintoma sem topografia obrigatória também precisa de origem');
+ const scar=graph.analisar('Refere dor e hipersensibilidade na palma da mão direita após queimadura.');assert(scar.fatos.every(f=>f.categoria!=='antecedentes'));assert(scar.proposicoes.some(p=>p.conceito==='hipersensibilidade'&&p.lado==='direito'));
+ assert(graph.analisar('Relata queimadura em 2020.').fatos.every(f=>f.categoria==='antecedentes'));
+});
+test('movement targets and chained unique references do not create another complaint',()=>{
+ const r=graph.analisar('Dor no punho esquerdo melhora ao apoiar o antebraço.');assert(r.proposicoes.some(p=>p.segmentoId==='antebraco'&&p.papel==='movimento_modificador'));assert.equal(r.problemas.length,1);
+ const text='Dor na parte de fora da canela direita. Essa dor piora na eversão. Essa dor melhora ao descansar.',chained=graph.analisar(text);assert.equal(references(chained).length,2);assert(chained.fatos.slice(1).every(f=>f.proposicoes.some(p=>p.qualificadoresLocal.includes('lateral'))));assert.equal(chained.origem,text);
+ assert(!graph.validar(chained,graph.planejar(chained).map(b=>b.texto).join(' ').replaceAll('lateral','medial')).ok);
+});
 console.log(count+' priority 1/2/4 synthetic language scenarios OK');
