@@ -116,4 +116,27 @@ test('no network, trained model, global clinical cache or altered diagnostic thr
  const source=fs.readFileSync('src/clinical/clinical_language_rules-1.0.0.js','utf8');assert(!/fetch\(|XMLHttpRequest|localStorage|sessionStorage|supabase|transformers|tensorflow|onnx|limiar\s*[:=]/i.test(source));
  const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');assert(loader.indexOf('clinical_language_rules-1.0.0.js')<loader.indexOf('clinical_semantic_graph-1.0.0.js'));
 });
+test('nominal reference preserves the sole explicit side and does not inherit duration',()=>{
+ const source='Dor cervical à direita há três meses. A dor cervical piora ao trabalhar. A dor cervical melhora com pausas.',r=graph.analisar(source);
+ const links=r.relacoes.filter(x=>x.tipo==='referencia_nominal_resolvida');assert.equal(links.length,2);
+ assert(r.proposicoes.slice(1).every(p=>p.lado==='direito'&&p.referenciaOrigem&&!p.tempo.length));
+ assert.equal(r.origem,source);for(const link of links)assert.equal(source.slice(link.antecedente.inicio,link.antecedente.fim),link.antecedente.trecho);
+ assert(graph.validar(r,graph.planejar(r).map(b=>b.texto).join(' ')).ok);
+});
+for(const source of [
+ 'Dor no ombro direito. Dor no ombro esquerdo. A dor no ombro piora ao elevar o braço.',
+ 'Minha mãe tem dor no ombro direito. A dor no ombro piora.',
+ 'Nega dor no ombro direito. A dor no ombro piora.',
+ 'Antigamente tinha dor no ombro direito. A dor no ombro piora.',
+ 'Dor no ombro direito há três meses. A dor no ombro piora há dois dias.',
+ 'Dor na lateral do joelho direito. A dor medial no joelho piora.'
+])test('unsafe nominal reference cannot transfer side: '+source,()=>{
+ const r=graph.analisar(source);assert(!r.relacoes.some(x=>x.tipo==='referencia_nominal_resolvida'));assert(!r.fatos.at(-1).proposicoes.some(p=>p.referenciaOrigem));
+});
+test('support and elevation of the arm are modifiers, not another complaint',()=>{
+ for(const source of ['Dor cervical à direita melhora com apoio do braço.','Dor no ombro esquerdo piora com o braço elevado.']){
+  const r=graph.analisar(source);assert(r.proposicoes.some(p=>p.segmentoId==='braco'&&p.papel==='movimento_modificador'));
+  assert.equal(r.problemas.length,1);assert(graph.validar(r,source).ok);
+ }
+});
 console.log(count+' priority 1/2/4 synthetic language scenarios OK');

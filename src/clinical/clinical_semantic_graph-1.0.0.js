@@ -36,7 +36,7 @@
  function entidades(text){
   const t=norm(text),out=[...(root.KineSysClinicalLanguage?.extrair(text).entidades||[])];
   Object.entries(REGIOES).forEach(([regiaoId,rx])=>matches(t,rx).forEach(e=>out.push({...e,regiaoId,trecho:text.slice(e.inicio,e.fim)})));
-  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|canelas?|pernas?|membro superior|membro inferior)\b/g).forEach(e=>out.push({...e,regiaoId:'',segmentoId:/^(?:canelas?|pernas?)$/.test(e.texto)?'perna':'',trecho:text.slice(e.inicio,e.fim)}));
+  matches(t,/\b(?:dedo minimo|dedo indicador|dedo medio|dedo anelar|mindinho|bracos?|antebracos?|canelas?|pernas?|membro superior|membro inferior)\b/g).forEach(e=>out.push({...e,regiaoId:'',segmentoId:/^(?:canelas?|pernas?)$/.test(e.texto)?'perna':/^antebracos?$/.test(e.texto)?'antebraco':/^bracos?$/.test(e.texto)?'braco':/^membro superior$/.test(e.texto)?'membro_superior':/^membro inferior$/.test(e.texto)?'membro_inferior':'',trecho:text.slice(e.inicio,e.fim)}));
   return out.sort((a,b)=>a.inicio-b.inicio||b.fim-a.fim).filter((e,i,a)=>!a.slice(0,i).some(o=>o.inicio<=e.inicio&&o.fim>=e.fim));
  }
  function lados(text){return uniq((norm(text).match(/\b(?:direit[oa]s?|esquerd[oa]s?|bilateral(?:mente)?|ambos|ambas)\b/g)||[]).map(x=>/^direit/.test(x)?'direito':/^esquerd/.test(x)?'esquerdo':'bilateral'));}
@@ -49,7 +49,8 @@
   const t=norm(text),antes=t.slice(0,inicio),depois=t.slice(fim);
   const triggers=matches(antes,/\b(?:nao nega|nao sabe se|nega que|nao pode excluir|nao descarta|(?:sem|nega) (?:piora|melhora|aumento|reducao|mudanca)|nega|negou|sem|ausencia de|nao apresenta|nao refere|nao relata|nao sente|nao tem|nao houve|nao evidenciou|nao foi identificado|nao foi identificada|refere|relata|apresenta|sente|evidenciou|identificou)\b/g);
   const trigger=triggers.at(-1)?.texto||'',declaracao=matches(antes,/\b(?:possivel|possibilidade de|suspeita de|hipotese de|talvez|a investigar|se apresentar|se houver)\b/g).at(-1);
-  let estado=/^(?:nao nega|nao sabe se|nega que|nao pode excluir|nao descarta|(?:sem|nega) (?:piora|melhora|aumento|reducao|mudanca))$/.test(trigger)?'indeterminado':/^(?:nega|negou|sem|ausencia|nao)/.test(trigger)?'negado':'relatado';
+  const inicioNegado=/\b(?:nega|negou|sem)\s+(?:inicio|instalacao)\s+(?:subit[oa]|abrupt[oa])\s+(?:d[ao]|de)\s*$/.test(antes);
+  let estado=inicioNegado||/^(?:nao nega|nao sabe se|nega que|nao pode excluir|nao descarta|(?:sem|nega) (?:piora|melhora|aumento|reducao|mudanca))$/.test(trigger)?'indeterminado':/^(?:nega|negou|sem|ausencia|nao)/.test(trigger)?'negado':'relatado';
   // Negativa pós-conceito só quando explicitamente predicada; não cruza outro sintoma.
   if(/^\s*(?:(?:foi|esta|e)\s+)?(?:ausente|negad[oa])\b/.test(depois))estado='negado';
   const sujeitos=matches(antes,/\b(?:o paciente|a paciente|paciente|em si|comigo|minha mae|meu pai|minha irma|meu irmao|irma|irmao|mae|pai|historico familiar|antecedente familiar)\b/g);
@@ -107,10 +108,10 @@
    if(!lado.length&&sites.length===1)lado=lados(texto);
    // Adjetivo plural no final de enumeração: ombro e cotovelo esquerdos.
    if(!lado.length&&sites.length>1&&/\b(?:direit[oa]s|esquerd[oa]s)\b/.test(t.slice(sites.at(-1).fim))&&lados(texto).length===1)lado=lados(texto);
-   if(lado.length>1)lado=[]; // não escolhe um lado se o trecho não permite ligação segura.
+   if(lado.length>1)lado=sites.length===1&&/\b(?:direit[oa]\s+e\s+esquerd[oa]|esquerd[oa]\s+e\s+direit[oa])\b/.test(norm(apos))?['bilateral']:[];
    const ep=escopo(texto,c.inicio,c.fim),temporal=tempo(local),id=`${fatoId}:p${out.length}`;
    let papel='local';if(trajeto&&sites.length>1)papel=index===0?'origem_trajeto':'destino_trajeto';
-   if(site&&(index>0||root.KineSysClinicalLanguage?.alvoDeMovimento(texto,site))&&/\b(?:estender|flexionar|girar|rodar|elevar|levantar|movimentar|apertar|extensao d[eo]|flexao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(t.slice(Math.max(0,a-35),a)))papel='movimento_modificador';
+   if(site&&(root.KineSysClinicalLanguage?.alvoDeMovimento(texto,site)||index>0&&/\b(?:estender|flexionar|girar|rodar|elevar|levantar|movimentar|apertar|extensao d[eo]|flexao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(t.slice(Math.max(0,a-35),a))))papel='movimento_modificador';
    if(site&&/\b(?:biopsia|cirurgia|procedimento|operacao|infiltracao)(?:\s+(?:na|no|da|do|de))?\s+$/.test(t.slice(Math.max(0,a-40),a)))papel='procedimento_modificador';
    const prefixo=site&&!sites.some(s=>s.inicio>c.inicio&&s.inicio<site.inicio)?texto.slice(c.fim,site.inicio):'';
    const termo=texto.slice(c.inicio,c.fim),nt=norm(termo),qualidade=c.qualidade||(c.conceito==='parestesia'?/dorm|adorm/.test(nt)?'dormencia':/formig/.test(nt)?'formigamento':/choque/.test(nt)?'choque':'nao_especificada':c.conceito==='dor'&&/fisgada|pontada|desconforto/.test(nt)?nt:'');
@@ -194,6 +195,8 @@
   // Contradição só dentro do mesmo evento anatômico/lado/momento/sujeito.
   proposicoes.forEach((a,i)=>proposicoes.slice(i+1).forEach(b=>{
    if(!a.regiaoId||a.tipo!==b.tipo||a.conceito!==b.conceito||a.regiaoId!==b.regiaoId||a.lado!==b.lado||a.sujeito!==b.sujeito||a.temporalidade!==b.temporalidade||JSON.stringify(a.tempo)!==JSON.stringify(b.tempo))return;
+   const local=p=>p.estruturaId||norm(p.local||'').replace(/^(?:coluna )?(?:pescoco|cervical)$/,'cervical').replace(/^(?:coluna )?(?:lombar|lombossacra)$/,'lombar').replace(/^calcaneo$/,'calcanhar');
+   if(local(a)!==local(b)||JSON.stringify(a.qualificadoresLocal||[])!==JSON.stringify(b.qualificadoresLocal||[]))return;
    if(new Set([a.estado,b.estado]).has('relatado')&&new Set([a.estado,b.estado]).has('negado')&&a.certeza==='relatada'&&b.certeza==='relatada')relacoes.push({tipo:'possivel_contradicao',de:a.fatoId,para:b.fatoId,proposicoes:[a.id,b.id]});
   }));
   return {versao:VERSION,origem,fatos,proposicoes,problemas:[...problemas.values()],relacoes,pendencias,marcadoresEstruturais,manterOrdem:fatos.some(f=>f.categoria==='continuidade')||pendencias.some(p=>p.tipo==='referencia_nao_resolvida')};

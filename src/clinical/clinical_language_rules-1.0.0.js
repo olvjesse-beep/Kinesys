@@ -53,7 +53,10 @@
  const predicateRules=predicates.map(verbo=>({verbo,pattern:compile(verbo)}));
  const behaviorRules=[...['piora','piorou','piorando','aumenta','aumentou','aumentando','agrava'].map(v=>({pattern:compile(v),relacao:'piora'})),...['melhora','melhorou','melhorando','alivia','aliviou','diminui','reduz'].map(v=>({pattern:compile(v),relacao:'melhora'})),...['persiste','persistência da dor','não passou'].map(v=>({pattern:compile(v),relacao:'persistencia',persistencia:v==='não passou'})),{pattern:compile('pior período de dor'),relacao:'piora'}];
  function behavior(text){const ts=tokens(text),out=[];for(const rule of behaviorRules)for(const span of locate(ts,rule.pattern)){const before=ts.slice(Math.max(0,span.tokenInicio-2),span.tokenInicio).map(t=>t.normalizado);const denied=!rule.persistencia&&before.some(t=>['nao','sem','nega','negou'].includes(t));out.push(rule.relacao+':'+(denied?'negado':'relatado'));}return Array.from(new Set(out)).sort();}
- function motionSite(text,site){return /\b(?:ao |para |durante |quando )?(?:elevar|levantar|estender|flexionar|girar|rodar|movimentar|apertar|flexao d[eo]|extensao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(norm(text.slice(Math.max(0,site.inicio-65),site.inicio)));}
+ function motionSite(text,site){
+  const before=norm(text.slice(Math.max(0,site.inicio-65),site.inicio)),after=norm(text.slice(site.fim));
+  return /\b(?:ao |para |durante |quando )?(?:elevar|levantar|estender|flexionar|girar|rodar|movimentar|apertar|flexao d[eo]|extensao d[eo])\s+(?:(?:o|a|os|as)\s+)?$/.test(before)||/\b(?:piora|melhora|agrava|alivia)\b/.test(norm(text))&&(/\bapoio (?:d[oa]|a[oa])\s*$/.test(before)||/\bcom (?:o|a|os|as)\s*$/.test(before)&&/^\s+(?:elevad[oa]s?|levantad[oa]s?)\b/.test(after));
+ }
  function localQualifiers(text,site){
   if(!site)return [];
   const terms='lateral|medial|anterior|posterior|superior|inferior|proximal|distal',out=[];
@@ -144,6 +147,26 @@
    f.realizacoes=[f.redacao];f.atributos.regioes=Array.from(new Set(parsed.map(p=>p.regiaoId).filter(Boolean)));
    f.linguagem=clause(raw,f.proposicoes,f.origens[0].inicio);f.linguagem.referencia=copy(link);
    document.pendencias=document.pendencias.filter(q=>q.fatoId!==f.id||!['referencia_nao_resolvida','local_nao_especificado'].includes(q.tipo));
+  }
+  // Referência nominal definida: "a dor cervical" retoma a mesma queixa,
+  // apenas quando há um único lado documentado para aquele território.
+  // Não acrescenta duração, intensidade, causalidade ou palavras à HMA.
+  for(let i=0;i<facts.length;i++){
+   const f=facts[i],raw=f.origens[0].trecho,t=norm(raw);
+   if(!/^(?:a dor|o formigamento|a dormencia)\b/.test(t)||!(/\b(?:piora|melhora|aumenta|diminui|persiste|continua|comecou|iniciou)\b/.test(t))||/["“”]|\b(?:nova|novo|outra|outro|ontem|hoje|nega|nao|sem|mae|pai)\b/.test(t))continue;
+   for(const p of f.proposicoes||[]){
+    if(p.tipo!=='sintoma'||p.lado||p.sujeito!=='paciente'||p.estado!=='relatado'||!p.regiaoId||!['local','origem_trajeto'].includes(p.papel))continue;
+    const candidates=new Map();
+    for(const anterior of facts.slice(0,i))for(const q of anterior.proposicoes||[]){
+     if(q.referenciaOrigem||q.tipo!=='sintoma'||q.conceito!==p.conceito||q.regiaoId!==p.regiaoId||q.sujeito!=='paciente'||q.estado!=='relatado'||q.certeza!=='relatada'||q.temporalidade==='anterior'||!q.lado||!['local','origem_trajeto'].includes(q.papel)||(q.estruturaId||'')!==(p.estruturaId||'')||JSON.stringify(q.qualificadoresLocal||[])!==JSON.stringify(p.qualificadoresLocal||[]))continue;
+     if(p.tempo?.length&&JSON.stringify(q.tempo)!==JSON.stringify(p.tempo))continue;
+     const key=JSON.stringify([q.lado,q.temporalidade,q.tempo,q.marcadoresTemporais]);if(!candidates.has(key))candidates.set(key,{anterior,q});
+    }
+    if(candidates.size!==1)continue;
+    const {anterior,q}=candidates.values().next().value,link={tipo:'referencia_nominal_resolvida',de:f.id,para:anterior.id,regra:'territorio_explicito_e_lado_unico',referencia:copy(f.origens[0]),antecedente:copy(anterior.origens[0])};
+    p.lado=q.lado;p.referenciaOrigem={fatoId:anterior.id,origem:copy(anterior.origens[0])};
+    f.referencias=[...(f.referencias||[]),link];document.relacoes.push(link);f.textoInterpretado=raw;
+   }
   }
  }
  root.KineSysClinicalLanguage=Object.freeze({version:VERSION,tokenizar:tokens,extrair:lexical,analisarOracao:clause,cortesOracoes:clauseCuts,separarEstrutura:noteStructure,comportamento:behavior,qualificadoresLocal:localQualifiers,alvoDeMovimento:motionSite,resolverReferencias:resolveReferences});
