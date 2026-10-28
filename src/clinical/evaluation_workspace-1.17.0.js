@@ -1126,8 +1126,8 @@
     function textoBase(d){
         const semantica=construirPlanoNarrativo(d),secoes=comporDocumentoSemantico(semantica),validacao=validarNarrativaClinica(d,secoes);
         semantica.validacao=validarPlanoSemantico(semantica,secoes.join('\n\n'));
-        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:10,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
-        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:10,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        if(validacao.pendencias.length)return {texto:'',modo:'incompleto',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:11,pendencias:validacao.pendencias,validacao,semantica,atualizadoEm:new Date().toISOString()};
+        return {texto:secoes.join('\n\n'),modo:validacao.ok&&semantica.validacao.ok?'assistido':'revisao',fonte:d.fonte,revisado:false,textoAutomatico:true,versaoTexto:22,revisaoSemantica:11,validacao,semantica,atualizadoEm:new Date().toISOString()};
     }
     window.preencherLaudoAvaliacaoKineSys=function(value){
         limparLaudoDoContexto();
@@ -1172,7 +1172,7 @@
             (textoLaudo.includes('foi avaliado(a) pela fisioterapia')&&textoLaudo.includes('Com base nos dados registrados, recomenda-se'))||
             (textoLaudo.startsWith('RELATÓRIO FISIOTERAPÊUTICO')&&textoLaudo.includes('Quanto à queixa atual, registra-se:')&&textoLaudo.includes('O exame físico ainda não contém resultados de testes registrados.')&&textoLaudo.includes('A hipótese clínica permanece em aberto até a correlação entre a anamnese e o exame físico.'))
         );
-        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==10)))laudo=textoBase(d);
+        if(!laudo||legadoAuto||(laudo.textoAutomatico&&!laudo.revisado&&(laudo.fonte!==d.fonte||laudo.versaoTexto!==22||laudo.revisaoSemantica!==11)))laudo=textoBase(d);
         laudo.contextoPaciente=clone(contextoAtual());
         const mudou=laudo.fonte!==d.fonte;
         if(mudou)laudo.revisado=false;
@@ -1196,7 +1196,7 @@
         if(sv?.problemasSemExame?.length)avisos.push('Queixas ainda sem exame registrado: '+unirNatural(valoresUnicos(sv.problemasSemExame.map(p=>p.regiao))));
         if(sv?.correlacoesDivergentes?.length)avisos.push('Há hipótese examinada com localização ou história ainda não concordante; confira as evidências do Radar');
         if(laudo.semantica?.pendenciasInterpretacao?.length)avisos.push('Há localizações ou referências no relato que precisam ser esclarecidas antes de associá-las a uma hipótese');
-        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==10;
+        const motorAnterior=laudo.versaoTexto!==22||laudo.revisaoSemantica!==11;
         document.getElementById('ks-laudo-status').textContent=mudou||motorAnterior?'A avaliação mudou ou há uma nova base semântica. Seu texto foi preservado: use Atualizar base da avaliação ou revise as diferenças antes de finalizar.':laudo.modo==='incompleto'?`Para gerar o relatório, falta ${unirNatural(laudo.pendencias||[])}.`:v.ambiguidades?.length?'O relatório requer revisão: um item positivo reúne achados alternativos. Especifique no texto qual achado foi observado.':(laudo.modo==='revisao'||sv&&!sv.ok)?`O relatório requer revisão. ${avisos.length?avisos.map(a=>String(a).replace(/[.\s]+$/,'')).join('. ')+'.':'Confira os achados divergentes ou os trechos do relato que precisam de revisão.'}`:'Relatório correlacionado à anamnese e ao exame. Revise a conclusão antes de finalizar.';
         const analiseRevisao=mudou||motorAnterior?construirPlanoNarrativo(d).analiseDocumental:laudo.semantica?.analiseDocumental;
         window.KineSysDocumentReview?.renderizar({host:document.getElementById('ks-laudo-revisao-documental'),analise:analiseRevisao,

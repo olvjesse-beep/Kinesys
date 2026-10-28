@@ -4,15 +4,34 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.5.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+ const VERSION='1.6.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
  const uniq=a=>Array.from(new Set(a.filter(x=>x!==undefined&&x!==null&&x!=='')));
  const regionNames={cervical:'coluna cervical',ombro:'ombro',cotovelo:'cotovelo',punho_mao:'punho e mão',coluna_toracica:'coluna torácica',lombar:'coluna lombar',quadril:'quadril',joelho:'joelho',tornozelo_pe:'tornozelo e pé',cefaleia:'cabeça / cefaleia',atm:'ATM',perna:'perna'};
  const clone=x=>JSON.parse(JSON.stringify(x)),sentence=s=>{s=String(s||'').trim().replace(/[.;\s]+$/,'');return s?s[0].toUpperCase()+s.slice(1)+'.':'';};
- const noun='(?:dor(?:es)?|dormência|formigamento|parestesia|fraqueza|rigidez|edema|inchaço|cefaleia|choques?|instabilidade|limitação|dificuldade|queimação|hipersensibilidade|tontura|vertigem)';
+ const noun='(?:dor(?:es)?|incômodo|desconforto|dormência|formigamento|parestesia|fraqueza|rigidez|edema|inchaço|cefaleia|choques?|instabilidade|limitação|dificuldade|queimação|hipersensibilidade|tontura|vertigem)';
  const symptoms=new RegExp('^(?:(?:o mesmo|a mesma|o paciente|a paciente|paciente)\\s+)?(?:(?:sente|tem|apresenta|está com|esta com|vem apresentando|queixa-se de|se queixa de)\\s+)?((?:muita?\\s+|pouca?\\s+)?'+noun+')\\b([\\s\\S]*)$','iu');
  const wrapper=/^(?:(?:o|a)\s+)?paciente\s+(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+|^(?:também\s+)?(?:relata|refere|informa)(?:\s+também)?(?:\s+que)?\s+/i;
  function slots(text){
   const base=String(text||'').trim(),body=base.replace(wrapper,'').replace(/[.;\s]+$/,'');
+  // Finite documentary clauses: the slot is explicit in this sentence. These
+  // rules do not resolve an unnamed location, infer a cause or prescribe care.
+  const localized=/^(a dor)\s+(?:está|esta) localizada\s+(.+)$/iu.exec(body);
+  if(localized)return {modelo:'localizacao_explicita',sujeito:localized[1],complemento:localized[2],corpo:body};
+  const recurring=/^(a dor)\s+(também\s+)?(?:acontece|ocorre)\s+(.+)$/iu.exec(body);
+  if(recurring)return {modelo:'ocorrencia_explicita',sujeito:recurring[1],adicao:!!recurring[2],complemento:recurring[3],corpo:body};
+  const courseNominal=/^a (piora|melhora) (da dor|dos sintomas) (?:acontece|ocorre)\s+(.+)$/iu.exec(body);
+  if(courseNominal)return {modelo:'modificador_nominal',sujeito:courseNominal[2]==='da dor'?'A dor':'Os sintomas',predicado:courseNominal[1]==='piora'?(courseNominal[2]==='da dor'?'piora':'pioram'):(courseNominal[2]==='da dor'?'melhora':'melhoram'),complemento:courseNominal[3],escopo:'oracao_positiva_explicita'};
+  const work=/^trabalha (?:em|no|com) (?:o )?(computador|notebook)$/iu.exec(body);
+  if(work)return {modelo:'rotina_computador',equipamento:work[1].toLowerCase(),escopo:'oracao_positiva_explicita'};
+  const dominance=/^é (destr[oa]|canhot[oa])$/iu.exec(body);
+  if(dominance)return {modelo:'dominancia_relatada',dominancia:dominance[1].toLowerCase(),escopo:'oracao_positiva_explicita'};
+  const clenching=/^apertamento predominante (bilateralmente|à direita|à esquerda)$/iu.exec(body);
+  if(clenching)return {modelo:'apertamento_relatado',distribuicao:clenching[1],escopo:'oracao_positiva_explicita'};
+  if(/^apresenta apertamento diagnosticado$/iu.test(body))return {modelo:'apertamento_diagnostico_informado',corpo:body,escopo:'diagnostico_explicitamente_relatado'};
+  if(/^(?:sente|apresenta) enjoo quando usa a placa miorelaxante$/iu.test(body))return {modelo:'enjoo_durante_uso_placa',escopo:'oracao_positiva_explicita'};
+  // The object of use remains unspecified. Do not attach this denial to a
+  // nearby drug or device merely because it is the closest noun in the HMA.
+  if(/^não faz (?:o )?uso frequente$/iu.test(body))return {modelo:'uso_nao_frequente_sem_objeto',escopo:'negativa_documental_fechada'};
   const duracao=/^(?:A|Há|Ha)\s+(\d+)\s+(dias?|semanas?|m[eê]s(?:es)?|anos?)$/iu.exec(body);
   if(duracao)return {modelo:'duracao_informada',quantidade:duracao[1],unidade:duracao[2].toLowerCase(),escopo:'oracao_positiva_explicita'};
   const localSolto=/^D[oa]\s+(tornozelo|joelho|quadril|ombro|punho)\s+(esquerdo|direito)$/iu.exec(body);
@@ -32,6 +51,8 @@
   if(use&&classifyFreeNote(body).medicamentoReconhecido)return {modelo:'uso_medicamentoso_relatado',complemento:use[1],corpo:body,escopo:'oracao_positiva_explicita'};
   const radiation=/^(dor)\s+(.+?)\s+que\s+irradia\s+(para\s+.+)$/iu.exec(body);
   if(radiation)return {modelo:'sintoma_com_irradiacao',predicado:radiation[1],origemLocal:radiation[2],trajeto:radiation[3],corpo:body};
+  const radiationOnly=/^(?:sente|apresenta) irradiação (para (?:o braço|a mão|a perna|o pé) (?:direit[oa]|esquerd[oa]))$/iu.exec(body);
+  if(radiationOnly)return {modelo:'irradiacao_sem_origem',trajeto:radiationOnly[1],escopo:'oracao_positiva_explicita'};
   const sublocation=/^dor(?:\s+referida)?\s+na região\s+(d[oa]\s+.+?),\s*principalmente\s+(?:na\s+)?porção\s+(medial|lateral|anterior|posterior)$/iu.exec(body);
   if(sublocation)return {modelo:'sintoma_com_sublocalizacao',local:sublocation[1],qualificador:sublocation[2],corpo:body};
   const coordinated=/^((?:essa|esta|a) dor(?:\s+n[oa]\s+[^.;]+?)?)\s+piora\s+(.+?)\s+e\s+(?:agrava|piora|aumenta)\s+(.+)$/iu.exec(body);
@@ -49,12 +70,22 @@
   return {modelo:'preservacao_documental',corpo:base};
  }
  function realize(model){
+  if(model.modelo==='localizacao_explicita')return sentence(model.sujeito+' localiza-se '+model.complemento);
+  if(model.modelo==='ocorrencia_explicita')return sentence(model.sujeito+(model.adicao?' também':'')+' ocorre '+model.complemento);
+  if(model.modelo==='modificador_nominal')return sentence(model.sujeito+' '+model.predicado+' '+model.complemento);
+  if(model.modelo==='rotina_computador')return sentence('A rotina de trabalho inclui o uso de '+model.equipamento);
+  if(model.modelo==='dominancia_relatada')return sentence('É '+model.dominancia);
+  if(model.modelo==='apertamento_relatado')return sentence('O apertamento é predominante '+model.distribuicao);
+  if(model.modelo==='apertamento_diagnostico_informado')return 'Segundo o relato, apresenta apertamento diagnosticado.';
+  if(model.modelo==='enjoo_durante_uso_placa')return 'Há relato de enjoo durante o uso da placa miorelaxante.';
+  if(model.modelo==='uso_nao_frequente_sem_objeto')return 'O uso foi descrito como não frequente.';
   if(model.modelo==='duracao_informada')return `Foi informada duração de ${model.quantidade} ${model.unidade}.`;
   if(model.modelo==='local_mencionado')return `Também foi mencionado o ${model.local} ${model.lado}.`;
   if(model.modelo==='inicio_progressao_relatados')return 'O início foi gradual, com aumento progressivo dos sintomas.';
   if(model.modelo==='qualidade_sono_relatada')return 'Relata sono de má qualidade.';
   if(model.modelo==='uso_medicamentoso_relatado')return sentence('Informa uso de '+model.complemento);
   if(model.modelo==='sintoma_com_irradiacao')return sentence('Relata '+model.predicado+' '+model.origemLocal+', com irradiação '+model.trajeto);
+  if(model.modelo==='irradiacao_sem_origem')return sentence('Há relato de irradiação '+model.trajeto);
   if(model.modelo==='sintoma_com_sublocalizacao')return sentence('Relata dor na região '+model.local+', principalmente na porção '+model.qualificador);
   if(model.modelo==='agravantes_coordenados')return sentence(model.sujeito+' piora '+model.circunstancias.join(' e '));
   if(model.modelo==='sintoma_negado')return sentence('Nega '+model.corpo);
@@ -65,7 +96,7 @@
   return model.corpo;
  }
  function analyzeStatement(original,base=original){
-  const graph=root.KineSysSemanticGraph,model=slots(base);
+  const graph=root.KineSysSemanticGraph,model=slots(root.KineSysClinicalLanguage?.polirDocumento(base)||base);
   const parsed=graph?.analisar(original),propositions=parsed?.proposicoes||[];
   const protectedScope=propositions.some(p=>p.sujeito!=='paciente'||p.estado!=='relatado'||p.certeza!=='relatada'||p.tipo==='diagnostico_relatado'||p.tipo==='procedimento'||p.tipo==='medicamento');
   // A symptom grammar cannot remove hypothesis, denial, family history, causality,
@@ -74,7 +105,8 @@
   let candidate=realize(model),status='realizado',check=null;
   const negativeSafe=model.modelo==='sintoma_negado'&&propositions.length&&propositions.every(p=>p.tipo==='sintoma'&&p.estado==='negado'&&p.sujeito==='paciente'&&p.certeza==='relatada');
   const contextSafe=model.escopo==='oracao_positiva_explicita'&&!guards;
-  if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe&&!contextSafe)||!graph||(!propositions.length&&!contextSafe)){candidate=base;status='preservado';}
+  const documentarySafe=model.escopo==='negativa_documental_fechada'&&!propositions.length||model.escopo==='diagnostico_explicitamente_relatado'&&!guards&&propositions.every(p=>p.tipo==='diagnostico_relatado'&&p.sujeito==='paciente'&&p.estado==='relatado'&&p.certeza==='relatada');
+  if(model.modelo==='preservacao_documental'||((protectedScope||guards)&&!negativeSafe&&!contextSafe&&!documentarySafe)||!graph||(!propositions.length&&!contextSafe&&!documentarySafe)){candidate=base;status='preservado';}
   else {
    check=graph.validar(parsed,candidate);
    // Raw note and professionally polished baseline must both retain meaning.
@@ -82,8 +114,8 @@
    if(!check.ok){candidate=original;status='revisar';}
   }
   return {versao:VERSION,modelo:model.modelo,slots:model,estado:status,origem:String(original||''),base:String(base||''),texto:candidate,
-   proposicoes:clone(propositions),validacao:check?clone(check):null,interpretacaoPendente:model.modelo==='preservacao_documental'&&!propositions.length,
-   ambiguidades:(parsed?.pendencias||[]).map(p=>({tipo:p.tipo,mensagem:p.mensagem}))};
+   proposicoes:clone(propositions),validacao:check?clone(check):null,interpretacaoPendente:model.modelo==='preservacao_documental'&&!propositions.length||model.modelo==='uso_nao_frequente_sem_objeto',
+   ambiguidades:[...(parsed?.pendencias||[]).map(p=>({tipo:p.tipo,mensagem:p.mensagem})),...(model.modelo==='uso_nao_frequente_sem_objeto'?[{tipo:'objeto_de_uso_nao_especificado',mensagem:'Confira a que item se refere o uso não frequente; nenhum medicamento ou dispositivo foi presumido.'}]:[])]};
  }
  function redactContext(value,field){
   // These are metadata wrappers created by the form, not words from a patient.
@@ -100,17 +132,15 @@
  }
  function realizePlannedFact(fact,text,hasPrevious){
   if(!hasPrevious||!root.KineSysSemanticGraph||fact.analiseDocumental?.estado!=='realizado')return text;
-  // Nominal clinical sentences reduce conversational repetition, only after a
+  // Complete clinical sentences reduce conversational repetition, only after a
   // source-attributed opening. Never elide denial, a drug, a relative or doubt.
-  if(fact.analiseDocumental.modelo!=='sintoma_referido'||!fact.proposicoes?.every(p=>p.regiaoId&&p.sujeito==='paciente'&&p.estado==='relatado'&&p.certeza==='relatada')||!/^Relata /u.test(text))return text;
+  if(fact.analiseDocumental.modelo!=='sintoma_referido'||!fact.proposicoes?.length||!fact.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado'&&p.certeza==='relatada')||!/^Relata /u.test(text))return text;
   const model=slots(text),predicate=model.predicado;
   if(!predicate)return text;
-  const masculine=/\b(?:formigamento|edema|inchaço|choques?)$/iu.test(predicate),plural=/\b(?:dores|choques)$/iu.test(predicate);
-  const attribution=masculine?(plural?'referidos':'referido'):(plural?'referidas':'referida');
-  const candidate=sentence(predicate+' '+attribution+model.complemento),check=root.KineSysSemanticGraph.validar(root.KineSysSemanticGraph.analisar(text),candidate);
+  const candidate=sentence('Há também '+predicate[0].toLowerCase()+predicate.slice(1)+model.complemento),check=root.KineSysSemanticGraph.validar(root.KineSysSemanticGraph.analisar(text),candidate);
   if(!check.ok)return text;
   fact.realizacoes=Array.from(new Set([...(fact.realizacoes||[]),candidate]));
-  fact.analiseDocumental.realizacaoPlanejada={texto:candidate,regra:'sintagma_nominal_com_escopo_preservado',validacao:clone(check)};
+  fact.analiseDocumental.realizacaoPlanejada={texto:candidate,regra:'oracao_existencial_com_escopo_preservado',validacao:clone(check)};
   return candidate;
  }
  function classifyFreeNote(value){

@@ -399,6 +399,7 @@ begin
  return jsonb_build_object('ok',true,'agendamento',to_jsonb(a),'cobranca',v_cobranca,'recebimentos_preservados',v_preservado);
 end $$;
 revoke all on function public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean) from public;
+revoke all on function public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean) from anon;
 grant execute on function public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean) to authenticated;
 
 create or replace function public.kinesys_converter_cobranca_pacote() returns trigger

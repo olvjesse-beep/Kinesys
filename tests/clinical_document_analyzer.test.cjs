@@ -36,14 +36,14 @@ function prepared(hma){const f=fixture();f.fields[2].value=hma;return f;}
 const f=prepared('Paciente apresenta dor no ombro direito há 3 meses. A paciente informa que está com dormência na mão direita. Nega febre.');
 f.notes.contexto_saude_observacao='Hipertensão informada';f.notes.contexto_trabalho_observacao='Sem afastamento do trabalho';
 const original=f.fields[2].value,r=f.render(),analysis=r.semantica.analiseDocumental;
-assert.equal(r.revisaoSemantica,10);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
+assert.equal(r.revisaoSemantica,11);assert.equal(r.semantica.versao,4);assert.equal(analysis.tipo,'analisador_documental_local');assert.equal(analysis.semServicoExterno,true);
 assert.equal(analysis.entrada.hma,original);assert.equal(f.fields[2].value,original);
 assert(analysis.entrada.entradas.some(x=>x.campo==='contexto_saude_observacao'&&x.valor==='Hipertensão informada'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='tags_medicamentos[1]'&&x.valor==='Medicamento B'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='mapeamento.radiculopatia_cervical.0'&&x.resultado==='positivo'));
 assert(analysis.entrada.entradas.some(x=>x.campo==='contextoAnamnese.estados.atividade'&&x.valor==='nega'));
 assert(analysis.unidades.every(x=>x.id&&x.origens.length));assert.equal(analysis.fatosSemRoteiro.length,0);
-assert.match(r.texto,/Relata dor no ombro direito há 3 meses\.\s+Dormência referida na mão direita\.\s+Nega febre\./);
+assert.match(r.texto,/Relata dor no ombro direito há 3 meses\.\s+Há também dormência na mão direita\.\s+Nega febre\./);
 assert(!r.texto.includes('Sobre os antecedentes de saúde, foi informado:'));assert(r.texto.includes('Antecedentes referidos: Hipertensão informada'));
 assert.equal(r.validacao.relatoAusente.length,0);assert.equal(r.validacao.contextoAusente.length,0);
 assert.equal(r.semantica.validacao.significado.ausentes.length,0,JSON.stringify(r.semantica.validacao.significado));
@@ -79,5 +79,32 @@ assert.equal(source.entradas.filter(x=>x.tipo==='hipotese_registrada').length,2)
 for(const protectedReport of [{...r,texto:'Documento profissional protegido.',textoAutomatico:false,revisado:false,revisaoSemantica:2},{...r,texto:'Documento já revisado.',textoAutomatico:true,revisado:true,revisaoSemantica:2}]){f.c.window.preencherLaudoAvaliacaoKineSys(protectedReport);f.c.window.renderizarLaudoAvaliacaoKineSys();assert(f.nodes['ks-laudo-texto'].value.startsWith(protectedReport.texto));}
 const other=prepared('Refere dor no joelho esquerdo.').render();assert(!JSON.stringify(other.semantica.analiseDocumental).includes('há 3 meses'));assert(!JSON.stringify(other.semantica.analiseDocumental).includes('mão direita'));
 const loader=fs.readFileSync('src/ui/screen_loader-1.25.0.js','utf8');assert(loader.indexOf('clinical_semantic_graph-1.0.0.js')<loader.indexOf('clinical_document_analyzer-1.0.0.js'));assert(loader.indexOf('clinical_document_analyzer-1.0.0.js')<loader.indexOf('evaluation_workspace-1.17.0.js'));
+// Finite documentary realization, rather than cycling through reporting verbs.
+for(const [source,expected] of [
+ ['Refere que a dor está localizada na região temporal.','A dor localiza-se na região temporal.'],
+ ['Refere que a piora dos sintomas acontece no final do dia.','Os sintomas pioram no final do dia.'],
+ ['Relata que a melhora da dor ocorre ao repousar.','A dor melhora ao repousar.'],
+ ['Refere que trabalha em computador.','A rotina de trabalho inclui o uso de computador.'],
+ ['Refere que é canhota.','É canhota.'],
+ ['Apertamento predominante bilateralmente.','O apertamento é predominante bilateralmente.'],
+ ['Refere que apresenta apertamento diagnósticado.','Segundo o relato, apresenta apertamento diagnosticado.'],
+ ['Refere que sente irradiação para o braço direito.','Há relato de irradiação para o braço direito.'],
+ ['Refere que sente enjoo quando usa a placamiorelaxante.','Há relato de enjoo durante o uso da placa miorelaxante.']
+]){const result=api.analisarFrase(source);assert.equal(result.estado,'realizado',source);assert.equal(result.texto,expected);assert(graph.validar(graph.analisar(source),expected).ok);assert.equal(result.origem,source);}
+// Do not use a positive sentence pattern on a relative, a denial, a hypothesis,
+// a quote, an old episode, or an unknown object of use.
+for(const source of ['A mãe refere que sente incômodo no ombro direito.','Refere que não trabalha em computador.','Talvez seja canhota.','Nega que a dor também ocorre do lado esquerdo.','No passado apresentava apertamento diagnosticado.','"Refere que é destra".'])assert.equal(api.analisarFrase(source).texto,source);
+const unspecified=api.analisarFrase('Relata que não faz o uso frequente.');assert(unspecified.interpretacaoPendente);assert(unspecified.ambiguidades.some(x=>x.tipo==='objeto_de_uso_nao_especificado'));assert(!/medicamento|placa/.test(unspecified.texto));
+// Deliberately synthetic identity, sides and circumstances. Full integration
+// checks every source, not just the number of occurrences of refere/relata.
+const narrative=prepared('Relata dor na região do trapézio do lado direito. Refere que sente incomodo do lado esquerdo. Apertamento predominante bilateralmente. Refere que apresenta apertamento diagnósticado. Refere que trabalha em computador. Refere que a piora dos sintomas acontece no final do dia. Refere que a dor está localizada na região temporal e na região occipital. Refere que sente irradiação para o braço direito. Relata que a dor também acontece do lado esquerdo. Porém com menos frequencia. Refere que é canhota. Refere que sente enjoo quando usa a placamiorelaxante. Relata que não faz o uso frequente.');
+const narrativeSource=narrative.fields[2].value,nr=narrative.render();
+assert.equal(narrative.fields[2].value,narrativeSource);assert.equal(nr.validacao.relatoAusente.length,0);assert.equal(nr.semantica.validacao.significado.ausentes.length,0);assert.equal(nr.semantica.analiseDocumental.fatosSemRoteiro.length,0);
+assert(nr.texto.includes('Há também incômodo do lado esquerdo.'));assert(nr.texto.includes('A dor também ocorre do lado esquerdo, porém com menos frequência.'));
+assert(!/\n\nPorém|\n\nÉ canhota\./.test(nr.texto));assert(nr.texto.includes('A rotina de trabalho inclui o uso de computador. É canhota.'));
+assert((nr.texto.match(/\b(?:Refere|Relata)\b/gi)||[]).length<=2);
+assert(!/bruxismo|causad[oa]|decorre de|irradiação do trapézio/.test(nr.texto));assert(nr.semantica.relacoes.some(x=>x.tipo==='continuacao_documental_frequencia'));
+for(const bad of [nr.texto.replace('braço direito','braço esquerdo'),nr.texto.replace('incômodo do lado esquerdo','dor no ombro esquerdo'),nr.texto+' Enjoo causado pela placa miorelaxante.'])assert(!narrative.c.window.validarTextoSemanticoAvaliacaoKineSys(bad).ok);
+const separatedFrequency=prepared('A dor também acontece do lado direito. Nega trauma. Porém com menos frequência.').render();assert(!separatedFrequency.semantica.relacoes.some(x=>x.tipo==='continuacao_documental_frequencia'),'an intervening fact must stop a frequency attachment');
 console.log('Local document analyzer: typed full-assessment input, finite grammar, source/meaning validation, deduplication, scope, persistence, patient isolation and no remote service OK');
 if(process.env.KINESYS_LOCAL_DOCUMENT_EXAMPLE==='1')console.log(r.texto);
