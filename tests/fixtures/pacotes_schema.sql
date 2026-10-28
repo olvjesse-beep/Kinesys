@@ -142,6 +142,7 @@ clinica_id uuid default kinesys_current_clinica_id(),
 agendamento_online_ativo boolean default false, primary key(id));
 alter table public.cobrancas_agendamento add unique(clinica_id,agendamento_id);
 
+create table public.creditos_paciente_usos(id uuid primary key default gen_random_uuid(),clinica_id uuid,paciente_id text,plano_id uuid,valor numeric);
 create function public.kinesys_perfil_sessao() returns jsonb language sql as $$ select jsonb_build_object('clinica_id',current_setting('test.clinica',true),'tipo',current_setting('test.papel',true),'nome','Teste') $$;
 CREATE OR REPLACE FUNCTION public.kinesys_validar_pagamento_plano_paciente()
  RETURNS trigger
