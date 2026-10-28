@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#123D47">
   <title>Agendamento online</title>
   <link rel="stylesheet" href="../styles/design_tokens.css?v=20260912-online-r1">
-  <link rel="stylesheet" href="./agendamento-publico.css?v=20261025-interface-audit-r1">
-  <link rel="stylesheet" href="./agendamento-modelo2.css?v=20261025-interface-audit-r1">
+  <link rel="stylesheet" href="./agendamento-publico.css?v=20261028-disponibilidade-r1">
+  <link rel="stylesheet" href="./agendamento-modelo2.css?v=20261028-disponibilidade-r1">
 </head>
 <body>
   <main class="ks-public-page" id="ks_public_app">
@@ -155,6 +155,8 @@
               <strong>Nenhum horário disponível agora</strong>
               <span>Tente outro atendimento, outro profissional ou volte mais tarde.</span>
             </div>
+            <button type="button" class="ks-public-btn ks-public-btn-secondary" id="ks_public_refresh_slots">Atualizar horários</button>
+            <p id="ks_public_slots_feedback" class="ks-public-calendar-help" role="status" hidden></p>
             <div id="ks_public_calendar" class="ks-public-calendar" hidden>
               <div class="ks-public-calendar-head">
                 <h2 id="ks_public_calendar_month" aria-live="polite"></h2>
@@ -248,7 +250,7 @@
     </div>
   </main>
 
-  <script src="./calendario-publico.js?v=20261025-interface-audit-r1" defer></script>
-  <script src="./agendamento-publico-v2.js?v=20261025-interface-audit-r1" defer></script>
+  <script src="./calendario-publico.js?v=20261028-disponibilidade-r1" defer></script>
+  <script src="./agendamento-publico-v2.js?v=20261028-disponibilidade-r1" defer></script>
 </body>
 </html>

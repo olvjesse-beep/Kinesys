@@ -13,15 +13,15 @@ class Element {
 }
 function setup() {
   const nodes = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(m => [m[1], new Element()]));
-  const calls = [], errors = [];
+  const calls = [], errors = [], events = {}, timers=[];
   const stages = [...html.matchAll(/<section[^>]*id="([^"]+)"[^>]*data-step="([^"]+)"/g)].map(m => { nodes[m[1]].dataset.step = m[2]; return nodes[m[1]]; });
   const markers = Array.from({length:4}, (_, i) => {const e=new Element();e.dataset.progressSegment=String(i);return e;});
   let slotsResponse = () => ({ ok: true, json: async () => slots });
   let reservation = () => ({ ok: true, json: async () => ({ ok: true }) });
-  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: { getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener() {} }, window: { scrollTo() {} }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse() : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? profile : catalog }; } };
+  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse() : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? profile : catalog }; } };
   vm.runInNewContext(fs.readFileSync('agendamento/calendario-publico.js', 'utf8'), ctx);
-  vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book};bind();'), ctx);
-  return { api: ctx.window.test, calendar: ctx.window.KineSysPublicCalendar, nodes, calls, errors, setSlots: fn => slotsResponse = fn, setReservation: fn => reservation = fn };
+  vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,refreshSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book};bind();'), ctx);
+  return { api: ctx.window.test, calendar: ctx.window.KineSysPublicCalendar, nodes, calls, errors,events,timers,document:ctx.document, setSlots: fn => slotsResponse = fn, setReservation: fn => reservation = fn };
 }
 const flush = () => new Promise(r => setImmediate(r));
 (async () => {
@@ -46,7 +46,7 @@ const flush = () => new Promise(r => setImmediate(r));
   a.selectTime('11:00', '12:00'); assert.equal(t.nodes.ks_public_selection.hidden, false);
   a.moveMonth(1); assert.equal(a.s.month, '2026-11'); assert.equal(a.s.data, '2026-11-03'); assert.equal(a.s.horario, null);
   assert.equal(t.nodes.ks_public_month_next.disabled, true); a.moveMonth(1); assert.equal(a.s.month, '2026-11');
-  a.moveMonth(-1); a.selectTime('11:00', '12:00'); a.prepareData();
+  a.moveMonth(-1); a.selectTime('11:00', '12:00'); await a.prepareData();
   assert.equal(t.nodes.ks_public_app.dataset.bookingStep, 'dados'); assert.equal(t.nodes.ks_public_selection.hidden, true);
   assert.equal(t.nodes.ks_public_app.hidden, false, 'O estado visual da página não pertence ao seletor das etapas');
   assert.equal(t.nodes.ks_public_step_dados.hidden, false); assert.equal(t.nodes.ks_public_step_horario.hidden, true);
@@ -80,6 +80,25 @@ const flush = () => new Promise(r => setImmediate(r));
   await conflict.api.book({preventDefault(){}}); assert.equal(conflict.nodes.ks_public_app.dataset.bookingStep,'horario'); assert.equal(conflict.api.s.horario,null); assert.equal(conflict.nodes.ks_public_success.hidden,true);
   conflict.api.selectTime('11:00','12:00'); conflict.setReservation(()=>{throw new Error('Indisponível');}); await conflict.api.book({preventDefault(){}});
   assert.equal(conflict.nodes.ks_public_nome.value,'Paciente de teste'); assert.equal(conflict.api.s.reservando,false); assert.equal(conflict.nodes.ks_public_confirmar.disabled,false);
+  // A página aberta não pode congelar a primeira fotografia da disponibilidade.
+  const fresh=setup();await fresh.api.load();fresh.api.selectProfessional('prof-demo');fresh.api.selectProcedure('osteo-demo');await flush();fresh.api.selectTime('11:00','12:00');
+  fresh.nodes.ks_public_nome.value='Nome conservado';fresh.nodes.ks_public_telefone.value='11999990000';
+  const changed={dias:[{data:'2026-10-26',horarios:[{inicio:'10:00',fim:'11:00'}]},{data:'2026-11-05',horarios:[{inicio:'14:00',fim:'15:00'}]}]};
+  fresh.setSlots(()=>({ok:true,json:async()=>changed}));await fresh.api.refreshSlots({forcar:true});
+  assert.equal(fresh.api.s.horario,null,'horário que ficou ocupado é retirado da seleção');assert(fresh.nodes.ks_public_slots_feedback.textContent.includes('não está mais disponível'));assert(fresh.nodes.ks_public_horarios.innerHTML.includes('10:00|11:00'),'horário recém-liberado entra na lista');assert(fresh.nodes.ks_public_datas.innerHTML.includes('data-data="2026-10-26"'));
+  fresh.api.selectTime('11:00','12:00');assert.equal(fresh.api.s.horario,null,'DOM antigo não pode selecionar horário removido');assert.equal(fresh.nodes.ks_public_nome.value,'Nome conservado');assert.equal(fresh.nodes.ks_public_telefone.value,'11999990000');
+  fresh.api.moveMonth(1);fresh.api.selectTime('14:00','15:00');await fresh.api.prepareData();assert.equal(fresh.nodes.ks_public_app.dataset.bookingStep,'dados');
+  await fresh.api.refreshSlots({forcar:true});assert.equal(fresh.api.s.data,'2026-11-05');assert.equal(fresh.api.s.month,'2026-11');assert.equal(fresh.api.s.horario.inicio,'14:00');assert.equal(fresh.nodes.ks_public_app.dataset.bookingStep,'dados','seleção ainda válida e formulário são preservados');
+  fresh.api.s.requestId='tentativa-sem-resposta';const beforeRetry=fresh.calls.length;await fresh.api.refreshSlots({forcar:true});assert.equal(fresh.calls.length,beforeRetry);assert.equal(fresh.api.s.requestId,'tentativa-sem-resposta','retentativa idempotente nunca é descartada pelo polling');fresh.api.s.requestId='';
+  fresh.setSlots(()=>({ok:true,json:async()=>({dias:[]})}));await fresh.api.refreshSlots({forcar:true});assert.equal(fresh.nodes.ks_public_app.dataset.bookingStep,'horario');assert.equal(fresh.api.s.slots.length,0);assert.equal(fresh.api.s.horario,null);assert.equal(fresh.nodes.ks_public_nome.value,'Nome conservado');
+  fresh.setSlots(()=>({ok:true,json:async()=>changed}));await fresh.api.refreshSlots({forcar:true});fresh.api.selectTime('10:00','11:00');
+  let release;fresh.setSlots(()=>new Promise(r=>release=r));const inFlight=fresh.api.refreshSlots({forcar:true});const queries=fresh.calls.length;await fresh.api.refreshSlots({forcar:true});assert.equal(fresh.calls.length,queries,'foco, botão e timer compartilham a trava');assert.equal(fresh.api.s.horario,null,'não permite continuar com seleção anterior durante consulta');release({ok:true,json:async()=>changed});await inFlight;
+  fresh.api.s.slotsUpdatedAt=0;fresh.setSlots(()=>{throw Error('Sem conexão');});await fresh.api.refreshSlots({forcar:true});assert.equal(fresh.api.s.slots.length,0);assert.equal(fresh.api.s.horario,null);assert.equal(fresh.nodes.ks_public_refresh_slots.disabled,false);assert.equal(fresh.nodes.ks_public_calendar.hidden,true);
+  fresh.setSlots(()=>({ok:true,json:async()=>changed}));fresh.api.s.slotsUpdatedAt=0;fresh.events.focus();await flush();assert.equal(fresh.api.s.slots.length,2,'voltar ao navegador atualiza a consulta');
+  fresh.api.s.slotsUpdatedAt=0;fresh.document.visibilityState='hidden';const hiddenCalls=fresh.calls.length;fresh.timers[0].fn();await flush();assert.equal(fresh.calls.length,hiddenCalls,'aba oculta não consulta');fresh.document.visibilityState='visible';fresh.events.visibilitychange();await flush();assert(fresh.calls.length>hiddenCalls);assert.equal(fresh.timers[0].ms,60000);
+  // Revalidar antes dos dados também detecta uma ocupação ocorrida após clicar no horário.
+  fresh.api.selectTime('10:00','11:00');fresh.setSlots(()=>({ok:true,json:async()=>({dias:[]})}));await fresh.api.prepareData();assert.equal(fresh.nodes.ks_public_app.dataset.bookingStep,'horario');assert.equal(fresh.api.s.horario,null);assert(!fresh.calls.some(c=>c.body?.acao==='reservar'));
+  console.log('PASS disponibilidade atual: ocupação/liberação, mês e dados preservados, foco/visibilidade/timer, consulta concorrente, erro seguro e retentativa idempotente.');
   // Assets do portal partilham revisão e o helper vem antes do controlador.
   const urls = [...html.matchAll(/(?:src|href)="\.\/([^"?]+)\?v=([^" ]+)"/g)];
   assert.equal(new Set(urls.map(x => x[2])).size, 1);
