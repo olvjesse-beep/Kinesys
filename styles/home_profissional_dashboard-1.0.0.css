@@ -32,12 +32,18 @@
 .ks-prof-month-row strong{display:grid;place-items:center;min-width:30px;height:25px;padding:0 8px;border-radius:8px;background:#edf6f6;color:#145f65;font-size:.78rem}
 .ks-prof-module-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px 10px}
 .ks-prof-notification-list{display:grid;padding:0 12px 12px}
+.ks-prof-notification-list.is-expanded{max-height:360px;max-height:min(360px,50dvh);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.ks-prof-notification-item[hidden],.ks-prof-notifications-toggle[hidden]{display:none!important}
+.ks-prof-notification-list:not(.is-expanded) .ks-prof-notification-item small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.ks-prof-notifications-toggle{display:block;min-height:44px;width:calc(100% - 28px);margin:0 14px 14px;padding:9px 12px;border:1px solid var(--kds-line-soft,#d8e5e4);border-radius:10px;background:var(--kds-surface-soft,#f4f9f8);color:var(--kds-petrol-deep,#173f45);font:inherit;font-size:.8rem;font-weight:700;text-align:center;cursor:pointer}
+.ks-prof-notifications-toggle:hover{background:var(--kds-accent-soft,#e8f4f1)}
+.ks-prof-notifications-toggle:focus-visible{outline:2px solid var(--kds-accent,#168d83);outline-offset:2px}
 .ks-prof-notification-item{display:grid;grid-template-columns:8px 1fr;gap:10px;align-items:start;width:100%;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
 .ks-prof-notification-item:not(:disabled):hover{background:#f5f8f8}
 .ks-prof-notification-item:disabled{opacity:1;cursor:default}
 .ks-prof-notification-item>span:nth-child(2){display:grid;gap:2px;min-width:0}
 .ks-prof-notification-item strong{font-size:.83rem;color:#284b50;font-weight:690}
-.ks-prof-notification-item small{font-size:.76rem;color:#728589;line-height:1.4;white-space:normal}
+.ks-prof-notification-item small{font-size:.76rem;color:#728589;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
 .ks-prof-notification-dot{width:7px;height:7px;border-radius:999px;background:#9bb0b3;margin-top:5px}
 .ks-prof-notification-item.is-unread .ks-prof-notification-dot{background:#b56a28;box-shadow:0 0 0 3px rgba(181,106,40,.1)}
 .ks-prof-notification-item.is-unread strong{color:#173f45}

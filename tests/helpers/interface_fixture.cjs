@@ -19,7 +19,9 @@ module.exports=function fixture(root){
 var radarAlertasJaApresentados=new Set();
 ${radarClose}
 function qaRadar(alertasMatriz){const containerFlutuante=document.getElementById('radar_flutuante_container');${radarUI}}
-var usuarioLogado={id:'qa-admin',clinica_id:'qa-clinica',tipo:'MASTER',nome:'Administrador de demonstração'};
+var usuarioLogado={id:'qa-admin',clinica_id:'qa-clinica',tipo:new URLSearchParams(location.search).has('notificacoes')?'FISIOTERAPEUTA':'MASTER',nome:'Administrador de demonstração'};
+var agendaNotificacoesCache=new URLSearchParams(location.search).has('notificacoes')?Array.from({length:12},(_,i)=>({id:'qa-aviso-'+i,titulo:'Horário excepcional agendado',mensagem:'Paciente de demonstração '+(i+1)+' agendado para 29/10/2026, 13:00–14:00, em horário extraordinário. Confira os detalhes na Agenda.',lida:false})):[];
+function carregarNotificacoesAgenda(){return Promise.resolve(agendaNotificacoesCache);}function abrirNotificacaoAgenda(id){alert('Aviso de demonstração: '+id);}
 var pacienteAtualId=null, BANCO_MAPEAMENTO_CLINICO={}, KINESYS_APP_VERSION='prévia', CAMPOS_PUBLICOS_PERFIL='id,nome,tipo';
 function rotuloPerfil(){return 'Administrador';} function usuarioEhMaster(){return true;} function telaPermitida(){return true;}
 function escapeHTML(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -39,7 +41,7 @@ function irParaHojeAgenda(){document.getElementById('agenda_dia_titulo').textCon
 const qaEquipe=[{id:'qa1',nome:'Profissional de demonstração',email:'exemplo@example.com',tipo:'FISIOTERAPEUTA',registro:'CREFITO de exemplo',ativo:true},{id:'qa2',nome:'Administrador de demonstração',email:'admin@example.com',tipo:'MASTER',ativo:true}];
 const qaProcedimentos=[{id:'p1',nome:'Avaliação',duracao_minutos:60,valor:100,ativo:true},{id:'p2',nome:'Sessão de Fisioterapia - Individual',duracao_minutos:60,valor:89.90,ativo:true}];
 const qaHorarios=Array.from({length:5},(_,i)=>[{dia_semana:i+1,profissional_id:null,hora_inicio:'08:00',hora_fim:'12:00'},{dia_semana:i+1,profissional_id:null,hora_inicio:'14:00',hora_fim:'19:00'}]).flat();
-var _supabase={from(table){let single=false;const q={select(){return q;},eq(){return q;},order(){return q;},maybeSingle(){single=true;return q;},then(ok){return Promise.resolve({data:single?(table==='configuracoes_agendamento_online'?{seguir_agenda_interna:new URLSearchParams(location.search).has('seguirAgenda')}:null):table==='equipe'?qaEquipe:table==='procedimentos'?qaProcedimentos:table==='horarios_atendimento'?qaHorarios:[],error:null}).then(ok);}};return q;},rpc(){return Promise.resolve({data:'qa-clinica',error:null});}};
+var _supabase={from(table){let single=false;const q={select(){return q;},eq(){return q;},in(){return q;},gte(){return q;},lt(){return q;},order(){return q;},maybeSingle(){single=true;return q;},then(ok){return Promise.resolve({data:single?(table==='configuracoes_agendamento_online'?{seguir_agenda_interna:new URLSearchParams(location.search).has('seguirAgenda')}:null):table==='equipe'?qaEquipe:table==='procedimentos'?qaProcedimentos:table==='horarios_atendimento'?qaHorarios:[],error:null}).then(ok);}};return q;},rpc(){return Promise.resolve({data:'qa-clinica',error:null});}};
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  if(new URLSearchParams(location.search).get('prontuario')==='1'){document.open();document.write(${JSON.stringify(report)});document.close();return;}
  document.getElementById('header_welcome').hidden=false;document.getElementById('lbl_usuario_logado').textContent=usuarioLogado.nome;
@@ -86,5 +88,6 @@ function qaPrepararAgendaExcecoes(){
 }
 `;
  const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
+ scripts.push('src/home/home_profissional_dashboard-1.0.0.js');
  return html.replace('</body>',`<script>${setup}</script>${scripts.map(src=>'<script defer src="/'+src+'"></script>').join('')}</body>`);
 };

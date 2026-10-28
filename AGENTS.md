@@ -295,3 +295,7 @@ A separação entre `public_html` e `public_html/app` é uma invariável de prod
 - Continuação de frequência só se liga à ocorrência explicitamente descrita imediatamente antes, com ambas as origens auditadas. Uso não frequente sem objeto não é atribuído ao medicamento/dispositivo mais próximo. Evitar cortes mecânicos de parágrafo que deixem uma frase final isolada; não inventar conteúdo para preencher parágrafo.
 - Base automática não revisada recebe revisão semântica 11; texto manual ou revisado não é sobrescrito. Manter os cenários ampliados em clinical_document_analyzer.test.cjs e toda a barreira crítica hospedada.
 - A nova RPC de edição de atendimento não concede execução a anon, inclusive quando houver grant direto por default privileges; manter esse cenário no teste PostgreSQL isolado.
+
+### Notificações compactas da Home — 28/10/2026
+
+- A Home profissional mostra somente dois resumos de notificações inicialmente, com controle acessível para expandir/recolher e lista expandida de altura limitada com rolagem. Não truncar o cache canônico em oito itens, apagar avisos nem marcar como lidos ao expandir. Preservar os vínculos de abertura e aniversários; o texto distingue aniversários de hoje de avisos recentes de outras datas. Refresh no mesmo contexto conserva a expansão; troca de usuário/clínica/dia ou logout recolhe. Manter os cenários funcionais em `tests/home_actions_inline.contract.cjs` na barreira existente.
