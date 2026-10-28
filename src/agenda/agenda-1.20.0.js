@@ -3156,15 +3156,27 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
 
     const mudouProcedimento = String(a.procedimento_id || '') !== String(procedimentoId || '');
     let financeiroAnterior = null;
+    let confirmarReprecificacao = false;
     if (mudouProcedimento && typeof obterSituacaoPagamentoAgendamento === 'function') {
         try { financeiroAnterior = await obterSituacaoPagamentoAgendamento(a); } catch (_) {}
     }
     if (mudouProcedimento && Number(financeiroAnterior?.pagos || 0) > 0) {
         const continuar = await confirmarKineSys(
-            'Este atendimento já possui pagamento registrado. O pagamento e o histórico financeiro serão preservados no mesmo atendimento; apenas o procedimento da ocorrência será atualizado. Deseja continuar?',
+            'Este atendimento já possui pagamento registrado. O pagamento e o histórico financeiro serão preservados no mesmo atendimento. A cobrança será recalculada pelo novo procedimento, descontando o que já foi pago. Confira os descontos acordados no Financeiro após a alteração. Deseja continuar?',
             { titulo:'Preservar pagamento existente', confirmar:'Salvar alteração', cancelar:'Voltar' }
         );
         if (!continuar) return false;
+        confirmarReprecificacao = true;
+    }
+    const procedimentoAnterior = agendaProcedimentosCache.find(p => String(p.id) === String(a.procedimento_id));
+    let converterPacote = false;
+    if (mudouProcedimento && a.plano_id && Number(procedimento.sessoes_pacote || 1) === 1
+        && (Number(procedimentoAnterior?.sessoes_pacote || 1) > 1 || financeiroAnterior?.origem === 'plano')) {
+        converterPacote = await confirmarKineSys(
+            'Este atendimento será convertido para ' + procedimento.nome + ', com cobrança individual. O pacote deve estar cancelado e sem saldo recebido. A data, o horário e o histórico da sessão serão preservados. Confirme os descontos acordados no Financeiro após a conversão.',
+            { titulo:'Converter atendimento do pacote', confirmar:'Converter para individual', cancelar:'Voltar', tipo:'aviso' }
+        );
+        if (!converterPacote) return false;
     }
 
     const alteracoes = {
@@ -3180,8 +3192,33 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
         alteracoes.horario_extraordinario_confirmado_em=extraordinario?new Date().toISOString():null;
     }
     const pendenteLocal = lerAgendamentosPendentesSync().some(x => String(x.payload?.id || '') === id);
+    if (pendenteLocal && converterPacote) {
+        mostrarFeedbackAgendaModal('Sincronize este atendimento antes de converter o pacote. A cobrança precisa ser validada junto com a alteração.', 'erro');
+        return false;
+    }
     let salvo = false;
-    if (_supabase) {
+    let registroSalvo = null;
+    let financeiroPreservado = false;
+    if (_supabase && !pendenteLocal) {
+        const { data, error } = await _supabase.rpc('kinesys_editar_atendimento', {
+            p_agendamento_id:id, p_profissional_id:profissionalId, p_procedimento_id:procedimentoId,
+            p_data:dataISO, p_hora_inicio:horaInicio, p_hora_fim:horaFim,
+            p_extraordinario:extraordinario, p_converter_pacote:converterPacote, p_confirmar_reprecificacao:confirmarReprecificacao,
+            p_esperado:{paciente_id:a.paciente_id,procedimento_id:a.procedimento_id,profissional_id:a.profissional_id,
+                plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim}
+        });
+        if (error) {
+            if (erroEhConflitoAgenda(error)) {
+                mostrarFeedbackAgendaModal('O horário acabou de ser ocupado por outro atendimento. Escolha outro horário.', 'erro');
+                return false;
+            }
+            throw error;
+        }
+        if (!data?.ok || String(data.agendamento?.id || '') !== id) throw new Error('Não foi possível confirmar a atualização completa do atendimento e da cobrança.');
+        salvo = true;
+        registroSalvo = data.agendamento;
+        financeiroPreservado = data.recebimentos_preservados === true;
+    } else if (_supabase) {
         const { data, error } = await _supabase.from('agendamentos').update(alteracoes)
             .eq('id', id)
             .eq('data', a.data)
@@ -3207,6 +3244,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
     if (typeof invalidarCacheAgendaSemana === 'function') invalidarCacheAgendaSemana();
 
     Object.assign(a, alteracoes, {
+        plano_id: registroSalvo ? registroSalvo.plano_id : a.plano_id,
         equipe: agendaEquipeCache.find(p => String(p.id) === String(profissionalId)) || a.equipe,
         procedimentos: procedimento
     });
@@ -3217,10 +3255,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
     if (a.plano_id && typeof salvarVinculoAgendaLocal === 'function') {
         salvarVinculoAgendaLocal(id, a.plano_id, a.paciente_id, procedimentoId, a.status || 'agendado');
     }
-    if (mudouProcedimento && Number(financeiroAnterior?.pagos || 0) <= 0 && _supabase) {
-        try { await _supabase.rpc('kinesys_preparar_cobranca_agendamento', { p_agendamento_id:id }); }
-        catch (err) { console.warn('Atendimento atualizado; cobrança será reconciliada na próxima abertura do Financeiro.', err); }
-    }
+    if (financeiroPreservado) mostrarFeedbackAgenda('Cobrança atualizada pelo novo procedimento, preservando os recebimentos existentes. Confira o saldo e os descontos acordados no Financeiro.', 'aviso');
 
     agendaEdicaoAtendimentoId = null;
     document.getElementById('ag_id').value = '';
@@ -3622,7 +3657,20 @@ async function vincularPlanoAgendamentoAtual() {
     const planoId=document.getElementById('detalhe_plano_select')?.value||null;
     try {
         if(!planoId) {
-            const {error}=await _supabase.from('agendamentos').update({plano_id:null}).eq('id',agendamentoDetalheAtualId);
+            const a=agendaAgendamentosSemanaCache.find(x=>String(x.id)===String(agendamentoDetalheAtualId))||agendaAgendamentosDoDiaCache.find(x=>String(x.id)===String(agendamentoDetalheAtualId));
+            if(!a)throw new Error('Atualize a agenda para localizar o atendimento.');
+            const procedimento=agendaProcedimentosCache.find(p=>String(p.id)===String(a.procedimento_id));
+            if(Number(procedimento?.sessoes_pacote||1)>1){
+                if(await confirmarKineSys('Para converter esta sessão sem apagar seu histórico, escolha um procedimento individual na edição. O vínculo e a cobrança serão atualizados juntos.',{titulo:'Converter para atendimento individual',confirmar:'Editar procedimento',cancelar:'Voltar'}))await editarAgendamentoAtual();
+                return;
+            }
+            const {error}=await _supabase.rpc('kinesys_editar_atendimento',{
+                p_agendamento_id:a.id,p_profissional_id:a.profissional_id,p_procedimento_id:a.procedimento_id,
+                p_data:a.data,p_hora_inicio:a.hora_inicio,p_hora_fim:a.hora_fim,
+                p_extraordinario:agendamentoEhHorarioExtraordinario(a),p_converter_pacote:true,
+                p_esperado:{paciente_id:a.paciente_id,procedimento_id:a.procedimento_id,profissional_id:a.profissional_id,
+                    plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim}
+            });
             if(error)throw error;
         } else {
             const {error}=await _supabase.rpc('kinesys_vincular_contrato',{p_agendamento_id:agendamentoDetalheAtualId,p_plano_id:planoId});

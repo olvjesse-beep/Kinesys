@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261027-relatorio-dosagens-r1';
+    const ASSET_REVISION='20261028-agenda-cobranca-atomica-r1';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -87,7 +87,7 @@
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
             scripts:Object.freeze([
-                'src/agenda/agenda-1.20.0.js?v=20261026-inicializacao-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1',
+                'src/agenda/agenda-1.20.0.js?v=20261028-agenda-cobranca-atomica-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
                 'src/agenda/agenda_lifecycle-1.0.0.js?v=20260914-postgrid-r41'

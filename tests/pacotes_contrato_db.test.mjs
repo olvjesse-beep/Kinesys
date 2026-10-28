@@ -55,6 +55,55 @@ try {
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_reparar_unitario_estornado.sql',root),'utf8'));
  assert.equal(Number((await db.query('select valor_devido from cobrancas_agendamento where id=$1',[lc])).rows[0].valor_devido),0);
  assert.equal((await db.query('select count(*) n from pagamentos where plano_id=$1',[legacy])).rows[0].n,2);
- await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(call('unauthorized'),/administradores/);
+ // Procedimento e cobrança devem mudar atomicamente também às 07h e às 13h.
+ const prof='prof-edicao',av='a1000000-0000-4000-8000-000000000001',ost='a1000000-0000-4000-8000-000000000002',fis='a1000000-0000-4000-8000-000000000003';
+ await db.exec(`insert into equipe(id,nome,clinica_id,ativo) values('${prof}','Profissional ficticio','${cid}',true);
+ insert into procedimentos(id,clinica_id,nome,valor,sessoes_pacote,ativo) values('${av}','${cid}','Avaliacao teste',100,1,true),('${ost}','${cid}','Osteopatia teste',150,1,true),('${fis}','${cid}','Fisioterapia individual teste',89.90,1,true);`);
+ const snap=async id=>(await db.query('select to_jsonb(a) a from agendamentos a where id=$1',[id])).rows[0].a;
+ const edit=async(id,procedimento,{converter=false,esperado=null,confirmarPago=false}={})=>{
+  const original=esperado||await snap(id);
+  return (await db.query('select kinesys_editar_atendimento($1,$2,$3,$4,$5,$6,true,$7,$8,$9) r',[id,prof,procedimento,original.data,original.hora_inicio,original.hora_fim,original,converter,confirmarPago])).rows[0].r;
+ };
+ const k='a2000000-0000-4000-8000-000000000001';
+ await db.query("insert into agendamentos(id,paciente_id,profissional_id,procedimento_id,clinica_id,data,hora_inicio,hora_fim,horario_extraordinario) values($1,'teste',$2,$3,$4,'2026-10-27','13:00','14:00',true)",[k,prof,av,cid]);
+ const kc=(await db.query('select kinesys_preparar_cobranca_agendamento($1) c',[k])).rows[0].c,antes=await snap(k);
+ const kr=await edit(k,ost);assert(kr.ok);assert.equal(kr.cobranca.valor_original,150);assert.equal(kr.cobranca.valor_devido,150);assert.notEqual(kr.agendamento.plano_id,kc.plano_id);assert.equal(kr.agendamento.id,k);assert.equal(kr.agendamento.hora_inicio,'13:00:00');assert.equal(kr.agendamento.hora_fim,'14:00:00');assert.equal(kr.agendamento.status,antes.status);
+ const old=(await db.query('select * from planos_atendimento where id=$1',[kc.plano_id])).rows[0];assert.equal(Number(old.valor_tabela),100);assert.equal(old.procedimento_id,av);assert.equal(old.status,'cancelado');
+ await assert.rejects(edit(k,fis,{esperado:antes}),/outra pessoa/);assert.equal((await snap(k)).procedimento_id,ost);
+ assert.equal((await edit(k,ost)).cobranca.id,kc.id,'reabrir/repetir não duplica cobrança');
+ const cancelled=await call('pacote-cancelado-sintetico',{sessoes:10,valor:800,desconto_cortesia:150});
+ const f='a2000000-0000-4000-8000-000000000002';
+ await db.query("insert into agendamentos(id,paciente_id,profissional_id,procedimento_id,clinica_id,plano_id,data,hora_inicio,hora_fim,status,horario_extraordinario) values($1,'teste',$2,$3,$4,$5,'2026-10-20','07:00','08:00','atendido',true)",[f,prof,proc,cid,cancelled.id]);
+ await alter(cancelled.id,'cancelar');
+ await assert.rejects(db.query('update agendamentos set procedimento_id=$1 where id=$2',[fis,f]),/não cobre/);
+ await assert.rejects(db.query('update agendamentos set plano_id=null where id=$1',[f]),/Contrate/);
+ await assert.rejects(edit(f,fis),/Confirme a conversão/);
+ const fr=await edit(f,fis,{converter:true});assert(fr.ok);assert.equal(fr.cobranca.valor_devido,89.9);assert.equal(fr.agendamento.hora_inicio,'07:00:00');assert.equal(fr.agendamento.data,'2026-10-20');assert.equal(fr.agendamento.status,'atendido');assert.equal(fr.agendamento.horario_extraordinario,true);
+ assert.equal((await db.query('select status from planos_atendimento where id=$1',[cancelled.id])).rows[0].status,'cancelado');
+ await alter(fr.agendamento.plano_id,'personalizar',{sessoes:1,valor:89.9,desconto_cortesia:24.9});
+ await db.query("update cobrancas_agendamento set desconto_tipo='cortesia',desconto_valor=24.90 where id=$1",[fr.cobranca.id]);
+ await db.query("insert into pagamentos(plano_id,paciente_id,clinica_id,valor,tipo,forma_pagamento,data_pagamento,agendamento_id,cobranca_agendamento_id) values($1,'teste',$2,65,'recebimento','PIX','2026-10-28',$3,$4)",[fr.agendamento.plano_id,cid,f,fr.cobranca.id]);
+ const fsit=(await db.query('select * from kinesys_situacao_financeira_agendamentos($1)',[[f]])).rows[0];assert.equal(Number(fsit.valor_devido),65);assert.equal(Number(fsit.total_pago),65);assert.equal(Number(fsit.valor_pendente),0);assert.equal(fsit.status_financeiro,'pago');
+ await assert.rejects(edit(f,ost),/Confirme a atualização/);
+ const paid=await edit(f,ost,{confirmarPago:true});assert(paid.recebimentos_preservados);assert.equal((await db.query('select count(*) n from pagamentos where agendamento_id=$1',[f])).rows[0].n,1);
+ const psit=(await db.query('select * from kinesys_situacao_financeira_agendamentos($1)',[[f]])).rows[0];assert.equal(Number(psit.valor_devido),150);assert.equal(Number(psit.total_pago),65);assert.equal(Number(psit.valor_pendente),85);
+ const pp=(await db.query('select * from planos_atendimento where id=$1',[fr.agendamento.plano_id])).rows[0];assert.equal(pp.procedimento_id,fis);assert.equal(pp.condicoes_originais.valor,89.9);assert.equal(Number(pp.valor_final),150);
+ await db.query("insert into creditos_paciente_usos(clinica_id,paciente_id,plano_id,valor) values($1,'teste',$2,10)",[cid,fr.agendamento.plano_id]);
+ const csit=(await db.query('select * from kinesys_situacao_financeira_agendamentos($1)',[[f]])).rows[0];assert.equal(Number(csit.total_pago),75);assert.equal(Number(csit.valor_pendente),75);
+ await edit(f,av,{confirmarPago:true});const creditPreserved=(await db.query('select * from kinesys_situacao_financeira_agendamentos($1)',[[f]])).rows[0];assert.equal(Number(creditPreserved.valor_devido),100);assert.equal(Number(creditPreserved.total_pago),75);assert.equal(Number(creditPreserved.valor_pendente),25);assert.equal((await db.query('select count(*) n from creditos_paciente_usos where plano_id=$1',[fr.agendamento.plano_id])).rows[0].n,1);
+ for(const [i,[inicio,fim,extra]] of [['04:15','05:15',true],['12:20','13:20',true],['19:15','20:15',true],['22:30','23:30',true],['09:00','10:00',false]].entries()){
+  const id='a3000000-0000-4000-8000-'+String(i+1).padStart(12,'0');
+  await db.query("insert into agendamentos(id,paciente_id,profissional_id,procedimento_id,clinica_id,data,hora_inicio,hora_fim,horario_extraordinario) values($1,'teste',$2,$3,$4,'2026-10-22',$5,$6,$7)",[id,prof,av,cid,inicio,fim,extra]);
+  const st=await snap(id);const result=(await db.query('select kinesys_editar_atendimento($1,$2,$3,$4,$5,$6,$7,$8,false,false) r',[id,prof,ost,st.data,inicio,fim,extra,st])).rows[0].r;
+  assert.equal(result.cobranca.valor_devido,150);assert.equal(result.agendamento.hora_inicio,inicio+':00');assert.equal(result.agendamento.horario_extraordinario,extra);
+ }
+ const blocked='a2000000-0000-4000-8000-000000000003';
+ await db.query("insert into agendamentos(id,paciente_id,profissional_id,procedimento_id,clinica_id,data,hora_inicio,hora_fim) values($1,'teste',$2,$3,$4,'2026-10-21','13:00','14:00')",[blocked,prof,av,cid]);
+ const bc=(await db.query('select kinesys_preparar_cobranca_agendamento($1) c',[blocked])).rows[0].c;
+ await db.query("update cobrancas_agendamento set baixa_tipo='lancamento_incorreto',baixada_em=now() where id=$1",[bc.id]);
+ await assert.rejects(edit(blocked,ost),/nenhuma alteração foi salva/);assert.equal((await snap(blocked)).procedimento_id,av);assert.equal((await snap(blocked)).plano_id,bc.plano_id);
+ await assert.rejects(edit(k,av,{esperado:{...(await snap(k)),paciente_id:'outra-pessoa'}}),/outra pessoa/);
+ await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(call('unauthorized'),/administradores/);await assert.rejects(edit(k,av),/perfil/);
+ console.log('PASS: horários 07h/13h, preço 100→150, pacote cancelado→individual, desconto sem crédito falso, quitação 65, recebimentos imutáveis, concorrência e rollback integral.');
  console.log('PASS: contratação, idempotência, preço vigente/histórico, personalização substitutiva, restauração, zero sem contrato, reservas, excesso bloqueado, consumo, reversão, cancelamento, proteção de cache e autorização.');
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

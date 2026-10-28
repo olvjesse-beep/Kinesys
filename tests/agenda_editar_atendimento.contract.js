@@ -81,8 +81,9 @@ assert.doesNotMatch(editar, /recorrencia_indice|recorrencia_total|gerarDatasReco
 assert.match(editar, /financeiroAnterior\?\.pagos/,'Edição de procedimento deve verificar pagamentos existentes');
 assert.match(editar, /pagamento e o histórico financeiro serão preservados no mesmo atendimento/,
   'Pagamento existente deve receber confirmação explícita de preservação');
-assert.match(editar, /kinesys_preparar_cobranca_agendamento[^\n]*p_agendamento_id:id/,
-  'Cobrança sem pagamento deve ser reconciliada pelo mesmo agendamento_id');
+assert.match(editar, /kinesys_editar_atendimento[\s\S]*p_agendamento_id:id/,
+  'Ocorrência e cobrança devem mudar atomicamente no servidor pelo mesmo agendamento_id');
+assert.doesNotMatch(editar,/cobrança será reconciliada na próxima/,'Erro financeiro não pode ser ignorado após salvar a ocorrência');
 assert.doesNotMatch(editar, /\.delete\(|pagamentos[^\n]*delete|cobrancas[^\n]*delete/i,
   'Edição não pode apagar pagamento/cobrança');
 assert.match(financeiro, /p_agendamento_id/,'Financeiro deve continuar canonizado pelo agendamento_id');
@@ -121,7 +122,12 @@ async function executarEdicao({pagos=0,extra=false,bloqueado=false,conflito=fals
         insert(){ chamadas.insert++; throw new Error('insert proibido no modo edição'); }
       };
     },
-    async rpc(nome,args){ chamadas.rpc.push([nome,args]); return {data:[],error:null}; }
+    async rpc(nome,args){ chamadas.rpc.push([nome,args]);
+      assert.equal(nome,'kinesys_editar_atendimento');assert.equal(args.p_esperado.paciente_id,registro.paciente_id);assert.equal(args.p_esperado.plano_id,registro.plano_id);
+      chamadas.update++;updatePayload={profissional_id:args.p_profissional_id,procedimento_id:args.p_procedimento_id,data:args.p_data,hora_inicio:args.p_hora_inicio,hora_fim:args.p_hora_fim};
+      if(args.p_extraordinario)updatePayload.horario_extraordinario=true;
+      return {data:{ok:true,agendamento:{...registro,...updatePayload},recebimentos_preservados:pagos>0},error:null};
+    }
   };
   const elementos = {
     ag_id:{value:'ag-1'},
@@ -193,22 +199,22 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
     'UPDATE deve alterar somente os quatro campos físicos correspondentes aos três controles');
   assert.deepStrictEqual(semPagamento.chamadas.conflito.map(String),['prof-2','2026-09-16','11:00','12:00','ag-1'],
     'conflito deve ignorar apenas o próprio agendamento');
-  assert.ok(semPagamento.chamadas.eq.some(([k,v])=>k==='id'&&v==='ag-1'),'UPDATE deve filtrar pelo mesmo id');
+  assert.ok(semPagamento.chamadas.rpc.some(([nome,args])=>nome==='kinesys_editar_atendimento'&&args.p_agendamento_id==='ag-1'),'RPC deve filtrar pelo mesmo id');
   assert.strictEqual(semPagamento.registro.id,'ag-1','id do registro deve permanecer intacto');
   assert.strictEqual(semPagamento.registro.paciente_id,'pac-1','paciente deve permanecer intacto');
   assert.strictEqual(semPagamento.registro.data,'2026-09-16','data deve ser atualizada no mesmo registro');
   assert.strictEqual(semPagamento.registro.status,'agendado','status deve permanecer intacto');
   assert.strictEqual(semPagamento.chamadas.render,1,'Agenda deve redesenhar uma vez');
   assert.deepStrictEqual(semPagamento.chamadas.detalhe,['ag-1'],'deve retornar ao detalhe do mesmo id');
-  assert.ok(semPagamento.chamadas.rpc.some(([nome,args])=>nome==='kinesys_preparar_cobranca_agendamento'&&args.p_agendamento_id==='ag-1'),
-    'reconciliação financeira sem pagamento deve usar o mesmo id');
+  assert.ok(semPagamento.chamadas.rpc.some(([nome,args])=>nome==='kinesys_editar_atendimento'&&args.p_agendamento_id==='ag-1'),
+    'edição financeira atômica deve usar o mesmo id');
 
   const comPagamento = await executarEdicao({pagos:150});
   assert.strictEqual(comPagamento.ok,true,'pagamento existente não deve impedir edição após confirmação');
   assert.strictEqual(comPagamento.chamadas.update,1);
   assert.strictEqual(comPagamento.chamadas.insert,0);
-  assert.ok(!comPagamento.chamadas.rpc.some(([nome])=>nome==='kinesys_preparar_cobranca_agendamento'),
-    'cobrança paga não deve ser recriada/recalculada automaticamente');
+  assert.ok(comPagamento.chamadas.rpc.some(([nome,args])=>nome==='kinesys_editar_atendimento'&&args.p_confirmar_reprecificacao===true),
+    'recebimento existente exige confirmação para atualizar a cobrança sem apagar o pagamento');
 
   console.log('Agenda edit contract: OK');
   const extraordinario=await executarEdicao({extra:true});

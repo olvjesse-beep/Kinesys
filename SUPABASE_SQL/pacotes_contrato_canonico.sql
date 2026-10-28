@@ -227,24 +227,40 @@ declare
   perfil jsonb:=public.kinesys_perfil_sessao(); cid uuid:=(perfil->>'clinica_id')::uuid; papel text:=perfil->>'tipo';
   a public.agendamentos%rowtype; p public.procedimentos%rowtype; pl public.planos_atendimento%rowtype;
   c public.cobrancas_agendamento%rowtype; v_original numeric(12,2):=0; v_desconto numeric(12,2):=0; v_origem text:='avulso';
-  v_plano_id uuid; v_operacao text;
+  v_plano_id uuid; v_operacao text; v_plano_anterior uuid; v_reabrir boolean:=false; v_pago numeric:=0;
 begin
-  if cid is null or papel not in ('MASTER','MASTER_FEM') then raise exception 'Somente administradores podem preparar cobranças' using errcode='42501'; end if;
+  if cid is null or papel not in ('MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','SECRETARIA') then raise exception 'Somente administradores podem preparar cobranças' using errcode='42501'; end if;
   select * into a from public.agendamentos where id=p_agendamento_id and clinica_id=cid for update;
   if not found or a.status='cancelado' then raise exception 'Agendamento não encontrado ou cancelado'; end if;
 
   select * into c from public.cobrancas_agendamento where clinica_id=cid and agendamento_id=a.id;
   if found and c.baixada_em is not null then
-    return to_jsonb(c);
+    if c.baixa_tipo is distinct from 'migracao_pacote' then return to_jsonb(c); end if;
+    v_reabrir:=true;
   end if;
 
   select * into p from public.procedimentos where id=a.procedimento_id and clinica_id=cid;
   if not found then raise exception 'Serviço do agendamento não encontrado'; end if;
   v_plano_id:=a.plano_id;
   if v_plano_id is not null then
-    select * into pl from public.planos_atendimento where id=v_plano_id and clinica_id=cid;
+    select * into pl from public.planos_atendimento where id=v_plano_id and clinica_id=cid for update;
+    if not found or pl.paciente_id is distinct from a.paciente_id then raise exception 'Contrato incompatível com o atendimento'; end if;
     if found then
       if pl.sessoes_contratadas>1 then raise exception 'Registre o recebimento na contratação do pacote'; end if;
+      if pl.procedimento_id is distinct from a.procedimento_id and coalesce(p.sessoes_pacote,1)=1 then
+        select coalesce(sum(g.valor),0) into v_pago from public.pagamentos g
+          where g.clinica_id=cid and (g.plano_id=pl.id or g.agendamento_id=a.id or g.cobranca_agendamento_id=c.id);
+        select v_pago+coalesce(sum(valor),0) into v_pago from public.creditos_paciente_usos where clinica_id=cid and plano_id=pl.id and paciente_id=a.paciente_id;
+        if v_pago=0 then
+          v_plano_anterior:=pl.id;
+          -- Novo serviço, novo contrato: o preço e a identidade originais nunca são reescritos.
+          if not exists(select 1 from public.agendamentos x where x.plano_id=pl.id and x.id<>a.id and x.status<>'cancelado') then
+            update public.planos_atendimento set status='cancelado',encerrado_em=now(),encerramento_automatico=false where id=pl.id;
+          end if;
+          update public.agendamentos set plano_id=null where id=a.id;
+          v_plano_id:=null;
+        end if;
+      end if;
       v_origem:=case when coalesce(pl.sessoes_contratadas,1)=1 then 'unitario' else 'plano' end;
       v_original:=round(coalesce(pl.valor_tabela,0)/greatest(coalesce(pl.sessoes_contratadas,1),1),2);
       v_desconto:=round(coalesce(pl.desconto_valor,0)/greatest(coalesce(pl.sessoes_contratadas,1),1),2);
@@ -254,7 +270,11 @@ begin
   if v_plano_id is null then
     v_original:=round(coalesce(p.valor,0),2); v_desconto:=0; v_origem:='unitario';
     v_operacao:='unitario-agenda-'||a.id::text;
-    select id into v_plano_id from public.planos_atendimento where clinica_id=cid and operacao_id=v_operacao limit 1;
+    select id into v_plano_id from public.planos_atendimento where clinica_id=cid and operacao_id=v_operacao
+      and paciente_id=a.paciente_id and procedimento_id=a.procedimento_id and sessoes_contratadas=1 and status<>'cancelado' limit 1;
+    if v_plano_id is null and exists(select 1 from public.planos_atendimento where clinica_id=cid and operacao_id=v_operacao) then
+      v_operacao:=v_operacao||'-revisao-'||gen_random_uuid()::text;
+    end if;
     if v_plano_id is null then
       insert into public.planos_atendimento(id,paciente_id,procedimento_id,nome,sessoes_contratadas,valor_tabela,desconto_valor,valor_final,
         forma_pagamento_prevista,parcelas,observacoes,status,criado_por,criado_em,operacao_id,desconto_pacote,desconto_cortesia,clinica_id)
@@ -271,11 +291,115 @@ begin
     v_desconto,v_origem,coalesce(perfil->>'nome','Administrador')
   from public.pacientes pac left join public.equipe e on e.id::text=a.profissional_id::text and e.clinica_id=cid
   where pac.id::text=a.paciente_id::text and pac.clinica_id=cid
-  on conflict (clinica_id,agendamento_id) do nothing;
+  on conflict (clinica_id,agendamento_id) do update set
+    procedimento_id=excluded.procedimento_id,procedimento_nome=excluded.procedimento_nome,
+    profissional_id=excluded.profissional_id,profissional_nome=excluded.profissional_nome,
+    plano_id=excluded.plano_id,data_agendamento=excluded.data_agendamento,
+    valor_original=excluded.valor_original,desconto_tipo=excluded.desconto_tipo,desconto_valor=excluded.desconto_valor,
+    origem=excluded.origem,baixa_tipo=null,baixa_motivo=null,baixada_em=null,baixada_por=null,atualizado_em=now()
+  where (cobrancas_agendamento.procedimento_id is distinct from excluded.procedimento_id
+      or cobrancas_agendamento.plano_id is distinct from excluded.plano_id
+      or cobrancas_agendamento.profissional_id is distinct from excluded.profissional_id
+      or cobrancas_agendamento.data_agendamento is distinct from excluded.data_agendamento or v_reabrir)
+    and (cobrancas_agendamento.baixada_em is null or v_reabrir)
+    and not exists(select 1 from public.pagamentos g where g.clinica_id=cid
+      and (g.cobranca_agendamento_id=cobrancas_agendamento.id or g.agendamento_id=a.id or g.plano_id=cobrancas_agendamento.plano_id)
+      group by g.clinica_id having sum(g.valor)<>0)
+    and not exists(select 1 from public.creditos_paciente_usos u where u.clinica_id=cid and u.plano_id=cobrancas_agendamento.plano_id group by u.clinica_id having sum(u.valor)<>0);
+  if v_plano_anterior is not null then
+    insert into public.auditoria_contratos(clinica_id,plano_id,acao,antes,depois,motivo,autor)
+    values(cid,v_plano_anterior,'reprecificar_procedimento',jsonb_build_object('agendamento_id',a.id,'plano_id',v_plano_anterior),
+      jsonb_build_object('plano_id',v_plano_id,'procedimento_id',p.id,'valor_tabela',v_original),
+      'Troca de procedimento sem saldo recebido; contrato anterior preservado',coalesce(perfil->>'nome','Administrador'));
+  end if;
   select * into c from public.cobrancas_agendamento where clinica_id=cid and agendamento_id=a.id;
+  if c.baixada_em is null and c.plano_id is distinct from v_plano_id then raise exception 'A cobrança possui vínculo financeiro diferente; revise os recebimentos e créditos antes de continuar'; end if;
   return to_jsonb(c);
 end $function$
 ;
+
+-- Edição online atômica: ocorrência, vínculo e cobrança mudam ou falham juntos.
+create or replace function public.kinesys_editar_atendimento(
+ p_agendamento_id uuid,p_profissional_id text,p_procedimento_id uuid,p_data date,
+ p_hora_inicio time,p_hora_fim time,p_extraordinario boolean,p_esperado jsonb,p_converter_pacote boolean default false,
+ p_confirmar_reprecificacao boolean default false)
+returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+declare perfil jsonb:=public.kinesys_perfil_sessao();cid uuid:=(perfil->>'clinica_id')::uuid;
+ a public.agendamentos%rowtype;pl public.planos_atendimento%rowtype;p public.procedimentos%rowtype;
+ v_plano uuid;v_pago numeric:=0;v_cobranca jsonb;v_preservado boolean:=false;
+begin
+ if cid is null or coalesce(perfil->>'tipo','') not in ('MASTER','MASTER_FEM','SECRETARIA') then
+   raise exception 'Seu perfil não pode editar este atendimento' using errcode='42501';
+ end if;
+ select * into a from public.agendamentos where id=p_agendamento_id and clinica_id=cid for update;
+ if not found then raise exception 'Atendimento não encontrado'; end if;
+ if p_esperado is null or not (p_esperado ?& array['paciente_id','procedimento_id','profissional_id','plano_id','status','data','hora_inicio','hora_fim'])
+  or a.paciente_id is distinct from p_esperado->>'paciente_id'
+  or a.procedimento_id is distinct from (p_esperado->>'procedimento_id')::uuid
+  or a.profissional_id is distinct from p_esperado->>'profissional_id'
+  or a.plano_id is distinct from (p_esperado->>'plano_id')::uuid
+  or a.status is distinct from p_esperado->>'status'
+  or a.data is distinct from (p_esperado->>'data')::date
+  or a.hora_inicio is distinct from (p_esperado->>'hora_inicio')::time
+  or a.hora_fim is distinct from (p_esperado->>'hora_fim')::time then
+   raise exception 'O atendimento foi alterado por outra pessoa. Atualize a agenda e tente novamente.' using errcode='40001';
+ end if;
+ if p_data is null or p_hora_inicio is null or p_hora_fim is null or p_hora_inicio>=p_hora_fim then raise exception 'Data ou intervalo inválido'; end if;
+ select * into p from public.procedimentos where id=p_procedimento_id and clinica_id=cid and coalesce(ativo,true) for share;
+ if not found or not exists(select 1 from public.equipe e where e.id=p_profissional_id and e.clinica_id=cid)
+   or (coalesce(array_length(p.profissionais_ids,1),0)>0 and not p_profissional_id=any(p.profissionais_ids)) then
+   raise exception 'Profissional ou procedimento indisponível neste atendimento';
+ end if;
+ v_plano:=a.plano_id;
+ if v_plano is not null then
+  select * into pl from public.planos_atendimento where id=v_plano and clinica_id=cid and paciente_id=a.paciente_id for update;
+  if not found then raise exception 'Contrato incompatível com paciente ou clínica'; end if;
+  select coalesce(sum(g.valor),0) into v_pago from public.pagamentos g where g.clinica_id=cid and (g.plano_id=pl.id or g.agendamento_id=a.id);
+  select v_pago+coalesce(sum(valor),0) into v_pago from public.creditos_paciente_usos where clinica_id=cid and plano_id=pl.id and paciente_id=a.paciente_id;
+  if pl.sessoes_contratadas>1 and p.id is distinct from a.procedimento_id then
+   if not coalesce(p_converter_pacote,false) or p.sessoes_pacote<>1 then raise exception 'Confirme a conversão para um procedimento individual'; end if;
+   if perfil->>'tipo' not in ('MASTER','MASTER_FEM') then raise exception 'Somente administradores podem converter contratações' using errcode='42501'; end if;
+   if pl.status<>'cancelado' then raise exception 'Cancele o pacote antes de converter esta ocorrência em atendimento individual'; end if;
+   if v_pago<>0 then raise exception 'O pacote possui saldo recebido. Revise os recebimentos antes da conversão'; end if;
+   v_plano:=null;
+  elsif p.id is distinct from a.procedimento_id and v_pago<>0 then
+   if not coalesce(p_confirmar_reprecificacao,false) then raise exception 'Confirme a atualização da cobrança preservando os recebimentos existentes'; end if;
+   if p.sessoes_pacote<>1 then raise exception 'Vincule uma contratação compatível antes de converter para pacote'; end if;
+   if exists(select 1 from public.agendamentos x where x.plano_id=pl.id and x.id<>a.id and x.status<>'cancelado') then raise exception 'Esta contratação está vinculada a outras ocorrências. Revise o Financeiro antes da troca'; end if;
+   perform public.kinesys_alterar_contrato(pl.id,'personalizar','Reprecificação explícita pelo procedimento realizado, preservando recebimentos e condições originais',
+     jsonb_build_object('sessoes',1,'valor',round(p.valor,2),'desconto_pacote',0,'desconto_cortesia',0,'procedimento_realizado_id',p.id));
+   v_preservado:=true;
+  end if;
+ end if;
+ update public.agendamentos set profissional_id=p_profissional_id,procedimento_id=p.id,data=p_data,
+  hora_inicio=p_hora_inicio,hora_fim=p_hora_fim,plano_id=v_plano,
+  horario_extraordinario=coalesce(p_extraordinario,false),
+  horario_extraordinario_confirmado_por=case when p_extraordinario then perfil->>'nome' end,
+  horario_extraordinario_confirmado_em=case when p_extraordinario then now() end where id=a.id;
+ if a.plano_id is distinct from v_plano and a.plano_id is not null then
+  insert into public.auditoria_contratos(clinica_id,plano_id,acao,antes,depois,motivo,autor)
+   values(cid,a.plano_id,'converter_para_unitario',to_jsonb(a),jsonb_build_object('procedimento_id',p.id,'plano_id',v_plano),
+    'Conversão explícita de ocorrência de pacote cancelado, sem saldo recebido',perfil->>'nome');
+ end if;
+ if v_preservado then
+  update public.cobrancas_agendamento set procedimento_id=p.id,procedimento_nome=p.nome,valor_original=round(p.valor,2),
+   desconto_tipo='nenhum',desconto_valor=0,profissional_id=p_profissional_id,data_agendamento=p_data,atualizado_em=now()
+   where agendamento_id=a.id and clinica_id=cid and baixada_em is null;
+ end if;
+ if a.status<>'cancelado' and p.sessoes_pacote=1 and
+  (a.procedimento_id is distinct from p.id or a.plano_id is distinct from v_plano
+   or (v_plano is not null and pl.procedimento_id is distinct from p.id)
+   or exists(select 1 from public.cobrancas_agendamento c where c.agendamento_id=a.id and c.clinica_id=cid)) then
+  v_cobranca:=public.kinesys_preparar_cobranca_agendamento(a.id);
+  if coalesce(v_cobranca->>'procedimento_id','')<>p.id::text or v_cobranca->>'baixada_em' is not null then
+   raise exception 'A cobrança não pôde ser reconciliada; nenhuma alteração foi salva';
+  end if;
+ end if;
+ select * into a from public.agendamentos where id=a.id;
+ return jsonb_build_object('ok',true,'agendamento',to_jsonb(a),'cobranca',v_cobranca,'recebimentos_preservados',v_preservado);
+end $$;
+revoke all on function public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean) from public;
+grant execute on function public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean) to authenticated;
 
 create or replace function public.kinesys_converter_cobranca_pacote() returns trigger
 language plpgsql security definer set search_path=public,pg_temp as $$
@@ -315,12 +439,12 @@ language sql stable security definer set search_path=public,pg_temp as $$
  case when pl.sessoes_contratadas>1 then pl.desconto_valor else coalesce(c.desconto_valor,pl.desconto_valor,0) end desconto,
  case when pl.sessoes_contratadas>1 then pl.valor_final else coalesce(c.valor_devido,pl.valor_final,pr.valor,0) end devido,
  case when pl.sessoes_contratadas>1 then 'plano' else coalesce(c.origem,'avulso') end origem,
- coalesce((select sum(g.valor) from public.pagamentos g where g.clinica_id=a.clinica_id and case when pl.sessoes_contratadas>1 then g.plano_id=pl.id else g.cobranca_agendamento_id=c.id or (g.cobranca_agendamento_id is null and g.agendamento_id=a.id) end),0) pago
+ coalesce((select sum(g.valor) from public.pagamentos g where g.clinica_id=a.clinica_id and case when pl.sessoes_contratadas>1 then g.plano_id=pl.id else g.cobranca_agendamento_id=c.id or (g.cobranca_agendamento_id is null and g.agendamento_id=a.id) end),0) + coalesce((select sum(u.valor) from public.creditos_paciente_usos u where u.clinica_id=a.clinica_id and u.plano_id=pl.id and u.paciente_id=a.paciente_id),0) pago
  from public.agendamentos a join perfil x on a.clinica_id=(x.p->>'clinica_id')::uuid
  left join public.planos_atendimento pl on pl.id=a.plano_id and pl.clinica_id=a.clinica_id
  left join public.cobrancas_agendamento c on c.agendamento_id=a.id and c.clinica_id=a.clinica_id
  left join public.procedimentos pr on pr.id=a.procedimento_id and pr.clinica_id=a.clinica_id
- where a.id=any(p_ids) and x.p->>'tipo' in ('MASTER','MASTER_FEM')
+ where a.id=any(p_ids) and x.p->>'tipo' in ('MASTER','MASTER_FEM','ADMINISTRADOR','ADMINISTRADORA','SECRETARIA')
  ) select id,cobranca_id,original,desconto,devido,pago,greatest(devido-pago,0),case when devido<=pago then 'pago' when pago<=0 then 'pendente' else 'parcial' end,origem from base;
 $$;
 
