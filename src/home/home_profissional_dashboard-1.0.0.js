@@ -9,6 +9,9 @@
     'use strict';
 
     let refreshToken = 0;
+    const NOTIFICACOES_RESUMO = 2;
+    let notificacoesExpandidas = false;
+    let contextoNotificacoes = '';
 
     function ehProfissional(){
         const tipo=String(typeof usuarioLogado!=='undefined'?usuarioLogado?.tipo:'').toUpperCase();
@@ -125,8 +128,9 @@
                         <div id="ks_prof_month_details" class="ks-prof-expand-panel" hidden></div>
                     </article>
                     <article class="ks-prof-home-module ks-prof-notifications-card">
-                        <div class="ks-prof-module-title"><span><small>ATENÇÃO</small><strong>Notificações de hoje</strong><em>Somente avisos com data de hoje</em></span><span class="ks-prof-notification-count" id="ks_prof_notification_count" hidden>0</span></div>
+                        <div class="ks-prof-module-title"><span><small>ATENÇÃO</small><strong>Notificações</strong><em>Aniversários de hoje e avisos recentes da Agenda.</em></span><span class="ks-prof-notification-count" id="ks_prof_notification_count" hidden>0</span></div>
                         <div id="ks_prof_notifications_list" class="ks-prof-notification-list"><p class="ks-prof-empty">Carregando notificações…</p></div>
+                        <button type="button" id="ks_prof_notifications_toggle" class="ks-prof-notifications-toggle" aria-expanded="false" aria-controls="ks_prof_notifications_list" hidden>Expandir avisos</button>
                     </article>
                 </div>
                 <dialog id="ks_prof_pendencias_dialog" class="ks-prof-pending-dialog" aria-labelledby="ks_prof_pendencias_title">
@@ -137,6 +141,7 @@
             const crm=document.getElementById('card_crm');
             if(crm&&crm.parentElement===home)home.insertBefore(workspace,crm);else home.appendChild(workspace);
             workspace.querySelector('#ks_prof_month_toggle')?.addEventListener('click',alternarMes);
+            workspace.querySelector('#ks_prof_notifications_toggle')?.addEventListener('click',alternarNotificacoes);
             workspace.querySelector('[data-prof-close]')?.addEventListener('click',fecharPendencias);
             workspace.querySelector('#ks_prof_pendencias_dialog')?.addEventListener('cancel',e=>{e.preventDefault();fecharPendencias();});
         }
@@ -282,24 +287,47 @@
         const m=String(valor||'').match(/^\d{4}-(\d{2})-(\d{2})$/);return !!m&&Number(m[1])===hoje.mes&&Number(m[2])===hoje.dia;
     }
 
+    function sincronizarExpansaoNotificacoes(){
+        const lista=document.getElementById('ks_prof_notifications_list');
+        const toggle=document.getElementById('ks_prof_notifications_toggle');
+        if(!lista||!toggle)return;
+        const itens=[...lista.querySelectorAll('[data-index]')];
+        const podeExpandir=itens.length>NOTIFICACOES_RESUMO;
+        if(!podeExpandir)notificacoesExpandidas=false;
+        lista.classList.toggle('is-expanded',notificacoesExpandidas);
+        itens.forEach((item,indice)=>{item.hidden=!notificacoesExpandidas&&indice>=NOTIFICACOES_RESUMO;});
+        toggle.hidden=!podeExpandir;
+        toggle.setAttribute('aria-expanded',String(notificacoesExpandidas));
+        toggle.textContent=notificacoesExpandidas?'Recolher avisos':`Expandir avisos (${itens.length})`;
+        if(!notificacoesExpandidas)lista.scrollTop=0;
+    }
+
+    function alternarNotificacoes(){
+        notificacoesExpandidas=!notificacoesExpandidas;
+        sincronizarExpansaoNotificacoes();
+    }
+
     async function carregarNotificacoesHome(token){
         const lista=document.getElementById('ks_prof_notifications_list'),count=document.getElementById('ks_prof_notification_count');if(!lista)return;
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
         if(token!==refreshToken)return;
         const hoje=agoraBrasilia();
+        const contexto=`${profissionalAtualId()}|${String(typeof usuarioLogado!=='undefined'?usuarioLogado?.clinica_id||'':'')}|${hoje.iso}`;
+        if(contexto!==contextoNotificacoes){contextoNotificacoes=contexto;notificacoesExpandidas=false;}
         const aniversarios=(pacientes||[]).filter(p=>nascimentoHoje(p.nascimento,hoje)).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(p=>({tipo:'aniversario',titulo:'Aniversário hoje',mensagem:String(p.nome||'Paciente')}));
         try{if(typeof carregarNotificacoesAgenda==='function')await carregarNotificacoesAgenda({avisar:false});}catch(_){}
         if(token!==refreshToken)return;
         let internas=[];
-        try{internas=Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache.slice(0,8):[];}catch(_){}
-        const itens=[...aniversarios,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))].slice(0,8);
+        try{internas=Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache:[];}catch(_){}
+        const itens=[...aniversarios,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))];
         if(count){const naoLidas=itens.filter(i=>i.tipo==='aniversario'||!i.lida).length;count.textContent=String(naoLidas);count.hidden=!naoLidas;}
-        if(!itens.length){lista.innerHTML='<div class="ks-prof-empty-state compact"><strong>Nenhuma notificação agora</strong><span>Aniversários e avisos da agenda aparecerão aqui.</span></div>';return;}
+        if(!itens.length){lista.innerHTML='<div class="ks-prof-empty-state compact"><strong>Nenhuma notificação agora</strong><span>Aniversários e avisos da agenda aparecerão aqui.</span></div>';sincronizarExpansaoNotificacoes();return;}
         lista.innerHTML=itens.map((i,idx)=>`<button type="button" class="ks-prof-notification-item ${i.tipo==='agenda'&&!i.lida?'is-unread':''}" data-index="${idx}" ${i.tipo==='aniversario'?'disabled':''}><span class="ks-prof-notification-dot" aria-hidden="true"></span><span><strong>${escapar(i.titulo)}</strong><small>${escapar(i.mensagem)}</small></span></button>`).join('');
         lista.querySelectorAll('[data-index]').forEach(btn=>{
             const item=itens[Number(btn.dataset.index)];if(!item||item.tipo!=='agenda'||!item.id)return;
             btn.disabled=false;btn.addEventListener('click',()=>{if(typeof abrirNotificacaoAgenda==='function')abrirNotificacaoAgenda(item.id);});
         });
+        sincronizarExpansaoNotificacoes();
     }
 
     function alternarMes(){
@@ -322,7 +350,7 @@
 
     document.addEventListener('kinesys:meu-dia-atualizado',atualizar);
     document.addEventListener('kinesys:tela-ativada',e=>{
-        if(e.detail?.id==='tela_login'){refreshToken++;return;}
+        if(e.detail?.id==='tela_login'){refreshToken++;notificacoesExpandidas=false;contextoNotificacoes='';return;}
         if(e.detail?.id==='tela_home')atualizar();
     });
     const iniciar=()=>{if(document.getElementById('tela_home')?.classList.contains('ativa'))atualizar();};
