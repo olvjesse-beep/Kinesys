@@ -111,6 +111,8 @@ Ao finalizar, informe de forma breve:
 
 ## 10. Contratos permanentes de Agenda e Paciente
 
+- O portal público não mantém a primeira consulta como disponibilidade permanente: reconsulta ao retornar à aba, periodicamente enquanto visível, por atualização manual e antes de avançar para os dados. Preservar mês, escolha ainda válida e campos preenchidos; escolha removida ou erro de consulta bloqueiam a continuação sem exibir horário antigo. Não descartar UUID de tentativa sem resposta: retentativa idempotente deve recuperar a reserva. Não ampliar silenciosamente os períodos publicados, a jornada ou a antecedência configurada. Executar `agendamento_publico_modelo2.test.cjs` na barreira hospedada.
+
 - Conforme solicitação explícita de 28/10/2026, a Agenda interna permite sobreposição, ausência/bloqueio e feriado somente após aviso e confirmação do encaixe excepcional. Conferir no servidor o profissional, período e os conflitos/bloqueios atuais; mudança durante o diálogo exige nova confirmação. Aviso interno ao responsável pertence à mesma transação do agendamento. Não estender essa autorização ao portal público. Preservar escopo de clínica/perfil e edição financeira atômica. Atendimentos simultâneos continuam acessíveis lado a lado na grade.
 - Ausências permitem datas inicial/final inclusivas; horas opcionais aplicadas a cada dia, ambas vazias significam dia todo. Cadastro completo é atômico e repetição da mesma operação não duplica dias. Manter a trava independente de botão e os testes funcionais/DB na barreira hospedada.
 
