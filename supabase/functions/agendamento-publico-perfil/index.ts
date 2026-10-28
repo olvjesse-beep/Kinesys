@@ -45,7 +45,7 @@ async function resolverClinica(slug: string) {
 
   const { data: cfgPorSlug, error: cfgSlugError } = await supabase
     .from("configuracoes_agendamento_online")
-    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
+    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao,seguir_agenda_interna")
     .eq("slug_publico", slugNormalizado)
     .maybeSingle();
   if (cfgSlugError) throw cfgSlugError;
@@ -72,7 +72,7 @@ async function resolverClinica(slug: string) {
 
   const { data: configPublica, error: cfgError } = await supabase
     .from("configuracoes_agendamento_online")
-    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao")
+    .select("clinica_id,nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao,seguir_agenda_interna")
     .eq("clinica_id", clinica.id)
     .maybeSingle();
   if (cfgError) throw cfgError;
@@ -107,7 +107,9 @@ async function carregarPerfilPublico(slug: string) {
   for (const r of [profRes, perfilRes, dispRes]) if (r.error) throw r.error;
 
   const perfis = new Map((perfilRes.data || []).map((p) => [String(p.profissional_id), p]));
-  const comHorario = new Set((dispRes.data || []).map((d) => String(d.profissional_id)));
+  const comHorario = configPublica?.seguir_agenda_interna
+    ? new Set((profRes.data || []).map(p => String(p.id)))
+    : new Set((dispRes.data || []).map((d) => String(d.profissional_id)));
 
   const profissionais = (profRes.data || [])
     .filter((p) => comHorario.has(String(p.id)))

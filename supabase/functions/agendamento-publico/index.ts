@@ -80,12 +80,19 @@ function intersectar(a: Janela[], b: Janela[]) {
   return [...new Map(resultado.map((j) => [`${j.hora_inicio}|${j.hora_fim}`, j])).values()].sort((x, y) => x.hora_inicio.localeCompare(y.hora_inicio));
 }
 
+function janelasDaAgenda(horarios: Janela[], profissionalId: string, diaSemana: number) {
+  const gerais = horarios.filter(h => h.profissional_id == null && Number(h.dia_semana) === diaSemana);
+  const gradeProfCompleta = horarios.filter(h => String(h.profissional_id || "") === String(profissionalId));
+  if (!gradeProfCompleta.length) return gerais;
+  return intersectar(gerais, gradeProfCompleta.filter(h => Number(h.dia_semana) === diaSemana));
+}
+
 async function obterContextoClinica(slug: string) {
   const { data: clinica, error: clinicaError } = await supabase.from("clinicas").select("id,nome,slug,ativa").eq("slug", slug).eq("ativa", true).maybeSingle();
   if (clinicaError) throw clinicaError;
   if (!clinica) return null;
   const { data: config, error: configError } = await supabase.from("configuracoes_agendamento_online")
-    .select("ativo,antecedencia_minima_minutos,horizonte_dias,titulo_publico,descricao_publica,mensagem_fechado,mostrar_valores")
+    .select("ativo,antecedencia_minima_minutos,horizonte_dias,titulo_publico,descricao_publica,mensagem_fechado,mostrar_valores,seguir_agenda_interna")
     .eq("clinica_id", clinica.id).maybeSingle();
   if (configError) throw configError;
   return { clinica, config };
@@ -103,13 +110,16 @@ async function catalogoPublico(slug: string) {
   };
   if (!config?.ativo) return fechado;
 
-  const [profRes, procRes, dispRes] = await Promise.all([
+  const [profRes, procRes, dispRes, gradeRes] = await Promise.all([
     supabase.from("equipe").select("id,nome,tipo,agendamento_online_ordem").eq("clinica_id", clinica.id).eq("ativo", true).eq("aparece_na_agenda", true).eq("agendamento_online_ativo", true).order("agendamento_online_ordem", { ascending: true }).order("nome", { ascending: true }),
     supabase.from("procedimentos").select("id,nome,duracao_minutos,valor,profissionais_ids").eq("clinica_id", clinica.id).eq("ativo", true).eq("agendamento_online_ativo", true).order("nome"),
     supabase.from("disponibilidade_agendamento_online").select("profissional_id").eq("clinica_id", clinica.id).eq("ativo", true),
+    supabase.from("horarios_atendimento").select("profissional_id,dia_semana,hora_inicio,hora_fim").eq("clinica_id", clinica.id),
   ]);
-  for (const r of [profRes, procRes, dispRes]) if (r.error) throw r.error;
-  const idsComDisponibilidade = new Set((dispRes.data || []).map((d) => String(d.profissional_id || "")));
+  for (const r of [profRes, procRes, dispRes, gradeRes]) if (r.error) throw r.error;
+  const idsComDisponibilidade = config.seguir_agenda_interna
+    ? new Set((profRes.data || []).filter(p => Array.from({length:7},(_,dia) => dia).some(dia => janelasDaAgenda(gradeRes.data || [], String(p.id), dia).length)).map(p => String(p.id)))
+    : new Set((dispRes.data || []).map((d) => String(d.profissional_id || "")));
   const profissionais = (profRes.data || [])
     .filter((p) => idsComDisponibilidade.has(String(p.id)))
     .map((p) => ({ id: texto(p.id, 120), nome: texto(p.nome, 120), tipo: texto(p.tipo || "Profissional", 80).replaceAll("_", " ") }));
@@ -161,20 +171,14 @@ async function slotsPublicos(slug: string, profissionalId: string, procedimentoI
   for (const r of [bloqRes, agRes]) if (r.error) throw r.error;
 
   const horarios = horariosRes.data || [], publicados = pubRes.data || [];
-  const gradeProfCompleta = horarios.filter((h) => String(h.profissional_id || "") === String(profissionalId));
   const dias: Array<{ data: string; horarios: Array<{ inicio: string; fim: string }> }> = [];
   let total = 0;
   for (let offset = 0; offset < horizonte && total < MAX_SLOTS_RESPOSTA; offset++) {
     const diaISO = somarDias(inicio, offset), d = dataUTC(diaISO);
     if (!d || feriadoAgenda(diaISO)) continue;
     const diaSemana = d.getUTCDay();
-    const gerais = horarios.filter((h) => h.profissional_id == null && Number(h.dia_semana) === diaSemana);
-    let reais: Janela[] = gerais;
-    if (gradeProfCompleta.length) {
-      const especificas = gradeProfCompleta.filter((h) => Number(h.dia_semana) === diaSemana);
-      reais = especificas.length ? intersectar(gerais as Janela[], especificas as Janela[]) : [];
-    }
-    const janelas = intersectar(reais as Janela[], publicados.filter((h) => Number(h.dia_semana) === diaSemana) as Janela[]);
+    const reais = janelasDaAgenda(horarios as Janela[], profissionalId, diaSemana);
+    const janelas = config.seguir_agenda_interna ? reais : intersectar(reais, publicados.filter((h) => Number(h.dia_semana) === diaSemana) as Janela[]);
     if (!janelas.length) continue;
     const ocupados: Array<[number, number]> = (agRes.data || []).filter((a) => a.data === diaISO)
       .map((a) => [horaParaMinutos(horaCurta(a.hora_inicio)), horaParaMinutos(horaCurta(a.hora_fim))]);

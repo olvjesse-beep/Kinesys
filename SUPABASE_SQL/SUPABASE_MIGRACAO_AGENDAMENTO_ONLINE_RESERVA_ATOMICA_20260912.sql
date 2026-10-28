@@ -2,6 +2,8 @@
 -- Reserva atômica, deduplicação segura de paciente e notificação interna.
 -- A função de escrita é exclusiva do service_role e nunca deve ser chamada diretamente pelo navegador.
 
+alter table public.configuracoes_agendamento_online add column if not exists seguir_agenda_interna boolean not null default false;
+
 create or replace function public.kinesys_agendamento_online_cpf_valido(p_cpf text)
 returns boolean
 language plpgsql
@@ -112,6 +114,7 @@ declare
   v_clinica_id uuid;
   v_clinica_nome text;
   v_ativo boolean;
+  v_seguir_agenda boolean;
   v_antecedencia integer;
   v_horizonte integer;
   v_duracao integer;
@@ -165,8 +168,8 @@ begin
     raise exception 'Solicitação inválida.' using errcode = '23505';
   end if;
 
-  select cfg.ativo, cfg.antecedencia_minima_minutos, cfg.horizonte_dias
-    into v_ativo, v_antecedencia, v_horizonte
+  select cfg.ativo, cfg.antecedencia_minima_minutos, cfg.horizonte_dias, cfg.seguir_agenda_interna
+    into v_ativo, v_antecedencia, v_horizonte, v_seguir_agenda
   from public.configuracoes_agendamento_online cfg
   where cfg.clinica_id = v_clinica_id;
 
@@ -284,8 +287,9 @@ begin
     raise exception 'Horário fora da jornada do profissional.' using errcode = 'P0001';
   end if;
 
-  -- Nível 3: período explicitamente publicado para o portal.
-  if not exists (
+  -- Nível 3: a grade manual só restringe o modo de períodos específicos.
+  -- No modo vinculado, os níveis 1 e 2 são a fonte de disponibilidade.
+  if not coalesce(v_seguir_agenda, false) and not exists (
     select 1 from public.disponibilidade_agendamento_online d
     where d.clinica_id = v_clinica_id
       and d.profissional_id = p_profissional_id

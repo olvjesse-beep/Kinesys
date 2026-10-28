@@ -99,6 +99,19 @@ assert(!/#[0-9a-f]{3,8}\b/i.test(css),
   'CSS novo deve usar somente tokens --kds-* e não cores locais');
 
 console.log('agendamento_online_admin_config.contract: OK');
+// Execute the actual source of the mirror editor without substituting its rules.
+{
+ const vm=require('node:vm'),els=new Map([['ks_online_seguir_agenda',{checked:true}],['ks_online_horarios',{innerHTML:''}]]);
+ const source=js.slice(js.indexOf('    function segueAgendaInterna()'),js.indexOf('    function horariosDoProfissional'));
+ const publication=js.slice(js.indexOf('    function estadoPublicacaoAtual()'),js.indexOf('    function atualizarResumoPublicacao()'));
+ const ctx={document:{getElementById:id=>els.get(id)},state:{profissionais:[{id:'p',agendamento_online_ativo:true}],procedimentos:[{id:'service',agendamento_online_ativo:true,profissionais_ids:['p']}],horariosAgenda:[{profissional_id:null,dia_semana:1,hora_inicio:'08:00:00',hora_fim:'12:00:00'},{profissional_id:null,dia_semana:1,hora_inicio:'14:00:00',hora_fim:'19:00:00'}],disponibilidadeEditada:[{profissional_id:'p',dia_semana:1,hora_inicio:'08:00',hora_fim:'12:00'}]},DIAS:[{valor:1},{valor:2}],chaveHorario:x=>[x.profissional_id,x.dia_semana,x.hora_inicio,x.hora_fim].join('|')};
+ vm.runInNewContext(source+publication+'this.mirror=horariosDaAgendaPublicaveis;this.pub=estadoPublicacaoAtual;',ctx);
+ assert.equal(ctx.pub().horarios.length,2);assert.equal(ctx.pub().procedimentoIncompativel,null);
+ ctx.state.horariosAgenda.push({profissional_id:'p',dia_semana:1,hora_inicio:'15:00:00',hora_fim:'18:00:00'});assert.equal(ctx.mirror().length,1);assert.equal(ctx.mirror()[0].hora_inicio,'15:00');assert.equal(ctx.mirror()[0].hora_fim,'18:00');
+ els.get('ks_online_seguir_agenda').checked=false;assert.equal(ctx.pub().horarios.length,1);assert.equal(ctx.pub().horarios[0].hora_inicio,'08:00','desativar o vínculo recupera períodos manuais preservados');
+ assert(js.includes('if(!cfg.seguir_agenda_interna){'),'vínculo não pode regravar nem apagar períodos manuais');
+ console.log('PASS configuração vinculada: jornada geral/própria, compatibilidade de serviço e preservação da grade manual.');
+}
 // O layout da Comunicação deve carregar mesmo se o perfil público da Agenda
 // foi pré-carregado antes de existir uma sessão administrativa.
 const garantirCSS = js.slice(js.indexOf('function garantirCSS()'), js.indexOf('function setStatus('));

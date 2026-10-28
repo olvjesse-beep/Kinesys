@@ -4,7 +4,7 @@ create role anon;
 create table public.bloqueios_agenda(id uuid primary key default gen_random_uuid(),clinica_id uuid,profissional_id text,data date,hora_inicio time,hora_fim time,motivo text);
 create table public.notificacoes_internas(id uuid primary key default gen_random_uuid(),clinica_id uuid,destinatario_profissional_id text,destinatario_email text,tipo text,titulo text,mensagem text,agendamento_id text,agendamento_data date,origem_chave text unique,criada_por text,criada_em timestamptz default now(),lida boolean default false,lida_em timestamptz);
 -- Calendar behavior is separately covered by the public booking contract.
-create function public.kinesys_agendamento_online_feriado(d date) returns text language sql immutable as $$ select case when to_char(d,'MM-DD')='12-25' then 'Natal' end $$;
+create function public.kinesys_agendamento_online_feriado(p_data date) returns text language sql immutable as $$ select case when to_char(p_data,'MM-DD')='12-25' then 'Natal' end $$;
 -- Supabase also grants the anonymous role directly by default. Revoking PUBLIC
 -- alone must not make the authorization regression pass accidentally.
 alter default privileges grant execute on functions to anon;
