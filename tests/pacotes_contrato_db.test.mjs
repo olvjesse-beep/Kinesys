@@ -1,10 +1,12 @@
 const {PGlite}=await import(process.env.PGLITE_MODULE || '@electric-sql/pglite');
+const {btree_gist}=await import(process.env.PGLITE_MODULE?new URL('./contrib/btree_gist.js',process.env.PGLITE_MODULE).href:'@electric-sql/pglite/contrib/btree_gist');
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-const db=new PGlite();
+const db=new PGlite({extensions:{btree_gist}});
 const root=new URL('../',import.meta.url);
 try {
  await db.exec(fs.readFileSync(new URL('tests/fixtures/pacotes_schema.sql',root),'utf8'));
+ await db.exec('create extension btree_gist');
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_contrato_canonico.sql',root),'utf8'));
  const privileges=(await db.query("select has_function_privilege('anon','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') anonymous, has_function_privilege('authenticated','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') authenticated")).rows[0];
  assert.equal(privileges.anonymous,false);assert.equal(privileges.authenticated,true);
@@ -105,6 +107,58 @@ try {
  await db.query("update cobrancas_agendamento set baixa_tipo='lancamento_incorreto',baixada_em=now() where id=$1",[bc.id]);
  await assert.rejects(edit(blocked,ost),/nenhuma alteração foi salva/);assert.equal((await snap(blocked)).procedimento_id,av);assert.equal((await snap(blocked)).plano_id,bc.plano_id);
  await assert.rejects(edit(k,av,{esperado:{...(await snap(k)),paciente_id:'outra-pessoa'}}),/outra pessoa/);
+ // Explicit exceptions keep ordinary slots and public booking protected.
+ const context=async(day,start='10:00',end='11:00',ignore=null)=>(await db.query('select kinesys_consultar_excecoes_agenda($1,$2,$3,$4,$5) r',[prof,day,start,end,ignore])).rows[0].r;
+ const insertSlot=async(id,day,{start='10:00',end='11:00',extra=false,confirmation=null,origin='interno'}={})=>db.query("insert into agendamentos(id,paciente_id,profissional_id,procedimento_id,clinica_id,data,hora_inicio,hora_fim,horario_extraordinario,excecao_agenda,origem) values($1,'teste',$2,$3,$4,$5,$6,$7,$8,$9,$10)",[id,prof,av,cid,day,start,end,extra,confirmation,origin]);
+ const first='b1000000-0000-4000-8000-000000000001',second='b1000000-0000-4000-8000-000000000002',third='b1000000-0000-4000-8000-000000000003';
+ await insertSlot(first,'2026-11-09');
+ await assert.rejects(insertSlot(second,'2026-11-09'),/confirme o encaixe/);
+ const confirmed={...(await context('2026-11-09')),confirmado:true};assert.deepEqual(confirmed.conflitos,[first]);
+ await assert.rejects(insertSlot(second,'2026-11-09',{extra:true,confirmation:{...confirmed,confirmado:false}}),/confirme o encaixe/);
+ await insertSlot(second,'2026-11-09',{extra:true,confirmation:confirmed});
+ const overlapBefore=await snap(second);
+ const overlapEdit=await edit(second,ost,{esperado:{...overlapBefore,excecoes_confirmadas:{...(await context('2026-11-09','10:00','11:00',second)),confirmado:true}}});
+ assert.equal(overlapEdit.cobranca.valor_devido,150);assert.equal(overlapEdit.agendamento.id,second);assert.equal(overlapEdit.agendamento.hora_inicio,'10:00:00');
+ let notice=(await db.query('select * from notificacoes_internas where agendamento_id=$1',[second])).rows[0];assert.equal(notice.destinatario_profissional_id,prof);assert.match(notice.mensagem,/sobreposição confirmada/);
+ await assert.rejects(insertSlot(third,'2026-11-09',{extra:true,confirmation:confirmed}),/Atualize e confirme/,'a concurrent new appointment invalidates the old confirmation');
+ await assert.rejects(insertSlot(third,'2026-11-09',{origin:'online',extra:true,confirmation:{...(await context('2026-11-09')),confirmado:true}}),/agendamento público/);
+ await insertSlot(third,'2026-11-09',{start:'11:00',end:'12:00'});
+ await db.query("update agendamentos set status='confirmado' where id=$1",[second]);assert.equal((await db.query('select count(*) n from notificacoes_internas where agendamento_id=$1',[second])).rows[0].n,1);
+ // Even an ordinary insert cannot overlap a previously confirmed exception.
+ await db.query("update agendamentos set status='cancelado' where id=$1",[first]);
+ await assert.rejects(insertSlot('b1000000-0000-4000-8000-000000000004','2026-11-09'),/confirme o encaixe/);
+ const op='b2000000-0000-4000-8000-000000000001';
+ const block=async(start,end,timeStart=null,timeEnd=null,nonce=op)=>(await db.query("select kinesys_registrar_bloqueio_periodo(null,$1,$2,$3,$4,'Fechamento sintético',$5) r",[start,end,timeStart,timeEnd,nonce])).rows[0].r;
+ const period=await block('2026-11-16','2026-11-18');assert.equal(period.dias,3);assert.equal(new Set(period.ids).size,3);assert.deepEqual((await block('2026-11-16','2026-11-18')).ids,period.ids);
+ assert.equal((await db.query('select count(*) n from bloqueios_agenda')).rows[0].n,3,'retry must not duplicate dates');
+ await db.exec("create function fail_block() returns trigger language plpgsql as $$begin if new.data='2026-11-25'::date then raise exception 'Falha sintética de período';end if;return new;end$$;create trigger fail_block before insert on bloqueios_agenda for each row execute function fail_block();");
+ await assert.rejects(block('2026-11-24','2026-11-26',null,null,'b2000000-0000-4000-8000-000000000002'),/Falha sintética/);assert.equal((await db.query("select count(*) n from bloqueios_agenda where data between '2026-11-24' and '2026-11-26'")).rows[0].n,0);await db.exec('drop trigger fail_block on bloqueios_agenda');
+ await assert.rejects(block('2026-11-18','2026-11-16'),/período válido/);await assert.rejects(block('2026-11-20','2026-11-21','13:00',null),/início e fim/);
+ const absence='b3000000-0000-4000-8000-000000000001';
+ await assert.rejects(insertSlot(absence,'2026-11-17'),/confirme o encaixe/);
+ const absenceContext=await context('2026-11-17');assert.equal(absenceContext.bloqueios.length,1);
+ await insertSlot(absence,'2026-11-17',{extra:true,confirmation:{...absenceContext,confirmado:true}});
+ assert.match((await db.query('select mensagem from notificacoes_internas where agendamento_id=$1',[absence])).rows[0].mensagem,/ausência\/bloqueio/);
+ const holiday='b3000000-0000-4000-8000-000000000002';await assert.rejects(insertSlot(holiday,'2026-12-25'),/confirme o encaixe/);
+ await insertSlot(holiday,'2026-12-25',{extra:true,confirmation:{...(await context('2026-12-25')),confirmado:true}});
+ assert.match((await db.query('select mensagem from notificacoes_internas where agendamento_id=$1',[holiday])).rows[0].mensagem,/Natal/);
+ // Removing notification persistence makes the entire exception fail atomically.
+ await db.exec("create function fail_notice() returns trigger language plpgsql as $$begin raise exception 'Falha sintética de notificação';end$$; create trigger fail_notice before insert on notificacoes_internas for each row execute function fail_notice();");
+ const failID='b3000000-0000-4000-8000-000000000003';await assert.rejects(insertSlot(failID,'2026-12-25',{extra:true,confirmation:{...(await context('2026-12-25')),confirmado:true}}),/Falha sintética/);assert.equal((await db.query('select count(*) n from agendamentos where id=$1',[failID])).rows[0].n,0);await db.exec('drop trigger fail_notice on notificacoes_internas');
+ await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(block('2026-11-23','2026-11-24'),/administradores/);await assert.rejects(context('2026-11-09'),/perfil/);
+ await db.exec(`set test.profissional='${prof}'`);const own=await context('2026-11-09');await insertSlot('b4000000-0000-4000-8000-000000000001','2026-11-09',{extra:true,confirmation:{...own,confirmado:true}});
+ await assert.rejects(db.query("select kinesys_consultar_excecoes_agenda('outro-profissional','2026-11-09','10:00','11:00')"),/perfil/);
+ for(const signature of ['kinesys_consultar_excecoes_agenda(text,date,time,time,uuid)','kinesys_registrar_bloqueio_periodo(text,date,date,time,time,text,uuid)'])assert.equal((await db.query("select has_function_privilege('anon',$1,'EXECUTE') allowed",[signature])).rows[0].allowed,false);
+ // Exercise the actual recipient RLS as the API role, not the table owner.
+ await db.query("insert into notificacoes_internas(clinica_id,destinatario_profissional_id,titulo,origem_chave) values($1,'outro-profissional','Privado','outro-destinatario')",[cid]);
+ await db.exec('alter table notificacoes_internas enable row level security;grant select,update on notificacoes_internas to authenticated;set role authenticated');
+ const ownNotices=(await db.query('select * from notificacoes_internas')).rows;assert(ownNotices.length>0);assert(ownNotices.every(n=>n.destinatario_profissional_id===prof&&n.clinica_id===cid));
+ await assert.rejects(db.query("update notificacoes_internas set titulo='Conteúdo adulterado' where id=$1",[notice.id]),/Somente a leitura/);
+ await assert.rejects(db.query("update notificacoes_internas set destinatario_profissional_id='outro-profissional' where id=$1",[notice.id]),/Somente a leitura/);
+ await db.query('update notificacoes_internas set lida=true where id=$1',[notice.id]);assert((await db.query('select lida,lida_em from notificacoes_internas where id=$1',[notice.id])).rows[0].lida_em);
+ assert.equal((await db.query("update notificacoes_internas set lida=true where origem_chave='outro-destinatario' returning id")).rows.length,0);await db.exec('reset role');
+ console.log('PASS: professional can read/mark only own notifications; content and other recipients remain protected by actual RLS.');
+ console.log('PASS: overlap confirmation, stale snapshot, public denial, adjacent slots, interval of dates/idempotency, blocked/holiday exceptions and atomic professional notification.');
  await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(call('unauthorized'),/administradores/);await assert.rejects(edit(k,av),/perfil/);
  console.log('PASS: horários 07h/13h, preço 100→150, pacote cancelado→individual, desconto sem crédito falso, quitação 65, recebimentos imutáveis, concorrência e rollback integral.');
  console.log('PASS: contratação, idempotência, preço vigente/histórico, personalização substitutiva, restauração, zero sem contrato, reservas, excesso bloqueado, consumo, reversão, cancelamento, proteção de cache e autorização.');

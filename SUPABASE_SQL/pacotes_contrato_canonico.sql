@@ -373,6 +373,7 @@ begin
  end if;
  update public.agendamentos set profissional_id=p_profissional_id,procedimento_id=p.id,data=p_data,
   hora_inicio=p_hora_inicio,hora_fim=p_hora_fim,plano_id=v_plano,
+  excecao_agenda=case when p_esperado ? 'excecoes_confirmadas' then p_esperado->'excecoes_confirmadas' else a.excecao_agenda end,
   horario_extraordinario=coalesce(p_extraordinario,false),
   horario_extraordinario_confirmado_por=case when p_extraordinario then perfil->>'nome' end,
   horario_extraordinario_confirmado_em=case when p_extraordinario then now() end where id=a.id;
@@ -429,6 +430,165 @@ begin
 end $$;
 revoke all on function public.kinesys_vincular_contrato(uuid,uuid) from public;
 grant execute on function public.kinesys_vincular_contrato(uuid,uuid) to authenticated;
+
+-- Encaixes internos explicitamente confirmados. O portal público nunca recebe
+-- autorização para ignorar ocupação, ausência ou feriado.
+alter table public.agendamentos add column if not exists excecao_agenda jsonb;
+
+create or replace function public.kinesys_consultar_excecoes_agenda(
+ p_profissional_id text,p_data date,p_inicio time,p_fim time,p_ignorar uuid default null)
+returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+declare perfil jsonb:=public.kinesys_perfil_sessao(); cid uuid:=(perfil->>'clinica_id')::uuid;
+ conflitos jsonb; bloqueios jsonb;
+begin
+ if cid is null or coalesce(perfil->>'tipo','') not in ('MASTER','MASTER_FEM','SECRETARIA','FISIOTERAPEUTA')
+  or (perfil->>'tipo'='FISIOTERAPEUTA' and perfil->>'id' is distinct from p_profissional_id)
+  or not exists(select 1 from public.equipe where id=p_profissional_id and clinica_id=cid and coalesce(ativo,true))
+ then raise exception 'Seu perfil não pode consultar esta agenda' using errcode='42501'; end if;
+ if p_data is null or p_inicio is null or p_fim is null or p_inicio>=p_fim then raise exception 'Data ou horário inválido'; end if;
+ select coalesce(jsonb_agg(id::text order by id::text),'[]'::jsonb) into conflitos from public.agendamentos
+ where clinica_id=cid and profissional_id=p_profissional_id and data=p_data and status<>'cancelado'
+ and (p_ignorar is null or id<>p_ignorar) and hora_inicio<p_fim and hora_fim>p_inicio;
+ select coalesce(jsonb_agg(id::text order by id::text),'[]'::jsonb) into bloqueios from public.bloqueios_agenda
+ where clinica_id=cid and data=p_data and (profissional_id is null or profissional_id=p_profissional_id)
+ and (hora_inicio is null or hora_fim is null or (hora_inicio<p_fim and hora_fim>p_inicio));
+ return jsonb_build_object('contexto',jsonb_build_object('profissional_id',p_profissional_id,'data',p_data,'inicio',to_char(p_inicio,'HH24:MI'),'fim',to_char(p_fim,'HH24:MI')),
+  'conflitos',conflitos,'bloqueios',bloqueios,'feriado',coalesce(public.kinesys_agendamento_online_feriado(p_data),''));
+end $$;
+revoke all on function public.kinesys_consultar_excecoes_agenda(text,date,time,time,uuid) from public,anon;
+grant execute on function public.kinesys_consultar_excecoes_agenda(text,date,time,time,uuid) to authenticated;
+
+create or replace function public.kinesys_validar_excecao_agenda() returns trigger
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare perfil jsonb:=public.kinesys_perfil_sessao(); conflitos jsonb; bloqueios jsonb;
+ feriado text; contexto jsonb; precisa boolean; confirmacao jsonb:=new.excecao_agenda;
+begin
+ if new.status='cancelado' then return new; end if;
+ if tg_op='UPDATE' and old.status<>'cancelado' and
+  (new.clinica_id,new.profissional_id,new.data,new.hora_inicio,new.hora_fim,new.horario_extraordinario,new.excecao_agenda)
+  is not distinct from (old.clinica_id,old.profissional_id,old.data,old.hora_inicio,old.hora_fim,old.horario_extraordinario,old.excecao_agenda)
+ then return new; end if;
+ -- Campos são NOT NULL em produção; não criar exceção a essa constraint.
+ if new.profissional_id is null or new.data is null or new.hora_inicio is null or new.hora_fim is null then return new; end if;
+ -- Também é adquirido pelo cadastro de ausência: a confirmação não vale para
+ -- um conflito/bloqueio que surgiu enquanto o diálogo estava aberto.
+ perform pg_advisory_xact_lock(hashtextextended(new.clinica_id::text||':'||new.data::text,0));
+ select coalesce(jsonb_agg(id::text order by id::text),'[]'::jsonb) into conflitos from public.agendamentos
+ where clinica_id=new.clinica_id and profissional_id=new.profissional_id and data=new.data and status<>'cancelado'
+ and id<>new.id and hora_inicio<new.hora_fim and hora_fim>new.hora_inicio;
+ select coalesce(jsonb_agg(id::text order by id::text),'[]'::jsonb) into bloqueios from public.bloqueios_agenda
+ where clinica_id=new.clinica_id and data=new.data and (profissional_id is null or profissional_id=new.profissional_id)
+ and (hora_inicio is null or hora_fim is null or (hora_inicio<new.hora_fim and hora_fim>new.hora_inicio));
+ feriado:=coalesce(public.kinesys_agendamento_online_feriado(new.data),'');
+ precisa:=jsonb_array_length(conflitos)>0 or jsonb_array_length(bloqueios)>0 or feriado<>'';
+ if new.origem='online' and (precisa or new.horario_extraordinario or confirmacao is not null) then
+  raise exception 'Horário indisponível para agendamento público' using errcode='23P01';
+ end if;
+ if precisa then
+  if coalesce(perfil->>'tipo','') not in ('MASTER','MASTER_FEM','SECRETARIA','FISIOTERAPEUTA')
+   or (perfil->>'clinica_id')::uuid is distinct from new.clinica_id
+   or (perfil->>'tipo'='FISIOTERAPEUTA' and perfil->>'id' is distinct from new.profissional_id)
+  then raise exception 'Seu perfil não pode autorizar este encaixe' using errcode='42501'; end if;
+  contexto:=jsonb_build_object('profissional_id',new.profissional_id,'data',new.data,'inicio',to_char(new.hora_inicio,'HH24:MI'),'fim',to_char(new.hora_fim,'HH24:MI'));
+  if not new.horario_extraordinario or coalesce(confirmacao->>'confirmado','false')<>'true'
+   or confirmacao->'contexto' is distinct from contexto
+   or confirmacao->'conflitos' is distinct from conflitos or confirmacao->'bloqueios' is distinct from bloqueios
+   or confirmacao->>'feriado' is distinct from feriado then
+   raise exception 'A agenda possui atendimento, bloqueio ou feriado neste horário. Atualize e confirme o encaixe excepcional antes de salvar.' using errcode='23P01';
+  end if;
+ end if;
+ if new.horario_extraordinario and new.origem='interno' then
+  new.horario_extraordinario_confirmado_por:=coalesce(perfil->>'nome',new.horario_extraordinario_confirmado_por);
+  new.horario_extraordinario_confirmado_em:=now();
+  new.excecao_agenda:=coalesce(confirmacao,'{}'::jsonb)||jsonb_build_object('conflitos',conflitos,'bloqueios',bloqueios,'feriado',feriado,'notificacao_servidor',true,'confirmado_por_id',perfil->>'id','confirmado_em',now());
+ end if;
+ return new;
+end $$;
+revoke all on function public.kinesys_validar_excecao_agenda() from public,anon,authenticated;
+drop trigger if exists zz_kinesys_excecao_agenda on public.agendamentos;
+create trigger zz_kinesys_excecao_agenda before insert or update on public.agendamentos for each row execute function public.kinesys_validar_excecao_agenda();
+-- O trigger serializa todos os horários e também considera encaixes existentes.
+-- A constraint parcial mantém uma segunda trava para os horários ordinários.
+alter table public.agendamentos drop constraint if exists agendamentos_sem_sobreposicao;
+alter table public.agendamentos add constraint agendamentos_sem_sobreposicao exclude using gist
+ (profissional_id with =,tsrange(data+hora_inicio,data+hora_fim,'[)') with &&)
+ where(status<>'cancelado' and not horario_extraordinario);
+
+create or replace function public.kinesys_notificar_excecao_agenda() returns trigger
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare nome_paciente text; email_profissional text; motivos text[]:=array[]::text[];
+begin
+ if new.status='cancelado' or not new.horario_extraordinario then return new; end if;
+ if tg_op='UPDATE' and (new.profissional_id,new.data,new.hora_inicio,new.hora_fim,new.horario_extraordinario,new.excecao_agenda->'conflitos',new.excecao_agenda->'bloqueios',coalesce(new.excecao_agenda->>'feriado',''))
+  is not distinct from (old.profissional_id,old.data,old.hora_inicio,old.hora_fim,old.horario_extraordinario,old.excecao_agenda->'conflitos',old.excecao_agenda->'bloqueios',coalesce(old.excecao_agenda->>'feriado','')) then return new; end if;
+ select nome into nome_paciente from public.pacientes where id=new.paciente_id and clinica_id=new.clinica_id;
+ select email into email_profissional from public.equipe where id=new.profissional_id and clinica_id=new.clinica_id;
+ if jsonb_array_length(coalesce(new.excecao_agenda->'conflitos','[]'::jsonb))>0 then motivos:=array_append(motivos,'sobreposição confirmada'); end if;
+ if jsonb_array_length(coalesce(new.excecao_agenda->'bloqueios','[]'::jsonb))>0 then motivos:=array_append(motivos,'encaixe em ausência/bloqueio'); end if;
+ if coalesce(new.excecao_agenda->>'feriado','')<>'' then motivos:=array_append(motivos,'feriado: '||(new.excecao_agenda->>'feriado')); end if;
+ if cardinality(motivos)=0 then motivos:=array['fora da jornada padrão']; end if;
+ insert into public.notificacoes_internas(clinica_id,destinatario_profissional_id,destinatario_email,tipo,titulo,mensagem,agendamento_id,agendamento_data,origem_chave,criada_por,lida)
+ values(new.clinica_id,new.profissional_id,email_profissional,'horario_extraordinario','Agendamento excepcional confirmado',
+  coalesce(nome_paciente,'Paciente')||' em '||to_char(new.data,'DD/MM/YYYY')||', '||to_char(new.hora_inicio,'HH24:MI')||'–'||to_char(new.hora_fim,'HH24:MI')||'. '||array_to_string(motivos,'; ')||'. Confirmado por '||coalesce(new.horario_extraordinario_confirmado_por,'equipe da clínica')||'.',
+  new.id::text,new.data,'horario_extraordinario:'||new.id::text,new.horario_extraordinario_confirmado_por,false)
+ on conflict(origem_chave) do update set destinatario_profissional_id=excluded.destinatario_profissional_id,destinatario_email=excluded.destinatario_email,
+ titulo=excluded.titulo,mensagem=excluded.mensagem,agendamento_data=excluded.agendamento_data,criada_por=excluded.criada_por,criada_em=now(),lida=false,lida_em=null;
+ return new;
+end $$;
+revoke all on function public.kinesys_notificar_excecao_agenda() from public,anon,authenticated;
+drop trigger if exists zz_kinesys_notificar_excecao on public.agendamentos;
+create trigger zz_kinesys_notificar_excecao after insert or update on public.agendamentos for each row execute function public.kinesys_notificar_excecao_agenda();
+
+-- O destinatário precisa conseguir ler o aviso gravado pelo servidor. Não
+-- conceder escrita do conteúdo, criação, exclusão ou acesso a outros avisos.
+drop policy if exists ks_notificacao_propria_select on public.notificacoes_internas;
+create policy ks_notificacao_propria_select on public.notificacoes_internas for select to authenticated
+ using(clinica_id=(public.kinesys_perfil_sessao()->>'clinica_id')::uuid
+ and destinatario_profissional_id=public.kinesys_perfil_sessao()->>'id'
+ and public.kinesys_perfil_sessao()->>'tipo'='FISIOTERAPEUTA');
+drop policy if exists ks_notificacao_propria_update on public.notificacoes_internas;
+create policy ks_notificacao_propria_update on public.notificacoes_internas for update to authenticated
+ using(clinica_id=(public.kinesys_perfil_sessao()->>'clinica_id')::uuid
+ and destinatario_profissional_id=public.kinesys_perfil_sessao()->>'id'
+ and public.kinesys_perfil_sessao()->>'tipo'='FISIOTERAPEUTA')
+ with check(clinica_id=(public.kinesys_perfil_sessao()->>'clinica_id')::uuid
+ and destinatario_profissional_id=public.kinesys_perfil_sessao()->>'id'
+ and public.kinesys_perfil_sessao()->>'tipo'='FISIOTERAPEUTA');
+create or replace function public.kinesys_proteger_conteudo_notificacao() returns trigger
+ language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+ if public.kinesys_perfil_sessao()->>'tipo'='FISIOTERAPEUTA' then
+  if (to_jsonb(new)-'lida'-'lida_em') is distinct from (to_jsonb(old)-'lida'-'lida_em') then
+   raise exception 'Somente a leitura do próprio aviso pode ser alterada' using errcode='42501';
+  end if;
+  new.lida_em:=case when new.lida then now() else null end;
+ end if;
+ return new;
+end $$;
+revoke all on function public.kinesys_proteger_conteudo_notificacao() from public,anon,authenticated;
+drop trigger if exists z_kinesys_proteger_notificacao on public.notificacoes_internas;
+create trigger z_kinesys_proteger_notificacao before update on public.notificacoes_internas for each row execute function public.kinesys_proteger_conteudo_notificacao();
+
+create or replace function public.kinesys_registrar_bloqueio_periodo(p_profissional_id text,p_data_inicio date,p_data_fim date,p_inicio time default null,p_fim time default null,p_motivo text default '',p_operacao_id uuid default null)
+returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+declare perfil jsonb:=public.kinesys_perfil_sessao(); cid uuid:=(perfil->>'clinica_id')::uuid; dia date; ids uuid[]:=array[]::uuid[]; novo uuid; operacao uuid:=coalesce(p_operacao_id,gen_random_uuid());
+begin
+ if cid is null or coalesce(perfil->>'tipo','') not in ('MASTER','MASTER_FEM') then raise exception 'Somente administradores podem cadastrar ausências' using errcode='42501'; end if;
+ if p_data_inicio is null or p_data_fim is null or p_data_fim<p_data_inicio or p_data_fim-p_data_inicio>365 then raise exception 'Informe um período válido de até 366 dias'; end if;
+ if (p_inicio is null)<>(p_fim is null) or (p_inicio is not null and p_inicio>=p_fim) then raise exception 'Informe início e fim válidos, ou deixe ambos vazios para o dia todo'; end if;
+ if p_profissional_id is not null and not exists(select 1 from public.equipe where id=p_profissional_id and clinica_id=cid and coalesce(ativo,true)) then raise exception 'Profissional não encontrado nesta clínica' using errcode='42501'; end if;
+ for dia in select p_data_inicio+i from generate_series(0,p_data_fim-p_data_inicio) i loop
+  perform pg_advisory_xact_lock(hashtextextended(cid::text||':'||dia::text,0));
+  novo:=md5(operacao::text||':'||dia::text)::uuid;
+  insert into public.bloqueios_agenda(id,clinica_id,profissional_id,data,hora_inicio,hora_fim,motivo)
+  values(novo,cid,p_profissional_id,dia,p_inicio,p_fim,nullif(btrim(p_motivo),'')) on conflict(id) do nothing;
+  if not exists(select 1 from public.bloqueios_agenda b where b.id=novo and b.clinica_id=cid and b.profissional_id is not distinct from p_profissional_id and b.data=dia and b.hora_inicio is not distinct from p_inicio and b.hora_fim is not distinct from p_fim and b.motivo is not distinct from nullif(btrim(p_motivo),'')) then raise exception 'A operação já foi usada para outro período. Reabra o formulário.'; end if;
+  ids:=array_append(ids,novo);
+ end loop;
+ return jsonb_build_object('ok',true,'ids',ids,'dias',cardinality(ids));
+end $$;
+revoke all on function public.kinesys_registrar_bloqueio_periodo(text,date,date,time,time,text,uuid) from public,anon;
+grant execute on function public.kinesys_registrar_bloqueio_periodo(text,date,date,time,time,text,uuid) to authenticated;
 
 -- Uma sessão de pacote usa o saldo do contrato, nunca uma segunda cobrança.
 create or replace function public.kinesys_situacao_financeira_agendamentos(p_ids uuid[])

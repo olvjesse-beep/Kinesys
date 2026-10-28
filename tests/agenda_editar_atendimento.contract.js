@@ -123,6 +123,7 @@ async function executarEdicao({pagos=0,extra=false,bloqueado=false,conflito=fals
       };
     },
     async rpc(nome,args){ chamadas.rpc.push([nome,args]);
+      if(nome==='kinesys_consultar_excecoes_agenda')return {data:{contexto:{profissional_id:args.p_profissional_id,data:args.p_data,inicio:args.p_inicio,fim:args.p_fim},conflitos:conflito?['ocupado']:[],bloqueios:bloqueado?['ausencia']:[],feriado:''},error:null};
       assert.equal(nome,'kinesys_editar_atendimento');assert.equal(args.p_esperado.paciente_id,registro.paciente_id);assert.equal(args.p_esperado.plano_id,registro.plano_id);
       chamadas.update++;updatePayload={profissional_id:args.p_profissional_id,procedimento_id:args.p_procedimento_id,data:args.p_data,hora_inicio:args.p_hora_inicio,hora_fim:args.p_hora_fim};
       if(args.p_extraordinario)updatePayload.horario_extraordinario=true;
@@ -147,7 +148,7 @@ async function executarEdicao({pagos=0,extra=false,bloqueado=false,conflito=fals
     usuarioPodeVerAgendaClinicaToda:()=>true,
     agendaPodeMarcarProfissional:()=>true,
     existeConflitoImediato:async (...args)=>{chamadas.conflito=args; return conflito;},
-    intervaloDisponivelNaJornadaRecorrencia:()=>({ok:!bloqueado,motivo:'bloqueio fixture'}),
+    intervaloDisponivelNaJornadaRecorrencia:(p,d,i,f,opts)=>({ok:!bloqueado||opts.permitirExtraordinario,motivo:'bloqueio fixture'}),
     intervaloDentroDaJornadaPadrao:()=>!extra,
     registrarNotificacaoHorarioExtraordinario:async()=>{chamadas.aviso=true;},
     motivoHorarioExtraordinarioAgenda:()=> 'fora da jornada',
@@ -161,10 +162,11 @@ async function executarEdicao({pagos=0,extra=false,bloqueado=false,conflito=fals
     mostrarFeedbackAgenda:()=>{},
     mostrarFeedbackAgendaModal:()=>{},
     abrirDetalheAgendamento:async id=>{chamadas.detalhe.push(id);},
-    document:{getElementById:id=>elementos[id] || {value:'',}},
+    formatarDataAgendaBR:d=>d,
+    document:{getElementById:id=>elementos[id] || {value:'',},querySelectorAll:()=>[]},
   };
   vm.createContext(context);
-  vm.runInContext(editar + '\nthis.__editar = salvarEdicaoAtendimentoAtual;', context, {timeout:1000});
+  vm.runInContext(trechoEntre('function assinaturaFormularioAgenda','\nasync function resolverListaEsperaAposAgendamento')+editar + '\nthis.__editar = salvarEdicaoAtendimentoAtual;', context, {timeout:1000});
   const ok = await context.__editar({profissionalId:'prof-2',procedimentoId:'proc-2',dataISO:'2026-09-16',horarioVal:extra?'':'11:00|12:00',usarHorarioExtraordinario:extra,horarioExtra:extra?{inicio:'20:00',fim:'21:00',valido:true}:null});
   return {ok,chamadas,updatePayload,registro};
 }
@@ -173,16 +175,17 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
  const salvos=[],avisos=[],erros=[];
  const campos={ag_paciente_select:{value:'pac-fixture'},ag_profissional_select:{value:'prof-fixture',selectedOptions:[{textContent:'Profissional fixture'}]},ag_procedimento_select:{value:'proc-fixture',selectedOptions:[{dataset:{duracao:'60'},textContent:'Sessão fixture'}]},ag_data_input:{value:'2026-10-19'},ag_horario_select:{value:ativo?'':'20:00|21:00'},ag_horario_extra_toggle:{checked:ativo},ag_horario_extra_inicio:{value:'20:00'},ag_observacoes:{value:''}};
  const context={console,agendaSalvando:false,agendaEdicaoAtendimentoId:null,agendaEquipeCache:[],usuarioLogado:{nome:'Equipe fixture'},agendaDataSelecionada:null,
- document:{getElementById:id=>campos[id]||{value:'',selectedOptions:[],textContent:'',disabled:false}},
+ document:{getElementById:id=>campos[id]||{value:'',selectedOptions:[],textContent:'',disabled:false},querySelectorAll:()=>[]},
  horaParaMinutos:t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m;},minutosParaHora:m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),horaCurta:t=>t.slice(0,5),
  agendaDataUTC:d=>new Date(d+'T12:00:00Z'),intervaloDentroDaJornadaPadrao:()=>false,obterFeriadoAgenda:()=>feriado?{nome:'Feriado fixture'}:null,bloqueiosAgendaPara:()=>bloqueado?[{motivo:'Bloqueio manual'}]:[],
- _supabase:{from:()=>({select(){return this;},eq(){return this;},gte(){return this;},lte(){return this;},async neq(){return {data:ocupado?[{data:'2026-10-19',hora_inicio:'20:00',hora_fim:'21:00',status:'agendado'}]:[],error:null};}})},
+ _supabase:{rpc:async(nome,args)=>{assert.equal(nome,'kinesys_consultar_excecoes_agenda');return {data:{contexto:{profissional_id:args.p_profissional_id,data:args.p_data,inicio:args.p_inicio,fim:args.p_fim},conflitos:ocupado?['ocupado']:[],bloqueios:bloqueado?['bloqueio']:[],feriado:feriado?'Feriado fixture':''},error:null};},from:()=>({select(){return this;},eq(){return this;},gte(){return this;},lte(){return this;},async neq(){return {data:ocupado?[{id:'ocupado',data:'2026-10-19',hora_inicio:'20:00',hora_fim:'21:00',status:'agendado'}]:[],error:null};}})},
  statusAgendaOcupaHorario:()=>true,lerAgendamentosPendentesSync:()=>[],erroAgendaEhTransitorio:()=>false,agendaPodeMarcarProfissional:()=>true,usuarioPodeVerAgendaClinicaToda:()=>true,usuarioEhAdministradorAgenda:()=>true,
  lerConfiguracaoRecorrenciaModal:()=>({tipo:'nenhuma'}),gerarDatasRecorrenciaAgenda:()=>serie?['2026-10-19','2026-10-20']:['2026-10-19'],textoDatasIndisponiveisRecorrencia:a=>JSON.stringify(a),confirmarKineSys:async()=>confirmar,
  formatarDataAgendaBR:d=>d,classificarHorarioExtraordinarioAgenda:()=>({tipo:'fora_horario_profissional',motivo:'fora da jornada'}),pacienteAgendaPorId:()=>({nome:'Fixture'}),gerarIdAgendamentoKineSys:()=> 'novo-'+salvos.length,
  inserirAgendamentoNuvemConfiavel:async row=>{salvos.push(row);return {ok:true,sincronizado:true};},registrarNotificacaoHorarioExtraordinario:async row=>{avisos.push(row);return {ok:true};},
  invalidarCacheAgendaSemana(){},fecharModal(){},renderizarPainelAgenda:async()=>{},mostrarFeedbackAgenda(){},mostrarFeedbackAgendaModal(){},resolverListaEsperaAposAgendamento:async()=>{},mensagemErroSalvarAgenda:e=>e.message,alert:e=>erros.push(e)};
  context.window=context;vm.createContext(context);
+ vm.runInContext(trechoEntre('function assinaturaFormularioAgenda','\nasync function resolverListaEsperaAposAgendamento'),context);
  vm.runInContext(trechoEntre('function horarioExtraordinarioAtivoModal','\nfunction textoDatasIndisponiveisRecorrencia'),context);
  vm.runInContext(trechoEntre('async function salvarAgendamento()','\nasync function abrirDetalheAgendamento'),context);
  await context.salvarAgendamento();assert.deepStrictEqual(erros,[],'o fluxo novo não pode falhar por dependência ausente');
@@ -190,7 +193,39 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
  return {salvos,avisos,context,campos};
 }
 
+function testarFaixasSimultaneas(){
+ const ctx={Map,horaCurta:x=>String(x).slice(0,5),horaParaMinutos:x=>{const [h,m]=x.split(':').map(Number);return h*60+m;}};
+ vm.createContext(ctx);vm.runInContext(trechoEntre('function calcularFaixasSobrepostasAgenda','\nfunction assinaturaFormularioAgenda'),ctx);
+ const row=(id,inicio,fim,profissional_id='p',data='2026-10-28')=>({id,hora_inicio:inicio,hora_fim:fim,profissional_id,data});
+ const entradas=[row('c','09:30','10:30'),row('a','09:00','10:00'),row('b','09:00','10:00'),row('d','10:30','11:00'),row('outro-prof','09:00','10:00','q'),row('outro-dia','09:00','10:00','p','2026-10-29')];
+ const antes=JSON.stringify(entradas),r=ctx.calcularFaixasSobrepostasAgenda(entradas);
+ for(const id of ['a','b','c'])assert.equal(r.get(id).total,3);
+ assert.equal(new Set(['a','b','c'].map(id=>r.get(id).faixa)).size,3,'cada atendimento sobreposto deve permanecer acessível em sua faixa');
+ for(const id of ['d','outro-prof','outro-dia'])assert.equal(r.get(id).total,1,'adjacência, outro profissional e outro dia não são sobreposição');
+ assert.equal(JSON.stringify(entradas),antes,'renderização não reordena nem altera o cache');
+ const invertido=ctx.calcularFaixasSobrepostasAgenda(entradas.slice().reverse());for(const [id,faixa] of r)assert.equal(JSON.stringify(faixa),JSON.stringify(invertido.get(id)),'a ordem da consulta não muda as faixas');
+ const cadeia=ctx.calcularFaixasSobrepostasAgenda([row('a','09:00','10:00'),row('b','09:30','10:30'),row('c','10:00','11:00')]);
+ assert.equal(cadeia.get('c').faixa,cadeia.get('a').faixa,'faixa pode ser reutilizada após o fim do atendimento');
+ assert.equal(cadeia.get('a').total,2);
+}
+
+async function testarAusenciaPeriodo(){
+ const campos=Object.fromEntries(['bloq_id','bloq_profissional_select','bloq_data','bloq_data_fim','bloq_inicio','bloq_fim','bloq_motivo','btn_salvar_bloqueio'].map(id=>[id,{value:'',disabled:false}]));
+ const chamadas=[],avisos=[];let fechar=0,recarregar=0,resolver,erro=null;
+ const ctx={console,Date,agendaDataSelecionada:new Date('2026-12-17T12:00:00'),gerarIdAgendamentoKineSys:()=> 'operacao-estavel',formatarDataISO:()=> '2026-12-17',document:{getElementById:id=>campos[id]},abrirModal(){},fecharModal(){fechar++;},alert:x=>avisos.push(x),horaParaMinutos:t=>{const [h,m]=t.split(':').map(Number);return h*60+m;},carregarBloqueios:async()=>{recarregar++;},renderizarPainelAgenda:async()=>{},_supabase:{rpc:(nome,args)=>{chamadas.push([nome,args]);return new Promise(r=>resolver=()=>r({data:erro?null:{ok:true,dias:3},error:erro}));}}};
+ vm.createContext(ctx);vm.runInContext(trechoEntre('function abrirModalBloqueio()','\nasync function excluirBloqueio'),ctx);
+ ctx.abrirModalBloqueio();assert.equal(campos.bloq_data_fim.value,'2026-12-17');
+ campos.bloq_data.value='2026-12-20';ctx.atualizarPeriodoBloqueio();assert.equal(campos.bloq_data_fim.value,'2026-12-20');assert.equal(campos.bloq_data_fim.min,'2026-12-20');
+ campos.bloq_data_fim.value='2026-12-22';campos.bloq_motivo.value=' Férias ';
+ const salvando=ctx.salvarBloqueio();assert.equal(campos.btn_salvar_bloqueio.disabled,true);await ctx.salvarBloqueio();assert.equal(chamadas.length,1,'duplo clique não repete o período');resolver();await salvando;
+ assert.equal(chamadas[0][0],'kinesys_registrar_bloqueio_periodo');assert.equal(chamadas[0][1].p_operacao_id,'operacao-estavel');assert.equal(chamadas[0][1].p_data_fim,'2026-12-22');assert.equal(chamadas[0][1].p_inicio,null);assert.equal(chamadas[0][1].p_motivo,'Férias');assert.equal(fechar,1);assert.equal(recarregar,1);assert.equal(campos.btn_salvar_bloqueio.disabled,false);
+ erro={message:'Falha de transporte'};const falhou=ctx.salvarBloqueio();resolver();await falhou;assert.equal(fechar,1,'falha conserva o formulário');assert.equal(campos.bloq_id.value,'operacao-estavel','nova tentativa conserva a chave idempotente');assert.equal(campos.btn_salvar_bloqueio.disabled,false);
+ const antes=chamadas.length;campos.bloq_data_fim.value='2026-12-19';await ctx.salvarBloqueio();campos.bloq_data_fim.value='2026-12-22';campos.bloq_inicio.value='13:00';await ctx.salvarBloqueio();campos.bloq_fim.value='12:00';await ctx.salvarBloqueio();assert.equal(chamadas.length,antes,'período invertido e horas incompletas/invertidas não gravam');assert(avisos.length>=4);
+}
+
 (async()=>{
+  testarFaixasSimultaneas();await testarAusenciaPeriodo();
+  console.log('Agenda simultaneous lanes and inclusive absence period: OK');
   const semPagamento = await executarEdicao({pagos:0});
   assert.strictEqual(semPagamento.ok,true);
   assert.strictEqual(semPagamento.chamadas.update,1,'deve ocorrer exatamente um UPDATE');
@@ -222,15 +257,16 @@ async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confi
   assert.strictEqual(extraordinario.updatePayload.hora_inicio,'20:00');
   assert.strictEqual(extraordinario.updatePayload.horario_extraordinario,true);
   assert.ok(extraordinario.chamadas.aviso,'edição extraordinária deve avisar o profissional');
-  for(const opcoes of [{extra:true,bloqueado:true},{extra:true,conflito:true},{extra:true,confirmar:false}]){
-    const recusada=await executarEdicao(opcoes);assert.strictEqual(recusada.ok,false);assert.strictEqual(recusada.chamadas.update,0,'exceção não permite conflitos, bloqueios nem ignora cancelamento');
+  for(const opcoes of [{extra:true,bloqueado:true},{extra:true,conflito:true},{conflito:true}]){
+    const aceita=await executarEdicao(opcoes);assert.strictEqual(aceita.ok,true);assert.equal(aceita.chamadas.update,1);assert(aceita.chamadas.rpc.some(([name,args])=>name==='kinesys_editar_atendimento'&&args.p_extraordinario&&args.p_esperado.excecoes_confirmadas.confirmado),'encaixe exige confirmação explícita enviada ao servidor');
   }
-  console.log('Agenda extraordinary editing: allowed, conflict, block and cancelled confirmation OK');
-  for(const opcoes of [{},{feriado:true},{serie:true}]){
+  for(const opcoes of [{extra:true,confirmar:false},{extra:true,bloqueado:true,confirmar:false},{extra:true,conflito:true,confirmar:false},{bloqueado:true}]){const recusada=await executarEdicao(opcoes);assert.equal(recusada.ok,false);assert.equal(recusada.chamadas.update,0,'sem confirmação ou opção de exceção, nenhum registro é alterado');}
+  console.log('Agenda extraordinary editing: explicit overlap/block confirmation, decline and normal booking guards OK');
+  for(const opcoes of [{},{feriado:true},{serie:true},{bloqueado:true},{ocupado:true}]){
     const novo=await executarNovoExtra(opcoes);assert.strictEqual(novo.salvos.length,opcoes.serie?2:1);assert.strictEqual(novo.avisos.length,novo.salvos.length);
     assert.ok(novo.salvos.every(a=>a.hora_inicio==='20:00'&&a.hora_fim==='21:00'&&a.horario_extraordinario),'criação deve usar o horário digitado e manter a marca de exceção');
   }
-  for(const opcoes of [{ativo:false},{bloqueado:true},{ocupado:true},{confirmar:false}])assert.strictEqual((await executarNovoExtra(opcoes)).salvos.length,0,'horário extra não pode contornar bloqueio, conflito, confirmação ou opt-in');
+  for(const opcoes of [{ativo:false},{confirmar:false},{bloqueado:true,confirmar:false},{ocupado:true,confirmar:false}])assert.strictEqual((await executarNovoExtra(opcoes)).salvos.length,0,'encaixe não pode ignorar recusa ou opt-in de horário fora da jornada');
   console.log('Agenda extraordinary creation: off-hours, holiday, series and four safety refusals OK');
   const corrida=await executarNovoExtra();let liberarConsulta;
   corrida.campos.ag_horario_extra_toggle.checked=false;

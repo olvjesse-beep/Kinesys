@@ -676,6 +676,9 @@ function iconeHorarioExtraordinarioHTML(a) {
 
 async function registrarNotificacaoHorarioExtraordinario(agendamento, meta = {}) {
     if (!agendamento?.id || !agendamento?.profissional_id) return { ok:false, ignorada:true };
+    // A exceção nova é notificada na mesma transação pelo banco. O fallback
+    // continua disponível para filas e registros legados, sem aviso duplicado.
+    if (agendamento.excecao_agenda?.confirmado || agendamento.excecao_agenda?.notificacao_servidor) return {ok:true,pendente:false};
     const profissional = agendaEquipeCache.find(p => String(p.id) === String(agendamento.profissional_id)) || {};
     const dataBR = formatarDataAgendaBR(agendamento.data);
     const feriado = obterFeriadoAgenda(agendamento.data);
@@ -1663,36 +1666,59 @@ function renderizarListaBloqueios() {
 }
 
 function abrirModalBloqueio() {
-    document.getElementById('bloq_id').value = '';
+    if (agendaSalvandoBloqueio) return;
+    document.getElementById('bloq_id').value = gerarIdAgendamentoKineSys();
     document.getElementById('bloq_profissional_select').value = '';
     document.getElementById('bloq_data').value = formatarDataISO(agendaDataSelecionada);
+    document.getElementById('bloq_data_fim').value = formatarDataISO(agendaDataSelecionada);
+    atualizarPeriodoBloqueio();
     document.getElementById('bloq_inicio').value = '';
     document.getElementById('bloq_fim').value = '';
     document.getElementById('bloq_motivo').value = '';
     abrirModal('modal_bloqueio');
 }
 
+function atualizarPeriodoBloqueio() {
+    const inicio=document.getElementById('bloq_data').value;
+    const fim=document.getElementById('bloq_data_fim');
+    fim.min=inicio;
+    if(!fim.value || fim.value<inicio)fim.value=inicio;
+}
+
+let agendaSalvandoBloqueio = false;
 async function salvarBloqueio() {
+    if (agendaSalvandoBloqueio) return;
     const profissionalId = document.getElementById('bloq_profissional_select').value || null;
     const data = document.getElementById('bloq_data').value;
+    const dataFim = document.getElementById('bloq_data_fim').value || data;
     const inicio = document.getElementById('bloq_inicio').value || null;
     const fim = document.getElementById('bloq_fim').value || null;
     const motivo = document.getElementById('bloq_motivo').value.trim();
 
     if (!data) { alert('Informe a data do bloqueio.', 'aviso'); return; }
+    const dias = (Date.parse(dataFim+'T00:00:00Z')-Date.parse(data+'T00:00:00Z'))/86400000;
+    if (!Number.isInteger(dias) || dias<0 || dias>365) { alert('Informe um período válido de até 366 dias.', 'aviso'); return; }
     if ((inicio && !fim) || (!inicio && fim)) { alert('Informe início e fim, ou deixe os dois vazios para bloquear o dia todo.', 'aviso'); return; }
     if (inicio && fim && horaParaMinutos(inicio) >= horaParaMinutos(fim)) { alert('O início da ausência precisa ser anterior ao fim.', 'aviso'); return; }
 
+    agendaSalvandoBloqueio = true;
+    const botao=document.getElementById('btn_salvar_bloqueio');if(botao)botao.disabled=true;
+    let salvo=false;
     try {
-        const { error } = await _supabase.from('bloqueios_agenda').insert([{
-            profissional_id: profissionalId, data, hora_inicio: inicio, hora_fim: fim, motivo
-        }]);
+        if (!_supabase) throw new Error('Conecte o sistema para registrar o período completo.');
+        const { data:resultado, error } = await _supabase.rpc('kinesys_registrar_bloqueio_periodo',{
+            p_profissional_id:profissionalId,p_data_inicio:data,p_data_fim:dataFim,p_inicio:inicio,p_fim:fim,p_motivo:motivo,p_operacao_id:document.getElementById('bloq_id').value
+        });
         if (error) throw error;
+        if (!resultado?.ok || resultado.dias!==dias+1) throw new Error('Não foi possível confirmar o período completo.');
+        salvo=true;
         fecharModal('modal_bloqueio');
         await carregarBloqueios();
         await renderizarPainelAgenda();
     } catch (err) {
-        alert('Erro ao salvar bloqueio: ' + (err.message || err), 'erro');
+        alert((salvo?'Período salvo. Não foi possível atualizar a tela; atualize a Agenda. ':'Erro ao salvar bloqueio: ') + (err.message || err), salvo?'aviso':'erro');
+    } finally {
+        agendaSalvandoBloqueio=false;if(botao)botao.disabled=false;
     }
 }
 
@@ -2310,6 +2336,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
         });
     });
 
+    const faixasSobrepostas=calcularFaixasSobrepostasAgenda(agendaAgendamentosSemanaCache);
     if (profissionalFiltro) {
         agendaAgendamentosSemanaCache.filter(a => a.profissional_id === profissionalFiltro).forEach(a => {
             const diaIdx = dias.findIndex(d => d.dataISO === a.data);
@@ -2328,6 +2355,8 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             overlay.style.gridColumn = String(diaIdx + 2);
             overlay.style.gridRow = `${rowInicio} / span ${span}`;
             overlay.style.zIndex = '3';
+            const simultaneos=faixasSobrepostas.get(String(a.id))||{faixa:0,total:1};
+            if(simultaneos.total>1){overlay.style.width=`calc(100% / ${simultaneos.total})`;overlay.style.justifySelf='start';overlay.style.transform=`translateX(${simultaneos.faixa*100}%)`;}
             overlay.addEventListener('click', () => abrirDetalheAgendamento(a.id));
             overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.procedimentos?.nome || 'Atendimento'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
             overlay.tabIndex = 0;
@@ -2369,9 +2398,10 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 overlay.style.gridColumn = String(diaIdx + 2);
                 overlay.style.gridRow = `${rowInicio} / span ${span}`;
                 overlay.style.zIndex = '3';
-                overlay.style.width = `calc(100% / ${totalFaixas})`;
+                const simultaneos=faixasSobrepostas.get(String(a.id))||{faixa:0,total:1};
+                overlay.style.width = `calc(100% / ${totalFaixas*simultaneos.total})`;
                 overlay.style.justifySelf = 'start';
-                overlay.style.transform = `translateX(${faixa * 100}%)`;
+                overlay.style.transform = `translateX(${(faixa*simultaneos.total+simultaneos.faixa) * 100}%)`;
                 overlay.addEventListener('click', e => { e.stopPropagation(); abrirDetalheAgendamento(a.id); });
                 overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.equipe?.nome || 'Profissional'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
                 overlay.tabIndex = 0;
@@ -2699,8 +2729,8 @@ async function aoAlternarHorarioExtraordinario() {
         const feriado = obterFeriadoAgenda(dataISO);
         mostrarFeedbackAgendaModal(
             feriado
-                ? `${feriado.nome}: a agenda padrão está bloqueada por feriado. A exceção extraordinária está liberada e será notificada ao profissional responsável; conflitos e bloqueios manuais continuam sendo respeitados.`
-                : 'Horário extraordinário habilitado. Você poderá agendar fora da jornada padrão; conflitos e bloqueios continuam sendo respeitados.',
+                ? `${feriado.nome}: confirme o encaixe excepcional antes de salvar. O profissional responsável receberá um aviso.`
+                : 'Horário excepcional habilitado. Sobreposição, ausência ou bloqueio exigem confirmação antes de salvar e geram aviso ao profissional.',
             'aviso'
         );
     } else {
@@ -2732,8 +2762,8 @@ function intervaloDisponivelNaJornadaRecorrencia(profissionalId, dataISO, horaIn
         const bf = horaParaMinutos(horaCurta(b.hora_fim));
         return ini < bf && fim > bi;
     });
-    if (bloqueio) return { ok:false, motivo:`bloqueado${bloqueio.motivo ? ': '+bloqueio.motivo : ''}` };
-    return { ok:true, extraordinario:!dentroPadrao };
+    if (bloqueio && !opcoes.permitirExtraordinario) return { ok:false, motivo:`bloqueado${bloqueio.motivo ? ': '+bloqueio.motivo : ''}. Ative o horário excepcional para solicitar um encaixe.` };
+    return { ok:true, extraordinario:!dentroPadrao || !!bloqueio };
 }
 
 async function analisarDatasRecorrenciaAgenda(datas, profissionalId, horaInicio, horaFim, opcoes = {}) {
@@ -2765,7 +2795,7 @@ async function analisarDatasRecorrenciaAgenda(datas, profissionalId, horaInicio,
         if (!jornada.ok) { indisponiveis.push({data:dataISO,motivo:jornada.motivo}); continue; }
         const ocupados = [...existentesNuvem, ...pendentes].filter(a => a.data === dataISO && statusAgendaOcupaHorario(a.status));
         const conflito = ocupados.some(a => ini < horaParaMinutos(horaCurta(a.hora_fim)) && fim > horaParaMinutos(horaCurta(a.hora_inicio)));
-        if (conflito) indisponiveis.push({data:dataISO,motivo:'horário já ocupado'});
+        if (conflito && !opcoes.permitirSobreposicao) indisponiveis.push({data:dataISO,motivo:'horário já ocupado'});
         else validas.push(dataISO);
     }
     return { validas, indisponiveis };
@@ -3066,6 +3096,48 @@ async function existeConflitoImediato(profissionalId, dataISO, horaInicio, horaF
         .some(a => ini < horaParaMinutos(horaCurta(a.hora_fim)) && fim > horaParaMinutos(horaCurta(a.hora_inicio)));
 }
 
+function calcularFaixasSobrepostasAgenda(agendamentos){
+    const resultado=new Map(),grupos=new Map();
+    for(const a of agendamentos||[]){const chave=String(a.profissional_id)+'|'+a.data;if(!grupos.has(chave))grupos.set(chave,[]);grupos.get(chave).push(a);}
+    for(const grupo of grupos.values()){
+        const ordenados=grupo.slice().sort((a,b)=>String(a.hora_inicio).localeCompare(String(b.hora_inicio))||String(a.id).localeCompare(String(b.id)));
+        let componente=[],fins=[],limite=-1;
+        const finalizar=()=>{for(const item of componente)resultado.set(String(item.id),{faixa:item.faixa,total:fins.length});componente=[];fins=[];};
+        for(const a of ordenados){
+            const inicio=horaParaMinutos(horaCurta(a.hora_inicio)),fim=horaParaMinutos(horaCurta(a.hora_fim));
+            if(!Number.isFinite(inicio)||!Number.isFinite(fim)||fim<=inicio)continue;
+            if(inicio>=limite){finalizar();limite=-1;}
+            let faixa=fins.findIndex(f=>f<=inicio);if(faixa<0)faixa=fins.length;fins[faixa]=fim;
+            componente.push({id:a.id,faixa});limite=Math.max(limite,fim);
+        }finalizar();
+    }return resultado;
+}
+function assinaturaFormularioAgenda(){
+    return JSON.stringify(Array.from(document.querySelectorAll('#modal_agendamento input, #modal_agendamento select, #modal_agendamento textarea')).map(el=>[el.id,el.value,el.checked]));
+}
+async function confirmarExcecoesAgenda(profissionalId,dataISO,horaInicio,horaFim,id=null) {
+    if (!_supabase) {
+        const ocupado=await existeConflitoImediato(profissionalId,dataISO,horaInicio,horaFim,id);
+        if(ocupado||obterFeriadoAgenda(dataISO)||bloqueiosAgendaPara(dataISO,profissionalId).length)throw new Error('Conecte o sistema para conferir e confirmar o encaixe excepcional.');
+        return {ok:true,extraordinario:false,confirmacao:null};
+    }
+    const {data,error}=await _supabase.rpc('kinesys_consultar_excecoes_agenda',{
+        p_profissional_id:profissionalId,p_data:dataISO,p_inicio:horaInicio,p_fim:horaFim,p_ignorar:id
+    });
+    if(error)throw error;
+    if(!data?.contexto || data.contexto.profissional_id!==profissionalId || data.contexto.data!==dataISO || data.contexto.inicio!==horaInicio || data.contexto.fim!==horaFim || !Array.isArray(data.conflitos)||!Array.isArray(data.bloqueios))throw new Error('Não foi possível conferir a disponibilidade atual. Atualize a agenda.');
+    const avisos=[];
+    if(data.conflitos.length)avisos.push(`O profissional já possui ${data.conflitos.length} atendimento(s) nesse horário. Os atendimentos serão simultâneos.`);
+    if(data.bloqueios.length)avisos.push('O horário está em um período de ausência ou bloqueio.');
+    if(data.feriado)avisos.push(`A data é feriado: ${data.feriado}.`);
+    if(avisos.length){
+        const confirmar=await confirmarKineSys(`${formatarDataAgendaBR(dataISO)} · ${horaInicio}–${horaFim}\n\n${avisos.join('\n')}\n\nDeseja realmente agendar assim mesmo? O encaixe será excepcional e o profissional responsável receberá um aviso interno.`,
+            {titulo:data.conflitos.length?'Profissional já possui atendimento':'Encaixe excepcional',confirmar:'Agendar assim mesmo',cancelar:'Voltar e revisar',tipo:'aviso'});
+        if(!confirmar)return {ok:false};
+    }
+    return {ok:true,extraordinario:avisos.length>0,confirmacao:{...data,confirmado:true}};
+}
+
 async function resolverListaEsperaAposAgendamento(pacienteId) {
     if (!usuarioPodeVerAgendaClinicaToda()) return {encontrou:false,removeu:false};
     if (!_supabase || !pacienteId) return { encontrou: false, removeu: false };
@@ -3113,6 +3185,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
 }
 
 async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, dataISO, horarioVal, usarHorarioExtraordinario=false, horarioExtra=null }) {
+    const formularioInicial=assinaturaFormularioAgenda();
     const id = String(agendaEdicaoAtendimentoId || '');
     const a = agendaAgendamentosSemanaCache.find(x => String(x.id) === id)
         || agendaAgendamentosDoDiaCache.find(x => String(x.id) === id);
@@ -3147,12 +3220,11 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
     const jornada=intervaloDisponivelNaJornadaRecorrencia(profissionalId,dataISO,horaInicio,horaFim,{permitirExtraordinario:usarHorarioExtraordinario});
     if(!jornada.ok){mostrarFeedbackAgendaModal('Horário indisponível: '+jornada.motivo,'erro');return false;}
     const conflito = await existeConflitoImediato(profissionalId, dataISO, horaInicio, horaFim, id);
-    if (conflito) {
-        mostrarFeedbackAgendaModal('Este profissional já possui outro atendimento nesse horário. Escolha um horário disponível.', 'erro');
-        return false;
-    }
-    const extraordinario=!intervaloDentroDaJornadaPadrao(profissionalId,dataISO,horaInicio,horaFim);
-    if(extraordinario&&!await confirmarKineSys(`Este horário (${horaInicio}–${horaFim}) está fora da jornada padrão. Conflitos e bloqueios continuam protegidos. Confirmar a alteração como horário extraordinário?`,{titulo:'Horário fora do padrão',confirmar:'Confirmar horário extraordinário',cancelar:'Voltar e revisar',tipo:'aviso'}))return false;
+    const excecao=await confirmarExcecoesAgenda(profissionalId,dataISO,horaInicio,horaFim,id);
+    if(!excecao.ok)return false;
+    if(conflito&&!excecao.extraordinario)throw new Error('A ocupação da agenda mudou. Atualize e confirme novamente.');
+    const extraordinario=excecao.extraordinario||!intervaloDentroDaJornadaPadrao(profissionalId,dataISO,horaInicio,horaFim);
+    if(extraordinario&&!excecao.extraordinario&&!await confirmarKineSys(`Este horário (${horaInicio}–${horaFim}) está fora da jornada padrão. Confirmar a alteração como horário extraordinário e avisar o profissional?`,{titulo:'Horário fora do padrão',confirmar:'Confirmar horário extraordinário',cancelar:'Voltar e revisar',tipo:'aviso'}))return false;
 
     const mudouProcedimento = String(a.procedimento_id || '') !== String(procedimentoId || '');
     let financeiroAnterior = null;
@@ -3192,6 +3264,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
         alteracoes.horario_extraordinario_confirmado_em=extraordinario?new Date().toISOString():null;
     }
     const pendenteLocal = lerAgendamentosPendentesSync().some(x => String(x.payload?.id || '') === id);
+    if(extraordinario&&excecao.confirmacao)alteracoes.excecao_agenda=excecao.confirmacao;
     if (pendenteLocal && converterPacote) {
         mostrarFeedbackAgendaModal('Sincronize este atendimento antes de converter o pacote. A cobrança precisa ser validada junto com a alteração.', 'erro');
         return false;
@@ -3199,17 +3272,19 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
     let salvo = false;
     let registroSalvo = null;
     let financeiroPreservado = false;
+    if(formularioInicial!==assinaturaFormularioAgenda())throw new Error('Os campos foram alterados durante a confirmação. Revise e salve novamente.');
     if (_supabase && !pendenteLocal) {
         const { data, error } = await _supabase.rpc('kinesys_editar_atendimento', {
             p_agendamento_id:id, p_profissional_id:profissionalId, p_procedimento_id:procedimentoId,
             p_data:dataISO, p_hora_inicio:horaInicio, p_hora_fim:horaFim,
             p_extraordinario:extraordinario, p_converter_pacote:converterPacote, p_confirmar_reprecificacao:confirmarReprecificacao,
             p_esperado:{paciente_id:a.paciente_id,procedimento_id:a.procedimento_id,profissional_id:a.profissional_id,
-                plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim}
+                plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim,
+                excecoes_confirmadas:extraordinario?(excecao.confirmacao||a.excecao_agenda||null):null}
         });
         if (error) {
             if (erroEhConflitoAgenda(error)) {
-                mostrarFeedbackAgendaModal('O horário acabou de ser ocupado por outro atendimento. Escolha outro horário.', 'erro');
+                mostrarFeedbackAgendaModal('A disponibilidade mudou durante a confirmação. Revise e confirme novamente antes de salvar.', 'erro');
                 return false;
             }
             throw error;
@@ -3275,6 +3350,7 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
 }
 
 async function salvarAgendamento() {
+    const formularioInicial=assinaturaFormularioAgenda();
     if (agendaSalvando) return;
     const btn = document.getElementById('btn_salvar_agendamento');
     const pacienteId = document.getElementById('ag_paciente_select').value;
@@ -3360,7 +3436,7 @@ async function salvarAgendamento() {
         const optPlano = document.getElementById('ag_plano_select')?.selectedOptions?.[0];
         const capacidadePacote = Number(optPlano?.dataset?.disponiveis || validacaoPlano.plano?.sessoes_disponiveis_vinculo || optPlano?.dataset?.restantes || 0);
 
-        const analise = await analisarDatasRecorrenciaAgenda(datasSolicitadas, profissionalId, horaInicio, horaFim, { permitirExtraordinario: usarHorarioExtraordinario });
+        const analise = await analisarDatasRecorrenciaAgenda(datasSolicitadas, profissionalId, horaInicio, horaFim, { permitirExtraordinario: usarHorarioExtraordinario,permitirSobreposicao:true });
         if (!analise.validas.length) {
             mostrarFeedbackAgendaModal('Nenhuma das datas solicitadas está disponível nesse horário.\n' + textoDatasIndisponiveisRecorrencia(analise.indisponiveis), 'erro');
             return;
@@ -3373,8 +3449,13 @@ async function salvarAgendamento() {
             if (!seguir) return;
         }
         datasSolicitadas = analise.validas;
-
-        const datasExtraordinarias = datasSolicitadas.filter(d => !intervaloDentroDaJornadaPadrao(profissionalId, d, horaInicio, horaFim));
+        const excecoesPorData=new Map();
+        for(const dia of datasSolicitadas){
+            const excecao=await confirmarExcecoesAgenda(profissionalId,dia,horaInicio,horaFim);
+            if(!excecao.ok)return;
+            excecoesPorData.set(dia,excecao);
+        }
+        const datasExtraordinarias = datasSolicitadas.filter(d => !excecoesPorData.get(d)?.extraordinario && !intervaloDentroDaJornadaPadrao(profissionalId, d, horaInicio, horaFim));
         if (datasExtraordinarias.length) {
             const profissionalNome = document.getElementById('ag_profissional_select')?.selectedOptions?.[0]?.textContent || 'profissional';
             const primeira = formatarDataAgendaBR(datasExtraordinarias[0]);
@@ -3398,7 +3479,7 @@ O horário escolhido está fora da jornada cadastrada de ${profissionalNome}.` :
             const confirmarExtra = await confirmarKineSys(
                 `O horário ${horaInicio}–${horaFim} é uma exceção à jornada padrão em ${resumoDatas}.${detalheFeriado}${detalheJornada}
 
-Conflitos de agenda e bloqueios manuais continuam protegidos. Se você confirmar, o agendamento será salvo como extraordinário e ${profissionalNome} receberá um aviso interno.
+Se você confirmar, o agendamento será salvo como extraordinário e ${profissionalNome} receberá um aviso interno.
 
 Deseja realmente realizar esse agendamento?`,
                 { titulo: feriadosExtra.length ? 'Agendamento extraordinário em feriado' : (foraDiaProfissional.length ? 'Fora do dia de atendimento' : 'Horário fora do padrão'), confirmar:'Sim, agendar mesmo assim', cancelar:'Voltar e revisar', tipo:'aviso' }
@@ -3428,12 +3509,14 @@ Deseja realmente realizar esse agendamento?`,
         let primeiroErro = null;
         const idsSalvos = [];
         for (let i = 0; i < datasSolicitadas.length; i++) {
+            if(formularioInicial!==assinaturaFormularioAgenda())throw new Error('Os campos foram alterados durante a confirmação. Revise os horários antes de continuar.');
             const dataOcorrencia = datasSolicitadas[i];
             mostrarFeedbackAgendaModal(`Salvando ${i+1} de ${datasSolicitadas.length}…`, 'info');
             const cobertoPeloPacote = !!planoId && i < capacidadePacote;
             const excedenteDoPacote = !!planoId && !cobertoPeloPacote;
             const statusOcorrencia = excedenteDoPacote ? 'pre_agendado' : (cobertoPeloPacote ? 'agendado' : statusInicialSolicitado);
-            const ehExtraordinario = !intervaloDentroDaJornadaPadrao(profissionalId, dataOcorrencia, horaInicio, horaFim);
+            const excecao=excecoesPorData.get(dataOcorrencia);
+            const ehExtraordinario = excecao?.extraordinario || !intervaloDentroDaJornadaPadrao(profissionalId, dataOcorrencia, horaInicio, horaFim);
             const classificacaoExtraordinario = ehExtraordinario ? classificarHorarioExtraordinarioAgenda(profissionalId, dataOcorrencia, horaInicio, horaFim) : null;
             const motivoExtraordinario = ehExtraordinario ? (classificacaoExtraordinario?.motivo || motivoHorarioExtraordinarioAgenda(profissionalId, dataOcorrencia, horaInicio, horaFim)) : '';
             const novoAgendamento = {
@@ -3451,6 +3534,7 @@ Deseja realmente realizar esse agendamento?`,
                 horario_extraordinario_confirmado_por: ehExtraordinario ? (usuarioLogado?.nome || 'Desconhecido') : null,
                 horario_extraordinario_confirmado_em: ehExtraordinario ? new Date().toISOString() : null
             };
+            if(ehExtraordinario&&excecao?.confirmacao)novoAgendamento.excecao_agenda=excecao.confirmacao;
             if (cobertoPeloPacote && validacaoPlano.modo === 'nuvem') novoAgendamento.plano_id = planoId;
 
             const persistencia = await inserirAgendamentoNuvemConfiavel(novoAgendamento, {
@@ -3458,7 +3542,7 @@ Deseja realmente realizar esse agendamento?`,
                 metadados: { ...metaBase, recorrencia: cfgRecorrencia.tipo, recorrencia_indice: i+1, recorrencia_total: datasSolicitadas.length, horario_extraordinario: ehExtraordinario, motivo_extraordinario: motivoExtraordinario, tipo_extraordinario: classificacaoExtraordinario?.tipo || null, classificacao_extraordinario: classificacaoExtraordinario ? { tipo: classificacaoExtraordinario.tipo, motivo: classificacaoExtraordinario.motivo } : null, cobertura_financeira: cobertoPeloPacote ? 'pacote' : (statusOcorrencia === 'pre_agendado' ? 'pre_agendado_sem_cobertura' : 'sem_pacote') }
             });
             if (!persistencia.ok) {
-                if (persistencia.conflito || erroEhConflitoAgenda(persistencia.error)) { conflitosTardios++; continue; }
+                if (persistencia.conflito || erroEhConflitoAgenda(persistencia.error)) { conflitosTardios++; primeiroErro=primeiroErro||persistencia.error; continue; }
                 falhas++;
                 primeiroErro = primeiroErro || persistencia.error;
                 continue;

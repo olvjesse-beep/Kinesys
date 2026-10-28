@@ -111,6 +111,9 @@ Ao finalizar, informe de forma breve:
 
 ## 10. Contratos permanentes de Agenda e Paciente
 
+- Conforme solicitação explícita de 28/10/2026, a Agenda interna permite sobreposição, ausência/bloqueio e feriado somente após aviso e confirmação do encaixe excepcional. Conferir no servidor o profissional, período e os conflitos/bloqueios atuais; mudança durante o diálogo exige nova confirmação. Aviso interno ao responsável pertence à mesma transação do agendamento. Não estender essa autorização ao portal público. Preservar escopo de clínica/perfil e edição financeira atômica. Atendimentos simultâneos continuam acessíveis lado a lado na grade.
+- Ausências permitem datas inicial/final inclusivas; horas opcionais aplicadas a cada dia, ambas vazias significam dia todo. Cadastro completo é atômico e repetição da mesma operação não duplica dias. Manter a trava independente de botão e os testes funcionais/DB na barreira hospedada.
+
 Estas decisões só podem ser removidas ou revertidas por solicitação explícita do usuário. Refatorações devem preservar o comportamento e ampliar os testes quando necessário:
 
 - Em notebook, navegação e filtros da Agenda quebram por grupos, nunca por letras ou por sobreposição de campos. Conferir 1366×768, 1280×720, 1024×768 e mobile.
