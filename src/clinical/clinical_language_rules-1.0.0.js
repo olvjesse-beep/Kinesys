@@ -2,7 +2,7 @@
  * source-bound references. No model, external service, diagnosis or learning. */
 (function(root){
  'use strict';
- const VERSION='1.2.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
+ const VERSION='1.3.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),copy=v=>JSON.parse(JSON.stringify(v));
  function tokens(text){return Array.from(String(text||'').matchAll(/[\p{L}\p{M}]+(?:-[\p{L}\p{M}]+)*|\d+(?:[.,]\d+)?|[^\s]/gu)).map(m=>({texto:m[0],normalizado:norm(m[0]),inicio:m.index,fim:m.index+m[0].length}));}
  const anatomy=[
   ['glutea','quadril','','glutea',['região dos dois glúteos','região dos dois gluteos','região glútea bilateral','glúteos','gluteos','glútea','glutea']],
@@ -21,6 +21,7 @@
   ['planta','tornozelo_pe','','',['sola do pé','planta do pé','sola dos pés','sola dos dois pés','solas dos pés','planta dos pés','planta de ambos os pés']]
  ];
  const vocabulary=[
+  ['dor','incomodo',['incômodo','incomodo']],
   ['parestesia','formigamento',['formigando','formigação','formigacoes']],
   ['parestesia','dormencia',['adormecida','adormecido','adormecidas','adormecidos']],
   ['edema','',['inchada','inchadas','inchados','inchando']],
@@ -48,6 +49,7 @@
    .replace(/\bdesidrata[cç][aã]o\b/gi,'desidratação').replace(/\bosteofitos\b/gi,'osteófitos').replace(/\bespondilolise\b/gi,'espondilólise')
    .replace(/\bprotus[oõ]es\b/gi,'protrusões').replace(/\bprotus[aã]o\b/gi,'protrusão').replace(/\bsem evidencia\b/gi,'sem evidência').replace(/\bisquiatica\b/gi,'isquiática')
    .replace(/\bsintomatica\b/gi,'sintomática').replace(/\bregi[aã]o dos dois gl[uú]teos\b/gi,'região glútea bilateral')
+   .replace(/\bincomodo\b/gi,'incômodo').replace(/\bdiagnósticado\b/gi,'diagnosticado').replace(/\bfrequencia\b/gi,'frequência').replace(/\bplacamiorelaxante\b/gi,'placa miorelaxante')
    .replace(/\bMMII\b/g,'membros inferiores').replace(/\b(\d+(?:[.,]\d+)?)\s*(MG|MCG|ML)\b/gi,(_,n,u)=>n+' '+u.toLowerCase())
    .replace(/^E\s+atualmente\s+apresenta\s+/i,'Atualmente, refere ');
  }

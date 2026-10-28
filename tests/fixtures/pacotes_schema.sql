@@ -1,5 +1,9 @@
 create function public.kinesys_current_clinica_id() returns uuid language sql as $$ select nullif(current_setting('test.clinica',true),'')::uuid $$;
 create role authenticated; create table public.clinicas(id uuid primary key);
+create role anon;
+-- Supabase also grants the anonymous role directly by default. Revoking PUBLIC
+-- alone must not make the authorization regression pass accidentally.
+alter default privileges grant execute on functions to anon;
 create table public.agendamentos (id uuid default gen_random_uuid(),
 paciente_id text,
 profissional_id text,

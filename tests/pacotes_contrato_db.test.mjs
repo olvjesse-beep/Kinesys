@@ -6,6 +6,8 @@ const root=new URL('../',import.meta.url);
 try {
  await db.exec(fs.readFileSync(new URL('tests/fixtures/pacotes_schema.sql',root),'utf8'));
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_contrato_canonico.sql',root),'utf8'));
+ const privileges=(await db.query("select has_function_privilege('anon','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') anonymous, has_function_privilege('authenticated','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') authenticated")).rows[0];
+ assert.equal(privileges.anonymous,false);assert.equal(privileges.authenticated,true);
  const cid='11111111-1111-4111-8111-111111111111',proc='22222222-2222-4222-8222-222222222222';
  await db.exec(`set test.clinica='${cid}';set test.papel='MASTER';insert into clinicas(id) values('${cid}');insert into pacientes(id,clinica_id,nome) values('teste','${cid}','Teste');insert into procedimentos(id,clinica_id,nome,valor,sessoes_pacote,ativo) values('${proc}','${cid}','Pacote teste',123,10,true);`);
  const call=async(op,custom=null)=>(await db.query('select kinesys_contratar_pacote($1,$2,$3,$4) c',['teste',proc,op,custom])).rows[0].c;

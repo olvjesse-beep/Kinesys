@@ -6,7 +6,7 @@
  */
 (function(root){
  'use strict';
- const VERSION='1.5.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const VERSION='1.6.0',norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const uniq=a=>Array.from(new Set(a.filter(Boolean))),copy=o=>JSON.parse(JSON.stringify(o));
  const natural=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' e '+a.at(-1);
  const sentence=t=>{t=String(t||'').trim().replace(/[.;,\s]+$/,'');return t?t[0].toUpperCase()+t.slice(1)+'.':'';};
@@ -101,7 +101,8 @@
   const numericos=segmento=>uniq((norm(segmento).match(/\b\d+(?:[.,]\d+)?(?:\s*\/\s*\d+)?(?:\s*(?:mg|mcg|ml|cm|mm|kg|dias?|semanas?|meses?|anos?|horas?|minutos?))?\b/g)||[]));
   function add(c,site,index){
    const next=sites[index+1],prev=sites[index-1],a=site?.inicio??c.inicio,b=site?.fim??c.fim;
-   const inicioContexto=site?(prev?site.inicio:0):c.inicio;
+   const nominalModifier=conceitos.length===1&&/^(?:(?:refere|relata|informa)(?: que)?\s+)?a (?:piora|melhora) da\s*$/.test(t.slice(0,c.inicio));
+   const inicioContexto=site?(prev?site.inicio:0):nominalModifier?0:c.inicio;
    const fimContexto=next?next.inicio:texto.length;
    const local=texto.slice(inicioContexto,fimContexto),apos=site?texto.slice(b,fimContexto):'';
    let lado=site?lados(apos):[];
@@ -168,7 +169,7 @@
   if(props.some(p=>p.sujeito==='outra_pessoa')||/^(?:(?:o|a) )?(?:mae|pai|irmao|irma|avo|avo materna|avo paterna)\b/.test(t)||!sintomaAtual&&/antecedente|historico|cirurgia|queimadura|pneumonia|septicemia/.test(t))return 'antecedentes';
   if(/\b(?:apos isso|desde entao|por isso|essa dor|o mesmo sintoma)\b/.test(t))return 'continuidade';
   if(/\b(?:ao dormir|sono|despert\w*|acorda|noite|noturn\w*)\b/.test(t))return 'repercussoes';
-  if(/\b(?:telefone|celular|rotina|trabalho)\b/.test(t)&&!props.some(p=>p.conceito==='dor'))return 'rotina';
+  if(/\b(?:telefone|celular|rotina|trabalho|trabalha|computador|notebook|destr[oa]|canhot[oa])\b/.test(t)&&!props.some(p=>p.conceito==='dor'))return 'rotina';
   if(/\b(?:gama|resultado|laboratorial)\b/.test(t))return 'informacoes_complementares';
   return props.length&&!props.some(p=>p.conceito==='dor')?'associados':'queixa';
  }
@@ -234,6 +235,18 @@
     simples.forEach((f,i)=>{f.realizacoes=[frase];if(i)omitidos.add(f.id);});
    }
    if(!relato.manterOrdem){
+    // A frequency fragment can complete only the immediately preceding,
+    // explicit occurrence clause. Keep both sources; never pick an anatomy.
+    fs.forEach((f,i)=>{
+     const previous=fs[i-1];if(!previous||omitidos.has(previous.id)||previous.analiseDocumental?.modelo!=='ocorrencia_explicita'||!/^Porém com menos frequ[eê]ncia\.$/iu.test(f.redacao))return;
+     const allPrevious=relato.fatos.indexOf(previous),allCurrent=relato.fatos.indexOf(f);
+     if(allCurrent!==allPrevious+1)return;
+     const phrase=(textos.get(previous.id)||previous.redacao).replace(/\.$/,'')+', porém com menos frequência.';
+     const check=validar(analisar(previous.origens[0].trecho+' '+f.origens[0].trecho),phrase);
+     if(!check.ok)return;
+     textos.set(previous.id,phrase);omitidos.add(f.id);previous.realizacoes=f.realizacoes=[phrase];
+     relato.relacoes.push({tipo:'continuacao_documental_frequencia',de:f.id,para:previous.id});
+    });
     const generico=fs.find(f=>f.redacao==='Refere persistência da dor.'),detalhado=fs.find(f=>/^Refere persistência da dor há .+\.$/.test(f.redacao));
     if(generico&&detalhado){omitidos.add(generico.id);generico.realizacoes=[detalhado.redacao];relato.relacoes.push({tipo:'detalhado_por',de:generico.id,para:detalhado.id});}
     const sono=fs.find(f=>f.redacao==='A dor piora ao dormir.'),despertar=fs.find(f=>f.redacao==='A dor provoca despertares noturnos.');
@@ -243,14 +256,17 @@
     }
    }
    let bloco={tipo,fatos:[],texto:''};
-   fs.filter(f=>!omitidos.has(f.id)).forEach(f=>{
+   const active=fs.filter(f=>!omitidos.has(f.id));
+   active.forEach((f,index)=>{
     const anterior=bloco.fatos.length?relato.fatos.find(x=>x.id===bloco.fatos.at(-1)):null;
     const inicio=f.origens?.[0]?.inicio,fimAnterior=anterior?.origens?.at(-1)?.fim;
     const transicao=(relato.marcadoresEstruturais||[]).some(m=>m.tipo==='transicao_discursiva'&&m.inicio>=(fimAnterior??Infinity)&&m.fim<=(inicio??-1));
     if(bloco.texto&&transicao){blocos.push(bloco);bloco={tipo,fatos:[],texto:''};}
     const base=textos.get(f.id)||f.redacao;
     const texto=root.KineSysDocumentAnalyzer?.redigirFatoPlanejado(f,base,!!bloco.texto||blocos.length>0)||base;
-    if(bloco.texto&&bloco.texto.length+texto.length>550){blocos.push(bloco);bloco={tipo,fatos:[],texto:''};}
+    // Do not cut a coherent topic at 550 characters or leave an isolated final
+    // sentence. Only split a long topic when both sides keep several facts.
+    if(bloco.texto.length>900&&bloco.fatos.length>=4&&active.length-index>=3){blocos.push(bloco);bloco={tipo,fatos:[],texto:''};}
     bloco.texto+=(bloco.texto?' ':'')+texto;bloco.fatos.push(...fs.filter(o=>o.id===f.id||o.realizacoes?.includes(texto)).map(o=>o.id));
    });if(bloco.texto)blocos.push(bloco);
    // A repeated source follows the final realization of its representative,
