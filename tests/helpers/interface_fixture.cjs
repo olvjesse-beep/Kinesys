@@ -12,6 +12,9 @@ module.exports=function fixture(root){
  const radarStart=core.indexOf('    const launcher =',core.indexOf('    ultimoRadarAlertas = alertasMatriz;'));
  const radarUI=core.slice(radarStart,core.indexOf('\n}\n\n/* função construirBlocoRedFlags',radarStart));
  const radarClose=core.slice(core.indexOf('function fecharRadarKineSys('),core.indexOf('function sincronizarCicloVidaRadar('));
+ const agenda=fs.readFileSync(path.join(root,'src/agenda/agenda-1.20.0.js'),'utf8');
+ const trechoAgenda=(a,b)=>agenda.slice(agenda.indexOf(a),agenda.indexOf(b,agenda.indexOf(a)+a.length));
+ const agendaExcecoes=trechoAgenda('function calcularFaixasSobrepostasAgenda','\nasync function resolverListaEsperaAposAgendamento')+trechoAgenda('function abrirModalBloqueio()','\nasync function excluirBloqueio')+trechoAgenda('function renderizarGradeSemanal(','\nasync function renderizarPainelAgenda');
  const setup=`
 var radarAlertasJaApresentados=new Set();
 ${radarClose}
@@ -52,7 +55,34 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  }
  document.querySelectorAll('[onclick*="salvar"],[onclick*="cadastrar"],[onclick*="excluir"],[onclick*="Pagamento"],[onclick*="gerarProntuario"]').forEach(b=>b.disabled=true);
  document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
+ if(new URLSearchParams(location.search).get('agendaExcecoes')==='1')qaPrepararAgendaExcecoes();
 },50));
+${agendaExcecoes}
+var agendaDataSelecionada=new Date('2026-10-26T12:00:00'),AGENDA_GRADE_PASSO_MIN=10,agendaAgendamentosSemanaCache=[];
+function horaCurta(x){return String(x||'').slice(0,5);}function horaParaMinutos(x){const [h,m]=x.split(':').map(Number);return h*60+m;}
+function minutosParaHora(x){return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');}
+function diasVisiveisDaSemana(){return Array.from({length:5},(_,i)=>({dataISO:'2026-10-'+(26+i),data:new Date('2026-10-'+(26+i)+'T12:00:00'),diaSemana:i+1}));}
+function limitesHorariosGrade(){return {inicio:480,fim:1080};}function instanteAgendaSaoPaulo(){return {data:'2026-10-28'};}
+function obterFeriadoAgenda(){return null;}function janelasAgendaPara(){return [{inicio:480,fim:1080}];}
+function bloqueiosAgendaPara(){return [];}function minutoDentroDeJanela(){return true;}function bloqueioNoMinuto(){return null;}
+function intervaloEntreJanelasAgenda(){return null;}function intervalosEntreJanelasAgenda(){return [];}
+function classeStatusAgenda(x){return x;}function classeTipoVisualAgendamentoAgenda(){return 'tipo-fisioterapia';}
+function iconePagamentoAgendaHTML(){return '';}function iconeHorarioExtraordinarioHTML(){return '';}
+function aplicarCoresAgenda(){}function carregarCoresAgendaCompartilhadas(){return Promise.resolve();}function iniciarRelogioAgenda(){}
+function abrirDetalheAgendamento(id){alert('Agendamento fictício: '+id);}function gerarIdAgendamentoKineSys(){return crypto.randomUUID();}
+function formatarDataISO(d){return d.toISOString().slice(0,10);}function formatarDataAgendaBR(d){return d.split('-').reverse().join('/');}
+function carregarBloqueios(){return Promise.resolve();}
+function irParaSubtelaAgenda(id){document.querySelectorAll('#tela_agenda .subtela').forEach(e=>e.classList.toggle('ativa',e.id===id));}
+function qaPrepararAgendaExcecoes(){
+ agendaAgendamentosSemanaCache=[['a','09:00','10:00','Paciente de exemplo A'],['b','09:00','10:00','Paciente de exemplo B'],['c','10:00','11:00','Paciente de exemplo C']].map(([id,hora_inicio,hora_fim,nome])=>({id,hora_inicio,hora_fim,data:'2026-10-28',profissional_id:'qa1',pacientes:{nome},equipe:qaEquipe[0],procedimentos:qaProcedimentos[1],status:'agendado'}));
+ renderizarPainelAgenda=async()=>renderizarGradeSemanal(null,null,'qa1');renderizarPainelAgenda();
+ const select=document.getElementById('bloq_profissional_select');select.innerHTML='<option value="">Toda a clínica</option><option value="qa1">Profissional de demonstração</option>';
+ document.getElementById('btn_salvar_bloqueio').disabled=false;
+ _supabase.rpc=async(nome,args)=>nome==='kinesys_consultar_excecoes_agenda'?{data:{contexto:{profissional_id:args.p_profissional_id,data:args.p_data,inicio:args.p_inicio,fim:args.p_fim},conflitos:['a','b'],bloqueios:[],feriado:''},error:null}:{data:{ok:true,dias:(Date.parse(args.p_data_fim)-Date.parse(args.p_data_inicio))/86400000+1},error:null};
+ const botao=document.querySelector('[onclick="novoAgendamento()"]')||document.querySelector('#agenda_painel .btn-primary');
+ if(botao){botao.textContent='Conferir encaixe (prévia)';botao.onclick=()=>confirmarExcecoesAgenda('qa1','2026-10-28','09:00','10:00');}
+ document.querySelectorAll('[onclick="abrirModalBloqueio()"]')[0]?.removeAttribute('disabled');
+}
 `;
  const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
  return html.replace('</body>',`<script>${setup}</script>${scripts.map(src=>'<script defer src="/'+src+'"></script>').join('')}</body>`);

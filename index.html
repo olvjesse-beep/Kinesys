@@ -1387,10 +1387,17 @@
                 <select id="bloq_profissional_select"><option value="">Toda a clínica</option></select>
                 <p class="field-help">Selecione um profissional para registrar uma ausência individual. Deixe “Toda a clínica” para feriados ou fechamento geral.</p>
             </div>
-            <div class="input-group">
-                <label for="bloq_data">Data</label>
-                <input type="date" id="bloq_data">
+            <div class="grid-2">
+                <div class="input-group">
+                    <label for="bloq_data">Data inicial</label>
+                    <input type="date" id="bloq_data" onchange="atualizarPeriodoBloqueio()">
+                </div>
+                <div class="input-group">
+                    <label for="bloq_data_fim">Data final</label>
+                    <input type="date" id="bloq_data_fim">
+                </div>
             </div>
+            <p class="field-help">Inclui a data inicial e a final. O horário abaixo vale em cada dia; deixe os dois horários vazios para bloquear os dias inteiros.</p>
             <div class="grid-2">
                 <div class="input-group">
                     <label for="bloq_inicio">Início (opcional — vazio = dia todo)</label>
@@ -1407,7 +1414,7 @@
             </div>
             <div class="actions">
                 <button class="btn-secondary" onclick="fecharModal('modal_bloqueio')">Cancelar</button>
-                <button class="btn-primary" onclick="salvarBloqueio()">Salvar ausência / bloqueio</button>
+                <button class="btn-primary" id="btn_salvar_bloqueio" onclick="salvarBloqueio()">Salvar ausência / bloqueio</button>
             </div>
         </div>
     </div>
@@ -1610,7 +1617,7 @@
     <script defer src="src/patient/patient_deletion_core-1.0.0.js?v=20261026-inicializacao-r1"></script>
     <script defer src="src/patient/patient_chart_read_core-1.0.0.js?v=20261026-inicializacao-r1"></script>
     <script defer src="src/patient/patient_registration_core-1.0.0.js?v=20261026-inicializacao-r1&audit=20261026-completa-r1"></script>
-    <script defer src="src/ui/screen_loader-1.25.0.js?v=20261028-redacao-coesa-r1&anterior=20261024-linguagem-contextual-r2&meudia=20260915-owner-r1&condicoes=20261027-radar-condicoes-r1"></script>
+    <script defer src="src/ui/screen_loader-1.25.0.js?v=20261028-agenda-excecoes-r1&anterior=20261024-linguagem-contextual-r2&meudia=20260915-owner-r1&condicoes=20261027-radar-condicoes-r1"></script>
     <script defer src="src/finance/financeiro-1.19.0.js?v=20261025-interface-audit-r1&audit=20261026-completa-r1"></script>
     <script defer src="src/finance/credito_cliente-1.19.0.js?v=20261019-pagamento-contexto-r1"></script>
     <script defer src="src/core/mensagens_config.js?v=20261026-inicializacao-r1"></script>

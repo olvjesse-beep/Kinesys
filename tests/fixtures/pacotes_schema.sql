@@ -1,6 +1,10 @@
 create function public.kinesys_current_clinica_id() returns uuid language sql as $$ select nullif(current_setting('test.clinica',true),'')::uuid $$;
 create role authenticated; create table public.clinicas(id uuid primary key);
 create role anon;
+create table public.bloqueios_agenda(id uuid primary key default gen_random_uuid(),clinica_id uuid,profissional_id text,data date,hora_inicio time,hora_fim time,motivo text);
+create table public.notificacoes_internas(id uuid primary key default gen_random_uuid(),clinica_id uuid,destinatario_profissional_id text,destinatario_email text,tipo text,titulo text,mensagem text,agendamento_id text,agendamento_data date,origem_chave text unique,criada_por text,criada_em timestamptz default now(),lida boolean default false,lida_em timestamptz);
+-- Calendar behavior is separately covered by the public booking contract.
+create function public.kinesys_agendamento_online_feriado(d date) returns text language sql immutable as $$ select case when to_char(d,'MM-DD')='12-25' then 'Natal' end $$;
 -- Supabase also grants the anonymous role directly by default. Revoking PUBLIC
 -- alone must not make the authorization regression pass accidentally.
 alter default privileges grant execute on functions to anon;
@@ -147,7 +151,7 @@ agendamento_online_ativo boolean default false, primary key(id));
 alter table public.cobrancas_agendamento add unique(clinica_id,agendamento_id);
 
 create table public.creditos_paciente_usos(id uuid primary key default gen_random_uuid(),clinica_id uuid,paciente_id text,plano_id uuid,valor numeric);
-create function public.kinesys_perfil_sessao() returns jsonb language sql as $$ select jsonb_build_object('clinica_id',current_setting('test.clinica',true),'tipo',current_setting('test.papel',true),'nome','Teste') $$;
+create function public.kinesys_perfil_sessao() returns jsonb language sql as $$ select jsonb_build_object('clinica_id',current_setting('test.clinica',true),'tipo',current_setting('test.papel',true),'nome','Teste','id',current_setting('test.profissional',true)) $$;
 CREATE OR REPLACE FUNCTION public.kinesys_validar_pagamento_plano_paciente()
  RETURNS trigger
  LANGUAGE plpgsql
