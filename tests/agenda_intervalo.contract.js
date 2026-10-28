@@ -7,6 +7,13 @@ const raiz = path.resolve(__dirname, '..');
 const agenda = fs.readFileSync(path.join(raiz, 'src/agenda/agenda-1.20.0.js'), 'utf8');
 const estilo = fs.readFileSync(path.join(raiz, 'styles/design_agenda.css'), 'utf8');
 
+const originFn=agenda.slice(agenda.indexOf('function iconeOrigemOnlineAgendaHTML('),agenda.indexOf('function iconePagamentoAgendaHTML('));
+const originCtx={};vm.runInNewContext(originFn,originCtx);
+assert.equal(originCtx.iconeOrigemOnlineAgendaHTML({origem:'interno'}),'');assert.equal(originCtx.iconeOrigemOnlineAgendaHTML({pacientes:{origem_cadastro:'agendamento_online'}}),'','Origem do cadastro não muda a origem de um agendamento interno');
+const onlineIcon=originCtx.iconeOrigemOnlineAgendaHTML({origem:'online'});assert(onlineIcon.includes('<svg'));assert(onlineIcon.includes('role="img"'));assert(onlineIcon.includes('Agendado online pelo paciente'));assert(onlineIcon.includes('Lembrete ainda não enviado'));
+assert(originCtx.iconeOrigemOnlineAgendaHTML({origem:'online',lembrete_enviado_em:'2030-01-01'}).includes('Lembrete enviado'));
+assert.equal(agenda.split('${iconeOrigemOnlineAgendaHTML(a)}<span class="agenda-paciente-nome">').length-1,2,'Ícone antes do nome em ambas as composições da grade');
+
 assert.match(agenda, /function intervalosEntreJanelasAgenda\s*\(/,
     'A Agenda deve calcular os espaços reais entre períodos, inclusive com janelas antigas sobrepostas.');
 assert.match(agenda, /function intervaloEntreJanelasAgenda\s*\(/,

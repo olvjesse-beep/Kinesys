@@ -15,7 +15,7 @@ function lerPacientesLocaisComSeguranca() {
 }
 
 const KINESYS_CAMPOS_PACIENTE_BASICO = [
-    'id','nome','cpf','nascimento','telefone','profissao','sexo','estado_civil',
+    'id','nome','cpf','nascimento','telefone','telefones_adicionais','observacoes_cadastro','profissao','sexo','estado_civil',
     'dependente','responsavel_nome','responsavel_parentesco','responsavel_telefone',
     'cep','endereco','data_cadastro','cadastrado_por','timestamp_cadastro'
 ].join(',');

@@ -369,3 +369,10 @@
 }
 
 
+/* Contatos opcionais usam os mesmos campos do cadastro, sem largura fixa. */
+.patient-registration-phone-row{display:flex;align-items:flex-end;gap:10px;margin:10px 0}
+.patient-registration-phone-row>.input-group{flex:1;min-width:0;margin:0}
+.patient-registration-phone-row>button{flex:0 0 auto;min-height:44px;margin-bottom:4px}
+#cad_contatos_adicionais>small{color:var(--kds-muted,#607a82)}
+#cad_contatos_adicionais>button{align-self:flex-start;min-height:44px}
+#cad_observacoes{min-height:96px;resize:vertical;width:100%;box-sizing:border-box}

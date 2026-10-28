@@ -299,3 +299,10 @@ A separação entre `public_html` e `public_html/app` é uma invariável de prod
 ### Notificações compactas da Home — 28/10/2026
 
 - A Home profissional mostra somente dois resumos de notificações inicialmente, com controle acessível para expandir/recolher e lista expandida de altura limitada com rolagem. Não truncar o cache canônico em oito itens, apagar avisos nem marcar como lidos ao expandir. Preservar os vínculos de abertura e aniversários; o texto distingue aniversários de hoje de avisos recentes de outras datas. Refresh no mesmo contexto conserva a expansão; troca de usuário/clínica/dia ou logout recolhe. Manter os cenários funcionais em `tests/home_actions_inline.contract.cjs` na barreira existente.
+
+### Cadastro e identificação do agendamento online — 28/10/2026
+
+- Telefones adicionais e observações administrativas são campos do cadastro na nuvem; reabrir/editar preserva ambos e trocar de paciente limpa os campos. Contato principal e responsável mantêm a preferência dos lembretes. Não misturar observação administrativa com HMA/relatório. Salvar somente cadastro não regrava avaliações/evoluções. Objetos clínicos legados/parciais não apagam esses novos campos.
+- Portal exige nome e telefone; nascimento opcional digitado em DD/MM/AAAA é validado como data civil e enviado ISO/null ao servidor. CPF e consentimento mantêm suas regras. Sem nascimento e CPF forte, não adivinhar identidade de prontuário por telefone compartilhado. Preservar idempotência e validação atômica de disponibilidade no banco.
+- Ícone SVG antes do nome na Agenda depende da origem do agendamento igual a online, nunca da origem do cadastro do paciente; detalhe explicita origem e criador, e mantém lembrete manual. Preço vem do cadastro de procedimentos publicado e da opção mostrar_valores, sem preço fixo no HTML. Esta opção foi explicitamente habilitada para FisioFix; não alterar outras clínicas.
+- Manter os round-trips em patient_registration_modularization.contract.js, public_booking modelo2/Edge, agenda_intervalo/detalhe e pacotes_contrato_db.test.mjs na barreira hospedada existente, com dados sintéticos e conferência da interface.

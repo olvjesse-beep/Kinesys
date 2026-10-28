@@ -373,6 +373,8 @@ function navegarPara(idTela, contextoEdicao = false) {
             if(document.getElementById(id)) document.getElementById(id).value = "";
         });
         const cadDependente = document.getElementById('cad_dependente');
+        if (typeof preencherTelefonesCadastro === 'function') preencherTelefonesCadastro();
+        if (document.getElementById('cad_observacoes')) document.getElementById('cad_observacoes').value='';
         if (cadDependente) cadDependente.checked = false;
         if (typeof alternarCamposResponsavel === 'function') alternarCamposResponsavel();
     }
@@ -516,6 +518,11 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
         responsavel_telefone: responsavelTelefone || ''
     };
 
+    // Objetos clínicos parciais/legados não apagam dados administrativos.
+    if (Array.isArray(pacienteObjeto.telefones_adicionais)) pacienteDataCore.telefones_adicionais = pacienteObjeto.telefones_adicionais;
+    if (typeof pacienteObjeto.observacoes_cadastro === 'string') pacienteDataCore.observacoes_cadastro = pacienteObjeto.observacoes_cadastro;
+    Object.assign(pacienteDataComResponsavel,pacienteDataCore);
+
     // Mantém o contato do responsável disponível neste computador mesmo se a
     // migration da nuvem ainda não tiver sido executada.
     salvarDadosResponsavelLocal(pacienteObjeto);
@@ -538,7 +545,7 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
             }
 
             // Cadastro administrativo não regrava o conteúdo clínico já existente.
-            const podeGravarClinica = usuarioEhMaster() || perfilDoUsuario() === 'FISIOTERAPEUTA' || perfilDoUsuario() === 'PROFISSIONAL';
+            const podeGravarClinica = !opcoes.somenteCadastro && (usuarioEhMaster() || perfilDoUsuario() === 'FISIOTERAPEUTA' || perfilDoUsuario() === 'PROFISSIONAL');
             for (const av of (podeGravarClinica ? avaliacoes : [])) {
                 const avData = {
                     id: av.id || `av_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,

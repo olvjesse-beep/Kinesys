@@ -183,7 +183,7 @@ begin
   if length(v_nome) < 3 or length(v_nome) > 120 then
     raise exception 'Informe o nome completo do paciente.' using errcode = '22023';
   end if;
-  if p_nascimento is null or p_nascimento > v_hoje or p_nascimento < date '1900-01-01' then
+  if p_nascimento is not null and (p_nascimento > v_hoje or p_nascimento < date '1900-01-01') then
     raise exception 'Informe uma data de nascimento válida.' using errcode = '22023';
   end if;
   if length(v_telefone) not between 10 and 11 then
@@ -329,7 +329,8 @@ begin
   end if;
 
   -- Reutiliza prontuário por CPF forte. Sem CPF, só reaproveita pré-cadastro online
-  -- não validado com nome+nascimento+telefone exatos; nunca adivinha prontuário validado.
+  -- não validado com nome+nascimento+telefone exatos; sem nascimento não adivinha
+  -- identidade por nome/telefone compartilhado. Nunca altera prontuário validado.
   if v_cpf <> '' then
     select p.id into v_paciente_id
     from public.pacientes p
@@ -344,6 +345,7 @@ begin
       and p.origem_cadastro = 'agendamento_online'
       and p.cadastro_validado is false
       and lower(btrim(regexp_replace(p.nome, '\s+', ' ', 'g'))) = lower(v_nome)
+      and p_nascimento is not null
       and coalesce(p.nascimento, '') = p_nascimento::text
       and regexp_replace(coalesce(p.telefone, ''), '\D', '', 'g') = v_telefone
     order by p.id

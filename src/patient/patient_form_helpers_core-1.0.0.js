@@ -44,7 +44,7 @@ function obterTextoExibicao(item) {
 /* ================= CADASTRO DE PACIENTE — CAMADA VISUAL R47 ================= */
 (function prepararCadastroPacienteCleanKineSys(){
     const STYLE_ID='ks_patient_registration_clean_style';
-    const STYLE_SRC='styles/patient_registration_clean-1.0.0.css?v=20260914-r47';
+    const STYLE_SRC='styles/patient_registration_clean-1.0.0.css?v=20261028-contatos-r1';
 
     function garantirEstilo(){
         if(document.getElementById(STYLE_ID))return;
@@ -133,7 +133,7 @@ function obterTextoExibicao(item) {
         const nascimento=document.getElementById('cad_nascimento')?.closest('.grid-2')||grupoDoCampo('cad_nascimento');
         const cpf=grupoDoCampo('cad_cpf');
         nome?.classList.add('patient-registration-wide');
-        [nome,telefone,nascimento,cpf].forEach(no=>{if(no)essenciais.campos.appendChild(no);});
+        [nome,telefone,document.getElementById('cad_contatos_adicionais'),nascimento,cpf,grupoDoCampo('cad_observacoes')].forEach(no=>{if(no)essenciais.campos.appendChild(no);});
 
         const responsavel=criarSecao('2','Responsável e contato','Ative somente para menores de idade ou pacientes que dependem de outra pessoa para contato.','patient-registration-responsible');
         const toggle=grupoDoCampo('cad_dependente');

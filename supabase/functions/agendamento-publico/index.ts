@@ -206,13 +206,13 @@ function payloadReservaValido(body: Record<string, unknown>) {
   const dependente = paciente.dependente === true, telefone = digitos(paciente.telefone, 11), cpf = digitos(paciente.cpf, 11), respTelefone = digitos(paciente.responsavel_telefone, 11);
   if (!uuidValido(body.request_id) || !uuidValido(body.procedimento_id)) return null;
   if (!texto(body.profissional_id, 120) || !dataValida(body.data) || !horaValida(body.hora_inicio)) return null;
-  if (texto(paciente.nome, 120).length < 3 || !dataValida(paciente.nascimento)) return null;
+  if (texto(paciente.nome, 120).length < 3 || (paciente.nascimento && !dataValida(paciente.nascimento))) return null;
   if (telefone.length < 10 || telefone.length > 11 || (cpf && cpf.length !== 11)) return null;
   if (dependente && (texto(paciente.responsavel_nome, 120).length < 3 || texto(paciente.responsavel_parentesco, 60).length < 2 || respTelefone.length < 10)) return null;
   return {
     requestId: texto(body.request_id, 40), profissionalId: texto(body.profissional_id, 120), procedimentoId: texto(body.procedimento_id, 40),
     data: texto(body.data, 10), horaInicio: horaCurta(body.hora_inicio), nome: texto(paciente.nome, 120).replace(/\s+/g, " "), cpf,
-    nascimento: texto(paciente.nascimento, 10), telefone, dependente,
+    nascimento: texto(paciente.nascimento, 10) || null, telefone, dependente,
     responsavelNome: dependente ? texto(paciente.responsavel_nome, 120).replace(/\s+/g, " ") : "",
     responsavelParentesco: dependente ? texto(paciente.responsavel_parentesco, 60) : "", responsavelTelefone: dependente ? respTelefone : "",
   };

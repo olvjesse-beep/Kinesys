@@ -6,9 +6,9 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#123D47">
   <title>Agendamento online</title>
-  <link rel="stylesheet" href="../styles/design_tokens.css?v=20260912-online-r1">
-  <link rel="stylesheet" href="./agendamento-publico.css?v=20261028-disponibilidade-r1">
-  <link rel="stylesheet" href="./agendamento-modelo2.css?v=20261028-disponibilidade-r1">
+  <link rel="stylesheet" href="../styles/design_tokens.css?v=20261028-contatos-online-r1">
+  <link rel="stylesheet" href="./agendamento-publico.css?v=20261028-contatos-online-r1">
+  <link rel="stylesheet" href="./agendamento-modelo2.css?v=20261028-contatos-online-r1">
 </head>
 <body>
   <main class="ks-public-page" id="ks_public_app">
@@ -191,15 +191,16 @@
 
             <form id="ks_public_form" class="ks-public-form" novalidate>
               <label class="ks-public-field ks-public-field-wide">
-                <span>Nome completo</span>
+                <span>Nome completo *</span>
                 <input id="ks_public_nome" name="nome" type="text" autocomplete="name" maxlength="120" required>
               </label>
               <label class="ks-public-field">
-                <span>Data de nascimento</span>
-                <input id="ks_public_nascimento" name="nascimento" type="date" autocomplete="bday" required>
+                <span>Data de nascimento <small>opcional</small></span>
+                <input id="ks_public_nascimento" name="nascimento" type="text" inputmode="numeric" autocomplete="bday" maxlength="10" placeholder="DD/MM/AAAA" aria-describedby="ks_public_nascimento_ajuda">
+                <small id="ks_public_nascimento_ajuda">Digite dia, mês e ano. Ex.: 15/04/1990.</small>
               </label>
               <label class="ks-public-field">
-                <span>Celular</span>
+                <span>Telefone de contato / WhatsApp *</span>
                 <input id="ks_public_telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(38) 99999-9999" required>
               </label>
               <label class="ks-public-field ks-public-field-wide">
@@ -250,7 +251,7 @@
     </div>
   </main>
 
-  <script src="./calendario-publico.js?v=20261028-disponibilidade-r1" defer></script>
-  <script src="./agendamento-publico-v2.js?v=20261028-disponibilidade-r1" defer></script>
+  <script src="./calendario-publico.js?v=20261028-contatos-online-r1" defer></script>
+  <script src="./agendamento-publico-v2.js?v=20261028-contatos-online-r1" defer></script>
 </body>
 </html>
