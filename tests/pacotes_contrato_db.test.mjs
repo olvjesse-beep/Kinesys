@@ -162,4 +162,31 @@ try {
  await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(call('unauthorized'),/administradores/);await assert.rejects(edit(k,av),/perfil/);
  console.log('PASS: horários 07h/13h, preço 100→150, pacote cancelado→individual, desconto sem crédito falso, quitação 65, recebimentos imutáveis, concorrência e rollback integral.');
  console.log('PASS: contratação, idempotência, preço vigente/histórico, personalização substitutiva, restauração, zero sem contrato, reservas, excesso bloqueado, consumo, reversão, cancelamento, proteção de cache e autorização.');
+ // The public list and the final reservation must agree when following Agenda.
+ await db.exec(`set test.papel='MASTER';create role service_role;
+ alter table clinicas add column nome text,add column slug text,add column ativa boolean default true;
+ create table configuracoes_agendamento_online(clinica_id uuid primary key,ativo boolean,antecedencia_minima_minutos integer,horizonte_dias integer);
+ create table horarios_atendimento(clinica_id uuid,profissional_id text,dia_semana integer,hora_inicio time,hora_fim time);
+ create table disponibilidade_agendamento_online(clinica_id uuid,profissional_id text,dia_semana integer,hora_inicio time,hora_fim time,ativo boolean);`);
+ await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_RESERVA_ATOMICA_20260912.sql',root),'utf8'));
+ const portalCid='c1111111-1111-4111-8111-111111111111',portalProc='c2222222-2222-4222-8222-222222222222';
+ await db.query("insert into clinicas(id,nome,slug,ativa) values($1,'Clínica sintética','clinica-sintetica',true)",[portalCid]);
+ await db.exec(`set test.clinica='${portalCid}';insert into configuracoes_agendamento_online(clinica_id,ativo,antecedencia_minima_minutos,horizonte_dias) values('${portalCid}',true,0,90);
+ insert into equipe(id,nome,clinica_id,ativo,aparece_na_agenda,agendamento_online_ativo) values('public-prof','Profissional sintético','${portalCid}',true,true,true);
+ insert into procedimentos(id,nome,clinica_id,ativo,agendamento_online_ativo,duracao_minutos,valor) values('${portalProc}','Avaliação sintética','${portalCid}',true,true,60,100);`);
+ const bookingDay=(await db.query("select d::date::text dia,extract(dow from d)::int dow from generate_series(current_date+2,current_date+30,'1 day') d where extract(dow from d) between 1 and 5 and kinesys_agendamento_online_feriado(d::date) is null limit 1")).rows[0];
+ await db.query("insert into horarios_atendimento values($1,null,$2,'08:00','12:00'),($1,null,$2,'14:00','19:00'),($1,'public-prof',$2,'14:00','17:00')",[portalCid,bookingDay.dow]);
+ await db.query("insert into disponibilidade_agendamento_online values($1,'public-prof',$2,'08:00','12:00',true)",[portalCid,bookingDay.dow]);
+ let request=0;const publicBook=async(time,{id=null,day=bookingDay.dia}={})=>(await db.query("select kinesys_criar_agendamento_online('clinica-sintetica',$1,'public-prof',$2,$3,$4,'Paciente sintético','',date '1990-01-01','11999990000',false,null,null,null) r",[id||`c3333333-3333-4333-8333-${String(++request).padStart(12,'0')}`,portalProc,day,time])).rows[0].r;
+ await assert.rejects(publicBook('15:00'),/não publicado/,'legacy mode still respects manual publication');
+ assert.equal((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n,0);
+ await db.query('update configuracoes_agendamento_online set seguir_agenda_interna=true where clinica_id=$1',[portalCid]);
+ const publicSuccess=await publicBook('15:00');assert.equal(publicSuccess.ok,true);assert.equal(publicSuccess.hora_fim,'16:00');assert.equal((await publicBook('15:00',{id:publicSuccess.agendamento_id})).repetido,true);
+ await assert.rejects(publicBook('15:00'),/disponível/);await assert.rejects(publicBook('17:00'),/jornada do profissional/);await assert.rejects(publicBook('13:00'),/funcionamento da clínica/);
+ await db.query("insert into bloqueios_agenda(clinica_id,profissional_id,data,hora_inicio,hora_fim) values($1,'public-prof',$2,'16:00','17:00')",[portalCid,bookingDay.dia]);
+ await assert.rejects(publicBook('16:00'),/bloqueado/);
+ await db.query('update configuracoes_agendamento_online set antecedencia_minima_minutos=129600 where clinica_id=$1',[portalCid]);await assert.rejects(publicBook('14:00'),/antecedência/);
+ assert.equal((await db.query('select count(*) n from agendamentos where clinica_id=$1',[portalCid])).rows[0].n,1);assert.equal((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n,1);
+ assert.equal((await db.query("select has_function_privilege('anon','kinesys_criar_agendamento_online(text,uuid,text,uuid,date,time,text,text,date,text,boolean,text,text,text)','execute') allowed")).rows[0].allowed,false);
+ console.log('PASS public reservation: mirror accepts Agenda afternoon; manual mode, professional/clinic hours, block, overlap, lead time and idempotent rollback remain protected.');
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

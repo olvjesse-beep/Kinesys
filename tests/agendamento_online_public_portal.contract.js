@@ -83,3 +83,32 @@ assert(!profileEdge.includes('.from("pacientes")') && !profileEdge.includes('.fr
 assert(profileEdge.includes('req.method !== "GET"'), 'endpoint de perfil público deve ser somente leitura');
 
 console.log('agendamento_online_public_portal.contract: OK');
+
+// Run the real Edge slot calculator with a closed, synthetic transport.
+(async()=>{
+ const vm=require('node:vm'),{stripTypeScriptTypes}=require('node:module');
+ const cid='clinic-synthetic',pid='prof-synthetic',proc='11111111-1111-4111-8111-111111111111';
+ const tables={clinicas:[{id:cid,slug:'clinica-sintetica',nome:'Clínica sintética',ativa:true}],configuracoes_agendamento_online:[{clinica_id:cid,ativo:true,horizonte_dias:14,antecedencia_minima_minutos:0,seguir_agenda_interna:false}],equipe:[{id:pid,clinica_id:cid,nome:'Profissional sintético',ativo:true,aparece_na_agenda:true,agendamento_online_ativo:true}],procedimentos:[{id:proc,clinica_id:cid,nome:'Avaliação',ativo:true,agendamento_online_ativo:true,duracao_minutos:60,profissionais_ids:[]}],horarios_atendimento:[],disponibilidade_agendamento_online:[],agendamentos:[],bloqueios_agenda:[]};
+ for(let dia=1;dia<=5;dia++){for(const [inicio,fim]of[['08:00','12:00'],['14:00','19:00']])tables.horarios_atendimento.push({clinica_id:cid,profissional_id:null,dia_semana:dia,hora_inicio:inicio,hora_fim:fim});tables.disponibilidade_agendamento_online.push({clinica_id:cid,profissional_id:pid,dia_semana:dia,hora_inicio:'08:00',hora_fim:'12:00',ativo:true});}
+ tables.agendamentos=[['09:00','10:00','agendado',pid,cid],['15:00','16:00','agendado',pid,cid],['16:00','17:00','cancelado',pid,cid],['10:00','11:00','agendado','outro-prof',cid],['11:00','12:00','agendado',pid,'outra-clinica']].map(([hora_inicio,hora_fim,status,profissional_id,clinica_id])=>({data:'2030-03-05',hora_inicio,hora_fim,status,profissional_id,clinica_id}));
+ tables.bloqueios_agenda=[{clinica_id:cid,profissional_id:null,data:'2030-03-06',hora_inicio:null,hora_fim:null},{clinica_id:cid,profissional_id:pid,data:'2030-03-07',hora_inicio:'14:00',hora_fim:'15:00'}];
+ let queryError='';
+ const db={from(table){let rows=[...(tables[table]||[])],single=false;const q={select(){return q;},eq(k,v){rows=rows.filter(x=>x[k]===v);return q;},neq(k,v){rows=rows.filter(x=>x[k]!==v);return q;},gte(k,v){rows=rows.filter(x=>x[k]>=v);return q;},lte(k,v){rows=rows.filter(x=>x[k]<=v);return q;},order(){return q;},maybeSingle(){single=true;return q;},then(resolve,reject){return Promise.resolve({data:single?rows[0]||null:rows,error:queryError===table?{message:'Falha sintética de consulta'}:null}).then(resolve,reject);}};return q;}};
+ let fixed=Date.parse('2030-03-04T13:00:00Z');class Clock extends Date{constructor(...args){super(...(args.length?args:[fixed]));}static now(){return fixed;}}
+ const ctx={Date:Clock,Intl,Map,Set,console,createClient:()=>db,Deno:{env:{get:()=> 'synthetic'},serve(){}},Response,Request,URL,TextEncoder,crypto};
+ const js=stripTypeScriptTypes(edge.replace(/^import[^\n]+\n/gm,''),{mode:'strip'});vm.runInNewContext(js+';this.slotsTest=slotsPublicos;this.catalogTest=catalogoPublico;',ctx);
+ const get=()=>ctx.slotsTest('clinica-sintetica',pid,proc),times=(r,d)=>r.dias.find(x=>x.data===d)?.horarios.map(x=>x.inicio)||[];
+ const manual=await get();assert(!times(manual,'2030-03-05').includes('14:00'));assert(!times(manual,'2030-03-05').includes('09:00'));
+ tables.configuracoes_agendamento_online[0].seguir_agenda_interna=true;let mirror=await get();
+ for(const hour of ['08:00','10:00','11:00','14:00','16:00','17:00','18:00'])assert(times(mirror,'2030-03-05').includes(hour),hour+' deve acompanhar a Agenda');
+ for(const hour of ['09:00','12:00','13:00','15:00','19:00'])assert(!times(mirror,'2030-03-05').includes(hour),hour+' não deve ser oferecido');
+ assert.equal(times(mirror,'2030-03-06').length,0);assert(!times(mirror,'2030-03-07').includes('14:00'));
+ tables.disponibilidade_agendamento_online=[];assert((await ctx.catalogTest('clinica-sintetica')).profissionais.some(x=>x.id===pid),'espelhamento não depende de períodos manuais antigos');
+ const profileCtx={...ctx};vm.runInNewContext(stripTypeScriptTypes(profileEdge.replace(/^import[^\n]+\n/gm,''),{mode:'strip'})+';this.profileTest=carregarPerfilPublico;',profileCtx);assert((await profileCtx.profileTest('clinica-sintetica')).profissionais.some(x=>x.id===pid),'perfil publicado também independe da grade manual no modo vinculado');
+ tables.horarios_atendimento.push({clinica_id:cid,profissional_id:pid,dia_semana:2,hora_inicio:'14:00',hora_fim:'17:00'});mirror=await get();assert.deepEqual([...times(mirror,'2030-03-05')],['14:00','16:00']);assert.equal(times(mirror,'2030-03-07').length,0,'jornada própria não herda dias ausentes');
+ tables.horarios_atendimento=tables.horarios_atendimento.filter(h=>!h.profissional_id);tables.horarios_atendimento.find(h=>h.dia_semana===2&&h.hora_inicio==='14:00').hora_fim='20:00';assert(times(await get(),'2030-03-05').includes('19:00'),'alteração da jornada interna reflete sem editar segunda grade');
+ tables.configuracoes_agendamento_online[0].antecedencia_minima_minutos=2880;assert.equal(times(await get(),'2030-03-05').length,0,'antecedência continua sendo respeitada');
+ fixed=Date.parse('2030-11-01T13:00:00Z');tables.configuracoes_agendamento_online[0].antecedencia_minima_minutos=0;tables.horarios_atendimento.push({clinica_id:cid,profissional_id:null,dia_semana:6,hora_inicio:'08:00',hora_fim:'12:00'});assert.equal(times(await get(),'2030-11-02').length,0,'feriado bloqueia mesmo quando a clínica cadastrou jornada no sábado');
+ queryError='agendamentos';await assert.rejects(get(),e=>e.message==='Falha sintética de consulta');
+ console.log('PASS Edge real: Agenda manhã/tarde, ocupação normal/extraordinária, cancelamento, almoço, ausência, profissional/clínica, jornada própria, alteração futura, modo manual e antecedência.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -36,6 +36,7 @@
         config: null,
         profissionais: [],
         procedimentos: [],
+        horariosAgenda: [],
         disponibilidadeOriginal: [],
         disponibilidadeEditada: [],
         profissionalSelecionado: ''
@@ -265,6 +266,7 @@
     function configPadrao() {
         return {
             ativo: false,
+            seguir_agenda_interna: false,
             antecedencia_minima_minutos: 120,
             horizonte_dias: 30,
             titulo_publico: 'Agende seu atendimento',
@@ -529,6 +531,10 @@
                                 <p>Estes períodos nunca ampliam a jornada interna: bloqueios, feriados e horários ocupados continuam prevalecendo.</p>
                             </div>
                         </div>
+                        <label class="ks-online-choice" for="ks_online_seguir_agenda">
+                            <span class="ks-online-choice-copy"><strong>Seguir disponibilidade da Agenda</strong><small>Usa a jornada da clínica e do profissional automaticamente. Bloqueios, feriados, ocupações e antecedência continuam valendo.</small></span>
+                            <span class="ks-switch-control"><input type="checkbox" id="ks_online_seguir_agenda"><span aria-hidden="true"></span></span>
+                        </label>
                         <label class="ks-online-field ks-online-profissional-select">
                             <span>Configurar horários de</span>
                             <select id="ks_online_profissional_horarios"></select>
@@ -558,6 +564,7 @@
             el.addEventListener(el.matches('input[type="checkbox"],select') ? 'change' : 'input', marcarSujo);
         });
 
+        document.getElementById('ks_online_seguir_agenda')?.addEventListener('change',()=>{renderizarHorariosProfissional();marcarSujo();});
         document.getElementById('ks_online_profissional_horarios')?.addEventListener('change', evento => {
             const anterior = state.profissionalSelecionado;
             if (!capturarHorariosProfissionalAtual()) {
@@ -635,7 +642,7 @@
         setStatus('Carregando configuração do agendamento online…', 'neutro');
         try {
             state.clinicaId = await resolverClinicaId();
-            const [cfgRes, profRes, procRes, dispRes] = await Promise.all([
+            const [cfgRes, profRes, procRes, dispRes, jornadaRes] = await Promise.all([
                 client.from('configuracoes_agendamento_online').select('*').eq('clinica_id', state.clinicaId).maybeSingle(),
                 client.from('equipe')
                     .select('id,nome,tipo,ativo,aparece_na_agenda,agendamento_online_ativo,agendamento_online_ordem')
@@ -647,13 +654,15 @@
                 client.from('disponibilidade_agendamento_online')
                     .select('id,profissional_id,dia_semana,hora_inicio,hora_fim,ativo')
                     .eq('clinica_id', state.clinicaId).eq('ativo', true)
-                    .order('profissional_id', { ascending: true }).order('dia_semana', { ascending: true }).order('hora_inicio', { ascending: true })
+                    .order('profissional_id', { ascending: true }).order('dia_semana', { ascending: true }).order('hora_inicio', { ascending: true }),
+                client.from('horarios_atendimento').select('profissional_id,dia_semana,hora_inicio,hora_fim').eq('clinica_id', state.clinicaId)
             ]);
 
-            for (const resposta of [cfgRes, profRes, procRes, dispRes]) {
+            for (const resposta of [cfgRes, profRes, procRes, dispRes, jornadaRes]) {
                 if (resposta.error) throw resposta.error;
             }
 
+            state.horariosAgenda = jornadaRes.data || [];
             state.config = { ...configPadrao(), ...(cfgRes.data || {}) };
             state.profissionais = (profRes.data || []).map(p => ({ ...p, _onlineOriginal: !!p.agendamento_online_ativo }));
             state.procedimentos = (procRes.data || []).map(p => ({ ...p, _onlineOriginal: !!p.agendamento_online_ativo }));
@@ -694,6 +703,7 @@
         const setValue = (id, valor) => { const el = document.getElementById(id); if (el) el.value = String(valor ?? ''); };
         const setChecked = (id, valor) => { const el = document.getElementById(id); if (el) el.checked = !!valor; };
         setChecked('ks_online_ativo', cfg.ativo);
+        setChecked('ks_online_seguir_agenda', cfg.seguir_agenda_interna);
         setValue('ks_online_titulo', cfg.titulo_publico);
         setValue('ks_online_descricao', cfg.descricao_publica);
         setValue('ks_online_antecedencia', cfg.antecedencia_minima_minutos);
@@ -773,6 +783,25 @@
         state.profissionalSelecionado = select.value;
     }
 
+    function segueAgendaInterna() {
+        return document.getElementById('ks_online_seguir_agenda')?.checked ?? !!state.config?.seguir_agenda_interna;
+    }
+    function horariosDaAgendaPublicaveis() {
+        const rows=[];
+        for(const p of state.profissionais){
+            const propria=state.horariosAgenda.filter(h=>String(h.profissional_id||'')===String(p.id));
+            for(const dia of DIAS){
+                const gerais=state.horariosAgenda.filter(h=>!h.profissional_id&&Number(h.dia_semana)===dia.valor);
+                const especificas=propria.filter(h=>Number(h.dia_semana)===dia.valor);
+                for(const g of gerais)for(const h of propria.length?especificas:[g]){
+                    const inicio=[g.hora_inicio.slice(0,5),h.hora_inicio.slice(0,5)].sort().at(-1);
+                    const fim=[g.hora_fim.slice(0,5),h.hora_fim.slice(0,5)].sort()[0];
+                    if(inicio<fim)rows.push({profissional_id:p.id,dia_semana:dia.valor,hora_inicio:inicio,hora_fim:fim});
+                }
+            }
+        }
+        return [...new Map(rows.map(h=>[chaveHorario(h),h])).values()];
+    }
     function horariosDoProfissional(id) {
         return state.disponibilidadeEditada.filter(x => String(x.profissional_id) === String(id));
     }
@@ -783,6 +812,11 @@
         const id = state.profissionalSelecionado;
         if (!id) {
             alvo.innerHTML = '<p class="ks-online-empty">Selecione um profissional para configurar os horários.</p>';
+            return;
+        }
+        if(segueAgendaInterna()){
+            const rows=horariosDaAgendaPublicaveis().filter(h=>String(h.profissional_id)===String(id));
+            alvo.innerHTML='<p class="field-help">Vinculado à Agenda. Alterações de jornada passam a valer no link automaticamente; horários já ocupados não são oferecidos.</p>'+DIAS.map(d=>'<div class="ks-online-day"><div class="ks-online-day-head"><strong>'+escapeHTML(d.nome)+'</strong></div><p>'+escapeHTML(rows.filter(h=>h.dia_semana===d.valor).map(h=>h.hora_inicio+'–'+h.hora_fim).join(' · ')||'Não atende')+'</p></div>').join('');
             return;
         }
         const rows = horariosDoProfissional(id);
@@ -836,6 +870,7 @@
     }
 
     function capturarHorariosProfissionalAtual() {
+        if(segueAgendaInterna())return true;
         const id = state.profissionalSelecionado;
         if (!id) return true;
         const alvo = document.getElementById('ks_online_horarios');
@@ -890,7 +925,7 @@
     function estadoPublicacaoAtual() {
         const profissionais = state.profissionais.filter(p => p.agendamento_online_ativo);
         const profissionaisIds = new Set(profissionais.map(p => String(p.id)));
-        const horarios = state.disponibilidadeEditada.filter(x => profissionaisIds.has(String(x.profissional_id)));
+        const horarios = (segueAgendaInterna()?horariosDaAgendaPublicaveis():state.disponibilidadeEditada).filter(x => profissionaisIds.has(String(x.profissional_id)));
         const profissionaisComHorarios = new Set(horarios.map(x => String(x.profissional_id)));
         const procedimentos = state.procedimentos.filter(p => p.agendamento_online_ativo);
         const procedimentoIncompativel = procedimentos.find(p => {
@@ -925,6 +960,7 @@
         return {
             clinica_id: state.clinicaId,
             ativo: !!document.getElementById('ks_online_ativo')?.checked,
+            seguir_agenda_interna: segueAgendaInterna(),
             antecedencia_minima_minutos: Number(document.getElementById('ks_online_antecedencia')?.value || 120),
             horizonte_dias: Number(document.getElementById('ks_online_horizonte')?.value || 30),
             titulo_publico: String(document.getElementById('ks_online_titulo')?.value || '').trim(),
@@ -998,30 +1034,32 @@
                 if (error) throw error;
             }
 
-            const desejados = state.disponibilidadeEditada.map(x => ({
-                clinica_id: state.clinicaId,
-                profissional_id: x.profissional_id,
-                dia_semana: Number(x.dia_semana),
-                hora_inicio: String(x.hora_inicio).slice(0, 5),
-                hora_fim: String(x.hora_fim).slice(0, 5),
-                ativo: true,
-                atualizado_em: new Date().toISOString()
-            }));
-            if (desejados.length) {
-                const { error } = await client.from('disponibilidade_agendamento_online')
-                    .upsert(desejados, { onConflict: 'clinica_id,profissional_id,dia_semana,hora_inicio,hora_fim' });
-                if (error) throw error;
-            }
-            const chavesDesejadas = new Set(desejados.map(chaveHorario));
-            const removerIds = state.disponibilidadeOriginal
-                .filter(x => x.id && !chavesDesejadas.has(chaveHorario(x)))
-                .map(x => x.id);
-            if (removerIds.length) {
-                const { error } = await client.from('disponibilidade_agendamento_online')
-                    .delete().in('id', removerIds).eq('clinica_id', state.clinicaId);
-                if (error) throw error;
-            }
+            if(!cfg.seguir_agenda_interna){
+                const desejados = state.disponibilidadeEditada.map(x => ({
+                    clinica_id: state.clinicaId,
+                    profissional_id: x.profissional_id,
+                    dia_semana: Number(x.dia_semana),
+                    hora_inicio: String(x.hora_inicio).slice(0, 5),
+                    hora_fim: String(x.hora_fim).slice(0, 5),
+                    ativo: true,
+                    atualizado_em: new Date().toISOString()
+                }));
+                if (desejados.length) {
+                    const { error } = await client.from('disponibilidade_agendamento_online')
+                        .upsert(desejados, { onConflict: 'clinica_id,profissional_id,dia_semana,hora_inicio,hora_fim' });
+                    if (error) throw error;
+                }
+                const chavesDesejadas = new Set(desejados.map(chaveHorario));
+                const removerIds = state.disponibilidadeOriginal
+                    .filter(x => x.id && !chavesDesejadas.has(chaveHorario(x)))
+                    .map(x => x.id);
+                if (removerIds.length) {
+                    const { error } = await client.from('disponibilidade_agendamento_online')
+                        .delete().in('id', removerIds).eq('clinica_id', state.clinicaId);
+                    if (error) throw error;
+                }
 
+            }
             if (cfg.ativo) await salvarConfiguracaoPortal(client, cfg);
 
             setStatus(cfg.ativo ? 'Configuração salva. O portal está preparado para aceitar agendamentos.' : 'Configuração salva. O portal continua fechado.', 'sucesso');

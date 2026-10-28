@@ -8,7 +8,7 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20261016-config-paginas-r1';
+    const ONLINE_CONFIG_REVISION='20261028-espelhar-agenda-r1';
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
     const ONLINE_PROFILE_CONFIG_REVISION='20261016-config-paginas-r1';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
