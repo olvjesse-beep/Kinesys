@@ -14,7 +14,7 @@ module.exports=function fixture(root){
  const radarClose=core.slice(core.indexOf('function fecharRadarKineSys('),core.indexOf('function sincronizarCicloVidaRadar('));
  const agenda=fs.readFileSync(path.join(root,'src/agenda/agenda-1.20.0.js'),'utf8');
  const trechoAgenda=(a,b)=>agenda.slice(agenda.indexOf(a),agenda.indexOf(b,agenda.indexOf(a)+a.length));
- const agendaExcecoes=trechoAgenda('function calcularFaixasSobrepostasAgenda','\nasync function resolverListaEsperaAposAgendamento')+trechoAgenda('function abrirModalBloqueio()','\nasync function excluirBloqueio')+trechoAgenda('function renderizarGradeSemanal(','\nasync function renderizarPainelAgenda');
+ const agendaExcecoes=trechoAgenda('function iconeOrigemOnlineAgendaHTML(','\nfunction iconePagamentoAgendaHTML')+trechoAgenda('function calcularFaixasSobrepostasAgenda','\nasync function resolverListaEsperaAposAgendamento')+trechoAgenda('function abrirModalBloqueio()','\nasync function excluirBloqueio')+trechoAgenda('function renderizarGradeSemanal(','\nasync function renderizarPainelAgenda');
  const setup=`
 var radarAlertasJaApresentados=new Set();
 ${radarClose}
@@ -77,7 +77,7 @@ function formatarDataISO(d){return d.toISOString().slice(0,10);}function formata
 function carregarBloqueios(){return Promise.resolve();}
 function irParaSubtelaAgenda(id){document.querySelectorAll('#tela_agenda .subtela').forEach(e=>e.classList.toggle('ativa',e.id===id));}
 function qaPrepararAgendaExcecoes(){
- agendaAgendamentosSemanaCache=[['a','09:00','10:00','Paciente de exemplo A'],['b','09:00','10:00','Paciente de exemplo B'],['c','10:00','11:00','Paciente de exemplo C']].map(([id,hora_inicio,hora_fim,nome])=>({id,hora_inicio,hora_fim,data:'2026-10-28',profissional_id:'qa1',pacientes:{nome},equipe:qaEquipe[0],procedimentos:qaProcedimentos[1],status:'agendado'}));
+ agendaAgendamentosSemanaCache=[['a','09:00','10:00','Paciente de exemplo A'],['b','09:00','10:00','Paciente de exemplo B'],['c','10:00','11:00','Paciente de exemplo C']].map(([id,hora_inicio,hora_fim,nome])=>({id,hora_inicio,hora_fim,origem:id==='a'?'online':'interno',data:'2026-10-28',profissional_id:'qa1',pacientes:{nome},equipe:qaEquipe[0],procedimentos:qaProcedimentos[1],status:'agendado'}));
  renderizarPainelAgenda=async()=>renderizarGradeSemanal(null,null,'qa1');renderizarPainelAgenda();
  const select=document.getElementById('bloq_profissional_select');select.innerHTML='<option value="">Toda a clínica</option><option value="qa1">Profissional de demonstração</option>';
  document.getElementById('btn_salvar_bloqueio').disabled=false;
@@ -89,5 +89,6 @@ function qaPrepararAgendaExcecoes(){
 `;
  const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
  scripts.push('src/home/home_profissional_dashboard-1.0.0.js');
+ scripts.push('src/core/cadastro_validacoes_core-1.0.0.js','src/patient/patient_form_helpers_core-1.0.0.js','src/patient/patient_registration_core-1.0.0.js');
  return html.replace('</body>',`<script>${setup}</script>${scripts.map(src=>'<script defer src="/'+src+'"></script>').join('')}</body>`);
 };

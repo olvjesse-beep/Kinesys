@@ -5,6 +5,37 @@
    A persistência (`salvarPacienteNaNuvem`) e lógica clínica permanecem no core.
    ========================================================================== */
 
+let cadastroTelefoneSequencia = 0;
+function adicionarTelefoneCadastro(valor = '') {
+    const lista = document.getElementById('cad_telefones_lista');
+    if (!lista) return;
+    const linha = document.createElement('div'); linha.className = 'patient-registration-phone-row';
+    const grupo = document.createElement('div'); grupo.className = 'input-group';
+    const campo = document.createElement('input'); campo.id = 'cad_telefone_adicional_' + (++cadastroTelefoneSequencia);
+    campo.type = 'tel'; campo.inputMode = 'tel'; campo.maxLength = 15; campo.autocomplete = 'tel'; campo.placeholder = '(00) 00000-0000'; campo.value = valor;
+    campo.dataset.cadTelefone = '1';
+    const label = document.createElement('label'); label.htmlFor = campo.id; label.textContent = 'Telefone adicional';
+    const erro = document.createElement('small'); erro.id = campo.id + '_erro'; erro.className = 'field-error'; erro.setAttribute('role','alert'); campo.setAttribute('aria-describedby',erro.id);
+    campo.addEventListener('input',()=>{campo.value=formatarTelefoneBR(campo.value);limparEstadoCampo(campo.id);});
+    const remover = document.createElement('button'); remover.type = 'button'; remover.className = 'btn-secondary'; remover.textContent = 'Remover'; remover.setAttribute('aria-label','Remover telefone adicional');
+    remover.addEventListener('click',()=>{linha.remove();document.getElementById('cad_adicionar_telefone')?.focus();});
+    grupo.append(label,campo,erro); linha.append(grupo,remover); lista.appendChild(linha);
+}
+function preencherTelefonesCadastro(telefones = []) {
+    const lista = document.getElementById('cad_telefones_lista'); if (!lista) return;
+    lista.replaceChildren();
+    (Array.isArray(telefones)?telefones:[]).forEach(telefone=>adicionarTelefoneCadastro(String(telefone)));
+}
+function telefonesAdicionaisCadastroValidos() {
+    return [...document.querySelectorAll('#cad_telefones_lista input')].map(campo=>validarTelefoneInput(campo.id)).every(Boolean);
+}
+function lerTelefonesAdicionaisCadastro() {
+    const principal=somenteDigitos(document.getElementById('cad_telefone')?.value||'');
+    const vistos=new Set(principal?[principal]:[]);
+    return [...document.querySelectorAll('#cad_telefones_lista input')].map(campo=>campo.value.trim()).filter(valor=>{const n=somenteDigitos(valor);if(!n||vistos.has(n))return false;vistos.add(n);return true;});
+}
+window.adicionarTelefoneCadastro=adicionarTelefoneCadastro;
+
 async function salvarCadastroSomente(redirecionar = true) {
     const nome = document.getElementById('cad_nome').value.trim();
     if (!nome) {
@@ -16,6 +47,7 @@ async function salvarCadastroSomente(redirecionar = true) {
         validarCPFInput('cad_cpf'),
         validarCEPInput('cad_cep'),
         validarTelefoneInput('cad_telefone'),
+        telefonesAdicionaisCadastroValidos(),
         validarResponsavelCadastro()
     ].every(Boolean);
     if (!cadastroValido) {
@@ -60,6 +92,8 @@ async function salvarCadastroSomente(redirecionar = true) {
         sexo: document.getElementById('cad_sexo').value,
         estadoCivil: document.getElementById('cad_estado_civil').value,
         telefone: document.getElementById('cad_telefone').value.trim(),
+        telefones_adicionais: lerTelefonesAdicionaisCadastro(),
+        observacoes_cadastro: document.getElementById('cad_observacoes')?.value.trim() || '',
         dependente: !!document.getElementById('cad_dependente')?.checked,
         responsavelNome: document.getElementById('cad_dependente')?.checked ? document.getElementById('cad_responsavel_nome')?.value.trim() || '' : '',
         responsavelParentesco: document.getElementById('cad_dependente')?.checked ? document.getElementById('cad_responsavel_parentesco')?.value || '' : '',
@@ -73,7 +107,7 @@ async function salvarCadastroSomente(redirecionar = true) {
     if (!novoPaciente.evolucoes) novoPaciente.evolucoes = [];
     if (!novoPaciente.avaliacoes) novoPaciente.avaliacoes = [];
 
-    const sucesso = await salvarPacienteNaNuvem(novoPaciente);
+    const sucesso = await salvarPacienteNaNuvem(novoPaciente,{somenteCadastro:true});
 
     if (sucesso) {
         if (redirecionar) {
@@ -86,6 +120,8 @@ async function salvarCadastroSomente(redirecionar = true) {
             const chkDependente = document.getElementById('cad_dependente');
             if (chkDependente) chkDependente.checked = false;
             alternarCamposResponsavel();
+            preencherTelefonesCadastro();
+            if(document.getElementById('cad_observacoes'))document.getElementById('cad_observacoes').value='';
             ['cad_cpf','cad_cep','cad_telefone','cad_responsavel_nome','cad_responsavel_telefone'].forEach(limparEstadoCampo);
             definirStatusCEP('', '');
             definirUltimoCEPPesquisadoKineSys('');
@@ -143,6 +179,8 @@ async function editarCadastro(id) {
     document.getElementById('cad_sexo').value = p.sexo || "";
     document.getElementById('cad_estado_civil').value = p.estadoCivil || "";
     document.getElementById('cad_telefone').value = p.telefone || "";
+    preencherTelefonesCadastro(p.telefones_adicionais);
+    if(document.getElementById('cad_observacoes'))document.getElementById('cad_observacoes').value=p.observacoes_cadastro||'';
     document.getElementById('cad_profissao').value = p.profissao || "";
     const chkDependente = document.getElementById('cad_dependente');
     if (chkDependente) chkDependente.checked = pacienteEhDependente(p);

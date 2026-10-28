@@ -18,7 +18,7 @@ function fixture() {
   const b = { id: 'synthetic-patient-b', nome: 'Paciente Beta', telefone: '00000000001', avaliacoes: [], evolucoes: [] };
   let selected = a, allowed = true;
   const context = { console, contextoRevisao: 0, pacienteContextoId: a.id, pacienteAtualId: null,
-    document: { getElementById: id => id === 'ks_prontuario_resumo' ? summary : id === 'ks_prontuario_cards' ? null : (fields[id] ||= { value: '', dataset: {} }),
+    document: { getElementById: id => id === 'ks_prontuario_resumo' ? summary : ['ks_prontuario_cards','cad_telefones_lista'].includes(id) ? null : (fields[id] ||= { value: '', dataset: {} }),
       createElement: () => ({ dataset: {}, setAttribute() {} }), createDocumentFragment: () => ({ children: [], append(button) { this.children.push(button); } }) },
     obterPacienteContexto: async () => selected, escapeHTMLDS: text => String(text),
     definirPacienteContexto: async id => { selected = [a, b].find(p => p.id === id); context.pacienteContextoId = id; },
@@ -29,7 +29,7 @@ function fixture() {
   context.telaPermitida = screen => screen !== 'tela_cadastro' || allowed;
   vm.createContext(context);
   vm.runInContext(design.slice(design.indexOf('    function formatarDataDiretorio('),design.indexOf('    function prepararFinanceiro(')),context);
-  vm.runInContext(registration.slice(registration.indexOf('async function editarCadastro('), registration.indexOf('// APIs históricas')), context);
+  vm.runInContext(registration.slice(0,registration.indexOf('async function salvarCadastroSomente'))+registration.slice(registration.indexOf('async function editarCadastro('), registration.indexOf('// APIs históricas')), context);
   const canonicalEdit = context.editarCadastro;
   context.editarCadastro = async id => { edits.push(id); return canonicalEdit(id); };
   vm.runInContext(summarySource + actionSource + bindingSource, context);

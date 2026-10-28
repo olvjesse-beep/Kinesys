@@ -59,6 +59,11 @@ comment on column public.pacientes.origem_cadastro is
 comment on column public.pacientes.cadastro_validado is
     'FALSE quando o cadastro ainda precisa de conferência administrativa pela equipe.';
 
+-- 3b) Contatos administrativos adicionais (28/10/2026): sem acesso anônimo novo.
+alter table public.pacientes
+    add column if not exists telefones_adicionais jsonb not null default '[]'::jsonb,
+    add column if not exists observacoes_cadastro text not null default '';
+
 -- 4) Configuração da clínica. Sem linha ativa, o portal deve responder como
 -- indisponível. A ausência da linha equivale a ativo=false.
 create table if not exists public.configuracoes_agendamento_online (

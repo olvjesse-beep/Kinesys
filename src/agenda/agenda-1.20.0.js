@@ -459,6 +459,12 @@ function situacaoPagamentoAgenda(agendamento) {
     };
 }
 
+function iconeOrigemOnlineAgendaHTML(agendamento) {
+    if (agendamento?.origem !== 'online') return '';
+    const descricao = 'Agendado online pelo paciente' + (agendamento.lembrete_enviado_em ? ' · Lembrete enviado' : ' · Lembrete ainda não enviado');
+    return `<span class="agenda-origem-online" role="img" aria-label="${descricao}" title="${descricao}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/></svg></span>`;
+}
+
 function iconePagamentoAgendaHTML(agendamento) {
     if (!usuarioEhAdministradorAgenda()) return '';
     const situacao = situacaoPagamentoAgenda(agendamento);
@@ -2361,13 +2367,13 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.procedimentos?.nome || 'Atendimento'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
             overlay.tabIndex = 0;
             overlay.setAttribute('role','button');
-            overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}`);
+            overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}${a.origem==='online'?' · Agendado online pelo paciente':''}`);
             overlay.addEventListener('keydown', evento => {
                 if (evento.key !== 'Enter' && evento.key !== ' ') return;
                 evento.preventDefault();
                 abrirDetalheAgendamento(a.id);
             });
-            overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+            overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente">${iconeOrigemOnlineAgendaHTML(a)}<span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
             container.appendChild(overlay);
         });
     } else {
@@ -2406,13 +2412,13 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 overlay.title = `${a.pacientes?.nome || 'Paciente'} · ${a.equipe?.nome || 'Profissional'} · ${horaCurta(a.hora_inicio)}–${horaCurta(a.hora_fim)}`;
                 overlay.tabIndex = 0;
                 overlay.setAttribute('role','button');
-                overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}`);
+                overlay.setAttribute('aria-label',`Abrir agendamento: ${overlay.title}${a.origem==='online'?' · Agendado online pelo paciente':''}`);
                 overlay.addEventListener('keydown', evento => {
                     if (evento.key !== 'Enter' && evento.key !== ' ') return;
                     evento.preventDefault();
                     abrirDetalheAgendamento(a.id);
                 });
-                overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente"><span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
+                overlay.innerHTML = `<div data-procedimento-id="${escapeHTML(a.procedimento_id || '')}" class="agenda-compromisso status-${escapeHTML(classeStatusAgenda(a.status))} ${escapeHTML(classeTipoVisualAgendamentoAgenda(a))}"><div class="paciente">${iconeOrigemOnlineAgendaHTML(a)}<span class="agenda-paciente-nome">${escapeHTML(a.pacientes?.nome || 'Paciente')}</span>${iconePagamentoAgendaHTML(a)}${iconeHorarioExtraordinarioHTML(a)}</div></div>`;
                 container.appendChild(overlay);
             });
         });
@@ -3637,7 +3643,8 @@ async function abrirDetalheAgendamento(id) {
     else linhaPagamento = '<p class="agenda-pagamento-detalhe neutro"><strong>Pagamento:</strong> não foi possível confirmar agora</p>';
     const corpo = document.getElementById('detalhe_agendamento_corpo');
     corpo.innerHTML = `
-        <p><strong>Paciente:</strong> ${escapeHTML(a.pacientes?.nome || '—')}</p>
+        <p><strong>Paciente:</strong> ${iconeOrigemOnlineAgendaHTML(a)} ${escapeHTML(a.pacientes?.nome || '—')}</p>
+        <p><strong>Origem:</strong> ${a.origem==='online'?'Agendado online pelo paciente':'Registrado pela equipe da clínica'}${a.criado_por?' · '+escapeHTML(a.criado_por):''}</p>
         ${a.paciente_id && (typeof telaPermitida!=='function'||telaPermitida('tela_buscar')) ? '<p><button type="button" class="btn-secondary" onclick="abrirProntuarioAgendamentoAtual()">Abrir prontuário</button></p>' : ''}
         <p><strong>Contato:</strong> ${escapeHTML((() => { const c = obterContatoAgendaPaciente(a.pacientes); return c.telefone ? c.telefone + (c.usaResponsavel ? ' · Responsável: ' + c.nomeDestinatario : '') : 'Não informado'; })())}</p>
         <p><strong>Profissional:</strong> ${escapeHTML(a.equipe?.nome || '—')}</p>

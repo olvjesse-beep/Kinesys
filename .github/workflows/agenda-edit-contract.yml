@@ -77,6 +77,12 @@ jobs:
           node --check src/patient/prontuario_export_impl.js
           node tests/prontuario_clinico.test.cjs
           node tests/patient_summary_edit.test.cjs
+          node --check src/patient/patient_registration_core-1.0.0.js
+          node --check src/patient/patient_form_helpers_core-1.0.0.js
+          node --check src/core/script-1.18.0.js
+          node tests/patient_registration_modularization.contract.js
+          node tests/patient_form_helpers_modularization.contract.js
+          node tests/patient_index_cache_modularization.contract.js
           node tests/prontuario_export_lazy.contract.js
           node --check src/ui/input_helpers_core-1.0.0.js
           node --check src/clinical/evaluation_context_panels-1.18.3.js

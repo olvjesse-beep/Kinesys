@@ -540,6 +540,8 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   text-overflow:ellipsis;
 }
 
+.agenda-origem-online{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;box-sizing:border-box;vertical-align:middle;border-radius:5px;background:#e1f1fa;border:1px solid #8cbbd3;color:#205b78}
+.agenda-origem-online svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .agenda-pagamento-icone,.agenda-cobranca-icone{
   display:inline-flex;
   align-items:center;

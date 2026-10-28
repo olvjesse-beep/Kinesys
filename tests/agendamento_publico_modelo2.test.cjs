@@ -100,6 +100,17 @@ const flush = () => new Promise(r => setImmediate(r));
   fresh.api.selectTime('10:00','11:00');fresh.setSlots(()=>({ok:true,json:async()=>({dias:[]})}));await fresh.api.prepareData();assert.equal(fresh.nodes.ks_public_app.dataset.bookingStep,'horario');assert.equal(fresh.api.s.horario,null);assert(!fresh.calls.some(c=>c.body?.acao==='reservar'));
   console.log('PASS disponibilidade atual: ocupação/liberação, mês e dados preservados, foco/visibilidade/timer, consulta concorrente, erro seguro e retentativa idempotente.');
   // Assets do portal partilham revisão e o helper vem antes do controlador.
+  // Data opcional digitada, com calendário civil válido; nome/telefone obrigatórios.
+  const birthNode=html.match(/<input id="ks_public_nascimento"[^>]+>/)?.[0];assert(birthNode.includes('type="text"'));assert(!birthNode.includes('required'));assert(birthNode.includes('DD/MM/AAAA'));
+  for(const id of ['ks_public_nome','ks_public_telefone'])assert(html.match(new RegExp('<input id="'+id+'"[^>]+>'))[0].includes('required'));
+  const dates=setup();await dates.api.load();dates.api.selectProfessional('prof-demo');dates.api.selectProcedure('av-demo');await flush();dates.api.selectTime('11:00','12:00');
+  dates.nodes.ks_public_nome.value='Paciente com nascimento digitado';dates.nodes.ks_public_telefone.value='11999990000';dates.nodes.ks_public_consentimento.checked=true;
+  dates.nodes.ks_public_nascimento.value='31/02/1990';await dates.api.book({preventDefault(){}});assert(!dates.calls.some(c=>c.body?.acao==='reservar'),'Data inexistente impede envio');
+  dates.nodes.ks_public_nascimento.value='29/02/2000';await dates.api.book({preventDefault(){}});assert.equal(dates.calls.find(c=>c.body?.acao==='reservar').body.paciente.nascimento,'2000-02-29');
+  const optional=setup();await optional.api.load();optional.api.selectProfessional('prof-demo');optional.api.selectProcedure('av-demo');await flush();optional.api.selectTime('11:00','12:00');optional.nodes.ks_public_nome.value='Paciente sem nascimento';optional.nodes.ks_public_telefone.value='11999990000';optional.nodes.ks_public_consentimento.checked=true;
+  optional.nodes.ks_public_nome.value='';await optional.api.book({preventDefault(){}});assert(!optional.calls.some(c=>c.body?.acao==='reservar'));
+  optional.nodes.ks_public_nome.value='Paciente sem nascimento';optional.nodes.ks_public_telefone.value='';await optional.api.book({preventDefault(){}});assert(!optional.calls.some(c=>c.body?.acao==='reservar'));
+  optional.nodes.ks_public_telefone.value='11999990000';await optional.api.book({preventDefault(){}});assert.equal(optional.calls.find(c=>c.body?.acao==='reservar').body.paciente.nascimento,null);
   const urls = [...html.matchAll(/(?:src|href)="\.\/([^"?]+)\?v=([^" ]+)"/g)];
   assert.equal(new Set(urls.map(x => x[2])).size, 1);
   assert(html.indexOf('calendario-publico.js') < html.indexOf('agendamento-publico-v2.js'));
