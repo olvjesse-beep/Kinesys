@@ -89,6 +89,30 @@ begin
 end;
 $$;
 
+
+-- Consulta exclusiva do servidor: nunca concede leitura de pacientes ao portal.
+create or replace function public.kinesys_telefone_online(p_valor text)
+returns text language sql immutable set search_path = public, pg_temp as $$
+ select case when length(n) in (12,13) and left(n,2)='55' then substr(n,3) else n end
+ from (select regexp_replace(coalesce(p_valor,''),'\D','','g') n) x;
+$$;
+create or replace function public.kinesys_localizar_paciente_online(p_clinica_slug text,p_telefone text)
+returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+ select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) from (
+  select p.id,p.nome,p.cpf,p.nascimento from public.pacientes p
+  join public.clinicas c on c.id=p.clinica_id and c.ativa is true
+  join public.configuracoes_agendamento_online cfg on cfg.clinica_id=c.id and cfg.ativo is true
+  where c.slug=lower(btrim(p_clinica_slug)) and length(public.kinesys_telefone_online(p_telefone)) between 10 and 11
+  and (public.kinesys_telefone_online(p.telefone)=public.kinesys_telefone_online(p_telefone)
+   or exists(select 1 from jsonb_array_elements_text(case when jsonb_typeof(to_jsonb(p)->'telefones_adicionais')='array' then to_jsonb(p)->'telefones_adicionais' else '[]'::jsonb end) t(valor)
+      where public.kinesys_telefone_online(t.valor)=public.kinesys_telefone_online(p_telefone)))
+  order by p.cadastro_validado desc,p.timestamp_cadastro nulls last,p.id limit 6
+ ) x;
+$$;
+revoke all on function public.kinesys_telefone_online(text) from public,anon,authenticated;
+revoke all on function public.kinesys_localizar_paciente_online(text,text) from public,anon,authenticated;
+grant execute on function public.kinesys_localizar_paciente_online(text,text) to service_role;
+
 create or replace function public.kinesys_criar_agendamento_online(
   p_clinica_slug text,
   p_request_id uuid,
@@ -100,10 +124,11 @@ create or replace function public.kinesys_criar_agendamento_online(
   p_cpf text,
   p_nascimento date,
   p_telefone text,
-  p_dependente boolean default false,
-  p_responsavel_nome text default null,
-  p_responsavel_parentesco text default null,
-  p_responsavel_telefone text default null
+  p_dependente boolean,
+  p_responsavel_nome text,
+  p_responsavel_parentesco text,
+  p_responsavel_telefone text,
+  p_paciente_confirmado_id text
 )
 returns jsonb
 language plpgsql
@@ -118,6 +143,8 @@ declare
   v_antecedencia integer;
   v_horizonte integer;
   v_duracao integer;
+  v_sessoes_pacote integer;
+  v_plano_id uuid;
   v_procedimento_nome text;
   v_profissionais_ids text[];
   v_profissional_nome text;
@@ -131,12 +158,14 @@ declare
   v_tem_grade_profissional boolean;
   v_feriado text;
   v_cpf text := regexp_replace(coalesce(p_cpf, ''), '\D', '', 'g');
-  v_telefone text := regexp_replace(coalesce(p_telefone, ''), '\D', '', 'g');
+  v_telefone text := public.kinesys_telefone_online(p_telefone);
   v_resp_telefone text := regexp_replace(coalesce(p_responsavel_telefone, ''), '\D', '', 'g');
   v_nome text := btrim(regexp_replace(coalesce(p_nome, ''), '\s+', ' ', 'g'));
   v_resp_nome text := btrim(regexp_replace(coalesce(p_responsavel_nome, ''), '\s+', ' ', 'g'));
   v_resp_parentesco text := btrim(regexp_replace(coalesce(p_responsavel_parentesco, ''), '\s+', ' ', 'g'));
   v_paciente_id text;
+  v_candidatos jsonb;
+  v_confirmado jsonb;
   v_existente_origem text;
   v_existente_clinica uuid;
 begin
@@ -216,8 +245,8 @@ begin
     raise exception 'Profissional indisponível para agendamento online.' using errcode = 'P0001';
   end if;
 
-  select pr.nome, pr.duracao_minutos, pr.profissionais_ids
-    into v_procedimento_nome, v_duracao, v_profissionais_ids
+  select pr.nome, pr.duracao_minutos, pr.profissionais_ids, pr.sessoes_pacote
+    into v_procedimento_nome, v_duracao, v_profissionais_ids, v_sessoes_pacote
   from public.procedimentos pr
   where pr.clinica_id = v_clinica_id
     and pr.id = p_procedimento_id
@@ -328,28 +357,46 @@ begin
     raise exception 'Este horário não está mais disponível.' using errcode = '23P01';
   end if;
 
-  -- Reutiliza prontuário por CPF forte. Sem CPF, só reaproveita pré-cadastro online
-  -- não validado com nome+nascimento+telefone exatos; sem nascimento não adivinha
-  -- identidade por nome/telefone compartilhado. Nunca altera prontuário validado.
-  if v_cpf <> '' then
+  -- Serializa por clínica/telefone para impedir duplicação em reservas simultâneas.
+  perform pg_advisory_xact_lock(hashtextextended(v_clinica_id::text || ':' || v_telefone,0));
+  v_candidatos := public.kinesys_localizar_paciente_online(p_clinica_slug,v_telefone);
+  if nullif(p_paciente_confirmado_id,'') is not null then
+    select x into v_confirmado from jsonb_array_elements(v_candidatos) x where x->>'id'=p_paciente_confirmado_id;
+    if v_confirmado is null
+      or (v_cpf<>'' and coalesce(v_confirmado->>'cpf','')<>'' and regexp_replace(v_confirmado->>'cpf','\D','','g')<>v_cpf)
+      or (p_nascimento is not null and coalesce(v_confirmado->>'nascimento','')<>'' and v_confirmado->>'nascimento'<>p_nascimento::text)
+    then raise exception 'Confira novamente a identificação do paciente.' using errcode='P0011'; end if;
+    v_paciente_id:=v_confirmado->>'id';
+    v_nome:=v_confirmado->>'nome'; -- Notificação usa a identidade canônica, sem sobrescrever o cadastro.
+  elsif jsonb_array_length(v_candidatos)>0 and v_cpf='' then
+    raise exception 'Confirme o cadastro já associado ao telefone antes de agendar.' using errcode='P0011';
+  end if;
+  -- Reutiliza prontuário por CPF forte. Sem confirmação, não adivinha por telefone.
+  if v_paciente_id is null and v_cpf <> '' then
     select p.id into v_paciente_id
     from public.pacientes p
     where p.clinica_id = v_clinica_id
       and regexp_replace(coalesce(p.cpf, ''), '\D', '', 'g') = v_cpf
     order by p.cadastro_validado desc, (p.origem_cadastro = 'interno') desc, p.id
     limit 1;
-  else
-    select p.id into v_paciente_id
-    from public.pacientes p
-    where p.clinica_id = v_clinica_id
-      and p.origem_cadastro = 'agendamento_online'
-      and p.cadastro_validado is false
-      and lower(btrim(regexp_replace(p.nome, '\s+', ' ', 'g'))) = lower(v_nome)
-      and p_nascimento is not null
-      and coalesce(p.nascimento, '') = p_nascimento::text
-      and regexp_replace(coalesce(p.telefone, ''), '\D', '', 'g') = v_telefone
-    order by p.id
-    limit 1;
+    if v_paciente_id is null and jsonb_array_length(v_candidatos)>0 then
+      raise exception 'Confira o CPF ou utilize outro telefone para este paciente.' using errcode='P0011';
+    end if;
+  end if;
+
+
+  -- Uma reserva pública de pacote só usa uma contratação existente; nunca vende nem cria plano.
+  if coalesce(v_sessoes_pacote,1)>1 then
+    if v_paciente_id is null or nullif(p_paciente_confirmado_id,'') is null then
+      raise exception 'Identifique o paciente com pacote contratado.' using errcode='P0012';
+    end if;
+    select pl.id into v_plano_id from public.planos_atendimento pl
+    where pl.clinica_id=v_clinica_id and pl.paciente_id=v_paciente_id
+      and pl.procedimento_id=p_procedimento_id and pl.status='ativo' and pl.sessoes_contratadas>1
+      and (select count(*) from public.agendamentos a where a.plano_id=pl.id and a.status in
+       ('pre_agendado','agendado','confirmado','em_recepcao','atendido','concluido','falta_nao_justificada'))<pl.sessoes_contratadas
+    order by pl.criado_em,pl.id limit 1 for update;
+    if v_plano_id is null then raise exception 'Pacote sem sessões disponíveis.' using errcode='P0012'; end if;
   end if;
 
   if v_paciente_id is null then
@@ -370,11 +417,11 @@ begin
   insert into public.agendamentos (
     id, paciente_id, profissional_id, procedimento_id,
     data, hora_inicio, hora_fim, status,
-    observacoes, criado_por, clinica_id, origem
+    observacoes, criado_por, clinica_id, origem, plano_id
   ) values (
     p_request_id, v_paciente_id, p_profissional_id, p_procedimento_id,
     p_data, p_hora_inicio, v_hora_fim, 'agendado',
-    null, 'Portal de agendamento online', v_clinica_id, 'online'
+    null, 'Portal de agendamento online', v_clinica_id, 'online', v_plano_id
   );
 
   insert into public.notificacoes_internas (
@@ -411,6 +458,18 @@ exception
     raise;
 end;
 $$;
+
+
+create or replace function public.kinesys_criar_agendamento_online(
+ p_clinica_slug text,p_request_id uuid,p_profissional_id text,p_procedimento_id uuid,p_data date,p_hora_inicio time,
+ p_nome text,p_cpf text,p_nascimento date,p_telefone text,p_dependente boolean default false,
+ p_responsavel_nome text default null,p_responsavel_parentesco text default null,p_responsavel_telefone text default null)
+returns jsonb language sql security invoker set search_path = public, pg_temp as $$
+ select public.kinesys_criar_agendamento_online(p_clinica_slug,p_request_id,p_profissional_id,p_procedimento_id,p_data,p_hora_inicio,
+ p_nome,p_cpf,p_nascimento,p_telefone,p_dependente,p_responsavel_nome,p_responsavel_parentesco,p_responsavel_telefone,null::text);
+$$;
+revoke all on function public.kinesys_criar_agendamento_online(text,uuid,text,uuid,date,time,text,text,date,text,boolean,text,text,text,text) from public,anon,authenticated;
+grant execute on function public.kinesys_criar_agendamento_online(text,uuid,text,uuid,date,time,text,text,date,text,boolean,text,text,text,text) to service_role;
 
 revoke all on function public.kinesys_agendamento_online_cpf_valido(text) from public, anon, authenticated;
 revoke all on function public.kinesys_agendamento_online_feriado(date) from public, anon, authenticated;

@@ -455,8 +455,8 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
 @media(hover:none){
   #tela_agenda .agenda-slot-acao{opacity:.66;visibility:visible;transform:translateX(-50%);transition:none}
 }
-#tela_agenda .agenda-celula.bloqueado{background:#596164;color:#fff;cursor:default}
-#tela_agenda .agenda-celula.bloqueado .agenda-bloqueio-texto{padding:5px 6px;color:#fff;font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui);font-weight:800}
+#tela_agenda .agenda-celula.bloqueado{background:var(--agenda-intervalo-fundo);border-color:var(--agenda-intervalo-linha);color:var(--agenda-intervalo-texto);cursor:default}
+#tela_agenda .agenda-celula.bloqueado .agenda-bloqueio-texto{padding:5px 6px;color:var(--agenda-intervalo-texto);font-size:var(--kds-font-metadata);line-height:var(--kds-leading-ui);font-weight:800}
 #tela_agenda .agenda-celula.feriado{background:#6A6261;color:#fff}
 #tela_agenda .agenda-celula.feriado.meia-hora{border-top-color:rgba(255,255,255,.12)}
 #tela_agenda .agenda-celula.feriado .agenda-feriado-texto{color:#fff;white-space:normal}

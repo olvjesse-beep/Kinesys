@@ -177,7 +177,7 @@ try {
  const bookingDay=(await db.query("select d::date::text dia,extract(dow from d)::int dow from generate_series(current_date+2,current_date+30,'1 day') d where extract(dow from d) between 1 and 5 and kinesys_agendamento_online_feriado(d::date) is null limit 1")).rows[0];
  await db.query("insert into horarios_atendimento values($1,null,$2,'08:00','12:00'),($1,null,$2,'14:00','19:00'),($1,'public-prof',$2,'14:00','17:00')",[portalCid,bookingDay.dow]);
  await db.query("insert into disponibilidade_agendamento_online values($1,'public-prof',$2,'08:00','12:00',true)",[portalCid,bookingDay.dow]);
- let request=0;const publicBook=async(time,{id=null,day=bookingDay.dia,birth='1990-01-01',name='Paciente sintético',phone='11999990000',professional='public-prof',procedure=portalProc}={})=>(await db.query("select kinesys_criar_agendamento_online('clinica-sintetica',$1,$8,$2,$3,$4,$6,'',$5::date,$7,false,null,null,null) r",[id||`c3333333-3333-4333-8333-${String(++request).padStart(12,'0')}`,procedure,day,time,birth,name,phone,professional])).rows[0].r;
+ let request=0;const publicBook=async(time,{id=null,day=bookingDay.dia,birth='1990-01-01',name='Paciente sintético',phone='11999990000',professional='public-prof',procedure=portalProc,confirmed=null}={})=>(await db.query("select kinesys_criar_agendamento_online('clinica-sintetica',$1,$8,$2,$3,$4,$6,'',$5::date,$7,false,null,null,null,$9) r",[id||`c3333333-3333-4333-8333-${String(++request).padStart(12,'0')}`,procedure,day,time,birth,name,phone,professional,confirmed])).rows[0].r;
  await assert.rejects(publicBook('15:00'),/não publicado/,'legacy mode still respects manual publication');
  assert.equal((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n,0);
  await db.query('update configuracoes_agendamento_online set seguir_agenda_interna=true where clinica_id=$1',[portalCid]);
@@ -190,7 +190,7 @@ try {
  assert.equal((await db.query("select has_function_privilege('anon','kinesys_criar_agendamento_online(text,uuid,text,uuid,date,time,text,text,date,text,boolean,text,text,text)','execute') allowed")).rows[0].allowed,false);
  await db.query('update configuracoes_agendamento_online set antecedencia_minima_minutos=0 where clinica_id=$1',[portalCid]);
  await assert.rejects(publicBook('14:00',{name:''}),/nome completo/);await assert.rejects(publicBook('14:00',{phone:''}),/telefone válido/);await assert.rejects(publicBook('14:00',{birth:'2099-01-01'}),/nascimento válida/);
- const optionalBirth=await publicBook('14:00',{birth:null});assert.equal(optionalBirth.ok,true);assert.equal((await publicBook('14:00',{birth:null,id:optionalBirth.agendamento_id})).repetido,true);
+ const optionalBirth=await publicBook('14:00',{birth:null,phone:'11999990002'});assert.equal(optionalBirth.ok,true);assert.equal((await publicBook('14:00',{birth:null,id:optionalBirth.agendamento_id})).repetido,true);
  const online=(await db.query('select paciente_id,origem,criado_por from agendamentos where id=$1',[optionalBirth.agendamento_id])).rows[0];assert.equal(online.origem,'online');assert.equal(online.criado_por,'Portal de agendamento online');
  const schemaContacts=fs.readFileSync(new URL('SUPABASE_SQL/SUPABASE_MIGRACAO_AGENDAMENTO_ONLINE_ESTRUTURA_20260912.sql',root),'utf8').match(/alter table public\.pacientes\s+add column if not exists telefones_adicionais[\s\S]*?;/)[0];await db.exec(schemaContacts);
  const noBirth=(await db.query('select nascimento,telefones_adicionais,observacoes_cadastro from pacientes where id=$1',[online.paciente_id])).rows[0];assert.equal(noBirth.nascimento,null);assert.deepEqual(noBirth.telefones_adicionais,[]);assert.equal(noBirth.observacoes_cadastro,'');
@@ -200,14 +200,16 @@ try {
  // Dois profissionais reais no banco de teste: jornada, conflitos e bloqueios por ID.
  await db.query("insert into equipe(id,nome,clinica_id,ativo,aparece_na_agenda,agendamento_online_ativo) values('public-prof-b','Enfermagem sintética',$1,true,true,true)",[portalCid]);
  await db.query("insert into horarios_atendimento values($1,'public-prof-b',$2,'08:00','12:00'),($1,'public-prof-b',$2,'14:00','19:00'),($1,'public-prof',$2,'08:00','12:00')",[portalCid,bookingDay.dow]);
- const forB={professional:'public-prof-b',name:'Paciente sintético de outro profissional'};
+ const forB={professional:'public-prof-b',name:'Paciente sintético de outro profissional',phone:'11999990003'};
  const simultaneous=await publicBook('15:00',forB);assert.equal(simultaneous.ok,true,'Ocupação de A não impede horário de B');
  assert.equal((await db.query('select profissional_id from agendamentos where id=$1',[simultaneous.agendamento_id])).rows[0].profissional_id,'public-prof-b');
  await assert.rejects(publicBook('15:00',forB),/disponível/,'B não pode reservar seu próprio horário já ocupado');
+ const bPatient=(await db.query('select paciente_id from agendamentos where id=$1',[simultaneous.agendamento_id])).rows[0].paciente_id;forB.confirmed=bPatient;
  assert.equal((await publicBook('16:00',forB)).ok,true,'Bloqueio individual de A não impede B');
  await db.query("insert into bloqueios_agenda(clinica_id,profissional_id,data,hora_inicio,hora_fim) values($1,null,$2,'10:00','11:00'),($1,'public-prof-b',$2,'11:00','12:00')",[portalCid,bookingDay.dia]);
  await assert.rejects(publicBook('10:00'),/bloqueado/);await assert.rejects(publicBook('10:00',forB),/bloqueado/,'Bloqueio de clínica afeta todos');
- await assert.rejects(publicBook('11:00',forB),/bloqueado/);assert.equal((await publicBook('11:00')).ok,true,'Ausência individual de B não afeta A');
+ await assert.rejects(publicBook('11:00',forB),/bloqueado/);const canonicalPatient=(await db.query('select paciente_id from agendamentos where id=$1',[publicSuccess.agendamento_id])).rows[0].paciente_id;
+ assert.equal((await publicBook('11:00',{confirmed:canonicalPatient})).ok,true,'Ausência individual de B não afeta A');
  const nurseOnly='d2222222-2222-4222-8222-222222222222';
  await db.query("insert into procedimentos(id,nome,clinica_id,ativo,agendamento_online_ativo,duracao_minutos,valor,profissionais_ids) values($1,'Serviço de enfermagem sintético',$2,true,true,60,80,array['public-prof-b'])",[nurseOnly,portalCid]);
  await assert.rejects(publicBook('08:00',{procedure:nurseOnly}),/procedimento|profissional/i,'Servidor valida vínculo do serviço com a pessoa escolhida');
@@ -215,6 +217,40 @@ try {
  await db.query("update equipe set agendamento_online_ativo=false where id='public-prof-b'");await assert.rejects(publicBook('09:00',forB),/profissional/i,'Pessoa não publicada não aceita reserva por requisição direta');
  console.log('PASS reserva multiprofissional: mesmo horário para pessoas diferentes, conflitos próprios, ausência individual, bloqueio geral, serviço vinculado e publicação por profissional.');
  console.log('PASS public reservation: mirror accepts Agenda afternoon; manual mode, professional/clinic hours, block, overlap, lead time and idempotent rollback remain protected.');
+
+ // Identidade por telefone: confirmar, preservar cadastro e não criar duplicatas.
+ await db.query("update equipe set agendamento_online_ativo=true where id='public-prof-b'");
+ await assert.rejects(publicBook('09:00',{phone:'11999990000',name:'Outro nome digitado'}),/Confirme o cadastro/);
+ const idCount=Number((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n);
+ const identified=await publicBook('09:00',{phone:'11999990000',name:'Outro nome digitado',confirmed:canonicalPatient});
+ assert.equal((await db.query('select paciente_id from agendamentos where id=$1',[identified.agendamento_id])).rows[0].paciente_id,canonicalPatient);
+ assert.equal(Number((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n),idCount);
+ assert.equal((await db.query('select nome from pacientes where id=$1',[canonicalPatient])).rows[0].nome,'Paciente sintético');
+ await assert.rejects(publicBook('14:00',{professional:'public-prof-b',confirmed:online.paciente_id}),/identificação/,'Token de outro telefone não pode vincular cadastro');
+ await assert.rejects(publicBook('14:00',{professional:'public-prof-b',confirmed:canonicalPatient,birth:'1980-01-01'}),/identificação/,'Nascimento divergente bloqueia vínculo');
+ const found=(await db.query("select kinesys_localizar_paciente_online('clinica-sintetica','5511999990001') r")).rows[0].r;
+ assert.equal(found.length,1,'Telefone adicional e código do país normalizados');assert.equal(found[0].id,online.paciente_id);
+ assert.equal((await db.query("select kinesys_localizar_paciente_online('outra-clinica','11999990000') r")).rows[0].r.length,0,'Consulta isolada por clínica');
+ for(const signature of ['kinesys_localizar_paciente_online(text,text)','kinesys_criar_agendamento_online(text,uuid,text,uuid,date,time,text,text,date,text,boolean,text,text,text,text)']) {
+  assert.equal((await db.query("select has_function_privilege('anon',$1,'execute') allowed",[signature])).rows[0].allowed,false);
+  assert.equal((await db.query("select has_function_privilege('authenticated',$1,'execute') allowed",[signature])).rows[0].allowed,false);
+ }
+ console.log('PASS identidade SQL: confirmação por telefone, cadastro canônico preservado, sem duplicação, divergência, telefone adicional/55, clínica e permissões.');
+
+ const portalPackage='f2222222-2222-4222-8222-222222222222';
+ await db.query("insert into procedimentos(id,nome,clinica_id,ativo,agendamento_online_ativo,duracao_minutos,valor,sessoes_pacote) values($1,'Pacote online sintético',$2,true,true,60,650,2)",[portalPackage,portalCid]);
+ const packageChoice={professional:'public-prof-b',procedure:portalPackage,confirmed:canonicalPatient};
+ await assert.rejects(publicBook('14:00',packageChoice),/Pacote sem sessões/);
+ const plansBefore=Number((await db.query('select count(*) n from planos_atendimento')).rows[0].n),paymentsBefore=Number((await db.query('select count(*) n from pagamentos')).rows[0].n);
+ const portalPlan=(await db.query("select kinesys_contratar_pacote($1,$2,'plano-online-sintetico') p",[canonicalPatient,portalPackage])).rows[0].p;
+ const p1=await publicBook('14:00',packageChoice);const p2=await publicBook('17:00',packageChoice);
+ assert.equal((await db.query('select plano_id from agendamentos where id=$1',[p1.agendamento_id])).rows[0].plano_id,portalPlan.id);
+ assert.equal((await db.query('select plano_id from agendamentos where id=$1',[p2.agendamento_id])).rows[0].plano_id,portalPlan.id);
+ await assert.rejects(publicBook('18:00',packageChoice),/Pacote sem sessões/);
+ assert.equal(Number((await db.query('select count(*) n from planos_atendimento')).rows[0].n),plansBefore+1,'Portal não contrata outro pacote');
+ assert.equal(Number((await db.query('select count(*) n from pagamentos')).rows[0].n),paymentsBefore,'Portal não cria recebimentos');
+ await db.query('update agendamentos set status=\'cancelado\' where id=$1',[p2.agendamento_id]);assert.equal((await publicBook('18:00',packageChoice)).ok,true,'Cancelamento libera a sessão reservada');
+ console.log('PASS sessão online de pacote: contrato existente compatível, saldo disponível, excesso negado, cancelamento libera sessão, sem novo contrato/recebimento.');
  // Diagnóstico isolado de credenciais: ingresso limitado, sem acesso anônimo aos registros.
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/diagnostico_acesso.sql',root),'utf8'));
  const diagCid='81111111-1111-4111-8111-111111111111',otherCid='82222222-2222-4222-8222-222222222222';
