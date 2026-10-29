@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261029-config-horarios-r3';
+    const ASSET_REVISION = '20261029-intervalo-r4';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
