@@ -9,22 +9,23 @@ class Element {
   setAttribute(name, value) { this.attrs[name] = value; }
   removeAttribute(name) { delete this.attrs[name]; }
   querySelector(name) { return this[name] ||= new Element(); }
-  scrollIntoView() {} focus() {}
+  scrollIntoView(options) { (this.scrolls ||= []).push(options); } focus() {}
 }
-function setup({catalogue=catalog,publicProfile=profile}={}) {
+function setup({catalogue=catalog,publicProfile=profile,reducedMotion=false}={}) {
   const nodes = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(m => [m[1], new Element()]));
   const calls = [], errors = [], events = {}, timers=[];
   const stages = [...html.matchAll(/<section[^>]*id="([^"]+)"[^>]*data-step="([^"]+)"/g)].map(m => { nodes[m[1]].dataset.step = m[2]; return nodes[m[1]]; });
   const markers = Array.from({length:4}, (_, i) => {const e=new Element();e.dataset.progressSegment=String(i);return e;});
   let slotsResponse = () => ({ ok: true, json: async () => slots });
   let reservation = () => ({ ok: true, json: async () => ({ ok: true }) });
-  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse(body) : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? publicProfile : catalogue }; } };
+  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},matchMedia:()=>({matches:reducedMotion}),addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse(body) : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? publicProfile : catalogue }; } };
   vm.runInNewContext(fs.readFileSync('agendamento/calendario-publico.js', 'utf8'), ctx);
   vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,refreshSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book,limparIdentidade};bind();'), ctx);
   return { api: ctx.window.test, calendar: ctx.window.KineSysPublicCalendar, nodes, calls, errors,events,timers,document:ctx.document, setSlots: fn => slotsResponse = fn, setReservation: fn => reservation = fn };
 }
 const flush = () => new Promise(r => setImmediate(r));
 (async () => {
+  const noMotion=setup({reducedMotion:true});await noMotion.api.load();noMotion.api.selectProfessional('prof-demo');noMotion.api.selectProcedure('osteo-demo');await flush();noMotion.api.selectTime('11:00','12:00');assert.equal(noMotion.nodes.ks_public_continue.scrolls[0].behavior,'auto','Preferência por menos movimento é respeitada');
   const t = setup(), a = t.api, c = t.calendar;
   assert.equal(c.date('2026-02-30'), null);
   assert.equal(c.model([], '2026-13'), null);
@@ -44,6 +45,11 @@ const flush = () => new Promise(r => setImmediate(r));
   assert.equal(t.nodes.ks_public_month_prev.disabled, true); assert.equal(t.nodes.ks_public_month_next.disabled, false);
   a.selectDate('2026-10-25'); assert.equal(a.s.data, '2026-10-26', 'Não selecionar dia que o servidor não retornou');
   a.selectTime('11:00', '12:00'); assert.equal(t.nodes.ks_public_selection.hidden, false);
+  assert.equal(t.nodes.ks_public_continue.scrolls.length,1,'Escolher horário leva até Continuar');
+  assert.equal(t.nodes.ks_public_continue.scrolls[0].block,'center');
+  assert.equal(t.nodes.ks_public_continue.scrolls[0].behavior,'smooth');
+  a.selectTime('00:00','01:00');assert.equal(t.nodes.ks_public_continue.scrolls.length,1,'Horário inválido não dispara rolagem');
+  await a.loadSlots({preservar:true});assert.equal(t.nodes.ks_public_continue.scrolls.length,1,'Atualização de disponibilidade não puxa a tela para baixo');
   a.moveMonth(1); assert.equal(a.s.month, '2026-11'); assert.equal(a.s.data, '2026-11-03'); assert.equal(a.s.horario, null);
   assert.equal(t.nodes.ks_public_month_next.disabled, true); a.moveMonth(1); assert.equal(a.s.month, '2026-11');
   a.moveMonth(-1); a.selectTime('11:00', '12:00'); await a.prepareData();
