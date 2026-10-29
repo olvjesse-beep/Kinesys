@@ -37,6 +37,9 @@ assert.match(estilo, /--agenda-intervalo-fundo:/,
 assert.match(estilo, /\.agenda-celula\.bloqueado\{background:var\(--agenda-intervalo-fundo\)/,
     'Ausências e bloqueios devem reutilizar a sinalização amarela do intervalo, sem virar horário livre.');
 assert(agenda.includes("'Bloqueado · ' + bloq.motivo"),'O bloqueio deve continuar identificado pelo motivo');
+const referencia=fs.readFileSync(path.join(raiz,'styles/agenda_referencia-1.20.0.css'),'utf8');
+assert(referencia.includes('.agenda-celula:not(.bloqueado):not(.intervalo)'),
+    'O tema de referência não deve cobrir com fundo branco as células de bloqueio e intervalo');
 assert.match(agenda, /agenda-slot-acao[^\n]*\+ Agendar/,
     'Horários livres de hora cheia devem expor a ação + Agendar sem trocar o fluxo existente.');
 assert.match(estilo, /\.agenda-slot-acao\{[^}]*opacity:0;[^}]*visibility:hidden;/,
