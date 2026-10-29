@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261029-config-nav-r2';
+    const ASSET_REVISION = '20261029-config-horarios-r3';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -806,13 +806,20 @@
         const alvo = document.getElementById('ks_online_horarios');
         if (!alvo) return;
         const id = state.profissionalSelecionado;
+        alvo.dataset.scheduleMode = !id ? 'empty' : segueAgendaInterna() ? 'agenda' : 'manual';
         if (!id) {
             alvo.innerHTML = '<p class="ks-online-empty">Selecione um profissional para configurar os horários.</p>';
             return;
         }
         if(segueAgendaInterna()){
             const rows=horariosDaAgendaPublicaveis().filter(h=>String(h.profissional_id)===String(id));
-            alvo.innerHTML='<p class="field-help">Vinculado à Agenda. Alterações de jornada passam a valer no link automaticamente; horários já ocupados não são oferecidos.</p>'+DIAS.map(d=>'<div class="ks-online-day"><div class="ks-online-day-head"><strong>'+escapeHTML(d.nome)+'</strong></div><p>'+escapeHTML(rows.filter(h=>h.dia_semana===d.valor).map(h=>h.hora_inicio+'–'+h.hora_fim).join(' · ')||'Não atende')+'</p></div>').join('');
+            alvo.innerHTML = '<p class="ks-online-schedule-note">Vinculado à Agenda. Alterações de jornada passam a valer no link automaticamente; horários já ocupados não são oferecidos.</p>' +
+                '<dl class="ks-online-linked-week" aria-label="Jornada semanal vinculada à Agenda">' + DIAS.map(d => {
+                    const periodos = rows.filter(h => h.dia_semana === d.valor);
+                    return '<div class="ks-online-linked-day"><dt>' + escapeHTML(d.nome) + '</dt><dd>' +
+                        (periodos.length ? periodos.map(h => '<span>' + escapeHTML(h.hora_inicio + '–' + h.hora_fim) + '</span>').join('') : '<span class="ks-online-linked-day-off">Não atende</span>') +
+                        '</dd></div>';
+                }).join('') + '</dl>';
             return;
         }
         const rows = horariosDoProfissional(id);

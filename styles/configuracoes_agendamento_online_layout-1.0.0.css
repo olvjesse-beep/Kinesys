@@ -776,8 +776,49 @@ body.ks-design-ready #tela_configuracoes #ks_config_team_list>.ks-team-list{padd
 #tela_configuracoes #ks_config_panel_online .ks-online-layout-nav button{display:flex;align-items:center;gap:12px}
 #tela_configuracoes #ks_config_panel_online .ks-online-layout-nav button[aria-selected=true]{background:var(--kds-accent-soft);border-left:4px solid var(--kds-accent);color:var(--kds-accent-hover);box-shadow:none}
 #tela_configuracoes #ks_config_panel_online .ks-online-topline>[data-adicionar-procedimento]{flex:0 0 auto;min-height:44px}
+/* Resumo vinculado separado da grade editável: aviso não ocupa uma célula de dia. */
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="agenda"]{display:block}
+#tela_configuracoes .ks-online-schedule-note{margin:0 0 18px;color:var(--kds-muted);font-size:var(--kds-font-ui);line-height:var(--kds-leading-text);max-width:80ch}
+#tela_configuracoes .ks-online-linked-week{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin:0;border-top:1px solid var(--kds-line-soft)}
+#tela_configuracoes .ks-online-linked-day{display:grid;grid-template-columns:minmax(132px,.6fr) minmax(0,1fr);align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--kds-line-soft);min-width:0}
+#tela_configuracoes .ks-online-linked-day dt{margin:0;font-weight:600;color:var(--kds-text)}
+#tela_configuracoes .ks-online-linked-day dd{display:flex;flex-wrap:wrap;gap:8px 24px;min-width:0;margin:0;font-variant-numeric:tabular-nums}
+#tela_configuracoes .ks-online-linked-day dd>span{white-space:nowrap}
+#tela_configuracoes .ks-online-linked-day-off{color:var(--kds-muted)}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"]{grid-template-columns:minmax(0,1fr)}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-day{display:block;min-width:0}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-day-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px;background:var(--kds-surface-soft)}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-day-head small{display:block;margin-top:4px;color:var(--kds-muted)}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-time-list{display:grid;gap:8px}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-time-row{display:grid;grid-template-columns:minmax(0,180px) minmax(0,180px) auto;gap:12px;padding:12px;align-items:end}
+#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-time-row label,#tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] input[type="time"]{width:100%;min-width:0}
+@media(min-width:701px){
+ #tela_configuracoes #ks_config_panel_online .ks-online-shell.ks-online-distilled>.ks-online-layout-nav{position:sticky;top:calc(var(--kds-topbar-min-height) + 12px);align-self:start;max-height:calc(100dvh - var(--kds-topbar-min-height) - 24px);overflow-y:auto}
+}
+@media(max-width:1400px){
+ #ks_config_panel_online .ks-week-headers,#ks_config_panel_online .ks-week-row{grid-template-columns:104px minmax(90px,1fr) 12px minmax(90px,1fr) 56px minmax(90px,1fr) 12px minmax(90px,1fr);min-width:0;gap:6px}
+ #ks_config_panel_online .ks-week-row :where(input[type="time"],select){width:100%;min-width:0;padding-inline:6px}
+}
+@media(max-width:1100px){
+ #ks_config_panel_online .ks-week-headers{display:none}
+ #ks_config_panel_online .ks-week-row{grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);gap:8px;min-width:0;padding:16px 0}
+ #ks_config_panel_online .ks-week-day{grid-column:1/-1}
+ #ks_config_panel_online .ks-week-row>[data-grade="inicio1"]{grid-column:1;grid-row:2}
+ #ks_config_panel_online .ks-week-row>.ks-week-sep:nth-child(3){grid-column:2;grid-row:2}
+ #ks_config_panel_online .ks-week-row>[data-grade="fim1"]{grid-column:3;grid-row:2}
+ #ks_config_panel_online .ks-week-break{grid-column:1/-1;text-align:left}
+ #ks_config_panel_online .ks-week-row>[data-grade="inicio2"]{grid-column:1;grid-row:4}
+ #ks_config_panel_online .ks-week-row>.ks-week-sep:nth-child(7){grid-column:2;grid-row:4}
+ #ks_config_panel_online .ks-week-row>[data-grade="fim2"]{grid-column:3;grid-row:4}
+ #ks_config_panel_online .ks-week-row :where(input[type="time"],select){width:100%;min-width:0}
+}
 @media(max-width:700px){
  #tela_configuracoes #ks_config_panel_online .ks-online-layout-nav button{min-width:auto;padding:12px 16px;white-space:nowrap}
  #tela_configuracoes #ks_config_panel_online .ks-online-topline{flex-direction:column;align-items:stretch;gap:16px}
  #tela_configuracoes #ks_config_panel_online .ks-online-topline>[data-adicionar-procedimento]{align-self:start}
+ #tela_configuracoes .ks-online-linked-day{grid-template-columns:minmax(0,1fr);gap:8px}
+ #tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-time-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ #tela_configuracoes #ks_online_horarios[data-schedule-mode="manual"] .ks-online-remove-time{grid-column:1/-1;width:100%}
+ #tela_configuracoes .ks-config-tabs{position:static}
+ #tela_configuracoes #ks_config_panel_online .ks-online-savebar{width:100%;box-sizing:border-box}
 }
