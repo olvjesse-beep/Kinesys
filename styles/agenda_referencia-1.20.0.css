@@ -286,7 +286,8 @@ body.ks-design-ready #agenda_painel .agenda-hora-eixo {
   font-weight:650;
 }
 
-body.ks-design-ready #agenda_painel .agenda-celula {
+/* Células neutras não apagam as cores semânticas de intervalo, ausência e feriado. */
+body.ks-design-ready #agenda_painel .agenda-celula:not(.bloqueado):not(.intervalo) {
   border-top-color:#EDF1F0;
   border-left-color:#EDF1F0;
   background:#FCFDFD;
