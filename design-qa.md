@@ -1,3 +1,46 @@
+# Horários — correção da composição e responsividade, 29/10/2026
+
+Escopo: corrigir a página existente de Horários, preservando a identidade visual selecionada, os campos e as regras de disponibilidade. Não é uma nova proposta de interface.
+
+## Evidências e comparação
+
+- Fonte: captura do usuário `C:/Users/User/AppData/Local/Temp/codex-clipboard-cc505573-c685-4749-94bb-08e6f39b505d.png`, complementada por captura atual do produto em `G:/KineSys-IA/Resultados/configuracoes-horarios-20261029/01-horarios-antes.jpg` e `02-publicados-antes.jpg`.
+- Implementação: mesma pasta, `03-publicados-depois.jpg`, `04-horarios-depois.jpg`, `06-manual-depois.jpg`.
+- Antes/depois de notebook: viewport CSS 1280 × 720, captura de conteúdo 1265px de largura, densidade efetiva 1:1; capturas completas variam em altura. Mesmo perfil e dados. Os horários e as cores não foram gravados durante a revisão.
+- Comparação conjunta: `comparacao.html` apresenta antes e depois lado a lado, tanto o resumo vinculado quanto o editor manual e a composição completa. Inspeção visual feita no navegador. O screenshot do usuário é mais largo; as comparações de notebook usam capturas próprias de largura idêntica para evitar falsa precisão.
+- Detalhe dos campos foi inspecionado diretamente no aplicativo; os controles e textos são legíveis nos screenshots de viewport, além das capturas completas.
+- Responsivo real: viewport CSS 545 × 892, conteúdo 530px, capturas `08-compacta-vinculada-depois.jpg`, `09-compacta-manual-depois.jpg` e `10-compacta-jornada-depois.jpg`. Sem overflow global nem dos campos conferidos.
+
+## Histórico de achados e correções
+
+1. [P1, corrigido] O aviso de vínculo participava da grade de dias e deslocava segunda-feira. Separado o aviso da lista semântica dos sete dias, em ordem de segunda a domingo.
+2. [P1, corrigido] O resumo somente leitura herdava três colunas do editor manual; horas ficavam comprimidas. Resumo agora tem uma linha por dia, período completo sem quebra e wrap entre períodos. Estados sem atendimento preservados.
+3. [P2, corrigido] Menu lateral esticado por mais de 2200px, vazio ao rolar. Altura intrínseca e posição sticky no desktop; navegação horizontal normal em telas compactas. Verificado em rolagem com topo de 102px e altura de 344px no notebook.
+4. [P2, corrigido] Grade nativa de expediente exigia 780px mesmo com espaço menor. Colunas proporcionais no notebook, períodos em duas linhas abaixo de 1100px. Todos os quatro campos por dia e seus labels originais preservados.
+5. [P1, corrigido após primeira revisão] Ao conferir o modo manual, campos e botão Remover invadiam o dia seguinte. Evidência `05-manual-antes.jpg`; corrigido para um bloco por dia e inputs agrupados. Pós-correção `06-manual-depois.jpg` e `09-compacta-manual-depois.jpg`.
+6. [P2, corrigido após primeira revisão compacta] Abas principais transparentes sobrepunham o texto e o rodapé ocupava só parte da largura. Evidência `07-compacta-primeira-revisao.jpg`; abas sem fixação em telas compactas e rodapé com largura total. Revisão posterior em 08/09/10, sem sobreposição detectada.
+
+## Cinco superfícies de fidelidade
+
+- Fontes/tipografia: Segoe UI e tokens existentes preservados. Dias em peso de label; horários com algarismos tabulares e sem quebra dentro de HH:MM–HH:MM. Não foram introduzidos títulos, fontes ou ícones de outro sistema.
+- Espaçamento/layout: aviso fora dos dias, alinhamento de semana em uma lista, campos manuais em blocos, navegação lateral de altura curta. O aumento de altura do modo manual é intencional para manter os campos editáveis e legíveis.
+- Cores/tokens: somente tokens `--kds-*`; superfícies, seleção e estados existentes. Nenhuma nova paleta ou efeito decorativo.
+- Imagens/ícones: marca e ícones existentes preservados. Não há imagens novas ou desenhos que substituam assets; esta correção trata de estrutura de formulários.
+- Conteúdo: texto e horários reais preservados. Seguir Agenda continua somente leitura; desligar exibe o editor manual original. Nenhum cálculo de slots, antecedência, bloqueio ou contratação foi alterado.
+
+## Interações e limites
+
+- Navegação de Horários para Cores e demais seções preservada pelos testes existentes.
+- Alternância vinculada/manual, inclusão e remoção de período em rascunho, seleção de profissional e retorno ao modo vinculado conferidos sem salvar. A validação de fim anterior ao início continua ativa durante o preenchimento parcial.
+- Teste ampliado executa o renderizador real: sete dias, aviso separado, filtro do profissional, interseção de jornadas, estado sem seleção e preservação do período manual.
+- Console da prévia sem erros/warnings capturados.
+- Não foram feitos salvamentos reais na clínica para teste. Persistência e disponibilidade são exercitadas por testes sintéticos e banco isolado; esta revisão visual não certifica acessibilidade integral.
+- Sem achados P0/P1/P2 pendentes nos estados conferidos. Viewports intermediários não conferidos visualmente permanecem cobertos apenas pelas regras responsivas e pelo check hospedado.
+
+final result: passed
+
+---
+
 # Correção da navegação de Agenda e serviços — 29/10/2026
 
 Escopo: corrigir a troca de menus ao abrir Cores, mantendo a composição aprovada e os controles canônicos. Esta revisão substitui a conclusão anterior para esta navegação.

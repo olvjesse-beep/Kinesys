@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261029-config-nav-r2';
+    const ASSET_REVISION = '20261029-config-horarios-r3';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css';
 
     const state = {

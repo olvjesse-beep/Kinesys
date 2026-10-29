@@ -112,6 +112,39 @@ console.log('agendamento_online_admin_config.contract: OK');
  assert(js.includes('if(!cfg.seguir_agenda_interna){'),'vínculo não pode regravar nem apagar períodos manuais');
  console.log('PASS configuração vinculada: jornada geral/própria, compatibilidade de serviço e preservação da grade manual.');
 }
+// Render the linked summary and switch back to the unchanged manual editor.
+{
+ const vm=require('node:vm');
+ const container={innerHTML:'',dataset:{}},toggle={checked:true};
+ const state={profissionalSelecionado:'p',profissionais:[{id:'p'},{id:'other'}],horariosAgenda:[
+  {profissional_id:null,dia_semana:1,hora_inicio:'08:00:00',hora_fim:'12:00:00'},
+  {profissional_id:null,dia_semana:1,hora_inicio:'14:00:00',hora_fim:'19:00:00'},
+  {profissional_id:'p',dia_semana:1,hora_inicio:'15:00:00',hora_fim:'18:00:00'},
+  {profissional_id:'other',dia_semana:1,hora_inicio:'09:00:00',hora_fim:'11:00:00'}
+ ],disponibilidadeEditada:[{profissional_id:'p',dia_semana:1,hora_inicio:'10:00',hora_fim:'11:00'}]};
+ const ctx={state,document:{getElementById:id=>id==='ks_online_horarios'?container:id==='ks_online_seguir_agenda'?toggle:null},escapeHTML:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;'),chaveHorario:x=>[x.profissional_id,x.dia_semana,x.hora_inicio,x.hora_fim].join('|')};
+ vm.createContext(ctx);
+ vm.runInContext(js.slice(js.indexOf('const DIAS ='),js.indexOf('const state ='))+js.slice(js.indexOf('function segueAgendaInterna()'),js.indexOf('function adicionarIntervalo(')),ctx);
+ const before=JSON.stringify(state);
+ vm.runInContext('renderizarHorariosProfissional()',ctx);
+ assert.equal(container.dataset.scheduleMode,'agenda');
+ assert(container.innerHTML.indexOf('ks-online-schedule-note')<container.innerHTML.indexOf('<dl '),'note must be outside the day grid');
+ assert.equal((container.innerHTML.match(/<dt>/g)||[]).length,7,'seven days must appear exactly once');
+ assert(container.innerHTML.indexOf('Segunda-feira')<container.innerHTML.indexOf('Terça-feira'));
+ assert(container.innerHTML.includes('15:00–18:00'));
+ assert(!container.innerHTML.includes('09:00–11:00'),'another professional cannot leak into the summary');
+ assert.equal((container.innerHTML.match(/Não atende/g)||[]).length,6);
+ assert.equal(JSON.stringify(state),before,'rendering the summary cannot change schedule state');
+ toggle.checked=false;vm.runInContext('renderizarHorariosProfissional()',ctx);
+ assert.equal(container.dataset.scheduleMode,'manual');
+ assert.equal((container.innerHTML.match(/data-dia-card=/g)||[]).length,7);
+ assert(container.innerHTML.includes('data-hora-inicio')&&container.innerHTML.includes('value="10:00"'));
+ assert(!container.innerHTML.includes('ks-online-linked-week'));
+ assert.equal(JSON.stringify(state),before,'switching display must preserve the manual periods');
+ state.profissionalSelecionado='';vm.runInContext('renderizarHorariosProfissional()',ctx);
+ assert.equal(container.dataset.scheduleMode,'empty');assert(!container.innerHTML.includes('<dl '));
+ console.log('PASS resumo de horários: sete dias ordenados, aviso separado, profissional correto e editor manual preservado.');
+}
 // O layout da Comunicação deve carregar mesmo se o perfil público da Agenda
 // foi pré-carregado antes de existir uma sessão administrativa.
 const garantirCSS = js.slice(js.indexOf('function garantirCSS()'), js.indexOf('function setStatus('));
