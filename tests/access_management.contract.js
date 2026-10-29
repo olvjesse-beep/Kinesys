@@ -49,6 +49,9 @@ assert.match(index,/src\/admin\/access_admin-1\.0\.0\.js/,'access admin controll
 assert.ok(index.indexOf('src/auth/login_access-1.18.0.js')<index.indexOf('src/admin/access_admin-1.0.0.js'),'access admin must load after login access and the core globals it relies on');
 
 console.log('Access management contract OK: unified profile login, dedicated recovery and MASTER-only server-side password reset.');
+const teamPresentation=fs.readFileSync('src/core/design_system-1.20.1.js','utf8');
+const presentation=teamPresentation.slice(teamPresentation.indexOf('function prepararEquipe()'),teamPresentation.indexOf('function prepararCadastro()'));
+assert.match(presentation,/ks-team-hero[\s\S]*KineSysAccessAdmin\.diagnostics\(\)[\s\S]*tela\.insertBefore\(hero,form\)/,'atalho de diagnóstico pertence ao cabeçalho visível, preservado quando o formulário vira drawer');
 // Chrome novo, cache antigo ou preferência de movimento reduzido não podem
 // depender de uma animação para revelar o login ou a aplicação.
 assert.doesNotMatch(index, /<body[^>]*\bks-app-booting\b/, 'não ocultar o body inteiro nem depender de animação');
