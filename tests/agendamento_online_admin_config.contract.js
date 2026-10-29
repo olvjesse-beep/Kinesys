@@ -229,3 +229,65 @@ assert(html.includes('id="proc_sessoes_pacote"'), 'o formulário de procedimento
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 assert(fs.readFileSync("styles/design_base.css","utf8").includes("#ks_team_drawer [hidden]{display:none!important}"),"a edição de equipe deve respeitar campos ocultos de senha inicial");
+
+// Exercise the actual navigation functions: Cores is a stage, not another settings page.
+{
+ const stagesSource=layout.slice(layout.indexOf('const STAGES ='),layout.indexOf('const ONLINE_REQUIRED'));
+ const stageContext={sessionStorage:{values:new Map(),setItem(k,v){this.values.set(k,v);},getItem(k){return this.values.get(k);}},window:{},setTimeout:()=>{},atualizarContextos:()=>{},atualizarStageNativo:()=>{}};
+ vm.createContext(stageContext);
+ vm.runInContext(stagesSource+';this.stages=STAGES;',stageContext);
+ const sections=new Map(stageContext.stages.flatMap(s=>s.sections).map(id=>[id,{hidden:false}]));
+ const colors=sections.get('ks_config_panel_aparencia');colors.unsavedColor='#123456';
+ const attrs=()=>({attributes:{},setAttribute(k,v){this.attributes[k]=v;}});
+ const buttons=stageContext.stages.map(s=>({...attrs(),dataset:{onlineStage:s.id},focus(){stageContext.document.activeElement=this;},scrollIntoView(){},closest(){return this;}}));
+ const heading={textContent:''},description={textContent:''},badge={hidden:false},add={hidden:true},savebar={hidden:false},surface={dataset:{}};
+ const header={querySelector:s=>({'h2':heading,'p':description,'.ks-online-badge':badge,'[data-adicionar-procedimento]':add})[s]};
+ const handlers={},nav={...attrs(),addEventListener:(name,fn)=>{handlers[name]=fn;}};
+ const shell={querySelector:()=>nav,querySelectorAll:()=>buttons,addEventListener:()=>{}};
+ const media={matches:false,addEventListener:(name,fn)=>{media.change=fn;}};
+ stageContext.window.matchMedia=()=>media;
+ stageContext.document={getElementById:id=>sections.get(id),querySelector:s=>s.endsWith('.ks-online-topline')?header:s.endsWith('.ks-online-surface')?surface:savebar,querySelectorAll:()=>buttons,activeElement:buttons[0]};
+ vm.runInContext("let currentStage='geral';const STORAGE_KEY='kinesys_online_config_stage';"+layout.slice(layout.indexOf('function navMarkup()'),layout.indexOf('const AREAS'))+layout.slice(layout.indexOf('function mostrarStage('),layout.indexOf('function montar()')),stageContext);
+ const markup=vm.runInContext('navMarkup()',stageContext);
+ assert.equal((markup.match(/role="tablist"/g)||[]).length,1);
+ assert.equal((markup.match(/role="tab"/g)||[]).length,6);
+ assert(!markup.includes('data-config-destino'),'no duplicate shortcut outside the canonical six stages');
+ stageContext.shell=shell;vm.runInContext('ligarEventos(shell)',stageContext);
+ assert.equal(nav.attributes['aria-orientation'],'vertical');
+ media.matches=true;media.change();assert.equal(nav.attributes['aria-orientation'],'horizontal');
+ const check=id=>{
+  assert.equal(buttons.filter(b=>b.attributes['aria-selected']==='true').length,1);
+  assert.equal(buttons.find(b=>b.tabIndex===0).dataset.onlineStage,id);
+  for(const stage of stageContext.stages)for(const section of stage.sections)assert.equal(sections.get(section).hidden,stage.id!==id);
+  assert.equal(savebar.hidden,id==='cores');assert.equal(add.hidden,id!=='cores');
+  assert.strictEqual(sections.get('ks_config_panel_aparencia'),colors);
+  assert.equal(colors.unsavedColor,'#123456','navigation must not recreate or reset color controls');
+ };
+ for(let repeat=0;repeat<2;repeat++)for(const button of buttons){handlers.click({target:button});check(button.dataset.onlineStage);}
+ handlers.click({target:buttons[0]});
+ for(const [key,id] of [['End','cores'],['Home','geral'],['ArrowUp','cores'],['ArrowDown','geral'],['ArrowRight','profissional'],['ArrowLeft','geral']]){
+  let prevented=false;handlers.keydown({key,preventDefault(){prevented=true;}});assert(prevented);check(id);
+  assert.equal(stageContext.document.activeElement.dataset.onlineStage,id,'keyboard focus must stay on the selected tab');
+ }
+ assert.equal(heading.textContent,'Agenda Online');
+ const panels=new Map(),tabs=new Map();
+ const areas=['clinica','online','equipe','mensagens','documentos','integracoes','dados'].map(id=>[id,id]);
+ for(const [id] of areas){panels.set('ks_config_panel_'+id,{hidden:true});tabs.set('ks_config_tab_'+id,attrs());}
+ const coreContext={CONFIG_AREAS:areas,montarHub:()=>true,carregar:()=>{},sessionStorage:stageContext.sessionStorage,document:{getElementById:id=>panels.get(id)||tabs.get(id)},window:{KineSysConfiguracoesAgendaOnlineLayout:{showPage:aba=>{if(aba==='online')vm.runInContext('mostrarStage(sessionStorage.getItem(STORAGE_KEY))',stageContext);}}}};
+ vm.createContext(coreContext);vm.runInContext(js.slice(js.indexOf('function abrirAba('),js.indexOf('async function onOpen()')),coreContext);
+ vm.runInContext("abrirAba('aparencia')",coreContext);check('cores');
+ assert.equal(tabs.get('ks_config_tab_online').attributes['aria-selected'],'true');assert.equal(panels.get('ks_config_panel_online').hidden,false);
+ vm.runInContext("abrirAba('clinica');abrirAba('online')",coreContext);check('cores');
+ assert.equal(stageContext.sessionStorage.getItem('kinesys_config_tab'),'online','legacy entry normalizes the primary tab');
+ console.log('PASS navegação única: seis etapas, Cores, rascunhos, retorno, teclado e atalho legado.');
+ const entries=[],bootContext={sessionStorage:stageContext.sessionStorage,telaConfiguracoesAtiva:()=>true,ehMaster:()=>true,window:{}};
+ vm.createContext(bootContext);vm.runInContext(adminBootstrap.slice(adminBootstrap.indexOf("let agendaStagePendente="),adminBootstrap.indexOf('function carregarLayoutAgendaOnline()')),bootContext);
+ bootContext.sessionStorage.setItem('kinesys_config_tab','aparencia');
+ vm.runInContext('prepararEntradaAgendaConfiguracoes(true);ativarConfiguracoesAgenda()',bootContext);
+ bootContext.window.KineSysConfiguracoesAgendaOnline={onOpen(){},abrirAba(aba){entries.push(aba);}};
+ bootContext.window.KineSysConfiguracoesAgendaOnlineLayout={onOpen(){},showStage(stage){entries.push(stage);}};
+ vm.runInContext('ativarConfiguracoesAgenda()',bootContext);assert.deepEqual(entries.slice(-2),['online','cores'],'cold lazy load must preserve the Agenda → Cores intent');
+ entries.length=0;bootContext.sessionStorage.setItem('kinesys_config_tab','online');vm.runInContext('prepararEntradaAgendaConfiguracoes(true);ativarConfiguracoesAgenda()',bootContext);
+ assert.deepEqual(entries,['clinica'],'normal settings entry still starts with Clínica');
+ console.log('PASS entrada a frio: atalho Cores preservado sem mudar a entrada normal em Clínica.');
+}

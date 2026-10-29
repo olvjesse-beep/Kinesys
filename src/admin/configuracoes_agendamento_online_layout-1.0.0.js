@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261029-config-aprovadas-r1';
+    const ASSET_REVISION = '20261029-config-nav-r2';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_layout-1.0.0.css';
     const GLASS_STYLE_PATH = 'styles/navigation_glass-1.0.0.css';
     const STORAGE_KEY = 'kinesys_online_config_stage';
@@ -14,7 +14,7 @@
         { id: 'servicos', label: 'Serviços', sections: ['agenda_procedimentos', 'ks_online_sec_procedimentos'] },
         { id: 'horarios', label: 'Horários', sections: ['agenda_horarios', 'ks_online_sec_horarios'] },
         { id: 'ausencias', label: 'Ausências', sections: ['agenda_bloqueios'] },
-        { id: 'cores', label: 'Cores', sections: [] }
+        { id: 'cores', label: 'Cores', sections: ['ks_config_panel_aparencia'] }
     ]);
 
     const ONLINE_REQUIRED = Object.freeze([
@@ -91,8 +91,8 @@
 
     function navMarkup() {
         return `<div class="ks-online-layout-nav" role="tablist" aria-label="Áreas de configuração da Agenda">
-            ${STAGES.map((stage, index) => `<button type="button" role="tab" data-online-stage="${stage.id}" aria-selected="${index === 0 ? 'true' : 'false'}">${stage.label}</button>`).join('')}
-        </div><button type="button" class="btn-secondary ks-config-colors-link" data-config-destino="aparencia">Aparência da agenda · Cores dos atendimentos</button>`;
+            ${STAGES.map((stage, index) => `<button type="button" id="ks_online_stage_tab_${stage.id}" role="tab" data-online-stage="${stage.id}" aria-controls="${stage.sections.join(' ')}" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${stage.label}</button>`).join('')}
+        </div>`;
     }
 
     const AREAS = Object.freeze({
@@ -224,10 +224,16 @@
             comunicacao.insertAdjacentHTML('beforeend','<section id="ks_config_notifications" role="tabpanel" aria-labelledby="ks_config_com_tab_notificacoes" hidden><div class="ks-config-notification-grid"><div><h3>Prazo dos avisos informativos</h3><p>Defina por quanto tempo permanecem em destaque.</p><label for="ks_config_notice_hours">Expirar após</label><select id="ks_config_notice_hours">'+[6,12,24,48,72,168].map(h=>'<option value="'+h+'">'+(h===168?'7 dias':h+' horas')+'</option>').join('')+'</select><hr><h3>Regras de exibição e organização</h3><label class="ks-config-notice-rule"><span><strong>Arquivar avisos informativos automaticamente</strong><small>Após o prazo definido, os avisos saem do painel principal.</small></span><span class="ks-switch-control"><input type="checkbox" id="ks_config_notice_auto"><span aria-hidden="true"></span></span></label><label class="ks-config-notice-rule"><span><strong>Manter pendências até serem resolvidas</strong><small>Avisos que exigem ação permanecem disponíveis.</small></span><span class="ks-switch-control"><input type="checkbox" checked disabled aria-label="Pendências sempre preservadas"><span aria-hidden="true"></span></span></label></div><aside class="ks-config-notice-preview"><h3>Histórico de avisos</h3><p>Arquivar não marca uma pendência como resolvida e não apaga seu histórico.</p><p>A regra se aplica aos avisos de horário extraordinário e a informativos. Novos agendamentos online continuam disponíveis para conferência.</p><button type="button" class="btn-secondary" data-config-notice-history>Ver histórico de avisos</button></aside></div><footer class="ks-config-page-footer"><output id="ks_config_notice_feedback" role="status" aria-live="polite"></output><button type="button" class="btn-primary" id="ks_config_notice_save" data-config-notice-save disabled>Salvar regras de notificações</button></footer></section>');
         }
         const aparencia = document.getElementById('ks_config_panel_aparencia');
-        aparencia?.querySelector('[data-config-voltar-agenda]')?.remove();
-        aparencia?.classList.add('ks-config-dedicated-page');
-        aparencia?.prepend(contextoArea('agenda',[['procedimentos','Procedimentos e cores'],['horarios','Horários e intervalos'],['ausencias','Ausências'],['geral','Agendamento online']]));
-        aparencia?.querySelector('.ks-agenda-colors-shell')?.classList.add('ks-config-page-content');
+        const surface = document.querySelector('#ks_config_panel_online .ks-online-surface');
+        if (aparencia && surface) {
+            aparencia.classList.add('ks-config-colors-stage');
+            aparencia.setAttribute('aria-labelledby','ks_online_stage_tab_cores');
+            const header=aparencia.querySelector('.ks-online-topline');
+            const add=header?.querySelector('[data-adicionar-procedimento]');
+            if(add){add.hidden=true;document.querySelector('#ks_config_panel_online .ks-online-topline')?.appendChild(add);}
+            header?.remove();
+            surface.appendChild(aparencia);
+        }
         root.querySelector('.ks-config-tabs')?.insertAdjacentHTML('afterend','<p class="ks-config-page-breadcrumb" id="ks_config_page_breadcrumb">Configurações / Clínica</p>');
         const falta = document.getElementById('ks_agenda_cor_falta')?.closest('.ks-agenda-color-field');
         if (falta) {
@@ -293,7 +299,7 @@
             if (alvo.hasAttribute('data-config-open-messages')) window.KineSysConfiguracoesAgendaOnline?.abrirAba('mensagens');
             if (alvo.dataset.configContext) {
                 const [area,key] = alvo.dataset.configContext.split(':');
-                if (area === 'agenda') { window.KineSysConfiguracoesAgendaOnline?.abrirAba(key === 'procedimentos' ? 'aparencia' : 'online'); if (key !== 'procedimentos') mostrarStage(key); }
+                if (area === 'agenda') { window.KineSysConfiguracoesAgendaOnline?.abrirAba('online'); mostrarStage(key === 'procedimentos' ? 'cores' : key); }
                 else if (area === 'clinica') { showClinicSection(key); }
                 else if (area === 'equipe') {
                     if(form)form.hidden=true;
@@ -399,6 +405,7 @@
         const revisao=++revisaoPagina,usuarioAtual=(typeof usuarioLogado!=='undefined'&&usuarioLogado)||window.usuarioLogado;const clinicaAtual=String(usuarioAtual?.clinica_id||'');
         prepararPaginas();
         decorarContextos();
+        if(aba === 'online') mostrarStage(carregarStageSalvo());
         const label = document.getElementById(`ks_config_tab_${aba === 'aparencia' ? 'online' : aba}`)?.textContent?.trim() || 'Configurações';
         const bread = document.getElementById('ks_config_page_breadcrumb'); if (bread) bread.textContent = `Configurações / ${label}`;
         if (aba === 'equipe' && typeof window.carregarListaEquipe === 'function') {await window.carregarListaEquipe();if(revisao===revisaoPagina)decorarEquipeConfiguracao();}
@@ -533,11 +540,27 @@
     }
 
     function mostrarStage(stageId, { focus = false } = {}) {
-        if(stageId==='cores'){window.KineSysConfiguracoesAgendaOnline?.abrirAba('aparencia');return;}
         const stage = STAGES.find(item => item.id === stageId) || STAGES[0];
         currentStage = stage.id;
-        const titulo=document.querySelector('#ks_config_panel_online .ks-online-topline h2');if(titulo)titulo.textContent=stage.id==='geral'?'Agenda Online':'Agenda e serviços';
-        const surface=document.querySelector('#ks_config_panel_online .ks-online-surface');if(surface)surface.dataset.configStage=stage.id;
+        const textos = {
+            geral: ['Agenda Online', 'O paciente escolhe o profissional e vê a disponibilidade real da agenda dele.'],
+            profissional: ['Profissionais', 'Defina quem aparece no portal e revise o perfil público de cada profissional.'],
+            servicos: ['Serviços e valores', 'Cadastre procedimentos, edite valores e escolha quais serviços aparecem no portal.'],
+            horarios: ['Horários de atendimento', 'Defina a jornada da clínica e de cada profissional, preservando o vínculo com a Agenda Online.'],
+            ausencias: ['Ausências e bloqueios', 'Organize folgas, feriados e períodos de indisponibilidade da clínica ou do profissional.'],
+            cores: ['Cores dos atendimentos', 'Defina as cores dos procedimentos e da falta sem alterar valores ou status dos atendimentos.']
+        };
+        const header = document.querySelector('#ks_config_panel_online .ks-online-topline');
+        if (header) {
+            header.querySelector('h2').textContent = textos[stage.id][0];
+            header.querySelector('p').textContent = textos[stage.id][1];
+            const badge = header.querySelector('.ks-online-badge');
+            if (badge) badge.hidden = stage.id !== 'geral';
+            const add = header.querySelector('[data-adicionar-procedimento]');
+            if (add) add.hidden = stage.id !== 'cores';
+        }
+        const surface = document.querySelector('#ks_config_panel_online .ks-online-surface');
+        if (surface) surface.dataset.configStage = stage.id;
 
         STAGES.forEach(item => {
             item.sections.forEach(sectionId => {
@@ -550,8 +573,9 @@
             const active = button.dataset.onlineStage === stage.id;
             button.setAttribute('aria-selected', String(active));
             button.tabIndex = active ? 0 : -1;
-            if (active && focus) button.focus({ preventScroll: true });
+            if (active && focus) {button.focus({ preventScroll: true });button.scrollIntoView?.({block:'nearest',inline:'nearest'});}
         });
+        const savebar=document.querySelector('#ks_config_panel_online .ks-online-savebar');if(savebar)savebar.hidden=stage.id==='cores';
 
         atualizarContextos();
         atualizarStageNativo(stage.id);
@@ -559,21 +583,25 @@
     }
 
     function ligarEventos(shell) {
+        const nav=shell.querySelector('.ks-online-layout-nav');
+        const mobile=window.matchMedia?.('(max-width: 700px)');
+        const orientar=()=>nav?.setAttribute('aria-orientation',mobile?.matches?'horizontal':'vertical');
+        orientar();mobile?.addEventListener?.('change',orientar);
         shell.querySelector('.ks-online-layout-nav')?.addEventListener('click', event => {
             const button = event.target.closest('[data-online-stage]');
             if (!button) return;
-            mostrarStage(button.dataset.onlineStage);
+            mostrarStage(button.dataset.onlineStage, {focus:true});
         });
 
         shell.querySelector('.ks-online-layout-nav')?.addEventListener('keydown', event => {
-            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
             const buttons = [...shell.querySelectorAll('.ks-online-layout-nav [data-online-stage]')];
             const index = buttons.indexOf(document.activeElement);
             if (index < 0) return;
             event.preventDefault();
             let next = index;
-            if (event.key === 'ArrowLeft') next = (index - 1 + buttons.length) % buttons.length;
-            if (event.key === 'ArrowRight') next = (index + 1) % buttons.length;
+            if (['ArrowLeft','ArrowUp'].includes(event.key)) next = (index - 1 + buttons.length) % buttons.length;
+            if (['ArrowRight','ArrowDown'].includes(event.key)) next = (index + 1) % buttons.length;
             if (event.key === 'Home') next = 0;
             if (event.key === 'End') next = buttons.length - 1;
             mostrarStage(buttons[next].dataset.onlineStage, { focus: true });

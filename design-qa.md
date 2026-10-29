@@ -1,3 +1,46 @@
+# Correção da navegação de Agenda e serviços — 29/10/2026
+
+Escopo: corrigir a troca de menus ao abrir Cores, mantendo a composição aprovada e os controles canônicos. Esta revisão substitui a conclusão anterior para esta navegação.
+
+## Evidências e comparação
+
+- Fonte visual: `G:/KineSys-IA/Resultados/configuracoes-design-20261029/02-agenda-proposta.png`, 1487 × 1058 pixels. A fonte mostra Agenda Online e seu menu de seis seções; não representa os controles específicos de Cores.
+- Antes: `G:/KineSys-IA/Resultados/configuracoes-menu-20261029/03-cores-notebook-antes.jpg`, 1265 × 1211 pixels, viewport CSS 1280 × 720 com 15px ocupados pela barra de rolagem.
+- Depois: mesma pasta, `04-cores-notebook-depois.jpg` e `05-cores-atalho-depois.jpg`, 1265 × 1227 pixels, mesmo viewport e densidade efetiva 1:1. Perfil administrativo autenticado; controles reais, sem gravar preços, cores ou dados de pacientes.
+- Comparação conjunta obrigatória: `comparacao.html` e `06-comparacao-conjunta.jpg`. Antes/depois têm a mesma largura, apresentados lado a lado. A referência aprovada e a implantação também foram apresentadas juntas, normalizadas por largura; a avaliação da referência se restringe à arquitetura e composição da navegação, pois os estados são diferentes.
+- Detalhes legíveis inspecionados diretamente na aplicação a 1280 × 720: seleção Cores, seis abas, cabeçalho único, tabela, valores, adicionar/editar, rodapé de cores e teclado. A captura completa inclui o contexto superior; a observação direta ampliada cobriu tipografia e controles.
+- Responsividade: quadro real de aplicação 390 × 844 em `responsivo.html`. A biblioteca do navegador não conseguiu acionar alvos dentro do iframe; não se afirma teste funcional móvel completo. As interações foram exercidas na aplicação direta e nas funções reais de navegação; orientação horizontal/vertical foi verificada com mudança de media query em teste. O override de viewport do navegador não alterou a medida real de 1280 × 720 e foi removido.
+
+## Achados corrigidos
+
+1. [P1] Abrir Cores substituía as seis seções por outro menu de quatro itens. Removida a navegação concorrente: o painel original de Cores agora ocupa o mesmo workspace. Evidência pós-correção: capturas 04 e 05.
+2. [P2] Cores perdia a indicação de seleção e não tinha foco consistente. As seis abas têm IDs, `aria-controls`, seleção exclusiva e tabindex móvel. Setas, Home e End atualizam conteúdo e foco. Captura 04 e teste funcional confirmam Cores selecionada.
+3. [P2] O atalho Agenda → Cores podia ser sobrescrito pela inicialização em Clínica. A intenção é preservada durante o carregamento e consumida após a montagem; entrada normal permanece em Clínica. Teste a frio realizado no navegador e no código real.
+4. [Funcional] Reabrir Cores remontava os campos a partir do estado salvo e podia perder alterações locais. Navegação agora reutiliza o mesmo nó e evita o preenchimento redundante. Teste funcional mantém rascunhos durante dois ciclos completos das seis seções.
+
+## Cinco superfícies de fidelidade
+
+- Tipografia: família e tokens do KineSys preservados, título contextual com tamanho do design system, labels legíveis, sem quebra por letras. A rasterização da referência gerada não é tratada como equivalência de pixels.
+- Espaçamento/layout: menu lateral persistente, mesma superfície, apenas um cabeçalho, ação Adicionar procedimento alinhada ao cabeçalho. Cores usa sua tabela e seu rodapé originais. Não há overflow horizontal global a 1280px.
+- Cores/tokens: estados selecionados usam `--kds-accent-soft`, `--kds-accent` e `--kds-accent-hover`; nenhuma paleta improvisada. As cores reais configuradas não foram alteradas.
+- Imagens/ícones: mantidos ícones existentes das abas principais e marca. A navegação secundária preserva seus rótulos textuais existentes; não foram acrescentados emojis, imagens ou ícones substitutos.
+- Conteúdo: títulos específicos para cada seção; apenas Cores oferece Salvar cores. O rodapé geral da Agenda Online não aparece em Cores. Os mesmos handlers de cadastro, edição e persistência continuam ativos.
+
+## Verificação e limites
+
+- Um único menu secundário com seis itens e uma única seleção no DOM.
+- Navegação ida/volta pelas seis seções, busca, atalho a frio, abertura e cancelamento do formulário original de procedimento.
+- Nenhum erro/warning de console capturado na prévia durante a verificação.
+- 109 comandos locais da barreira passaram; banco isolado passou; teste ampliado de navegação passou novamente após formatação da fonte. Registros em `tests-local.json` e `test-db.txt` na pasta privada de evidências.
+- Não foram feitas gravações de cores/preços reais para testar. Persistência, erro de servidor, duplo clique, clínica e autorização são exercitados por testes sintéticos existentes.
+- Nenhum achado visual P0/P1/P2 permanece nos estados conferidos. Limite residual: automação de interações no iframe de 390px indisponível no navegador.
+
+final result: passed
+
+---
+
+## Histórico da implantação anterior
+
 # Configurações KineSys — revisão de implantação
 
 Data: 29/10/2026. Escopo: as sete propostas aprovadas, usando os formulários existentes e os tokens do KineSys.
