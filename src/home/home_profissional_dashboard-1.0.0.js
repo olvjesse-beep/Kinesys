@@ -318,7 +318,7 @@
         try{if(typeof carregarNotificacoesAgenda==='function')await carregarNotificacoesAgenda({avisar:false});}catch(_){}
         if(token!==refreshToken)return;
         let internas=[];
-        try{internas=Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache:[];}catch(_){}
+        try{internas=typeof window.obterNotificacoesAtuaisAgenda==='function'?window.obterNotificacoesAtuaisAgenda():Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache:[];}catch(_){}
         const itens=[...aniversarios,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))];
         if(count){const naoLidas=itens.filter(i=>i.tipo==='aniversario'||!i.lida).length;count.textContent=String(naoLidas);count.hidden=!naoLidas;}
         if(!itens.length){lista.innerHTML='<div class="ks-prof-empty-state compact"><strong>Nenhuma notificação agora</strong><span>Aniversários e avisos da agenda aparecerão aqui.</span></div>';sincronizarExpansaoNotificacoes();return;}

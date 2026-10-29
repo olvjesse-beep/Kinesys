@@ -231,4 +231,29 @@ try {
  await db.exec(`set test.clinica='${otherCid}'`);assert.equal((await db.query('select kinesys_listar_diagnosticos_acesso() r')).rows[0].r.length,0,'administrador de outra clínica não recebe registros de A');
  await db.exec("update kinesys_diagnosticos_acesso set recebido_em=now()-interval '15 days'");await sendDiag([]);assert.equal((await db.query('select count(*) n from kinesys_diagnosticos_acesso')).rows[0].n,0,'retenção de 14 dias');
  console.log('PASS diagnóstico SQL: admissão sem leitura anônima, idempotência, whitelist, retenção e isolamento MASTER/clínica.');
+ { // Regras de avisos: expiração não apaga o histórico nem resolve pendências.
+ await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/configuracoes_notificacoes.sql',root),'utf8'));
+ const noticeCid='e1111111-1111-4111-8111-111111111111';await db.query('insert into clinicas(id) values($1)',[noticeCid]);
+ await db.exec(`reset role;set test.clinica='${noticeCid}';set test.profissional='public-prof';set test.papel='MASTER';`);
+ const notice=async(kind,hours,who='public-prof',clinic=noticeCid)=>db.query("insert into notificacoes_internas(clinica_id,destinatario_profissional_id,tipo,criada_em,titulo) values($1,$2,$3,now()-make_interval(hours=>$4),'Aviso sintético') returning id",[clinic,who,kind,hours]);
+ const oldInfo=(await notice('horario_extraordinario',25)).rows[0].id;
+ await notice('horario_extraordinario',23);await notice('horario_extraordinario',24);await notice('agendamento_online',200);await notice('tipo_futuro_pendente',200);await notice('horario_extraordinario',1,'other-prof');await notice('horario_extraordinario',1,'public-prof',otherCid);
+ const feed=async(history=false)=>(await db.query('select id,tipo,lida from kinesys_listar_avisos($1)',[history])).rows;
+ assert.equal((await feed()).length,5,'arquivamento desativado preserva comportamento anterior');
+ await db.exec('set role authenticated');
+ assert.equal((await db.query('select kinesys_configuracao_avisos(24,true) r')).rows[0].r.automatico,true);
+ let active=await feed();assert.equal(active.length,3);assert(!active.some(n=>n.id===oldInfo));assert(active.some(n=>n.tipo==='agendamento_online'));assert(active.some(n=>n.tipo==='tipo_futuro_pendente'));
+ assert.equal((await feed(true)).length,5,'histórico inclui expirados sem destinatários alheios');assert((await feed(true)).every(n=>n.lida===false),'consultar histórico não marca como lido');
+ await assert.rejects(db.query('select kinesys_configuracao_avisos(1,true)'),/inválida/);
+ await db.exec("set test.papel='FISIOTERAPEUTA'");await assert.rejects(db.query('select kinesys_configuracao_avisos(48,true)'),/administradores/);assert.equal((await feed()).length,3);
+ await db.exec("set test.papel='SECRETARIA'");await assert.rejects(feed(),/restrito/);assert.equal((await db.query('select kinesys_configuracao_avisos() r')).rows[0].r.horas,24);
+ await db.exec('reset role;set role anon');await assert.rejects(feed(),/permission denied/);await assert.rejects(db.query('select kinesys_configuracao_avisos()'),/permission denied/);await db.exec("reset role;set test.papel='MASTER'");
+ await db.exec(`set test.clinica='${otherCid}'`);assert.equal((await feed(true)).length,1,'MASTER continua restrito à sua clínica e destinatário');
+ await db.exec(`set test.clinica='${noticeCid}'`);
+ await db.exec(`insert into notificacoes_internas(clinica_id,destinatario_profissional_id,tipo,criada_em) select '${noticeCid}','public-prof','horario_extraordinario',now()-interval '30 hours' from generate_series(1,105)`);
+ assert.equal((await feed()).length,3,'expiração antes do limite não enterra uma pendência antiga');
+ assert.equal((await feed(true)).length,100,'histórico limitado sem apagar registros');
+ assert.equal((await db.query('select lida from notificacoes_internas where id=$1',[oldInfo])).rows[0].lida,false);
+ console.log('PASS avisos SQL: limite 24h, histórico preservado, pendências antigas, tipos futuros, autorização de escrita e isolamento de clínica/destinatário.');
+ }
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

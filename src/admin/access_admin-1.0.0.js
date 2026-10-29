@@ -8,11 +8,11 @@
     const VERSION='1.0.0';
     const DIALOG_ID='ks_access_admin_dialog';
     const ONLINE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online-1.0.0.js';
-    const ONLINE_CONFIG_REVISION='20261028-espelhar-agenda-r1';
+    const ONLINE_CONFIG_REVISION='20261029-config-aprovadas-r1';
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
-    const ONLINE_PROFILE_CONFIG_REVISION='20261016-config-paginas-r1';
+    const ONLINE_PROFILE_CONFIG_REVISION='20261029-config-aprovadas-r1';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
-    const ONLINE_LAYOUT_REVISION='20261016-config-paginas-r1';
+    const ONLINE_LAYOUT_REVISION='20261029-config-aprovadas-r1';
     let alvoAtual=null;
     let busy=false;
 
@@ -181,10 +181,10 @@
         return !!document.getElementById('tela_configuracoes')?.classList.contains('ativa');
     }
 
-    function prepararEntradaAgendaConfiguracoes(){
+    function prepararEntradaAgendaConfiguracoes(forcar=false){
         try{
             const atual=sessionStorage.getItem('kinesys_config_tab');
-            if(!['clinica','online','aparencia','equipe','mensagens','documentos','integracoes','dados'].includes(atual))sessionStorage.setItem('kinesys_config_tab','mensagens');
+            if(forcar||!['clinica','online','aparencia','equipe','mensagens','documentos','integracoes','dados'].includes(atual))sessionStorage.setItem('kinesys_config_tab','clinica');
         }catch(_){}
     }
 
@@ -196,8 +196,8 @@
         // O perfil necessita do DOM do hub antes de montar; módulos podem ter
         // sido carregados enquanto a sessão ainda estava sendo restaurada.
         window.KineSysConfiguracoesAgendaOnlinePerfilPublico?.onOpen?.();
-        let aba='online';
-        try{aba=sessionStorage.getItem('kinesys_config_tab')||'online';}catch(_){}
+        let aba='clinica';
+        try{aba=sessionStorage.getItem('kinesys_config_tab')||'clinica';}catch(_){}
         configuracoes?.abrirAba?.(aba);
         window.KineSysConfiguracoesAgendaOnlineLayout?.onOpen?.();
         return !!configuracoes;
@@ -266,7 +266,7 @@
 
     function encaminharAberturaConfiguracoes(event){
         if(!event.target?.closest?.('#menu_configuracoes a'))return;
-        prepararEntradaAgendaConfiguracoes();
+        prepararEntradaAgendaConfiguracoes(true);
         carregarConfiguracoesAgendaOnline();
         setTimeout(()=>{
             ativarConfiguracoesAgenda();
@@ -281,7 +281,7 @@
         const observer=new MutationObserver(()=>{
             const estaAtiva=tela.classList.contains('ativa');
             if(estaAtiva&&!estavaAtiva){
-                prepararEntradaAgendaConfiguracoes();
+                prepararEntradaAgendaConfiguracoes(true);
                 carregarConfiguracoesAgendaOnline();
                 setTimeout(ativarConfiguracoesAgenda,0);
             }

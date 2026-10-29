@@ -1282,3 +1282,7 @@ body.ks-design-ready{font-size:var(--kds-font-content);line-height:1.55;backgrou
                 min-height:0!important;
             }
         }
+
+.ks-notificacoes-periodo{padding:10px 13px;margin:0;color:var(--kds-muted);font-size:var(--kds-font-metadata);line-height:1.5}.ks-notificacoes-history{display:block;margin:0 13px 10px;padding:6px 0;border:0;background:transparent;color:var(--kds-accent-hover);font:inherit;cursor:pointer;text-align:left}
+/* Os campos exclusivos de novo usuário permanecem ocultos durante edição. */
+#ks_team_drawer [hidden]{display:none!important}
