@@ -159,7 +159,7 @@ const KineSysLogin = (() => {
             if(!_supabase)throw new Error('Serviço de autenticação indisponível.');
             const {data}= _supabase.auth.onAuthStateChange(event=>{
                 if(event==='PASSWORD_RECOVERY'){sessaoRevisao++;recoveryView();return;}
-                if(event==='SIGNED_OUT'){sessaoRevisao++;entradaPendente=null;usuarioLogado=null;clearPending();diagnostics()?.clearIdentity();if(typeof window!=='undefined')window.KineSysAccessAdmin?.clearDiagnostics();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
+                if(event==='SIGNED_OUT'){sessaoRevisao++;entradaPendente=null;usuarioLogado=null;clearPending();diagnostics()?.clearIdentity?.();if(typeof window!=='undefined')window.KineSysAccessAdmin?.clearDiagnostics?.();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
                 if(event==='SIGNED_IN' && !busy && !recovery){setTimeout(()=>resume().catch(()=>{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}),0);}
             });authStateSubscription=data?.subscription;
             if(recovery){recoveryView();return;}
