@@ -177,7 +177,7 @@ try {
  const bookingDay=(await db.query("select d::date::text dia,extract(dow from d)::int dow from generate_series(current_date+2,current_date+30,'1 day') d where extract(dow from d) between 1 and 5 and kinesys_agendamento_online_feriado(d::date) is null limit 1")).rows[0];
  await db.query("insert into horarios_atendimento values($1,null,$2,'08:00','12:00'),($1,null,$2,'14:00','19:00'),($1,'public-prof',$2,'14:00','17:00')",[portalCid,bookingDay.dow]);
  await db.query("insert into disponibilidade_agendamento_online values($1,'public-prof',$2,'08:00','12:00',true)",[portalCid,bookingDay.dow]);
- let request=0;const publicBook=async(time,{id=null,day=bookingDay.dia,birth='1990-01-01',name='Paciente sintético',phone='11999990000'}={})=>(await db.query("select kinesys_criar_agendamento_online('clinica-sintetica',$1,'public-prof',$2,$3,$4,$6,'',$5::date,$7,false,null,null,null) r",[id||`c3333333-3333-4333-8333-${String(++request).padStart(12,'0')}`,portalProc,day,time,birth,name,phone])).rows[0].r;
+ let request=0;const publicBook=async(time,{id=null,day=bookingDay.dia,birth='1990-01-01',name='Paciente sintético',phone='11999990000',professional='public-prof',procedure=portalProc}={})=>(await db.query("select kinesys_criar_agendamento_online('clinica-sintetica',$1,$8,$2,$3,$4,$6,'',$5::date,$7,false,null,null,null) r",[id||`c3333333-3333-4333-8333-${String(++request).padStart(12,'0')}`,procedure,day,time,birth,name,phone,professional])).rows[0].r;
  await assert.rejects(publicBook('15:00'),/não publicado/,'legacy mode still respects manual publication');
  assert.equal((await db.query('select count(*) n from pacientes where clinica_id=$1',[portalCid])).rows[0].n,0);
  await db.query('update configuracoes_agendamento_online set seguir_agenda_interna=true where clinica_id=$1',[portalCid]);
@@ -197,5 +197,22 @@ try {
  await db.query('update pacientes set telefones_adicionais=$2::jsonb,observacoes_cadastro=$3 where id=$1',[online.paciente_id,JSON.stringify(['11999990001','1133334444']),'Observação administrativa sintética']);
  const contacts=(await db.query('select telefones_adicionais,observacoes_cadastro from pacientes where id=$1',[online.paciente_id])).rows[0];assert.deepEqual(contacts.telefones_adicionais,['11999990001','1133334444']);assert.equal(contacts.observacoes_cadastro,'Observação administrativa sintética');
  assert.equal((await db.query('select count(*) n from agendamentos where clinica_id=$1',[portalCid])).rows[0].n,2,'Erros e retentativas não criam reservas/pacientes fantasmas');
+ // Dois profissionais reais no banco de teste: jornada, conflitos e bloqueios por ID.
+ await db.query("insert into equipe(id,nome,clinica_id,ativo,aparece_na_agenda,agendamento_online_ativo) values('public-prof-b','Enfermagem sintética',$1,true,true,true)",[portalCid]);
+ await db.query("insert into horarios_atendimento values($1,'public-prof-b',$2,'08:00','12:00'),($1,'public-prof-b',$2,'14:00','19:00'),($1,'public-prof',$2,'08:00','12:00')",[portalCid,bookingDay.dow]);
+ const forB={professional:'public-prof-b',name:'Paciente sintético de outro profissional'};
+ const simultaneous=await publicBook('15:00',forB);assert.equal(simultaneous.ok,true,'Ocupação de A não impede horário de B');
+ assert.equal((await db.query('select profissional_id from agendamentos where id=$1',[simultaneous.agendamento_id])).rows[0].profissional_id,'public-prof-b');
+ await assert.rejects(publicBook('15:00',forB),/disponível/,'B não pode reservar seu próprio horário já ocupado');
+ assert.equal((await publicBook('16:00',forB)).ok,true,'Bloqueio individual de A não impede B');
+ await db.query("insert into bloqueios_agenda(clinica_id,profissional_id,data,hora_inicio,hora_fim) values($1,null,$2,'10:00','11:00'),($1,'public-prof-b',$2,'11:00','12:00')",[portalCid,bookingDay.dia]);
+ await assert.rejects(publicBook('10:00'),/bloqueado/);await assert.rejects(publicBook('10:00',forB),/bloqueado/,'Bloqueio de clínica afeta todos');
+ await assert.rejects(publicBook('11:00',forB),/bloqueado/);assert.equal((await publicBook('11:00')).ok,true,'Ausência individual de B não afeta A');
+ const nurseOnly='d2222222-2222-4222-8222-222222222222';
+ await db.query("insert into procedimentos(id,nome,clinica_id,ativo,agendamento_online_ativo,duracao_minutos,valor,profissionais_ids) values($1,'Serviço de enfermagem sintético',$2,true,true,60,80,array['public-prof-b'])",[nurseOnly,portalCid]);
+ await assert.rejects(publicBook('08:00',{procedure:nurseOnly}),/procedimento|profissional/i,'Servidor valida vínculo do serviço com a pessoa escolhida');
+ assert.equal((await publicBook('08:00',{...forB,procedure:nurseOnly})).ok,true);
+ await db.query("update equipe set agendamento_online_ativo=false where id='public-prof-b'");await assert.rejects(publicBook('09:00',forB),/profissional/i,'Pessoa não publicada não aceita reserva por requisição direta');
+ console.log('PASS reserva multiprofissional: mesmo horário para pessoas diferentes, conflitos próprios, ausência individual, bloqueio geral, serviço vinculado e publicação por profissional.');
  console.log('PASS public reservation: mirror accepts Agenda afternoon; manual mode, professional/clinic hours, block, overlap, lead time and idempotent rollback remain protected.');
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

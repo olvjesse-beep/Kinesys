@@ -11,14 +11,14 @@ class Element {
   querySelector(name) { return this[name] ||= new Element(); }
   scrollIntoView() {} focus() {}
 }
-function setup() {
+function setup({catalogue=catalog,publicProfile=profile}={}) {
   const nodes = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(m => [m[1], new Element()]));
   const calls = [], errors = [], events = {}, timers=[];
   const stages = [...html.matchAll(/<section[^>]*id="([^"]+)"[^>]*data-step="([^"]+)"/g)].map(m => { nodes[m[1]].dataset.step = m[2]; return nodes[m[1]]; });
   const markers = Array.from({length:4}, (_, i) => {const e=new Element();e.dataset.progressSegment=String(i);return e;});
   let slotsResponse = () => ({ ok: true, json: async () => slots });
   let reservation = () => ({ ok: true, json: async () => ({ ok: true }) });
-  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse() : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? profile : catalog }; } };
+  const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse(body) : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? publicProfile : catalogue }; } };
   vm.runInNewContext(fs.readFileSync('agendamento/calendario-publico.js', 'utf8'), ctx);
   vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,refreshSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book};bind();'), ctx);
   return { api: ctx.window.test, calendar: ctx.window.KineSysPublicCalendar, nodes, calls, errors,events,timers,document:ctx.document, setSlots: fn => slotsResponse = fn, setReservation: fn => reservation = fn };
@@ -112,6 +112,18 @@ const flush = () => new Promise(r => setImmediate(r));
   optional.nodes.ks_public_nome.value='Paciente sem nascimento';optional.nodes.ks_public_telefone.value='';await optional.api.book({preventDefault(){}});assert(!optional.calls.some(c=>c.body?.acao==='reservar'));
   optional.nodes.ks_public_telefone.value='11999990000';await optional.api.book({preventDefault(){}});assert.equal(optional.calls.find(c=>c.body?.acao==='reservar').body.paciente.nascimento,null);
   const urls = [...html.matchAll(/(?:src|href)="\.\/([^"?]+)\?v=([^" ]+)"/g)];
+  const multiCatalog=JSON.parse(JSON.stringify(catalog)),multiProfile=JSON.parse(JSON.stringify(profile));
+  multiCatalog.profissionais.push({id:'nurse-demo',nome:'Lúcia (enfermagem, sintética)',tipo:'PROFISSIONAL'});multiProfile.profissionais=multiCatalog.profissionais;
+  multiCatalog.procedimentos=[{id:'shared-demo',nome:'Atendimento compartilhado',duracao_minutos:60,valor:120,profissionais_ids:[]},{id:'nurse-only-demo',nome:'Enfermagem sintética',duracao_minutos:60,valor:80,profissionais_ids:['nurse-demo']}];
+  const multi=setup({catalogue:multiCatalog,publicProfile:multiProfile});
+  const profSlots={dias:[{data:'2026-10-26',horarios:[{inicio:'08:00',fim:'09:00'}]}]},nurseSlots={dias:[{data:'2026-10-26',horarios:[{inicio:'15:00',fim:'16:00'}]}]};
+  multi.setSlots(body=>({ok:true,json:async()=>body.profissional_id==='prof-demo'?profSlots:nurseSlots}));await multi.api.load();multi.api.selectProfessional('prof-demo');assert(!multi.nodes.ks_public_procedimentos.innerHTML.includes('nurse-only-demo'));
+  multi.api.selectProcedure('shared-demo');await flush();multi.api.selectTime('08:00','09:00');assert(multi.api.s.horario);assert(multi.nodes.ks_public_procedimentos.innerHTML.includes('120,00'));
+  multi.api.selectProfessional('nurse-demo');assert.equal(multi.api.s.horario,null);assert.equal(multi.api.s.slots.length,0);assert(multi.nodes.ks_public_procedimentos.innerHTML.includes('nurse-only-demo'));
+  multi.api.selectProcedure('nurse-only-demo');await flush();assert(multi.nodes.ks_public_horarios.innerHTML.includes('15:00|16:00'));assert(!multi.nodes.ks_public_horarios.innerHTML.includes('08:00|09:00'));assert.equal(multi.calls.filter(c=>c.body?.acao==='slots').at(-1).body.profissional_id,'nurse-demo');
+  multi.api.selectProfessional('prof-demo');let releaseOld;multi.setSlots(()=>new Promise(resolve=>{releaseOld=resolve;}));multi.api.selectProcedure('shared-demo');multi.api.selectProfessional('nurse-demo');multi.setSlots(()=>({ok:true,json:async()=>nurseSlots}));multi.api.selectProcedure('nurse-only-demo');await flush();releaseOld({ok:true,json:async()=>profSlots});await flush();assert(multi.nodes.ks_public_horarios.innerHTML.includes('15:00|16:00'));assert(!multi.nodes.ks_public_horarios.innerHTML.includes('08:00|09:00'),'Resposta atrasada de outro profissional não substitui os horários atuais');
+  multiCatalog.procedimentos[0].valor=135.50;await multi.api.load();multi.api.selectProfessional('prof-demo');assert(multi.nodes.ks_public_procedimentos.innerHTML.includes('135,50'),'Catálogo recarregado usa preço editado, sem preço fixo no cliente');
+  console.log('PASS seleção multiprofissional: consulta por ID, serviços próprios, seleção limpa na troca, resposta antiga descartada e preço atualizado.');
   assert.equal(new Set(urls.map(x => x[2])).size, 1);
   assert(html.indexOf('calendario-publico.js') < html.indexOf('agendamento-publico-v2.js'));
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(x => x[1]); assert.equal(new Set(ids).size, ids.length);
