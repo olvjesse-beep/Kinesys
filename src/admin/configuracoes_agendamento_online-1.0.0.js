@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261029-config-aprovadas-r1';
+    const ASSET_REVISION = '20261029-config-nav-r2';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -306,7 +306,6 @@
         aparencia.setAttribute('aria-labelledby', 'ks_config_tab_online');
         aparencia.hidden = true;
         aparencia.innerHTML = markupAparenciaAgenda();
-        aparencia.insertAdjacentHTML('afterbegin', '<button type="button" class="btn-secondary" data-config-voltar-agenda>Voltar para Agenda e serviços</button>');
 
         const mensagens = document.createElement('div');
         mensagens.id = 'ks_config_panel_mensagens';
@@ -596,14 +595,12 @@
 
     function abrirAba(nome = 'clinica') {
         if (!montarHub()) return;
-        const aba = [...CONFIG_AREAS.map(([id]) => id), 'aparencia'].includes(nome) ? nome : 'clinica';
+        if(nome === 'aparencia') {nome='online';try{sessionStorage.setItem('kinesys_online_config_stage','cores');}catch(_){}}
+        const aba = CONFIG_AREAS.some(([id])=>id===nome) ? nome : 'clinica';
         const online = aba === 'online';
-        const aparencia = aba === 'aparencia';
         const mensagens = aba === 'mensagens';
-        const painelAparencia = document.getElementById('ks_config_panel_aparencia');
-        painelAparencia.hidden = !aparencia;
         CONFIG_AREAS.forEach(([id]) => {
-            const active = id === aba || (id === 'online' && aparencia);
+            const active = id === aba;
             const tab = document.getElementById(`ks_config_tab_${id}`);
             tab.setAttribute('aria-selected', String(active));
             tab.tabIndex = active ? 0 : -1;
@@ -613,7 +610,6 @@
         try { sessionStorage.setItem('kinesys_config_tab', aba); } catch (_) {}
 
         if (online) carregar(false);
-        else if (aparencia) { preencherCoresAgenda(); renderizarCoresProcedimentos(); carregar(false); }
         else if (mensagens && typeof window.abrirConfiguracoesMensagens === 'function') window.abrirConfiguracoesMensagens();
         else if (['clinica','documentos'].includes(aba)) carregar(false);
         window.KineSysConfiguracoesAgendaOnlineLayout?.showPage?.(aba);
