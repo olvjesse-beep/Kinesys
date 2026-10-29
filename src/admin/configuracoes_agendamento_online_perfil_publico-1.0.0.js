@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-paginas-r1';
+    const ASSET_REVISION = '20261029-config-aprovadas-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_perfil_publico-1.0.0.css';
 
     const state = {
@@ -60,6 +60,7 @@
 
     function setSaving(valor) {
         state.saving = !!valor;
+        document.querySelectorAll('[data-config-save-clinic],[data-config-save-portal]').forEach(button=>{button.disabled=state.saving||state.loading||!state.config;});
         const btn = $('ks_online_v2_salvar');
         if (btn) {
             btn.disabled = state.saving;
@@ -78,8 +79,9 @@
                 </div>
 
                 <div class="ks-online-v2-link-grid">
+                    <label class="ks-online-field ks-online-v2-span-4"><span>Nome da clínica</span><input id="ks_online_v2_nome_interno" type="text" readonly aria-readonly="true"><small class="ks-online-v2-help">Identificação interna. O nome de exibição pode ser editado ao lado.</small></label>
                     <label class="ks-online-field ks-online-v2-span-4">
-                        <span>Nome público da clínica</span>
+                        <span>Nome de exibição</span>
                         <input id="ks_online_v2_nome_publico" type="text" maxlength="120" autocomplete="organization" placeholder="Ex.: FisioFix Fisioterapia">
                         <small class="ks-online-v2-help">Este nome aparece para o paciente sem alterar o nome interno da clínica.</small>
                     </label>
@@ -103,6 +105,7 @@
                         <span>Telefone público</span>
                         <input id="ks_online_v2_telefone" type="text" maxlength="80" autocomplete="tel" placeholder="(38) 0000-0000">
                     </label>
+                    <label class="ks-online-field ks-online-v2-span-4"><span>E-mail comercial</span><input id="ks_online_v2_email" type="email" maxlength="254" autocomplete="email" placeholder="contato@clinica.com.br"><small class="ks-online-v2-help">Opcional. Use apenas o contato comercial da clínica.</small></label>
                     <label class="ks-online-field ks-online-v2-span-12">
                         <span>Mensagem após confirmar o agendamento</span>
                         <textarea id="ks_online_v2_mensagem_confirmacao" rows="5" maxlength="2000"></textarea>
@@ -253,13 +256,14 @@
         const client = sb();
         if (!client) return;
         state.loading = true;
+        document.querySelectorAll('[data-config-save-clinic],[data-config-save-portal]').forEach(button=>{button.disabled=true;});
         feedback('Carregando dados públicos…', '');
         try {
             state.clinicaId = await resolverClinicaId();
             const [clinicaRes, configRes, profRes, perfisRes, procRes] = await Promise.all([
                 client.from('clinicas').select('id,nome,slug').eq('id', state.clinicaId).maybeSingle(),
                 client.from('configuracoes_agendamento_online')
-                    .select('nome_publico,slug_publico,endereco_publico,telefone_publico,mensagem_confirmacao')
+                    .select('nome_publico,slug_publico,endereco_publico,telefone_publico,email_publico,mensagem_confirmacao')
                     .eq('clinica_id', state.clinicaId).maybeSingle(),
                 client.from('equipe')
                     .select('id,nome,tipo,ativo,aparece_na_agenda')
@@ -290,15 +294,18 @@
             feedback(`Não foi possível carregar os dados públicos: ${error?.message || error}`, 'erro');
         } finally {
             state.loading = false;
+            document.querySelectorAll('[data-config-save-clinic],[data-config-save-portal]').forEach(button=>{button.disabled=state.saving||!state.config;});
         }
     }
 
     function preencherIdentidade() {
         const sugerido = state.config?.slug_publico || slugificar(state.clinica?.nome || '') || state.clinica?.slug || '';
+        if ($('ks_online_v2_nome_interno')) $('ks_online_v2_nome_interno').value = state.clinica?.nome || '';
         if ($('ks_online_v2_nome_publico')) $('ks_online_v2_nome_publico').value = state.config?.nome_publico || '';
         if ($('ks_online_v2_slug')) $('ks_online_v2_slug').value = sugerido;
         if ($('ks_online_v2_endereco')) $('ks_online_v2_endereco').value = state.config?.endereco_publico || '';
         if ($('ks_online_v2_telefone')) $('ks_online_v2_telefone').value = state.config?.telefone_publico || '';
+        if ($('ks_online_v2_email')) $('ks_online_v2_email').value = state.config?.email_publico || '';
         if ($('ks_online_v2_mensagem_confirmacao')) $('ks_online_v2_mensagem_confirmacao').value = state.config?.mensagem_confirmacao || '';
         atualizarLink();
         window.KineSysConfiguracoesAgendaOnlineLayout?.refreshClinicPreview?.();
@@ -374,48 +381,49 @@
             .slice(0, 30);
     }
 
-    async function salvar({ somenteClinica = false } = {}) {
+    async function salvar({ somenteClinica = false, somentePortal = false } = {}) {
         if (state.saving || !state.clinicaId || !ehAdministrador()) return;
+        if(state.loading||!state.config){feedback('Aguarde o carregamento dos dados antes de salvar.','erro');return;}
         const client = sb();
         if (!client) return;
 
         const slug = slugificar($('ks_online_v2_slug')?.value || '');
-        if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug)) {
+        if (!somenteClinica && !/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug)) {
             feedback('Informe um nome válido para o link público.', 'erro');
             if (somenteClinica) window.KineSysConfiguracoesAgendaOnlineLayout?.showClinicSection?.('publico');
             $('ks_online_v2_slug')?.focus();
             return;
         }
         const fotoUrl = String($('ks_online_v2_foto_url')?.value || '').trim();
-        if (!somenteClinica && fotoUrl && !/^https:\/\//i.test(fotoUrl)) {
+        if (!somenteClinica && !somentePortal && fotoUrl && !/^https:\/\//i.test(fotoUrl)) {
             feedback('A foto pública deve usar um endereço https://.', 'erro');
             $('ks_online_v2_foto_url')?.focus();
             return;
         }
         const mensagem = String($('ks_online_v2_mensagem_confirmacao')?.value || '').trim();
-        if (!mensagem) {
+        if (!somenteClinica && !mensagem) {
             feedback('Informe a mensagem exibida após o agendamento.', 'erro');
             if (somenteClinica) window.KineSysConfiguracoesAgendaOnlineLayout?.showClinicSection?.('publico');
             $('ks_online_v2_mensagem_confirmacao')?.focus();
             return;
         }
 
+        const email = String($('ks_online_v2_email')?.value || '').trim();
+        if (!somentePortal && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { feedback('Confira o e-mail comercial.', 'erro'); $('ks_online_v2_email')?.focus(); return; }
+        const contexto = state.clinicaId;
+        const identidade = {nome_publico:String($('ks_online_v2_nome_publico')?.value || '').trim(),endereco_publico:String($('ks_online_v2_endereco')?.value || '').trim(),telefone_publico:String($('ks_online_v2_telefone')?.value || '').trim(),email_publico:email};
+        const portal = {slug_publico:slug,mensagem_confirmacao:mensagem};
+        const alteracoes = somenteClinica ? identidade : somentePortal ? portal : {...identidade,...portal};
         setSaving(true);
         feedback('Salvando dados públicos…', '');
         try {
             const { error: cfgError } = await client.from('configuracoes_agendamento_online')
-                .update({
-                    nome_publico: String($('ks_online_v2_nome_publico')?.value || '').trim(),
-                    slug_publico: slug,
-                    endereco_publico: String($('ks_online_v2_endereco')?.value || '').trim(),
-                    telefone_publico: String($('ks_online_v2_telefone')?.value || '').trim(),
-                    mensagem_confirmacao: mensagem,
-                    atualizado_em: new Date().toISOString()
-                })
-                .eq('clinica_id', state.clinicaId);
+                .update({...alteracoes,atualizado_em:new Date().toISOString()})
+                .eq('clinica_id', contexto).select('clinica_id').single();
             if (cfgError) throw cfgError;
+            if (contexto !== state.clinicaId) return;
 
-            if (!somenteClinica && state.profissionalId) {
+            if (!somenteClinica && !somentePortal && state.profissionalId) {
                 const perfil = {
                     clinica_id: state.clinicaId,
                     profissional_id: state.profissionalId,
@@ -434,15 +442,9 @@
                 state.perfis.set(String(state.profissionalId), { ...perfil });
             }
 
-            state.config = {
-                ...(state.config || {}),
-                nome_publico: String($('ks_online_v2_nome_publico')?.value || '').trim(),
-                slug_publico: slug,
-                endereco_publico: String($('ks_online_v2_endereco')?.value || '').trim(),
-                telefone_publico: String($('ks_online_v2_telefone')?.value || '').trim(),
-                mensagem_confirmacao: mensagem
-            };
+            state.config = {...(state.config || {}),...alteracoes};
             atualizarLink();
+            window.KineSysConfiguracoesAgendaOnlineLayout?.refreshClinicPreview?.();
             feedback('Dados públicos salvos.', 'sucesso');
             if (typeof window.mostrarToastKineSys === 'function') {
                 window.mostrarToastKineSys('Perfil público do agendamento salvo.', 'sucesso', 3500);
@@ -479,6 +481,13 @@
             return true;
         },
         refresh: carregar,
-        saveClinic: () => salvar({somenteClinica:true})
+        saveClinic: () => salvar({somenteClinica:true}),
+        savePortal: () => salvar({somentePortal:true}),
+        discardClinic() {
+            const fields={ks_online_v2_nome_publico:'nome_publico',ks_online_v2_endereco:'endereco_publico',ks_online_v2_telefone:'telefone_publico',ks_online_v2_email:'email_publico'};
+            Object.entries(fields).forEach(([id,key])=>{if($(id))$(id).value=state.config?.[key]||'';});
+            window.KineSysConfiguracoesAgendaOnlineLayout?.refreshClinicPreview?.();
+            const output=$('ks_clinica_feedback');if(output)output.textContent='Alterações não salvas descartadas.';
+        }
     });
 })();

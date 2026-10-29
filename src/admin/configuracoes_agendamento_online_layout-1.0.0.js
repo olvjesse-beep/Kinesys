@@ -3,17 +3,18 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-paginas-r1';
+    const ASSET_REVISION = '20261029-config-aprovadas-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online_layout-1.0.0.css';
     const GLASS_STYLE_PATH = 'styles/navigation_glass-1.0.0.css';
     const STORAGE_KEY = 'kinesys_online_config_stage';
 
     const STAGES = Object.freeze([
-        { id: 'geral', label: 'Agendamento online', sections: ['ks_online_sec_publicacao'] },
+        { id: 'geral', label: 'Agenda Online', sections: ['ks_online_sec_publicacao','ks_config_online_identidade','ks_config_portal_preview'] },
         { id: 'profissional', label: 'Profissionais', sections: ['ks_online_sec_profissionais', 'ks_online_sec_profissional_publico'] },
         { id: 'servicos', label: 'Serviços', sections: ['agenda_procedimentos', 'ks_online_sec_procedimentos'] },
         { id: 'horarios', label: 'Horários', sections: ['agenda_horarios', 'ks_online_sec_horarios'] },
-        { id: 'ausencias', label: 'Ausências', sections: ['agenda_bloqueios'] }
+        { id: 'ausencias', label: 'Ausências', sections: ['agenda_bloqueios'] },
+        { id: 'cores', label: 'Cores', sections: [] }
     ]);
 
     const ONLINE_REQUIRED = Object.freeze([
@@ -33,6 +34,7 @@
     let equipeOrigem = null;
     let equipeNos = [];
     let documentosPerfis = [];
+    let revisaoPagina=0;
 
     function ehAdministrador() {
         if (typeof usuarioEhMaster === 'function') return !!usuarioEhMaster();
@@ -55,11 +57,11 @@
         }
 
         const headerCopy = document.querySelector('#tela_configuracoes .ks-config-hub-header p');
-        if (headerCopy) headerCopy.textContent = 'Controle da clínica, comunicação e conexões.';
+        if (headerCopy) headerCopy.textContent = 'Organize a rotina da sua clínica.';
 
         const titulo = document.querySelector('#ks_config_panel_online .ks-online-topline h2');
         const descricao = document.querySelector('#ks_config_panel_online .ks-online-topline p');
-        if (titulo) titulo.textContent = 'Agenda';
+        if (titulo) titulo.textContent = 'Agenda e serviços';
         if (descricao) descricao.textContent = 'Configure serviços, profissionais, horários, ausências e o portal de agendamento em um único lugar.';
     }
 
@@ -94,7 +96,7 @@
     }
 
     const AREAS = Object.freeze({
-        clinica: {titulo:'Clínica', itens:[['identidade','Identidade da clínica'],['contato','Contato e endereço'],['publico','Presença pública']]},
+        clinica: {titulo:'Clínica', itens:[['identidade','Identidade'],['contato','Contato e endereço']]},
         equipe: {titulo:'Equipe', itens:[['profissionais','Profissionais'],['registros','Registros profissionais'],['acessos','Perfis de acesso']]},
         documentos: {titulo:'Documentos', itens:[['assinatura','Identificação e assinatura'],['clinica','Dados da clínica'],['relatorios','Documentos e relatórios']]},
         integracoes: {titulo:'Integrações', itens:[['geral','Visão geral'],['whatsapp','WhatsApp'],['google','Google Calendar']]},
@@ -119,6 +121,14 @@
         if (!root) return;
         const identidade = document.getElementById('ks_online_sec_identidade_publica');
         if (!identidade) return;
+        const portal=document.createElement('section');portal.id='ks_config_online_identidade';portal.className='ks-online-section ks-config-online-identity';
+        portal.innerHTML='<details><summary>Link e orientações avançadas da Agenda Online</summary><p>Edite o endereço do portal e a mensagem após a reserva.</p><div class="ks-online-v2-link-grid"></div><button type="button" class="btn-secondary" data-config-save-portal>Salvar link e orientações</button><output id="ks_config_portal_feedback" role="status"></output></details>';
+        ['ks_online_v2_slug','ks_online_v2_link','ks_online_v2_mensagem_confirmacao'].forEach(id=>{const input=document.getElementById(id);const field=id==='ks_online_v2_link'?input?.closest('.ks-online-v2-linkbox'):input?.closest('label');if(field)portal.querySelector('.ks-online-v2-link-grid').appendChild(field);});
+        const linkbox=portal.querySelector('.ks-online-v2-linkbox');if(linkbox){linkbox.classList.add('ks-online-field-wide');document.querySelector('#ks_online_sec_publicacao .ks-online-fields')?.prepend(linkbox);}
+        document.querySelector('#ks_config_panel_online .ks-online-surface')?.appendChild(portal);
+        const preview=document.createElement('aside');preview.id='ks_config_portal_preview';preview.className='ks-config-portal-preview';preview.setAttribute('aria-label','Pré-visualização do portal');
+        preview.innerHTML='<h3>Pré-visualização do portal</h3><p>Como será apresentado ao paciente.</p><div class="ks-config-portal-paper"><strong data-portal-clinic></strong><h3 data-portal-title></h3><p data-portal-description></p><label>Procedimento<select data-portal-procedure aria-label="Procedimento na prévia" disabled><option>Conforme serviços publicados</option></select></label><p>O paciente escolhe o profissional e vê a disponibilidade real da agenda dele.</p><p class="field-help">Prévia ilustrativa. Nenhum horário é reservado aqui.</p></div><p>Valores editáveis em Serviços.</p>';
+        document.querySelector('#ks_config_panel_online .ks-online-surface')?.appendChild(preview);
         Object.entries(AREAS).forEach(([id,area]) => {
             const panel = document.getElementById(`ks_config_panel_${id}`);
             if (!panel) return;
@@ -155,6 +165,7 @@
                     avancado.innerHTML='<summary>Informações dos dados e ferramentas de migração</summary>';
                     [...card.children].filter(el=>!el.classList.contains('card-header') && el!==backup && el!==restore).forEach(el=>avancado.appendChild(el));
                     card.appendChild(avancado);
+                    card.insertAdjacentHTML('beforeend','<div class="ks-config-data-access"><button type="button" class="btn-secondary" data-config-open-team-page>Revisar acessos da equipe</button><button type="button" class="btn-secondary" data-config-diagnostics>Consultar diagnósticos de acesso</button></div>');
                 }
             }
             else if (id === 'integracoes') {
@@ -170,17 +181,18 @@
             }
             else existentes.forEach(el => el.remove());
             if (id === 'clinica') {
-                body.innerHTML = '<header class="ks-config-page-heading"><h2>Identidade da clínica</h2><p>Organize os dados usados para apresentar a clínica aos pacientes.</p></header>';
+                body.innerHTML = '<header class="ks-config-page-heading"><h2>Dados da clínica</h2><p>Identidade, contato e endereço em um só lugar.</p></header>';
                 body.appendChild(identidade);
                 identidade.hidden = false;
                 body.insertAdjacentHTML('beforeend','<section class="ks-config-clinic-preview" id="ks_config_clinic_preview"><h3>Como será exibido para os pacientes</h3><strong id="ks_config_clinic_name"></strong><p id="ks_config_clinic_contact"></p></section>');
-                body.insertAdjacentHTML('beforeend','<div class="ks-config-page-footer"><output id="ks_clinica_feedback" role="status" aria-live="polite"></output><button class="btn-primary" type="button" data-config-save-clinic>Salvar dados da clínica</button></div>');
+                body.insertAdjacentHTML('beforeend','<div class="ks-config-page-footer"><output id="ks_clinica_feedback" role="status" aria-live="polite"></output><button class="btn-secondary" type="button" data-config-discard-clinic>Descartar alterações</button><button class="btn-primary" type="button" data-config-save-clinic>Salvar dados da clínica</button></div>');
             }
             if (id === 'equipe') {
                 body.innerHTML = '<header class="ks-config-page-heading ks-config-page-heading-actions"><div><h2>Profissionais da clínica</h2><p>Organize profissionais, registros e vínculos sem duplicar cadastros.</p></div><button class="btn-primary" type="button" data-config-add-team>Adicionar profissional</button></header><label class="ks-config-team-search">Buscar profissional<input type="search" id="ks_config_team_search" placeholder="Digite o nome do profissional"></label><div id="ks_config_team_form" hidden></div><div id="ks_config_team_list"></div><p class="field-help">As permissões são definidas por perfil. Revise os vínculos antes de salvar alterações.</p>';
+                body.querySelector('.ks-config-team-search').insertAdjacentHTML('afterend','<div class="ks-config-team-filters"><label>Perfil<select id="ks_config_team_role"><option value="">Todos os perfis</option></select></label><label>Situação<select id="ks_config_team_status"><option value="">Todas</option><option>Ativo</option><option>Inativo</option></select></label><button type="button" class="btn-secondary" data-config-diagnostics>Diagnósticos de acesso</button></div>');
             }
             if (id === 'documentos') {
-                body.innerHTML = '<header class="ks-config-page-heading"><h2>Identificação nos documentos</h2><p>Confira os dados da clínica e do profissional responsável.</p></header><div class="ks-config-document-grid"><div><label for="ks_config_doc_profissional">Profissional responsável</label><select id="ks_config_doc_profissional"><option value="">Carregando profissionais…</option></select><p id="ks_config_doc_registro" class="field-help"></p><button type="button" class="btn-secondary" data-config-open-team>Editar cadastro profissional</button><hr><h3>Clínica</h3><p id="ks_config_doc_clinica"></p><button type="button" class="btn-secondary" data-config-open-clinic>Editar dados da clínica</button></div><section class="ks-config-document-preview" aria-label="Prévia ilustrativa"><p>Prévia ilustrativa</p><p id="ks_config_doc_data"></p><div class="ks-config-signature"><p id="ks_config_doc_nome"></p><p id="ks_config_doc_registro_preview"></p></div></section></div><footer class="ks-config-page-footer"><p>O conteúdo clínico do relatório continua sendo definido na avaliação.</p><button type="button" class="btn-primary" data-config-open-reports>Abrir documentos e relatórios</button></footer>';
+                body.innerHTML = '<header class="ks-config-page-heading"><h2>Identificação nos documentos</h2><p>Confira os dados da clínica e do profissional responsável.</p></header><div class="ks-config-document-grid"><div><label for="ks_config_doc_profissional">Profissional responsável</label><select id="ks_config_doc_profissional"><option value="">Carregando profissionais…</option></select><p id="ks_config_doc_registro" class="field-help"></p><button type="button" class="btn-secondary" data-config-open-team>Editar cadastro profissional</button><hr><h3>Clínica</h3><p id="ks_config_doc_clinica"></p><button type="button" class="btn-secondary" data-config-open-clinic>Editar dados da clínica</button></div><section class="ks-config-document-preview" aria-label="Prévia ilustrativa"><p>Prévia ilustrativa</p><p id="ks_config_doc_data"></p><div class="ks-config-document-example"><h4>Relatório fisioterapêutico</h4><hr><p>Exemplo de identificação do documento.</p><p>O nome da clínica e o registro do profissional responsável acompanham os documentos emitidos.</p><p>O conteúdo clínico é preenchido na avaliação e nos registros do prontuário.</p></div><div class="ks-config-signature"><p id="ks_config_doc_nome"></p><p id="ks_config_doc_registro_preview"></p></div></section></div><footer class="ks-config-page-footer"><p>O conteúdo clínico é definido na avaliação.</p><button type="button" class="btn-primary" data-config-open-reports>Abrir documentos e relatórios</button></footer>';
             }
         });
         // Mensagens: mantém todos os controles e handlers; muda apenas a composição.
@@ -203,13 +215,20 @@
                 regras.before(details); details.appendChild(regras);
             }
             document.getElementById('ks_config_integracoes_resumo')?.remove();
+            const subtabs=document.createElement('div');subtabs.className='ks-config-communication-tabs';subtabs.setAttribute('role','tablist');subtabs.setAttribute('aria-label','Configurações de comunicação');
+            subtabs.innerHTML='<button type="button" role="tab" id="ks_config_com_tab_whatsapp" aria-controls="ks_config_communication_whatsapp" aria-selected="true" data-communication-mode="whatsapp">WhatsApp</button><button type="button" role="tab" id="ks_config_com_tab_notificacoes" aria-controls="ks_config_notifications" aria-selected="false" data-communication-mode="notificacoes">Notificações do sistema</button>';
+            const content=document.createElement('div');content.id='ks_config_communication_whatsapp';content.setAttribute('role','tabpanel');content.setAttribute('aria-labelledby','ks_config_com_tab_whatsapp');
+            const heading=comunicacao.querySelector('.ks-config-communication-heading');
+            [...comunicacao.children].filter(el=>el!==heading).forEach(el=>content.appendChild(el));
+            comunicacao.append(subtabs,content);
+            comunicacao.insertAdjacentHTML('beforeend','<section id="ks_config_notifications" role="tabpanel" aria-labelledby="ks_config_com_tab_notificacoes" hidden><div class="ks-config-notification-grid"><div><h3>Prazo dos avisos informativos</h3><p>Defina por quanto tempo permanecem em destaque.</p><label for="ks_config_notice_hours">Expirar após</label><select id="ks_config_notice_hours">'+[6,12,24,48,72,168].map(h=>'<option value="'+h+'">'+(h===168?'7 dias':h+' horas')+'</option>').join('')+'</select><hr><h3>Regras de exibição e organização</h3><label class="ks-config-notice-rule"><span><strong>Arquivar avisos informativos automaticamente</strong><small>Após o prazo definido, os avisos saem do painel principal.</small></span><span class="ks-switch-control"><input type="checkbox" id="ks_config_notice_auto"><span aria-hidden="true"></span></span></label><label class="ks-config-notice-rule"><span><strong>Manter pendências até serem resolvidas</strong><small>Avisos que exigem ação permanecem disponíveis.</small></span><span class="ks-switch-control"><input type="checkbox" checked disabled aria-label="Pendências sempre preservadas"><span aria-hidden="true"></span></span></label></div><aside class="ks-config-notice-preview"><h3>Histórico de avisos</h3><p>Arquivar não marca uma pendência como resolvida e não apaga seu histórico.</p><p>A regra se aplica aos avisos de horário extraordinário e a informativos. Novos agendamentos online continuam disponíveis para conferência.</p><button type="button" class="btn-secondary" data-config-notice-history>Ver histórico de avisos</button></aside></div><footer class="ks-config-page-footer"><output id="ks_config_notice_feedback" role="status" aria-live="polite"></output><button type="button" class="btn-primary" id="ks_config_notice_save" data-config-notice-save disabled>Salvar regras de notificações</button></footer></section>');
         }
         const aparencia = document.getElementById('ks_config_panel_aparencia');
         aparencia?.querySelector('[data-config-voltar-agenda]')?.remove();
         aparencia?.classList.add('ks-config-dedicated-page');
         aparencia?.prepend(contextoArea('agenda',[['procedimentos','Procedimentos e cores'],['horarios','Horários e intervalos'],['ausencias','Ausências'],['geral','Agendamento online']]));
         aparencia?.querySelector('.ks-agenda-colors-shell')?.classList.add('ks-config-page-content');
-        root.querySelector('.ks-config-tabs')?.insertAdjacentHTML('afterend','<p class="ks-config-page-breadcrumb" id="ks_config_page_breadcrumb">Configurações / Comunicação</p>');
+        root.querySelector('.ks-config-tabs')?.insertAdjacentHTML('afterend','<p class="ks-config-page-breadcrumb" id="ks_config_page_breadcrumb">Configurações / Clínica</p>');
         const falta = document.getElementById('ks_agenda_cor_falta')?.closest('.ks-agenda-color-field');
         if (falta) {
             const linha = document.createElement('section'); linha.className='ks-config-falta-row';
@@ -230,13 +249,13 @@
         };
         new MutationObserver(refletirEquipe).observe(root,{attributes:true,attributeFilter:['class']});
         refletirEquipe();
-        document.getElementById('ks_config_team_search')?.addEventListener('input',evento => {
-            const termo = evento.target.value.trim().toLocaleLowerCase('pt-BR');
-            document.querySelectorAll('#lista_equipe_corpo tr').forEach(row => { row.hidden = !row.textContent.toLocaleLowerCase('pt-BR').includes(termo); });
-        });
+        document.getElementById('ks_config_team_search')?.addEventListener('input',filtrarEquipeConfiguracao);
+        ['ks_config_team_role','ks_config_team_status'].forEach(id=>document.getElementById(id)?.addEventListener('change',filtrarEquipeConfiguracao));
+        if(listaEquipe)new MutationObserver(decorarEquipeConfiguracao).observe(listaEquipe,{childList:true,subtree:true});
         listaEquipe?.addEventListener('click',evento => { if (evento.target.closest('button')) { if (form) form.hidden = false; } });
         root.addEventListener('input',evento => {
             if (evento.target.closest('#ks_config_content_clinica')) atualizarPreviaClinica();
+            if(evento.target.closest('#ks_config_panel_online'))atualizarPreviaPortal();
             if (evento.target.matches('[data-cor-procedimento]')) {
                 const texto = evento.target.parentElement.querySelector('span'); if (texto) texto.textContent = evento.target.value.toUpperCase();
                 root.querySelector(`[data-preview-procedimento="${evento.target.dataset.corProcedimento}"]`)?.style.setProperty('--preview-color',evento.target.value);
@@ -251,14 +270,24 @@
                 const feedback = document.getElementById('ks_online_v2_feedback');
                 document.getElementById('ks_clinica_feedback').textContent = feedback?.textContent || '';
             }
-            if (alvo.hasAttribute('data-config-add-team')) { window.limparFormularioEquipe?.(); if (form) form.hidden = false; document.getElementById('eq_nome')?.focus(); }
+            if(alvo.hasAttribute('data-config-discard-clinic'))window.KineSysConfiguracoesAgendaOnlinePerfilPublico?.discardClinic?.();
+            if(alvo.hasAttribute('data-config-save-portal')){alvo.disabled=true;try{await window.KineSysConfiguracoesAgendaOnlinePerfilPublico?.savePortal?.();}finally{alvo.disabled=false;}const status=document.getElementById('ks_config_portal_feedback');if(status)status.textContent=document.getElementById('ks_online_v2_feedback')?.textContent||'';}
+            if (alvo.hasAttribute('data-config-add-team')) {const novo=document.getElementById('ks_new_team');if(novo)novo.click();else{window.limparFormularioEquipe?.();if(form)form.hidden=false;document.getElementById('eq_nome')?.focus();}}
+            if(alvo.hasAttribute('data-config-open-team-page'))window.KineSysConfiguracoesAgendaOnline?.abrirAba('equipe');
+            if(alvo.hasAttribute('data-config-diagnostics'))window.KineSysAccessAdmin?.diagnostics?.();
+            if(alvo.dataset.communicationMode)mostrarComunicacao(alvo.dataset.communicationMode);
+            if(alvo.hasAttribute('data-config-notice-save')){
+                alvo.disabled=true;const output=document.getElementById('ks_config_notice_feedback');output.textContent='Salvando…';
+                try{const r=await window.salvarRegrasAvisosAgenda(Number(document.getElementById('ks_config_notice_hours').value),document.getElementById('ks_config_notice_auto').checked);output.textContent=r?'Regras salvas para esta clínica.':'O contexto mudou. Reabra esta página.';}catch(error){output.textContent=error?.message||'Não foi possível salvar. Tente novamente.';}finally{alvo.disabled=false;}
+            }
+            if(alvo.hasAttribute('data-config-notice-history')){await window.alternarHistoricoAvisosAgenda?.({abrir:true});const painel=document.getElementById('ks_notificacoes_painel');if(painel)painel.hidden=false;}
             if (alvo.hasAttribute('data-adicionar-procedimento') || alvo.dataset.editarProcedimento) {
                 if (window.KineSysScreenLoader?.ensure) await window.KineSysScreenLoader.ensure('tela_agenda');
                 if (typeof window.carregarProfissionaisAgenda === 'function') await window.carregarProfissionaisAgenda();
                 if (typeof window.carregarProcedimentos === 'function') await window.carregarProcedimentos();
                 window.abrirModalProcedimento?.(alvo.dataset.editarProcedimento || '');
             }
-            if (alvo.hasAttribute('data-config-open-team')) window.KineSysConfiguracoesAgendaOnline?.abrirAba('equipe');
+            if (alvo.hasAttribute('data-config-open-team')) {const id=document.getElementById('ks_config_doc_profissional')?.value;if(!id)return;window.KineSysConfiguracoesAgendaOnline?.abrirAba('equipe');await window.abrirEdicaoFuncionario?.(id);}
             if (alvo.hasAttribute('data-config-open-clinic')) window.KineSysConfiguracoesAgendaOnline?.abrirAba('clinica');
             if (alvo.hasAttribute('data-config-open-reports')) window.navegarPara?.('tela_relatorio');
             if (alvo.hasAttribute('data-config-open-messages')) window.KineSysConfiguracoesAgendaOnline?.abrirAba('mensagens');
@@ -288,15 +317,22 @@
     function atualizarPreviaClinica() {
         const nome=document.getElementById('ks_config_clinic_name'),contato=document.getElementById('ks_config_clinic_contact');
         if (nome) nome.textContent=document.getElementById('ks_online_v2_nome_publico')?.value || 'Nome público não informado';
-        if (contato) contato.textContent=[document.getElementById('ks_online_v2_endereco')?.value,document.getElementById('ks_online_v2_telefone')?.value].filter(Boolean).join(' · ');
+        if (contato) contato.textContent=[document.getElementById('ks_online_v2_endereco')?.value,document.getElementById('ks_online_v2_telefone')?.value,document.getElementById('ks_online_v2_email')?.value].filter(Boolean).join(' · ');
+        atualizarPreviaPortal();
+    }
+
+    function atualizarPreviaPortal(){
+        const root=document.getElementById('ks_config_portal_preview');if(!root)return;
+        [['[data-portal-clinic]','ks_online_v2_nome_publico','Nome público da clínica'],['[data-portal-title]','ks_online_titulo','Agende seu atendimento'],['[data-portal-description]','ks_online_descricao','Escolha o procedimento e o profissional.']].forEach(([selector,id,fallback])=>{root.querySelector(selector).textContent=document.getElementById(id)?.value||fallback;});
     }
 
     function showClinicSection(key='identidade') {
-        const textos={identidade:['Identidade da clínica','Organize os dados usados para apresentar a clínica aos pacientes.'],contato:['Contato e endereço','Mantenha o endereço e o telefone público da clínica atualizados.'],publico:['Presença pública','Confira o link público e as orientações enviadas após o agendamento.']};
+        if(key==='publico'){window.KineSysConfiguracoesAgendaOnline?.abrirAba('online');mostrarStage('geral');document.getElementById('ks_online_v2_slug')?.focus();return;}
+        const textos={identidade:['Dados da clínica','Identidade, contato e endereço em um só lugar.'],contato:['Contato e endereço','Mantenha o endereço e o telefone público da clínica atualizados.']};
         const [titulo,descricao]=textos[key] || textos.identidade;
         const header=document.querySelector('#ks_config_content_clinica .ks-config-page-heading');
         if (header) { header.querySelector('h2').textContent=titulo; header.querySelector('p').textContent=descricao; }
-        const campos={identidade:['ks_online_v2_nome_publico','ks_online_v2_endereco','ks_online_v2_telefone'],contato:['ks_online_v2_endereco','ks_online_v2_telefone'],publico:['ks_online_v2_slug','ks_online_v2_link','ks_online_v2_mensagem_confirmacao']};
+        const campos={identidade:['ks_online_v2_nome_publico','ks_online_v2_nome_interno','ks_online_v2_endereco','ks_online_v2_telefone','ks_online_v2_email'],contato:['ks_online_v2_endereco','ks_online_v2_telefone','ks_online_v2_email']};
         const ids=campos[key] || campos.identidade;
         const grid=document.querySelector('#ks_config_content_clinica .ks-online-v2-link-grid');
         if (grid) [...grid.children].forEach(el=>{ el.hidden=![...el.querySelectorAll('input,textarea')].some(input=>ids.includes(input.id)); });
@@ -308,6 +344,7 @@
     function atualizarPreviaDocumentos() {
         const id = document.getElementById('ks_config_doc_profissional')?.value;
         const perfil = documentosPerfis.find(p => String(p.id) === id) || {};
+        const editar=document.querySelector('[data-config-open-team]');if(editar)editar.disabled=!perfil.id;
         const set = (id,texto) => { const el = document.getElementById(id); if (el) el.textContent = texto; };
         set('ks_config_doc_nome',perfil.nome || 'Profissional não selecionado');
         set('ks_config_doc_registro',perfil.registro || 'Registro profissional não informado. Confira o cadastro.');
@@ -333,23 +370,51 @@
         });
     }
 
+    function filtrarEquipeConfiguracao(){
+        const termo=String(document.getElementById('ks_config_team_search')?.value||'').trim().toLocaleLowerCase('pt-BR'),perfil=document.getElementById('ks_config_team_role')?.value||'',status=document.getElementById('ks_config_team_status')?.value||'';
+        document.querySelectorAll('#lista_equipe_corpo tr').forEach(row=>{row.hidden=!row.textContent.toLocaleLowerCase('pt-BR').includes(termo)||(!!perfil&&row.cells?.[2]?.textContent.trim()!==perfil)||(!!status&&row.cells?.[4]?.textContent.trim()!==status);});
+    }
+    function decorarEquipeConfiguracao(){
+        const tbody=document.getElementById('lista_equipe_corpo');if(!tbody)return;
+        tbody.closest('table')?.classList.add('ks-config-team-table');
+        tbody.querySelectorAll('tr').forEach(row=>{if(row.dataset.configDecorada||row.cells.length<7)return;row.dataset.configDecorada='1';
+            const details=document.createElement('details');details.className='ks-config-team-details';const summary=document.createElement('summary');summary.textContent='Contato e agenda';const info=document.createElement('p');info.textContent=[row.cells[1].textContent.trim(),'Na agenda: '+row.cells[5].textContent.trim()].join(' · ');details.append(summary,info);row.cells[0].appendChild(details);
+            const actions=document.createElement('details');actions.className='ks-config-team-actions';const actionTitle=document.createElement('summary');actionTitle.textContent='Ações';const controls=document.createElement('div');while(row.cells[6].firstChild)controls.appendChild(row.cells[6].firstChild);actions.append(actionTitle,controls);row.cells[6].appendChild(actions);
+        });
+        const select=document.getElementById('ks_config_team_role');if(select){const valor=select.value;const perfis=[...new Set([...tbody.rows].filter(r=>r.cells.length>=7).map(r=>r.cells[2].textContent.trim()))].sort();if([...select.options].slice(1).map(o=>o.value).join('|')!==perfis.join('|')){select.replaceChildren(new Option('Todos os perfis',''),...perfis.map(p=>new Option(p,p)));select.value=valor;}}
+        filtrarEquipeConfiguracao();
+    }
+    async function mostrarComunicacao(mode='whatsapp'){
+        const whatsapp=mode!=='notificacoes';const panel=document.getElementById('ks_config_panel_mensagens');if(!panel)return;
+        panel.dataset.communicationMode=whatsapp?'whatsapp':'notificacoes';
+        const desc=panel.querySelector('.ks-config-communication-heading p');if(desc)desc.textContent='Mensagens para pacientes e avisos internos, com regras claras.';
+        panel.querySelectorAll('[data-communication-mode]').forEach(b=>{b.setAttribute('aria-selected',String((b.dataset.communicationMode==='whatsapp')===whatsapp));});
+        const conteudo=document.getElementById('ks_config_communication_whatsapp'),notificacoes=document.getElementById('ks_config_notifications');if(conteudo)conteudo.hidden=!whatsapp;if(notificacoes)notificacoes.hidden=whatsapp;
+        const title=document.getElementById('ks_config_current_message_title');if(title)title.textContent=whatsapp?'Modelos de WhatsApp':'Notificações do sistema';
+        if(whatsapp)return;const revisao=revisaoPagina,output=document.getElementById('ks_config_notice_feedback'),save=document.getElementById('ks_config_notice_save');save.disabled=true;output.textContent='Carregando regras…';
+        try{const r=await window.carregarRegrasAvisosAgenda();if(revisao!==revisaoPagina||!r)return;document.getElementById('ks_config_notice_hours').value=String(r.horas);document.getElementById('ks_config_notice_auto').checked=!!r.automatico;save.disabled=false;output.textContent='';}catch(_){output.textContent='Não foi possível carregar as regras. Tente reabrir esta seção.';}
+    }
+
     async function showPage(aba) {
+        const revisao=++revisaoPagina,usuarioAtual=(typeof usuarioLogado!=='undefined'&&usuarioLogado)||window.usuarioLogado;const clinicaAtual=String(usuarioAtual?.clinica_id||'');
         prepararPaginas();
         decorarContextos();
         const label = document.getElementById(`ks_config_tab_${aba === 'aparencia' ? 'online' : aba}`)?.textContent?.trim() || 'Configurações';
         const bread = document.getElementById('ks_config_page_breadcrumb'); if (bread) bread.textContent = `Configurações / ${label}`;
-        if (aba === 'equipe' && typeof window.carregarListaEquipe === 'function') await window.carregarListaEquipe();
+        if (aba === 'equipe' && typeof window.carregarListaEquipe === 'function') {await window.carregarListaEquipe();if(revisao===revisaoPagina)decorarEquipeConfiguracao();}
         if (aba === 'clinica') atualizarPreviaClinica();
         if (aba === 'documentos') {
+            const editButton=document.querySelector('[data-config-open-team]');if(editButton)editButton.disabled=true;
             try {
                 const usuario = (typeof usuarioLogado !== 'undefined' && usuarioLogado) || window.usuarioLogado;
                 const client = (typeof _supabase !== 'undefined' && _supabase) || window._supabase;
                 if (!usuario?.clinica_id || !client) return;
                 const {data,error} = await client.from('equipe').select('id,nome,registro,tipo').eq('clinica_id',usuario.clinica_id).eq('ativo',true).order('nome');
                 if (error) throw error;
-                documentosPerfis = data || [];
+                if(revisao!==revisaoPagina||String(((typeof usuarioLogado!=='undefined'&&usuarioLogado)||window.usuarioLogado)?.clinica_id||'')!==clinicaAtual)return;
+                documentosPerfis = (data || []).filter(p=>!['MASTER','MASTER_FEM','SECRETARIA'].includes(String(p.tipo).toUpperCase()));
                 const select = document.getElementById('ks_config_doc_profissional');
-                if (select) { select.replaceChildren(...documentosPerfis.map(p => new Option(p.nome,p.id))); if (documentosPerfis.some(p => p.id === usuario.id)) select.value = usuario.id; }
+                if (select) { const anterior=select.value;select.replaceChildren(...(documentosPerfis.length?documentosPerfis.map(p => new Option(p.nome,p.id)):[new Option('Nenhum profissional assistencial ativo','')]));if(documentosPerfis.some(p=>p.id===anterior))select.value=anterior;else if(documentosPerfis.some(p => p.id === usuario.id)) select.value = usuario.id; }
                 atualizarPreviaDocumentos();
             } catch (_) { const el = document.getElementById('ks_config_doc_registro'); if (el) el.textContent = 'Não foi possível carregar os registros. Tente reabrir esta página.'; }
         }
@@ -468,8 +533,11 @@
     }
 
     function mostrarStage(stageId, { focus = false } = {}) {
+        if(stageId==='cores'){window.KineSysConfiguracoesAgendaOnline?.abrirAba('aparencia');return;}
         const stage = STAGES.find(item => item.id === stageId) || STAGES[0];
         currentStage = stage.id;
+        const titulo=document.querySelector('#ks_config_panel_online .ks-online-topline h2');if(titulo)titulo.textContent=stage.id==='geral'?'Agenda Online':'Agenda e serviços';
+        const surface=document.querySelector('#ks_config_panel_online .ks-online-surface');if(surface)surface.dataset.configStage=stage.id;
 
         STAGES.forEach(item => {
             item.sections.forEach(sectionId => {
@@ -556,7 +624,7 @@
             mostrarStage(currentStage || carregarStageSalvo());
             const surface = document.querySelector('#ks_config_panel_online .ks-online-surface');
             if (surface) garantirAgendaInterna(surface);
-            let aba='mensagens'; try { aba=sessionStorage.getItem('kinesys_config_tab') || aba; } catch (_) {}
+            let aba='clinica'; try { aba=sessionStorage.getItem('kinesys_config_tab') || aba; } catch (_) {}
             showPage(aba);
             return true;
         }

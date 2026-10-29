@@ -3,7 +3,7 @@
     'use strict';
 
     const VERSION = '1.0.0';
-    const ASSET_REVISION = '20261016-config-paginas-r1';
+    const ASSET_REVISION = '20261029-config-aprovadas-r1';
     const STYLE_PATH = 'styles/configuracoes_agendamento_online-1.0.0.css';
     const CONFIG_AREAS = Object.freeze([
         ['clinica', 'Clínica'], ['online', 'Agenda e serviços'], ['equipe', 'Equipe'],
@@ -329,7 +329,7 @@
             return panel;
         });
 
-        tabs.innerHTML = CONFIG_AREAS.map(([id, label]) => `<button type="button" id="ks_config_tab_${id}" role="tab" aria-selected="${id === 'mensagens'}" aria-controls="ks_config_panel_${id}" data-config-tab="${id}">${label}</button>`).join('');
+        tabs.innerHTML = CONFIG_AREAS.map(([id, label]) => `<button type="button" id="ks_config_tab_${id}" role="tab" aria-selected="${id === 'clinica'}" aria-controls="ks_config_panel_${id}" data-config-tab="${id}">${label}</button>`).join('');
         header.innerHTML = `<label class="ks-config-search"><input type="search" id="ks_config_busca" placeholder="Buscar ajuste" autocomplete="off" aria-label="Buscar ajuste"></label><span class="ks-config-scope">Clínica atual</span>`;
         tela.classList.add('ks-config-connected');
         tela.append(header, tabs, online, aparencia, mensagens, ...adicionais);
@@ -594,9 +594,9 @@
         document.getElementById('ks_online_salvar')?.addEventListener('click', salvarTudo);
     }
 
-    function abrirAba(nome = 'mensagens') {
+    function abrirAba(nome = 'clinica') {
         if (!montarHub()) return;
-        const aba = [...CONFIG_AREAS.map(([id]) => id), 'aparencia'].includes(nome) ? nome : 'mensagens';
+        const aba = [...CONFIG_AREAS.map(([id]) => id), 'aparencia'].includes(nome) ? nome : 'clinica';
         const online = aba === 'online';
         const aparencia = aba === 'aparencia';
         const mensagens = aba === 'mensagens';
@@ -622,8 +622,8 @@
     async function onOpen() {
         if (!ehAdministrador()) return;
         if (!montarHub()) return;
-        let aba = 'mensagens';
-        try { aba = sessionStorage.getItem('kinesys_config_tab') || 'mensagens'; } catch (_) {}
+        let aba = 'clinica';
+        try { aba = sessionStorage.getItem('kinesys_config_tab') || 'clinica'; } catch (_) {}
         abrirAba(aba);
     }
 

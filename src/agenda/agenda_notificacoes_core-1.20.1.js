@@ -12,6 +12,40 @@ let agendaNotificacoesEmCarga = null;
 let agendaNotificacoesUltimaCargaEm = 0;
 const AGENDA_NOTIFICACOES_CACHE_MS = 15000;
 const AGENDA_NOTIFICACOES_PENDENTES_KEY = 'kinesys_notificacoes_pendentes_v1';
+let agendaRegrasAvisos={horas:24,automatico:false,clinica_id:''};
+let agendaHistoricoAvisos=null,agendaMostrandoHistorico=false,agendaAvisosContexto='';
+function contextoAvisosAgenda(){return [usuarioLogado?.clinica_id,usuarioLogado?.id,usuarioLogado?.tipo].join('|');}
+function avisoInformativoExpirado(n,agora=Date.now()){
+    if(!agendaRegrasAvisos.automatico||String(agendaRegrasAvisos.clinica_id)!==String(usuarioLogado?.clinica_id))return false;
+    if(!['horario_extraordinario','aviso_informativo'].includes(n?.tipo))return false;
+    const criada=Date.parse(n.criada_em);return Number.isFinite(criada)&&agora-criada>=agendaRegrasAvisos.horas*3600000;
+}
+function obterNotificacoesAtuaisAgenda(){return agendaNotificacoesCache.filter(n=>!avisoInformativoExpirado(n));}
+async function carregarRegrasAvisosAgenda(){
+    const contexto=contextoAvisosAgenda();
+    if(typeof _supabase?.rpc!=='function')return agendaRegrasAvisos;
+    const {data,error}=await _supabase.rpc('kinesys_configuracao_avisos');
+    if(contexto!==contextoAvisosAgenda())return null;
+    if(error)throw error;if(data&&[6,12,24,48,72,168].includes(Number(data.horas)))agendaRegrasAvisos=data;
+    return agendaRegrasAvisos;
+}
+async function salvarRegrasAvisosAgenda(horas,automatico){
+    if(!['MASTER','MASTER_FEM'].includes(String(usuarioLogado?.tipo)))throw Error('Somente administradores podem salvar estas regras.');
+    const contexto=contextoAvisosAgenda();
+    const {data,error}=await _supabase.rpc('kinesys_configuracao_avisos',{p_horas:Number(horas),p_automatico:!!automatico});
+    if(error)throw error;if(contexto!==contextoAvisosAgenda())return null;
+    agendaRegrasAvisos=data;agendaHistoricoAvisos=null;agendaMostrandoHistorico=false;
+    await carregarNotificacoesAgenda({avisar:false,forcar:true});return data;
+}
+async function alternarHistoricoAvisosAgenda({abrir=false}={}){
+    const contexto=contextoAvisosAgenda();
+    if(agendaMostrandoHistorico&&abrir){renderizarIndicadorNotificacoesAgenda();return;}
+    if(agendaMostrandoHistorico){agendaMostrandoHistorico=false;renderizarIndicadorNotificacoesAgenda();return;}
+    try{const {data,error}=await _supabase.rpc('kinesys_listar_avisos',{p_historico:true});if(error)throw error;
+        if(contexto!==contextoAvisosAgenda())return;agendaHistoricoAvisos=data||[];agendaMostrandoHistorico=true;renderizarIndicadorNotificacoesAgenda();
+    }catch(_){if(typeof mostrarToastKineSys==='function')mostrarToastKineSys('Não foi possível carregar o histórico de avisos. Tente novamente.','erro');}
+}
+if(typeof window!=='undefined')Object.assign(window,{obterNotificacoesAtuaisAgenda,carregarRegrasAvisosAgenda,salvarRegrasAvisosAgenda,alternarHistoricoAvisosAgenda});
 
 function lerNotificacoesPendentesAgenda() {
     try { return JSON.parse(localStorage.getItem(AGENDA_NOTIFICACOES_PENDENTES_KEY) || '[]'); }
@@ -67,7 +101,10 @@ function renderizarIndicadorNotificacoesAgenda() {
         badge.setAttribute('aria-hidden', 'true');
         return;
     }
-    const naoLidas = agendaNotificacoesCache.filter(n => !n.lida);
+    const atuais=obterNotificacoesAtuaisAgenda(),exibidas=agendaMostrandoHistorico?(agendaHistoricoAvisos||[]):atuais;
+    const historicoBtn=document.getElementById('ks_notificacoes_historico');if(historicoBtn)historicoBtn.textContent=agendaMostrandoHistorico?'Voltar aos avisos atuais':'Ver histórico de avisos';
+    const descricao=document.getElementById('ks_notificacoes_periodo');if(descricao)descricao.textContent=agendaMostrandoHistorico?'Últimos 100 avisos, incluindo arquivados.':`Informativos saem do painel após ${agendaRegrasAvisos.horas}h quando o arquivamento está ativo. Pendências são preservadas.`;
+    const naoLidas = atuais.filter(n => !n.lida);
     const totalNaoLidas = naoLidas.length;
     badge.textContent = totalNaoLidas > 99 ? '99+' : String(totalNaoLidas);
     // O badge vermelho só existe visualmente quando há avisos não lidos.
@@ -76,11 +113,11 @@ function renderizarIndicadorNotificacoesAgenda() {
     badge.hidden = totalNaoLidas === 0;
     badge.style.display = totalNaoLidas > 0 ? 'grid' : 'none';
     badge.setAttribute('aria-hidden', totalNaoLidas > 0 ? 'false' : 'true');
-    if (!agendaNotificacoesCache.length) {
+    if (!exibidas.length) {
         lista.innerHTML = '<div class="ks-notificacao-vazia">Nenhum aviso novo.</div>';
         return;
     }
-    lista.innerHTML = agendaNotificacoesCache.map(n => `
+    lista.innerHTML = exibidas.map(n => `
         <button type="button" class="ks-notificacao-item ${n.lida ? '' : 'nao-lida'}" onclick="abrirNotificacaoAgenda('${escapeHTML(n.id || '')}')">
             <strong>${escapeHTML(n.titulo || 'Aviso da Agenda')}</strong>
             <span>${escapeHTML(n.mensagem || '')}</span>
@@ -90,6 +127,8 @@ function renderizarIndicadorNotificacoesAgenda() {
 if (typeof window !== 'undefined') window.renderizarIndicadorNotificacoesAgenda = renderizarIndicadorNotificacoesAgenda;
 
 async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}) {
+    const contextoAtual=contextoAvisosAgenda();
+    if(agendaAvisosContexto!==contextoAtual){agendaAvisosContexto=contextoAtual;agendaNotificacoesCache=[];agendaNotificacoesEmCarga=null;agendaNotificacoesUltimaCargaEm=0;agendaHistoricoAvisos=null;agendaMostrandoHistorico=false;agendaRegrasAvisos={horas:24,automatico:false,clinica_id:usuarioLogado?.clinica_id||''};}
     if (!usuarioPodeReceberNotificacoesAgenda() || !_supabase) {
         agendaNotificacoesCache = [];
         agendaNotificacoesUltimaCargaEm = 0;
@@ -105,7 +144,7 @@ async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}
     const agoraMs = Date.now();
     if (!forcar && !avisar && agendaNotificacoesUltimaCargaEm && (agoraMs - agendaNotificacoesUltimaCargaEm) < AGENDA_NOTIFICACOES_CACHE_MS) {
         renderizarIndicadorNotificacoesAgenda();
-        return agendaNotificacoesCache;
+        return obterNotificacoesAtuaisAgenda();
     }
 
     agendaNotificacoesEmCarga=(async()=>{
@@ -114,17 +153,24 @@ async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}
         const vistos = new Set();
         const adicionar = rows => (rows || []).forEach(n => { const k = n.id || n.origem_chave; if (!vistos.has(k)) { vistos.add(k); resultados.push(n); } });
         try {
-            if (ident.id) {
+            let feedCarregado=false;
+            if(typeof _supabase.rpc==='function'){
+                await carregarRegrasAvisosAgenda();const r=await _supabase.rpc('kinesys_listar_avisos',{p_historico:false});
+                if(r.error&&!/PGRST202|42883/.test(r.error.code||''))throw r.error;
+                if(!r.error){adicionar(r.data);feedCarregado=true;}
+            }
+            if (!feedCarregado&&ident.id) {
                 const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_profissional_id', ident.id).order('criada_em', { ascending:false }).limit(20);
                 if (r.error) throw r.error; adicionar(r.data);
             }
-            if (ident.email) {
+            if (!feedCarregado&&ident.email) {
                 const r = await _supabase.from('notificacoes_internas').select('*').eq('destinatario_email', ident.email).order('criada_em', { ascending:false }).limit(20);
                 if (r.error) throw r.error; adicionar(r.data);
             }
+            if(contextoAtual!==contextoAvisosAgenda())return [];
             resultados.sort((a,b) => String(b.criada_em || '').localeCompare(String(a.criada_em || '')));
             const antes = agendaNotificacoesCache.filter(n => !n.lida).length;
-            agendaNotificacoesCache = resultados.slice(0,20);
+            agendaNotificacoesCache = resultados.slice(0,100);
             agendaNotificacoesUltimaCargaEm = Date.now();
             renderizarIndicadorNotificacoesAgenda();
             const agora = agendaNotificacoesCache.filter(n => !n.lida).length;
@@ -132,7 +178,7 @@ async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}
                 mostrarToastKineSys(agora === 1 ? 'Você tem 1 novo aviso da Agenda.' : `Você tem ${agora} avisos não lidos da Agenda.`, 'aviso', 5200);
             }
             agendaNotificacoesPrimeiraCarga = false;
-            return agendaNotificacoesCache;
+            return obterNotificacoesAtuaisAgenda();
         } catch (error) {
             if (!erroSchemaNotificacoesAgenda(error)) console.warn('Agenda: falha ao carregar notificações internas.', error);
             renderizarIndicadorNotificacoesAgenda();
@@ -152,7 +198,7 @@ function alternarPainelNotificacoes() {
 if (typeof window !== 'undefined') window.alternarPainelNotificacoes = alternarPainelNotificacoes;
 
 async function marcarTodasNotificacoesAgendaLidas() {
-    const naoLidas = agendaNotificacoesCache.filter(n => !n.lida && n.id);
+    const naoLidas = obterNotificacoesAtuaisAgenda().filter(n => !n.lida && n.id);
     if (!_supabase || !naoLidas.length) return;
     const ids = naoLidas.map(n => n.id);
     const { error } = await _supabase.from('notificacoes_internas').update({ lida:true, lida_em:new Date().toISOString() }).in('id', ids);
@@ -164,7 +210,7 @@ async function marcarTodasNotificacoesAgendaLidas() {
 if (typeof window !== 'undefined') window.marcarTodasNotificacoesAgendaLidas = marcarTodasNotificacoesAgendaLidas;
 
 async function abrirNotificacaoAgenda(id) {
-    const n = agendaNotificacoesCache.find(x => String(x.id) === String(id));
+    const n = [...agendaNotificacoesCache,...(agendaHistoricoAvisos||[])].find(x => String(x.id) === String(id));
     if (!n) return;
     if (_supabase && !n.lida && n.id) {
         await _supabase.from('notificacoes_internas').update({ lida:true, lida_em:new Date().toISOString() }).eq('id', n.id);
@@ -213,6 +259,7 @@ function pararNotificacoesAgenda() {
     agendaNotificacoesCache = [];
     agendaNotificacoesEmCarga = null;
     agendaNotificacoesUltimaCargaEm = 0;
+    agendaHistoricoAvisos=null;agendaMostrandoHistorico=false;agendaAvisosContexto='';agendaRegrasAvisos={horas:24,automatico:false,clinica_id:''};
     renderizarIndicadorNotificacoesAgenda();
 }
 if (typeof window !== 'undefined') window.pararNotificacoesAgenda = pararNotificacoesAgenda;

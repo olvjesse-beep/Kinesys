@@ -143,7 +143,7 @@ const layout = fs.readFileSync('src/admin/configuracoes_agendamento_online_layou
 assert(layout.includes('function prepararPaginas()') && layout.includes('function showPage(aba)'), 'sete áreas devem usar composição e navegação próprias');
 assert(!layout.includes('cloneNode(true)); mensagens'), 'formulários não podem ser clonados para criar páginas paralelas');
 assert(layout.includes('equipeOrigem') && layout.includes('destino.appendChild(el)'), 'a página Equipe original deve receber seus mesmos nós ao sair das Configurações');
-assert(layout.includes('saveClinic?.()') && perfil.includes('if (!somenteClinica && state.profissionalId)'), 'salvar Clínica não pode sobrescrever o perfil do profissional oculto');
+assert(layout.includes('saveClinic?.()') && perfil.includes('if (!somenteClinica && !somentePortal && state.profissionalId)'), 'salvar Clínica não pode sobrescrever o perfil do profissional oculto');
 assert(js.includes('data-adicionar-procedimento') && layout.includes('window.abrirModalProcedimento?.('), 'Adicionar procedimento deve abrir o CRUD existente');
 assert(html.includes('id="proc_sessoes_pacote"'), 'o formulário de procedimento deve preservar o campo exigido pelos planos');
 
@@ -210,3 +210,22 @@ assert(html.includes('id="proc_sessoes_pacote"'), 'o formulário de procedimento
   assert.strictEqual(refreshContext.state.procedimentos,previous,'resposta de outra clínica não deve substituir o estado atual');
   console.log('Refresh de procedimentos: rascunhos, vínculos e isolamento entre clínicas preservados.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+// Exercise actual notification policy and profile save scopes with synthetic identities.
+(async()=>{
+ const vm=require('node:vm'),source=fs.readFileSync('src/agenda/agenda_notificacoes_core-1.20.1.js','utf8');
+ let reads=0;const fields=new Map();const rows=[{id:'old',tipo:'horario_extraordinario',criada_em:new Date(Date.now()-25*3600000).toISOString(),lida:false},{id:'current',tipo:'horario_extraordinario',criada_em:new Date().toISOString(),lida:false},{id:'pending',tipo:'agendamento_online',criada_em:new Date(Date.now()-80*3600000).toISOString(),lida:false}];
+ const ctx={Date,console,window:{},usuarioLogado:{id:'synthetic',tipo:'MASTER',clinica_id:'clinic-a'},document:{getElementById:id=>fields.get(id)||null,addEventListener:()=>{}},_supabase:{rpc:async(name)=>{reads++;return {data:name==='kinesys_configuracao_avisos'?{horas:24,automatico:true,clinica_id:'clinic-a'}:rows,error:null};}},escapeHTML:s=>s};vm.createContext(ctx);vm.runInContext(source,ctx);
+ await vm.runInContext('carregarNotificacoesAgenda({avisar:false})',ctx);assert.equal(vm.runInContext('obterNotificacoesAtuaisAgenda().length',ctx),2,'client also filters expired events when clock advances');
+ await vm.runInContext('alternarHistoricoAvisosAgenda()',ctx);assert.equal(vm.runInContext('agendaHistoricoAvisos.length',ctx),3);assert(rows.every(n=>!n.lida),'opening history must not mark as read');
+ let done;ctx._supabase.rpc=()=>new Promise(resolve=>{done=resolve;});const stale=vm.runInContext('carregarRegrasAvisosAgenda()',ctx);ctx.usuarioLogado={...ctx.usuarioLogado,clinica_id:'clinic-b'};done({data:{horas:6,automatico:true,clinica_id:'clinic-a'},error:null});assert.equal(await stale,null,'late result cannot install previous clinic policy');
+ ctx.usuarioLogado.tipo='FISIOTERAPEUTA';await assert.rejects(vm.runInContext('salvarRegrasAvisosAgenda(24,true)',ctx),/administradores/);
+ console.log('PASS avisos client: expiração, histórico sem quitação/leitura, troca de contexto e autorização.');
+ const form=new Map(Object.entries({ks_online_v2_nome_publico:'Clínica A',ks_online_v2_endereco:'Endereço A',ks_online_v2_telefone:'1133334444',ks_online_v2_email:'contato@example.invalid',ks_online_v2_slug:'outro-link-em-rascunho',ks_online_v2_mensagem_confirmacao:'Mensagem em rascunho'}).map(([id,value])=>[id,{value,focus(){}}]));let writes=[],finish;
+ const saveSource=perfil.slice(perfil.indexOf('    async function salvar('),perfil.indexOf('    function inicializar()'));
+ const saveCtx={state:{clinicaId:'a',saving:false,config:{slug_publico:'link-salvo',mensagem_confirmacao:'Mensagem salva'},profissionalId:'p',perfis:new Map()},sb:()=>({from:table=>({update:payload=>{writes.push({table,payload});return {eq:()=>({select:()=>({single:async()=>({data:{clinica_id:'a'},error:null})})})};}})}),ehAdministrador:()=>true,$:id=>form.get(id),slugificar:v=>v,feedback:()=>{},setSaving:value=>{saveCtx.state.saving=value;},window:{},atualizarLink:()=>{},console,Date};vm.createContext(saveCtx);vm.runInContext(saveSource,saveCtx);
+ await vm.runInContext('salvar({somenteClinica:true})',saveCtx);assert.equal(writes.length,1);assert(!('slug_publico' in writes[0].payload));assert(!('mensagem_confirmacao' in writes[0].payload));assert.equal(saveCtx.state.config.slug_publico,'link-salvo');
+ writes=[];await vm.runInContext('salvar({somentePortal:true})',saveCtx);assert.equal(writes.length,1);assert(!('nome_publico' in writes[0].payload));assert(!('telefone_publico' in writes[0].payload));assert.equal(writes[0].payload.slug_publico,'outro-link-em-rascunho');
+ console.log('PASS salvamentos separados: Clínica não grava rascunho do portal; portal não grava contato nem profissional oculto.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
+
+assert(fs.readFileSync("styles/design_base.css","utf8").includes("#ks_team_drawer [hidden]{display:none!important}"),"a edição de equipe deve respeitar campos ocultos de senha inicial");
