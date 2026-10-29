@@ -95,10 +95,29 @@ console.log('agendamento_online_public_portal.contract: OK');
  let queryError='';
  const db={from(table){let rows=[...(tables[table]||[])],single=false;const q={select(){return q;},eq(k,v){rows=rows.filter(x=>x[k]===v);return q;},neq(k,v){rows=rows.filter(x=>x[k]!==v);return q;},gte(k,v){rows=rows.filter(x=>x[k]>=v);return q;},lte(k,v){rows=rows.filter(x=>x[k]<=v);return q;},order(){return q;},maybeSingle(){single=true;return q;},then(resolve,reject){return Promise.resolve({data:single?rows[0]||null:rows,error:queryError===table?{message:'Falha sintética de consulta'}:null}).then(resolve,reject);}};return q;}};
  let fixed=Date.parse('2030-03-04T13:00:00Z');class Clock extends Date{constructor(...args){super(...(args.length?args:[fixed]));}static now(){return fixed;}}
- const ctx={Date:Clock,Intl,Map,Set,console,createClient:()=>db,Deno:{env:{get:()=> 'synthetic'},serve(){}},Response,Request,URL,TextEncoder,crypto};
- const js=stripTypeScriptTypes(edge.replace(/^import[^\n]+\n/gm,''),{mode:'strip'});vm.runInNewContext(js+';this.slotsTest=slotsPublicos;this.catalogTest=catalogoPublico;this.payloadTest=payloadReservaValido;',ctx);
+ const ctx={Date:Clock,Intl,Map,Set,console,createClient:()=>db,Deno:{env:{get:()=> 'synthetic'},serve(){}},Response,Request,URL,TextEncoder,TextDecoder,crypto,btoa,atob};
+ const js=stripTypeScriptTypes(edge.replace(/^import[^\n]+\n/gm,''),{mode:'strip'});vm.runInNewContext(js+';this.slotsTest=slotsPublicos;this.catalogTest=catalogoPublico;this.payloadTest=payloadReservaValido;this.identifyTest=identificarReserva;this.reserveTest=reservarOnline;',ctx);
  const input={request_id:'c3333333-3333-4333-8333-111111111111',profissional_id:pid,procedimento_id:'c2222222-2222-4222-8222-222222222222',data:'2030-03-05',hora_inicio:'14:00',paciente:{nome:'Paciente sintético',telefone:'11999990000'}};
  assert.equal(ctx.payloadTest(input).nascimento,null,'Nascimento é opcional também no servidor');assert.equal(ctx.payloadTest({...input,paciente:{...input.paciente,nome:''}}),null);assert.equal(ctx.payloadTest({...input,paciente:{...input.paciente,telefone:''}}),null);assert.equal(ctx.payloadTest({...input,paciente:{...input.paciente,nascimento:'data inválida'}}),null);
+
+ let candidates=[],rpcCalls=[];
+ db.rpc=async(name,args)=>{rpcCalls.push({name,args});return {data:name==='kinesys_localizar_paciente_online'?candidates:{ok:true},error:null};};
+ const patient={id:'paciente-sintetico',nome:'Larissa Sintética',cpf:'',nascimento:null};
+ const parsed=ctx.payloadTest(input);
+ assert.equal((await ctx.identifyTest('clinica-sintetica',parsed,{})).pacienteId,'');
+ candidates=[patient];const prompt=await ctx.identifyTest('clinica-sintetica',parsed,{});
+ assert.equal(prompt.resposta.body.codigo,'CONFIRMAR_PACIENTE');assert.equal(prompt.resposta.body.nome_abreviado,'Larissa S.');
+ assert(!JSON.stringify(prompt).includes(patient.id));assert(!JSON.stringify(prompt).includes(patient.nome),'Nome completo e prontuário não são públicos');
+ const signed={identidade_token:prompt.resposta.body.identidade_token,identidade_confirmada:true};
+ assert.equal((await ctx.identifyTest('clinica-sintetica',parsed,signed)).pacienteId,patient.id);
+ for(const changed of [{telefone:'11999990001'},{nome:'Nome alterado'},{requestId:'outra-tentativa'}])
+  assert.equal((await ctx.identifyTest('clinica-sintetica',{...parsed,...changed},signed)).resposta.body.codigo,'CONFIRMAR_PACIENTE');
+ assert.equal((await ctx.identifyTest('clinica-sintetica',parsed,{...signed,identidade_token:'token-falso'})).resposta.body.codigo,'CONFIRMAR_PACIENTE');
+ const clockBackup=fixed;fixed+=600001;assert.equal((await ctx.identifyTest('clinica-sintetica',parsed,signed)).resposta.body.codigo,'CONFIRMAR_PACIENTE');fixed=clockBackup;
+ const booked=await ctx.reserveTest('clinica-sintetica',{...input,...signed});assert.equal(booked.body.ok,true);assert.equal(rpcCalls.at(-1).args.p_paciente_confirmado_id,patient.id);
+ candidates=[patient,{...patient,id:'outro',nome:'Outra pessoa'}];assert.equal((await ctx.identifyTest('clinica-sintetica',parsed,{})).resposta.body.codigo,'IDENTIDADE_AMBIGUA');
+ candidates=[{...patient,nascimento:'1980-01-01'}];assert.equal((await ctx.identifyTest('clinica-sintetica',{...parsed,nascimento:'1990-01-01'},{})).resposta.body.codigo,'IDENTIDADE_DIVERGENTE');candidates=[];
+ console.log('PASS identidade Edge: token cifrado, escopo por telefone/nome/clínica/tentativa, expiração/adulteração, confirmação explícita, ambiguidade e divergência.');
  const get=()=>ctx.slotsTest('clinica-sintetica',pid,proc),times=(r,d)=>r.dias.find(x=>x.data===d)?.horarios.map(x=>x.inicio)||[];
  const manual=await get();assert(!times(manual,'2030-03-05').includes('14:00'));assert(!times(manual,'2030-03-05').includes('09:00'));
  tables.configuracoes_agendamento_online[0].seguir_agenda_interna=true;let mirror=await get();
@@ -124,7 +143,8 @@ console.log('agendamento_online_public_portal.contract: OK');
  assert.deepEqual([...times(await get(),'2030-03-08')],['08:00','11:00']);assert.deepEqual([...times(await theirs(),'2030-03-08')],['09:00','11:00'],'Ausência individual não bloqueia o colega; bloqueio da clínica afeta os dois');
  const restricted='22222222-2222-4222-8222-222222222222';tables.procedimentos.push({id:restricted,clinica_id:cid,nome:'Atendimento de enfermagem sintético',duracao_minutos:60,valor:80,ativo:true,agendamento_online_ativo:true,profissionais_ids:[nurse]});
  assert.equal((await ctx.slotsTest('clinica-sintetica',pid,restricted)).dias.length,0,'Serviço restrito não é oferecido para outro profissional');
- const published=await ctx.catalogTest('clinica-sintetica');assert.equal(published.profissionais.length,2);assert.deepEqual([...published.procedimentos.find(p=>p.id===restricted).profissionais_ids],[nurse]);
+ tables.procedimentos.push({id:'pacote-sintetico',clinica_id:cid,nome:'Pacote sintético',duracao_minutos:60,valor:650,sessoes_pacote:10,ativo:true,agendamento_online_ativo:true,profissionais_ids:[]});
+ const published=await ctx.catalogTest('clinica-sintetica');assert.equal(published.profissionais.length,2);assert.equal(published.procedimentos.find(p=>p.id==='pacote-sintetico').valor,null);assert.equal(published.procedimentos.find(p=>p.id==='pacote-sintetico').pacote_existente,true);assert.deepEqual([...published.procedimentos.find(p=>p.id===restricted).profissionais_ids],[nurse]);
  // O editor real altera o mesmo registro lido pelo catálogo, sem atualizar pacientes/financeiro.
  const agendaSource=fs.readFileSync('src/agenda/agenda-1.20.0.js','utf8');
  const fields={proc_id:{value:proc},proc_nome:{value:'Avaliação'},proc_duracao:{value:'60'},proc_valor:{value:'135.50'},proc_sessoes_pacote:{value:'1'}};let writes=0;

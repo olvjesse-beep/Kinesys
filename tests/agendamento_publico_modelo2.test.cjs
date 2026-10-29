@@ -5,7 +5,7 @@ const html = fs.readFileSync('agendamento/index.html', 'utf8');
 const script = fs.readFileSync('agendamento/agendamento-publico-v2.js', 'utf8');
 class Element {
   constructor() { this.hidden = false; this.disabled = false; this.dataset = {}; this.attrs = {}; this.events = {}; this.value = ''; this.checked = false; this.textContent = ''; this.innerHTML = ''; this.classList = { toggle() {} }; }
-  addEventListener(name, fn) { this.events[name] = fn; }
+  addEventListener(name, fn) { const previous=this.events[name];this.events[name]=event=>{previous?.(event);fn(event);}; }
   setAttribute(name, value) { this.attrs[name] = value; }
   removeAttribute(name) { delete this.attrs[name]; }
   querySelector(name) { return this[name] ||= new Element(); }
@@ -20,7 +20,7 @@ function setup({catalogue=catalog,publicProfile=profile}={}) {
   let reservation = () => ({ ok: true, json: async () => ({ ok: true }) });
   const ctx = { Date, Intl, Map, Set, console: { ...console, error:e=>errors.push(e) }, URLSearchParams, setTimeout: fn => fn(),setInterval:(fn,ms)=>timers.push({fn,ms}), crypto: { randomUUID: () => 'request-demo' }, location: { search: '?clinica=demo' }, document: {visibilityState:'visible', getElementById: id => nodes[id], querySelectorAll: selector => selector==='[data-step]'?[...stages,...(nodes.ks_public_app.dataset.step?[nodes.ks_public_app]:[])]:selector==='[data-progress-segment]'?markers:[], addEventListener:(name,fn)=>events[name]=fn }, window: { scrollTo() {},addEventListener:(name,fn)=>events[name]=fn }, fetch: async (url, options) => { const body = options?.body ? JSON.parse(options.body) : null; calls.push({ url, body }); return body?.acao === 'slots' ? slotsResponse(body) : body?.acao === 'reservar' ? reservation() : { ok: true, json: async () => url.includes('perfil') ? publicProfile : catalogue }; } };
   vm.runInNewContext(fs.readFileSync('agendamento/calendario-publico.js', 'utf8'), ctx);
-  vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,refreshSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book};bind();'), ctx);
+  vm.runInNewContext(script.replace('bind();load();', 'window.test={s,load,selectProfessional,selectProcedure,loadSlots,refreshSlots,selectDate,selectTime,moveMonth,openStep,prepareData,book,limparIdentidade};bind();'), ctx);
   return { api: ctx.window.test, calendar: ctx.window.KineSysPublicCalendar, nodes, calls, errors,events,timers,document:ctx.document, setSlots: fn => slotsResponse = fn, setReservation: fn => reservation = fn };
 }
 const flush = () => new Promise(r => setImmediate(r));
@@ -64,6 +64,17 @@ const flush = () => new Promise(r => setImmediate(r));
   const payload = t.calls.find(x => x.body?.acao === 'reservar').body;
   assert.equal(payload.profissional_id, 'prof-demo'); assert.equal(payload.procedimento_id, 'av-demo'); assert.equal(payload.data, '2026-10-26'); assert.equal(payload.hora_inicio, '11:00'); assert.equal(payload.paciente.responsavel_nome, 'Responsável de teste');
   assert.equal(t.nodes.ks_public_success.hidden, false);
+  // Confirmação por telefone só é enviada após consentimento e limpa ao editar a identidade.
+  const identity=setup();await identity.api.load();identity.api.selectProfessional('prof-demo');identity.api.selectProcedure('osteo-demo');await flush();identity.api.selectTime('11:00','12:00');
+  identity.nodes.ks_public_nome.value='Outro nome digitado';identity.nodes.ks_public_telefone.value='11999990000';identity.nodes.ks_public_consentimento.checked=true;
+  identity.setReservation(()=>({ok:false,status:409,json:async()=>({codigo:'CONFIRMAR_PACIENTE',nome_abreviado:'Paciente S.',identidade_token:'token-opaco'})}));
+  await identity.api.book({preventDefault(){}});assert.equal(identity.nodes.ks_public_identidade.hidden,false);assert.equal(identity.nodes.ks_public_success.hidden,true);assert.equal(identity.api.s.identidade,'token-opaco');
+  const identityCalls=identity.calls.length;await identity.api.book({preventDefault(){}});assert.equal(identity.calls.length,identityCalls,'Sem confirmar não reserva');
+  identity.nodes.ks_public_identidade_confirmar.checked=true;identity.setReservation(()=>({ok:true,json:async()=>({ok:true})}));await identity.api.book({preventDefault(){}});
+  assert.equal(identity.calls.at(-1).body.identidade_token,'token-opaco');assert.equal(identity.calls.at(-1).body.identidade_confirmada,true);
+  identity.nodes.ks_public_telefone.events.input({currentTarget:identity.nodes.ks_public_telefone});assert.equal(identity.api.s.identidade,null);assert.equal(identity.nodes.ks_public_identidade.hidden,true);
+  const packagePortal=setup({catalogue:{...catalog,procedimentos:[{...catalog.procedimentos[0],pacote_existente:true,valor:null}]}});await packagePortal.api.load();packagePortal.api.selectProfessional('prof-demo');
+  assert(packagePortal.nodes.ks_public_procedimentos.innerHTML.includes('Já contratado'));assert(!packagePortal.nodes.ks_public_procedimentos.innerHTML.includes('R$'));
   // Disponibilidade antiga não reaparece depois de trocar atendimento/profissional.
   let old; t.setSlots(() => new Promise(r => old = r)); const oldRequest = a.loadSlots();
   a.selectProfessional('prof-demo'); old({ ok: true, json: async () => slots }); await oldRequest;

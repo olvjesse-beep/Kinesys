@@ -73,7 +73,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ks-public-option-copy{display:flex;flex-direction:column;min-width:0}
 .ks-public-option-copy strong{font-size:var(--kds-font-content);line-height:var(--kds-leading-ui);overflow-wrap:anywhere}
 .ks-public-option-copy span{font-size:var(--kds-font-metadata);color:var(--kds-muted);margin-top:2px;overflow-wrap:anywhere}
-.ks-public-option-meta{font-size:var(--kds-font-metadata);font-weight:700;color:var(--kds-text-secondary);white-space:nowrap}
+.ks-public-option-meta{flex:0 0 auto;font-size:var(--kds-font-metadata);font-weight:700;color:var(--kds-text-secondary);white-space:nowrap;overflow-wrap:normal}
 
 .ks-public-inline-state{min-height:58px;border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);background:var(--kds-surface-soft);display:flex;align-items:center;justify-content:center;gap:10px;color:var(--kds-text-secondary);font-size:var(--kds-font-content);padding:12px}
 .ks-public-empty{border:1px solid var(--kds-line);border-radius:var(--kds-radius-md);background:var(--kds-surface-soft);padding:16px;display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -170,7 +170,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .ks-public-selection strong,.ks-public-selection small{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
   .ks-public-selection .ks-public-btn{width:100%}
   .ks-public-option{align-items:flex-start}
-  .ks-public-option-meta{white-space:normal;text-align:right;overflow-wrap:anywhere}
+  .ks-public-option-meta{white-space:nowrap;text-align:right;overflow-wrap:normal}
   .ks-public-back{min-height:44px}
   .ks-public-success{padding:32px 0}
   .ks-public-success-card,.ks-public-success-address{max-width:100%}

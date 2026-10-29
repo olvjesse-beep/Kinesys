@@ -2,6 +2,8 @@
 // Servidor exclusivo de QA. Substituições em memória, sem editar assets de produção.
 const http = require('node:http'), fs = require('node:fs'), path = require('node:path');
 const { profile, catalog, slots } = require('./public_booking_fixture.cjs');
+catalog.procedimentos[0].valor=150;catalog.procedimentos[1].valor=100;
+catalog.procedimentos.push({id:'individual-demo',nome:'Sessão de Fisioterapia - Individual',duracao_minutos:60,valor:89.90,profissionais_ids:['prof-demo']},{id:'pacote-demo',nome:'Fisioterapia',duracao_minutos:60,pacote_existente:true,valor:null,profissionais_ids:['prof-demo']});
 const root = path.resolve(__dirname, '../..');
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 const server = http.createServer(async (req, res) => {
@@ -12,6 +14,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') { res.end(JSON.stringify(url.pathname.endsWith('profile') ? profile : catalog)); return; }
     let body = ''; for await (const chunk of req) body += chunk;
     let data; try { data = JSON.parse(body); } catch { res.writeHead(400).end('{}'); return; }
+    if(data.acao==='reservar' && data.paciente?.telefone==='11999990000' && !data.identidade_confirmada){res.writeHead(409);res.end(JSON.stringify({codigo:'CONFIRMAR_PACIENTE',nome_abreviado:'Paciente S.',identidade_token:'token-simulado'}));return;}
     res.end(JSON.stringify(data.acao === 'slots' ? slots : { ok: true, demonstracao: true })); return;
   }
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405).end(); return; }

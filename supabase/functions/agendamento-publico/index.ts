@@ -112,7 +112,7 @@ async function catalogoPublico(slug: string) {
 
   const [profRes, procRes, dispRes, gradeRes] = await Promise.all([
     supabase.from("equipe").select("id,nome,tipo,agendamento_online_ordem").eq("clinica_id", clinica.id).eq("ativo", true).eq("aparece_na_agenda", true).eq("agendamento_online_ativo", true).order("agendamento_online_ordem", { ascending: true }).order("nome", { ascending: true }),
-    supabase.from("procedimentos").select("id,nome,duracao_minutos,valor,profissionais_ids").eq("clinica_id", clinica.id).eq("ativo", true).eq("agendamento_online_ativo", true).order("nome"),
+    supabase.from("procedimentos").select("id,nome,duracao_minutos,valor,profissionais_ids,sessoes_pacote").eq("clinica_id", clinica.id).eq("ativo", true).eq("agendamento_online_ativo", true).order("nome"),
     supabase.from("disponibilidade_agendamento_online").select("profissional_id").eq("clinica_id", clinica.id).eq("ativo", true),
     supabase.from("horarios_atendimento").select("profissional_id,dia_semana,hora_inicio,hora_fim").eq("clinica_id", clinica.id),
   ]);
@@ -130,7 +130,8 @@ async function catalogoPublico(slug: string) {
     if (vinculadosOriginais.length && !vinculadosPublicos.length) return [];
     return [{
       id: texto(p.id, 80), nome: texto(p.nome, 120), duracao_minutos: Math.max(5, Math.min(480, Number(p.duracao_minutos) || 30)),
-      valor: config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
+      valor: Number(p.sessoes_pacote||1)>1 ? null : config.mostrar_valores && p.valor != null ? Number(p.valor) : null,
+      pacote_existente: Number(p.sessoes_pacote||1)>1,
       profissionais_ids: vinculadosPublicos,
     }];
   });
@@ -245,19 +246,69 @@ async function reservaDentroDoLimite(req: Request, slug: string) {
 async function reservarOnline(slug: string, body: Record<string, unknown>) {
   const reserva = payloadReservaValido(body);
   if (!reserva) return { status: 400, body: { erro: "Revise os dados do agendamento e tente novamente.", codigo: "DADOS_INVALIDOS" } };
+  const identificacao = await identificarReserva(slug, reserva, body);
+  if (identificacao.resposta) return identificacao.resposta;
   const { data, error } = await supabase.rpc("kinesys_criar_agendamento_online", {
     p_clinica_slug: slug, p_request_id: reserva.requestId, p_profissional_id: reserva.profissionalId, p_procedimento_id: reserva.procedimentoId,
     p_data: reserva.data, p_hora_inicio: reserva.horaInicio, p_nome: reserva.nome, p_cpf: reserva.cpf, p_nascimento: reserva.nascimento, p_telefone: reserva.telefone,
     p_dependente: reserva.dependente, p_responsavel_nome: reserva.responsavelNome || null, p_responsavel_parentesco: reserva.responsavelParentesco || null,
     p_responsavel_telefone: reserva.responsavelTelefone || null,
+    p_paciente_confirmado_id: identificacao.pacienteId || null,
   });
   if (!error && data?.ok) return { status: 200, body: { ok: true, agendamento_id: data.agendamento_id, data: data.data, hora_inicio: data.hora_inicio, hora_fim: data.hora_fim } };
   const codigo = texto(error?.code, 16);
+  if (codigo === "P0011") return { status: 409, body: { erro: "O cadastro mudou. Confira os dados e confirme novamente.", codigo: "IDENTIDADE_ATUALIZADA" } };
+  if (codigo === "P0012") return { status: 409, body: { erro: "Não há sessão disponível em um pacote ativo desse paciente para este atendimento. Entre em contato com a clínica para conferir o plano.", codigo: "PACOTE_INDISPONIVEL" } };
   if (codigo === "23P01") return { status: 409, body: { erro: "Esse horário não está mais disponível.", codigo: "HORARIO_INDISPONIVEL" } };
   if (codigo === "22023") return { status: 400, body: { erro: texto(error?.message, 240) || "Revise os dados informados.", codigo: "DADOS_INVALIDOS" } };
   if (codigo === "P0001") return { status: 409, body: { erro: "A disponibilidade da agenda mudou. Atualize os horários e tente novamente.", codigo: "AGENDA_ATUALIZADA" } };
   console.error("agendamento-publico reservar", error);
   return { status: 500, body: { erro: "Não foi possível confirmar o agendamento agora.", codigo: "ERRO_INTERNO" } };
+}
+
+// A confirmação autoriza apenas uma reserva. Não autentica o paciente nem abre seu prontuário.
+type ReservaPublica = NonNullable<ReturnType<typeof payloadReservaValido>>;
+async function chaveIdentidade() {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`kinesys-reserva-identidade-v1:${SERVICE_ROLE_KEY}`));
+  return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+function vinculoIdentidade(slug: string, reserva: ReservaPublica) {
+  return JSON.stringify([slug,reserva.requestId,reserva.telefone,reserva.nome,reserva.cpf,reserva.nascimento,reserva.dependente,reserva.responsavelNome,reserva.responsavelTelefone]);
+}
+async function tokenIdentidade(slug: string, reserva: ReservaPublica, pacienteId: string) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const payload = new TextEncoder().encode(JSON.stringify({ vinculo:vinculoIdentidade(slug,reserva), id:pacienteId, exp:Date.now()+600000 }));
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},await chaveIdentidade(),payload));
+  return btoa(String.fromCharCode(...iv,...encrypted));
+}
+async function lerIdentidade(token: unknown, slug: string, reserva: ReservaPublica) {
+  try {
+    const bytes = Uint8Array.from(atob(texto(token,4000)),c=>c.charCodeAt(0));
+    const decoded = await crypto.subtle.decrypt({name:"AES-GCM",iv:bytes.slice(0,12)},await chaveIdentidade(),bytes.slice(12));
+    const payload = JSON.parse(new TextDecoder().decode(decoded));
+    return payload.exp>Date.now() && payload.vinculo===vinculoIdentidade(slug,reserva) ? String(payload.id) : "";
+  } catch { return ""; }
+}
+function nomeAbreviado(nome: string) {
+  const partes=nome.trim().split(/\s+/).filter(Boolean);
+  return `${partes[0]||"Paciente"}${partes.length>1?' '+partes.slice(1).map(p=>p[0]+'.').join(' '):''}`;
+}
+async function identificarReserva(slug: string, reserva: ReservaPublica, body: Record<string, unknown>) {
+  const {data,error}=await supabase.rpc("kinesys_localizar_paciente_online",{p_clinica_slug:slug,p_telefone:reserva.telefone});
+  if(error) throw error;
+  if(!Array.isArray(data)) throw new Error("Identificação indisponível");
+  let candidatos=data;
+  if(candidatos.length>1) {
+    candidatos=candidatos.filter(p=>reserva.cpf ? digitos(p.cpf,11)===reserva.cpf : reserva.nascimento && p.nascimento===reserva.nascimento && String(p.nome).trim().toLocaleLowerCase()===reserva.nome.toLocaleLowerCase());
+    if(candidatos.length!==1) return {resposta:{status:409,body:{codigo:"IDENTIDADE_AMBIGUA",erro:"Há mais de um cadastro associado a esse telefone. Informe o CPF do paciente ou entre em contato com a clínica para conferir o cadastro."}}};
+  }
+  if(!candidatos.length) return {pacienteId:""};
+  const paciente=candidatos[0];
+  if((reserva.cpf && paciente.cpf && digitos(paciente.cpf,11)!==reserva.cpf) || (reserva.nascimento && paciente.nascimento && paciente.nascimento!==reserva.nascimento))
+    return {resposta:{status:409,body:{codigo:"IDENTIDADE_DIVERGENTE",erro:"Os dados não correspondem ao cadastro desse telefone. Confira o CPF e o nascimento, ou utilize outro telefone para outro paciente."}}};
+  const confirmado=body.identidade_confirmada===true ? await lerIdentidade(body.identidade_token,slug,reserva) : "";
+  if(confirmado===paciente.id) return {pacienteId:confirmado};
+  return {resposta:{status:409,body:{codigo:"CONFIRMAR_PACIENTE",nome_abreviado:nomeAbreviado(paciente.nome),identidade_token:await tokenIdentidade(slug,reserva,paciente.id),erro:"Confirme se o atendimento é para o paciente já cadastrado nesse telefone."}}};
 }
 
 async function lerBody(req: Request) {

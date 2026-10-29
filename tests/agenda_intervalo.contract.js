@@ -34,6 +34,9 @@ assert.match(estilo, /\.agenda-intervalo-bloco\s*\{/,
     'A faixa de intervalo deve ter estilo próprio.');
 assert.match(estilo, /--agenda-intervalo-fundo:/,
     'O intervalo deve preservar a sinalização amarela do KineSys.');
+assert.match(estilo, /\.agenda-celula\.bloqueado\{background:var\(--agenda-intervalo-fundo\)/,
+    'Ausências e bloqueios devem reutilizar a sinalização amarela do intervalo, sem virar horário livre.');
+assert(agenda.includes("'Bloqueado · ' + bloq.motivo"),'O bloqueio deve continuar identificado pelo motivo');
 assert.match(agenda, /agenda-slot-acao[^\n]*\+ Agendar/,
     'Horários livres de hora cheia devem expor a ação + Agendar sem trocar o fluxo existente.');
 assert.match(estilo, /\.agenda-slot-acao\{[^}]*opacity:0;[^}]*visibility:hidden;/,

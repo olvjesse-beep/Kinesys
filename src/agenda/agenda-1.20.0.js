@@ -2294,7 +2294,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             } else if (bloq) {
                 const inicioBloq = !bloq.hora_inicio || horaCurta(bloq.hora_inicio) === hh;
                 cell.title = `Horário bloqueado${bloq.motivo ? ': ' + bloq.motivo : ''}. Não oferecer para pacientes.`;
-                if (inicioBloq) cell.innerHTML = `<div class="agenda-bloqueio-texto">${escapeHTML(bloq.motivo || 'Bloqueado')}</div>`;
+                if (inicioBloq || r === 0) cell.innerHTML = `<div class="agenda-bloqueio-texto">${escapeHTML(bloq.motivo ? 'Bloqueado · ' + bloq.motivo : 'Bloqueado')}</div>`;
             } else if (intervalo) {
                 const rotuloIntervalo = `Intervalo · ${minutosParaHora(intervalo.inicio)}–${minutosParaHora(intervalo.fim)}`;
                 cell.title = `${rotuloIntervalo}. Não oferecer para pacientes.`;

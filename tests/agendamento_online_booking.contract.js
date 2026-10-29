@@ -17,12 +17,12 @@ assert(sql.includes('grant execute on function public.kinesys_criar_agendamento_
 
 assert(sql.includes("a.id = p_request_id") && sql.includes("v_existente_origem = 'online'"),
   'request UUID deve tornar reenvios idempotentes');
-assert(sql.includes("origem_cadastro = 'agendamento_online'") && sql.includes('cadastro_validado is false'),
+assert(sql.includes("v_clinica_id, 'agendamento_online', false"),
   'pré-cadastro online deve permanecer não validado até revisão interna');
 assert(sql.includes("regexp_replace(coalesce(p.cpf, ''), '\\D', '', 'g') = v_cpf"),
   'reuso de prontuário deve usar CPF normalizado como identidade forte');
-assert(sql.includes("p.origem_cadastro = 'agendamento_online'") && sql.includes("p.cadastro_validado is false"),
-  'sem CPF, dedupe só pode reutilizar outro pré-cadastro online não validado');
+assert(sql.includes('p_paciente_confirmado_id') && sql.includes("errcode='P0011'") && sql.includes('pg_advisory_xact_lock'),
+  'telefone exige confirmação explícita e proteção de concorrência, sem adivinhar identidade');
 assert(sql.includes("'online'"), 'agendamento criado pelo portal deve registrar origem online');
 assert(sql.includes("'agendamento_online', 'Novo agendamento online'"), 'reserva deve criar notificação interna própria');
 assert(sql.includes('agendamentos_sem_sobreposicao') || sql.includes('when exclusion_violation'),
