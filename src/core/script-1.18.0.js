@@ -16,7 +16,7 @@ const SUPABASE_URL = "https://yulkylvkofeisbjwnxhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_STAVKxWe_UAlyADqxyQxjQ_c3NP5npE";
 
 const _supabase = (typeof window.supabase !== 'undefined') 
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, window.KineSysAccessDiagnostics ? {global:{fetch:window.KineSysAccessDiagnostics.transport}} : {})
     : null;
 
 /* ================= 1. VARIÁVEIS GLOBAIS E AUTENTICAÇÃO ================= */

@@ -27,7 +27,7 @@
     <link rel="stylesheet" data-kinesys-lazy-href="styles/design_clinical.css?v=20261012-visual-harmony-r4">
     <link rel="stylesheet" data-kinesys-lazy-href="styles/design_clinical_direction-1.17.0.css">
     <link rel="stylesheet" href="styles/design_utilities.css">
-    <link rel="stylesheet" href="styles/login_access-1.18.0.css?v=20261026-inicializacao-r1">
+    <link rel="stylesheet" href="styles/login_access-1.18.0.css?v=20261029-acesso-r1">
     <link rel="stylesheet" href="styles/access_admin-1.0.0.css?v=20260911-access-r1">
     <link rel="stylesheet" href="styles/design_patient_selection-1.18.1.css">
     <link rel="stylesheet" href="styles/design_home_activity-1.18.5.css?v=20261017-admin-panorama-r1&audit=20261026-completa-r1">
@@ -45,6 +45,7 @@
     <div id="ks_startup" role="status" aria-live="polite">
         <strong>KineSys</strong><p id="ks_startup_message">Preparando seu acesso…</p>
         <button id="ks_startup_retry" type="button" hidden onclick="location.reload()">Recarregar</button>
+        <div id="ks_startup_diagnostico" hidden><p data-access-code></p><button type="button" data-access-download>Baixar diagnóstico</button></div>
     </div>
     <noscript><p class="ks-startup-noscript">Ative o JavaScript para acessar o KineSys.</p></noscript>
 
@@ -127,6 +128,7 @@
                         <p>Por segurança, não exibimos e-mails cadastrados nesta tela. Nunca envie sua senha a terceiros.</p><button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
                     </div>
                     <div id="login_feedback" role="status" aria-live="polite" class="ks-login-feedback" style="display:none"></div>
+                    <div id="login_diagnostico" hidden class="ks-access-diagnostic"><small data-access-code></small><button type="button" class="btn-secondary" data-access-download>Baixar diagnóstico</button></div>
                     <p class="ks-access-footer">Acesso exclusivo à equipe autorizada. Não compartilhe sua senha.</p>
                 </div>
             </div>
@@ -1051,6 +1053,7 @@
                 <div class="card-header">
                     <div>
                         <h2>Funcionários e acessos</h2>
+                        <button type="button" class="btn-secondary" onclick="KineSysAccessAdmin.diagnostics()">Diagnósticos de acesso</button>
                         <p class="field-help">Cadastre aqui administradores, secretárias e profissionais. Pacientes são cadastrados separadamente em “Novo paciente” e nunca aparecem nesta lista.</p>
                     </div>
                 </div>
@@ -1602,6 +1605,7 @@
 
 
 
+<script defer src="src/auth/access_diagnostics-1.0.0.js?v=20261029-acesso-r1"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="database/ocupacoes_esportes.js"></script>
     <script defer src="src/core/kinesys_data_cache-1.0.0.js?v=20260911-cache-r1"></script>
@@ -1625,7 +1629,7 @@
     <script defer src="src/admin/team_management_core-1.0.0.js?v=20261026-inicializacao-r1"></script>
     <script defer src="src/auth/login_ui_helpers_core-1.0.0.js?v=20260911-phase4r-r1"></script>
     <script defer src="src/reports/report_ui_helpers_core-1.0.0.js?v=20260911-phase4s-r1"></script>
-    <script defer src="src/core/script-1.18.0.js?v=20261028-contatos-online-r1&anterior=20261022-meudia-cuidados-r1&exame=20261023-exame-livre-r1&overlay_focus=20261012-r2&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1&meudia=20260915-owner-r1&radar=20261011-funil-r1&audit=20261026-completa-r1&eva=20261026-lightglass-r1&doses=20261027-relatorio-dosagens-r1&condicoes=20261027-radar-condicoes-r1"></script>
+    <script defer src="src/core/script-1.18.0.js?v=20261029-acesso-r1&cadastro=20261028-contatos-online-r1&anterior=20261022-meudia-cuidados-r1&exame=20261023-exame-livre-r1&overlay_focus=20261012-r2&patient_self_service=20260910-r1&access_admin=20260910-r1&data_cache=20260911-r1&core_mod=20260911-phase4s-r1&meudia=20260915-owner-r1&radar=20261011-funil-r1&audit=20261026-completa-r1&eva=20261026-lightglass-r1&doses=20261027-relatorio-dosagens-r1&condicoes=20261027-radar-condicoes-r1"></script>
     <script defer src="src/patient/patient_deletion_core-1.0.0.js?v=20261026-inicializacao-r1"></script>
     <script defer src="src/patient/patient_chart_read_core-1.0.0.js?v=20261026-inicializacao-r1"></script>
     <script defer src="src/patient/patient_registration_core-1.0.0.js?v=20261028-contatos-online-r1&audit=20261026-completa-r1"></script>
@@ -1647,8 +1651,8 @@
             <div class="actions"><button type="button" class="btn-primary" onclick="fecharInfoMotorClinico()">Entendi</button></div>
         </div>
     </div>
-    <script defer src="src/auth/login_access-1.18.0.js?v=20261026-inicializacao-r1"></script>
-    <script defer src="src/admin/access_admin-1.0.0.js?v=20261028-espelhar-agenda-r1"></script>
+    <script defer src="src/auth/login_access-1.18.0.js?v=20261029-acesso-r1"></script>
+    <script defer src="src/admin/access_admin-1.0.0.js?v=20261029-acesso-r1"></script>
     <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20261019-pagamento-contexto-r1&audit=20261026-completa-r1"></script>
     <script defer src="src/ui/ui_experience.js?v=20261025-interface-audit-r1"></script>
     <script defer src="src/home/home_profissional_dashboard-1.0.0.js?v=20261028-notificacoes-expansiveis-r1&meudia=20260915-owner-r1&crm_busca=20261019-r1"></script>

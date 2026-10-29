@@ -8,6 +8,13 @@ const KineSysLogin = (() => {
     let recoveryBusy = false, resetBusy = false;
     let entradaPendente = null, sessaoRevisao = 0;
     const el = id => document.getElementById(id);
+    const diagnostics=()=>typeof window!=='undefined'?window.KineSysAccessDiagnostics:null;
+    function record(stage,result,started,error){diagnostics()?.report(stage,result,{duracao_ms:Date.now()-started,status:error?.status});}
+    async function startupWait(task){
+        let timer;
+        try{return await Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>{const error=new Error('Tempo de conexão excedido');error.name='TimeoutError';reject(error);},12000);})]);}
+        finally{clearTimeout(timer);}
+    }
     const normalize = value => ({MASTER_FEM:'MASTER',PROFISSIONAL:'FISIOTERAPEUTA'})[value] || value;
     const known = value => Object.values(roles).flat().some(([id])=>id === normalize(value));
     const roleLabel = value => ({MASTER:'Administrador(a)',SECRETARIA:'Secretaria',FISIOTERAPEUTA:'Fisioterapeuta'})[normalize(value)] || normalize(value) || 'Perfil';
@@ -74,7 +81,7 @@ const KineSysLogin = (() => {
     async function resume() {
         if(recovery)return;
         const revisao=sessaoRevisao;
-        const active=await rpc('kinesys_perfil_sessao');
+        const active=await startupWait(rpc('kinesys_perfil_sessao'));
         if(recovery||revisao!==sessaoRevisao)return;
         if(active)await enter(active);
         else {if(usuarioLogado){location.reload();return;}usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}
@@ -84,27 +91,31 @@ const KineSysLogin = (() => {
         if(!pending.length && !el('login_form').reportValidity())return;
         if(pending.length && el('login_perfil').value===''){mostrarFeedbackLogin('Selecione o perfil para continuar.','aviso');return;}
         setBusy(true);mostrarFeedbackLogin(pending.length?'Validando o perfil selecionado…':'Verificando credenciais e perfis…');
+        let stage=pending.length?'ativacao':'credenciais',started=Date.now();
         try {
+            await diagnostics()?.begin(el('login_email').value);
+            record(stage,'iniciado',started);
             if(pending.length){
                 const chosen=pending.find(p=>String(p.id)===el('login_perfil').value);
                 const {data,error}=await _supabase.auth.getUser();
                 if(error || data?.user?.id!==pendingUser || !chosen)throw new Error('Sua sessão mudou. Entre novamente.');
-                await activate(chosen);return;
+                await activate(chosen);record('entrada','sucesso',started);return;
             }
             const email=el('login_email').value.trim().toLowerCase(),password=el('login_senha').value;
             if(!_supabase)throw new Error('Serviço de autenticação indisponível.');
             const {data,error}=await _supabase.auth.signInWithPassword({email,password});
             el('login_senha').value='';
-            if(error)throw new Error(mensagemErroAutenticacao(error));
+            if(error){const failure=new Error(mensagemErroAutenticacao(error));failure.code=error.code;failure.status=error.status;failure.name=error.name||'Error';throw failure;}
+            record('credenciais','sucesso',started);stage='perfis';
             const profiles=(await rpc('kinesys_meus_perfis') || []).filter(p=>known(p.tipo));
             if(!profiles.length){await _supabase.auth.signOut({scope:'local'});throw new Error('Esta conta não possui nenhum perfil ativo no KineSys. Procure o administrador da clínica.');}
-            if(profiles.length===1){await activate(profiles[0]);return;}
+            if(profiles.length===1){stage='ativacao';await activate(profiles[0]);record('entrada','sucesso',started);return;}
             pending=profiles.slice().sort((a,b)=>profileLabel(a).localeCompare(profileLabel(b),'pt-BR',{sensitivity:'base'}));
             loginPerfisDisponiveis=[...pending];pendingUser=data.user.id;
             el('login_perfil').replaceChildren(new Option('Selecione seu perfil',''),...pending.map(p=>new Option(profileLabel(p),String(p.id))));
             el('login_perfil_group').style.display='block';el('login_senha').required=false;el('login_email').readOnly=true;
             mostrarFeedbackLogin('Identidade confirmada. Escolha um dos perfis vinculados à sua conta.','sucesso');
-        } catch(error){usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();mostrarFeedbackLogin(error.message || 'Não foi possível entrar. Tente novamente.','erro');}
+        } catch(error){record(stage,diagnostics()?.classify(error)||'falha_desconhecida',started,error);usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();mostrarFeedbackLogin(error.message || 'Não foi possível entrar. Tente novamente.','erro');}
         finally{setBusy(false);if(pending.length)el('login_perfil').focus();}
     }
     async function sendRecovery() {
@@ -141,25 +152,28 @@ const KineSysLogin = (() => {
             const mensagem=el('ks_startup_message');if(mensagem)mensagem.textContent='A verificação está demorando. Confira a conexão ou recarregue a página.';
             const repetir=el('ks_startup_retry');if(repetir)repetir.hidden=false;
         },12000);
+        let stage='sessao',started=Date.now();record('inicializacao','iniciado',started);
         try{
             localStorage.removeItem('kinesys_sessao_logada');
             recovery=new URLSearchParams(location.search).get('recuperar')==='1';
             if(!_supabase)throw new Error('Serviço de autenticação indisponível.');
             const {data}= _supabase.auth.onAuthStateChange(event=>{
                 if(event==='PASSWORD_RECOVERY'){sessaoRevisao++;recoveryView();return;}
-                if(event==='SIGNED_OUT'){sessaoRevisao++;entradaPendente=null;usuarioLogado=null;clearPending();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
+                if(event==='SIGNED_OUT'){sessaoRevisao++;entradaPendente=null;usuarioLogado=null;clearPending();diagnostics()?.clearIdentity?.();if(typeof window!=='undefined')window.KineSysAccessAdmin?.clearDiagnostics?.();sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');return;}
                 if(event==='SIGNED_IN' && !busy && !recovery){setTimeout(()=>resume().catch(()=>{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}),0);}
             });authStateSubscription=data?.subscription;
             if(recovery){recoveryView();return;}
-            const {data:session,error}=await _supabase.auth.getSession();
+            const {data:session,error}=await startupWait(_supabase.auth.getSession());
             if(error)throw error;
-            if(session?.session)await resume();
+            if(session?.session){stage='perfis';await resume();}
             else {sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');}
-        }catch{usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');mostrarFeedbackLogin('Não foi possível recuperar o acesso. Entre novamente.','aviso');}
+            record('inicializacao','sucesso',started);
+        }catch(error){sessaoRevisao++;record(stage,diagnostics()?.classify(error)||'falha_desconhecida',started,error);usuarioLogado=null;sincronizarEstadoAutenticacaoVisual();navegarPara('tela_login');mostrarFeedbackLogin('Não foi possível recuperar o acesso. Entre novamente.','aviso');}
         finally{
             clearTimeout(espera);
-            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+            await new Promise(resolve=>{const fallback=setTimeout(resolve,500);requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(fallback);resolve();}));});
             document.body.removeAttribute('data-ks-startup');el('ks_startup')?.remove();
+            diagnostics()?.ready();
         }
     }
     document.addEventListener('DOMContentLoaded',()=>{
