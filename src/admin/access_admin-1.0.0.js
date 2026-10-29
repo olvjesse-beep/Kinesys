@@ -299,5 +299,27 @@
         observarConfiguracoesAtivas();
     }
 
-    window.KineSysAccessAdmin=Object.freeze({version:VERSION,open:abrir,validatePassword:validarSenha});
+    async function diagnosticos(){
+        if(!ehMaster())return;
+        let d=document.getElementById('ks_access_log_dialog');
+        if(!d){d=document.createElement('dialog');d.id='ks_access_log_dialog';d.className='ks-access-log-dialog';d.setAttribute('aria-labelledby','ks_access_log_title');
+            d.innerHTML='<h2 id="ks_access_log_title">Diagnósticos de acesso</h2><p>Últimos 14 dias · Horário de Brasília. A conta informada antes do login não comprova a identidade. Falhas sem conexão chegam quando o computador volta a se conectar.</p><label for="ks_access_log_search">Buscar conta ou código de atendimento</label><input id="ks_access_log_search" type="search"><p role="status" data-log-state></p><div class="ks-access-log-scroll" data-log-content></div><div class="actions"><button type="button" class="btn-secondary" data-log-close>Fechar</button></div>';
+            document.body.appendChild(d);d.querySelector('[data-log-close]').onclick=()=>d.close();
+        }
+        if(!d.open)d.showModal();
+        const profile=typeof usuarioLogado!=='undefined'?String(usuarioLogado?.id||''):'';
+        const state=d.querySelector('[data-log-state]'),content=d.querySelector('[data-log-content]');content.replaceChildren();state.textContent='Carregando registros…';
+        const labels={iniciado:'Tentativa iniciada',sucesso:'Concluído',credenciais_invalidas:'Credenciais recusadas',email_nao_confirmado:'E-mail não confirmado',limite_tentativas:'Limite de tentativas',rede_indisponivel:'Navegador sem conexão',falha_conexao:'Conexão falhou; DNS, bloqueio ou CORS não distinguíveis pelo navegador',tempo_esgotado:'Tempo de espera excedido',sessao_invalida:'Sessão inválida',acesso_negado:'Permissão recusada',servidor_indisponivel:'Servidor respondeu com erro',recurso_indisponivel:'Arquivo não carregou',erro_execucao:'Erro de execução',falha_desconhecida:'Causa não determinada'};
+        try{const {data,error}=await _supabase.rpc('kinesys_listar_diagnosticos_acesso');if(error)throw error;
+            if(!d.open||!ehMaster()||profile!==String(usuarioLogado?.id||'')){content.replaceChildren();d.close();return;}
+            const rows=Array.isArray(data)?data:[];
+            const render=()=>{const q=d.querySelector('input').value.trim().toLowerCase();const filtered=rows.filter(r=>[r.conta_informada,r.tentativa].join(' ').toLowerCase().includes(q));
+                state.textContent=filtered.length+' registro(s). Sem senhas, tokens ou dados clínicos. A causa de uma falha de rede pode exigir análise do computador.';
+                content.replaceChildren();const table=document.createElement('table'),head=table.createTHead().insertRow();['Horário','Conta informada','Etapa e resultado','Código'].forEach(text=>{const th=document.createElement('th');th.scope='col';th.textContent=text;head.appendChild(th);});
+                const body=table.createTBody();filtered.forEach(r=>{const row=body.insertRow();[new Date(r.ocorrido_em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}),r.conta_informada||'Não identificada',r.etapa+' · '+(labels[r.motivo]||'Causa não determinada')+(r.status?' · HTTP '+r.status:''),r.tentativa].forEach(value=>{const cell=row.insertCell();cell.textContent=String(value);});});content.appendChild(table);
+            };d.querySelector('input').value='';d.querySelector('input').oninput=render;render();
+        }catch(_){state.textContent='Não foi possível carregar os diagnósticos. Tente novamente quando a conexão voltar.';}
+    }
+    function limparDiagnosticos(){const d=document.getElementById('ks_access_log_dialog');if(d){d.querySelector('[data-log-content]')?.replaceChildren();const input=d.querySelector('input');if(input){input.value='';input.oninput=null;}if(d.open)d.close();}}
+    window.KineSysAccessAdmin=Object.freeze({version:VERSION,open:abrir,validatePassword:validarSenha,diagnostics:diagnosticos,clearDiagnostics:limparDiagnosticos});
 })();

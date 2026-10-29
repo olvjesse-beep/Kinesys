@@ -215,4 +215,20 @@ try {
  await db.query("update equipe set agendamento_online_ativo=false where id='public-prof-b'");await assert.rejects(publicBook('09:00',forB),/profissional/i,'Pessoa não publicada não aceita reserva por requisição direta');
  console.log('PASS reserva multiprofissional: mesmo horário para pessoas diferentes, conflitos próprios, ausência individual, bloqueio geral, serviço vinculado e publicação por profissional.');
  console.log('PASS public reservation: mirror accepts Agenda afternoon; manual mode, professional/clinic hours, block, overlap, lead time and idempotent rollback remain protected.');
+ // Diagnóstico isolado de credenciais: ingresso limitado, sem acesso anônimo aos registros.
+ await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/diagnostico_acesso.sql',root),'utf8'));
+ const diagCid='81111111-1111-4111-8111-111111111111',otherCid='82222222-2222-4222-8222-222222222222';
+ await db.query("insert into equipe(id,nome,email,clinica_id) values('diag-a','Conta sintética A','qa@example.invalid',$1),('diag-b','Conta sintética B','other@example.invalid',$2)",[diagCid,otherCid]);
+ const accountRef=(await db.query("select encode(sha256(convert_to('qa@example.invalid','UTF8')),'hex') r")).rows[0].r;
+ const event={id:'83333333-3333-4333-8333-333333333333',tentativa:'84444444-4444-4444-8444-444444444444',ocorrido_em:new Date().toISOString(),conta_ref:accountRef,etapa:'credenciais',motivo:'falha_conexao',status:null,duracao_ms:1200,online:true,password:'NAO_ARMAZENAR',token:'NAO_ARMAZENAR',clinica_id:otherCid};
+ const sendDiag=async(events)=>(await db.query('select kinesys_registrar_diagnostico_acesso($1::jsonb) r',[JSON.stringify(events)])).rows[0].r;
+ await db.exec('set role anon');assert.equal((await sendDiag([event])).ok,true);await assert.rejects(db.query('select * from kinesys_diagnosticos_acesso'),/permission denied/);await assert.rejects(db.query('select kinesys_listar_diagnosticos_acesso()'),/permission denied/);await db.exec('reset role');
+ assert.equal((await db.query('select count(*) n from kinesys_diagnosticos_acesso')).rows[0].n,1);await sendDiag([event]);assert.equal((await db.query('select count(*) n from kinesys_diagnosticos_acesso')).rows[0].n,1,'idempotência');
+ assert.equal((await sendDiag({senha:'x'})).ok,false);assert.equal((await sendDiag(Array(11).fill(event))).ok,false);assert.equal((await sendDiag([{...event,id:'malformado',motivo:'texto livre secreto'}])).recebidos.length,0);
+ const raw=(await db.query('select row_to_json(d)::text r from kinesys_diagnosticos_acesso d')).rows[0].r;assert(!raw.includes('NAO_ARMAZENAR'));assert(!raw.includes(otherCid));
+ await db.exec(`set test.clinica='${diagCid}';set test.papel='SECRETARIA';set role authenticated`);await assert.rejects(db.query('select kinesys_listar_diagnosticos_acesso()'),/restrito/);await db.exec('reset role');
+ await db.exec("set test.papel='MASTER';set role authenticated");assert.equal((await db.query('select kinesys_listar_diagnosticos_acesso() r')).rows[0].r[0].conta_informada,'Conta sintética A');await assert.rejects(db.query('select * from kinesys_diagnosticos_acesso'),/permission denied/);await db.exec('reset role');
+ await db.exec(`set test.clinica='${otherCid}'`);assert.equal((await db.query('select kinesys_listar_diagnosticos_acesso() r')).rows[0].r.length,0,'administrador de outra clínica não recebe registros de A');
+ await db.exec("update kinesys_diagnosticos_acesso set recebido_em=now()-interval '15 days'");await sendDiag([]);assert.equal((await db.query('select count(*) n from kinesys_diagnosticos_acesso')).rows[0].n,0,'retenção de 14 dias');
+ console.log('PASS diagnóstico SQL: admissão sem leitura anônima, idempotência, whitelist, retenção e isolamento MASTER/clínica.');
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

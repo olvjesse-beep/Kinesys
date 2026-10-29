@@ -45,6 +45,7 @@
     <div id="ks_startup" role="status" aria-live="polite">
         <strong>KineSys</strong><p id="ks_startup_message">Preparando seu acesso…</p>
         <button id="ks_startup_retry" type="button" hidden onclick="location.reload()">Recarregar</button>
+        <div id="ks_startup_diagnostico" hidden><p data-access-code></p><button type="button" data-access-download>Baixar diagnóstico</button></div>
     </div>
     <noscript><p class="ks-startup-noscript">Ative o JavaScript para acessar o KineSys.</p></noscript>
 
@@ -127,6 +128,7 @@
                         <p>Por segurança, não exibimos e-mails cadastrados nesta tela. Nunca envie sua senha a terceiros.</p><button class="ks-access-back" type="button" data-access-back>Voltar ao login</button>
                     </div>
                     <div id="login_feedback" role="status" aria-live="polite" class="ks-login-feedback" style="display:none"></div>
+                    <div id="login_diagnostico" hidden class="ks-access-diagnostic"><small data-access-code></small><button type="button" class="btn-secondary" data-access-download>Baixar diagnóstico</button></div>
                     <p class="ks-access-footer">Acesso exclusivo à equipe autorizada. Não compartilhe sua senha.</p>
                 </div>
             </div>
@@ -1051,6 +1053,7 @@
                 <div class="card-header">
                     <div>
                         <h2>Funcionários e acessos</h2>
+                        <button type="button" class="btn-secondary" onclick="KineSysAccessAdmin.diagnostics()">Diagnósticos de acesso</button>
                         <p class="field-help">Cadastre aqui administradores, secretárias e profissionais. Pacientes são cadastrados separadamente em “Novo paciente” e nunca aparecem nesta lista.</p>
                     </div>
                 </div>
@@ -1602,6 +1605,7 @@
 
 
 
+<script defer src="src/auth/access_diagnostics-1.0.0.js?v=20261029-acesso-r1"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="database/ocupacoes_esportes.js"></script>
     <script defer src="src/core/kinesys_data_cache-1.0.0.js?v=20260911-cache-r1"></script>
@@ -1647,7 +1651,7 @@
             <div class="actions"><button type="button" class="btn-primary" onclick="fecharInfoMotorClinico()">Entendi</button></div>
         </div>
     </div>
-    <script defer src="src/auth/login_access-1.18.0.js?v=20261026-inicializacao-r1"></script>
+    <script defer src="src/auth/login_access-1.18.0.js?v=20261029-acesso-r1"></script>
     <script defer src="src/admin/access_admin-1.0.0.js?v=20261028-espelhar-agenda-r1"></script>
     <script defer src="src/finance/financeiro_agendamento-1.21.0.js?v=20261019-pagamento-contexto-r1&audit=20261026-completa-r1"></script>
     <script defer src="src/ui/ui_experience.js?v=20261025-interface-audit-r1"></script>
