@@ -514,6 +514,9 @@
         const category=document.createElement('div');category.className='ks-fisio-day-category';category.textContent=clinica.rotuloSessao;
         const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=paciente?clinica.detalhe:'Prontuário indisponível · atualize para verificar avaliação e cuidados';
         content.appendChild(patientName);
+        const ultimaAvaliacao=paciente&&avaliacoesFinalizadas(paciente).slice().sort((a,b)=>String(b.realizadoEm||b.realizado_em||b.dataHoraISO||dataRegistro(b)).localeCompare(String(a.realizadoEm||a.realizado_em||a.dataHoraISO||dataRegistro(a)))||String(b.id||'').localeCompare(String(a.id||'')))[0];
+        const diagnostico=String(ultimaAvaliacao?.mapeamento?.clinicaEstruturada?.diagnosticoProfissional||'').trim();
+        if(diagnostico){const dx=document.createElement('p');dx.className='ks-fisio-day-diagnosis';dx.textContent='Diagnóstico: '+diagnostico;content.appendChild(dx);}
         const cuidados=paciente&&montarCuidados(paciente);if(cuidados)content.appendChild(cuidados);
         content.append(category,detail);
         const actions=document.createElement('div');actions.className='ks-fisio-day-actions';

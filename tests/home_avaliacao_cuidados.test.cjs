@@ -42,6 +42,12 @@ function setup(){
  p.avaliacoes=[{status:'finalizada',hma:'Paciente tem artrodese cervical C5-C6.'}];assert(api.cuidadosPaciente(p).some(i=>i.texto.includes('C5-C6')));
  p.avaliacoes=[{status:'finalizada',hma:'Sem artrodese. Prótese de quadril indicada. Pai possui marca-passo.'}];assert.equal(api.cuidadosPaciente(p).length,0);
  p.avaliacoes=[{status:'finalizada',hma:'Relata coxartrose com indicação para artroplastia total. Será submetido a artrodese lombar.'}];assert.equal(api.cuidadosPaciente(p).length,0);
+ // Diagnóstico é digitado pelo profissional, da avaliação finalizada mais recente.
+ const dx=(id,data,texto,status='finalizada')=>({id,realizadoEm:data,status,mapeamento:{clinicaEstruturada:{diagnosticoProfissional:texto}}});
+ p.avaliacoes=[dx('a2','2026-10-22T10:00:00Z','Prótese total de quadril esquerdo'),dx('a1','2026-10-21T10:00:00Z','Diagnóstico anterior'),dx('a3','2026-10-23T10:00:00Z','Rascunho não concluído','rascunho')];
+ let diagnoses=flatten(t.row(p)).filter(e=>e.className==='ks-fisio-day-diagnosis');assert.equal(diagnoses.length,1);assert.equal(diagnoses[0].textContent,'Diagnóstico: Prótese total de quadril esquerdo');
+ p.avaliacoes.push(dx('a4','2026-10-24T10:00:00Z',''));assert.equal(flatten(t.row(p)).filter(e=>e.className==='ks-fisio-day-diagnosis').length,0,'limpar na avaliação atual não ressuscita diagnóstico antigo');
+ p.avaliacoes=[{...dx('outro','2026-10-25','Não pode aparecer'),paciente_id:'outra-pessoa'}];assert.equal(flatten(t.row(p)).filter(e=>e.className==='ks-fisio-day-diagnosis').length,0);
  // Pipeline real de consulta, fotografia atômica, finalização e retorno à Home.
  t.schedule();t.patients=[t.patient()];assert.equal(await t.ctx.window.KineSysMeuDiaClinico.refresh(),true);
  assert(flatten(t.nodes.painel_fisio_lista).some(e=>e.textContent==='Realizar avaliação'));

@@ -118,6 +118,7 @@ jobs:
           node tests/evaluation_free_exam.test.cjs
           node tests/evaluation_semantic_facts.test.cjs
           node tests/evaluation_patient_isolation.test.cjs
+          node tests/evaluation_edit_flow.test.cjs
           node --check src/clinical/clinical_semantic_graph-1.0.0.js
           node --check src/clinical/clinical_reasoning_hma-3.0.0.js
           node --check src/clinical/clinical_reasoning_cervical-3.1.0.js
@@ -146,3 +147,4 @@ jobs:
           set -euo pipefail
           npm install --prefix "$RUNNER_TEMP/kinesys-db-regression" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.12
           PGLITE_MODULE="file://$RUNNER_TEMP/kinesys-db-regression/node_modules/@electric-sql/pglite/dist/index.js" node tests/pacotes_contrato_db.test.mjs
+          PGLITE_MODULE="file://$RUNNER_TEMP/kinesys-db-regression/node_modules/@electric-sql/pglite/dist/index.js" node tests/evaluation_edit_db.test.mjs

@@ -61,7 +61,7 @@ async function main(){
  }
  {
   const t=setup();let resolver,gravacoes=0;
-  Object.assign(t.c,{cargasPacienteAvaliacaoKineSys:0,validarRealizacaoClinicaInput:()=>'2026-10-21T10:00',alert(){},obterPacienteCompletoPorId:()=>new Promise(r=>resolver=r),salvarPacienteNaNuvem:()=>{gravacoes++;}});
+  Object.assign(t.c,{avaliacaoSalvandoKineSys:false,cargasPacienteAvaliacaoKineSys:0,validarRealizacaoClinicaInput:()=>'2026-10-21T10:00',alert(){},obterPacienteCompletoPorId:()=>new Promise(r=>resolver=r),salvarPacienteNaNuvem:()=>{gravacoes++;}});
   vm.runInContext(core.slice(core.indexOf('async function salvarAvaliacaoAtual('),core.indexOf('function chaveUsuarioRascunhoKineSys')),t.c);
   const salvar=t.c.salvarAvaliacaoAtual();t.next('paciente-b');resolver({id:'paciente-a'});await salvar;assert.equal(gravacoes,0);ok('troca de paciente durante salvamento aborta antes de gravar');
  }

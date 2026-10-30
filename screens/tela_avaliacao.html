@@ -28,8 +28,8 @@
                     </div>
                     <div class="input-group clinical-datetime-card kds-u-m-0">
                         <label for="avaliacao_realizado_em">Data e hora *</label>
-                        <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="Este horário inicia a janela fixa de 24 h para eventuais correções. O horário de salvamento é registrado separadamente.">
-                        <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">Este horário inicia a janela fixa de 24 h para eventuais correções. O horário em que o registro for salvo é carimbado separadamente.</small>
+                        <input type="datetime-local" id="avaliacao_realizado_em" aria-describedby="avaliacao_realizado_ajuda" title="A data e a autoria originais são preservadas. Correções ficam registradas no histórico.">
+                        <small id="avaliacao_realizado_ajuda" class="clinical-visually-hidden">A data e a autoria originais são preservadas. Correções ficam registradas no histórico.</small>
                     </div>
                 </div>
             </div>
@@ -264,6 +264,10 @@
                     <div class="input-group"><label for="ks_exame_livre_resultado">Resultado deste registro</label><select id="ks_exame_livre_resultado"><option value="">Não classificado</option><option value="positivo">Positivo</option><option value="negativo">Negativo</option><option value="inconclusivo">Inconclusivo</option></select></div>
                     <details><summary>Correlacionar com um teste do catálogo (opcional)</summary><div class="input-group"><label for="ks_exame_livre_vinculo">Hipótese e critério efetivamente examinados</label><select id="ks_exame_livre_vinculo"><option value="">Sem vínculo ao catálogo</option></select><small>Vincule somente se realizou o critério completo descrito. Achados livres sem correspondência entram na narrativa, mas não somam critérios de confirmação.</small></div></details>
                     <button type="button" class="btn-secondary" id="ks_exame_livre_adicionar">Adicionar ao exame</button><p id="ks_exame_livre_status" role="status"></p><div id="ks_exame_livre_registros" aria-label="Registros complementares do exame"></div>
+                </section>
+                <section class="card" aria-labelledby="avaliacao_diagnostico_titulo">
+                    <h3 id="avaliacao_diagnostico_titulo">Diagnóstico registrado pelo profissional</h3>
+                    <div class="input-group"><label for="avaliacao_diagnostico_profissional">Diagnóstico / condição clínica</label><textarea id="avaliacao_diagnostico_profissional" rows="2" maxlength="2000" placeholder="Ex.: Prótese total de quadril esquerdo" aria-describedby="avaliacao_diagnostico_ajuda"></textarea><small id="avaliacao_diagnostico_ajuda">Após finalizar a avaliação, este texto aparece abaixo do nome do paciente no Meu dia clínico. Registre lado e detalhes relevantes.</small></div>
                 </section>
                 <div class="cluster-focus-actions">
                     <button class="btn-secondary" onclick="irParaSubtela('subtela_triagem')">◀ Voltar à Anamnese</button>

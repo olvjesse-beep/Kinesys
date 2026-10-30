@@ -1,5 +1,12 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Edição de avaliações e diagnóstico profissional — 30/10/2026
+
+- Prontuário ativo oferece Editar avaliação e Histórico de edições, com escolha explícita por ID quando houver várias. Edição clínica usa a RPC `kinesys_editar_avaliacao`, revisão esperada, motivo e snapshots antes/depois na auditoria existente; não regrava outras avaliações, evoluções ou cadastro. Conflito/falha preserva o formulário. Autoria, realização, salvamento original, paciente, clínica e agendamento permanecem imutáveis. Correção de avaliação após 24h é explícita e auditada; a janela das evoluções permanece inalterada.
+- `clinicaEstruturada.diagnosticoProfissional` é texto do profissional após os testes. Limpa entre pacientes, persiste no JSON existente e aparece abaixo do nome no Meu dia clínico apenas a partir da avaliação finalizada mais recente (inclusive quando o campo atual estiver vazio, sem ressuscitar diagnóstico antigo). Não preencher pelo Radar nem transformar hipótese automaticamente em diagnóstico.
+- Antes de sair da Avaliação, trocar paciente ou iniciar outra, alterações não salvas exigem decisão; cancelar conserva o contexto. Diálogo assíncrono só retoma a ação no mesmo paciente/usuário/clínica. Fechar/recarregar recebe o aviso nativo do navegador. Rascunho local não equivale a salvamento no prontuário.
+- Executar `evaluation_edit_flow.test.cjs`, `evaluation_edit_db.test.mjs`, isolamento, contexto, Home e toda a barreira crítica hospedada com dados sintéticos. Não criar avaliações fictícias em produção para testes.
+
 ## Condições previamente informadas no Radar — 27/10/2026
 
 - Catálogo nominal de condições e procedimentos é separado dos clusters de investigação. Diagnóstico informado/documento mencionado não é confirmação pelo sistema, resultado de teste ou causa presumida de todas as queixas. Não alterar limiares nem ativar testes positivos por correspondência de nome.

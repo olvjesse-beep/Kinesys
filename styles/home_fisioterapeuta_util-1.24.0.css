@@ -227,3 +227,5 @@
 #card_painel_fisioterapeuta.ks-fisio-util-compact .is-rescheduled .ks-fisio-day-status{color:var(--kds-warning)}
 #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-row.is-waiting{background:var(--kds-surface-soft)}
 #card_painel_fisioterapeuta.ks-fisio-util-compact .is-waiting .ks-fisio-day-status{color:var(--kds-accent)}
+
+#card_painel_fisioterapeuta .ks-fisio-day-diagnosis{margin:4px 0 6px;font-size:13px;line-height:1.5;font-weight:600;color:inherit;white-space:normal;overflow-wrap:anywhere}

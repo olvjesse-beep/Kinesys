@@ -17,7 +17,7 @@
     const BUNDLES=Object.freeze({
         tela_avaliacao:Object.freeze({
             id:'avaliacao',
-            fragment:'screens/tela_avaliacao.html?v=20261026-eva-lightglass-r1',
+            fragment:'screens/tela_avaliacao.html?v=20261030-edicao-diagnostico-r1',
             styles:Object.freeze([
                 'styles/design_clinical.css?v=20261012-visual-harmony-r1',
                 'styles/design_clinical_direction-1.17.0.css',
