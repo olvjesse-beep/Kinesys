@@ -556,3 +556,12 @@ html body.ks-design-ready .ks-prontuario-export-modal>h2{padding-right:52px}
 .ks-patient-history-dialog caption{text-align:left;padding:0 0 12px;color:#607b80}
 .ks-patient-history-dialog th,.ks-patient-history-dialog td{padding:12px;border-bottom:1px solid #dce8e5;vertical-align:top;min-width:90px}
 .ks-patient-history-dialog th{background:#edf6f3;font-weight:700}
+
+/* Avaliações: seleção e comparação das versões, sem interferir nos outros diálogos. */
+#ks_patient_evaluation_edits{width:min(820px,calc(100vw - 28px));max-height:85vh;overflow:auto;padding:20px;border:1px solid var(--kds-line);border-radius:16px;color:var(--kds-text);background:var(--kds-surface)}
+#ks_patient_evaluation_edits::backdrop{background:rgba(15,47,53,.35)}
+#ks_patient_evaluation_edits header,#ks_patient_evaluation_edits .ks-evaluation-choice-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#ks_patient_evaluation_edits .ks-evaluation-choice{padding:16px 0;border-bottom:1px solid var(--kds-line)}
+#ks_patient_evaluation_edits pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:13px;padding:12px;background:var(--kds-surface-soft);border-radius:8px}
+#avaliacao_registros_paciente>button{margin:6px 0 6px 12px}
+#avaliacao_registros_paciente input{width:100%;box-sizing:border-box}

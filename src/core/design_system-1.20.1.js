@@ -252,8 +252,8 @@
         window.addEventListener('resize',()=>{
             if(window.innerWidth>820&&document.body.classList.contains('ks-nav-open')) setNavOpen(false);
         },{passive:true});
-        ctx.querySelector('.ks-patient-change').onclick=async()=>{if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);await definirPacienteContexto('');window.navegarPara('tela_buscar');setTimeout(()=>{const busca=document.getElementById('input_busca_paciente');busca?.focus();busca?.scrollIntoView({block:'center',behavior:'smooth'});},60);};
-        ctx.querySelector('.ks-patient-clear').onclick=async()=>{if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);await definirPacienteContexto('');const tela=document.querySelector('.tela.ativa')?.id||'';const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};const sel=document.getElementById(ids[tela]||'');if(sel){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}));const campo=document.getElementById(sel.id+'_busca')||sel;setTimeout(()=>campo.focus(),30);}};
+        ctx.querySelector('.ks-patient-change').onclick=async()=>{if(window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>ctx.querySelector('.ks-patient-change').click()))return;if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);if(await definirPacienteContexto('')===false)return;window.navegarPara('tela_buscar');setTimeout(()=>{const busca=document.getElementById('input_busca_paciente');busca?.focus();busca?.scrollIntoView({block:'center',behavior:'smooth'});},60);};
+        ctx.querySelector('.ks-patient-clear').onclick=async()=>{if(window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>ctx.querySelector('.ks-patient-clear').click()))return;if(typeof window.fecharRadarKineSys==='function')window.fecharRadarKineSys(true);if(await definirPacienteContexto('')===false)return;const tela=document.querySelector('.tela.ativa')?.id||'';const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};const sel=document.getElementById(ids[tela]||'');if(sel){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}));const campo=document.getElementById(sel.id+'_busca')||sel;setTimeout(()=>campo.focus(),30);}};
         ctx.querySelectorAll('[data-patient-target]').forEach(btn=>btn.addEventListener('click',()=>abrirPacienteNaTela(btn.dataset.patientTarget)));
         setTimeout(()=>{ if(typeof window.renderizarIndicadorNotificacoesAgenda==='function') window.renderizarIndicadorNotificacoesAgenda(); },0);
     }
@@ -288,6 +288,7 @@
         if(typeof window.navegarPara!=='function'||window.navegarPara.__ksWrapped)return;
         const orig=window.navegarPara;
         const wrapped=function(...args){
+            if((args[0]!=='tela_avaliacao'||!args[1])&&window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>window.navegarPara(...args)))return false;
             sincronizarIdentidadeContexto();preservarResumoPacienteNaNavegacao=args[1]===true;
             if((args[0]==='tela_buscar'&&!preservarResumoPacienteNaNavegacao)||args[0]==='tela_login')limparSelecaoPaciente();
             const r=orig.apply(this,args);
@@ -306,6 +307,7 @@
         try{const l=await window.obterPacientesSalvos();if(revisao!==contextoRevisao)return null;return (l||[]).find(p=>String(p.id)===String(id))||null;}catch(_){return null;}
     }
     async function definirPacienteContexto(id){
+        if(String(id||'')!==String(typeof pacienteAtualId!=='undefined'?pacienteAtualId||'':'')&&window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>definirPacienteContexto(id)))return false;
         sincronizarIdentidadeContexto();
         if(!id){limparSelecaoPaciente();return;}
         if(document.getElementById('tela_avaliacao')?.classList.contains('ativa')&&typeof pacienteAtualId!=='undefined'&&String(pacienteAtualId||'')!==String(id))window.iniciarContextoAvaliacaoKineSys?.(id);
@@ -383,7 +385,8 @@
     async function executarAcaoPacienteCard(acao,id){
         const pacienteId=String(id||'').trim();
         if(!pacienteId)return;
-        await definirPacienteContexto(pacienteId);
+        if(window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>executarAcaoPacienteCard(acao,id)))return;
+        if(await definirPacienteContexto(pacienteId)===false)return;
         if(acao==='selecionar'){
             await atualizarResumoPacienteContexto();
             return;
@@ -417,6 +420,8 @@
             if(typeof window.abrirHistoricoAgendamentosPaciente==='function')await window.abrirHistoricoAgendamentosPaciente(pacienteId);
             return;
         }
+        if(acao==='editar_avaliacao')return window.abrirEdicaoAvaliacoesPaciente?.(pacienteId);
+        if(acao==='historico_edicao')return window.abrirEdicaoAvaliacoesPaciente?.(pacienteId,true);
         if(acao==='consultar_avaliacao'||acao==='historico_evolucao'){
             const tela=acao==='consultar_avaliacao'?'tela_avaliacao':'tela_evolucao';
             if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
@@ -565,7 +570,7 @@
         const acoes=r.querySelector('.ks-prontuario-actions');
         if(acoes){
             const extra=document.createDocumentFragment();
-            [['editar','Editar cadastro','tela_cadastro'],['consultar_avaliacao','Consultar avaliação','tela_avaliacao'],['historico_evolucao','Histórico de evoluções','tela_evolucao'],['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
+            [['editar','Editar cadastro','tela_cadastro'],['consultar_avaliacao','Consultar avaliação','tela_avaliacao'],['editar_avaliacao','Editar avaliação','tela_avaliacao'],['historico_edicao','Histórico de edições','tela_avaliacao'],['historico_evolucao','Histórico de evoluções','tela_evolucao'],['agendamentos','Histórico de agendamentos','tela_agenda'],['financeiro','Financeiro','tela_financeiro']].forEach(([acao,label,tela])=>{
                 if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela))return;
                 const b=document.createElement('button');b.type='button';b.className='btn-secondary';b.dataset.ksPatientAction=acao;b.textContent=label;extra.append(b);
             });
@@ -780,7 +785,7 @@
     function wrapAberturaPaciente(){
         ['carregarPacienteParaEdicao','editarCadastro'].forEach(nome=>{
             const fn=window[nome];if(typeof fn!=='function'||fn.__ksContextWrapped)return;
-            const wrapped=async function(id,...rest){const carga=id?definirPacienteContexto(id):null,revisao=contextoRevisao;await carga;if(revisao!==contextoRevisao)return;return fn.call(this,id,...rest);};wrapped.__ksContextWrapped=true;window[nome]=wrapped;
+            const wrapped=async function(id,...rest){if(window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>window[nome](id,...rest)))return false;const carga=id?definirPacienteContexto(id):null,revisao=contextoRevisao;if(await carga===false)return false;if(revisao!==contextoRevisao)return;return fn.call(this,id,...rest);};wrapped.__ksContextWrapped=true;window[nome]=wrapped;
         });
     }
     function formatarDataDiretorio(valor){

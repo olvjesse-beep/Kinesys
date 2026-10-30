@@ -150,6 +150,8 @@ async function atualizarSelectPacientesPreCadastro() {
 async function carregarPacientePreCadastradoNaAvaliacao() {
     const select = document.getElementById('select_paciente_precadastro');
     if (!select) return;
+    const escolhaPaciente=select.value;
+    if(window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>{select.value=escolhaPaciente;window.carregarPacientePreCadastradoNaAvaliacao();})){select.value=String(pacienteAtualId||'');sincronizarBuscaPacientePreCadastro();return false;}
     cargasPacienteAvaliacaoKineSys++;
     try {
 
