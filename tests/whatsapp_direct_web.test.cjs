@@ -68,6 +68,9 @@ async function run(){
   const url=tag.match(/src="([^\"]+)"/)?.[1];assert(new URL(url,'https://kinesys.example').searchParams.get('v'),'consumidor deve ter revisão explícita');
  }
  assert(/agenda-1\.20\.0\.js\?v=[^'"\s]+/.test(loader),'Agenda deve ter revisão explícita no bundle lazy');
+ const revision=loader.match(/ASSET_REVISION='([^']+)'/)?.[1];
+ const loaderSrc=html.match(/src="(src\/ui\/screen_loader-1\.25\.0\.js\?[^\"]+)"/)?.[1];
+ assert(revision&&loaderSrc);assert.equal(new URL(loaderSrc,'https://kinesys.example').searchParams.get('v'),revision,'HTML deve invalidar o loader que entrega o novo lembrete');
  console.log('WhatsApp: Agenda, fila, CRM e Home abrem /send diretamente; número, texto, confirmação e cache preservados. Nenhuma mensagem enviada.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
