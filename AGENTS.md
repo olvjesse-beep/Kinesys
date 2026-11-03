@@ -1,5 +1,12 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Prévia e impressão de documentos A4 — 03/11/2026
+
+- Comparecimento, relatório e encaminhamento usam a mesma árvore paginada A4 na prévia e na impressão. Isolar os estilos do aplicativo, manter 210×297mm, fontes e área útil idênticas; diminuir a prévia por escala, sem refluir o texto. Timbre em imagem imprimível mesmo com gráficos de fundo desativados. Não voltar a esconder a interface somente com visibility:hidden.
+- Preservar todo o texto, datas, nomes, negações, doses, marcação e tabelas. Parágrafos extensos podem ser divididos sem truncar; repetir cabeçalhos de tabela e manter a assinatura inteira. Bloco que não couber deve impedir impressão com aviso, nunca desaparecer silenciosamente.
+- Imprimir somente após recursos e paginação prontos; impedir duplo clique, impressão de prévia antiga/oculta e troca de documento durante o registro na timeline. O menu nativo também deve receber as mesmas páginas, sem estilos da navegação. Não alterar dados ou regras de emissão para corrigir diagramação.
+- Executar contratos documentais, report_print_fidelity.test.cjs e report_print_browser.test.cjs na barreira hospedada. Chrome e PDF usam somente fixtures locais sintéticos, rede externa bloqueada e evidências sem pacientes reais. Comparar conteúdo, A4, páginas e pixels; não afrouxar testes para publicar.
+
 ## Edição de avaliações e diagnóstico profissional — 30/10/2026
 
 - Prontuário ativo oferece Editar avaliação e Histórico de edições, com escolha explícita por ID quando houver várias. Edição clínica usa a RPC `kinesys_editar_avaliacao`, revisão esperada, motivo e snapshots antes/depois na auditoria existente; não regrava outras avaliações, evoluções ou cadastro. Conflito/falha preserva o formulário. Autoria, realização, salvamento original, paciente, clínica e agendamento permanecem imutáveis. Correção de avaliação após 24h é explícita e auditada; a janela das evoluções permanece inalterada.

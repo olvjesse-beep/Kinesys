@@ -203,31 +203,60 @@
         /* ==========================================================================
            DOCUMENTOS FISIOFIX — padrão editorial clínico
            ========================================================================== */
-        .documento-timbrado{
+        .documento-preview{
             position: relative;
-            background: transparent;
+            width: 100%;
             max-width: 210mm;
-            min-height: 297mm;
             margin: 0 auto;
-            box-shadow: 0 8px 24px rgba(0,0,0,.10);
             overflow: hidden;
         }
+        .documento-preview-frame{
+            position: absolute;
+            inset: 0 auto auto 0;
+            display: block;
+            border: 0;
+            width: 210mm;
+            transform-origin: top left;
+        }
+        .ks-documento-paginado{
+            width: 210mm;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #fff;
+            color: #17272C;
+            font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .documento-timbrado{
+            position: relative;
+            flex: none;
+            background: #fff;
+            width: 210mm;
+            height: 297mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            overflow: hidden;
+            break-after: page;
+            page-break-after: always;
+        }
+        .documento-timbrado:last-child{break-after:auto;page-break-after:auto}
         .documento-timbrado .timbrado-fundo{
             position: absolute;
             top: 0; left: 0;
             width: 210mm;
             height: 297mm;
-            background-image: url("../assets/timbrado-fisiofix.png");
-            background-size: 210mm 297mm;
-            background-repeat: no-repeat;
-            background-position: top left;
+            display: block;
+            max-width: none;
             z-index: 0;
             pointer-events: none;
             opacity: .96;
         }
         /* Timbrado multiprofissional: neutraliza nome/CREFITO fixos da arte antiga. */
-        .documento-timbrado .timbrado-fundo::after{
-            content: "";
+        .documento-timbrado .timbrado-mascara{
             position: absolute;
             left: 54%;
             top: 89.0%;
@@ -261,15 +290,21 @@
             pointer-events: none;
         }
         .documento-timbrado .timbrado-conteudo{
-            position: relative;
+            position: absolute;
             z-index: 1;
-            padding: 49mm 22mm 48mm 28mm;
+            display: flow-root;
+            top: 49mm;
+            left: 28mm;
+            width: 160mm;
+            height: 194mm;
+            padding: 0;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 11.3pt;
             line-height: 1.43;
             color: #17272C;
             text-align: left;
-            hyphens: auto;
+            overflow-wrap: anywhere;
+            hyphens: none;
         }
         .documento-timbrado .timbrado-conteudo .abnt-titulo, .documento-timbrado .timbrado-conteudo .doc-titulo{
             font-family: Arial, Helvetica, sans-serif;
@@ -607,80 +642,18 @@
 
 
 
-        /* --- IMPRESSÃO --- */
+        /* Só a folha isolada é impressa: nenhuma mudança de fonte, largura,
+           margem interna ou quebra de página entre prévia e papel. */
         @media print {
-            @page { size: A4; margin: 49mm 22mm 54mm 28mm; }
-            html, body{ margin: 0 !important; padding: 0 !important; background: #fff !important; }
-            body *{
-                visibility: hidden;
+            @page { size: A4 portrait; margin: 0; }
+            .ks-documento-paginado { display: block; gap: 0; }
+            body[data-ks-documento-impressao] {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
             }
-            #preview_relatorio_container, #preview_relatorio_container *{
-                visibility: visible;
-            }
-            #preview_relatorio_container{
-                position: static;
-                width: auto;
-                height: auto;
-                margin: 0;
-                padding: 0;
-                background: transparent;
-                z-index: 99999;
-                display: block !important;
-            }
-            .documento-timbrado{
-                box-shadow: none;
-                max-width: 100%;
-                min-height: 0;
-                margin: 0;
-                overflow: visible;
-                background: transparent !important;
-            }
-            /* position:fixed faz o timbre repetir em TODAS as páginas impressas
-               (inclusive quando Avaliação/Encaminhamento ocupam mais de 1 folha) */
-            .documento-timbrado .timbrado-fundo{
-                position: fixed;
-                top: -49mm;
-                left: -28mm;
-            }
-            .documento-timbrado::before{
-                position: fixed;
-                top: -43mm;
-                right: -19mm;
-                width: 40mm;
-                height: 31mm;
-                font-size: 13.2pt;
-                line-height: 1.22;
-            }
-            .documento-timbrado .timbrado-conteudo{
-                padding: 0;
-                font-size: 11.3pt;
-                line-height: 1.43;
-                text-align: left;
-                color: #17272C;
-                background: transparent !important;
-            }
-            .documento-timbrado .doc-secao{
-                break-inside: auto !important;
-                page-break-inside: auto !important;
-                background: transparent !important;
-            }
-            .documento-timbrado .doc-secao, .documento-timbrado .doc-secao p, .documento-timbrado .fechamento-documento, .documento-timbrado .assinatura-dinamica{
-                background: transparent !important;
-            }
-            .documento-timbrado .fechamento-documento{
-                min-height: 66mm !important;
-                padding-bottom: 7mm !important;
-                break-inside: avoid-page !important;
-                page-break-inside: avoid !important;
-            }
-            .documento-timbrado .fechamento-documento .assinatura-dinamica{
-                padding-top: 27mm !important;
-                break-inside: avoid-page !important;
-                page-break-inside: avoid !important;
-            }
-            .actions, .btn-primary, .btn-secondary{
-                display: none !important;
-            }
+            body[data-ks-documento-impressao] > :not(#ks_documento_impressao) { display: none !important; }
+            body[data-ks-documento-impressao] > #ks_documento_impressao { display: block !important; width: 210mm; }
         }
 
         /* ============================================================

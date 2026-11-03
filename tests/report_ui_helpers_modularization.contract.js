@@ -31,8 +31,8 @@ assert.doesNotMatch(mod, /estadoMapeamento|processarRadar|analisarHMA|clinical/i
 const modulePos = html.indexOf('src/reports/report_ui_helpers_core-1.0.0.js');
 const corePos = html.indexOf('src/core/script-1.18.0.js');
 assert.ok(modulePos >= 0 && corePos > modulePos, 'ordem deve manter report UI helpers antes do monólito');
-assert.match(html, /src\/reports\/report_ui_helpers_core-1\.0\.0\.js\?v=20260911-phase4s-r1/,
-  'módulo 4S deve usar cache-buster próprio');
+assert.match(html, /src\/reports\/report_ui_helpers_core-1\.0\.0\.js\?v=\d{8}-[\w-]+/,
+  'módulo de apresentação deve usar cache-buster próprio');
 assert.match(html, /core_mod=20260911-phase4[a-z]+-r\d+/,
   'cache-bust do monólito deve permanecer versionado na série Phase 4');
 
@@ -47,7 +47,7 @@ function element(initial = {}) {
   };
 }
 
-const documento = element();
+const documento = element({clientWidth:640,replaceChildren(){this.children=[];},appendChild(el){this.children.push(el);},children:[]});
 const preview = element();
 const entrada = element({value:'08:00'});
 const saida = element({value:'09:30'});
@@ -60,12 +60,14 @@ const elements = {
   rel_comp_duracao: duracao
 };
 const listeners = {};
+const frame=element({setAttribute(){},addEventListener(type,fn){this[type]=fn;},contentDocument:{fonts:{ready:Promise.resolve()},querySelector(){return {sheet:{}};},images:[],body:{getBoundingClientRect(){return {width:794};},scrollHeight:1123}},contentWindow:{}});
 const context = {
   document: {
     getElementById(id){ return elements[id] || null; },
-    addEventListener(type, handler){ listeners[type] = handler; }
+    addEventListener(type, handler){ listeners[type] = handler; },
+    createElement(){return frame;},baseURI:'https://app.example.test/'
   },
-  encodeURIComponent
+  encodeURIComponent,URL,setTimeout,clearTimeout,console
 };
 vm.createContext(context);
 vm.runInContext(mod, context, {filename:'src/reports/report_ui_helpers_core-1.0.0.js'});
@@ -85,12 +87,16 @@ entrada.value='10:00'; saida.value='10:45';
 listeners.change({target:{id:'rel_comp_saida'}});
 assert.equal(duracao.value, '0h 45min');
 
+let textoPaginado='';
+context.paginarDocumentoKineSys=(doc,texto,arte)=>{textoPaginado=texto;assert.match(arte,/assets\/timbrado-fisiofix\.png$/);};
+context.criarEspelhoImpressaoDocumentoKineSys=()=>null;
 context.montarDocumentoComTimbrado('<p>Conteúdo</p>');
-assert.match(documento.innerHTML, /timbrado-fundo/);
-assert.match(documento.innerHTML, /<p>Conteúdo<\/p>/);
+assert.equal(documento.children[0],frame);
+assert.match(frame.srcdoc,/ks-documento-paginado/);
 assert.equal(preview.style.display, 'block');
 assert.equal(preview.scrollCalls.length, 1);
 assert.equal(preview.scrollCalls[0].behavior, 'smooth');
+frame.load().then(()=>assert.equal(textoPaginado,'<p>Conteúdo</p>'));
 
 assert(core.includes('montarDocumentoComTimbrado('), 'consumidores do timbrado devem permanecer no runtime');
 assert(core.includes('formatarDataBR('), 'consumidores de formatação de data devem permanecer no runtime');

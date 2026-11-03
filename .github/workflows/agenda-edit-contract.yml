@@ -119,6 +119,10 @@ jobs:
           node tests/evaluation_semantic_facts.test.cjs
           node tests/evaluation_patient_isolation.test.cjs
           node tests/evaluation_edit_flow.test.cjs
+          node --check src/reports/report_ui_helpers_core-1.0.0.js
+          node --check src/core/document_timeline_core-1.0.0.js
+          node tests/report_ui_helpers_modularization.contract.js
+          node tests/document_timeline_modularization.contract.js
           node --check src/clinical/clinical_semantic_graph-1.0.0.js
           node --check src/clinical/clinical_reasoning_hma-3.0.0.js
           node --check src/clinical/clinical_reasoning_cervical-3.1.0.js
@@ -148,3 +152,19 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/kinesys-db-regression" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.12
           PGLITE_MODULE="file://$RUNNER_TEMP/kinesys-db-regression/node_modules/@electric-sql/pglite/dist/index.js" node tests/pacotes_contrato_db.test.mjs
           PGLITE_MODULE="file://$RUNNER_TEMP/kinesys-db-regression/node_modules/@electric-sql/pglite/dist/index.js" node tests/evaluation_edit_db.test.mjs
+      - name: Isolated A4 preview and Chrome PDF fidelity regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/kinesys-print-regression" --ignore-scripts --no-audit --no-fund --package-lock=false jsdom@26.1.0 playwright-core@1.56.1
+          python -m pip install --disable-pip-version-check --quiet pypdf==6.21.4 pypdfium2==5.14.0 pillow==13.0.0
+          JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/report_print_fidelity.test.cjs
+          PLAYWRIGHT_CORE_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/playwright-core" REPORT_PRINT_OUTPUT="$RUNNER_TEMP/kinesys-print-evidence" node tests/report_print_browser.test.cjs
+      - name: Preserve synthetic print evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-print-fidelity
+          path: ${{ runner.temp }}/kinesys-print-evidence
+          if-no-files-found: ignore
+          retention-days: 7
