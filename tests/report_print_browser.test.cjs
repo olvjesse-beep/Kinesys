@@ -22,7 +22,7 @@ let browser;
   await page.goto(origin+'/__audit_fixture?documento='+caso);
   await page.waitForFunction(()=>document.querySelector('#ks_documento_impressao')?.shadowRoot?.querySelector('article'));
   const frame=page.frameLocator('iframe.documento-preview-frame');
-  const metrics=await frame.locator('body').evaluate(el=>({pages:el.children.length,text:[...el.querySelectorAll('.timbrado-conteudo')].map(c=>c.textContent).join(''),rects:[...el.querySelectorAll('.timbrado-conteudo')].map(c=>({x:c.getBoundingClientRect().x,y:c.getBoundingClientRect().y%c.closest('article').getBoundingClientRect().height,width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height,font:getComputedStyle(c).font})),overflow:[...el.querySelectorAll('.timbrado-conteudo')].some(c=>c.scrollHeight>c.clientHeight+1),rows:el.querySelectorAll('tbody>tr').length,signatures:el.querySelectorAll('.assinatura-dinamica').length}));
+  const metrics=await frame.locator('body').evaluate(el=>({pages:el.children.length,text:[...el.querySelectorAll('.timbrado-conteudo')].map(c=>c.innerText).join(''),rects:[...el.querySelectorAll('.timbrado-conteudo')].map(c=>({x:c.getBoundingClientRect().x,y:c.getBoundingClientRect().y%c.closest('article').getBoundingClientRect().height,width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height,font:getComputedStyle(c).font})),overflow:[...el.querySelectorAll('.timbrado-conteudo')].some(c=>c.scrollHeight>c.clientHeight+1),rows:el.querySelectorAll('tbody>tr').length,signatures:el.querySelectorAll('.assinatura-dinamica').length}));
   assert(!metrics.overflow);assert.equal(metrics.signatures,1);
   if(caso==='comparecimento')assert.equal(metrics.pages,1);else assert(metrics.pages>1);
   if(caso==='tabela')assert.equal(metrics.rows,45);
@@ -57,7 +57,9 @@ for item in json.loads((out/'metricas.json').read_text()):
  name=item['caso'];reader=PdfReader(out/(name+'.pdf'))
  assert len(reader.pages)==item['pages'],(name,'quantidade de folhas divergente',len(reader.pages),item['pages'])
  texto=''.join(p.extract_text() for p in reader.pages)
- texto=re.sub(r'FISIOTERAPIA\s*REABILITAÇÃO\s*MOVIMENTO','',texto)
+ # Chrome inclui o pseudo-elemento institucional e sua camada de sombra na
+ # extração; comparar o conteúdo clínico visível (incluindo text-transform).
+ texto=re.sub(r'(?:FISIOTERAPIA\s*)+(?:REABILITAÇÃO\s*)+(?:MOVIMENTO\s*)+','',texto)
  assert norm(texto)==norm(item['text']),(name,'conteúdo textual divergente')
  pdf=pdfium.PdfDocument(str(out/(name+'.pdf')))
  for i,page in enumerate(pdf):

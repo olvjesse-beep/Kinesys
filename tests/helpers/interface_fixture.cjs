@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
   KineSysContextoAnamnese.atualizarAlertas(qaAlertas);const dock=document.getElementById('radar_flutuante_container');document.getElementById('ks_radar_context_host').append(dock);dock.classList.add('radar-contexto-avaliacao');qaRadar(qaAlertas);
  }
  document.querySelectorAll('[onclick*="salvar"],[onclick*="cadastrar"],[onclick*="excluir"],[onclick*="Pagamento"],[onclick*="gerarProntuario"]').forEach(b=>b.disabled=true);
- document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
+ if(!documentoQa)document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
  if(new URLSearchParams(location.search).get('agendaExcecoes')==='1')qaPrepararAgendaExcecoes();
 },50));
 ${agendaExcecoes}
