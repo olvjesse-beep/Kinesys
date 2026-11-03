@@ -33,7 +33,9 @@ let browser;
   await page.getByRole('button',{name:'Imprimir ou exportar PDF',exact:true}).click();
   assert.equal(await page.evaluate(()=>document.querySelector('iframe.documento-preview-frame').contentWindow.__qaImpressions),1);
   const folhas=frame.locator('article');
-  for(let i=0;i<metrics.pages;i++)await folhas.nth(i).screenshot({path:path.join(out,caso+'-previa-'+(i+1)+'.png')});
+  // Capturar a folha, sem o cabeçalho fixo do aplicativo que passa por cima
+  // do iframe durante a rolagem automática da captura de páginas extensas.
+  for(let i=0;i<metrics.pages;i++)await folhas.nth(i).screenshot({path:path.join(out,caso+'-previa-'+(i+1)+'.png'),style:'#ks_topbar,#ks_sidebar{visibility:hidden!important}'});
   await page.pdf({path:path.join(out,caso+'.pdf'),preferCSSPageSize:true,printBackground:false,displayHeaderFooter:false});
   // A saída em PDF também exercita beforeprint/afterprint do menu nativo.
   assert.equal(await page.locator('body').getAttribute('data-ks-documento-impressao'),null);
@@ -64,7 +66,9 @@ for item in json.loads((out/'metricas.json').read_text()):
  pdf=pdfium.PdfDocument(str(out/(name+'.pdf')))
  for i,page in enumerate(pdf):
   box=reader.pages[i].mediabox
-  assert abs(float(box.width)-595.276)<.3 and abs(float(box.height)-841.89)<.3,(name,'papel não é A4')
+  # Chrome quantiza mm em pontos: A4 210mm resulta em 594.95996pt
+  # (209.89mm). Tolerância de 0.5pt, inferior a 0.18mm, sem aceitar Letter.
+  assert abs(float(box.width)-595.276)<.5 and abs(float(box.height)-841.89)<.5,(name,'papel não é A4')
   papel=page.render(scale=96/72).to_pil().convert('RGB')
   previa=Image.open(out/(name+'-previa-'+str(i+1)+'.png')).convert('RGB')
   assert abs(papel.width-previa.width)<=1 and abs(papel.height-previa.height)<=1,(name,'dimensão divergente',papel.size,previa.size)

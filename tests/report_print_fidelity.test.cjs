@@ -40,6 +40,10 @@ const varios=paginar(paragrafos+assinatura);assert(varios.folhas.length>1);asser
 for(let i=0;i<35;i++)assert.equal(varios.texto.split('Registro '+i+':').length-1,1);
 const longo='<section class="doc-secao"><h3 class="doc-secao-titulo">Achados</h3><p>'+Array.from({length:350},(_,i)=>'Trecho '+i+' <strong>sem dor</strong> à esquerda, 75 mg. ').join('')+'</p></section>';
 const fragmentado=paginar(longo+assinatura);assert(fragmentado.folhas.length>2);
+for(const classe of ['doc-titulo','abnt-titulo']){
+ const comTitulo=paginar('<p class="'+classe+'">Título</p><p>'+('Texto extenso com marcação. '.repeat(300))+'</p>'+assinatura);
+ assert(comTitulo.folhas[0].querySelector('.timbrado-conteudo').textContent.length>100,'não isolar o título numa folha vazia antes de parágrafo extenso');
+}
 const origem=doc.createElement('div');origem.innerHTML=longo+assinatura;assert.equal(fragmentado.texto,origem.textContent,'não perder/reordenar texto, negativa, dose ou marcação');
 assert.equal(fragmentado.folhas.flatMap(f=>[...f.querySelectorAll('strong')]).filter(el=>el.textContent==='sem dor').length,350);
 const tabela='<table class="doc-quadro-medidas"><thead><tr><th>Registro</th><th>Valor</th></tr></thead><tbody>'+Array.from({length:70},(_,i)=>'<tr><td>Item '+i+':</td><td>'+i+' mm</td></tr>').join('')+'</tbody></table>';

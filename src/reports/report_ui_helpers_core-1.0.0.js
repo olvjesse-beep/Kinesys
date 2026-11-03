@@ -102,7 +102,7 @@ function paginarDocumentoKineSys(doc, htmlConteudo, arte) {
     const temTexto = () => !!conteudo.textContent.trim();
     const seguirPagina = () => {
         const anterior = conteudo.lastElementChild;
-        const titulo = anterior?.matches('h1,h2,h3,h4,.doc-secao-titulo') ? anterior : null;
+        const titulo = anterior?.matches('h1,h2,h3,h4,.doc-secao-titulo,.doc-titulo,.abnt-titulo') ? anterior : null;
         if (titulo) titulo.remove();
         if (temTexto()) novaPagina();
         if (titulo) conteudo.appendChild(titulo);
