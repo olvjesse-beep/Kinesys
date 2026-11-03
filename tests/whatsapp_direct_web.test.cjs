@@ -23,10 +23,35 @@ async function run(){
  vm.createContext(c);vm.runInContext(section(agenda,'async function enviarLembreteAgendamentoAtual()','/* --------------------------------------------------------------------'),c);
  const sending=c.enviarLembreteAgendamentoAtual();assert.equal(urls.length,0);release(text);await sending;
  expectURL(urls.pop());assert.equal(writes.length,1);assert.equal(writes[0].id,a.id);assert.equal(refresh,1);
+ // Responsável e paciente não podem se confundir, mesmo com modelo antigo salvo.
+ vm.runInContext(section(agenda,'function montarLembreteResponsavelAgenda(','async function enviarLembreteAgendamentoAtual()'),c);
+ c.instanteAgendaSaoPaulo=()=>({data:'2026-11-03'});
+ const dependente={id:'fixture-dependente',data:'2026-11-04',hora_inicio:'15:00:00',pacientes:{nome:'Paciente sintético',telefone:'38999990000'}};
+ const responsavel={usaResponsavel:true,nomeDestinatario:'Responsável sintético',telefone:'11999990000'};
+ c.agendamentoDetalheAtualId=dependente.id;c.agendaAgendamentosSemanaCache=[dependente];
+ c.obterContatoAgendaPaciente=()=>responsavel;
+ c.obterMensagemPadraoConfigurada=async()=> 'Olá! Sobre o atendimento de alguém. Confirme sua sessão.';
+ await c.enviarLembreteAgendamentoAtual();
+ const aviso=new URL(urls.pop());assert.equal(aviso.searchParams.get('phone'),'5511999990000');
+ assert.equal(aviso.searchParams.get('text'),'Olá, Responsável sintético! Aqui quem fala é a Larissa da Fisiofix, tudo bem?\n\nEstou entrando em contato para lembrar da sessão de Paciente sintético amanhã, dia 04/11/2026 às 15:00 no endereço Rua Rosalvo Carvalho, n° 324B - João Botelho.\n\nPosso confirmar a presença?');
+ assert.equal(writes.at(-1).id,dependente.id);
+ for(const [data,hoje,termo] of [['2026-11-03','2026-11-03','hoje, dia 03/11/2026'],['2026-11-06','2026-11-03','no dia 06/11/2026'],['2027-01-01','2026-12-31','amanhã, dia 01/01/2027']]){
+  const msg=c.montarLembreteResponsavelAgenda({...dependente,data},responsavel,hoje);assert(msg.includes(termo));
+  assert(!msg.includes('sua sessão')&&!msg.includes('Sobre o atendimento de'));
+ }
+ // Brasília define “amanhã”, inclusive após a virada do dia em UTC.
+ vm.runInContext(section(agenda,'function instanteAgendaSaoPaulo(','function posicaoMarcadorAgenda('),c);
+ assert.equal(c.instanteAgendaSaoPaulo(new Date('2026-11-04T00:30:00Z')).data,'2026-11-03');
+ // Navegar para outro agendamento durante a consulta não abre mensagem nem marca outro lembrete.
+ c.obterMensagemPadraoConfigurada=()=>new Promise(resolve=>release=resolve);
+ const antes=urls.length,gravacoes=writes.length;
+ const tardio=c.enviarLembreteAgendamentoAtual();c.agendamentoDetalheAtualId='outro-agendamento';release(text);await tardio;
+ assert.equal(urls.length,antes);assert.equal(writes.length,gravacoes);
+ c.agendamentoDetalheAtualId=a.id;c.agendaAgendamentosSemanaCache=[a];c.obterContatoAgendaPaciente=p=>({telefone:p.telefone});
  // Oferta da lista de espera continua sem agendar se não houver confirmação explícita.
  c.agendaListaEsperaCache=[{id:'fixture-fila',pacientes:patient}];c.listaEsperaCombinaComVaga=()=>true;c.confirmarKineSys=async()=>false;c.obterMensagemPadraoConfigurada=async()=>text;
  vm.runInContext(section(agenda,'async function abrirOfertaListaEspera(','async function ',),c);
- await c.abrirOfertaListaEspera('profissional','2026-10-23','17:00','18:00');expectURL(urls.pop());assert.equal(writes.length,1);
+ await c.abrirOfertaListaEspera('profissional','2026-10-23','17:00','18:00');expectURL(urls.pop());assert.equal(writes.length,gravacoes);
  // CRM profissional: texto e número pertencem à seleção atual e permanecem codificados uma vez.
  const cc={console,Date,encodeURIComponent,usuarioLogado:{id:'u',clinica_id:'c'},alert:message=>assert.fail(message),
   document:{addEventListener(){},createElement:()=>({...anchor(),style:{}}),body:{appendChild(){},removeChild(){}}},obterContatoPreferencialPaciente:p=>({telefone:p.telefone}),

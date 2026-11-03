@@ -178,6 +178,8 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 
 ## 14. Contrato permanente dos atalhos de WhatsApp
 
+- Lembrete da Agenda dirigido ao responsável usa a saudação com o nome do contato e o corpo identifica explicitamente o paciente da sessão. Formato solicitado em 03/11/2026: apresentação da Larissa/Fisiofix, sessão de {paciente}, data/hora/endereço e “Posso confirmar a presença?”. Não herdar “sua sessão” nem inserir “Sobre o atendimento de” na saudação. “Hoje”/“amanhã” seguem a data civil de Brasília; outras datas usam “no dia”. Preservar mensagem configurada para o próprio paciente e não abrir nem registrar outro agendamento se houver troca durante a consulta assíncrona. Verificar em whatsapp_direct_web.test.cjs sem envio real.
+
 - Agenda (lembrete e lista de espera), CRM e Home administrador abrem diretamente `https://web.whatsapp.com/send?phone=...&text=...`, com número internacional e mensagem codificada, sem `wa.me`/`api.whatsapp.com` como etapa intermediária. O envio continua manual, sem clicar em Enviar automaticamente.
 - Não afirmar que o KineSys consegue inspecionar a sessão ou controlar uma aba externa já aberta. O WhatsApp verifica o login do próprio perfil do navegador; sessão desconectada pode exigir autenticação.
 - Invalidar os assets de todos os consumidores e executar `whatsapp_direct_web.test.cjs` na barreira hospedada. Preservar destinatário responsável/dependente, texto configurado e o registro de lembrete; usar somente destinatários sintéticos nos testes, sem enviar mensagens reais.

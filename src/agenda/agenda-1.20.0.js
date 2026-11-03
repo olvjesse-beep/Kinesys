@@ -3938,8 +3938,19 @@ async function cancelarAgendamentoAtual() {
     await marcarStatusAgendamento('cancelado');
 }
 
+function montarLembreteResponsavelAgenda(agendamento, contato, dataReferencia = instanteAgendaSaoPaulo().data) {
+    const data = String(agendamento.data || '').slice(0, 10);
+    const dataFormatada = data.split('-').reverse().join('/');
+    const diferencaDias = (Date.parse(data + 'T12:00:00Z') - Date.parse(dataReferencia + 'T12:00:00Z')) / 86400000;
+    const quando = diferencaDias === 1 ? 'amanhã, dia' : diferencaDias === 0 ? 'hoje, dia' : 'no dia';
+    const destinatario = String(contato.nomeDestinatario || '').trim() || 'responsável';
+    const paciente = String(agendamento.pacientes?.nome || '').trim() || 'paciente';
+    return `Olá, ${destinatario}! Aqui quem fala é a Larissa da Fisiofix, tudo bem?\n\nEstou entrando em contato para lembrar da sessão de ${paciente} ${quando} ${dataFormatada} às ${horaCurta(agendamento.hora_inicio)} no endereço Rua Rosalvo Carvalho, n° 324B - João Botelho.\n\nPosso confirmar a presença?`;
+}
+
 async function enviarLembreteAgendamentoAtual() {
     if (!agendamentoDetalheAtualId) return;
+    const agendamentoEnvioId = agendamentoDetalheAtualId;
     const a = agendaAgendamentosSemanaCache.find(x => x.id === agendamentoDetalheAtualId) || agendaAgendamentosDoDiaCache.find(x => x.id === agendamentoDetalheAtualId);
     if (!a) return;
     const contato = obterContatoAgendaPaciente(a.pacientes);
@@ -3967,9 +3978,13 @@ async function enviarLembreteAgendamentoAtual() {
         confirmacao: chamadaConfirmacao,
         link_confirmacao: linkConfirmacao
     };
-    const mensagem = (typeof obterMensagemPadraoConfigurada === 'function')
+    const mensagemConfigurada = (typeof obterMensagemPadraoConfigurada === 'function')
         ? await obterMensagemPadraoConfigurada('agenda_lembrete_sessao', contextoMensagem, true)
         : `${saudacaoMensagem}! Passando para lembrar da sessão de ${a.procedimentos?.nome || 'atendimento'} no dia ${dataFormatada} às ${horaCurta(a.hora_inicio)}. ${chamadaConfirmacao}`;
+    // O contato responsável recebe a saudação; a sessão pertence ao paciente.
+    // O modelo específico evita herdar “sua sessão/presença” do texto direto.
+    const mensagem = contato.usaResponsavel ? montarLembreteResponsavelAgenda(a, contato) : mensagemConfigurada;
+    if (agendamentoDetalheAtualId !== agendamentoEnvioId) return;
     const numeroCompleto = telefone.length <= 11 ? '55' + telefone : telefone;
     // Abrir a aplicação Web diretamente; wa.me redireciona para a tela intermediária.
     const url = `https://web.whatsapp.com/send?phone=${numeroCompleto}&text=${encodeURIComponent(mensagem)}`;
@@ -3982,7 +3997,7 @@ async function enviarLembreteAgendamentoAtual() {
     link.click();
     document.body.removeChild(link);
 
-    const { error } = await _supabase.from('agendamentos').update({ lembrete_enviado_em: new Date().toISOString() }).eq('id', agendamentoDetalheAtualId);
+    const { error } = await _supabase.from('agendamentos').update({ lembrete_enviado_em: new Date().toISOString() }).eq('id', agendamentoEnvioId);
     if (!error) {
         invalidarCacheAgendaSemana();
         fecharModal('modal_detalhe_agendamento');
