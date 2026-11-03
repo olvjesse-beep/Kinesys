@@ -42,7 +42,22 @@ async function registrarDocumentoAtual(){
     }else salvarDocumentoTimelineLocal(documentoAtualMeta.pacienteId,doc);
 }
 
+let impressaoDocumentoEmAndamento = false;
 async function imprimirDocumento() {
-    await registrarDocumentoAtual();
-    window.print();
+    if (impressaoDocumentoEmAndamento) return;
+    impressaoDocumentoEmAndamento = true;
+    const meta = documentoAtualMeta;
+    try {
+        const documento = await obterDocumentoProntoParaImpressaoKineSys();
+        if (documentoAtualMeta !== meta || !documento.atual()) return;
+        await registrarDocumentoAtual();
+        if (documentoAtualMeta !== meta || !documento.atual()) return;
+        documento.janela.focus();
+        documento.janela.print();
+    } catch (erro) {
+        console.warn('KineSys: impressão documental não preparada.', erro);
+        alert('Não foi possível preparar a impressão. Confira ou gere novamente a prévia do documento.');
+    } finally {
+        impressaoDocumentoEmAndamento = false;
+    }
 }

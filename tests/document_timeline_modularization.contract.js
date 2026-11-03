@@ -14,12 +14,13 @@ for(const fn of ['obterDocumentosTimelineLocal','carregarDocumentosTimelineNuvem
 }
 assert(mod.includes("_supabase.from('documentos_timeline')"),'módulo perdeu persistência Supabase documental');
 assert(mod.includes("localStorage.getItem('kinesys_documentos_timeline')"),'módulo perdeu fallback local documental');
-assert(mod.includes('await registrarDocumentoAtual();')&&mod.includes('window.print();'),'impressão deve registrar timeline antes de imprimir');
+assert(mod.includes('await registrarDocumentoAtual();')&&mod.includes('documento.janela.print();'),'impressão deve registrar timeline antes de imprimir a folha isolada');
+assert(!mod.includes('window.print();'),'não imprimir a janela do aplicativo');
 
-const tag='<script defer src="src/core/document_timeline_core-1.0.0.js?v=20260911-phase4h-r1"></script>';
+const tag=html.split('\n').find(l=>l.includes('<script defer src="src/core/document_timeline_core-1.0.0.js?v='));
 const crm='<script defer src="src/core/crm_relationship_core-1.0.0.js?v=20260911-phase4g-r1"></script>';
 const main='<script defer src="src/core/script-1.18.0.js';
-assert(html.includes(tag),'index não carrega document timeline core');
+assert(tag,'index não carrega document timeline core com cache-buster');
 assert(html.indexOf(crm)<html.indexOf(tag),'document timeline deve carregar após CRM core');
 assert(html.indexOf(tag)<html.indexOf(main),'document timeline deve carregar antes do core consumidor');
 assert.match(html,/core_mod=20260911-phase4[a-z]+-r\d+/,'cache-bust do monólito deve permanecer versionado na série Phase 4');

@@ -28,6 +28,9 @@ function escapeHTML(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function fecharMenu(){} function idadeNumericaPaciente(p){return p.idade;} function removerAcentos(x){return String(x).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();}
 function obterPacientesSalvos(){return Promise.resolve([]);} function obterAvaliacoes(p){return p?.avaliacoes||[];} function obterAvaliacaoMaisRecente(){return null;}
 function carregarHistoricoEvolucao(){} function renderizarLinhaTempoClinicaCompleta(){} function onTipoDocumentoChange(){document.getElementById('campos_comparecimento').style.display='block';document.getElementById('bloco_ia').style.display='none';}
+function sincronizarPacienteRelatorio(){return Promise.resolve('qa1');}
+${core.slice(core.indexOf('function formatarDataPorExtenso('),core.indexOf('function gerarCabecalhoRelatorioHTML('))}
+${core.slice(core.indexOf('async function montarDocumentoComparecimento('),core.indexOf('const PROMPT_SISTEMA_RELATORIO_FISIOTERAPEUTICO'))}
 function renderizarPainelAgenda(){} function atualizarIndicadorEscopoAgenda(){} function atualizarMarcadorAgoraAgenda(){}
 function obterContextoAvaliacaoKineSys(){return {pacienteId:'qa1',clinicaId:'qa-clinica',usuarioId:'qa-admin',avaliacaoId:'',revisao:1};} function agendarAutosaveKineSys(){}
 function obterPacienteCompletoPorId(){return Promise.resolve({id:'qa1',nome:'Paciente de demonstração',avaliacoes:[{id:'qa-av1',status:'finalizada',realizadoEm:'2026-10-26T09:00',evaInicial:6}],evolucoes:[]});}
@@ -50,6 +53,18 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  document.getElementById('agenda_painel').classList.add('ativa');document.getElementById('agenda_dia_titulo').textContent='26 out – 01 nov de 2026';
  document.getElementById('agenda_data_input').value='2026-10-26';document.getElementById('agenda_semana_grade').innerHTML='<div class="agenda-vazio">Prévia de layout — sem agendamentos reais</div>';
  navegarPara(new URLSearchParams(location.search).get('tela')||'tela_relatorio');
+ const documentoQa=new URLSearchParams(location.search).get('documento');
+ if(documentoQa){
+  document.getElementById('rel_comp_data').value='2026-11-02';
+  document.getElementById('rel_comp_entrada').value='08:00';document.getElementById('rel_comp_saida').value='09:00';
+  if(documentoQa==='comparecimento')montarDocumentoComparecimento();
+  else {
+   const paragrafo='<p>Texto sintético de conferência de diagramação. Este parágrafo preserva a sequência de informações, a lateralidade esquerda e o valor 6/10, sem dados de pacientes reais. A prévia deve manter as mesmas linhas e quebras na impressão.</p>';
+   const longo=documentoQa==='paragrafo'?'<p>'+Array.from({length:180},(_,i)=>'Trecho '+(i+1)+' com <strong>marcação preservada</strong>.').join(' ')+'</p>':paragrafo.repeat(28);
+   const tabela='<table class="doc-quadro-medidas"><thead><tr><th>Registro</th><th>Descrição</th></tr></thead><tbody>'+Array.from({length:45},(_,i)=>'<tr><td>Item '+(i+1)+'</td><td>Medida sintética '+(i+1)+'</td></tr>').join('')+'</tbody></table>';
+   montarDocumentoComTimbrado('<p class="doc-titulo">Relatório de demonstração</p>'+longo+(documentoQa==='tabela'?tabela:'')+gerarRodapeAssinaturaHTML());
+  }
+ }
  if(new URLSearchParams(location.search).get('tela')==='tela_avaliacao'){
   const eva=new URLSearchParams(location.search).get('eva');if(eva!==null)preencherEvaAvaliacaoKineSys(Number(eva));
   document.getElementById('avaliacao_realizado_em').value='2026-10-26T09:00';atualizarEvaAvaliacaoKineSys();
@@ -89,6 +104,7 @@ function qaPrepararAgendaExcecoes(){
 `;
  const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
  scripts.push('src/home/home_profissional_dashboard-1.0.0.js');
+ scripts.push('src/reports/report_ui_helpers_core-1.0.0.js','src/core/document_timeline_core-1.0.0.js');
  scripts.push('src/core/cadastro_validacoes_core-1.0.0.js','src/patient/patient_form_helpers_core-1.0.0.js','src/patient/patient_registration_core-1.0.0.js');
  return html.replace('</body>',`<script>${setup}</script>${scripts.map(src=>'<script defer src="/'+src+'"></script>').join('')}</body>`);
 };
