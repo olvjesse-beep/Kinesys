@@ -74,10 +74,16 @@ for item in json.loads((out/'metricas.json').read_text()):
   assert abs(papel.width-previa.width)<=1 and abs(papel.height-previa.height)<=1,(name,'dimensão divergente',papel.size,previa.size)
   size=(max(papel.width,previa.width),max(papel.height,previa.height))
   a=Image.new('RGB',size,'white');b=Image.new('RGB',size,'white');a.paste(papel,(0,0));b.paste(previa,(0,0))
-  erro=sum(ImageStat.Stat(ImageChops.difference(a.filter(ImageFilter.GaussianBlur(1)),b.filter(ImageFilter.GaussianBlur(1)))).mean)/3
+  def diferenca(im):return sum(ImageStat.Stat(ImageChops.difference(a.filter(ImageFilter.GaussianBlur(1)),im.filter(ImageFilter.GaussianBlur(1)))).mean)/3
+  erro_bruto=diferenca(b)
+  # 297mm corresponde a 1122.52px. O recorte de cada folha no iframe
+  # arredonda a origem fracionária, enquanto o PDF reinicia em zero. Corrigir
+  # apenas essa fase de rasterização (até 1px), sem escala, corte ou reflow.
+  fases=[(diferenca(b.transform(size,Image.Transform.AFFINE,(1,0,dx,0,1,dy),Image.Resampling.BILINEAR,fillcolor='white')),dx,dy) for dx in [-1,-.5,0,.5,1] for dy in [-1,-.5,0,.5,1]]
+  erro,dx,dy=min(fases)
   assert erro<4.0,(name,i+1,'prévia e impressão diferem visualmente',erro)
   papel.save(out/(name+'-impresso-'+str(i+1)+'.png'))
-  checks.append({'caso':name,'pagina':i+1,'erro_medio_pixel':round(erro,4)})
+  checks.append({'caso':name,'pagina':i+1,'erro_medio_pixel':round(erro,4),'erro_bruto':round(erro_bruto,4),'fase_px':[dx,dy]})
  pdf.close()
 (out/'comparacao-pdf.json').write_text(json.dumps(checks,ensure_ascii=False,indent=2))
 print('PASS: PDF Chrome com mesmo texto, A4, número de páginas e comparação visual de todas as folhas.')
