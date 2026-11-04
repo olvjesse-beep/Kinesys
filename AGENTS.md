@@ -1,5 +1,11 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Instalação web no iPhone — 04/11/2026
+
+- Manifesto e ícones habilitam abertura standalone a partir da Tela de Início. Preservar a mesma aplicação, login, perfis e rotas no navegador do computador. O início é a raiz do app, nunca uma tela pública de login fixada ou um paciente específico.
+- Esta versão continua online: não registrar service worker, interceptar requisições, guardar prontuários em Cache Storage nem implementar fila de gravação offline para viabilizar instalação. Notificações push e uso offline são trabalhos separados, sem ativação automática de permissões.
+- Manter validação do manifesto, escopo, metadados e PNGs no contrato existente runtime_asset_cache.contract.js e na barreira hospedada. Conferir visualmente desktop e celular; teste de viewport não equivale a instalação física em Safari.
+
 ## Prévia e impressão de documentos A4 — 03/11/2026
 
 - Comparecimento, relatório e encaminhamento usam a mesma árvore paginada A4 na prévia e na impressão. Isolar os estilos do aplicativo, manter 210×297mm, fontes e área útil idênticas; diminuir a prévia por escala, sem refluir o texto. Timbre em imagem imprimível mesmo com gráficos de fundo desativados. Não voltar a esconder a interface somente com visibility:hidden.
