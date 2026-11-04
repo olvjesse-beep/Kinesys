@@ -1,15 +1,15 @@
-/* KineSys — Agenda Mobile Order 1.0.0 / post-grid r41
- * O lifecycle é a fonte de verdade da ordem mobile.
- * Ordem canônica: Clínica/Profissional -> navegação/data -> Novo agendamento -> grade -> Lista de espera -> Histórico.
+/* KineSys — Agenda mobile: modelo Dia em foco, 04/11/2026.
+ * O lifecycle reposiciona os controles canônicos e restaura a ordem no desktop.
+ * Apenas apresentação: a lista diária projeta as ocorrências/células da mesma grade.
  */
 
 @media (max-width:760px){
   #tela_agenda #ks_agenda_mobile_order{
     order:10!important;
-    display:flex!important;
-    flex-direction:column!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
     align-items:stretch!important;
-    gap:8px!important;
+    gap:10px!important;
     width:100%!important;
     margin:0 0 10px!important;
     padding:0!important;
@@ -18,16 +18,46 @@
     box-shadow:none!important;
   }
 
-  #tela_agenda #ks_agenda_mobile_order .agenda-visoes{order:10!important;}
-  #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{order:20!important;}
-
-  /* Preserva os controles canônicos também no celular. */
-  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav{display:flex!important;flex-wrap:wrap!important;gap:8px!important;order:12!important;width:100%!important}
-  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button{flex:1 1 70px;min-width:0!important;min-height:44px!important;white-space:nowrap!important}
-  #tela_agenda #ks_agenda_mobile_order .agenda-semana-rotulo{display:flex!important;flex:1 1 100%!important;width:100%!important;white-space:normal!important}
-  #tela_agenda #ks_agenda_mobile_order .agenda-periodo-segmentado{display:flex!important;flex:1 1 100%!important}
-  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date{display:block!important;order:14!important;width:100%!important;margin:0!important}
-  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date input{display:block!important;box-sizing:border-box;width:100%!important;min-height:44px!important;font-size:16px!important}
+  body.ks-design-ready[data-tela="tela_agenda"] #ks_topbar{padding:14px 16px!important;min-height:88px!important;gap:12px!important}
+  body.ks-design-ready[data-tela="tela_agenda"] #ks_page_title{font-size:26px!important;line-height:1.15!important;margin:3px 0 0!important}
+  body.ks-design-ready[data-tela="tela_agenda"] #ks_page_subtitle{display:none!important}
+  body.ks-design-ready[data-tela="tela_agenda"] #ks_page_kicker{font-size:12px!important}
+  body.ks-design-ready[data-tela="tela_agenda"] :is(#ks_mobile_menu,.ks-notificacoes-btn){width:42px!important;height:42px!important;min-height:42px!important}
+  body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{padding:12px 12px calc(90px + env(safe-area-inset-bottom,0px))!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-visoes{display:none!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-profissional-filtro{display:block!important;order:10!important;grid-column:1!important;min-width:0!important;margin:0!important;padding:0!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-profissional-filtro label,
+  #tela_agenda #ks_agenda_mobile_order .agenda-escopo-acesso{position:absolute!important;width:1px!important;height:1px!important;clip-path:inset(50%)!important;overflow:hidden!important}
+  #tela_agenda #ks_agenda_mobile_order #agenda_filtro_profissional{display:block!important;width:100%!important;height:44px!important;margin:0!important;font-size:15px!important;padding:8px 30px 8px 12px!important;border:1px solid var(--kds-line)!important;border-radius:10px!important;background:var(--kds-surface)!important;color:var(--kds-text)!important}
+  #tela_agenda #ks_agenda_mobile_order #agenda_filtro_profissional:disabled{opacity:1!important;-webkit-text-fill-color:var(--kds-text)!important}
+  #tela_agenda #ks_agenda_mobile_legend{order:11;grid-column:2;align-self:center;position:relative}
+  #tela_agenda #ks_agenda_mobile_legend>summary{padding:12px 6px;min-height:44px;box-sizing:border-box;cursor:pointer;color:var(--kds-accent);font-size:14px;font-weight:700}
+  #tela_agenda #ks_agenda_mobile_legend[open]{grid-column:1/-1;order:12}
+  #tela_agenda #ks_agenda_mobile_legend .agenda-color-legend{display:flex!important;flex-wrap:wrap!important;gap:10px!important;margin:0 0 4px!important;padding:12px!important;border:1px solid var(--kds-line)!important;border-radius:10px!important;background:var(--kds-surface)!important;font-size:13px!important}
+  #tela_agenda #ks_agenda_mobile_legend:not([open]) .agenda-color-legend{display:none!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav{display:grid!important;grid-template-columns:44px minmax(0,1fr) 56px 44px!important;grid-template-rows:44px!important;gap:5px!important;order:20!important;grid-column:1/-1!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button{grid-row:1!important;min-width:0!important;min-height:44px!important;width:auto!important;height:44px!important;margin:0!important;padding:0!important;border:1px solid var(--kds-line)!important;border-radius:9px!important;background:var(--kds-surface)!important;color:var(--kds-accent)!important;white-space:nowrap!important;font-size:14px!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button:first-of-type{grid-column:1!important;font-size:0!important;background:var(--kds-surface) url('../assets/vendor/tabler/chevron-left.svg') center/20px no-repeat!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>.btn-hoje-agenda{grid-column:3!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button:nth-of-type(3){grid-column:4!important;font-size:0!important;background:var(--kds-surface) url('../assets/vendor/tabler/chevron-right.svg') center/20px no-repeat!important}
+  #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>div:not(.ks-agenda-mobile-date){display:none!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date{display:block!important;grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date label{position:absolute!important;width:1px!important;height:1px!important;clip-path:inset(50%)!important;overflow:hidden!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date input{display:block!important;box-sizing:border-box;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;font-size:15px!important;padding:6px 4px!important;text-align:center!important;border-radius:9px!important;border:1px solid var(--kds-line)!important;background:var(--kds-surface)!important}
+  #tela_agenda #ks_agenda_mobile_days{order:30;grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding:4px;background:var(--kds-surface);border:1px solid var(--kds-line);border-radius:12px}
+  #tela_agenda #ks_agenda_mobile_days button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 0;min-width:0;min-height:56px;border:0;border-radius:9px;background:transparent;color:var(--kds-text)}
+  #tela_agenda #ks_agenda_mobile_days span{font-size:12px;line-height:1.2}
+  #tela_agenda #ks_agenda_mobile_days strong{font-size:18px;line-height:1.2}
+  #tela_agenda #ks_agenda_mobile_days [aria-pressed="true"]{background:var(--kds-accent);color:white}
+  #tela_agenda #ks_agenda_mobile_order>.agenda-periodo-segmentado{display:flex!important;order:40!important;grid-row:auto!important;grid-column:1/-1!important;width:100%!important;gap:4px!important;padding:3px!important;margin:0!important;background:var(--kds-accent-soft)!important;border:1px solid var(--kds-line)!important;border-radius:10px!important}
+  #tela_agenda #ks_agenda_mobile_order>.agenda-periodo-segmentado button{flex:1!important;min-height:40px!important;font-size:14px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:var(--kds-text)!important}
+  #tela_agenda #ks_agenda_mobile_order>.agenda-periodo-segmentado [data-agenda-periodo="dia"]{order:-1}
+  #tela_agenda #ks_agenda_mobile_post_grid #ks_agenda_controls [hidden],
+  #tela_agenda #ks_agenda_mobile_post_grid .agenda-audit-btn[hidden]{display:none!important}
+  #tela_agenda #ks_agenda_mobile_order>.agenda-periodo-segmentado [aria-pressed="true"]{background:var(--kds-accent)!important;color:white!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{position:fixed!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;left:12px!important;right:12px!important;width:calc(100% - 24px)!important;height:48px!important;min-height:48px!important;margin:0!important;padding:10px 16px!important;z-index:40!important;border-radius:12px!important;font-size:16px!important;box-shadow:0 2px 8px rgba(23,59,69,.12)!important}
+  #tela_agenda #agenda_painel .agenda-toolbar{display:none!important}
+  #tela_agenda #ks_agenda_mobile_order[data-subtela="lista"] .ks-new-appointment{display:none!important}
 
   /* A grade semanal já usa order:70 no contrato mobile. Este host deve vir depois dela. */
   #tela_agenda #ks_agenda_mobile_post_grid{

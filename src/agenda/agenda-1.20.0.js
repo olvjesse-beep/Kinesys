@@ -6,7 +6,7 @@
    ========================================================================== */
 
 let agendaDataSelecionada = new Date();
-let agendaPeriodoVisual = 'semana';
+let agendaPeriodoVisual = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches ? 'dia' : 'semana';
 let agendaProcedimentosCache = [];
 let agendaHorariosCache = [];
 let agendaBloqueiosCache = [];
@@ -2225,7 +2225,16 @@ async function carregarAgendamentosSemana(inicio, fim, profissionalEscopo = '') 
     }
 }
 
+// Metadados de apresentação da mesma ocorrência já autorizada e exibida na grade.
+// Não consulta, grava nem calcula uma segunda disponibilidade.
 function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
+    function prepararResumoMobileAgendamentoAgenda(elemento, atendimento, individual) {
+        elemento.dataset.agendamentoId = String(atendimento.id);
+        elemento.dataset.horaInicio = horaCurta(atendimento.hora_inicio);
+        elemento.dataset.horaFim = horaCurta(atendimento.hora_fim);
+        elemento.dataset.procedimento = atendimento.procedimentos?.nome || 'Atendimento';
+        elemento.dataset.profissional = individual ? '' : (atendimento.equipe?.nome || '');
+    }
     const container = document.getElementById('agenda_semana_grade');
     if (!container) return;
     const dias = diasVisiveisDaSemana(inicio, profissionalFiltro);
@@ -2234,6 +2243,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
     const totalSlots = Math.max(1, Math.ceil((limites.fim - limites.inicio) / passo));
     const hojeISO = instanteAgendaSaoPaulo().data;
     container.dataset.dias = dias.map(d => d.dataISO).join(',');
+    container.dataset.periodo = typeof agendaPeriodoVisual === 'string' ? agendaPeriodoVisual : 'semana';
     container.dataset.inicio = String(limites.inicio);
     container.dataset.fim = String(limites.fim);
 
@@ -2252,6 +2262,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
         const cab = document.createElement('div');
         const feriado = obterFeriadoAgenda(d.dataISO);
         cab.className = 'agenda-dia-cabecalho' + (d.dataISO === hojeISO ? ' hoje' : '') + (feriado ? ' feriado' : '');
+        cab.dataset.data = d.dataISO;
         cab.style.gridColumn = String(idx + 2);
         cab.style.gridRow = '1';
         const nome = d.data.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
@@ -2353,6 +2364,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
             const rowInicio = Math.floor((Math.max(ini, limites.inicio) - limites.inicio) / passo) + 2;
             const span = Math.max(1, Math.ceil((Math.min(fimA, limites.fim) - Math.max(ini, limites.inicio)) / passo));
             const overlay = document.createElement('div');
+            prepararResumoMobileAgendamentoAgenda(overlay, a, !!profissionalFiltro);
             overlay.className = 'agenda-celula agendado';
             const duracaoVisual = Math.max(passo, fimA - ini);
             overlay.dataset.duracaoMinutos = String(duracaoVisual);
@@ -2397,6 +2409,7 @@ function renderizarGradeSemanal(inicio, fim, profissionalFiltro) {
                 const faixa = faixaPorProfissional.get(String(a.profissional_id || 'sem-profissional')) || 0;
 
                 const overlay = document.createElement('div');
+                prepararResumoMobileAgendamentoAgenda(overlay, a, !!profissionalFiltro);
                 overlay.className = 'agenda-celula agendado agenda-geral-faixa';
                 overlay.dataset.duracaoMinutos = String(duracaoVisual);
                 if (duracaoVisual <= 10) overlay.classList.add('agenda-duracao-minima');
@@ -2436,9 +2449,17 @@ async function renderizarPainelAgenda({ pularSync = false } = {}) {
     const aindaAtual = () => revisao === agendaRevisaoVisual && identidade === String(usuarioLogado?.id || '') + '|' + String(usuarioLogado?.clinica_id || '');
     atualizarVisibilidadeAuditoriaStatusAgenda();
     const container = document.getElementById('agenda_semana_grade');
+    document.querySelectorAll('[data-agenda-periodo]').forEach(botao => {
+        const ativo = botao.dataset.agendaPeriodo === agendaPeriodoVisual;
+        botao.classList.toggle('active', ativo);
+        botao.setAttribute('aria-pressed', String(ativo));
+    });
+    // A apresentação diária nunca mantém uma fotografia anterior enquanto a grade consulta.
+    window.KineSysAgendaLifecycle?.limparResumoDiario?.();
     if (!_supabase) {
         if (container) container.innerHTML = '<div class="agenda-grade-aviso">Agenda indisponível: conexão com o Supabase não inicializada.</div>';
         mostrarFeedbackAgenda('Não foi possível conectar a agenda ao banco de dados.', 'erro');
+        window.KineSysAgendaLifecycle?.concluirConsultaVisual?.();
         return;
     }
 
@@ -2453,6 +2474,7 @@ async function renderizarPainelAgenda({ pularSync = false } = {}) {
     if (!podeVerClinicaToda && !profissionalProprioId) {
         if (container) container.innerHTML = '<div class="agenda-grade-aviso">Seu usuário não está vinculado a um profissional habilitado para aparecer na Agenda.<br><small>Peça a um administrador para abrir Equipe e ativar “Pode aparecer como profissional na Agenda” no seu cadastro.</small></div>';
         mostrarFeedbackAgenda('Acesso à Agenda restrito: seu usuário ainda não possui vínculo assistencial ativo.', 'aviso');
+        window.KineSysAgendaLifecycle?.concluirConsultaVisual?.();
         return;
     }
     const profissionalFiltro = podeVerClinicaToda ? filtroSolicitado : profissionalProprioId;
@@ -2488,6 +2510,8 @@ async function renderizarPainelAgenda({ pularSync = false } = {}) {
         console.error('Erro ao carregar agenda semanal:', err);
         if (container) container.innerHTML = `<div class="agenda-grade-aviso">Não foi possível carregar a agenda semanal.<br><small>${escapeHTML(err?.message || String(err))}</small></div>`;
         mostrarFeedbackAgenda('Erro ao carregar a agenda. Verifique a conexão e a estrutura do Supabase.', 'erro');
+    } finally {
+        if (aindaAtual()) window.KineSysAgendaLifecycle?.concluirConsultaVisual?.();
     }
 }
 

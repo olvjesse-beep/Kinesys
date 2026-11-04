@@ -1,3 +1,38 @@
+# Agenda mobile — modelo 1, 04/11/2026
+
+Escopo aprovado: Dia em foco somente até 760px, preservando Dia/Semana e a agenda do computador. Aplicação real existente, sem novo aplicativo ou telas paralelas.
+
+## Fonte e evidências
+
+- Referência escolhida: `C:/Users/User/.codex/generated_images/01a1256a-f8b7-72a3-befb-05b96d486a50/exec-b1dde146-25fd-439d-bb95-00b3620c48df.png`, 852×1846, conteúdo sem moldura.
+- Implementação: `G:/KineSys-IA/Resultados/agenda-mobile-modelo1-20261104/dia-final.jpg`, captura privada com dados sintéticos; viewport CSS 390×844, DPR 3,75. Raster 386×835 por recorte do navegador integrado; comparação preserva proporções, sem esticar. Fonte reduzida proporcionalmente para caber em 390×844.
+- Comparação conjunta inspecionada: `comparacao-modelo-implantacao.png`, fonte à esquerda e implementação à direita. Conferidos também os detalhes no DOM: nomes 16px, sete dias, cartões 56px, intervalo 58px sem ícone achatado, sem overflow horizontal global.
+- Estados complementares na mesma pasta: `semana-final.jpg`, `legenda-aberta.jpg`. Dia/Semana selecionam os modos reais; profissional e data usam os controles canônicos. Lúcia/05-11 apresenta somente Lia Santos na fixture, sem reutilizar os cartões de Jessé.
+- Desktop antes/depois: `desktop-antes-final.jpg`, `desktop-depois-final.jpg` e `comparacao-desktop.png`; mesmo cenário sintético, viewport CSS 1092×768. Raster capturado 1088×589; área comum capturada pixel a pixel idêntica. DOM confirma ausência da lista e controles móveis no desktop. Restauração dos mesmos nós é coberta no teste DOM; captura não certifica Safari físico.
+
+## Histórico da comparação e correções
+
+1. [P2 corrigido] Alternador herdava grid-row:2 e aparecia fora da hierarquia aprovada. Removida posição fixa da linha; profissional/cores, data, sete dias, Dia/Semana e atendimentos seguem a ordem escolhida.
+2. [P2 corrigido] Nomes herdavam tamanho reduzido e cartões de 72px consumiam espaço excessivo. Nomes agora 16px e cartões de altura mínima 56px, expansíveis para nomes/detalhes longos; duração no subtítulo evita repetir a hora.
+3. [P1 corrigido] Consulta poderia deixar fotografia antiga acionável. Carga limpa a apresentação, mostra atualização e só libera a fotografia atual. Erro exibe a mensagem real; botão de nó desconectado/consulta pendente não abre ocorrência.
+4. [P1 corrigido] Estilos de pós-grade poderiam sobrepor hidden. Regra explícita preserva ocultação da auditoria/lista de espera por perfil. Dados e permissões continuam determinados pelo módulo original.
+5. Revisão final conjunta: composição compacta, seleção Dia/Semana visível, cinco atendimentos legíveis e intervalo sem cobrir a próxima ocorrência. Sem P0/P1/P2 aberto.
+
+## Cinco superfícies e interações
+
+- Tipografia: tokens existentes, nomes 16px, horários 14px, detalhes 13px. Sem caixa em título; foco dos controles de teclado preservado.
+- Layout: composição do modelo 1; agenda diária legível e grade semanal original acessível. A lista usa ocorrências/células da própria grade, incluindo simultâneos e bloqueios.
+- Cores: paleta e configuração reais preservadas. A fixture não representa as cores personalizadas de produção; os cartões clonam o estilo da ocorrência original.
+- Assets: ícones vetorizados existentes; setas Tabler já distribuídas. Nenhum raster novo no runtime, emoji ou imagem usada como interface.
+- Conteúdo: seletor de data nativo explícito, escopo de clínica no próprio filtro e rótulo original Novo agendamento são adaptações funcionais deliberadas. Sem dados clínicos ou financeiros alterados.
+- Testados: Dia/Semana, legenda, data da faixa semanal, troca de profissional, origem online, carga/erro, ação canônica, horário parcial (08:30) e restauração desktop. Console da prévia sem erros. 114 checks locais do workflow passaram; teste DOM ampliado também passou com jsdom. Barreira hospedada ainda é obrigatória antes da integração.
+
+P3: instalação e gesto em Safari físico dependem do aparelho; não foram simulados como teste realizado.
+
+final result: passed
+
+---
+
 # Horários — correção da composição e responsividade, 29/10/2026
 
 Escopo: corrigir a página existente de Horários, preservando a identidade visual selecionada, os campos e as regras de disponibilidade. Não é uma nova proposta de interface.
