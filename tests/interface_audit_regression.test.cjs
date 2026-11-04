@@ -69,4 +69,56 @@ function presentation(){
  assert.doesNotMatch(html,/\p{Extended_Pictographic}/u,'HTML de entrada não contém emojis decorativos');
  assert.match(read('src/core/script-1.18.0.js'),/eva: ev\.eva \?\? null/,'transporte não transforma ausência em zero');
 }
-(async()=>{presentation();await navigation();await team();await finance();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});
+function agendaMobilePresentation(){
+ if(!process.env.JSDOM_MODULE)return; // Executado também na etapa DOM isolada obrigatória do workflow.
+ const {JSDOM}=require(process.env.JSDOM_MODULE);
+ const html=read('index.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+ const dom=new JSDOM(html,{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window,d=w.document;
+ let mobile=true,opened=[],changed=[],frames=[];
+ w.matchMedia=()=>({matches:mobile});w.requestAnimationFrame=fn=>{frames.push(fn);return frames.length;};w.setInterval=()=>1;w.clearInterval=()=>{};
+ w.ResizeObserver=class{observe(){}disconnect(){}};
+ d.getElementById('tela_agenda').classList.add('ativa');
+ const tabs=d.createElement('div');tabs.id='ks_agenda_controls';tabs.innerHTML='<div class="ks-segmented"><button data-agenda-view="agenda_painel">Semana</button><button data-agenda-view="agenda_lista_espera">Lista de espera</button></div>';
+ d.getElementById('tela_agenda').prepend(tabs);
+ const data=d.getElementById('agenda_data_input'),nav=d.querySelector('.agenda-semana-nav'),parentData=data.parentElement.parentElement,parentNav=nav.parentElement;
+ data.value='2026-11-04';data.addEventListener('change',()=>changed.push(data.value));
+ Object.assign(w,{agendaPeriodoVisual:'dia',AGENDA_GRADE_PASSO_MIN:10,
+  agendaAgendamentosSemanaCache:[['a','08:00','09:00','Ana Martins','p1'],['b','08:00','09:00','Bruno Almeida','p1'],['c','10:00','11:00','Clara Ribeiro','p2']].map(([id,hora_inicio,hora_fim,nome,profissional_id])=>({id,hora_inicio,hora_fim,profissional_id,data:'2026-11-04',pacientes:{nome},procedimentos:{nome:'Avaliação'},equipe:{nome:profissional_id},status:'agendado'})),
+  diasVisiveisDaSemana:()=>[{dataISO:'2026-11-04',data:new Date('2026-11-04T12:00:00'),diaSemana:3}],
+  limitesHorariosGrade:()=>({inicio:480,fim:900}),instanteAgendaSaoPaulo:()=>({data:'2026-11-04'}),
+  obterFeriadoAgenda:()=>null,janelasAgendaPara:()=>[{inicio:480,fim:720},{inicio:840,fim:900}],
+  bloqueiosAgendaPara:()=>[],minutoDentroDeJanela:(m,j)=>j.some(x=>m>=x.inicio&&m<x.fim),bloqueioNoMinuto:()=>null,
+  intervaloEntreJanelasAgenda:m=>m>=720&&m<840?{inicio:720,fim:840}:null,intervalosEntreJanelasAgenda:()=>[{inicio:720,fim:840}],
+  horaCurta:x=>String(x).slice(0,5),horaParaMinutos:x=>Number(x.slice(0,2))*60+Number(x.slice(3,5)),minutosParaHora:m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),
+  escapeHTML:x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  classeStatusAgenda:x=>x,classeTipoVisualAgendamentoAgenda:()=>'',iconeOrigemOnlineAgendaHTML:()=>'',iconePagamentoAgendaHTML:()=>'',iconeHorarioExtraordinarioHTML:()=>'',
+  calcularFaixasSobrepostasAgenda:()=>new Map(),aplicarCoresAgenda(){},carregarCoresAgendaCompartilhadas:()=>Promise.resolve(),iniciarRelogioAgenda(){},
+  abrirDetalheAgendamento:id=>opened.push(id),abrirModalAgendamento:(...args)=>opened.push(args),atualizarMarcadorAgoraAgenda(){}
+ });
+ const source=read('src/agenda/agenda-1.20.0.js');
+ w.eval(source.slice(source.indexOf('function renderizarGradeSemanal('),source.indexOf('\nasync function renderizarPainelAgenda')));
+ w.renderizarGradeSemanal(null,null,'p1');
+ w.eval(read('src/agenda/agenda_lifecycle-1.0.0.js'));
+ const drain=()=>{let n=0;while(frames.length&&n++<20)frames.shift()();assert(n<20,'organização converge, sem loop de frames');};
+ w.KineSysAgendaLifecycle.activate();drain();
+ const list=d.getElementById('ks_agenda_mobile_day_list');
+ assert.equal(list.hidden,false);assert.equal(list.querySelectorAll('.ks-agenda-day-action').length,2,'simultâneos permanecem acessíveis; outro profissional não entra');
+ assert.match(list.textContent,/Ana Martins/);assert.doesNotMatch(list.textContent,/Clara Ribeiro/);
+ assert.match(list.textContent,/Avaliação/);assert.equal(list.querySelectorAll('.ks-agenda-day-interval').length,1);
+ list.querySelector('.ks-agenda-day-action').click();assert.deepEqual(opened,['a']);
+ const old=list.querySelector('.ks-agenda-day-action');
+ w.KineSysAgendaLifecycle.limparResumoDiario();assert.equal(list.textContent,'Atualizando agenda…');old.click();assert.deepEqual(opened,['a'],'não aciona grade anterior durante nova consulta');
+ const grade=d.getElementById('agenda_semana_grade');grade.innerHTML='<div class="agenda-grade-aviso">Erro de consulta</div>';
+ w.KineSysAgendaLifecycle.concluirConsultaVisual();assert.equal(list.hidden,true);assert.match(grade.textContent,/Erro de consulta/);
+ w.agendaPeriodoVisual='dia';w.renderizarGradeSemanal(null,null,'p2');w.KineSysAgendaLifecycle.activate();drain();
+ assert.match(list.textContent,/Clara Ribeiro/);assert.doesNotMatch(list.textContent,/Ana Martins/,'troca de profissional não reaproveita cartão');
+ old.click();assert.deepEqual(opened,['a'],'nó antigo desconectado não abre outro atendimento');
+ d.querySelector('#ks_agenda_mobile_days [data-data="2026-11-05"]').click();assert.deepEqual(changed,['2026-11-05']);
+ w.agendaPeriodoVisual='semana';w.renderizarGradeSemanal(null,null,'p1');w.KineSysAgendaLifecycle.activate();drain();assert.equal(list.hidden,true,'Semana mantém grade canônica');
+ mobile=false;w.KineSysAgendaLifecycle.activate();drain();
+ assert.equal(data.parentElement.parentElement,parentData);assert.equal(nav.parentElement,parentNav);
+ assert.equal(d.getElementById('ks_agenda_mobile_order'),null);assert.equal(d.getElementById('ks_agenda_mobile_day_list'),null,'desktop não recebe lista nem controles novos');
+ w.KineSysAgendaLifecycle.destroy();dom.window.close();
+ console.log('agenda_mobile: OK (Dia/Semana, simultâneos, origem canônica, carga/erro, troca de escopo, data e restauração desktop)');
+}
+(async()=>{presentation();await navigation();await team();await finance();agendaMobilePresentation();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});

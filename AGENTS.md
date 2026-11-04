@@ -1,5 +1,11 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Agenda móvel — Dia em foco, 04/11/2026
+
+- Somente até 760px, preservar o modelo escolhido com seletor de profissional, legenda recolhível, navegação/data, faixa dos sete dias, Dia/Semana e ação de agendar. Desktop mantém a composição existente; restaurar os mesmos controles ao sair do breakpoint, sem duplicar IDs/eventos.
+- Lista diária projeta exclusivamente as ocorrências e células autorizadas da grade canônica. Não consultar outro conjunto de dados nem calcular disponibilidade paralela. Preservar simultâneos, cores, origem online, financeiro por perfil e bloqueios/feriados. Durante consulta, ocultar a fotografia anterior; erro não apresenta horário antigo como livre. Ação de nó desconectado ou durante atualização não abre atendimento.
+- Validar Dia/Semana, troca de escopo, data, falha de consulta e restauração desktop no teste DOM de `interface_audit_regression.test.cjs`, também executado na etapa isolada da barreira obrigatória. Dados sintéticos e capturas privadas; nenhum agendamento fictício em produção.
+
 ## Instalação web no iPhone — 04/11/2026
 
 - Manifesto e ícones habilitam abertura standalone a partir da Tela de Início. Preservar a mesma aplicação, login, perfis e rotas no navegador do computador. O início é a raiz do app, nunca uma tela pública de login fixada ou um paciente específico.

@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  document.querySelectorAll('[onclick*="salvar"],[onclick*="cadastrar"],[onclick*="excluir"],[onclick*="Pagamento"],[onclick*="gerarProntuario"]').forEach(b=>b.disabled=true);
  if(!documentoQa)document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
  if(new URLSearchParams(location.search).get('agendaExcecoes')==='1')qaPrepararAgendaExcecoes();
+ if(new URLSearchParams(location.search).get('agendaMobile')==='1')qaPrepararAgendaMobile();
 },50));
 ${agendaExcecoes}
 var agendaDataSelecionada=new Date('2026-10-26T12:00:00'),AGENDA_GRADE_PASSO_MIN=10,agendaAgendamentosSemanaCache=[];
@@ -100,6 +101,30 @@ function qaPrepararAgendaExcecoes(){
  const botao=document.querySelector('[onclick="novoAgendamento()"]')||document.querySelector('#agenda_painel .btn-primary');
  if(botao){botao.textContent='Conferir encaixe (prévia)';botao.onclick=()=>confirmarExcecoesAgenda('qa1','2026-10-28','09:00','10:00');}
  document.querySelectorAll('[onclick="abrirModalBloqueio()"]')[0]?.removeAttribute('disabled');
+}
+function qaPrepararAgendaMobile(){
+ agendaPeriodoVisual=matchMedia('(max-width:760px)').matches?'dia':'semana';
+ agendaDataSelecionada=new Date('2026-11-04T12:00:00');
+ document.getElementById('agenda_data_input').value='2026-11-04';
+ const filtro=document.getElementById('agenda_filtro_profissional');
+ filtro.innerHTML='<option value="">Toda a clínica</option><option value="qa1">Jessé Oliveira</option><option value="qa2">Lúcia Almeida</option>';filtro.value='qa1';
+ agendaAgendamentosSemanaCache=[['a','08:00','09:00','Ana Martins','Sessão de Fisioterapia'],['b','09:00','10:00','Bruno Almeida','Osteopatia'],['c','10:00','11:00','Clara Ribeiro','Avaliação'],['d','11:00','12:00','Diego Costa','Sessão de Fisioterapia'],['e','14:00','15:00','Elisa Rocha','Liberação miofascial']].map(([id,hora_inicio,hora_fim,nome,procedimento])=>({id,hora_inicio,hora_fim,origem:id==='d'?'online':'interno',data:'2026-11-04',profissional_id:'qa1',pacientes:{nome},equipe:{nome:'Jessé Oliveira'},procedimentos:{nome:procedimento},status:'agendado'}));
+ agendaAgendamentosSemanaCache.push({id:'f',hora_inicio:'09:00',hora_fim:'10:00',data:'2026-11-05',profissional_id:'qa2',pacientes:{nome:'Lia Santos'},equipe:{nome:'Lúcia Almeida'},procedimentos:{nome:'Avaliação'},status:'agendado'});
+ diasVisiveisDaSemana=()=>Array.from({length:agendaPeriodoVisual==='dia'?1:5},(_,i)=>{const d=agendaPeriodoVisual==='dia'?new Date(agendaDataSelecionada):new Date('2026-11-02T12:00:00');if(agendaPeriodoVisual!=='dia')d.setDate(d.getDate()+i);return {data:d,dataISO:formatarDataISO(d),diaSemana:d.getDay()};});
+ instanteAgendaSaoPaulo=()=>({data:'2026-11-04'});janelasAgendaPara=()=>[{inicio:480,fim:720},{inicio:840,fim:1140}];
+ minutoDentroDeJanela=(m,j)=>j.some(x=>m>=x.inicio&&m<x.fim);intervaloEntreJanelasAgenda=m=>m>=720&&m<840?{inicio:720,fim:840}:null;intervalosEntreJanelasAgenda=()=>[{inicio:720,fim:840}];
+ somarDiasAgenda=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
+ mudarSemanaAgenda=${trechoAgenda('async function mudarSemanaAgenda(', '\nasync function selecionarPeriodoAgenda')};
+ selecionarPeriodoAgenda=${trechoAgenda('async function selecionarPeriodoAgenda(', '\nasync function irParaHojeAgenda')};
+ irParaHojeAgenda=${trechoAgenda('async function irParaHojeAgenda(', '\nfunction obterContatoAgendaPaciente')};
+ irParaDataAgenda=${trechoAgenda('async function irParaDataAgenda(', '\nasync function carregarAgendamentosSemana')};
+ renderizarPainelAgenda=async()=>{document.getElementById('agenda_dia_titulo').textContent=agendaDataSelecionada.toLocaleDateString('pt-BR');renderizarGradeSemanal(null,null,filtro.value);};
+ abrirModalAgendamento=()=>{document.getElementById('modal_agendamento').classList.add('ativo');document.getElementById('modal_agendamento').style.display='flex';};
+ const novo=document.querySelector('.ks-new-appointment');novo.disabled=false;
+ classeTipoVisualAgendamentoAgenda=a=>a.procedimentos.nome==='Osteopatia'?'tipo-osteopatia':'tipo-fisioterapia';
+ document.getElementById('agenda_legenda_procedimentos').innerHTML='<span><i class="agenda-legend-dot fisioterapia"></i>Fisioterapia</span><span><i class="agenda-legend-dot osteopatia"></i>Osteopatia</span><span><i class="agenda-legend-dot"></i>Avaliação</span>';
+ selecionarPeriodoAgenda(agendaPeriodoVisual);
+ document.getElementById('ks_notificacoes_wrapper').hidden=false;document.getElementById('ks_notificacoes_badge').hidden=false;document.getElementById('ks_notificacoes_badge').textContent='8';
 }
 `;
  const scripts=['src/clinical/cirurgias-1.18.0.js','database/medicamentos_anvisa-20261024.js','database/medicamentos.js','database/ocupacoes_esportes.js','src/ui/modal_helpers-1.0.0.js','src/ui/input_helpers_core-1.0.0.js','src/home/home_fisioterapeuta_util-1.24.0.js','src/clinical/evaluation_context_panels-1.18.3.js','src/admin/team_management_core-1.0.0.js','src/core/design_system-1.20.1.js','src/agenda/agenda_lifecycle-1.0.0.js','src/admin/configuracoes_agendamento_online-1.0.0.js','src/ui/ui_experience.js'];
