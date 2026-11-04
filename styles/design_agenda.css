@@ -420,7 +420,8 @@ body.ks-design-ready[data-tela="tela_agenda"] #tela_agenda{
   color:#76550b;font-size:var(--kds-font-metadata);font-weight:850;letter-spacing:.3px;text-align:center;
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
-#tela_agenda .agenda-intervalo-icone{position:relative;width:13px;height:13px;border:2px solid currentColor;border-radius:50%;box-sizing:border-box;opacity:.82}
+#tela_agenda .agenda-intervalo-icone{position:relative;flex:0 0 13px;width:13px;min-width:13px;height:13px;min-height:13px;aspect-ratio:1;border:2px solid currentColor;border-radius:50%;box-sizing:border-box;opacity:.82}
+#tela_agenda .agenda-intervalo-bloco>span:last-child{min-width:0;overflow-wrap:anywhere}
 #tela_agenda .agenda-intervalo-icone::before{content:"";position:absolute;left:5px;top:-5px;width:2px;height:5px;border-radius:2px;background:currentColor;box-shadow:4px 2px 0 -1px currentColor}
 #tela_agenda .agenda-celula.atendimento{background:#fff;cursor:pointer}
 #tela_agenda .agenda-celula.atendimento:hover{background:#F1FAF7;box-shadow:inset 0 0 0 1px #9BCFC7}
