@@ -79,8 +79,55 @@ function startupHarness(options={}){
  const env={console,Promise,URLSearchParams,Option:function(text,value){this.text=text;this.value=value;},document:{body,getElementById:node,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}},localStorage:{removeItem(){if(options.storageError)throw Error('storage indisponível');}},location:{search:options.search||'',reload(){}},autenticacaoInicializada:false,authStateSubscription:null,usuarioLogado:null,loginPerfisDisponiveis:[],loginCredencialChave:'',loginEmAndamento:false,persistirSessao(){},sincronizarEstadoAutenticacaoVisual(){},mostrarFeedbackLogin(...args){messages.push(args);},mensagemErroAutenticacao:()=>'',navegarPara(route){env.route=route;},liberarAcessoSistema(){env.route='tela_home';env.entries=(env.entries||0)+1;return options.navigation?.();},requestAnimationFrame:fn=>frames.push(fn),setTimeout(fn,ms){const id=++serial;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
  env._supabase=options.offline?null:{auth:{onAuthStateChange(fn){authEvent=fn;return {data:{subscription:{}}};},getSession:session},rpc:options.rpc||(()=>Promise.resolve({data:{id:'perfil-qa',tipo:'MASTER',nome:'Demonstração'},error:null}))};
  vm.runInNewContext(login+'\nthis.loginController=KineSysLogin;',env);
- return {env,node,body,frames,timers,messages,event:value=>authEvent(value),async settle(task){for(let i=0;i<15;i++){await Promise.resolve();frames.splice(0).forEach(fn=>fn());}await task;}};
+ return {env,node,body,frames,timers,messages,event:value=>authEvent(value),async settle(task){let finished=false,failure;task.then(()=>finished=true,error=>{finished=true;failure=error;});for(let i=0;i<100&&!finished;i++){await Promise.resolve();frames.splice(0).forEach(fn=>fn());}assert(finished,'a inicialização de teste deve concluir, sem promessa abandonada');if(failure)throw failure;await task;}};
 }
+// Restauração real do destino: não substituir liberarAcessoSistema por uma
+// função que sempre manda à Home, pois isso escondia o hash #tela_login.
+(async()=>{
+ const routeSource=core.slice(core.indexOf('function liberarAcessoSistema()'),core.indexOf('function rotuloPerfil('));
+ const permissions=core.slice(core.indexOf('const PERMISSOES_POR_PERFIL ='),core.indexOf('function atualizarVisibilidadeAgenda()'));
+ function withRealRoute(h,hash){
+  h.env.window=h.env;h.env.location.hash=hash;
+  h.env.atualizarVisibilidadeOperacional=()=>{};h.env.atualizarSelectsPacientes=()=>{};h.env.popularSelectCRM=()=>{};
+  const get=h.env.document.getElementById;
+  h.env.document.getElementById=id=>id==='inexistente'?null:get(id);
+  vm.runInNewContext(permissions+'\n'+routeSource,h.env);return h;
+ }
+ for(const tipo of ['MASTER','FISIOTERAPEUTA','SECRETARIA']){
+  for(const [hash,destino] of [['#tela_login','tela_home'],['','tela_home'],['#inexistente','tela_home'],['#tela_agenda','tela_agenda'],['#tela_financeiro',tipo==='MASTER'?'tela_financeiro':'tela_home']]){
+   const h=withRealRoute(startupHarness({session:async()=>({data:{session:{}},error:null}),rpc:async()=>({data:{id:'qa-'+tipo,tipo,nome:'Pessoa sintética'},error:null})}),hash);
+   await h.settle(h.env.loginController.start());
+   assert.equal(h.env.route,destino,tipo+' com rota '+hash+' deve abrir destino interno autorizado');
+   assert.equal(h.env.usuarioLogado.tipo,tipo);assert(!h.body.pending);
+  }
+ }
+ // Submissão real de senha e seleção de vínculo, com transporte sintético.
+ for(const tipo of ['MASTER','FISIOTERAPEUTA'])for(const multiplos of [false,true]){
+  const profiles=['MASTER','FISIOTERAPEUTA'].map(tipo=>({id:'qa-'+tipo,tipo,nome:'Pessoa sintética'}));
+  let active=null,attempts=0,activations=0;
+  const h=withRealRoute(startupHarness({rpc:async(name,args)=>{
+   if(name==='kinesys_meus_perfis')return {data:multiplos?profiles:profiles.filter(p=>p.tipo===tipo),error:null};
+   if(name==='kinesys_ativar_perfil'){activations++;active=profiles.find(p=>p.id===args.p_perfil_id);return {data:active,error:null};}
+   return {data:active,error:null};
+  }}),'#tela_login');
+  h.node('login_form').reportValidity=()=>true;h.node('login_perfil').focus=()=>{};
+  h.node('login_email').value='sintetico@example.invalid';h.node('login_senha').value='somente-teste';
+  h.env._supabase.auth.signInWithPassword=async()=>{attempts++;return {data:{user:{id:'auth-sintetico'}},error:null};};
+  h.env._supabase.auth.getUser=async()=>({data:{user:{id:'auth-sintetico'}},error:null});
+  await h.settle(h.env.loginController.start());
+  await h.env.loginController.login();
+  if(multiplos){assert.equal(h.env.usuarioLogado,null);assert.equal(h.env.route,'tela_login');h.node('login_perfil').value='qa-'+tipo;await h.env.loginController.login();}
+  assert.equal(h.env.route,'tela_home');assert.equal(h.env.usuarioLogado.tipo,tipo);
+  assert.equal(attempts,1);assert.equal(activations,1);assert.equal(h.node('login_senha').value,'');
+ }
+ const denied=withRealRoute(startupHarness(),'#tela_login');
+ denied.node('login_form').reportValidity=()=>true;denied.node('login_email').value='sintetico@example.invalid';denied.node('login_senha').value='incorreta';
+ denied.env._supabase.auth.signInWithPassword=async()=>({data:null,error:{message:'Invalid login credentials'}});
+ await denied.settle(denied.env.loginController.start());await denied.env.loginController.login();
+ assert.equal(denied.env.usuarioLogado,null);assert.equal(denied.env.route,'tela_login');
+ console.log('Login route regression: administrador, fisioterapeuta e secretaria deixam #tela_login; links autorizados/restauração/permissões preservados.');
+ console.log('Login submit regression: senha + vínculo único/múltiplo abrem Home nos dois perfis; senha inválida permanece bloqueada.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
 (async()=>{
  const absent=startupHarness();await absent.settle(absent.env.loginController.start());assert(!absent.body.pending);assert.equal(absent.env.route,'tela_login');assert.equal(absent.env.usuarioLogado,null);
  let finishNavigation;const active=startupHarness({session:async()=>({data:{session:{}},error:null}),navigation:()=>new Promise(resolve=>finishNavigation=resolve)});const starting=active.env.loginController.start();for(let i=0;i<12;i++)await Promise.resolve();assert(active.body.pending,'não revelar painel durante navegação inicial');assert.equal(active.env.entries,1);finishNavigation();await active.settle(starting);assert(!active.body.pending);assert.equal(active.env.route,'tela_home');assert.equal(active.env.usuarioLogado.id,'perfil-qa');

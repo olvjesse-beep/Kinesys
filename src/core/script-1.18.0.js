@@ -276,7 +276,10 @@ function liberarAcessoSistema() {
     atualizarSelectsPacientes();
     popularSelectCRM();
     const rotaSalva = window.location.hash.slice(1);
-    const abertura=navegarPara(rotaSalva && document.getElementById(rotaSalva) && telaPermitida(rotaSalva) ? rotaSalva : 'tela_home');
+    // O login é uma rota pública, nunca o destino de uma sessão já validada.
+    // Celulares e favoritos podem preservar #tela_login após sair/recarregar.
+    const rotaInterna = rotaSalva && rotaSalva !== 'tela_login' && document.getElementById(rotaSalva) && telaPermitida(rotaSalva);
+    const abertura=navegarPara(rotaInterna ? rotaSalva : 'tela_home');
     if (typeof iniciarNotificacoesAgenda === 'function') setTimeout(() => iniciarNotificacoesAgenda(), 0);
     return abertura;
 }
