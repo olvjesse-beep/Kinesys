@@ -83,7 +83,7 @@ function agendaMobilePresentation(){
  const data=d.getElementById('agenda_data_input'),nav=d.querySelector('.agenda-semana-nav'),parentData=data.parentElement.parentElement,parentNav=nav.parentElement;
  data.value='2026-11-04';data.addEventListener('change',()=>changed.push(data.value));
  Object.assign(w,{agendaPeriodoVisual:'dia',AGENDA_GRADE_PASSO_MIN:10,
-  agendaAgendamentosSemanaCache:[['a','08:00','09:00','Ana Martins','p1'],['b','08:00','09:00','Bruno Almeida','p1'],['c','10:00','11:00','Clara Ribeiro','p2']].map(([id,hora_inicio,hora_fim,nome,profissional_id])=>({id,hora_inicio,hora_fim,profissional_id,data:'2026-11-04',pacientes:{nome},procedimentos:{nome:'Avaliação'},equipe:{nome:profissional_id},status:'agendado'})),
+  agendaAgendamentosSemanaCache:[['a','08:00','08:30','Ana Martins','p1'],['b','08:00','08:30','Bruno Almeida','p1'],['c','10:00','11:00','Clara Ribeiro','p2']].map(([id,hora_inicio,hora_fim,nome,profissional_id])=>({id,hora_inicio,hora_fim,profissional_id,data:'2026-11-04',pacientes:{nome},procedimentos:{nome:'Avaliação'},equipe:{nome:profissional_id},status:'agendado'})),
   diasVisiveisDaSemana:()=>[{dataISO:'2026-11-04',data:new Date('2026-11-04T12:00:00'),diaSemana:3}],
   limitesHorariosGrade:()=>({inicio:480,fim:900}),instanteAgendaSaoPaulo:()=>({data:'2026-11-04'}),
   obterFeriadoAgenda:()=>null,janelasAgendaPara:()=>[{inicio:480,fim:720},{inicio:840,fim:900}],
@@ -105,6 +105,7 @@ function agendaMobilePresentation(){
  assert.equal(list.hidden,false);assert.equal(list.querySelectorAll('.ks-agenda-day-action').length,2,'simultâneos permanecem acessíveis; outro profissional não entra');
  assert.match(list.textContent,/Ana Martins/);assert.doesNotMatch(list.textContent,/Clara Ribeiro/);
  assert.match(list.textContent,/Avaliação/);assert.equal(list.querySelectorAll('.ks-agenda-day-interval').length,1);
+ assert(Array.from(list.querySelectorAll('.ks-agenda-day-free')).some(e=>e.textContent.startsWith('08:30')),'intervalo parcial continua acionável, além das horas cheias');
  list.querySelector('.ks-agenda-day-action').click();assert.deepEqual(opened,['a']);
  const old=list.querySelector('.ks-agenda-day-action');
  w.KineSysAgendaLifecycle.limparResumoDiario();assert.equal(list.textContent,'Atualizando agenda…');old.click();assert.deepEqual(opened,['a'],'não aciona grade anterior durante nova consulta');

@@ -25,7 +25,7 @@ Escopo aprovado: Dia em foco somente até 760px, preservando Dia/Semana e a agen
 - Cores: paleta e configuração reais preservadas. A fixture não representa as cores personalizadas de produção; os cartões clonam o estilo da ocorrência original.
 - Assets: ícones vetorizados existentes; setas Tabler já distribuídas. Nenhum raster novo no runtime, emoji ou imagem usada como interface.
 - Conteúdo: seletor de data nativo explícito, escopo de clínica no próprio filtro e rótulo original Novo agendamento são adaptações funcionais deliberadas. Sem dados clínicos ou financeiros alterados.
-- Testados: Dia/Semana, legenda, data da faixa semanal, troca de profissional, origem online, carga/erro, ação canônica e restauração desktop. Console da prévia sem erros. 114 checks locais do workflow passaram; teste DOM ampliado também passou com jsdom. Barreira hospedada ainda é obrigatória antes da integração.
+- Testados: Dia/Semana, legenda, data da faixa semanal, troca de profissional, origem online, carga/erro, ação canônica, horário parcial (08:30) e restauração desktop. Console da prévia sem erros. 114 checks locais do workflow passaram; teste DOM ampliado também passou com jsdom. Barreira hospedada ainda é obrigatória antes da integração.
 
 P3: instalação e gesto em Safari físico dependem do aparelho; não foram simulados como teste realizado.
 

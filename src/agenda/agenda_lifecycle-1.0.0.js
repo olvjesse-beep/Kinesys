@@ -126,6 +126,7 @@
         const itens=[];
         const minutos=hora=>{const [h,m]=String(hora||'').split(':').map(Number);return h*60+m;};
         const hora=min=>`${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+        const ocupacoes=Array.from(grade.querySelectorAll('[data-agendamento-id]')).map(no=>({inicio:minutos(no.dataset.horaInicio),fim:minutos(no.dataset.horaFim)}));
         grade.querySelectorAll('[data-agendamento-id]').forEach(origem=>{
             const inicio=minutos(origem.dataset.horaInicio);
             if(!Number.isFinite(inicio))return;
@@ -147,18 +148,27 @@
             itens.push({inicio:Number(grade.dataset.inicio)+(row-2)*10,no:linha});
         });
         // Ações livres vêm das próprias células da grade; bloqueios/feriados não ganham ação.
+        // Agrupa apenas a apresentação das células descobertas, preservando também 08:30, 14:20 etc.
+        let anteriorLivre=null;
         grade.querySelectorAll('.agenda-celula').forEach(origem=>{
             const inicio=Number(origem.dataset.minuto);
             if(!origem.dataset.minuto)return;
-            if(origem.classList.contains('atendimento')&&origem.querySelector('.agenda-slot-acao')){
-                const linha=document.createElement('div');linha.className='ks-agenda-day-row ks-agenda-day-free';
-                const horario=document.createElement('span');horario.className='ks-agenda-day-time';horario.textContent=hora(inicio);
-                const botao=criarAcaoDaGrade(origem,'ks-agenda-day-free-action');botao.textContent='Horário livre · Agendar';
-                linha.append(horario,botao);itens.push({inicio,no:linha});
-            }else if(origem.querySelector('.agenda-bloqueio-texto')){
-                const linha=document.createElement('div');linha.className='ks-agenda-day-block';
-                linha.textContent=`${hora(inicio)} · ${origem.querySelector('.agenda-bloqueio-texto').textContent}`;
-                itens.push({inicio,no:linha});
+            const livre=origem.classList.contains('atendimento')&&origem.getAttribute('role')==='button'&&!ocupacoes.some(a=>a.inicio<inicio+10&&a.fim>inicio);
+            if(livre){
+                if(anteriorLivre!==inicio-10||inicio%60===0){
+                    const linha=document.createElement('div');linha.className='ks-agenda-day-row ks-agenda-day-free';
+                    const horario=document.createElement('span');horario.className='ks-agenda-day-time';horario.textContent=hora(inicio);
+                    const botao=criarAcaoDaGrade(origem,'ks-agenda-day-free-action');botao.textContent='Horário livre · Agendar';
+                    linha.append(horario,botao);itens.push({inicio,no:linha});
+                }
+                anteriorLivre=inicio;
+            }else{
+                anteriorLivre=null;
+                if(origem.querySelector('.agenda-bloqueio-texto')){
+                    const linha=document.createElement('div');linha.className='ks-agenda-day-block';
+                    linha.textContent=`${hora(inicio)} · ${origem.querySelector('.agenda-bloqueio-texto').textContent}`;
+                    itens.push({inicio,no:linha});
+                }
             }
         });
         itens.sort((a,b)=>a.inicio-b.inicio).forEach(item=>lista.appendChild(item.no));
