@@ -462,7 +462,7 @@ function situacaoPagamentoAgenda(agendamento) {
 function iconeOrigemOnlineAgendaHTML(agendamento) {
     if (agendamento?.origem !== 'online') return '';
     const descricao = 'Agendado online pelo paciente' + (agendamento.lembrete_enviado_em ? ' · Lembrete enviado' : ' · Lembrete ainda não enviado');
-    return `<span class="agenda-origem-online" role="img" aria-label="${descricao}" title="${descricao}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/></svg></span>`;
+    return `<span class="agenda-origem-online" role="img" aria-label="${descricao}" title="${descricao}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 21H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4M7 2v4M17 2v4M3 9h18"/><path d="m13 12 8 5-4 .8-1.5 3.7Z"/></svg></span>`;
 }
 
 function iconePagamentoAgendaHTML(agendamento) {
