@@ -58,7 +58,7 @@ assert.match(loader,/kinesys:tela-desativada/,'ciclo de vida deve emitir desativ
 assert.match(loader,/kinesys:tela-dom-pronta/,'loader deve emitir montagem de DOM');
 assert.match(loader,/revisaoNavegacao/,'navegação tardia deve proteger contra corrida de cliques');
 assert.match(loader,/const fragmentUrl=urlAbsoluta\(bundle\.fragment\)/,'fragmento deve receber a revisão global antes da busca');
-assert.match(loader,/fetch\(fragmentUrl,\{credentials:'same-origin',cache:'no-cache'\}\)/,'fragmento deve ser buscado somente sob demanda com revalidação');
+assert.match(loader,/fetch\(fragmentUrl,\{credentials:'same-origin',cache:'no-cache',signal:controle\.signal\}\)/,'fragmento deve ser buscado somente sob demanda com revalidação e cancelamento');
 assert.match(loader,/replaceChildren/,'fragmento deve ser montado no placeholder preservado');
 assert.match(loader,/kinesysFragmentState/,'estado de montagem do fragmento deve ser rastreável');
 
@@ -315,3 +315,86 @@ assert.doesNotThrow(()=>vm.runInNewContext(financeAgendaIntegration,integrationC
 
 const deferredRawBytes=145198+27284+2983;
 console.log(`Screen Loader contract Phase 4D: CSS clínico da Avaliação adia ${phase4dCssDeferredBytes} bytes brutos adicionais preservando cascade; bases clínicas lazy somam ${evaluationDatabaseDeferredBytes} bytes; Agenda continua lazy (${agendaLazyBytes} bytes).`);
+
+async function testarEntradaAvaliacaoComRedeInterrompida(){
+  class Elemento extends EventTarget{
+    constructor(){super();this.dataset={};this.attrs=new Map();}
+    setAttribute(nome,valor){this.attrs.set(nome,valor);}
+    removeAttribute(nome){this.attrs.delete(nome);}
+    remove(){this.removido=true;}
+  }
+  const tela=new Elemento(),preloads=[],scripts=[],toasts=[],classes=new Set(),timers=new Map();
+  let montagens=0,buscas=0,agora=0,ultimoTimer=0,ativa='tela_home',soltarScript=null;
+  tela.replaceChildren=()=>montagens++;
+  const criar=tag=>tag==='template'?{content:{cloneNode:()=>({})}}:new Elemento();
+  const document={
+    baseURI:'https://kinesys.test/',scripts,
+    createElement:criar,
+    getElementById:id=>id==='tela_avaliacao'?tela:null,
+    querySelector:()=>({id:ativa}),querySelectorAll:()=>[],dispatchEvent(){},
+    head:{appendChild(el){if(el.rel==='preload')preloads.push(el);else queueMicrotask(()=>el.dispatchEvent(new Event('load')));}},
+    body:{classList:classes,appendChild(el){
+      scripts.push(el);
+      if(scripts.length===1){soltarScript=()=>el.dispatchEvent(new Event('load'));}
+      else queueMicrotask(()=>el.dispatchEvent(new Event('load')));
+    }}
+  };
+  // A primeira resposta nunca chega. Na segunda tentativa o fragmento chega,
+  // mas um script para em trânsito. Ele pode terminar depois do aviso de erro.
+  const window={
+    navegarPara(id){ativa=id;return true;},
+    mostrarToastKineSys(msg){const toast=new Elemento();toast.msg=msg;toasts.push(toast);return toast;}
+  };
+  classes.remove=classes.delete.bind(classes);
+  vm.runInNewContext(loader,{window,document,URL,AbortController,CustomEvent,console:{error(){}},
+    setTimeout(fn,ms){const id=++ultimoTimer;timers.set(id,{fn,ate:agora+ms});return id;},
+    clearTimeout(id){timers.delete(id);},
+    fetch(_url,{signal}){
+      buscas++;
+      if(buscas>1)return Promise.resolve({ok:true,text:async()=>'<div>Ficha sintética</div>'});
+      return new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
+    }
+  });
+  const avançar=async(ms)=>{
+    const fim=agora+ms;
+    for(const [id,timer] of [...timers].sort((a,b)=>a[1].ate-b[1].ate)){
+      if(timer.ate<=fim&&timers.delete(id)){agora=timer.ate;timer.fn();await new Promise(setImmediate);}
+    }
+    agora=fim;
+  };
+  const primeira=window.navegarPara('tela_avaliacao');
+  assert(preloads.length>1,'transferências devem ser iniciadas enquanto o fragmento está pendente');
+  assert.equal(scripts.length,0,'precarregar não pode executar scripts antes da montagem');
+  await avançar(600);
+  assert.equal(toasts.at(-1).msg,'Carregando Avaliação…');
+  await avançar(19400);
+  assert.strictEqual(await primeira,false);
+  assert.equal(ativa,'tela_home');
+  assert(!tela.attrs.has('aria-busy'));
+  assert(!classes.has('kinesys-carregando-tela'));
+  assert(toasts[0].removido);
+  assert.match(toasts.at(-1).msg,/demorou para carregar/);
+  assert(preloads.every(link=>link.removido));
+
+  const segunda=window.navegarPara('tela_avaliacao');
+  await new Promise(setImmediate);
+  assert.equal(montagens,1);
+  assert.equal(scripts.length,1,'o segundo script deve esperar o primeiro executar');
+  await avançar(20000);
+  assert.strictEqual(await segunda,false);
+  assert(!tela.attrs.has('aria-busy'));
+  assert.strictEqual(window.navegarPara('tela_buscar'),true,'a tela anterior deve aceitar outros destinos');
+  const terceira=window.navegarPara('tela_avaliacao');
+  assert.equal(scripts.length,1,'tentar novamente não injeta uma segunda cópia do script em trânsito');
+  soltarScript();
+  assert.strictEqual(await terceira,true);
+  assert.equal(ativa,'tela_avaliacao');
+  assert.equal(buscas,2);
+  assert.equal(montagens,1);
+  assert.deepStrictEqual(scripts.map(el=>el.src),preloads.filter((_,i)=>i>=preloads.length-scripts.length).map(el=>el.href));
+  assert(!classes.has('kinesys-carregando-tela'));
+}
+
+testarEntradaAvaliacaoComRedeInterrompida().then(()=>{
+  console.log('PASS: Avaliação sinaliza a espera, recupera a navegação e reabre sem executar módulos em duplicidade.');
+}).catch(error=>{console.error(error);process.exitCode=1;});

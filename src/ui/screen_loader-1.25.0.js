@@ -5,13 +5,16 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261105-agenda-mobile-simetria-r1';
+    const VERSION='1.25.26-avaliacao-entrada-r1';
+    const ASSET_REVISION='20261105-avaliacao-entrada-r1';
+    const TEMPO_ESPERA_AVALIACAO=20000;
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
     const bundles=new Map();
     let revisaoNavegacao=0;
+    let telaEmPreparacao=null;
+    let avisoPreparacao=null;
     let telaAtiva=document.querySelector('.tela.ativa')?.id||'';
 
     const BUNDLES=Object.freeze({
@@ -167,6 +170,35 @@
         for(const src of lista)await carregarScript(src);
     }
 
+    function anteciparScripts(lista){
+        // O navegador pode baixar em paralelo. A execução continua na ordem clínica.
+        const links=[];
+        for(const src of lista){
+            const href=urlAbsoluta(src);
+            if(carregamentos.has(href))continue;
+            const link=document.createElement('link');
+            link.rel='preload';
+            link.as='script';
+            link.href=href;
+            links.push(link);
+            document.head.appendChild(link);
+        }
+        return ()=>links.forEach(link=>link.remove());
+    }
+
+    function aguardarAvaliacao(preparacao){
+        let timer;
+        const limite=new Promise((_,reject)=>{
+            timer=setTimeout(()=>{
+                const erro=new Error('A preparação da Avaliação excedeu o tempo de espera');
+                erro.name='TempoEsperaAvaliacao';
+                reject(erro);
+            },TEMPO_ESPERA_AVALIACAO);
+        });
+        // Um script em trânsito ainda pode executar. Compartilhar a carga evita duplicá-lo.
+        return Promise.race([preparacao,limite]).finally(()=>clearTimeout(timer));
+    }
+
     function carregarFragmento(idTela,bundle){
         if(!bundle?.fragment)return Promise.resolve(null);
         const alvo=document.getElementById(idTela);
@@ -177,9 +209,16 @@
         alvo.dataset.kinesysFragmentState='loading';
         const promessa=(async()=>{
             const fragmentUrl=urlAbsoluta(bundle.fragment);
-            const resposta=await fetch(fragmentUrl,{credentials:'same-origin',cache:'no-cache'});
-            if(!resposta.ok)throw new Error('Falha ao carregar tela '+idTela+' ('+resposta.status+')');
-            const html=await resposta.text();
+            const controle=new AbortController();
+            const timer=setTimeout(()=>controle.abort(),TEMPO_ESPERA_AVALIACAO);
+            let html;
+            try{
+                const resposta=await fetch(fragmentUrl,{credentials:'same-origin',cache:'no-cache',signal:controle.signal});
+                if(!resposta.ok)throw new Error('Falha ao carregar tela '+idTela+' ('+resposta.status+')');
+                html=await resposta.text();
+            }finally{
+                clearTimeout(timer);
+            }
             if(!html.trim())throw new Error('Fragmento vazio para '+idTela);
             if(/<script\b/i.test(html))throw new Error('Fragmento de tela não pode conter scripts: '+idTela);
             if(html.includes('id="'+idTela+'"')||html.includes("id='"+idTela+"'"))throw new Error('Fragmento duplicou o ID da tela: '+idTela);
@@ -214,8 +253,13 @@
 
         const promessa=(async()=>{
             const estilosProntos=Promise.all(bundle.styles.map(carregarEstilo));
-            await carregarFragmento(idTela,bundle);
-            await Promise.all([estilosProntos,carregarScriptsEmOrdem(bundle.scripts)]);
+            const limparPreloads=idTela==='tela_avaliacao'?anteciparScripts(bundle.scripts):null;
+            try{
+                const scriptsProntos=carregarFragmento(idTela,bundle).then(()=>carregarScriptsEmOrdem(bundle.scripts));
+                await Promise.all([estilosProntos,scriptsProntos]);
+            }finally{
+                limparPreloads?.();
+            }
             if(bundle.fragment){
                 document.dispatchEvent(new CustomEvent('kinesys:tela-dom-pronta',{detail:{id:idTela,bundle:bundle.id,fragmento:bundle.fragment,versao:VERSION}}));
             }
@@ -242,7 +286,10 @@
 
     function feedbackFalha(idTela,error){
         console.error('KineSys: falha ao preparar módulos da tela',idTela,error);
-        const mensagem='Não foi possível carregar este módulo agora. Verifique a conexão e tente novamente.';
+        const demora=idTela==='tela_avaliacao'&&['TempoEsperaAvaliacao','AbortError'].includes(error?.name);
+        const mensagem=demora
+            ?'A Avaliação demorou para carregar. Tente abrir novamente. Se persistir, atualize o KineSys.'
+            :'Não foi possível carregar este módulo agora. Verifique a conexão e tente novamente.';
         if(typeof window.mostrarToastKineSys==='function')window.mostrarToastKineSys(mensagem,'erro',6500);
         else if(typeof window.mostrarFeedbackLogin==='function'&&idTela==='tela_login')window.mostrarFeedbackLogin(mensagem,'erro');
         else window.alert(mensagem);
@@ -256,6 +303,11 @@
             const id=String(idTela||'');
             const bundle=bundleDaTela(id);
             const revisao=++revisaoNavegacao;
+            telaEmPreparacao?.removeAttribute('aria-busy');
+            telaEmPreparacao=null;
+            avisoPreparacao?.remove();
+            avisoPreparacao=null;
+            document.body.classList.remove('kinesys-carregando-tela');
 
             if(!bundle||!podeCarregarTela(id)){
                 const resultado=original.apply(this,arguments);
@@ -264,10 +316,16 @@
             }
 
             const tela=document.getElementById(id);
+            telaEmPreparacao=tela;
             tela?.setAttribute('aria-busy','true');
             document.body.classList.add('kinesys-carregando-tela');
+            const avaliacao=id==='tela_avaliacao';
+            const timerAviso=avaliacao&&bundles.get(bundle.id)!=='loaded'?setTimeout(()=>{
+                if(revisao===revisaoNavegacao)avisoPreparacao=window.mostrarToastKineSys?.('Carregando Avaliação…','info',TEMPO_ESPERA_AVALIACAO);
+            },600):null;
+            const preparacao=garantirTela(id);
 
-            return garantirTela(id).then(()=>{
+            return (avaliacao?aguardarAvaliacao(preparacao):preparacao).then(()=>{
                 if(revisao!==revisaoNavegacao)return false;
                 const resultado=original.call(this,id,contextoEdicao);
                 notificarCicloVida();
@@ -276,8 +334,13 @@
                 if(revisao===revisaoNavegacao)feedbackFalha(id,error);
                 return false;
             }).finally(()=>{
+                clearTimeout(timerAviso);
+                if(revisao!==revisaoNavegacao)return;
                 tela?.removeAttribute('aria-busy');
-                if(revisao===revisaoNavegacao)document.body.classList.remove('kinesys-carregando-tela');
+                telaEmPreparacao=null;
+                avisoPreparacao?.remove();
+                avisoPreparacao=null;
+                document.body.classList.remove('kinesys-carregando-tela');
             });
         };
         sobDemanda.__kinesysScreenLoader=true;
