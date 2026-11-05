@@ -120,6 +120,7 @@ function agendaMobilePresentation(){
  d.querySelector('#ks_agenda_mobile_days [data-data="2026-11-05"]').click();assert.deepEqual(changed,['2026-11-05']);
  w.KineSysAgendaLifecycle.limparResumoDiario();
  assert.equal(rotuloData.textContent,'05/11/2026','a data visível acompanha a seleção enquanto a grade carrega');
+ w.KineSysAgendaLifecycle.concluirConsultaVisual();
  w.agendaPeriodoVisual='semana';w.renderizarGradeSemanal(null,null,'p1');w.KineSysAgendaLifecycle.activate();drain();assert.equal(list.hidden,true,'Semana mantém grade canônica');
  mobile=false;w.KineSysAgendaLifecycle.activate();drain();
  assert.equal(data.parentElement.parentElement,parentData);assert.equal(nav.parentElement,parentNav);
