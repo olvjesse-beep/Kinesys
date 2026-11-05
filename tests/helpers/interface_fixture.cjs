@@ -75,6 +75,17 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
  if(!documentoQa)document.body.insertAdjacentHTML('beforeend','<aside style="position:fixed;bottom:0;left:0;right:0;background:#173f47;color:white;padding:6px 12px;text-align:center;z-index:100000;font:12px sans-serif">Prévia isolada · dados fictícios · sem gravações</aside>');
  if(new URLSearchParams(location.search).get('agendaExcecoes')==='1')qaPrepararAgendaExcecoes();
  if(new URLSearchParams(location.search).get('agendaMobile')==='1')qaPrepararAgendaMobile();
+ if(new URLSearchParams(location.search).get('sessoesPacote')==='1'){
+  usuarioLogado={id:'qa-prof',clinica_id:'qa-clinica',tipo:'FISIOTERAPEUTA',nome:'Profissional de demonstração'};
+  const partes=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  const dia=partes.year+'-'+partes.month+'-'+partes.day;
+  const consulta={id:'qa-atual',clinica_id:'qa-clinica',paciente_id:'qa-paciente',plano_id:'qa-pacote',procedimento_id:'qa-fisio',data:dia,hora_inicio:partes.hour+':'+partes.minute,hora_fim:'23:59',status:'atendido',pacientes:{nome:'Paciente de demonstração'},procedimentos:{nome:'Fisioterapia'}};
+  const historico=Array.from({length:8},(_,i)=>({...consulta,id:'qa-passado-'+i,data:'2026-09-01',status:i<6?'atendido':'falta_nao_justificada'}));
+  obterPacientesSalvos=async()=>[{id:'qa-paciente',clinica_id:'qa-clinica',nome:'Paciente de demonstração',avaliacoes:[],evolucoes:[]}];
+  _supabase={rpc:async()=>({data:{perfil_id:'qa-prof',clinica_id:'qa-clinica',profissionais:[{id:'qa-prof'}]}}),from:()=>{let anterior=false;const q={select:()=>q,eq:()=>q,in:()=>{anterior=true;return q;},lte:()=>q,neq:()=>q,order:()=>q,range:()=>q,then:(resolve,reject)=>Promise.resolve({data:anterior?historico:[consulta]}).then(resolve,reject)};return q;}};
+  KineSysMeuDiaClinico.refresh();
+  document.dispatchEvent(new CustomEvent('kinesys:tela-ativada',{detail:{id:'tela_home'}}));
+ }
 },50));
 ${agendaExcecoes}
 var agendaDataSelecionada=new Date('2026-10-26T12:00:00'),AGENDA_GRADE_PASSO_MIN=10,agendaAgendamentosSemanaCache=[];

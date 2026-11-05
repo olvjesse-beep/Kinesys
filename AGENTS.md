@@ -198,6 +198,7 @@ Estas decisões só podem ser removidas ou revertidas por solicitação explíci
 
 ## 15. Contratos do Meu dia e consulta clínica
 
+- Para agendamento com plano vinculado, Meu dia separa sessões consumidas, atendimentos realizados e faltas não justificadas. Contar somente o mesmo plano, paciente e clínica; não somar contratos anteriores ou horários reservados. Falta não justificada consome sessão sem virar atendimento; falta justificada e cancelamento não consomem. Não consultar valores nem alterar lançamentos. Histórico incompleto não mostra total parcial como confirmado. Preservar o caso 7 + 2 = 9 em `home_avaliacao_cuidados.test.cjs`.
 - Em Meu dia clínico, “Realizar avaliação” aparece somente no prontuário carregado sem avaliação finalizada; rascunho não conta como finalização. Preservar evolução, exceções justificadas e reavaliação, com vínculo pelo ID do paciente e agendamento. Dados indisponíveis ou locais pendentes não equivalem a paciente sem avaliação.
 - Após salvamento bem-sucedido, invalidar a fotografia clínica da Home usando a clínica de origem. Respostas anteriores ao salvamento ou à troca de perfil/clínica não podem recolocar ações ou cuidados desatualizados.
 - Cuidados abaixo do nome são registros com origem, não prescrições nem contraindicações automáticas. Diferenciar antecedente, relato a conferir e restrição explicitamente documentada. Não promover negativa, história familiar, cirurgia indicada ou rascunho a antecedente próprio. Restrições ativas usam a avaliação finalizada mais recente, não um pós-operatório antigo.
