@@ -5,13 +5,13 @@
 (function instalarAgendaLifecycle(){
     'use strict';
 
-    const VERSION='1.0.0-mobile-dia-r1';
+    const VERSION='1.0.0-mobile-textos-r3';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
-    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-simetria-r1';
+    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-textos-r3';
     const MOBILE_ORDER_STYLE_ID='ks_agenda_mobile_order_style';
-    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-simetria-r1';
+    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-textos-r3';
     const origensMobile=new Map();
     let relogioTimer=null;
     let resizeObserver=null;
@@ -72,6 +72,7 @@
             }
         });
         origensMobile.clear();
+        document.querySelector('.ks-agenda-mobile-date-value')?.remove();
         document.getElementById('ks_agenda_mobile_legend')?.remove();
         document.getElementById('ks_agenda_mobile_days')?.remove();
         document.getElementById('ks_agenda_mobile_day_list')?.remove();
@@ -86,6 +87,7 @@
         if(!modoMobileAgenda())return;
         const grade=document.getElementById('agenda_semana_grade');
         if(grade)grade.dataset.mobileConsulta='pendente';
+        atualizarDataVisivelMobile(document.querySelector('#ks_agenda_mobile_order .ks-agenda-mobile-date'));
         sincronizarResumoDiarioMobile();
     }
 
@@ -176,6 +178,21 @@
         lista.hidden=false;
     }
 
+    function atualizarDataVisivelMobile(campo){
+        const input=campo?.querySelector('#agenda_data_input');
+        if(!input)return;
+        let rotulo=campo.querySelector('.ks-agenda-mobile-date-value');
+        if(!rotulo){
+            rotulo=document.createElement('span');
+            rotulo.className='ks-agenda-mobile-date-value';
+            rotulo.setAttribute('aria-hidden','true');
+            campo.insertBefore(rotulo,input);
+        }
+        const [ano,mes,dia]=input.value.split('-');
+        const texto=dia?`${dia}/${mes}/${ano}`:'Selecionar data';
+        if(rotulo.textContent!==texto)rotulo.textContent=texto;
+    }
+
     function prepararCabecalhoMobile(hostTopo,nav,data){
         const filtro=document.querySelector('#tela_agenda .agenda-profissional-filtro');
         const periodo=document.querySelector('#tela_agenda .agenda-periodo-segmentado');
@@ -189,6 +206,7 @@
         }
         if(legenda&&legenda.parentElement!==detalhes)detalhes.appendChild(legenda);
         if(data&&nav&&data.parentElement!==nav)nav.appendChild(data);
+        atualizarDataVisivelMobile(data);
         let dias=document.getElementById('ks_agenda_mobile_days');
         if(!dias){dias=document.createElement('div');dias.id='ks_agenda_mobile_days';dias.setAttribute('role','group');dias.setAttribute('aria-label','Dias da semana');hostTopo.appendChild(dias);}
         const valor=document.getElementById('agenda_data_input')?.value;
