@@ -5,13 +5,13 @@
 (function instalarAgendaLifecycle(){
     'use strict';
 
-    const VERSION='1.0.0-mobile-iphone-r2';
+    const VERSION='1.0.0-mobile-textos-r3';
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
-    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-iphone-r2';
+    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-textos-r3';
     const MOBILE_ORDER_STYLE_ID='ks_agenda_mobile_order_style';
-    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-iphone-r2';
+    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-textos-r3';
     const origensMobile=new Map();
     let relogioTimer=null;
     let resizeObserver=null;
@@ -186,7 +186,7 @@
             rotulo=document.createElement('span');
             rotulo.className='ks-agenda-mobile-date-value';
             rotulo.setAttribute('aria-hidden','true');
-            campo.appendChild(rotulo);
+            campo.insertBefore(rotulo,input);
         }
         const [ano,mes,dia]=input.value.split('-');
         const texto=dia?`${dia}/${mes}/${ano}`:'Selecionar data';
