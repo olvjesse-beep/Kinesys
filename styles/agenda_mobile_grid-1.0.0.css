@@ -189,11 +189,16 @@
     min-width:0!important;
     min-height:48px!important;
     margin:0!important;
-    padding:8px!important;
+    /* 1 px de borda + 13 px de recuo = 4 px de borda + 10 px do cartão. */
+    padding:8px 10px 8px 13px!important;
     box-sizing:border-box!important;
+    justify-content:space-between;
+    flex-wrap:nowrap;
+    text-align:left;
     font-size:14px!important;
     white-space:normal!important;
   }
+  #tela_agenda #ks_agenda_mobile_day_list .ks-agenda-day-interval .agenda-intervalo-icone{order:1}
   #tela_agenda #ks_agenda_mobile_day_list .ks-agenda-day-free-action{min-height:48px;text-align:left;padding:10px 12px;background:transparent;border:1px dashed var(--kds-line);border-radius:10px;color:var(--kds-accent);font-size:14px}
   #tela_agenda #ks_agenda_mobile_day_list .ks-agenda-day-free .ks-agenda-day-time{padding-top:14px}
   #tela_agenda #ks_agenda_mobile_day_list .ks-agenda-day-block{padding:12px;border:1px solid #e5c477;border-radius:10px;background:var(--kds-warning-soft);color:var(--kds-warning);font-size:14px;line-height:1.5}

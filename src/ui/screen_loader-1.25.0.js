@@ -6,7 +6,7 @@
     'use strict';
 
     const VERSION='1.25.25-config-paginas-r1';
-    const ASSET_REVISION='20261105-agenda-mobile-iphone-r2';
+    const ASSET_REVISION='20261105-agenda-mobile-textos-r3';
     const carregamentos=new Map();
     const estilos=new Map();
     const fragmentos=new Map();
@@ -80,9 +80,9 @@
             styles:Object.freeze([
                 'styles/agenda_referencia-1.20.0.css?v=20260910-layout-shim-r1&layout=20261012-r6a',
                 'styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2',
-                'styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-iphone-r2',
+                'styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-textos-r3',
                 'styles/agenda_mobile_controls-1.0.0.css?v=20260914-controls-r29',
-                'styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-iphone-r2',
+                'styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-textos-r3',
                 'styles/agenda_profissional_picker-1.0.0.css?v=20260914-r42',
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
@@ -90,7 +90,7 @@
                 'src/agenda/agenda-1.20.0.js?v=20261104-mobile-dia-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
-                'src/agenda/agenda_lifecycle-1.0.0.js?v=20261105-mobile-iphone-r2'
+                'src/agenda/agenda_lifecycle-1.0.0.js?v=20261105-mobile-textos-r3'
             ])
         })
     });
