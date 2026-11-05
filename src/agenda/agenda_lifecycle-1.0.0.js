@@ -9,9 +9,9 @@
     const MOBILE_STYLE_ID='ks_agenda_mobile_style';
     const MOBILE_STYLE_SRC='styles/agenda_mobile-1.0.0.css?v=20260913-mobile-r2';
     const MOBILE_GRID_STYLE_ID='ks_agenda_mobile_grid_style';
-    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261104-mobile-dia-r1';
+    const MOBILE_GRID_STYLE_SRC='styles/agenda_mobile_grid-1.0.0.css?v=20261105-mobile-simetria-r1';
     const MOBILE_ORDER_STYLE_ID='ks_agenda_mobile_order_style';
-    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261104-mobile-dia-r1';
+    const MOBILE_ORDER_STYLE_SRC='styles/agenda_mobile_order-1.0.0.css?v=20261105-mobile-simetria-r1';
     const origensMobile=new Map();
     let relogioTimer=null;
     let resizeObserver=null;

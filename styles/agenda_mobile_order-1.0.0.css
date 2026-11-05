@@ -41,9 +41,52 @@
   #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>.btn-hoje-agenda{grid-column:3!important}
   #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>button:nth-of-type(3){grid-column:4!important;font-size:0!important;background:var(--kds-surface) url('../assets/vendor/tabler/chevron-right.svg') center/20px no-repeat!important}
   #tela_agenda #ks_agenda_mobile_order .agenda-semana-nav>div:not(.ks-agenda-mobile-date){display:none!important}
-  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date{display:block!important;grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date{
+    display:block!important;
+    grid-column:2!important;
+    grid-row:1!important;
+    min-inline-size:0!important;
+    max-inline-size:100%!important;
+    block-size:44px!important;
+    margin:0!important;
+    padding:0!important;
+    contain:inline-size;
+  }
   #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date label{position:absolute!important;width:1px!important;height:1px!important;clip-path:inset(50%)!important;overflow:hidden!important}
-  #tela_agenda #ks_agenda_mobile_order .ks-agenda-mobile-date input{display:block!important;box-sizing:border-box;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;font-size:15px!important;padding:6px 4px!important;text-align:center!important;border-radius:9px!important;border:1px solid var(--kds-line)!important;background:var(--kds-surface)!important}
+  #tela_agenda #ks_agenda_mobile_order #agenda_data_input{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    display:block!important;
+    box-sizing:border-box!important;
+    inline-size:100%!important;
+    min-inline-size:0!important;
+    max-inline-size:100%!important;
+    block-size:44px!important;
+    min-block-size:44px!important;
+    max-block-size:44px!important;
+    margin:0!important;
+    padding:0 4px!important;
+    font-size:16px!important;
+    line-height:1.2!important;
+    text-align:center!important;
+    border-radius:9px!important;
+    border:1px solid var(--kds-line)!important;
+    background:var(--kds-surface)!important;
+  }
+  #tela_agenda #ks_agenda_mobile_order #agenda_data_input::-webkit-date-and-time-value{
+    min-width:0;
+    margin:0;
+    padding:0;
+    text-align:center;
+  }
+  #tela_agenda #ks_agenda_mobile_order #agenda_data_input::-webkit-datetime-edit{
+    min-width:0;
+    padding:0;
+  }
+  #tela_agenda #ks_agenda_mobile_order #agenda_data_input::-webkit-calendar-picker-indicator{
+    margin:0;
+    padding:0;
+  }
   #tela_agenda #ks_agenda_mobile_days{order:30;grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding:4px;background:var(--kds-surface);border:1px solid var(--kds-line);border-radius:12px}
   #tela_agenda #ks_agenda_mobile_days button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 0;min-width:0;min-height:56px;border:0;border-radius:9px;background:transparent;color:var(--kds-text)}
   #tela_agenda #ks_agenda_mobile_days span{font-size:12px;line-height:1.2}
@@ -55,7 +98,24 @@
   #tela_agenda #ks_agenda_mobile_post_grid #ks_agenda_controls [hidden],
   #tela_agenda #ks_agenda_mobile_post_grid .agenda-audit-btn[hidden]{display:none!important}
   #tela_agenda #ks_agenda_mobile_order>.agenda-periodo-segmentado [aria-pressed="true"]{background:var(--kds-accent)!important;color:white!important}
-  #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{position:fixed!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;left:12px!important;right:12px!important;width:calc(100% - 24px)!important;height:48px!important;min-height:48px!important;margin:0!important;padding:10px 16px!important;z-index:40!important;border-radius:12px!important;font-size:16px!important;box-shadow:0 2px 8px rgba(23,59,69,.12)!important}
+  #tela_agenda #ks_agenda_mobile_order .ks-new-appointment{
+    --agenda-action-inset:max(12px,env(safe-area-inset-left,0px),env(safe-area-inset-right,0px));
+    position:fixed!important;
+    bottom:max(12px,env(safe-area-inset-bottom,0px))!important;
+    inset-inline:var(--agenda-action-inset)!important;
+    width:calc(100% - 2 * var(--agenda-action-inset))!important;
+    max-width:calc(100% - 2 * var(--agenda-action-inset))!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    height:48px!important;
+    min-height:48px!important;
+    margin:0!important;
+    padding:10px 16px!important;
+    z-index:40!important;
+    border-radius:12px!important;
+    font-size:16px!important;
+    box-shadow:0 2px 8px rgba(23,59,69,.12)!important;
+  }
   #tela_agenda #agenda_painel .agenda-toolbar{display:none!important}
   #tela_agenda #ks_agenda_mobile_order[data-subtela="lista"] .ks-new-appointment{display:none!important}
 
