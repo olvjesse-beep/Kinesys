@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.26-avaliacao-entrada-r1';
-    const ASSET_REVISION='20261105-avaliacao-entrada-r2';
+    const VERSION='1.25.27-avaliacao-webkit-r1';
+    const ASSET_REVISION='20261105-avaliacao-webkit-r1';
     const TEMPO_ESPERA_AVALIACAO=20000;
     const carregamentos=new Map();
     const estilos=new Map();

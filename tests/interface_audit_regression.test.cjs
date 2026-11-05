@@ -129,4 +129,35 @@ function agendaMobilePresentation(){
  w.KineSysAgendaLifecycle.destroy();dom.window.close();
  console.log('agenda_mobile: OK (Dia/Semana, simultâneos, origem canônica, carga/erro, troca de escopo, data e restauração desktop)');
 }
-(async()=>{presentation();await navigation();await team();await finance();agendaMobilePresentation();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});
+function evaluationLayoutSettles(){
+ if(!process.env.JSDOM_MODULE)return;
+ const {JSDOM}=require(process.env.JSDOM_MODULE);
+ const dom=new JSDOM('<section id="tela_avaliacao"><div id="subtela_mapeamento"></div></section>',{runScripts:'outside-only'});
+ const w=dom.window,d=w.document,root=d.getElementById('subtela_mapeamento');
+ const mutations=new w.MutationObserver(()=>{});
+ mutations.observe(root,{subtree:true,attributes:true,attributeFilter:['style']});
+ let atualizar;
+ w.MutationObserver=class{constructor(callback){atualizar=callback;}observe(){}};
+ const source=read('src/clinical/evaluation_workspace-1.17.0.js');
+ w.eval(source.slice(source.lastIndexOf('\n(function(){')));
+ root.innerHTML='<div class="ks-pd-exam-grid"><details class="ks-pd-exam-summary" aria-label="Resumo do exame"></details></div><div><aside><h3>Resumo do exame</h3></aside></div>';
+ atualizar();
+ const grade=root.querySelector('.ks-pd-exam-grid'),resumo=grade.firstElementChild,painel=root.querySelector('aside');
+ assert.equal(grade.style.display,'block');
+ assert.equal(painel.parentElement.style.display,'block');
+ assert.equal(resumo.style.position,'static');
+ assert.equal(painel.style.position,'static');
+ assert(mutations.takeRecords().length>0);
+ atualizar();
+ assert.equal(mutations.takeRecords().length,0,'o callback de layout não pode realimentar o próprio observador');
+ painel.style.position='sticky';
+ mutations.takeRecords();
+ atualizar();
+ assert.equal(painel.style.position,'static','uma alteração externa ainda é corrigida');
+ mutations.takeRecords();
+ atualizar();
+ assert.equal(mutations.takeRecords().length,0,'o layout deve voltar a estabilizar após a correção');
+ mutations.disconnect();
+ w.close();
+}
+(async()=>{presentation();await navigation();await team();await finance();agendaMobilePresentation();evaluationLayoutSettles();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});
