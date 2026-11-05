@@ -80,6 +80,11 @@ class CampoCadastro{
  ctx.adicionarTelefoneCadastro('123');const before=writes.length;assert.equal(await ctx.salvarCadastroSomente(false),null);assert.equal(writes.length,before,'Telefone adicional inválido bloqueia gravação');
  stored.beta={id:'beta',nome:'Paciente sintético Beta',telefone:'11999990002'};await ctx.editarCadastro('beta');assert.equal(field('cad_telefones_lista').querySelectorAll().length,0);assert.equal(field('cad_observacoes').value,'','Troca de paciente não herda nota/telefones');
  await ctx.salvarPacienteNaNuvem({id,nome:p.nome},{somenteCadastro:true});assert.equal(stored[id].observacoes_cadastro,'Nota alterada','Objeto parcial não apaga observação já gravada');assert.deepEqual(Array.from(stored[id].telefones_adicionais),['1133334444']);
+ let tentativasCpf=0;
+ ctx._supabase.from=()=>({upsert:async()=>{tentativasCpf++;return {error:{code:'23505',message:'duplicate key value violates unique constraint "pacientes_clinica_cpf_normalizado_uidx"'}};}});
+ assert.equal(await ctx.salvarPacienteNaNuvem({id:'duplicado',nome:'Paciente sintético',cpf:'529.982.247-25'},{somenteCadastro:true}),false);
+ assert.equal(tentativasCpf,1,'CPF duplicado no banco não provoca nova tentativa nem cria cadastro local');
+ assert.match(alerts.at(-1)[0],/CPF já pertence a um prontuário/);
  assert.match(fs.readFileSync('src/patient/patient_index_cache_core-1.0.0.js','utf8'),/'telefones_adicionais','observacoes_cadastro'/,'Reabrir cadastro lê os novos campos da nuvem');
  console.log('PASS cadastro: adicionar/remover/deduplicar contatos, observação, gravação/reabertura real, troca de paciente, validação e histórico clínico preservado.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
