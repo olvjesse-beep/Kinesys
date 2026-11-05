@@ -548,10 +548,11 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
             // existirem, salva o cadastro principal na nuvem e preserva os dados
             // do responsável localmente até a migration ITEM5 ser aplicada.
             if (pacienteError) {
+                if (pacienteError.code === '23505') throw pacienteError;
                 const tentativaCore = await _supabase
                     .from('pacientes')
                     .upsert([pacienteDataCore], { onConflict: 'id' });
-                if (tentativaCore.error) throw pacienteError;
+                if (tentativaCore.error) throw tentativaCore.error.code === '23505' ? tentativaCore.error : pacienteError;
                 console.warn('KineSys: cadastro salvo na nuvem sem as novas colunas de responsável. Execute SUPABASE_SQL/SUPABASE_MIGRACAO_v1.11.2_ITEM5_RESPONSAVEL.sql para sincronizá-las entre dispositivos.', pacienteError);
             }
 
@@ -621,6 +622,10 @@ async function salvarPacienteNaNuvem(pacienteObjeto, opcoes = {}) {
 
             return true;
         } catch (err) {
+            if (err?.code === '23505' && String(err.message || '').includes('pacientes_clinica_cpf_normalizado_uidx')) {
+                if (!opcoes.silenciarErro) alert('Este CPF já pertence a um prontuário desta clínica. Abra o cadastro existente para editar.', 'aviso');
+                return false;
+            }
             console.error("Erro ao salvar no Supabase:", err);
             if (opcoes.somenteNuvem || opcoes.exigirRastreabilidadeClinica) {
                 const msg=String(err?.message||err||'');

@@ -8,6 +8,7 @@ try {
  await db.exec(fs.readFileSync(new URL('tests/fixtures/pacotes_schema.sql',root),'utf8'));
  await db.exec('create extension btree_gist');
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_contrato_canonico.sql',root),'utf8'));
+ await db.exec(fs.readFileSync(new URL('supabase/migrations/20261105165754_cpf_e_cancelamento_unitario.sql',root),'utf8'));
  const privileges=(await db.query("select has_function_privilege('anon','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') anonymous, has_function_privilege('authenticated','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') authenticated")).rows[0];
  assert.equal(privileges.anonymous,false);assert.equal(privileges.authenticated,true);
  const cid='11111111-1111-4111-8111-111111111111',proc='22222222-2222-4222-8222-222222222222';
@@ -59,6 +60,44 @@ try {
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_reparar_unitario_estornado.sql',root),'utf8'));
  assert.equal(Number((await db.query('select valor_devido from cobrancas_agendamento where id=$1',[lc])).rows[0].valor_devido),0);
  assert.equal((await db.query('select count(*) n from pagamentos where plano_id=$1',[legacy])).rows[0].n,2);
+ {
+  const novoUnitario=async()=>{
+   const agendamento=(await db.query("insert into agendamentos(paciente_id,procedimento_id,clinica_id,status) values('teste',$1,$2,'agendado') returning id",[individual,cid])).rows[0].id;
+   const cobranca=(await db.query('select kinesys_preparar_cobranca_agendamento($1) c',[agendamento])).rows[0].c;
+   return {agendamento,plano:cobranca.plano_id};
+  };
+  const cancelar=({agendamento})=>db.query("update agendamentos set status='cancelado' where id=$1",[agendamento]);
+  const receber=({plano})=>db.query("insert into pagamentos(plano_id,paciente_id,clinica_id,valor,tipo) values($1,'teste',$2,30,'recebimento')",[plano,cid]);
+  const creditar=({plano})=>db.query("insert into creditos_paciente_usos(plano_id,paciente_id,clinica_id,valor) values($1,'teste',$2,20)",[plano,cid]);
+  const ler=async({plano})=>(await db.query("select status,encerramento_automatico,valor_final,condicoes_originais from planos_atendimento where id=$1",[plano])).rows[0];
+  const situacao=async id=>(await db.query('select status_financeiro,valor_pendente from kinesys_situacao_financeira_agendamentos($1)',[[id]])).rows[0];
+  const semSaldo=await novoUnitario(), antes=await ler(semSaldo);
+  await assert.rejects(db.query("update planos_atendimento set status='cancelado',encerramento_automatico=true where id=$1",[semSaldo.plano]),/exige uma alteração na Agenda/);
+  await cancelar(semSaldo);await cancelar(semSaldo);
+  assert.deepEqual(await ler(semSaldo),{...antes,status:'cancelado',encerramento_automatico:true});
+  assert.deepEqual(await situacao(semSaldo.agendamento),{status_financeiro:'cancelado',valor_pendente:'0'});
+  await assert.rejects(receber(semSaldo),/cobrança deste agendamento unitário foi cancelada/);
+  await assert.rejects(creditar(semSaldo),/cobrança deste agendamento unitário foi cancelada/);
+  await assert.rejects(db.query("update planos_atendimento set status='ativo',encerramento_automatico=false,encerrado_em=null where id=$1",[semSaldo.plano]),/não pode ser reativado/);
+  await db.query("update agendamentos set status='confirmado' where id=$1",[semSaldo.agendamento]);
+  assert.deepEqual(await ler(semSaldo),antes);
+  assert.equal((await situacao(semSaldo.agendamento)).status_financeiro,'pendente');
+  const acoes=(await db.query('select acao from auditoria_contratos where plano_id=$1 order by criado_em',[semSaldo.plano])).rows.map(row=>row.acao);
+  assert.deepEqual(acoes,['cancelar','reabrir']);
+  const pago=await novoUnitario();await receber(pago);await cancelar(pago);
+  assert.equal((await ler(pago)).status,'ativo','recebimento parcial exige conciliação explícita');
+  const credito=await novoUnitario();await creditar(credito);await cancelar(credito);
+  assert.equal((await ler(credito)).status,'ativo','crédito aplicado exige conciliação explícita');
+  const semCobranca=(await db.query("insert into agendamentos(paciente_id,procedimento_id,clinica_id,status) values('teste',$1,$2,'agendado') returning id",[individual,cid])).rows[0].id;
+  await cancelar({agendamento:semCobranca});
+  assert.equal((await db.query('select plano_id from agendamentos where id=$1',[semCobranca])).rows[0].plano_id,null);
+  assert.deepEqual(await situacao(semCobranca),{status_financeiro:'cancelado',valor_pendente:'0'});
+  await db.query("insert into pacientes(id,clinica_id,cpf) values('cpf-teste',$1,'529.982.247-25'),('sem-cpf1',$1,''),('sem-cpf2',$1,null)",[cid]);
+  await assert.rejects(db.query("insert into pacientes(id,clinica_id,cpf) values('cpf-duplicado',$1,'52998224725')",[cid]),/pacientes_clinica_cpf_normalizado_uidx/);
+  await assert.rejects(db.query("update pacientes set cpf='52998224725' where id='sem-cpf2'"),/pacientes_clinica_cpf_normalizado_uidx/);
+  await db.query("insert into pacientes(id,clinica_id,cpf) values('cpf-outra-clinica',$1,'52998224725')",['99111111-1111-4111-8111-111111111111']);
+  console.log('PASS: CPF único por clínica e cancelamento unitário auditado, reversível e sem alterar caixa ou pacote.');
+ }
  // Procedimento e cobrança devem mudar atomicamente também às 07h e às 13h.
  const prof='prof-edicao',av='a1000000-0000-4000-8000-000000000001',ost='a1000000-0000-4000-8000-000000000002',fis='a1000000-0000-4000-8000-000000000003';
  await db.exec(`insert into equipe(id,nome,clinica_id,ativo) values('${prof}','Profissional ficticio','${cid}',true);
