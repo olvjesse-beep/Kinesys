@@ -143,6 +143,7 @@
   text-overflow:ellipsis;
 }
 #card_painel_fisioterapeuta.ks-fisio-util-compact .has-record-pending .ks-fisio-day-detail{color:var(--kds-warning)}
+#card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-detail[data-ks-resumo-sessoes]{white-space:normal;overflow-wrap:break-word;overflow:visible;text-overflow:clip}
 #card_painel_fisioterapeuta.ks-fisio-util-compact .ks-fisio-day-actions{
   display:flex;
   align-items:center;

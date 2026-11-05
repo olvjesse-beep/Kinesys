@@ -8,6 +8,8 @@
     'use strict';
 
     const STATUS_CONCLUIDOS = new Set(['atendido','concluido']);
+    // Mesma regra de consumo da Agenda/Planos, sem transformar falta em atendimento.
+    const STATUS_CONSOME_PACOTE = new Set(['atendido','concluido','falta_nao_justificada']);
     const STATUS_AUSENCIA = new Set(['falta_justificada','falta_nao_justificada','faltou']);
     const JANELA_HOME_MINUTOS = 4 * 60;
     let contextoAgendaHomeFisioterapeuta = null;
@@ -117,12 +119,35 @@
         const nome=nomeProcedimento(atual);
         const familia=familiaProcedimento(nome,atual?.procedimento_id);
         const pacienteAtual=String(atual?.paciente_id||'').trim();
+        const clinicaAtual=String(atual?.clinica_id||'').trim();
+        const planoAtual=String(atual?.plano_id||'').trim();
+        const servico={avaliacao:'Avaliação',osteopatia:'Osteopatia',liberacao_miofascial:'Liberação miofascial',fisioterapia:'Fisioterapia'}[familia]||nome||'Atendimento';
+        if(!Array.isArray(historico))return {familia,nome,primeiroAtendimentoClinica:false,rotulo:servico,resumoSessoes:'Histórico de sessões indisponível · atualize para conferir'};
+        // O registro atual é a fotografia mais recente. IDs repetidos não duplicam consumo.
+        const registros=new Map();
+        for(const r of [...historico,atual]){
+            if(!r?.id||!pacienteAtual||String(r.paciente_id||'').trim()!==pacienteAtual)continue;
+            if(clinicaAtual&&String(r.clinica_id||'')!==clinicaAtual)continue;
+            const data=String(r.data||hoje).slice(0,10);
+            if(data<=hoje)registros.set(String(r.id),r);
+        }
+        historico=[...registros.values()];
         const anteriores=(historico||[]).filter(r=>
             pacienteAtual && String(r?.paciente_id||'').trim()===pacienteAtual &&
             STATUS_CONCLUIDOS.has(String(r?.status||'').toLowerCase()) && registroAntesDoAtual(r,atual,hoje)
         );
         const anterioresServico=anteriores.filter(r=>mesmaFamilia(r,atual,familia));
         const numero=anterioresServico.length+1;
+        const quantidade=(n,singular,plural)=>`${n} ${n===1?singular:plural}`;
+        if(planoAtual){
+            const pacote=historico.filter(r=>String(r.plano_id||'')===planoAtual);
+            const realizados=pacote.filter(r=>STATUS_CONCLUIDOS.has(String(r.status||'').toLowerCase())).length;
+            const faltas=pacote.filter(r=>String(r.status||'').toLowerCase()==='falta_nao_justificada').length;
+            const consumidas=pacote.filter(r=>STATUS_CONSOME_PACOTE.has(String(r.status||'').toLowerCase())).length;
+            return {familia,nome,numero,primeiroAtendimentoClinica:anteriores.length===0,
+                rotulo:`${servico} · ${quantidade(consumidas,'sessão consumida','sessões consumidas')} do plano`,
+                resumoSessoes:`${quantidade(realizados,'atendimento realizado','atendimentos realizados')} · ${quantidade(faltas,'falta não justificada','faltas não justificadas')}`};
+        }
         return {
             familia,
             nome,
@@ -258,6 +283,7 @@
             registroHoje,
             detalhe,
             rotuloSessao:sequencia.rotulo,
+            resumoSessoes:sequencia.resumoSessoes,
             primeiroAtendimentoClinica:sequencia.primeiroAtendimentoClinica,
             familia:sequencia.familia
         };
@@ -518,7 +544,9 @@
         const diagnostico=String(ultimaAvaliacao?.mapeamento?.clinicaEstruturada?.diagnosticoProfissional||'').trim();
         if(diagnostico){const dx=document.createElement('p');dx.className='ks-fisio-day-diagnosis';dx.textContent='Diagnóstico: '+diagnostico;content.appendChild(dx);}
         const cuidados=paciente&&montarCuidados(paciente);if(cuidados)content.appendChild(cuidados);
-        content.append(category,detail);
+        content.appendChild(category);
+        if(clinica.resumoSessoes){const sessoes=document.createElement('p');sessoes.className='ks-fisio-day-detail';sessoes.dataset.ksResumoSessoes='1';sessoes.textContent=clinica.resumoSessoes;content.appendChild(sessoes);}
+        content.appendChild(detail);
         const actions=document.createElement('div');actions.className='ks-fisio-day-actions';
         const status=String(agendamento.status||'').toLowerCase();
         const bloqueiaAcao=STATUS_AUSENCIA.has(status)||status==='cancelado';
@@ -557,26 +585,29 @@
         return 6;
     }
 
-    async function carregarHistoricoAgenda(atendimentos,hoje,profissionalId){
+    async function carregarHistoricoAgenda(atendimentos,hoje,perfilInicial){
         const ids=[...new Set((atendimentos||[]).map(a=>String(a?.paciente_id||'')).filter(Boolean))];
         if(!ids.length) return [];
-        let q=await _supabase.from('agendamentos')
-            .select('id,paciente_id,procedimento_id,data,hora_inicio,status,procedimentos(nome)')
-            .in('paciente_id',ids).lte('data',hoje).neq('status','cancelado')
-            .order('data').order('hora_inicio');
-        if(q.error && /procedimentos|relationship|schema cache/i.test(String(q.error.message||''))){
-            q=await _supabase.from('agendamentos')
-                .select('id,paciente_id,procedimento_id,data,hora_inicio,status')
-                .in('paciente_id',ids).lte('data',hoje).neq('status','cancelado')
-                .order('data').order('hora_inicio');
-        }
-        if(q.error){
-            q=await _supabase.from('agendamentos')
-                .select('id,paciente_id,procedimento_id,data,hora_inicio,status')
-                .in('paciente_id',ids).eq('profissional_id',profissionalId).lte('data',hoje).neq('status','cancelado')
-                .order('data').order('hora_inicio');
-        }
-        return q.error ? [] : (q.data||[]);
+        const clinicaId=String(perfilInicial?.clinica_id||'').trim();
+        if(!clinicaId)return null;
+        const registros=[],vistos=new Set(),tamanhoPagina=500;
+        let semRelacao=false;
+        try{
+            for(let inicio=0; ; inicio+=tamanhoPagina){
+                if(!perfilAtualEquivale(perfilInicial))return null;
+                const consultar=()=>_supabase.from('agendamentos')
+                    .select('id,clinica_id,paciente_id,plano_id,procedimento_id,data,hora_inicio,status'+(semRelacao?'':',procedimentos(nome)'))
+                    .eq('clinica_id',clinicaId).in('paciente_id',ids).lte('data',hoje).neq('status','cancelado')
+                    .order('data').order('hora_inicio').order('id').range(inicio,inicio+tamanhoPagina-1);
+                let q=await consultar();
+                if(q.error&&!semRelacao&&/procedimentos|relationship|schema cache/i.test(String(q.error.message||''))){semRelacao=true;q=await consultar();}
+                if(q.error||!Array.isArray(q.data))return null;
+                const novos=q.data.filter(r=>r?.id&&!vistos.has(String(r.id)));
+                if(q.data.length&&!novos.length)return null;
+                for(const r of novos){vistos.add(String(r.id));registros.push(r);}
+                if(q.data.length<tamanhoPagina)return registros;
+            }
+        }catch(_){return null;}
     }
 
     async function resolverProfissionalHomeFisioterapeuta(perfilInicial){
@@ -643,12 +674,12 @@
 
         const agora=instanteHomeBrasilia(),hoje=agora.data,inicioJanela=agora.minutos,fimJanela=Math.min(24*60,inicioJanela+JANELA_HOME_MINUTOS);
         let consulta=await _supabase.from('agendamentos')
-            .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome),procedimentos(nome,duracao_minutos)')
-            .eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
+            .select('id,clinica_id,paciente_id,plano_id,procedimento_id,data,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome),procedimentos(nome,duracao_minutos)')
+            .eq('clinica_id',perfilInicial.clinica_id).eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
         if(consulta.error&&/procedimentos|hora_fim|observacoes|relationship|schema cache/i.test(String(consulta.error.message||''))){
             consulta=await _supabase.from('agendamentos')
-                .select('id,paciente_id,procedimento_id,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome)')
-                .eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
+                .select('id,clinica_id,paciente_id,plano_id,procedimento_id,data,hora_inicio,hora_fim,status,observacoes,pacientes(id,nome)')
+                .eq('clinica_id',perfilInicial.clinica_id).eq('data',hoje).eq('profissional_id',profissionalId).order('hora_inicio');
         }
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
         if(consulta.error){resumo.textContent='Não foi possível carregar seus atendimentos agora.';return false;}
@@ -663,7 +694,7 @@
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
         const mapaPacientes=new Map((pacientes||[]).filter(p=>!p.clinica_id||String(p.clinica_id)===String(perfilInicial?.clinica_id||'')).map(p=>[String(p.id||''),p]));
-        const historico=await carregarHistoricoAgenda(atendimentos,hoje,profissionalId);
+        const historico=await carregarHistoricoAgenda(atendimentos,hoje,perfilInicial);
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
         let concluidos=0,registrosPendentes=0,emAtendimento=0;
