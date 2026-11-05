@@ -71,6 +71,7 @@ function financeiroResumoCoberturaAgenda() {
 }
 
 function rotuloPagamentoPlano(metricas) {
+    if (metricas?.unitarioCancelado) return 'Cancelado';
     if (!metricas || metricas.valorFinal <= 0 || metricas.saldo <= 0.009) return 'Quitado';
     if (metricas.pagos > 0) return 'Pagamento parcial';
     return 'Pagamento pendente';
@@ -685,8 +686,9 @@ function metricasPlano(plano) {
     const disponiveisVinculo = plano.status === 'ativo' ? Math.max(0, contratadas - consumidas - agendadas) : 0;
     const pagos = financeiroPagamentosCache.filter(p=>String(p.plano_id)===String(plano.id)).reduce((s,p)=>s+Number(p.valor||0),0);
     const valorFinal = Number(plano.valor_final || 0);
-    const saldo = Math.max(0, valorFinal - pagos);
-    return { contratadas, realizadas: consumidas, consumidas, atendidas, faltasNaoJustificadas, agendadas, restantes, disponiveisVinculo, pagos, valorFinal, saldo };
+    const unitarioCancelado = plano.status === 'cancelado' && ehAtendimentoUnitario(plano);
+    const saldo = unitarioCancelado ? 0 : Math.max(0, valorFinal - pagos);
+    return { contratadas, realizadas: consumidas, consumidas, atendidas, faltasNaoJustificadas, agendadas, restantes, disponiveisVinculo, pagos, valorFinal, saldo, unitarioCancelado };
 }
 
 function renderizarFinanceiroPaciente() {
@@ -721,7 +723,7 @@ function renderizarFinanceiroPaciente() {
                 <div class="finance-progress"><i style="width:${pct}%"></i></div>
                 <div class="finance-money-line"><span>Pagamento <b>${escapeHTML(rotuloPagamentoPlano(m))}</b></span><span>Pago <b>${moedaBR(m.pagos)}</b></span><span>Saldo <b>${moedaBR(m.saldo)}</b></span>${(()=>{const d=financeiroDescontosPlano(plano);return d.total>0?`<span>Desconto <b>${moedaBR(d.total)}</b>${d.pacote>0?` · pacote ${moedaBR(d.pacote)}`:''}${d.cortesia>0?` · cortesia ${moedaBR(d.cortesia)}`:''}${d.naoClassificado>0?` · histórico não classificado ${moedaBR(d.naoClassificado)}`:''}</span>`:''})()}${plano.forma_pagamento_prevista?`<span>Forma prevista <b>${escapeHTML(plano.forma_pagamento_prevista)}</b></span>`:''}</div>
                 ${plano.observacoes?`<p class="finance-note">${escapeHTML(plano.observacoes)}</p>`:''}
-                <div class="finance-plan-actions">${plano.status==='ativo'?`<button type="button" onclick="personalizarContratoFinanceiro('${escapeHTML(plano.id)}')">Personalizar</button>${plano.personalizacao?`<button type="button" onclick="removerPersonalizacaoFinanceiro('${escapeHTML(plano.id)}')">Excluir personalização</button>`:''}`:''}<button type="button" onclick="abrirModalPagamento('${escapeHTML(plano.id)}')">+ Pagamento</button>${plano.status==='ativo'&&m.disponiveisVinculo>0&&financeiroPreAgendamentosSemCobertura(plano).length?`<button type="button" onclick="vincularPreAgendamentosAoPlanoFinanceiro('${escapeHTML(plano.id)}')">Vincular pré-agendamentos</button>`:''}${!ehAtendimentoUnitario(plano)&&(plano.status==='concluido'||(plano.status!=='cancelado'&&m.contratadas>0&&m.restantes===0))?`<button type="button" onclick="abrirRenovacaoPlanoFinanceiro('${escapeHTML(plano.id)}')">Renovar plano</button>`:''}${plano.status==='ativo'&&m.restantes>0?`<button type="button" onclick="encerrarPlanoFinanceiro('${escapeHTML(plano.id)}')">Cancelar contratação</button>`:''}</div>
+                <div class="finance-plan-actions">${plano.status==='ativo'?`<button type="button" onclick="personalizarContratoFinanceiro('${escapeHTML(plano.id)}')">Personalizar</button>${plano.personalizacao?`<button type="button" onclick="removerPersonalizacaoFinanceiro('${escapeHTML(plano.id)}')">Excluir personalização</button>`:''}`:''}${m.unitarioCancelado?'':`<button type="button" onclick="abrirModalPagamento('${escapeHTML(plano.id)}')">+ Pagamento</button>`}${plano.status==='ativo'&&m.disponiveisVinculo>0&&financeiroPreAgendamentosSemCobertura(plano).length?`<button type="button" onclick="vincularPreAgendamentosAoPlanoFinanceiro('${escapeHTML(plano.id)}')">Vincular pré-agendamentos</button>`:''}${!ehAtendimentoUnitario(plano)&&(plano.status==='concluido'||(plano.status!=='cancelado'&&m.contratadas>0&&m.restantes===0))?`<button type="button" onclick="abrirRenovacaoPlanoFinanceiro('${escapeHTML(plano.id)}')">Renovar plano</button>`:''}${plano.status==='ativo'&&m.restantes>0?`<button type="button" onclick="encerrarPlanoFinanceiro('${escapeHTML(plano.id)}')">Cancelar contratação</button>`:''}</div>
             </article>`;
         }).join('');
     }
