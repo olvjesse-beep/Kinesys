@@ -1281,37 +1281,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){if(document.getElementById("ks-pd-exam-style"))return;const s=document.createElement("style");s.id="ks-pd-exam-style";s.textContent="\n\n/* Product Design 2026-09-30 — Exame clínico orientado pela queixa, opção 3 */\n#subtela_mapeamento.ks-pd-region-first{--ks-exam-border:#c8ddd9;--ks-exam-ink:#173f47;--ks-exam-muted:#627b80;--ks-exam-soft:#f4faf9;--ks-exam-accent:#0d8f86}\n#subtela_mapeamento .ks-pd-exam-intro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;margin:0 0 16px;padding:16px 18px;border:1px solid #e3c778;border-radius:12px;background:#fffaf0;color:var(--ks-exam-ink)}\n#subtela_mapeamento .ks-pd-exam-intro strong{display:block;margin-bottom:4px;font-size:15px}\n#subtela_mapeamento .ks-pd-exam-intro p{margin:0;color:var(--ks-exam-muted);line-height:1.45}\n#subtela_mapeamento .ks-pd-complaint-label{display:block;margin-bottom:5px;color:#8a6512;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}\n#subtela_mapeamento .ks-pd-exam-intro .btn-secondary{white-space:nowrap;background:#fff}\n#subtela_mapeamento .ks-pd-suggestions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:12px 14px;border:1px solid var(--ks-exam-border);border-radius:12px;background:#fff}\n#subtela_mapeamento .ks-pd-suggestions>strong{font-size:13px;color:var(--ks-exam-ink);margin-right:3px}\n#subtela_mapeamento .ks-pd-suggestion{min-height:34px;padding:6px 11px;border:1px solid #9fc7c1;border-radius:999px;background:#eef9f7;color:#145f5a;font-weight:700;cursor:pointer}\n#subtela_mapeamento .ks-pd-suggestion:hover,#subtela_mapeamento .ks-pd-suggestion:focus-visible{border-color:var(--ks-exam-accent);background:#dff4f1;outline:2px solid rgba(13,143,134,.18);outline-offset:2px}\n#subtela_mapeamento .ks-pd-suggestions small{color:var(--ks-exam-muted)}\n#subtela_mapeamento .ks-pd-exam-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}\n#subtela_mapeamento .ks-pd-exam-main{min-width:0}\n#subtela_mapeamento .ks-pd-exam-summary{position:sticky;top:86px;display:grid;gap:0;border:1px solid var(--ks-exam-border);border-radius:14px;background:#fff;box-shadow:0 12px 30px rgba(20,73,75,.07);overflow:hidden}\n#subtela_mapeamento .ks-pd-summary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 17px;border-bottom:1px solid #dcebe8}\n#subtela_mapeamento .ks-pd-summary-head h3{margin:0;font-size:17px;color:var(--ks-exam-ink)}\n#subtela_mapeamento .ks-pd-summary-status{padding:5px 9px;border-radius:999px;background:#e6f5f3;color:#11716a;font-size:11px;font-weight:800}\n#subtela_mapeamento .ks-pd-summary-section{padding:15px 17px;border-bottom:1px solid #e5efed}\n#subtela_mapeamento .ks-pd-summary-section:last-child{border-bottom:0}\n#subtela_mapeamento .ks-pd-summary-title{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;color:var(--ks-exam-ink);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}\n#subtela_mapeamento .ks-pd-summary-count{display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:999px;background:#edf4f3;color:#49686d}\n#subtela_mapeamento .ks-pd-region-list,#subtela_mapeamento .ks-pd-pending-list{display:grid;gap:8px}\n#subtela_mapeamento .ks-pd-summary-row{display:flex;align-items:center;gap:9px;min-height:30px;color:#365a61;font-size:13px}\n#subtela_mapeamento .ks-pd-summary-row::before{content:'';width:9px;height:9px;border:2px solid #7c9da0;border-radius:50%;flex:none}\n#subtela_mapeamento .ks-pd-summary-row.is-started::before{border-color:var(--ks-exam-accent);background:var(--ks-exam-accent)}\n#subtela_mapeamento .ks-pd-summary-empty{margin:0;color:var(--ks-exam-muted);font-size:13px;line-height:1.45}\n#subtela_mapeamento .ks-pd-clinical-tip{padding:14px 17px;background:#eff9f7;color:#41666a;font-size:12px;line-height:1.5}\n#subtela_mapeamento .ks-pd-clinical-tip strong{display:block;margin-bottom:4px;color:#135d58}\n#subtela_mapeamento #container_clusters_regioes>.ks-evaluation-overview{margin-top:0}\n#subtela_mapeamento #container_clusters_regioes>.region-card,#subtela_mapeamento #container_clusters_regioes>.cluster-card,#subtela_mapeamento #container_clusters_regioes>[class*=\"region\"]{border-radius:14px}\n#subtela_mapeamento .region-strip{margin-bottom:14px!important;padding:12px 0 14px!important}\n#subtela_mapeamento #ks-regions-selected{gap:7px}\n#subtela_mapeamento .ks-region-chip{background:#fff;box-shadow:0 3px 10px rgba(26,75,77,.04)}\n#subtela_mapeamento .ks-region-chip.active{border-color:var(--ks-exam-accent);background:#e6f6f3;box-shadow:0 0 0 2px rgba(13,143,134,.08)}\n@media(max-width:1050px){#subtela_mapeamento .ks-pd-exam-grid{grid-template-columns:1fr}#subtela_mapeamento .ks-pd-exam-summary{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}#subtela_mapeamento .ks-pd-summary-head,#subtela_mapeamento .ks-pd-clinical-tip{grid-column:1/-1}}\n@media(max-width:680px){#subtela_mapeamento .ks-pd-exam-intro{grid-template-columns:1fr}#subtela_mapeamento .ks-pd-exam-intro .btn-secondary{width:100%}#subtela_mapeamento .ks-pd-exam-summary{grid-template-columns:1fr}#subtela_mapeamento .ks-pd-summary-head,#subtela_mapeamento .ks-pd-clinical-tip{grid-column:auto}#subtela_mapeamento .ks-pd-suggestions{align-items:flex-start}}\n";document.head.appendChild(s);})();
 
 
-/* KineSys 2026-10-06 — normaliza o fluxo do resumo no rodapé da etapa 2 */
+/* Mantém o resumo no fluxo da etapa 2 sem realimentar o observador de estilos. */
 (function(){
  'use strict';
+ const estiloResumo={position:'static',inset:'auto',float:'none',transform:'none',width:'100%','max-height':'none',height:'auto',margin:'16px 0px 0px'};
+ const estiloGrade={display:'block','grid-template-columns':'none',height:'auto','min-height':'0px'};
+ function aplicarEstilo(elemento,estilos){
+  for(const [propriedade,valor] of Object.entries(estilos)){
+   if(elemento.style.getPropertyValue(propriedade)!==valor)elemento.style.setProperty(propriedade,valor);
+  }
+ }
  function corrigirFluxo(){
   const root=document.getElementById('subtela_mapeamento');
   if(!root)return;
-  root.querySelectorAll('.ks-pd-exam-summary,[aria-label="Resumo do exame"]').forEach(el=>{
-   el.style.position='static';el.style.top='auto';el.style.right='auto';el.style.bottom='auto';el.style.inset='auto';el.style.float='none';el.style.transform='none';el.style.width='100%';el.style.maxHeight='none';el.style.height='auto';el.style.margin='16px 0 0';
-  });
-  root.querySelectorAll('.ks-pd-exam-grid').forEach(el=>{el.style.display='block';el.style.gridTemplateColumns='none';el.style.height='auto';el.style.minHeight='0';});
+  root.querySelectorAll('.ks-pd-exam-summary,[aria-label="Resumo do exame"]').forEach(el=>aplicarEstilo(el,estiloResumo));
+  root.querySelectorAll('.ks-pd-exam-grid').forEach(el=>aplicarEstilo(el,estiloGrade));
+  const heading=Array.from(root.querySelectorAll('h2,h3')).find(el=>el.textContent.trim()==='Resumo do exame');
+  const card=heading?.closest('aside')||heading?.closest('[role="complementary"]')||heading?.parentElement?.parentElement;
+  if(card)aplicarEstilo(card,estiloResumo);
+  const parent=card?.parentElement;
+  if(parent&&parent!==root)aplicarEstilo(parent,estiloGrade);
  }
  const tela=document.getElementById('tela_avaliacao');
  if(tela)new MutationObserver(corrigirFluxo).observe(tela,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style']});
  corrigirFluxo();
-})();
-
-
-/* KineSys 2026-10-06 — alvo do painel-resumo real, independente de classe */
-(function(){
- 'use strict';
- function ajustarPainelReal(){
-  const root=document.getElementById('subtela_mapeamento');
-  if(!root)return;
-  const heading=Array.from(root.querySelectorAll('h2,h3')).find(el=>el.textContent.trim()==='Resumo do exame');
-  const card=heading?.closest('aside')||heading?.closest('[role="complementary"]')||heading?.parentElement?.parentElement;
-  if(card){card.style.position='static';card.style.top='auto';card.style.right='auto';card.style.bottom='auto';card.style.inset='auto';card.style.float='none';card.style.transform='none';card.style.width='100%';card.style.maxHeight='none';card.style.height='auto';card.style.margin='16px 0 0';}
-  const parent=card?.parentElement;
-  if(parent&&parent!==root){parent.style.display='block';parent.style.gridTemplateColumns='none';parent.style.height='auto';parent.style.minHeight='0';}
- }
- const tela=document.getElementById('tela_avaliacao');
- if(tela)new MutationObserver(ajustarPainelReal).observe(tela,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style']});
- ajustarPainelReal();
 })();
 
