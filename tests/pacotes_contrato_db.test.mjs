@@ -72,6 +72,7 @@ try {
   const ler=async({plano})=>(await db.query("select status,encerramento_automatico,valor_final,condicoes_originais from planos_atendimento where id=$1",[plano])).rows[0];
   const situacao=async id=>(await db.query('select status_financeiro,valor_pendente from kinesys_situacao_financeira_agendamentos($1)',[[id]])).rows[0];
   const semSaldo=await novoUnitario(), antes=await ler(semSaldo);
+  await assert.rejects(db.query("update planos_atendimento set status='cancelado',encerramento_automatico=true where id=$1",[semSaldo.plano]),/exige uma alteração na Agenda/);
   await cancelar(semSaldo);await cancelar(semSaldo);
   assert.deepEqual(await ler(semSaldo),{...antes,status:'cancelado',encerramento_automatico:true});
   assert.deepEqual(await situacao(semSaldo.agendamento),{status_financeiro:'cancelado',valor_pendente:'0'});

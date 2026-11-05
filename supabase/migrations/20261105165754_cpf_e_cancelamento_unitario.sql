@@ -13,9 +13,17 @@ begin
   if (new.status,new.sessoes_contratadas,new.valor_tabela,new.valor_final,new.desconto_valor) is distinct from (old.status,old.sessoes_contratadas,old.valor_tabela,old.valor_final,old.desconto_valor) then raise exception 'Altere as condições pela operação de contratos'; end if;
  end if;
  if tg_op='INSERT' then
+  if new.status='cancelado' and new.encerramento_automatico is true then
+   raise exception 'Cancelamento automático exige uma alteração na Agenda';
+  end if;
   new.condicoes_originais:=coalesce(new.condicoes_originais,jsonb_build_object('sessoes',new.sessoes_contratadas,'valor',new.valor_tabela,'desconto',new.desconto_valor,'desconto_pacote',new.desconto_pacote,'desconto_cortesia',new.desconto_cortesia));
   return new;
  end if;
+ if new.status='cancelado' and new.encerramento_automatico is true
+    and (old.status<>'cancelado' or old.encerramento_automatico is not true)
+    and not (current_user in ('postgres','supabase_admin') and pg_trigger_depth()=2
+      and old.status<>'cancelado' and new.sessoes_contratadas=1 and coalesce(new.operacao_id,'') like 'unitario-agenda-%')
+ then raise exception 'Cancelamento automático exige uma alteração na Agenda'; end if;
  if old.status='cancelado' and new.status<>'cancelado' and not (
    current_user in ('postgres','supabase_admin') and pg_trigger_depth()=2
    and coalesce(old.encerramento_automatico,false) and old.sessoes_contratadas=1
