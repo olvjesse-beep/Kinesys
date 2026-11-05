@@ -49,6 +49,8 @@
 #ks_admin_home .ks-admin-metrics span{font-size:var(--kds-font-body);font-weight:650}
 #ks_admin_home .ks-admin-metrics strong{display:block;grid-column:1/-1;grid-row:2;font-size:clamp(24px,2.6vw,36px);line-height:1.1;letter-spacing:-.5px;margin-top:4px;white-space:nowrap;font-weight:730;color:var(--kds-accent)}
 #ks_admin_home #ks_admin_receivable{color:#2F7EAD}
+#ks_admin_home .ks-admin-receivable-forecast{display:block;color:var(--kds-muted);font-weight:500}
+#ks_admin_home .ks-admin-receivable-forecast:empty{display:none}
 #ks_admin_home #ks_admin_expenses{color:var(--kds-eva-severe)}
 #ks_admin_home .ks-admin-flow{padding-top:24px}
 #ks_admin_home .ks-admin-flow-description{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:5px}
