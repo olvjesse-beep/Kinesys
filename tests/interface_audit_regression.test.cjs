@@ -101,6 +101,9 @@ function agendaMobilePresentation(){
  w.eval(read('src/agenda/agenda_lifecycle-1.0.0.js'));
  const drain=()=>{let n=0;while(frames.length&&n++<20)frames.shift()();assert(n<20,'organização converge, sem loop de frames');};
  w.KineSysAgendaLifecycle.activate();drain();
+ const rotuloData=d.querySelector('.ks-agenda-mobile-date-value');
+ assert.equal(rotuloData.textContent,'04/11/2026');
+ assert.equal(data.type,'date','a data deve continuar usando o seletor nativo');
  const list=d.getElementById('ks_agenda_mobile_day_list');
  assert.equal(list.hidden,false);assert.equal(list.querySelectorAll('.ks-agenda-day-action').length,2,'simultâneos permanecem acessíveis; outro profissional não entra');
  assert.match(list.textContent,/Ana Martins/);assert.doesNotMatch(list.textContent,/Clara Ribeiro/);
@@ -115,9 +118,12 @@ function agendaMobilePresentation(){
  assert.match(list.textContent,/Clara Ribeiro/);assert.doesNotMatch(list.textContent,/Ana Martins/,'troca de profissional não reaproveita cartão');
  old.click();assert.deepEqual(opened,['a'],'nó antigo desconectado não abre outro atendimento');
  d.querySelector('#ks_agenda_mobile_days [data-data="2026-11-05"]').click();assert.deepEqual(changed,['2026-11-05']);
+ w.KineSysAgendaLifecycle.limparResumoDiario();
+ assert.equal(rotuloData.textContent,'05/11/2026','a data visível acompanha a seleção enquanto a grade carrega');
  w.agendaPeriodoVisual='semana';w.renderizarGradeSemanal(null,null,'p1');w.KineSysAgendaLifecycle.activate();drain();assert.equal(list.hidden,true,'Semana mantém grade canônica');
  mobile=false;w.KineSysAgendaLifecycle.activate();drain();
  assert.equal(data.parentElement.parentElement,parentData);assert.equal(nav.parentElement,parentNav);
+ assert.equal(d.querySelector('.ks-agenda-mobile-date-value'),null);
  assert.equal(d.getElementById('ks_agenda_mobile_order'),null);assert.equal(d.getElementById('ks_agenda_mobile_day_list'),null,'desktop não recebe lista nem controles novos');
  w.KineSysAgendaLifecycle.destroy();dom.window.close();
  console.log('agenda_mobile: OK (Dia/Semana, simultâneos, origem canônica, carga/erro, troca de escopo, data e restauração desktop)');
