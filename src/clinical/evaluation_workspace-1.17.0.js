@@ -142,9 +142,14 @@
         // Reutiliza dados da avaliação carregada; não consulta outras sessões nem introduz questionários.
         const funcional=clone({medidasObjetivas:preservado.medidasObjetivas||[],psfs:preservado.psfs||null,outcomes:preservado.outcomes||[],objetivosPlano:preservado.objetivosPlano||null});
         const profissional=profissionalDoLaudo();
+        // Diagnóstico digitado pelo profissional após os testes (mesmo campo salvo em
+        // clinicaEstruturada.diagnosticoProfissional). Texto soberano: não vem do Radar
+        // nem de hipótese. Campo vazio na tela não ressuscita valor preservado.
+        const campoDiagnostico=document.getElementById('avaliacao_diagnostico_profissional');
+        const diagnosticoProfissional=limparTextoClinico(campoDiagnostico?campoDiagnostico.value:preservado.diagnosticoProfissional);
         if(restricoes.ativo)historia.push('Restrições pós-operatórias: '+Object.entries(restricoes).filter(([k,v])=>k!=='ativo'&&v).map(([k,v])=>k+': '+v).join('; '));
-        const fonte=JSON.stringify({identificacao,historia,campos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,plano,resumo:sintese.resumoPorRegiao.map(r=>({regiao:r.regiao,texto:r.textoDocumento,hipotese:r.hipotese,nome:r.nomeHipotese,nivel:r.nivel,anamnese:r.hipotesesAnamnese||[],redFlags:r.redFlags,conduta:r.redflagConduta,justificativa:r.redflagJustificativa})),achados,seguranca:sintese.segurancaGlobal});
-        return {identificacao,historia,campos,rotulosCampos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,plano,sintese,achados,seguranca,fonte,compativeis:achados.filter(a=>a.completo&&a.status==='positivo')};
+        const fonte=JSON.stringify({identificacao,historia,campos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,plano,resumo:sintese.resumoPorRegiao.map(r=>({regiao:r.regiao,texto:r.textoDocumento,hipotese:r.hipotese,nome:r.nomeHipotese,nivel:r.nivel,anamnese:r.hipotesesAnamnese||[],redFlags:r.redFlags,conduta:r.redflagConduta,justificativa:r.redflagJustificativa})),achados,seguranca:sintese.segurancaGlobal,...(diagnosticoProfissional?{diagnosticoProfissional}:{})});
+        return {identificacao,historia,campos,rotulosCampos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,diagnosticoProfissional,plano,sintese,achados,seguranca,fonte,compativeis:achados.filter(a=>a.completo&&a.status==='positivo')};
     }
     function limparTextoClinico(value){return String(value||'').replace(/\s+/g,' ').replace(/\s+([,.;:])/g,'$1').trim();}
     function fraseClinica(value){const texto=limparTextoClinico(value);if(!texto)return'';return texto.charAt(0).toUpperCase()+texto.slice(1).replace(/[.;:,\s]+$/,'')+'.';}
@@ -498,6 +503,7 @@
             ['Antecedentes e contexto',['antecedentes','cirurgias','medicamentos','trabalho','atividade','rotina','informacoes_complementares','complemento']],
             ['Exames de imagem',['imagem']],
             ['Exame físico-funcional e correlação clínica',['exame_livre','exame','sintese','limite']],
+            ['Diagnóstico / condição clínica',['diagnostico']],
             ['Capacidade funcional',['funcional']],
             ['Plano registrado',['plano']],
             ['Segurança e cuidados',['seguranca']]
@@ -664,6 +670,8 @@
         // Apenas documenta a lacuna; não altera seleção manual nem cria diagnóstico.
         // A cobertura de todas as queixas segue auditada, sem inserir um aviso
         // administrativo de campo vazio no documento entregue ao paciente.
+        // Somente o texto do profissional; hipótese do motor nunca vira diagnóstico aqui.
+        adicionar('diagnostico',d.diagnosticoProfissional?fraseClinica(d.diagnosticoProfissional):'',[{campo:'clinicaEstruturada.diagnosticoProfissional'}]);
         adicionar('funcional',secaoFuncional(d),[{campo:'medidasObjetivas/psfs/outcomes'}]);
         adicionar('plano',secaoPlanoRegistrado(d),[{campo:'objetivosPlano'}]);
         adicionar('seguranca',secaoSeguranca(d),[{campo:'sintese.segurancaGlobal'}]);
