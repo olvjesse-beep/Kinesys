@@ -319,7 +319,7 @@
     }
     window.definirPacienteContexto=definirPacienteContexto;
     function atualizarSeletoresContexto(tela,paciente){
-        const mapa={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};
+        const mapa={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_relatorio:'rel_paciente_select'};
         Object.entries(mapa).forEach(([t,id])=>{
             const sel=document.getElementById(id);if(!sel)return;
             const grp=sel.closest('.input-group')||sel.parentElement; if(!grp)return;
@@ -358,7 +358,7 @@
         if(!pacienteContextoId)return;
         const id=pacienteContextoId,revisao=contextoRevisao;
         const aindaAtual=()=>id===pacienteContextoId&&revisao===contextoRevisao&&document.getElementById(tela)?.classList.contains('ativa');
-        const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_financeiro:'financeiro_paciente_select',tela_relatorio:'rel_paciente_select'};
+        const ids={tela_avaliacao:'select_paciente_precadastro',tela_evolucao:'evo_paciente_select',tela_midias:'midia_paciente_select',tela_relatorio:'rel_paciente_select'};
         // A lista da Avaliação é carregada de forma assíncrona e historicamente
         // filtrava pacientes já avaliados. Aguarda sua reconstrução antes de
         // tentar selecionar o prontuário ativo para não depender de timeout.
@@ -367,7 +367,15 @@
         }
         if(ids[tela])await selecionarPacienteControle(ids[tela],id,true,aindaAtual);
     }
+    async function abrirFinanceiroDoPaciente(id){
+        if(typeof window.telaPermitida==='function'&&!window.telaPermitida('tela_financeiro')){toast('Seu perfil não tem acesso a esta área.','seguranca');return false;}
+        if(!id)return false;
+        const resultado=await window.navegarPara('tela_financeiro',true,id);
+        if(resultado===false||!document.getElementById('tela_financeiro')?.classList.contains('ativa'))return false;
+        return window.financeiroInicializacaoPendente;
+    }
     async function abrirPacienteNaTela(tela){
+        if(tela==='tela_financeiro')return abrirFinanceiroDoPaciente(pacienteContextoId);
         const p=await obterPacienteContexto();if(!p)return;
         if(typeof window.telaPermitida==='function'&&!window.telaPermitida(tela)){toast('Seu perfil não tem acesso a esta área.','seguranca');return;}
         if(tela==='tela_buscar'){window.navegarPara(tela,true);await atualizarResumoPacienteContexto();return;}
@@ -410,11 +418,8 @@
             return;
         }
         if(acao==='financeiro'){
-            await abrirPacienteNaTela('tela_financeiro');
-            if(typeof window.popularPacientesFinanceiro==='function')await window.popularPacientesFinanceiro(pacienteId);
-            if(typeof window.carregarFinanceiroPaciente==='function')await window.carregarFinanceiroPaciente();
-            if(typeof window.alternarAbaFinanceiro==='function')window.alternarAbaFinanceiro('paciente');
-            return;
+            if(pacienteContextoId===pacienteId)return abrirFinanceiroDoPaciente(pacienteId);
+            return false;
         }
         if(acao==='agendamentos'){
             if(typeof window.abrirHistoricoAgendamentosPaciente==='function')await window.abrirHistoricoAgendamentosPaciente(pacienteId);

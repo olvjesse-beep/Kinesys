@@ -90,27 +90,16 @@
         if(relatorios){relatorios.classList.add('active');relatorios.setAttribute('aria-selected','true');}
     }
 
-    function filtrarPacientes(){
-        const busca=normalizar(porId('financeiro_paciente_busca')?.value);
-        const sel=porId('financeiro_paciente_select');
-        if(!sel)return;
-        const atual=sel.value;
-        const lista=estado.pacientes.filter(x=>!busca||chavePaciente(x).includes(busca));
-        sel.innerHTML='<option value="">-- Selecione um paciente --</option>'+lista.map(x=>`<option value="${escapeHTML(x.value)}">${escapeHTML(x.label)}</option>`).join('');
-        if(lista.some(x=>x.value===atual))sel.value=atual;
-        atualizarContextoPaciente();
-        renderizarSugestoesPaciente();
-    }
-
     async function capturarPacientes(){
         const sel=porId('financeiro_paciente_select');
         if(!sel)return;
-        const opcoes=Array.from(sel.options).filter(o=>o.value).map(o=>({value:o.value,label:o.textContent||''}));
         let registros=[];
-        try{if(typeof global.obterPacientesSalvos==='function')registros=await global.obterPacientesSalvos()||[];}catch(_){}
+        try{if(typeof global.obterPacientesBasicos==='function')registros=await global.obterPacientesBasicos()||[];}catch(_){}
+        const opcoes=Array.from(sel.options).filter(o=>o.value).map(o=>({value:o.value,label:o.textContent||''}));
         const porIdPaciente=new Map(registros.map(p=>[texto(p.id),p]));
         estado.pacientes=opcoes.map(o=>{const p=porIdPaciente.get(texto(o.value))||{};return {...p,value:o.value,label:o.label,nome:p.nome||o.label.split(' · ')[0]};});
         atualizarContextoPaciente();
+        renderizarSugestoesPaciente();
     }
 
     function prepararDetalhesPlanos(){
@@ -211,18 +200,18 @@
         estado.popularBase=global.popularPacientesFinanceiro;
         if(typeof estado.renderBase==='function')global.renderizarFinanceiroPaciente=function(...a){const r=estado.renderBase.apply(this,a);aposRender();return r;};
         if(typeof estado.vazioBase==='function')global.renderizarFinanceiroVazio=function(...a){const r=estado.vazioBase.apply(this,a);atualizarContextoPaciente();return r;};
-        if(typeof estado.popularBase==='function')global.popularPacientesFinanceiro=async function(...a){const r=await estado.popularBase.apply(this,a);await capturarPacientes();return r;};
+        if(typeof estado.popularBase==='function')global.popularPacientesFinanceiro=async function(...a){const r=await estado.popularBase.apply(this,a);if(r!==false)await capturarPacientes();return r;};
         global.excluirPagamentoFinanceiro=estornarPagamento;
-        const busca=porId('financeiro_paciente_busca');if(busca)busca.addEventListener('input',filtrarPacientes);
+        const busca=porId('financeiro_paciente_busca');if(busca)busca.addEventListener('input',renderizarSugestoesPaciente);
         const sugestoes=porId('financeiro_paciente_sugestoes');if(sugestoes)sugestoes.addEventListener('click',e=>{const botao=e.target.closest('[data-fin-paciente-id]');if(botao)abrirPaciente(botao.dataset.finPacienteId);});
         const sel=porId('financeiro_paciente_select');if(sel)sel.addEventListener('change',()=>{
-            const atual=sel.value,b=porId('financeiro_paciente_busca');if(b)b.value='';
-            sel.innerHTML='<option value="">-- Selecione um paciente --</option>'+estado.pacientes.map(x=>`<option value="${escapeHTML(x.value)}">${escapeHTML(x.label)}</option>`).join('');
-            sel.value=atual;atualizarContextoPaciente();
+            if(busca)busca.value='';
+            renderizarSugestoesPaciente();
+            atualizarContextoPaciente();
         });
         const formas=porId('fin_pag_forma');if(formas)formas.addEventListener('change',atualizarDivisaoPagamento);
         const painelPaciente=porId('financeiro_painel_paciente');if(painelPaciente)new MutationObserver(atualizarAcoesContextuais).observe(painelPaciente,{attributes:true,attributeFilter:['hidden']});
-        capturarPacientes();aposRender();
+        aposRender();
     }
 
     global.KineSysFinanceiro=Object.freeze({versao:VERSAO,inicializar,resumoSeguro,estornarPagamento,obterComposicaoFormasPagamento,validarComposicaoFormasPagamento,atualizarDivisaoPagamento,aposRender,buscarPacientes,abrirPaciente,fecharPaciente,abrirIndicadores});

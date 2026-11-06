@@ -134,3 +134,42 @@ async function testarCargasFinanceirasForaDeOrdem(){
  console.log('PASS: consultas reais de planos/pagamentos e créditos rejeitam respostas fora de ordem.');
 }
 testarCargasFinanceirasForaDeOrdem().catch(error=>{console.error(error);process.exitCode=1;});
+
+async function testarContaDoProntuarioEBusca(){
+ const controles={};
+ for(const id of ['tela_financeiro','financeiro_paciente_select','financeiro_paciente_busca','financeiro_paciente_sugestoes','financeiro_paciente_contexto_nome']){
+  const eventos={};
+  controles[id]={value:'',options:[],hidden:false,addEventListener:(tipo,fn)=>{eventos[tipo]=fn;},dispatchEvent:e=>eventos[e.type]?.(e),classList:{contains:()=>true}};
+ }
+ const select=controles.financeiro_paciente_select,busca=controles.financeiro_paciente_busca;
+ select.value='pac-a';
+ let liberar;
+ const espera=new Promise(resolve=>{liberar=resolve;});
+ const nomes=[{id:'pac-a',nome:'Paciente Ana'},{id:'pac-b',nome:'Paciente Bia'}],cargas=[];
+ const c={document:{readyState:'complete',getElementById:id=>controles[id]||null,querySelectorAll:()=>[]},
+  usuarioLogado:{id:'gestora',clinica_id:'clinica'},financeiroPopularPacientesRevisao:0,financeiroPacienteAtualId:'pac-a',
+  financeiroPodeEditar:()=>true,mensagemFinanceiro(){},escapeHTML:String,Event,carregarProcedimentosFinanceiro:async()=>{},
+  obterPacientesBasicos:()=>espera,renderizarFinanceiroVazio(){c.financeiroPacienteAtualId='';},
+  carregarFinanceiroPaciente:async()=>{cargas.push(select.value);return true;}};
+ Object.defineProperty(select,'innerHTML',{set(html){
+  select.options=[...html.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map(([,value,textContent])=>({value,textContent}));
+  select.value='';
+ }});
+ Object.defineProperty(select,'selectedOptions',{get:()=>select.options.filter(x=>x.value===select.value)});
+ c.window=c;vm.createContext(c);
+ vm.runInContext(financeiro.slice(financeiro.indexOf('async function inicializarFinanceiro('),financeiro.indexOf('async function carregarProcedimentosFinanceiro(')),c);
+ vm.runInContext(fs.readFileSync('src/finance/financeiro_workspace-1.20.1.js','utf8'),c);
+ const abrindo=c.inicializarFinanceiro('pac-b',true);
+ assert.equal(select.value,'','enquanto carrega, a conta anterior sai da tela');
+ busca.value='Ana';busca.dispatchEvent(new Event('input'));
+ liberar(nomes);
+ assert.equal(await abrindo,true);
+ assert.equal(select.value,'pac-b');assert.deepEqual(cargas,['pac-b']);
+ assert.match(controles.financeiro_paciente_sugestoes.innerHTML,/Paciente Ana/,'digitação durante a carga deve atualizar os resultados');
+ busca.value='Ana';busca.dispatchEvent(new Event('input'));
+ assert.equal(select.value,'pac-b','digitar não troca nem limpa a conta aberta');
+ assert.equal(await c.KineSysFinanceiro.abrirPaciente('pac-a'),true);
+ assert.deepEqual(cargas,['pac-b','pac-a']);assert.equal(busca.value,'');
+ console.log('PASS: primeira abertura pelo ID, busca durante a carga e troca de conta somente após selecionar.');
+}
+testarContaDoProntuarioEBusca().catch(error=>{console.error(error);process.exitCode=1;});

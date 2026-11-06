@@ -74,7 +74,7 @@
                 'src/finance/descontos_financeiros-1.20.0.js?v=20260909-r2',
                 'src/finance/balanco_financeiro_admin-1.19.0.js?v=20260904-integracao-r1',
                 'src/admin/analise_admin-1.19.0.js?v=20260901-r2&audit=20261026-completa-r1',
-                'src/finance/financeiro_workspace-1.20.1.js?v=20260901-r1',
+                'src/finance/financeiro_workspace-1.20.1.js?v=20260901-r1&paciente=20261106-r1',
                 'src/finance/financeiro_lancamentos-1.20.0.js?v=20260904-integracao-r1&audit=20261026-completa-r1'
             ])
         }),
@@ -299,7 +299,7 @@
         const original=window.navegarPara;
         if(typeof original!=='function'||original.__kinesysScreenLoader)return;
 
-        const sobDemanda=function(idTela,contextoEdicao=false){
+        const sobDemanda=function(idTela,...args){
             const id=String(idTela||'');
             const bundle=bundleDaTela(id);
             const revisao=++revisaoNavegacao;
@@ -327,7 +327,7 @@
 
             return (avaliacao?aguardarAvaliacao(preparacao):preparacao).then(()=>{
                 if(revisao!==revisaoNavegacao)return false;
-                const resultado=original.call(this,id,contextoEdicao);
+                const resultado=original.call(this,id,...args);
                 notificarCicloVida();
                 return resultado;
             }).catch(error=>{
