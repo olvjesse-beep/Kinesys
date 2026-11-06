@@ -18,6 +18,8 @@ const manifestLink=index.match(/<link\s+rel="manifest"\s+href="([^"]+)"/);
 assert(manifestLink,'metadados devem oferecer manifesto para instalação');
 const manifestPath=manifestLink[1].split('?')[0];
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
+assert.match(htaccess,/AddType application\/manifest\+json \.webmanifest/,'o servidor deve servir o manifesto com MIME próprio');
+assert.match(htaccess,/<Files "manifest\.webmanifest">\s*Header set Cache-Control "no-cache, must-revalidate" env=KINESYS_APP_HOST\s*<\/Files>/,'manifesto deve revalidar no host do app');
 const base=new URL(manifestPath,'https://app.fisiofixfisioterapia.com/');
 assert.equal(manifest.name,'KineSys — Gestão Clínica');assert.equal(manifest.short_name,'KineSys');
 assert.equal(manifest.display,'standalone');assert.equal(manifest.lang,'pt-BR');
