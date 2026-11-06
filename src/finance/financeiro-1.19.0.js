@@ -51,7 +51,7 @@ function financeiroTodosAgendamentosPaciente() {
 function financeiroPreAgendamentosSemCobertura(plano = null) {
     const hoje = financeiroHojeISO();
     return financeiroTodosAgendamentosPaciente()
-        .filter(a => String(a.status || '') === 'pre_agendado' && !a.plano_id && String(a.data || '') >= hoje)
+        .filter(a => String(a.status || '') === 'pre_agendado' && !a.plano_id && !a.pacote_desvinculado_id && String(a.data || '') >= hoje)
         .filter(a => !plano?.procedimento_id || !a.procedimento_id || String(a.procedimento_id) === String(plano.procedimento_id))
         .sort((a,b) => `${a.data||''} ${a.hora_inicio||''}`.localeCompare(`${b.data||''} ${b.hora_inicio||''}`));
 }
@@ -59,7 +59,7 @@ function financeiroPreAgendamentosSemCobertura(plano = null) {
 function financeiroResumoCoberturaAgenda() {
     const hoje = financeiroHojeISO();
     const todos = financeiroTodosAgendamentosPaciente().filter(a => String(a.data || '') >= hoje && financeiroStatusReservaAgenda(a.status));
-    const semPacote = todos.filter(a => !a.plano_id);
+    const semPacote = todos.filter(a => !a.plano_id && !a.pacote_desvinculado_id);
     const preSemPacote = semPacote.filter(a => String(a.status || '') === 'pre_agendado');
     const metricas = new Map(financeiroPlanosCache.map(p => [String(p.id), metricasPlano(p)]));
     const comSaldoPendente = todos.filter(a => {
@@ -225,10 +225,7 @@ async function realocarCoberturaPlanoParaPreAgendamentos(planoId, contexto = {})
     let agendamentos = [];
     if (_supabase) {
         try {
-            const r = await _supabase.from('agendamentos')
-                .select('id,paciente_id,procedimento_id,plano_id,status,data,hora_inicio')
-                .eq('paciente_id', pacienteId)
-                .order('data').order('hora_inicio');
+            const r = await consultarAgendamentosFinanceiroPaciente(pacienteId);
             if (!r.error) agendamentos = r.data || [];
         } catch (_) {}
     }
@@ -247,7 +244,7 @@ async function realocarCoberturaPlanoParaPreAgendamentos(planoId, contexto = {})
 
     const hoje = financeiroHojeISO();
     const candidatos = agendamentos
-        .filter(a => String(a.status || '') === 'pre_agendado' && !a.plano_id && String(a.data || '') >= hoje)
+        .filter(a => String(a.status || '') === 'pre_agendado' && !a.plano_id && !a.pacote_desvinculado_id && String(a.data || '') >= hoje)
         .filter(a => !procedimentoId || !a.procedimento_id || String(a.procedimento_id) === String(procedimentoId))
         .sort(financeiroOrdenarAgendamentosCronologicamente);
 
@@ -605,10 +602,13 @@ function renderizarFinanceiroVazio() {
 }
 
 async function consultarAgendamentosFinanceiroPaciente(pacienteId) {
-    let r = await _supabase.from('agendamentos').select('id,plano_id,status,data,hora_inicio,procedimento_id').eq('paciente_id', pacienteId).neq('status','cancelado');
+    const campos = 'id,paciente_id,plano_id,status,data,hora_inicio,procedimento_id';
+    const consultar = selecao => _supabase.from('agendamentos').select(selecao).eq('paciente_id', pacienteId).neq('status','cancelado');
+    let r = await consultar(campos + ',pacote_desvinculado_id');
+    if (r.error && /pacote_desvinculado_id/i.test(String(r.error.message||''))) r = await consultar(campos);
     if(r.error && /plano_id|schema cache|column .* does not exist/i.test(String(r.error.message||''))) {
         financeiroVinculoAgendaDisponivel = false;
-        r = await _supabase.from('agendamentos').select('id,status,data,hora_inicio,procedimento_id').eq('paciente_id', pacienteId).neq('status','cancelado');
+        r = await consultar('id,paciente_id,status,data,hora_inicio,procedimento_id');
     }
     return r;
 }

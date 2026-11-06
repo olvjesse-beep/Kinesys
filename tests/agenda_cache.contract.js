@@ -36,7 +36,7 @@ const statusStart=agenda.indexOf("async function marcarStatusAgendamento(novoSta
 const statusEnd=agenda.indexOf('async function cancelarAgendamentoAtual',statusStart);
 assert.match(agenda.slice(statusStart,statusEnd),/invalidarCacheAgendaSemana\(\)/,'status changes must invalidate week cache');
 
-const planStart=agenda.indexOf('async function vincularPlanoAgendamentoAtual()');
+const planStart=agenda.indexOf('async function vincularPlanoAgendamentoAtual(');
 const planEnd=agenda.indexOf("async function marcarStatusAgendamento",planStart);
 assert.match(agenda.slice(planStart,planEnd),/invalidarCacheAgendaSemana\(\)/,'plan-link changes must invalidate week cache');
 
@@ -50,3 +50,27 @@ const conflict=agenda.slice(conflictStart,conflictStart+1300);
 assert.doesNotMatch(conflict,/KineSysDataCache/,'immediate conflict checks must never rely on the week TTL cache');
 
 console.log('Agenda Cache Phase 1B: 5s scoped week cache, cloning and surgical invalidation approved; conflict checks remain live.');
+
+(async()=>{
+    const vm=require('node:vm'),calls=[];
+    const appointment={id:'sessao',plano_id:'pacote',procedimento_id:'procedimento',status:'atendido'};
+    let confirm=false,refreshed=0;
+    const env={
+        usuarioEhAdministradorAgenda:()=>true,usuarioLogado:{id:'admin',clinica_id:'clinica',tipo:'MASTER'},
+        agendamentoDetalheAtualId:appointment.id,agendaAgendamentosSemanaCache:[appointment],
+        agendaAgendamentosDoDiaCache:[],document:{getElementById:()=>({value:''})},
+        situacaoPagamentoAgenda:()=>({verificado:true,origem:'plano'}),confirmarKineSys:async()=>confirm,
+        _supabase:{rpc:async(name,args)=>{calls.push([name,{...args}]);return {data:{ok:true,agendamento_id:appointment.id}};}},
+        invalidarCacheAgendaSemana(){},fecharModal(){},renderizarPainelAgenda:async()=>{refreshed++;},
+        alert:message=>{throw Error(message);}
+    };
+    const helper=agenda.indexOf('function agendamentoTemPacoteVinculado(');
+    vm.createContext(env);
+    vm.runInContext(agenda.slice(helper,planEnd),env);
+    await env.vincularPlanoAgendamentoAtual(true);
+    assert.equal(calls.length,0,'cancelar a confirmação não desvincula');
+    confirm=true;
+    await env.vincularPlanoAgendamentoAtual();
+    assert.deepEqual(calls,[['kinesys_desvincular_pacote_agendamento',{p_agendamento_id:'sessao',p_plano_esperado:'pacote'}]]);
+    assert.equal(refreshed,1);
+})().catch(error=>{console.error(error);process.exitCode=1;});
