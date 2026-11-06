@@ -5,8 +5,8 @@
 (function(){
     'use strict';
 
-    const VERSION='1.25.28-aprovacao-hipotese-r1';
-    const ASSET_REVISION='20261106-aprovacao-hipotese-r1';
+    const VERSION='1.25.29-diagnostico-relatorio-r1';
+    const ASSET_REVISION='20261106-diagnostico-relatorio-r1';
     const TEMPO_ESPERA_AVALIACAO=20000;
     const carregamentos=new Map();
     const estilos=new Map();
@@ -47,7 +47,7 @@
                 'src/clinical/clinical_evidence_reasoning-1.0.0.js?v=20261027-radar-condicoes-r1',
                 'src/clinical/clinical_engine-1.17.0.js?v=20261106-aprovacao-hipotese-r1&anterior=20261024-linguagem-contextual-r2',
                 'src/clinical/evaluation_free_exam-1.0.0.js?v=20261023-exame-livre-r1&eva=20261026-lightglass-r1&narrativa=20261026-assuntos-r1',
-                'src/clinical/evaluation_workspace-1.17.0.js?v=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&narrativa=20261026-assuntos-r1&auditoria=20261027-relatorio-dosagens-r1&redacao=20261028-redacao-coesa-r1',
+                'src/clinical/evaluation_workspace-1.17.0.js?v=20261106-diagnostico-relatorio-r1&cirurgias=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&narrativa=20261026-assuntos-r1&auditoria=20261027-relatorio-dosagens-r1&redacao=20261028-redacao-coesa-r1',
                 'src/clinical/proms_escalas.js',
                 'src/clinical/evaluation_context_panels-1.18.3.js?v=20261025-relatorio-cirurgias-r1&anterior=20261020-contexto-indice-r1&eva=20261026-lightglass-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
