@@ -297,7 +297,8 @@
         const pacienteId=typeof financeiroPacienteAtualId!=='undefined'?financeiroPacienteAtualId:'';const lista=document.getElementById('financeiro_planos_lista');if(!pacienteId||!lista||!_supabase)return;
         lista.querySelector('#fin_historico_agendamentos')?.remove();
         const [cr,pag]=await Promise.all([_supabase.from('cobrancas_agendamento').select('*').eq('paciente_id',pacienteId).order('data_agendamento',{ascending:false}),_supabase.from('pagamentos').select('id,agendamento_id,valor,forma_pagamento,parcelas,data_pagamento,tipo,estorno_de,cobranca_agendamento_id').eq('paciente_id',pacienteId).not('agendamento_id','is',null).order('data_pagamento',{ascending:false})]);
-        if(seq!==historicoAtendimentosSeq||cr.error||pag.error)return;lista.querySelector('#fin_historico_agendamentos')?.remove();const pagamentos=pag.data||[];
+        if(seq!==historicoAtendimentosSeq||pacienteId!==financeiroPacienteAtualId||pacienteId!==document.getElementById('financeiro_paciente_select')?.value||cr.error||pag.error)return;
+        lista.querySelector('#fin_historico_agendamentos')?.remove();const pagamentos=pag.data||[];
         const cobrancas=cr.data||[],baixadas=cobrancas.filter(c=>!!c.baixada_em),ativas=cobrancas.filter(c=>!c.baixada_em&&c.origem!=='plano');
         const cards=ativas.map(c=>{
             const ps=pagamentos.filter(p=>String(p.agendamento_id)===String(c.agendamento_id)),pago=ps.reduce((s,p)=>s+Number(p.valor||0),0),pend=Math.max(0,Number(c.valor_devido)-pago),status=pend<=0?'PAGO':pago>0?'PARCIAL':'PENDENTE';

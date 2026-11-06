@@ -330,8 +330,8 @@ async function fazerLogout() {
 async function enviarRedefinicaoSenha() { return KineSysLogin.sendRecovery(); }
 
 /* ================= 2. NAVEGAÇÃO SPA INTELIGENTE ================= */
-function navegarPara(idTela, contextoEdicao = false) {
-    if((idTela!=='tela_avaliacao'||!contextoEdicao)&&window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>window.navegarPara(idTela,contextoEdicao)))return false;
+function navegarPara(idTela, contextoEdicao = false, pacienteFinanceiroId = '') {
+    if((idTela!=='tela_avaliacao'||!contextoEdicao)&&window.confirmarSaidaAvaliacaoKineSys&&!window.confirmarSaidaAvaliacaoKineSys(()=>window.navegarPara(idTela,contextoEdicao,pacienteFinanceiroId)))return false;
     if (usuarioLogado && idTela !== 'tela_login' && window.location.hash !== '#' + idTela) window.history.pushState({ tela: idTela }, '', '#' + idTela);
     if (!usuarioLogado && idTela !== 'tela_login') idTela = 'tela_login';
 
@@ -462,8 +462,13 @@ function navegarPara(idTela, contextoEdicao = false) {
         if (typeof verificarKinesysLocal === 'function') verificarKinesysLocal(false);
     }
     if (idTela === 'tela_financeiro') {
+        if(pacienteFinanceiroId&&typeof alternarAbaFinanceiro==='function')alternarAbaFinanceiro('paciente');
         if (typeof inicializarFinanceiro === 'function') {
-            window.financeiroInicializacaoPendente = Promise.resolve(inicializarFinanceiro(pacienteAtualId || '')).catch(err => {console.error('KineSys Financeiro:', err);return false;});
+            window.financeiroInicializacaoPendente = inicializarFinanceiro(pacienteFinanceiroId||pacienteAtualId||'',!!pacienteFinanceiroId).catch(err => {
+                console.error('KineSys Financeiro:',err);
+                if(document.getElementById('tela_financeiro')?.classList.contains('ativa'))mensagemFinanceiro('Não foi possível carregar a conta. Atualize a página ou localize o paciente pela busca.','erro');
+                return false;
+            });
         }
     }
     if (idTela === 'tela_avaliacao') {

@@ -27,6 +27,30 @@ async function stalePatientContext(){
  const old=env.aplicarContextoNaTela('tela_avaliacao');env.pacienteContextoId='b';env.contextoRevisao++;release();await old;assert.deepEqual(changes,[],'contexto atrasado não seleciona outro paciente');
  await env.aplicarContextoNaTela('tela_avaliacao');assert.deepEqual(changes,['b']);
 }
+async function openFinanceFromPatient(){
+ const calls=[];
+ let resolveLoad;
+ const initialLoad=new Promise(resolve=>{resolveLoad=resolve;});
+ const finance={classList:{contains:name=>name==='ativa'}};
+ const env={pacienteContextoId:'pac-b',document:{getElementById:id=>id==='tela_financeiro'?finance:null},toast(){},
+  window:{telaPermitida:()=>true,financeiroInicializacaoPendente:initialLoad,navegarPara:async(...args)=>{calls.push(args);}}};
+ vm.createContext(env);
+ vm.runInContext(section(design,'    async function abrirFinanceiroDoPaciente(','    window.abrirPacienteNaTela='),env);
+ let finished=false;
+ const opening=env.abrirPacienteNaTela('tela_financeiro').then(result=>{finished=true;return result;});
+ await Promise.resolve();
+ assert.deepEqual(calls,[['tela_financeiro',true,'pac-b']]);
+ assert.equal(finished,false,'atalho deve aguardar a inicialização da conta');
+ resolveLoad(true);assert.equal(await opening,true);
+ env.window.telaPermitida=()=>false;
+ assert.equal(await env.abrirPacienteNaTela('tela_financeiro'),false);
+ assert.equal(calls.length,1,'perfil sem permissão não abre o Financeiro');
+ const toggles=[],search={classList:{add(){},toggle:(name,hidden)=>toggles.push([name,hidden])}};
+ env.document.getElementById=id=>id==='financeiro_paciente_select'?{closest:()=>null,parentElement:search}:null;
+ vm.runInContext(section(design,'    function atualizarSeletoresContexto(','    async function atualizarContextoVisual('),env);
+ env.atualizarSeletoresContexto('tela_financeiro',{id:'pac-b'});
+ assert.deepEqual(toggles,[],'o contexto do prontuário não pode ocultar a busca financeira');
+}
 async function restoreFinancialTabs(){
  const source=read('src/finance/pendencias_financeiras-1.19.0.js');
  const wrapper=source.slice(source.indexOf("if (typeof inicializarFinanceiro === 'function'"));
@@ -66,4 +90,4 @@ function anonymousHypotheses(){
  const model=env.window.KineSysDocumentAnalyzer.analisarDocumento({fatos:[],correlacoes:[{regiaoId:'cervical',semVinculo:true,resultados:[]}]},{});
  assert.equal(model.matrizEvidencias.length,0);assert.doesNotMatch(JSON.stringify(model),/Hipótese sem nome registrado/);
 }
-(async()=>{patientPickers();await stalePatientContext();await restoreFinancialTabs();ledgerOwnership();await reportServiceErrors();evolutionTrend();anonymousHypotheses();console.log('Auditoria completa: ranking antes de paginar, contextos atrasados, primeira carga financeira, livro-caixa, falhas externas, tendência e hipótese anônima OK');})().catch(error=>{console.error(error);process.exitCode=1;});
+(async()=>{patientPickers();await stalePatientContext();await openFinanceFromPatient();await restoreFinancialTabs();ledgerOwnership();await reportServiceErrors();evolutionTrend();anonymousHypotheses();console.log('Auditoria completa: ranking, contextos atrasados, atalho financeiro, abas financeiras, falhas externas, tendência e hipótese anônima OK');})().catch(error=>{console.error(error);process.exitCode=1;});

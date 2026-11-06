@@ -513,7 +513,7 @@ async function sincronizarFinanceiroLocalPaciente(pacienteId) {
     return !pendentes;
 }
 
-async function inicializarFinanceiro(preSelecionado = '') {
+async function inicializarFinanceiro(preSelecionado = '', peloProntuario = false) {
     const tela = document.getElementById('tela_financeiro');
     if (!tela) return;
     // Permissões já são conhecidas antes da consulta; evita abas surgindo tardiamente.
@@ -524,11 +524,27 @@ async function inicializarFinanceiro(preSelecionado = '') {
         if (painel) painel.innerHTML = '<div class="finance-empty">Seu perfil não possui permissão para lançar pagamentos.</div>';
         return;
     }
-    await popularPacientesFinanceiro(preSelecionado || financeiroPacienteAtualId || '');
-    await carregarProcedimentosFinanceiro();
     const sel = document.getElementById('financeiro_paciente_select');
-    if (sel?.value) await carregarFinanceiroPaciente();
-    else renderizarFinanceiroVazio();
+    if(peloProntuario){
+        if(sel)sel.value='';
+        const busca=document.getElementById('financeiro_paciente_busca');
+        if(busca){busca.value='';busca.dispatchEvent(new Event('input'));}
+        renderizarFinanceiroVazio();
+        mensagemFinanceiro('Carregando a conta do paciente…','info');
+    }
+    const identidade=String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    const revisao=financeiroPopularPacientesRevisao+1;
+    if(await popularPacientesFinanceiro(preSelecionado || financeiroPacienteAtualId || '')===false)return false;
+    await carregarProcedimentosFinanceiro();
+    if(revisao!==financeiroPopularPacientesRevisao||identidade!==String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||''))return false;
+    if(peloProntuario&&sel?.value!==String(preSelecionado)){
+        if(!sel?.value)mensagemFinanceiro('Não foi possível localizar este prontuário. Tente pela busca de pacientes.','aviso');
+        return false;
+    }
+    if (sel?.value) {
+        const carregado=await carregarFinanceiroPaciente();
+        if(peloProntuario)return carregado;
+    } else renderizarFinanceiroVazio();
 }
 
 async function popularPacientesFinanceiro(preSelecionado = '') {
@@ -598,17 +614,18 @@ async function consultarAgendamentosFinanceiroPaciente(pacienteId) {
 }
 
 async function carregarFinanceiroPaciente() {
-    const revisao=++financeiroCargaPacienteRevisao;
     const pacienteId = document.getElementById('financeiro_paciente_select')?.value || '';
-    const identidade=String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
-    const aindaAtual=()=>revisao===financeiroCargaPacienteRevisao&&pacienteId===(document.getElementById('financeiro_paciente_select')?.value||'')&&identidade===String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
     financeiroPacienteDadosConfirmados=false;
     if(financeiroContextoModalPagamento&&financeiroContextoModalPagamento.pacienteId!==pacienteId){
         fecharModal('modal_fin_pagamento');
         financeiroContextoModalPagamento=null;
     }
-    financeiroPacienteAtualId = pacienteId;
     if (!pacienteId) { renderizarFinanceiroVazio(); return; }
+    if(financeiroPacienteAtualId!==pacienteId)renderizarFinanceiroVazio();
+    const revisao=++financeiroCargaPacienteRevisao;
+    const identidade=String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    const aindaAtual=()=>revisao===financeiroCargaPacienteRevisao&&pacienteId===(document.getElementById('financeiro_paciente_select')?.value||'')&&identidade===String(usuarioLogado?.id||'')+'|'+String(usuarioLogado?.clinica_id||'');
+    financeiroPacienteAtualId = pacienteId;
 
     mensagemFinanceiro('Atualizando planos e pagamentos…', 'info');
     let planosLocais = obterFinanceiroLocalPaciente(FINANCEIRO_LOCAL_PLANOS, pacienteId);
