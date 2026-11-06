@@ -5,25 +5,31 @@ const start=source.indexOf('async function abrirDetalheAgendamento(id)');
 const end=source.indexOf('async function abrirProntuarioAgendamentoAtual()',start);
 assert(start>=0&&end>start);
 async function run(){
- for(const origem of ['interno','online'])for(const response of [null,true,false]){
+ for(const origem of ['interno','online'])for(const response of [null,true,false])for(const vinculo of ['nenhum','pacote','desvinculado','secretaria']){
   const a={id:'fixture',data:'2026-10-20',paciente_id:'patient-fixture',pacientes:{nome:'Paciente de teste'},equipe:{nome:'Profissional de teste'},procedimentos:{nome:'Osteopatia'},hora_inicio:'16:00:00',hora_fim:'17:00:00',status:'confirmado',confirmado_pelo_paciente:response,status_atualizado_em:'2026-10-20T12:00:00Z',status_atualizado_por:'Profissional de teste'};
   a.origem=origem;
+  if(vinculo==='pacote'||vinculo==='secretaria') a.plano_id='package-fixture';
+  if(vinculo==='desvinculado') a.pacote_desvinculado_id='package-fixture';
   const before=JSON.stringify(a),body={innerHTML:''};let opened='';
   const c={agendaAgendamentosSemanaCache:[a],agendaAgendamentosDoDiaCache:[],document:{getElementById:()=>body},
    atualizarControlesAgendaPorPerfil(){},usuarioPodeVerAgendaClinicaToda:()=>true,
-   obterPlanosAtivosPaciente:async()=>[],configStatusAgenda:()=>({consomeSessao:false}),
-   statusAgendaPermiteObservacao:()=>false,situacaoPagamentoAgenda:()=>({pago:false,verificado:true}),
+   obterPlanosAtivosPaciente:async()=>[],configStatusAgenda:()=>({consomeSessao:true}),
+   statusAgendaPermiteObservacao:()=>false,situacaoPagamentoAgenda:()=>({pago:false,verificado:true,origem:a.plano_id?'plano':'avulso'}),
    escapeHTML:s=>String(s),telaPermitida:()=>true,obterContatoAgendaPaciente:()=>({telefone:''}),
    formatarDataAgendaBR:s=>s.split('-').reverse().join('/'),horaCurta:s=>s.slice(0,5),agendamentoEhHorarioExtraordinario:()=>false,
    classeStatusAgenda:()=> 'confirmado',rotuloStatusAgenda:()=> 'Confirmado',
    opcoesStatusAgenda:()=> '<option>Confirmado</option>',statusAgendaPermiteReagendamento:()=>false,
-   usuarioEhAdministradorAgenda:()=>true,financeiroPodeEditar:()=>false,abrirModal:id=>{opened=id;}};
-  vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function iconeOrigemOnlineAgendaHTML('),source.indexOf('function iconePagamentoAgendaHTML('))+source.slice(start,end),c);await c.abrirDetalheAgendamento('fixture');
+   usuarioEhAdministradorAgenda:()=>vinculo!=='secretaria',financeiroPodeEditar:()=>false,abrirModal:id=>{opened=id;}};
+  const helper=source.slice(source.indexOf('function agendamentoTemPacoteVinculado('),source.indexOf('const vinculosAgendaEmCurso'));
+  vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function iconeOrigemOnlineAgendaHTML('),source.indexOf('function iconePagamentoAgendaHTML('))+helper+source.slice(start,end),c);await c.abrirDetalheAgendamento('fixture');
   assert.equal(opened,'modal_detalhe_agendamento');
   assert.match(body.innerHTML,/Data e horário:[\s\S]*20\/10\/2026/,'a data da ocorrência deve acompanhar o horário');
   assert.doesNotMatch(body.innerHTML,/Confirmação:|Ainda sem resposta|Paciente confirmou presença|Paciente avisou/);
   assert(body.innerHTML.includes(origem==='online'?'Agendado online pelo paciente':'Registrado pela equipe da clínica'),'Origem operacional deve estar explícita no detalhe');
-  for(const text of ['Paciente de teste','Osteopatia','16:00','17:00','Status atual:','Confirmado','Status atualizado:','Histórico de status','Editar agendamento','Salvar status','Pagamento:','pendente','Abrir prontuário']) assert(body.innerHTML.includes(text),text+' must remain');
+  assert.equal(body.innerHTML.includes('Desvincular pacote'),vinculo==='pacote');
+  if(vinculo==='desvinculado') assert.match(body.innerHTML,/Este status não consome sessão do pacote/);
+  for(const text of ['Paciente de teste','Osteopatia','16:00','17:00','Status atual:','Confirmado','Status atualizado:','Editar agendamento','Salvar status','Pagamento:','pendente','Abrir prontuário']) assert(body.innerHTML.includes(text),text+' must remain');
+  assert.equal(body.innerHTML.includes('Histórico de status'),vinculo!=='secretaria');
   assert.equal(JSON.stringify(a),before,'Presentation-only change must not mutate appointment/confirmation');
  }
  console.log('Agenda detalhe: linha de confirmação ausente nos três estados; status, histórico, prontuário, pagamento e dados preservados OK');

@@ -9,6 +9,7 @@ try {
  await db.exec('create extension btree_gist');
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/pacotes_contrato_canonico.sql',root),'utf8'));
  await db.exec(fs.readFileSync(new URL('supabase/migrations/20261105165754_cpf_e_cancelamento_unitario.sql',root),'utf8'));
+ await db.exec(fs.readFileSync(new URL('supabase/migrations/20261106213254_desvincular_sessao_do_pacote.sql',root),'utf8'));
  const privileges=(await db.query("select has_function_privilege('anon','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') anonymous, has_function_privilege('authenticated','public.kinesys_editar_atendimento(uuid,text,uuid,date,time,time,boolean,jsonb,boolean,boolean)','EXECUTE') authenticated")).rows[0];
  assert.equal(privileges.anonymous,false);assert.equal(privileges.authenticated,true);
  const cid='11111111-1111-4111-8111-111111111111',proc='22222222-2222-4222-8222-222222222222';
@@ -24,6 +25,34 @@ try {
  const restored=await alter(a.id,'remover_personalizacao');assert.equal(restored.sessoes_contratadas,10);assert.equal(restored.valor_final,123);
  const appointment=async(id,status,plan)=>db.query('insert into agendamentos(id,paciente_id,procedimento_id,clinica_id,plano_id,status) values($1,$2,$3,$4,$5,$6)',[id,'teste',proc,cid,plan,status]);
  await assert.rejects(appointment('33333333-3333-4333-8333-333333333333','atendido',null),/Contrate/);
+ {
+  const plan=await call('pacote-desvinculo'),id='34343434-3434-4434-8434-343434343434';
+  await appointment(id,'atendido',plan.id);
+  await db.query("insert into pagamentos(plano_id,paciente_id,clinica_id,valor,tipo) values($1,'teste',$2,234,'recebimento')",[plan.id,cid]);
+  const snapshot=async()=>(await db.query('select to_jsonb(a) a from agendamentos a where id=$1',[id])).rows[0].a;
+  const before=await snapshot();
+  const unlink=async(p=plan.id)=>db.query('select kinesys_desvincular_pacote_agendamento($1,$2)',[id,p]);
+  await assert.rejects(unlink(b.id),/vínculo.*mudou/);
+  await db.exec("set test.papel='SECRETARIA'");
+  await assert.rejects(unlink(),/Somente administradores/);
+  await db.exec("set test.papel='MASTER';set role authenticated");
+  await unlink();await unlink();
+  await db.exec('reset role');
+  const after=await snapshot();
+  assert.deepEqual(after,{...before,plano_id:null,pacote_desvinculado_id:plan.id});
+  assert.equal((await db.query("select count(*) n from auditoria_contratos where plano_id=$1 and acao='desvincular'",[plan.id])).rows[0].n,1);
+  assert.equal(Number((await db.query("select sum(valor) v from pagamentos where plano_id=$1",[plan.id])).rows[0].v),234);
+  const fin=(await db.query('select status_financeiro,valor_pendente from kinesys_situacao_financeira_agendamentos(array[$1]::uuid[])',[id])).rows[0];
+  assert.equal(fin.status_financeiro,'sem_cobranca');assert.equal(Number(fin.valor_pendente),0);
+  await assert.rejects(db.query('select kinesys_preparar_cobranca_agendamento($1)',[id]),/sem cobrança/);
+  await db.query("update agendamentos set status='confirmado' where id=$1",[id]);
+  await db.query("update agendamentos set status='atendido' where id=$1",[id]);
+  await assert.rejects(db.query('update agendamentos set plano_id=$1 where id=$2',[plan.id,id]),/manualmente/);
+  await db.query('select kinesys_vincular_contrato($1,$2)',[id,plan.id]);
+  assert.equal((await snapshot()).plano_id,plan.id);assert.equal((await snapshot()).pacote_desvinculado_id,null);
+  assert.equal((await db.query("select has_function_privilege('anon','public.kinesys_desvincular_pacote_agendamento(uuid,uuid)','execute') ok")).rows[0].ok,false);
+  console.log('PASS desvínculo de pacote: atendimento e recebimento preservados, operação repetível e relink só explícito.');
+ }
  for(let i=1;i<=10;i++)await appointment(`33333333-3333-4333-8333-${String(i).padStart(12,'0')}`,'agendado',a.id);
  await assert.rejects(appointment('33333333-3333-4333-8333-999999999999','agendado',a.id),/reservadas/);
  await db.exec(`update agendamentos set status='atendido' where plano_id='${a.id}'`);

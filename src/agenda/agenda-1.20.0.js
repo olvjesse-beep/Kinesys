@@ -3651,6 +3651,7 @@ async function abrirDetalheAgendamento(id) {
         (a.plano_id && !atualPresente ? `<option value="${escapeHTML(a.plano_id)}" selected>Cobrança atual</option>` : '') +
         planosVinculaveis.map(p=>`<option value="${escapeHTML(p.id)}" ${String(p.id)===String(a.plano_id||'')?'selected':''}>${escapeHTML(p.nome)} · ${p.sessoes_restantes ?? p.sessoes_contratadas} restante(s)</option>`).join('');
     const statusCfg = configStatusAgenda(a.status);
+    const pacoteDesvinculado = Boolean(a.pacote_desvinculado_id);
     const permiteObs = statusAgendaPermiteObservacao(a.status);
     let pagamento = situacaoPagamentoAgenda(a);
     if (!pagamento.verificado && typeof obterSituacaoPagamentoAgendamento === 'function') {
@@ -3689,7 +3690,7 @@ async function abrirDetalheAgendamento(id) {
                 <label for="detalhe_status_observacao">Observação do status <span>(opcional)</span></label>
                 <textarea id="detalhe_status_observacao" placeholder="Ex.: paciente avisou pela manhã, apresentou atestado, motivo do cancelamento...">${escapeHTML(a.status_observacao || '')}</textarea>
             </div>
-            <div id="detalhe_status_impacto" class="agenda-status-impacto ${statusCfg.consomeSessao ? 'consome' : ''}">${statusCfg.consomeSessao ? 'Este status consome 1 sessão do pacote vinculado.' : 'Este status não consome sessão do pacote.'}</div>
+            <div id="detalhe_status_impacto" data-pacote-desvinculado="${pacoteDesvinculado}" class="agenda-status-impacto ${statusCfg.consomeSessao && !pacoteDesvinculado ? 'consome' : ''}">${statusCfg.consomeSessao && !pacoteDesvinculado ? 'Este status consome 1 sessão do pacote vinculado.' : 'Este status não consome sessão do pacote.'}</div>
             <div class="agenda-status-actions">
                 <button type="button" id="btn_editar_atendimento" class="btn-secondary" onclick="editarAgendamentoAtual()">Editar agendamento</button>
                 <button type="button" class="btn-primary" onclick="salvarStatusAgendamentoAtual()">Salvar status</button>
@@ -3698,7 +3699,7 @@ async function abrirDetalheAgendamento(id) {
             </div>
         </div>
 
-        <div class="agenda-plano-vinculo"><label>Plano ou atendimento unitário</label>${!a.plano_id && String(a.status||'')==='pre_agendado'?'<div class="agenda-status-impacto">Pré-agendamento sem cobertura financeira. O horário está reservado. Vincule um plano ou registre um atendimento unitário.</div>':''}<div><select id="detalhe_plano_select">${optionsPlano}</select><button type="button" onclick="vincularPlanoAgendamentoAtual()">Vincular</button></div>${!a.plano_id && a.status !== 'cancelado' && typeof financeiroPodeEditar === 'function' && financeiroPodeEditar() ? '<button type="button" class="btn-secondary" onclick="abrirCriarAtendimento(\'detalhe\')">Registrar atendimento unitário</button>' : ''}<small>${a.plano_id?'Este atendimento tem uma cobrança vinculada. ':'Sem cobrança vinculada. '}Atendido e falta não justificada consomem sessão; falta justificada e cancelamento não consomem.</small></div>
+        <div class="agenda-plano-vinculo"><label>Plano ou atendimento unitário</label>${!a.plano_id && !a.pacote_desvinculado_id && String(a.status||'')==='pre_agendado'?'<div class="agenda-status-impacto">Pré-agendamento sem cobertura financeira. O horário está reservado. Vincule um plano ou registre um atendimento unitário.</div>':''}<div><select id="detalhe_plano_select">${optionsPlano}</select><button type="button" onclick="vincularPlanoAgendamentoAtual()">Vincular</button></div>${usuarioEhAdministradorAgenda()&&agendamentoTemPacoteVinculado(a,pagamento)?'<button type="button" class="btn-secondary" onclick="vincularPlanoAgendamentoAtual(true)">Desvincular pacote</button>':''}${!a.plano_id && !a.pacote_desvinculado_id && a.status !== 'cancelado' && typeof financeiroPodeEditar === 'function' && financeiroPodeEditar() ? '<button type="button" class="btn-secondary" onclick="abrirCriarAtendimento(\'detalhe\')">Registrar atendimento unitário</button>' : ''}<small>${a.pacote_desvinculado_id?'Pacote desvinculado. Este atendimento não consome sessão nem gera cobrança.':(a.plano_id?'Este atendimento tem uma cobrança vinculada. ':'Sem cobrança vinculada. ')+'Atendido e falta não justificada consomem sessão; falta justificada e cancelamento não consomem.'}</small></div>
     `;
     abrirModal('modal_detalhe_agendamento');
 }
@@ -3731,7 +3732,7 @@ function aoMudarStatusDetalhe() {
     const impacto = document.getElementById('detalhe_status_impacto');
     if (grupo) grupo.hidden = !statusAgendaPermiteObservacao(status);
     if (impacto) {
-        const consome = statusAgendaConsomeSessao(status);
+        const consome = impacto.dataset.pacoteDesvinculado !== 'true' && statusAgendaConsomeSessao(status);
         impacto.classList.toggle('consome', consome);
         impacto.textContent = consome ? 'Este status consome 1 sessão do pacote vinculado.' : 'Este status não consome sessão do pacote.';
     }
@@ -3767,34 +3768,55 @@ async function reagendarAgendamentoAtual() {
     agendamentoReagendamentoBuffer = null;
 }
 
-async function vincularPlanoAgendamentoAtual() {
+function agendamentoTemPacoteVinculado(a,pagamento=situacaoPagamentoAgenda(a)){
+    if(!a.plano_id)return false;
+    if(pagamento?.verificado&&pagamento.origem)return pagamento.origem==='plano';
+    const procedimento=agendaProcedimentosCache.find(p=>String(p.id)===String(a.procedimento_id));
+    return Number(procedimento?.sessoes_pacote||1)>1;
+}
+
+const vinculosAgendaEmCurso=new Set();
+async function vincularPlanoAgendamentoAtual(desvincular=false) {
     if(!usuarioEhAdministradorAgenda()||!agendamentoDetalheAtualId)return;
-    const planoId=document.getElementById('detalhe_plano_select')?.value||null;
+    const id=agendamentoDetalheAtualId;
+    const identidade=()=>[usuarioLogado?.id,usuarioLogado?.clinica_id,usuarioLogado?.tipo].join('|');
+    const acesso=identidade();
+    if(vinculosAgendaEmCurso.has(id))return;
+    const planoId=desvincular?null:document.getElementById('detalhe_plano_select')?.value||null;
+    vinculosAgendaEmCurso.add(id);
     try {
         if(!planoId) {
-            const a=agendaAgendamentosSemanaCache.find(x=>String(x.id)===String(agendamentoDetalheAtualId))||agendaAgendamentosDoDiaCache.find(x=>String(x.id)===String(agendamentoDetalheAtualId));
+            const a=agendaAgendamentosSemanaCache.find(x=>String(x.id)===String(id))||agendaAgendamentosDoDiaCache.find(x=>String(x.id)===String(id));
             if(!a)throw new Error('Atualize a agenda para localizar o atendimento.');
-            const procedimento=agendaProcedimentosCache.find(p=>String(p.id)===String(a.procedimento_id));
-            if(Number(procedimento?.sessoes_pacote||1)>1){
-                if(await confirmarKineSys('Para converter esta sessão sem apagar seu histórico, escolha um procedimento individual na edição. O vínculo e a cobrança serão atualizados juntos.',{titulo:'Converter para atendimento individual',confirmar:'Editar procedimento',cancelar:'Voltar'}))await editarAgendamentoAtual();
-                return;
+            if(!a.plano_id)return;
+            if(desvincular||agendamentoTemPacoteVinculado(a)){
+                const confirmado=await confirmarKineSys('O procedimento, o horário e o status serão preservados. A sessão deixará de contar no pacote e não será criada uma cobrança individual.',{titulo:'Desvincular pacote',confirmar:'Desvincular pacote',cancelar:'Voltar'});
+                if(!confirmado||id!==agendamentoDetalheAtualId||acesso!==identidade())return;
+                const {data,error}=await _supabase.rpc('kinesys_desvincular_pacote_agendamento',{p_agendamento_id:id,p_plano_esperado:a.plano_id});
+                if(error)throw error;
+                if(!data?.ok||String(data.agendamento_id)!==String(id))throw new Error('Atualize a agenda para confirmar o vínculo.');
+            }else{
+                const {error}=await _supabase.rpc('kinesys_editar_atendimento',{
+                    p_agendamento_id:a.id,p_profissional_id:a.profissional_id,p_procedimento_id:a.procedimento_id,
+                    p_data:a.data,p_hora_inicio:a.hora_inicio,p_hora_fim:a.hora_fim,
+                    p_extraordinario:agendamentoEhHorarioExtraordinario(a),p_converter_pacote:true,
+                    p_esperado:{paciente_id:a.paciente_id,procedimento_id:a.procedimento_id,profissional_id:a.profissional_id,
+                        plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim}
+                });
+                if(error)throw error;
             }
-            const {error}=await _supabase.rpc('kinesys_editar_atendimento',{
-                p_agendamento_id:a.id,p_profissional_id:a.profissional_id,p_procedimento_id:a.procedimento_id,
-                p_data:a.data,p_hora_inicio:a.hora_inicio,p_hora_fim:a.hora_fim,
-                p_extraordinario:agendamentoEhHorarioExtraordinario(a),p_converter_pacote:true,
-                p_esperado:{paciente_id:a.paciente_id,procedimento_id:a.procedimento_id,profissional_id:a.profissional_id,
-                    plano_id:a.plano_id||null,status:a.status,data:a.data,hora_inicio:a.hora_inicio,hora_fim:a.hora_fim}
-            });
-            if(error)throw error;
         } else {
-            const {error}=await _supabase.rpc('kinesys_vincular_contrato',{p_agendamento_id:agendamentoDetalheAtualId,p_plano_id:planoId});
+            const {error}=await _supabase.rpc('kinesys_vincular_contrato',{p_agendamento_id:id,p_plano_id:planoId});
             if(error)throw error;
         }
-        if(typeof removerVinculoAgendaLocal==='function')removerVinculoAgendaLocal(agendamentoDetalheAtualId);
-        invalidarCacheAgendaSemana();fecharModal('modal_detalhe_agendamento');await renderizarPainelAgenda();
+        if(acesso!==identidade())return;
+        if(typeof removerVinculoAgendaLocal==='function')removerVinculoAgendaLocal(id);
+        invalidarCacheAgendaSemana();
+        if(id===agendamentoDetalheAtualId)fecharModal('modal_detalhe_agendamento');
+        await renderizarPainelAgenda();
         if(typeof atualizarFinanceiroAposAgenda==='function')await atualizarFinanceiroAposAgenda();
-    }catch(err){alert('Não foi possível vincular a contratação: '+(err.message||err));}
+    }catch(err){if(acesso===identidade())alert('Não foi possível atualizar o vínculo: '+(err.message||err));}
+    finally{vinculosAgendaEmCurso.delete(id);}
 }
 
 async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
@@ -3821,7 +3843,7 @@ async function marcarStatusAgendamento(novoStatus, observacaoStatus = '') {
     else if (['atendido','concluido'].includes(statusAnterior)) alteracoes.atendido_em = null;
 
     let planoAutoLocal = null;
-    if (statusAgendaConsomeSessao(novoStatus) && !a.plano_id && typeof obterPlanosAtivosPaciente === 'function') {
+    if (statusAgendaConsomeSessao(novoStatus) && !a.plano_id && !a.pacote_desvinculado_id && typeof obterPlanosAtivosPaciente === 'function') {
         const planos = await obterPlanosAtivosPaciente(a.paciente_id, a.procedimento_id);
         if (planos.length === 1) {
             const unico = planos[0];

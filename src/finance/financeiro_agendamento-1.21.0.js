@@ -122,7 +122,7 @@
         if(typeof usuarioEhAdministradorAgenda==='function'&&!usuarioEhAdministradorAgenda())return '';
         const s=typeof situacaoPagamentoAgenda==='function'?situacaoPagamentoAgenda(a):null;
         if(!s?.verificado)return '<span class="agenda-fin-icone desconhecido" title="Situação financeira indisponível">$</span>';
-        if(s.statusFinanceiro==='cancelado')return '';
+        if(['cancelado','sem_cobranca'].includes(s.statusFinanceiro))return '';
         const cls=s.pago?'pago':(s.parcial?'parcial':'pendente');
         const titulo=s.pago?'Pagamento quitado':s.parcial?`Pagamento parcial · pendente ${fmt(s.valorPendente)}`:`Pagamento pendente · ${fmt(s.valorPendente)}`;
         return `<span class="agenda-fin-icone ${cls}" title="${esc(titulo)}" aria-label="${esc(titulo)}">$</span>`;
@@ -279,7 +279,7 @@
             const s=await obterSituacaoPagamentoAgendamento(a); const corpo=document.getElementById('detalhe_agendamento_corpo');if(!corpo||!s||revisao!==revisaoDetalheFinanceiro||String(agendamentoDetalheAtualId)!==String(id))return;
             corpo.querySelectorAll('.agenda-fin-resumo').forEach(e=>e.remove());
             corpo.querySelector('.agenda-pagamento-detalhe')?.remove();
-            const status=s.statusFinanceiro==='cancelado'?'Cancelado sem cobrança':s.pago?'Pago':s.parcial?'Parcial':'Pendente';
+            const status=s.statusFinanceiro==='cancelado'?'Cancelado sem cobrança':s.statusFinanceiro==='sem_cobranca'?'Sem cobrança':s.pago?'Pago':s.parcial?'Parcial':'Pendente';
             const html=`<section class="agenda-fin-resumo ${esc(s.statusFinanceiro)}"><div><strong>Financeiro · ${status}</strong><span>Original ${fmt(s.valorOriginal)} · desconto ${fmt(s.desconto)} · devido ${fmt(s.valorDevido)}</span><span>Pago ${fmt(s.pagos)} · pendente <b>${fmt(s.valorPendente)}</b></span></div>${a.status!=='cancelado'&&s.valorPendente>0?`<button type="button" class="btn-primary" onclick="abrirPagamentoAgendamentoIntegrado('${esc(a.id)}')">LANÇAR PAGAMENTO</button>`:''}</section>`;
             const alvo=corpo.querySelector('.agenda-status-editor');if(alvo)alvo.insertAdjacentHTML('beforebegin',html);else corpo.insertAdjacentHTML('beforeend',html);
         };
