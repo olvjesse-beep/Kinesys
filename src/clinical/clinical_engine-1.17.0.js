@@ -725,9 +725,14 @@
         // Se o profissional abriu a ferramenta e ela atingiu o próprio critério operacional,
         // o exame passa a alimentar a Síntese automaticamente. Isso não é uma seleção feita
         // por texto/IA: nasce de achados que o próprio fisioterapeuta registrou.
-        if(status==='positivo'){
-            const manualOutra=estado.hipoteseOrigem==='manual' && estado.hipotesePrincipalAtiva && estado.hipotesePrincipalAtiva!==key;
-            if(!manualOutra){
+        // Resultados divergentes (positivo e negativo no mesmo eixo) não confirmam a hipótese,
+        // e uma hipótese já aprovada, por qualquer origem, nunca é substituída silenciosamente
+        // por outra: trocar a direção clínica é decisão explícita do fisioterapeuta.
+        const respostas=typeof analisarRespostasItem==='function'?analisarRespostasItem(estado,grupo,item):null;
+        const divergente=!!respostas&&respostas.positivos>0&&respostas.negativos>0;
+        if(status==='positivo'&&!divergente){
+            const outraAprovada=estado.modoDirecao==='hipotese' && !!estado.hipotesePrincipalAtiva && estado.hipotesePrincipalAtiva!==key;
+            if(!outraAprovada){
                 estado.modoDirecao='hipotese';
                 estado.hipotesePrincipalAtiva=key;
                 if(estado.hipoteseOrigem!=='manual')estado.hipoteseOrigem='exame_positivo';
