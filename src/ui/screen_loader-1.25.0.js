@@ -90,7 +90,7 @@
                 'styles/agenda_new_appointment_clean-1.0.0.css?v=20260914-r44'
             ]),
             scripts:Object.freeze([
-                'src/agenda/agenda-1.20.0.js?v=20261104-mobile-dia-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1&desvinculo=20261106-r1',
+                'src/agenda/agenda-1.20.0.js?v=20261104-mobile-dia-r1&compact_time=20260910-r2&data_cache=20260911-r2&patient_autocomplete=20260911-r1&audit=20261026-completa-r1&desvinculo=20261106-r1&confirmacao=20261107-r1',
                 'src/agenda/agenda_profissional_picker-1.0.0.js?v=20260914-r42',
                 'src/agenda/agenda_new_appointment_clean-1.0.0.js?v=20260914-r43',
                 'src/agenda/agenda_lifecycle-1.0.0.js?v=20261105-mobile-textos-r3'

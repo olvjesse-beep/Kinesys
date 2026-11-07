@@ -18,6 +18,7 @@ let agendaListaEsperaCache = [];
 let agendamentoDetalheAtualId = null;
 let agendaHoraPreSelecionadaModal = '';
 let agendaSalvando = false;
+let agendaAberturaAgendamento = 0;
 let agendamentoReagendamentoBuffer = null;
 let agendaRecorrenciaDatasEspecificas = [];
 let agendaPagamentoCoberturaCache = new Map();
@@ -2887,6 +2888,7 @@ async function abrirModalAgendamento(profissionalPre, dataPre, horaPre, opcoes =
         mostrarFeedbackAgenda('Agenda indisponível: conexão com o banco não inicializada.', 'erro');
         return;
     }
+    agendaAberturaAgendamento++;
     const atendimentoEdicao = opcoes?.agendamento?.id ? opcoes.agendamento : null;
     agendaEdicaoAtendimentoId = atendimentoEdicao ? String(atendimentoEdicao.id) : null;
     document.getElementById('ag_id').value = agendaEdicaoAtendimentoId || '';
@@ -3145,15 +3147,25 @@ function calcularFaixasSobrepostasAgenda(agendamentos){
 function assinaturaFormularioAgenda(){
     return JSON.stringify(Array.from(document.querySelectorAll('#modal_agendamento input, #modal_agendamento select, #modal_agendamento textarea')).map(el=>[el.id,el.value,el.checked]));
 }
+async function aguardarConsultaAgendamento(consulta) {
+    let timer;
+    try {
+        return await Promise.race([consulta, new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error('A Agenda demorou a responder. Confira a conexão e tente confirmar novamente.')), 15000);
+        })]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
 async function confirmarExcecoesAgenda(profissionalId,dataISO,horaInicio,horaFim,id=null) {
     if (!_supabase) {
         const ocupado=await existeConflitoImediato(profissionalId,dataISO,horaInicio,horaFim,id);
         if(ocupado||obterFeriadoAgenda(dataISO)||bloqueiosAgendaPara(dataISO,profissionalId).length)throw new Error('Conecte o sistema para conferir e confirmar o encaixe excepcional.');
         return {ok:true,extraordinario:false,confirmacao:null};
     }
-    const {data,error}=await _supabase.rpc('kinesys_consultar_excecoes_agenda',{
+    const {data,error}=await aguardarConsultaAgendamento(_supabase.rpc('kinesys_consultar_excecoes_agenda',{
         p_profissional_id:profissionalId,p_data:dataISO,p_inicio:horaInicio,p_fim:horaFim,p_ignorar:id
-    });
+    }));
     if(error)throw error;
     if(!data?.contexto || data.contexto.profissional_id!==profissionalId || data.contexto.data!==dataISO || data.contexto.inicio!==horaInicio || data.contexto.fim!==horaFim || !Array.isArray(data.conflitos)||!Array.isArray(data.bloqueios))throw new Error('Não foi possível conferir a disponibilidade atual. Atualize a agenda.');
     const avisos=[];
@@ -3171,6 +3183,7 @@ async function confirmarExcecoesAgenda(profissionalId,dataISO,horaInicio,horaFim
 async function resolverListaEsperaAposAgendamento(pacienteId) {
     if (!usuarioPodeVerAgendaClinicaToda()) return {encontrou:false,removeu:false};
     if (!_supabase || !pacienteId) return { encontrou: false, removeu: false };
+    const usuarioInicial = usuarioLogado;
     try {
         const { data, error } = await _supabase.from('lista_espera')
             .select('id,paciente_id,status')
@@ -3179,7 +3192,11 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
         if (error) throw error;
 
         const entradasAtivas = data || [];
-        if (!entradasAtivas.length) return { encontrou: false, removeu: false };
+        if (usuarioLogado !== usuarioInicial || !entradasAtivas.length) return { encontrou: false, removeu: false };
+        if (!document.getElementById('tela_agenda')?.classList.contains('ativa') || document.getElementById('modal_agendamento')?.classList.contains('ativa')) {
+            alert('Agendamento salvo. O paciente continua na lista de espera, onde a entrada pode ser revisada.', 'info');
+            return { encontrou: true, removeu: false };
+        }
 
         const quantidade = entradasAtivas.length;
         const mensagem = quantidade === 1
@@ -3193,7 +3210,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
             tipo: 'info'
         });
 
-        if (!retirar) return { encontrou: true, removeu: false };
+        if (!retirar || usuarioLogado !== usuarioInicial) return { encontrou: true, removeu: false };
 
         const ids = entradasAtivas.map(item => item.id).filter(Boolean);
         if (!ids.length) return { encontrou: true, removeu: false };
@@ -3209,7 +3226,7 @@ async function resolverListaEsperaAposAgendamento(pacienteId) {
         return { encontrou: true, removeu: true };
     } catch (err) {
         console.warn('Agendamento salvo, mas não foi possível revisar a lista de espera:', err);
-        alert('O agendamento foi salvo, mas não foi possível verificar/atualizar a lista de espera. Revise a fila manualmente.', 'aviso');
+        if (usuarioLogado === usuarioInicial) alert('O agendamento foi salvo, mas não foi possível verificar/atualizar a lista de espera. Revise a fila manualmente.', 'aviso');
         return { encontrou: false, removeu: false, erro: err };
     }
 }
@@ -3380,12 +3397,15 @@ async function salvarEdicaoAtendimentoAtual({ profissionalId, procedimentoId, da
 }
 
 async function salvarAgendamento() {
-    const formularioInicial=assinaturaFormularioAgenda();
     if (agendaSalvando) return;
+    const formularioInicial=assinaturaFormularioAgenda();
+    const aberturaInicial = agendaAberturaAgendamento;
+    const usuarioInicial = usuarioLogado;
+    const formularioAtual = () => aberturaInicial === agendaAberturaAgendamento && usuarioInicial === usuarioLogado && document.getElementById('modal_agendamento')?.classList.contains('ativa');
+    if (!formularioAtual()) return;
     const btn = document.getElementById('btn_salvar_agendamento');
     const pacienteId = document.getElementById('ag_paciente_select').value;
     const profissionalId = document.getElementById('ag_profissional_select').value;
-    if (!agendaPodeMarcarProfissional(profissionalId)) { mostrarFeedbackAgendaModal('Selecione um profissional autorizado para sua agenda.', 'erro'); return; }
     const procedimentoId = document.getElementById('ag_procedimento_select').value;
     const dataISO = document.getElementById('ag_data_input').value;
     const horarioVal = document.getElementById('ag_horario_select').value;
@@ -3409,6 +3429,7 @@ async function salvarAgendamento() {
         mostrarFeedbackAgendaModal('Preencha: ' + faltantes.join(', ') + '.', 'erro');
         return;
     }
+    if (!agendaPodeMarcarProfissional(profissionalId)) { mostrarFeedbackAgendaModal('Selecione um profissional autorizado para sua agenda.', 'erro'); return; }
 
     if (agendaEdicaoAtendimentoId) {
         agendaSalvando = true;
@@ -3445,16 +3466,17 @@ async function salvarAgendamento() {
         : horarioVal.split('|');
     agendaSalvando = true;
     if (btn) { btn.disabled = true; btn.textContent = datasSolicitadas.length > 1 ? 'Criando série…' : 'Salvando…'; }
-    mostrarFeedbackAgendaModal(datasSolicitadas.length > 1 ? `Validando ${datasSolicitadas.length} agendamentos…` : 'Salvando agendamento…', 'info');
+    mostrarFeedbackAgendaModal(datasSolicitadas.length > 1 ? `Validando ${datasSolicitadas.length} agendamentos…` : 'Conferindo a disponibilidade do horário…', 'info');
 
     try {
         const planoId = usuarioEhAdministradorAgenda() ? (document.getElementById('ag_plano_select')?.value || '') : '';
         let validacaoPlano = {ok:true, modo:'nenhum', plano:null};
         if (planoId && typeof validarPlanoParaAgendamento === 'function') {
-            validacaoPlano = await validarPlanoParaAgendamento(planoId, pacienteId, procedimentoId);
+            validacaoPlano = await aguardarConsultaAgendamento(validarPlanoParaAgendamento(planoId, pacienteId, procedimentoId));
+            if (!formularioAtual()) return;
             if (!validacaoPlano.ok) {
                 mostrarFeedbackAgendaModal(validacaoPlano.mensagem || 'Não foi possível vincular este pacote.', 'erro');
-                await popularPlanosNoAgendamento(pacienteId, procedimentoId, planoId);
+                void popularPlanosNoAgendamento(pacienteId, procedimentoId, planoId);
                 return;
             }
         }
@@ -3466,7 +3488,8 @@ async function salvarAgendamento() {
         const optPlano = document.getElementById('ag_plano_select')?.selectedOptions?.[0];
         const capacidadePacote = Number(optPlano?.dataset?.disponiveis || validacaoPlano.plano?.sessoes_disponiveis_vinculo || optPlano?.dataset?.restantes || 0);
 
-        const analise = await analisarDatasRecorrenciaAgenda(datasSolicitadas, profissionalId, horaInicio, horaFim, { permitirExtraordinario: usarHorarioExtraordinario,permitirSobreposicao:true });
+        const analise = await aguardarConsultaAgendamento(analisarDatasRecorrenciaAgenda(datasSolicitadas, profissionalId, horaInicio, horaFim, { permitirExtraordinario: usarHorarioExtraordinario,permitirSobreposicao:true }));
+        if (!formularioAtual()) return;
         if (!analise.validas.length) {
             mostrarFeedbackAgendaModal('Nenhuma das datas solicitadas está disponível nesse horário.\n' + textoDatasIndisponiveisRecorrencia(analise.indisponiveis), 'erro');
             return;
@@ -3481,8 +3504,9 @@ async function salvarAgendamento() {
         datasSolicitadas = analise.validas;
         const excecoesPorData=new Map();
         for(const dia of datasSolicitadas){
+            if(!formularioAtual())return;
             const excecao=await confirmarExcecoesAgenda(profissionalId,dia,horaInicio,horaFim);
-            if(!excecao.ok)return;
+            if(!excecao.ok||!formularioAtual())return;
             excecoesPorData.set(dia,excecao);
         }
         const datasExtraordinarias = datasSolicitadas.filter(d => !excecoesPorData.get(d)?.extraordinario && !intervaloDentroDaJornadaPadrao(profissionalId, d, horaInicio, horaFim));
@@ -3539,6 +3563,7 @@ Deseja realmente realizar esse agendamento?`,
         let primeiroErro = null;
         const idsSalvos = [];
         for (let i = 0; i < datasSolicitadas.length; i++) {
+            if (!formularioAtual()) break;
             if(formularioInicial!==assinaturaFormularioAgenda())throw new Error('Os campos foram alterados durante a confirmação. Revise os horários antes de continuar.');
             const dataOcorrencia = datasSolicitadas[i];
             mostrarFeedbackAgendaModal(`Salvando ${i+1} de ${datasSolicitadas.length}…`, 'info');
@@ -3597,15 +3622,18 @@ Deseja realmente realizar esse agendamento?`,
         }
 
         if (!salvos) {
+            if (!formularioAtual()) return;
             throw primeiroErro || new Error('Nenhum agendamento da série pôde ser salvo.');
         }
+        if (usuarioLogado !== usuarioInicial) return;
         invalidarCacheAgendaSemana();
 
-        agendaDataSelecionada = new Date(datasSolicitadas[0] + 'T00:00:00');
-        const inputData = document.getElementById('agenda_data_input');
-        if (inputData) inputData.value = datasSolicitadas[0];
-        fecharModal('modal_agendamento');
-        await renderizarPainelAgenda({ pularSync: pendentes > 0 });
+        if (formularioAtual()) {
+            agendaDataSelecionada = new Date(datasSolicitadas[0] + 'T00:00:00');
+            const inputData = document.getElementById('agenda_data_input');
+            if (inputData) inputData.value = datasSolicitadas[0];
+            fecharModal('modal_agendamento');
+        }
 
         const partes = [`${salvos} agendamento(s) criado(s)`];
         if (sincronizados) partes.push(`${sincronizados} sincronizado(s)`);
@@ -3618,13 +3646,20 @@ Deseja realmente realizar esse agendamento?`,
         if (avisosProfissionalEnviados) partes.push(`${avisosProfissionalEnviados} aviso(s) entregue(s) ao profissional`);
         if (avisosProfissionalPendentes) partes.push(`${avisosProfissionalPendentes} aviso(s) aguardando sincronização`);
         if (falhas) partes.push(`${falhas} falha(s)`);
-        mostrarFeedbackAgenda(partes.join(' · ') + '.', falhas ? 'aviso' : 'sucesso');
-
-        // Uma única revisão da lista de espera por série é suficiente.
-        // Só acontece se pelo menos uma ocorrência já estiver confirmada na nuvem.
-        if (sincronizados > 0) await resolverListaEsperaAposAgendamento(pacienteId);
+        const interrompidos = datasSolicitadas.length - salvos - conflitosTardios - falhas;
+        if (interrompidos) partes.push(`${interrompidos} data(s) restantes sem tentativa de gravação`);
+        const resumo = partes.join(' · ') + '.';
+        const tipo = falhas || interrompidos ? 'aviso' : 'sucesso';
+        const atualizacao = renderizarPainelAgenda({ pularSync: pendentes > 0 });
+        mostrarFeedbackAgenda(resumo, tipo);
+        void atualizacao.then(() => {
+            if (usuarioLogado !== usuarioInicial) return;
+            mostrarFeedbackAgenda(resumo, tipo);
+            if (sincronizados > 0) return resolverListaEsperaAposAgendamento(pacienteId);
+        }).catch(err => console.warn('Agendamento salvo; não foi possível atualizar a Agenda:', err));
     } catch (err) {
         console.error('Erro ao salvar agendamento/recorrência:', err);
+        if (!formularioAtual()) return;
         const mensagemErro = mensagemErroSalvarAgenda(err);
         mostrarFeedbackAgendaModal('Erro ao salvar: ' + mensagemErro, 'erro');
         alert('Não foi possível concluir o agendamento. ' + mensagemErro, 'erro');
