@@ -69,6 +69,8 @@
     }
     let dialogResolve = null;
     let dialogAnteriorFoco = null;
+    let dialogEncerrando = false;
+    const filaDialogos = [];
 
     function icon(nome){
         const paths = {
@@ -139,9 +141,19 @@
     }
     function removerToast(el){ if(!el||el.dataset.saindo)return; el.dataset.saindo='1'; el.classList.remove('show'); setTimeout(()=>el.remove(),220); }
     function escapeHTMLDS(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
-    function abrirDialog({titulo='Atenção',mensagem='',confirmar='Confirmar',cancelar='Cancelar',tipo='aviso',apenasOk=false,destrutivo=false,alternativa=''}={}){
+    function abrirDialog(opcoes={}){
+        return new Promise(resolve=>{
+            filaDialogos.push({opcoes,resolve});
+            exibirProximoDialog();
+        });
+    }
+    function exibirProximoDialog(){
+        if(dialogResolve||dialogEncerrando||!filaDialogos.length)return;
+        const {opcoes,resolve}=filaDialogos.shift();
+        const {titulo='Atenção',mensagem='',confirmar='Confirmar',cancelar='Cancelar',tipo='aviso',apenasOk=false,destrutivo=false,alternativa=''}=opcoes;
         ensureFeedback();
-        const o=document.getElementById('ks_dialog'); dialogAnteriorFoco=document.activeElement;
+        const o=document.getElementById('ks_dialog');
+        if(!o.contains(document.activeElement))dialogAnteriorFoco=document.activeElement;
         o.querySelector('#ks_dialog_title').textContent=titulo;
         o.querySelector('#ks_dialog_message').innerHTML=escapeHTMLDS(textoLimpo(mensagem)).replace(/\n/g,'<br>');
         o.querySelector('#ks_dialog_symbol').innerHTML=icon(tipo==='sucesso'?'check':'warning');
@@ -150,14 +162,27 @@
         cancel.textContent=cancelar; cancel.hidden=!!apenasOk;
         const alternative=o.querySelector('#ks_dialog_alternative');alternative.textContent=alternativa;alternative.hidden=!alternativa;
         ok.textContent=confirmar; ok.classList.toggle('ks-danger',!!destrutivo);
-        o.hidden=false; requestAnimationFrame(()=>o.classList.add('ativa')); setTimeout(()=>ok.focus(),30);
-        return new Promise(resolve=>{dialogResolve=resolve;});
+        dialogResolve=resolve;
+        o.hidden=false;
+        requestAnimationFrame(()=>{if(dialogResolve===resolve)o.classList.add('ativa');});
+        setTimeout(()=>{if(dialogResolve===resolve)ok.focus();},30);
     }
     function resolverDialog(valor){
-        const o=document.getElementById('ks_dialog'); if(!o||o.hidden)return;
-        o.classList.remove('ativa'); setTimeout(()=>{o.hidden=true;},170);
-        const r=dialogResolve; dialogResolve=null; if(r)r(valor==='descartar'?'descartar':!!valor);
-        if(dialogAnteriorFoco && document.contains(dialogAnteriorFoco)) setTimeout(()=>dialogAnteriorFoco.focus(),30);
+        const o=document.getElementById('ks_dialog'); if(!o||!dialogResolve)return;
+        const r=dialogResolve;
+        dialogResolve=null;
+        dialogEncerrando=true;
+        o.classList.remove('ativa');
+        setTimeout(()=>{
+            const restaurarFoco=o.contains(document.activeElement)||document.activeElement===document.body;
+            o.hidden=true;
+            dialogEncerrando=false;
+            if(filaDialogos.length){exibirProximoDialog();return;}
+            const foco=dialogAnteriorFoco;
+            dialogAnteriorFoco=null;
+            if(restaurarFoco&&foco&&document.contains(foco))foco.focus();
+        },170);
+        r(valor==='descartar'?'descartar':!!valor);
     }
     window.confirmarKineSys=function(mensagem,opcoes={}){
         return abrirDialog({titulo:opcoes.titulo||'Confirmar ação',mensagem,confirmar:opcoes.confirmar||'Confirmar',cancelar:opcoes.cancelar||'Cancelar',tipo:opcoes.tipo||'aviso',destrutivo:!!opcoes.destrutivo});
