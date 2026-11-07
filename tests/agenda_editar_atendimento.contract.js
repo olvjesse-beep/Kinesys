@@ -171,34 +171,64 @@ async function executarEdicao({pagos=0,extra=false,bloqueado=false,conflito=fals
   return {ok,chamadas,updatePayload,registro};
 }
 
-async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confirmar=true,feriado=false,serie=false,renderizar=async()=>{},revisar=async()=>{},consulta=null,acao=null,erroEsperado=null}={}){
- const salvos=[],avisos=[],erros=[];
+async function executarNovoExtra({ativo=true,bloqueado=false,ocupado=false,confirmar=true,feriado=false,serie=false,jornadaPadrao=false,datas=null,validarPlano=null,renderizar=async()=>{},revisar=async()=>{},consulta=null,acao=null,erroEsperado=null}={}){
+ const salvos=[],avisos=[],erros=[],consultadas=[];
  const campos={ag_paciente_select:{value:'pac-fixture'},ag_profissional_select:{value:'prof-fixture',selectedOptions:[{textContent:'Profissional fixture'}]},ag_procedimento_select:{value:'proc-fixture',selectedOptions:[{dataset:{duracao:'60'},textContent:'Sessão fixture'}]},ag_data_input:{value:'2026-10-19'},ag_horario_select:{value:ativo?'':'20:00|21:00'},ag_horario_extra_toggle:{checked:ativo},ag_horario_extra_inicio:{value:'20:00'},ag_observacoes:{value:''}};
  const btn={tagName:'BUTTON',textContent:'Confirmar Agendamento',disabled:false,setAttribute(){},removeAttribute(){}};
  campos.btn_salvar_agendamento=btn;
  campos.modal_agendamento={classList:{contains:()=>true}};
  const context={console,agendaSalvando:false,agendaAberturaAgendamento:1,agendaEdicaoAtendimentoId:null,agendaEquipeCache:[],usuarioLogado:{nome:'Equipe fixture'},agendaDataSelecionada:null,
- setTimeout:consulta?(fn,ms)=>setTimeout(fn,ms===15000?10:ms):setTimeout,clearTimeout,
+ setTimeout:consulta?(fn,ms)=>setTimeout(fn,ms===6000?10:ms):setTimeout,clearTimeout,
  document:{getElementById:id=>campos[id]||{value:'',selectedOptions:[],textContent:'',disabled:false},querySelector:()=>btn,querySelectorAll:()=>[]},
  horaParaMinutos:t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m;},minutosParaHora:m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),horaCurta:t=>t.slice(0,5),
- agendaDataUTC:d=>new Date(d+'T12:00:00Z'),intervaloDentroDaJornadaPadrao:()=>false,obterFeriadoAgenda:()=>feriado?{nome:'Feriado fixture'}:null,bloqueiosAgendaPara:()=>bloqueado?[{motivo:'Bloqueio manual'}]:[],
- _supabase:{rpc:async(nome,args)=>{assert.equal(nome,'kinesys_consultar_excecoes_agenda');return {data:{contexto:{profissional_id:args.p_profissional_id,data:args.p_data,inicio:args.p_inicio,fim:args.p_fim},conflitos:ocupado?['ocupado']:[],bloqueios:bloqueado?['bloqueio']:[],feriado:feriado?'Feriado fixture':''},error:null};},from:()=>({select(){return this;},eq(){return this;},gte(){return this;},lte(){return this;},async neq(){if(consulta)await consulta;return {data:ocupado?[{id:'ocupado',data:'2026-10-19',hora_inicio:'20:00',hora_fim:'21:00',status:'agendado'}]:[],error:null};}})},
+ agendaDataUTC:d=>new Date(d+'T12:00:00Z'),intervaloDentroDaJornadaPadrao:()=>jornadaPadrao,obterFeriadoAgenda:()=>feriado?{nome:'Feriado fixture'}:null,bloqueiosAgendaPara:()=>bloqueado?[{motivo:'Bloqueio manual'}]:[],
+ _supabase:{rpc:async(nome,args)=>{
+  assert.equal(nome,'kinesys_consultar_excecoes_agenda');consultadas.push(args.p_data);
+  if(consulta)await (typeof consulta==='function'?consulta(args):consulta);
+  return {data:{contexto:{profissional_id:args.p_profissional_id,data:args.p_data,inicio:args.p_inicio,fim:args.p_fim},conflitos:ocupado?['ocupado']:[],bloqueios:bloqueado?['bloqueio']:[],feriado:feriado?'Feriado fixture':''},error:null};
+ },from:()=>assert.fail('o pré-salvamento não deve buscar os agendamentos pela segunda vez')},
  statusAgendaOcupaHorario:()=>true,lerAgendamentosPendentesSync:()=>[],erroAgendaEhTransitorio:()=>false,agendaPodeMarcarProfissional:()=>true,usuarioPodeVerAgendaClinicaToda:()=>true,usuarioEhAdministradorAgenda:()=>true,
- lerConfiguracaoRecorrenciaModal:()=>({tipo:'nenhuma'}),gerarDatasRecorrenciaAgenda:()=>serie?['2026-10-19','2026-10-20']:['2026-10-19'],textoDatasIndisponiveisRecorrencia:a=>JSON.stringify(a),confirmarKineSys:async()=>confirmar,
+ lerConfiguracaoRecorrenciaModal:()=>({tipo:'nenhuma'}),gerarDatasRecorrenciaAgenda:()=>datas||(serie?['2026-10-19','2026-10-20']:['2026-10-19']),textoDatasIndisponiveisRecorrencia:a=>JSON.stringify(a),confirmarKineSys:async()=>confirmar,
  formatarDataAgendaBR:d=>d,classificarHorarioExtraordinarioAgenda:()=>({tipo:'fora_horario_profissional',motivo:'fora da jornada'}),pacienteAgendaPorId:()=>({nome:'Fixture'}),gerarIdAgendamentoKineSys:()=> 'novo-'+salvos.length,
  inserirAgendamentoNuvemConfiavel:async row=>{salvos.push(row);return {ok:true,sincronizado:true};},registrarNotificacaoHorarioExtraordinario:async row=>{avisos.push(row);return {ok:true};},
  invalidarCacheAgendaSemana(){},fecharModal(){},renderizarPainelAgenda:renderizar,mostrarFeedbackAgenda(){},mostrarFeedbackAgendaModal(){},resolverListaEsperaAposAgendamento:revisar,mensagemErroSalvarAgenda:e=>e.message,alert:e=>erros.push(e)};
+ if(validarPlano){campos.ag_plano_select={value:'plano-fixture',selectedOptions:[{dataset:{disponiveis:'1'}}]};context.validarPlanoParaAgendamento=validarPlano;}
  context.window=context;vm.createContext(context);
  vm.runInContext(trechoEntre('function assinaturaFormularioAgenda','\nasync function resolverListaEsperaAposAgendamento'),context);
  vm.runInContext(trechoEntre('function horarioExtraordinarioAtivoModal','\nfunction textoDatasIndisponiveisRecorrencia'),context);
  vm.runInContext(trechoEntre('async function salvarAgendamento()','\nasync function abrirDetalheAgendamento'),context);
  vm.runInContext(fs.readFileSync('src/core/operation_guard-1.0.0.js','utf8'),context);
  context.protegerFuncaoKineSys('salvarAgendamento',()=> 'agenda-agendamento','#btn_salvar_agendamento','Salvando…');
- if(acao)await acao(context,btn,salvos);else await context.salvarAgendamento();
+ if(acao)await acao(context,btn,salvos,consultadas);else await context.salvarAgendamento();
  if(erroEsperado)assert.match(erros.join(' '),erroEsperado);else assert.deepStrictEqual(erros,[],'o fluxo novo não pode falhar por dependência ausente');
  assert.strictEqual(context.agendaSalvando,false,'o fluxo sempre libera uma nova tentativa');
  assert.strictEqual(btn.disabled,false,'o botão sempre volta a ficar disponível');
- return {salvos,avisos,context,campos};
+ return {salvos,avisos,context,campos,consultadas};
+}
+
+async function testarConsultasDisponibilidade(){
+ const normal=await executarNovoExtra({ativo:false,jornadaPadrao:true});
+ assert.equal(normal.salvos.length,1);
+ assert.deepEqual(normal.consultadas,['2026-10-19'],'sessão comum faz uma única consulta antes de gravar');
+
+ const datas=Array.from({length:8},(_,i)=>'2026-10-'+String(19+i));
+ let liberarConsultas,liberarPlano,consultouPlano=false;
+ const primeiraEtapa=new Promise(r=>liberarConsultas=r);
+ const plano=new Promise(r=>liberarPlano=r);
+ const serie=await executarNovoExtra({ativo:false,jornadaPadrao:true,datas,
+  consulta:()=>primeiraEtapa,
+  validarPlano:()=>{consultouPlano=true;return plano;},
+  acao:async(ctx,btn,salvos,consultadas)=>{
+   const salvando=ctx.salvarAgendamento();
+   assert.deepEqual(consultadas,datas.slice(0,6),'primeiro lote já está em andamento antes de qualquer resposta');
+   assert.equal(consultouPlano,true,'o pacote é consultado em paralelo');
+   assert.equal(salvos.length,0,'nenhuma gravação antes de confirmar disponibilidade e pacote');
+   liberarConsultas();liberarPlano({ok:true,modo:'nuvem',plano:{sessoes_disponiveis_vinculo:8}});await salvando;
+  }});
+ assert.deepEqual(serie.consultadas,datas);
+ assert.deepEqual(serie.salvos.map(a=>a.data),datas);
+ assert(serie.salvos.every(a=>a.plano_id==='plano-fixture'),'usar a capacidade confirmada do pacote e preservar a ordem');
+ console.log('Agenda: consulta única em sessão avulsa, série em lotes paralelos e pacote validado em paralelo.');
 }
 
 async function testarDestravamentoAgendamento(){
@@ -295,7 +325,7 @@ async function testarAusenciaPeriodo(){
 }
 
 (async()=>{
-  await testarFilaDeConfirmacoes();await testarDestravamentoAgendamento();
+  await testarFilaDeConfirmacoes();await testarDestravamentoAgendamento();await testarConsultasDisponibilidade();
   testarFaixasSimultaneas();await testarAusenciaPeriodo();
   console.log('Agenda simultaneous lanes and inclusive absence period: OK');
   const semPagamento = await executarEdicao({pagos:0});

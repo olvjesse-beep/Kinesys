@@ -183,7 +183,7 @@ function trechoEntre(inicio, fim) {
 const busca = trechoEntre('function normalizarBuscaPacienteAgenda', '\n// Status oficiais da Agenda');
 const abrir = trechoEntre('async function abrirModalAgendamento', '\nasync function oferecerExcecaoJornadaProfissionalModal');
 const slots = trechoEntre('function calcularSlotsLivres', '\nfunction diasVisiveisDaSemana');
-const recorrencia = trechoEntre('function intervaloDisponivelNaJornadaRecorrencia', '\nasync function analisarDatasRecorrenciaAgenda');
+const recorrencia = trechoEntre('function intervaloDisponivelNaJornadaRecorrencia', '\nfunction analisarJornadaRecorrenciaAgenda');
 const configurar = trechoEntre('function configurarModalEdicaoAtendimento', '\nasync function abrirModalAgendamento');
 const editar = trechoEntre('async function salvarEdicaoAtendimentoAtual', '\nasync function salvarAgendamento');
 const detalhe = trechoEntre('async function abrirDetalheAgendamento', '\nasync function editarAgendamentoAtual');
