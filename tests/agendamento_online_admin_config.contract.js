@@ -250,6 +250,9 @@ assert(html.includes('id="proc_sessoes_pacote"'), 'o formulário de procedimento
  const ctx={Date,console,window:{},usuarioLogado:{id:'synthetic',tipo:'MASTER',clinica_id:'clinic-a'},document:{getElementById:id=>fields.get(id)||null,addEventListener:()=>{}},_supabase:{rpc:async(name)=>{reads++;return {data:name==='kinesys_configuracao_avisos'?{horas:24,automatico:true,clinica_id:'clinic-a'}:rows,error:null};}},escapeHTML:s=>s};vm.createContext(ctx);vm.runInContext(source,ctx);
  await vm.runInContext('carregarNotificacoesAgenda({avisar:false})',ctx);assert.equal(vm.runInContext('obterNotificacoesAtuaisAgenda().length',ctx),2,'client also filters expired events when clock advances');
  await vm.runInContext('alternarHistoricoAvisosAgenda()',ctx);assert.equal(vm.runInContext('agendaHistoricoAvisos.length',ctx),3);assert(rows.every(n=>!n.lida),'opening history must not mark as read');
+ rows[2].lida=true;
+ assert.equal(vm.runInContext('obterNotificacoesAtuaisAgenda().length',ctx),1,'online antigo some da lista somente depois de lido');
+ assert.equal(vm.runInContext('agendaHistoricoAvisos.length',ctx),3,'online lido continua no histórico');
  let done;ctx._supabase.rpc=()=>new Promise(resolve=>{done=resolve;});const stale=vm.runInContext('carregarRegrasAvisosAgenda()',ctx);ctx.usuarioLogado={...ctx.usuarioLogado,clinica_id:'clinic-b'};done({data:{horas:6,automatico:true,clinica_id:'clinic-a'},error:null});assert.equal(await stale,null,'late result cannot install previous clinic policy');
  ctx.usuarioLogado.tipo='FISIOTERAPEUTA';await assert.rejects(vm.runInContext('salvarRegrasAvisosAgenda(24,true)',ctx),/administradores/);
  console.log('PASS avisos client: expiração, histórico sem quitação/leitura, troca de contexto e autorização.');

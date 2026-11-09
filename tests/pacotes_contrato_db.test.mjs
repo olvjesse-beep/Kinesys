@@ -337,6 +337,7 @@ try {
  console.log('PASS diagnóstico SQL: admissão sem leitura anônima, idempotência, whitelist, retenção e isolamento MASTER/clínica.');
  { // Regras de avisos: expiração não apaga o histórico nem resolve pendências.
  await db.exec(fs.readFileSync(new URL('SUPABASE_SQL/configuracoes_notificacoes.sql',root),'utf8'));
+ await db.exec(fs.readFileSync(new URL('supabase/migrations/20261109110540_expirar_avisos_online_lidos.sql',root),'utf8'));
  const noticeCid='e1111111-1111-4111-8111-111111111111';await db.query('insert into clinicas(id) values($1)',[noticeCid]);
  await db.exec(`reset role;set test.clinica='${noticeCid}';set test.profissional='public-prof';set test.papel='MASTER';`);
  const notice=async(kind,hours,who='public-prof',clinic=noticeCid)=>db.query("insert into notificacoes_internas(clinica_id,destinatario_profissional_id,tipo,criada_em,titulo) values($1,$2,$3,now()-make_interval(hours=>$4),'Aviso sintético') returning id",[clinic,who,kind,hours]);
@@ -358,6 +359,16 @@ try {
  assert.equal((await feed()).length,3,'expiração antes do limite não enterra uma pendência antiga');
  assert.equal((await feed(true)).length,100,'histórico limitado sem apagar registros');
  assert.equal((await db.query('select lida from notificacoes_internas where id=$1',[oldInfo])).rows[0].lida,false);
+ const onlineLidoAntigo=(await notice('agendamento_online',25)).rows[0].id;
+ const onlineLidoRecente=(await notice('agendamento_online',2)).rows[0].id;
+ await db.query('update notificacoes_internas set lida=true where id in ($1,$2)',[onlineLidoAntigo,onlineLidoRecente]);
+ active=await feed();
+ assert(!active.some(n=>n.id===onlineLidoAntigo),'online lido expira no prazo configurado');
+ assert(active.some(n=>n.id===onlineLidoRecente),'online lido recente permanece até o prazo');
+ assert(active.some(n=>n.tipo==='agendamento_online'&&!n.lida),'online antigo não lido continua na lista');
+ assert((await feed(true)).some(n=>n.id===onlineLidoAntigo&&n.lida),'arquivado continua lido no histórico');
+ await db.query('select kinesys_configuracao_avisos(24,false)');
+ assert((await feed()).some(n=>n.id===onlineLidoAntigo),'o arquivamento continua opt-in');
  console.log('PASS avisos SQL: limite 24h, histórico preservado, pendências antigas, tipos futuros, autorização de escrita e isolamento de clínica/destinatário.');
  }
 }catch(e){console.error(e.message,e.detail||'',e.where||'');process.exitCode=1;}finally{await db.close();}

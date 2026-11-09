@@ -17,7 +17,8 @@ let agendaHistoricoAvisos=null,agendaMostrandoHistorico=false,agendaAvisosContex
 function contextoAvisosAgenda(){return [usuarioLogado?.clinica_id,usuarioLogado?.id,usuarioLogado?.tipo].join('|');}
 function avisoInformativoExpirado(n,agora=Date.now()){
     if(!agendaRegrasAvisos.automatico||String(agendaRegrasAvisos.clinica_id)!==String(usuarioLogado?.clinica_id))return false;
-    if(!['horario_extraordinario','aviso_informativo'].includes(n?.tipo))return false;
+    const arquivavel=['horario_extraordinario','aviso_informativo'].includes(n?.tipo)||(n?.tipo==='agendamento_online'&&n.lida===true);
+    if(!arquivavel)return false;
     const criada=Date.parse(n.criada_em);return Number.isFinite(criada)&&agora-criada>=agendaRegrasAvisos.horas*3600000;
 }
 function obterNotificacoesAtuaisAgenda(){return agendaNotificacoesCache.filter(n=>!avisoInformativoExpirado(n));}
@@ -103,7 +104,7 @@ function renderizarIndicadorNotificacoesAgenda() {
     }
     const atuais=obterNotificacoesAtuaisAgenda(),exibidas=agendaMostrandoHistorico?(agendaHistoricoAvisos||[]):atuais;
     const historicoBtn=document.getElementById('ks_notificacoes_historico');if(historicoBtn)historicoBtn.textContent=agendaMostrandoHistorico?'Voltar aos avisos atuais':'Ver histórico de avisos';
-    const descricao=document.getElementById('ks_notificacoes_periodo');if(descricao)descricao.textContent=agendaMostrandoHistorico?'Últimos 100 avisos, incluindo arquivados.':`Informativos saem do painel após ${agendaRegrasAvisos.horas}h quando o arquivamento está ativo. Pendências são preservadas.`;
+    const descricao=document.getElementById('ks_notificacoes_periodo');if(descricao)descricao.textContent=agendaMostrandoHistorico?'Últimos 100 avisos, incluindo arquivados.':`Com o arquivamento ativo, informativos e avisos online já lidos vão para o histórico após ${agendaRegrasAvisos.horas}h. Pendências são preservadas.`;
     const naoLidas = atuais.filter(n => !n.lida);
     const totalNaoLidas = naoLidas.length;
     badge.textContent = totalNaoLidas > 99 ? '99+' : String(totalNaoLidas);
@@ -125,6 +126,10 @@ function renderizarIndicadorNotificacoesAgenda() {
         </button>`).join('');
 }
 if (typeof window !== 'undefined') window.renderizarIndicadorNotificacoesAgenda = renderizarIndicadorNotificacoesAgenda;
+
+function notificarAtualizacaoAvisosAgenda(){
+    document.dispatchEvent?.(new Event('kinesys:avisos-agenda-atualizados'));
+}
 
 async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}) {
     const contextoAtual=contextoAvisosAgenda();
@@ -169,11 +174,12 @@ async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}
             }
             if(contextoAtual!==contextoAvisosAgenda())return [];
             resultados.sort((a,b) => String(b.criada_em || '').localeCompare(String(a.criada_em || '')));
-            const antes = agendaNotificacoesCache.filter(n => !n.lida).length;
+            const antes = obterNotificacoesAtuaisAgenda().filter(n => !n.lida).length;
             agendaNotificacoesCache = resultados.slice(0,100);
             agendaNotificacoesUltimaCargaEm = Date.now();
             renderizarIndicadorNotificacoesAgenda();
-            const agora = agendaNotificacoesCache.filter(n => !n.lida).length;
+            if(avisar||forcar)notificarAtualizacaoAvisosAgenda();
+            const agora = obterNotificacoesAtuaisAgenda().filter(n => !n.lida).length;
             if (avisar && agora > 0 && (agendaNotificacoesPrimeiraCarga || agora > antes) && typeof mostrarToastKineSys === 'function') {
                 mostrarToastKineSys(agora === 1 ? 'Você tem 1 novo aviso da Agenda.' : `Você tem ${agora} avisos não lidos da Agenda.`, 'aviso', 5200);
             }
@@ -182,6 +188,7 @@ async function carregarNotificacoesAgenda({ avisar = true, forcar = false } = {}
         } catch (error) {
             if (!erroSchemaNotificacoesAgenda(error)) console.warn('Agenda: falha ao carregar notificações internas.', error);
             renderizarIndicadorNotificacoesAgenda();
+            if(contextoAtual===contextoAvisosAgenda())notificarAtualizacaoAvisosAgenda();
             return [];
         }
     })().finally(()=>{agendaNotificacoesEmCarga=null;});
@@ -200,11 +207,13 @@ if (typeof window !== 'undefined') window.alternarPainelNotificacoes = alternarP
 async function marcarTodasNotificacoesAgendaLidas() {
     const naoLidas = obterNotificacoesAtuaisAgenda().filter(n => !n.lida && n.id);
     if (!_supabase || !naoLidas.length) return;
+    const contexto=contextoAvisosAgenda();
     const ids = naoLidas.map(n => n.id);
     const { error } = await _supabase.from('notificacoes_internas').update({ lida:true, lida_em:new Date().toISOString() }).in('id', ids);
-    if (!error) {
+    if (!error && contexto===contextoAvisosAgenda()) {
         agendaNotificacoesCache = agendaNotificacoesCache.map(n => ids.includes(n.id) ? { ...n, lida:true } : n);
         renderizarIndicadorNotificacoesAgenda();
+        notificarAtualizacaoAvisosAgenda();
     }
 }
 if (typeof window !== 'undefined') window.marcarTodasNotificacoesAgendaLidas = marcarTodasNotificacoesAgendaLidas;
@@ -213,8 +222,14 @@ async function abrirNotificacaoAgenda(id) {
     const n = [...agendaNotificacoesCache,...(agendaHistoricoAvisos||[])].find(x => String(x.id) === String(id));
     if (!n) return;
     if (_supabase && !n.lida && n.id) {
-        await _supabase.from('notificacoes_internas').update({ lida:true, lida_em:new Date().toISOString() }).eq('id', n.id);
-        n.lida = true; renderizarIndicadorNotificacoesAgenda();
+        const contexto=contextoAvisosAgenda();
+        const {error}=await _supabase.from('notificacoes_internas').update({ lida:true, lida_em:new Date().toISOString() }).eq('id', n.id);
+        if(contexto!==contextoAvisosAgenda())return;
+        if(!error){
+            n.lida=true;
+            renderizarIndicadorNotificacoesAgenda();
+            notificarAtualizacaoAvisosAgenda();
+        }
     }
     const painel = document.getElementById('ks_notificacoes_painel'); if (painel) painel.hidden = true;
     if (typeof telaPermitida === 'function' && !telaPermitida('tela_agenda')) {
