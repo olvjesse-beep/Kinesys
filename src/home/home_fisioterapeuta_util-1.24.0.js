@@ -685,9 +685,14 @@
         if(consulta.error){resumo.textContent='Não foi possível carregar seus atendimentos agora.';return false;}
 
         const atendimentosHoje=consulta.data||[];
+        const iniciosComAtendimento=new Set(atendimentosHoje.filter(a=>{
+            const status=String(a.status||'').toLowerCase();
+            return statusOcupaHorarioHome(status)||STATUS_CONCLUIDOS.has(status)||STATUS_AUSENCIA.has(status);
+        }).map(a=>horaMinutos(a.hora_inicio)));
         const atendimentos=atendimentosHoje.filter(a=>{
             const inicio=horaMinutos(a.hora_inicio),fim=horaMinutos(a.hora_fim);
             if(!Number.isFinite(inicio))return false;
+            if(String(a.status||'').toLowerCase()==='cancelado'&&iniciosComAtendimento.has(inicio))return false;
             const termino=Number.isFinite(fim)&&fim>inicio?fim:inicio+30;
             return termino>inicioJanela&&inicio<fimJanela;
         });
