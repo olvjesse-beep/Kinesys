@@ -1,0 +1,66 @@
+/* ==========================================================================
+   KineSys Motion 1.0.0 — microanimações de retorno visual (somente visual)
+   - O estado sem animação é sempre o estado final: nada nasce escondido.
+   - Classes ks-motion-* são aplicadas e removidas por src/ui/ks_motion-1.0.0.js.
+   - Desligadas em impressão/PDF e para quem prefere menos movimento.
+   ========================================================================== */
+:root{
+    --ks-motion-ease: cubic-bezier(.2,.7,.2,1);
+    --ks-motion-accent: var(--kds-accent, #1E756F);
+    --ks-motion-accent-soft: var(--kds-accent-soft, #EAF5F2);
+    --ks-motion-success: var(--kds-success, #2F735A);
+}
+
+/* 1. Exame clínico: ferramenta atinge o próprio critério (status-positivo) */
+.cluster-card.ks-motion-criterio{animation:ksMotionRing .7s ease-out 1}
+.cluster-card.ks-motion-criterio .cluster-veredito{animation:ksMotionRise .26s var(--ks-motion-ease) 1}
+
+/* 4. Agenda: compromisso passa a "Confirmado" */
+.agenda-compromisso.ks-motion-confirmado{animation:ksMotionConfirm 1.1s ease-out 1}
+
+/* 5 + 15. Início / Meu dia: entrada em cascata e atendimento atual */
+#tela_home.ks-motion-entrada .ks-fisio-day-row{animation:ksMotionRise .24s var(--ks-motion-ease) backwards}
+#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(2){animation-delay:.05s}
+#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(3){animation-delay:.10s}
+#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(4){animation-delay:.15s}
+#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(n+5){animation-delay:.20s}
+#tela_home.ks-motion-entrada .ks-prof-month-card,
+#tela_home.ks-motion-entrada .ks-prof-priorities-card,
+#tela_home.ks-motion-entrada .ks-prof-notifications-card{animation:ksMotionRise .26s var(--ks-motion-ease) backwards .08s}
+.ks-fisio-day-row.is-current.ks-motion-atual{animation:ksMotionSoftFlash 1.6s ease-out 1}
+
+/* 8. Financeiro: plano passa a "Quitado" / valor pago muda */
+.finance-plan-card.ks-motion-quitado{animation:ksMotionConfirm 1.2s ease-out 1}
+.finance-plan-card.ks-motion-pagamento .finance-money-line{animation:ksMotionSoftFlash 1.2s ease-out 1;border-radius:8px}
+
+/* 14. Gráfico da dor (EVA): linha desenhada na janela de análise */
+.ks-fisio-evolution-chart.ks-motion-desenhar polyline{
+    stroke-dasharray:var(--ks-motion-len,1000);
+    animation:ksMotionDraw 1.1s var(--ks-motion-ease) backwards;
+}
+.ks-fisio-evolution-chart.ks-motion-desenhar circle{animation:ksMotionFade .3s ease backwards .8s}
+
+/* 15. Login: indicador de carregamento enquanto "Verificando acesso…" */
+#btn_login_entrar:disabled{position:relative}
+#btn_login_entrar:disabled::after{
+    content:"";display:inline-block;width:14px;height:14px;margin-left:10px;vertical-align:-2px;
+    border:2px solid currentColor;border-top-color:transparent;border-radius:50%;
+    animation:ksMotionSpin .7s linear infinite;
+}
+
+@keyframes ksMotionRing{0%{box-shadow:0 0 0 0 rgba(30,117,111,.30)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
+@keyframes ksMotionRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes ksMotionConfirm{0%{box-shadow:inset 4px 0 0 var(--ks-motion-accent),0 0 0 0 rgba(30,117,111,.32)}70%{box-shadow:inset 4px 0 0 var(--ks-motion-accent),0 0 0 8px rgba(30,117,111,0)}100%{box-shadow:inset 4px 0 0 var(--ks-motion-accent),0 0 0 0 rgba(30,117,111,0)}}
+@keyframes ksMotionSoftFlash{0%,30%{box-shadow:inset 0 0 0 999px rgba(30,117,111,.09)}100%{box-shadow:inset 0 0 0 999px rgba(30,117,111,0)}}
+@keyframes ksMotionDraw{from{stroke-dashoffset:var(--ks-motion-len,1000)}to{stroke-dashoffset:0}}
+@keyframes ksMotionFade{from{opacity:0}to{opacity:1}}
+@keyframes ksMotionSpin{to{transform:rotate(360deg)}}
+
+@media (prefers-reduced-motion:reduce){
+    [class*="ks-motion-"],[class*="ks-motion-"] *,#btn_login_entrar:disabled::after{animation:none!important}
+    .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dashoffset:0!important}
+}
+@media print{
+    [class*="ks-motion-"],[class*="ks-motion-"] *{animation:none!important}
+    .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
+}
