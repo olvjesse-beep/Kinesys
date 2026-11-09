@@ -115,6 +115,99 @@
         });
     }
 
+    // ---------- Contadores: números sobem de 0 até o valor real ----------
+    // O texto real do elemento NUNCA é alterado: a contagem é uma camada visual
+    // (::after com attr(data-ks-motion-valor)) sobre o texto, que fica transparente.
+    const CONTADORES_ADMIN=['ks_admin_received','ks_admin_receivable','ks_admin_expenses','ks_admin_attended','ks_admin_occupancy','ks_admin_absences','ks_admin_scheduled','ks_admin_free'];
+    const CONTADORES_BALANCO=['fin_bal_receita','fin_bal_despesas','fin_bal_resultado','fin_bal_descontos','fin_bal_qtd_pagamentos','fin_bal_ticket','fin_bal_planos','fin_bal_atendidos','fin_bal_faltas','fin_bal_qtd_despesas'];
+    const DURACAO_CONTAGEM_MS=900;
+    const NUMERO_BR=/\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?/;
+    const ultimoTexto=new Map();
+    const contagens=new Map();
+
+    function lerNumero(texto){
+        const m=NUMERO_BR.exec(texto||'');
+        if(!m)return null;
+        const n=Number(m[0].replace(/\./g,'').replace(',','.'));
+        return Number.isFinite(n)?{n,inicio:m.index,fim:m.index+m[0].length}:null;
+    }
+
+    function agora(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
+
+    function contar(el){
+        if(!el||!el.classList)return false;
+        try{
+            const anterior=contagens.get(el);if(anterior)anterior();
+            const final=(el.textContent||'').trim();
+            const info=lerNumero(final);
+            if(!info||info.n<=0)return false;
+            const prefixo=final.slice(0,info.inicio),sufixo=final.slice(info.fim);
+            const formatar=v=>prefixo+Math.floor(v).toLocaleString('pt-BR')+sufixo;
+            const cor=root.getComputedStyle?root.getComputedStyle(el).color:'';
+            if(cor)el.style.setProperty('--ks-motion-cor',cor);
+            el.setAttribute('data-ks-motion-valor',formatar(0));
+            el.classList.add('ks-motion-contando');
+            const t0=agora();
+            let feito=false;
+            const fim=()=>{
+                if(feito)return;feito=true;contagens.delete(el);
+                try{el.classList.remove('ks-motion-contando');el.removeAttribute('data-ks-motion-valor');el.style.removeProperty('--ks-motion-cor');}catch(_){}
+            };
+            const quadro=root.requestAnimationFrame?root.requestAnimationFrame.bind(root):(fn)=>root.setTimeout(fn,16);
+            const passo=()=>{
+                if(feito)return;
+                if((el.textContent||'').trim()!==final){fim();return;} // o sistema reescreveu: para na hora
+                const p=Math.min(1,(agora()-t0)/DURACAO_CONTAGEM_MS);
+                if(p>=1){fim();return;}
+                el.setAttribute('data-ks-motion-valor',formatar(info.n*(1-Math.pow(1-p,3))));
+                quadro(passo);
+            };
+            quadro(passo);
+            root.setTimeout(fim,DURACAO_CONTAGEM_MS+600); // garantia (aba em segundo plano)
+            contagens.set(el,fim);
+            return true;
+        }catch(_){return false;}
+    }
+
+    // Conta quando o texto passa a ser um número diferente do último visto
+    // (inclui a primeira vez); "—", "••••" e zero não contam.
+    function varrerContadores(raiz,ids,forcar){
+        let algum=false;
+        ids.forEach(id=>{
+            const el=raiz.querySelector('#'+id);
+            if(!el)return;
+            const txt=(el.textContent||'').trim();
+            if(!forcar&&ultimoTexto.get(id)===txt)return;
+            ultimoTexto.set(id,txt);
+            if(contar(el))algum=true;
+        });
+        return algum;
+    }
+
+    function revelarFluxoAdmin(raiz){
+        const canvas=raiz.querySelector('#ks_admin_chart');
+        if(canvas)pulsar(canvas,'ks-motion-revelar');
+    }
+
+    function varrerPainelAdmin(raiz,forcar){
+        const painel=raiz.querySelector('#ks_admin_home');
+        if(!painel||painel.hidden)return;
+        const recebidoAntes=ultimoTexto.get('ks_admin_received');
+        varrerContadores(painel,CONTADORES_ADMIN,forcar);
+        const recebido=ultimoTexto.get('ks_admin_received');
+        if(lerNumero(recebido)&&(forcar||recebido!==recebidoAntes))revelarFluxoAdmin(painel);
+    }
+
+    let balancoVisivel=false;
+    function varrerBalanco(raiz){
+        const painel=raiz.querySelector('#financeiro_painel_balanco');
+        if(!painel)return;
+        const visivel=!painel.hidden;
+        const abriu=visivel&&!balancoVisivel;
+        balancoVisivel=visivel;
+        if(visivel)varrerContadores(painel,CONTADORES_BALANCO,abriu);
+    }
+
     function desenharGrafico(svg){
         if(!svg||svg.dataset.ksMotionDesenhado)return;
         if(svg.closest('#avaliacao_eva_previa'))return; // prévia recalcula a cada ajuste do controle
@@ -147,16 +240,22 @@
         const id=(x)=>doc.getElementById(x);
         observar(id('tela_avaliacao'),varrerExame);
         observar(id('tela_agenda'),varrerAgenda);
-        observar(id('tela_financeiro'),varrerFinanceiro);
+        observar(id('tela_financeiro'),(t)=>{varrerFinanceiro(t);varrerBalanco(t);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
 
-        // Início / Meu dia: cascata na primeira entrada após o login + atendimento atual.
+        // Início / Meu dia / Panorama da clínica: cascata na primeira entrada após o
+        // login, atendimento atual e contadores do administrador a cada entrada.
         const home=id('tela_home');
         if(home){
-            observar(home,varrerMeuDia);
-            let entrou=false;
+            observar(home,(h)=>{varrerMeuDia(h);varrerPainelAdmin(h,false);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+            let entrou=false,ativa=home.classList.contains('ativa');
             const obsTela=new root.MutationObserver(()=>{
                 try{
-                    if(!entrou&&home.classList.contains('ativa')){entrou=true;pulsar(home,'ks-motion-entrada');obsTela.disconnect();}
+                    const agoraAtiva=home.classList.contains('ativa');
+                    if(agoraAtiva&&!ativa){
+                        if(!entrou){entrou=true;pulsar(home,'ks-motion-entrada');}
+                        varrerPainelAdmin(home,true);
+                    }
+                    ativa=agoraAtiva;
                 }catch(_){ }
             });
             obsTela.observe(home,{attributes:true,attributeFilter:['class']});
@@ -172,7 +271,7 @@
         },{childList:true});
     }
 
-    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico}});
+    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,balanco:varrerBalanco}});
 
     try{
         if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>{try{iniciar();}catch(_){}});

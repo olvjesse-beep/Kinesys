@@ -40,6 +40,24 @@
 }
 .ks-fisio-evolution-chart.ks-motion-desenhar circle{animation:ksMotionFade .3s ease backwards .8s}
 
+/* Painel do administrador e relatório financeiro: números contam de 0 ao valor.
+   O texto real fica no elemento (transparente só durante a contagem). */
+.ks-motion-contando{position:relative;color:transparent!important;-webkit-text-fill-color:transparent!important}
+.ks-motion-contando::after{
+    content:attr(data-ks-motion-valor);position:absolute;left:0;top:0;right:0;
+    color:var(--ks-motion-cor);-webkit-text-fill-color:var(--ks-motion-cor);
+    white-space:nowrap;text-align:inherit;font-variant-numeric:tabular-nums;pointer-events:none;
+}
+/* Fluxo do mês: o gráfico aparece da esquerda para a direita */
+#ks_admin_chart.ks-motion-revelar{animation:ksMotionRevelar .9s var(--ks-motion-ease) 1}
+/* Panorama: blocos entram em sequência na primeira entrada */
+#tela_home.ks-motion-entrada .ks-admin-metrics>div{animation:ksMotionRise .26s var(--ks-motion-ease) backwards}
+#tela_home.ks-motion-entrada .ks-admin-metrics>div:nth-child(2){animation-delay:.06s}
+#tela_home.ks-motion-entrada .ks-admin-metrics>div:nth-child(3){animation-delay:.12s}
+#tela_home.ks-motion-entrada .ks-admin-flow{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .16s}
+#tela_home.ks-motion-entrada .ks-admin-glass{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .2s}
+#tela_home.ks-motion-entrada .ks-admin-messages{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .26s}
+
 /* 15. Login: indicador de carregamento enquanto "Verificando acesso…" */
 #btn_login_entrar:disabled{position:relative}
 #btn_login_entrar:disabled::after{
@@ -55,10 +73,13 @@
 @keyframes ksMotionDraw{from{stroke-dashoffset:var(--ks-motion-len,1000)}to{stroke-dashoffset:0}}
 @keyframes ksMotionFade{from{opacity:0}to{opacity:1}}
 @keyframes ksMotionSpin{to{transform:rotate(360deg)}}
+@keyframes ksMotionRevelar{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
 /* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
    operacional (efeitos curtos, sem piscar). Desligar: localStorage ks_motion_off=1. */
 @media print{
     [class*="ks-motion-"],[class*="ks-motion-"] *{animation:none!important}
     .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
+    .ks-motion-contando{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
+    .ks-motion-contando::after{content:none!important}
 }

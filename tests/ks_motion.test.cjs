@@ -106,4 +106,61 @@ function ambiente(html,{off=false}={}){
   assert.ok(/ksMotionDraw\s*1\.1s[^;]*backwards/.test(css),'linha do gráfico visível por padrão (fill backwards)');
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (9 cenários).');
+// 9. Panorama do administrador: valor conta de 0 numa camada visual; o texto real não muda.
+{
+  const html=`<section id="tela_home"><section id="ks_admin_home"><div class="ks-admin-metrics"><div><strong id="ks_admin_received">—</strong></div><div><strong id="ks_admin_receivable">—</strong></div></div><canvas id="ks_admin_chart"></canvas><strong id="ks_admin_attended">—</strong></section></section>`;
+  const w=ambiente(html);
+  const quadros=[];const timers=[];
+  w.requestAnimationFrame=(fn)=>{quadros.push(fn);return quadros.length;};
+  w.setTimeout=(fn)=>{timers.push(fn);return timers.length;};
+  const tela=w.document.getElementById('tela_home');
+  const rec=w.document.getElementById('ks_admin_received');
+  w.KineSysMotion._varrer.painelAdmin(tela,false);
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'"—" não conta');
+  rec.textContent='R$ 12.345,5';
+  w.document.getElementById('ks_admin_attended').textContent='37';
+  w.KineSysMotion._varrer.painelAdmin(tela,false);
+  assert.ok(rec.classList.contains('ks-motion-contando'),'valor real passa a contar');
+  assert.strictEqual(rec.getAttribute('data-ks-motion-valor'),'R$ 0','contagem começa em zero, com o mesmo formato');
+  assert.strictEqual(rec.textContent,'R$ 12.345,5','texto real do sistema intacto');
+  assert.ok(w.document.getElementById('ks_admin_attended').classList.contains('ks-motion-contando'),'atendimentos também contam');
+  assert.ok(w.document.getElementById('ks_admin_chart').classList.contains('ks-motion-revelar'),'gráfico do fluxo é revelado');
+  // Sem mudança, não conta de novo.
+  timers.splice(0).forEach(f=>f());
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'camada removida no tempo máximo');
+  assert.strictEqual(rec.hasAttribute('data-ks-motion-valor'),false);
+  w.KineSysMotion._varrer.painelAdmin(tela,false);
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'mesmo valor não reconta');
+  // Reentrada no Início (forçar) conta de novo.
+  w.KineSysMotion._varrer.painelAdmin(tela,true);
+  assert.ok(rec.classList.contains('ks-motion-contando'),'reentrada reconta');
+  // "Ocultar valores" no meio da contagem: a camada sai na hora.
+  rec.textContent='••••';
+  quadros.splice(0).forEach(f=>f());
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'valores ocultos encerram a contagem');
+  w.KineSysMotion._varrer.painelAdmin(tela,false);
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'"••••" não conta');
+}
+
+// 10. Relatório financeiro: conta ao abrir a aba; zero não conta.
+{
+  const html=`<section id="tela_financeiro"><div id="financeiro_painel_balanco" hidden><strong id="fin_bal_receita">R$ 4.200,00</strong><strong id="fin_bal_faltas">0</strong><strong id="fin_bal_resultado">-R$ 150,00</strong></div></section>`;
+  const w=ambiente(html);
+  w.requestAnimationFrame=()=>1;w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_financeiro');
+  w.KineSysMotion._varrer.balanco(tela);
+  const rec=w.document.getElementById('fin_bal_receita');
+  assert.ok(!rec.classList.contains('ks-motion-contando'),'aba fechada não conta');
+  w.document.getElementById('financeiro_painel_balanco').hidden=false;
+  w.KineSysMotion._varrer.balanco(tela);
+  assert.ok(rec.classList.contains('ks-motion-contando'),'abrir a aba conta');
+  assert.ok(!w.document.getElementById('fin_bal_faltas').classList.contains('ks-motion-contando'),'zero não conta');
+  assert.strictEqual(w.document.getElementById('fin_bal_resultado').getAttribute('data-ks-motion-valor'),'-R$ 0','sinal negativo preservado');
+}
+
+// 11. CSS: contagem some na impressão.
+{
+  assert.ok(/@media print\{[\s\S]*\.ks-motion-contando::after\{content:none!important\}/.test(css),'impressão mostra o valor real');
+}
+
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (12 cenários).');
