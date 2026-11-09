@@ -78,7 +78,62 @@
         });
     }
 
+    // ---------- Aviso "Paciente chegou" (camada própria no <body>) ----------
+    const avisados=new Set();
+    function avisarChegada(lista){
+        const novos=lista.filter(x=>x&&x.nome&&!avisados.has(x.nome+'|'+x.hora));
+        if(!novos.length)return;
+        novos.forEach(x=>avisados.add(x.nome+'|'+x.hora));
+        const doc=root.document;if(!doc||!doc.body)return;
+        try{
+            const antigo=doc.getElementById('ks_motion_aviso_chegada');if(antigo)antigo.remove();
+            const aviso=doc.createElement('div');
+            aviso.id='ks_motion_aviso_chegada';aviso.className='ks-motion-aviso';
+            aviso.setAttribute('role','status');aviso.setAttribute('aria-live','polite');
+            aviso.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><div><strong></strong><small></small></div>';
+            const titulo=aviso.querySelector('strong'),detalhe=aviso.querySelector('small');
+            if(novos.length===1){
+                titulo.textContent=novos[0].nome+' chegou';
+                detalhe.textContent=(novos[0].hora?'Atendimento das '+novos[0].hora+' · ':'')+'em espera na recepção';
+            }else{
+                titulo.textContent=novos.length+' pacientes chegaram';
+                detalhe.textContent=novos.map(x=>x.nome).join(', ');
+            }
+            doc.body.appendChild(aviso);
+            root.setTimeout(()=>{try{aviso.classList.add('ks-motion-aviso-saindo');}catch(_){}},5200);
+            root.setTimeout(()=>{try{aviso.remove();}catch(_){}},5600);
+        }catch(_){ }
+    }
+
+    // ---------- Agenda: navegação (semana/dia deslizando) ----------
+    let navAnterior=null;
+    function animarNavegacaoAgenda(grade){
+        if(!grade)return;
+        const periodo=grade.dataset.periodo||'';
+        const dias=(grade.dataset.dias||'').split(',').filter(Boolean);
+        const atual={periodo,dias,assin:periodo+'|'+dias.join(',')};
+        const ant=navAnterior;navAnterior=atual;
+        if(!ant||ant.assin===atual.assin||!dias.length||!ant.dias.length)return;
+        if(ant.periodo==='semana'&&periodo==='dia'){
+            const i=ant.dias.indexOf(dias[0]),n=ant.dias.length;
+            if(i>=0){
+                grade.style.setProperty('--ks-motion-l',(i/n*100).toFixed(2)+'%');
+                grade.style.setProperty('--ks-motion-r',((n-i-1)/n*100).toFixed(2)+'%');
+                pulsar(grade,'ks-motion-abrir-dia');return;
+            }
+        }
+        if(periodo===ant.periodo){pulsar(grade,dias[0]>ant.dias[0]?'ks-motion-avancar':'ks-motion-voltar');return;}
+        pulsar(grade,'ks-motion-trocar');
+    }
+
+    // ---------- Agenda: confirmado, paciente chegou e novo agendamento ----------
+    const estadoAgenda=new Map();
+    let agendaAssinatura=null,agendaChaves=null;
     function varrerAgenda(raiz){
+        const grade=raiz.querySelector('#agenda_semana_grade');
+        try{animarNavegacaoAgenda(grade);}catch(_){ }
+        const assinatura=grade?(grade.dataset.periodo||'')+'|'+(grade.dataset.dias||''):'';
+        const vistos=[],chegadas=[];
         raiz.querySelectorAll('.agenda-compromisso').forEach(comp=>{
             const host=comp.parentElement;
             const titulo=host&&host.title;
@@ -86,8 +141,27 @@
             const coluna=host.closest('[data-data],[data-dia],[data-date]');
             const dia=coluna?(coluna.dataset.data||coluna.dataset.dia||coluna.dataset.date||''):'';
             const chave='agenda|'+dia+'|'+titulo;
-            if(det.transicao(chave,statusDaClasse(comp,'status-'),'confirmado'))pulsar(comp,'ks-motion-confirmado');
+            vistos.push([chave,comp]);
+            const st=statusDaClasse(comp,'status-');
+            const anterior=estadoAgenda.get(chave);
+            estadoAgenda.set(chave,st);
+            if(anterior===undefined||anterior===st)return;
+            if(st==='confirmado')pulsar(comp,'ks-motion-confirmado');
+            else if(st==='em_recepcao'){
+                pulsar(comp,'ks-motion-chegou');
+                const nome=((comp.querySelector('.agenda-paciente-nome')||{}).textContent||'').trim();
+                const hora=(/(\d{2}:\d{2})\s*[–-]/.exec(titulo)||[])[1]||'';
+                chegadas.push({nome,hora});
+            }
         });
+        // Novo agendamento: mesma semana/dia, 1 ou 2 cartões que não existiam.
+        // Mais que isso (ou grade antes vazia) é carga inicial: não anima.
+        if(assinatura&&assinatura===agendaAssinatura&&agendaChaves&&agendaChaves.size>0){
+            const novos=vistos.filter(([k])=>!agendaChaves.has(k));
+            if(novos.length>=1&&novos.length<=2)novos.forEach(([,comp])=>pulsar(comp,'ks-motion-novo'));
+        }
+        agendaAssinatura=assinatura;agendaChaves=new Set(vistos.map(([k])=>k));
+        if(chegadas.length)avisarChegada(chegadas);
     }
 
     function varrerFinanceiro(raiz){
@@ -110,8 +184,14 @@
             const hora=row.querySelector('.ks-fisio-day-time');
             const nome=row.querySelector('.ks-fisio-day-patient-name');
             if(!hora||!nome)return;
-            const chave='dia|'+hora.textContent.trim()+'|'+nome.textContent.trim();
+            const horaTxt=((hora.querySelector('strong')||hora).textContent||'').trim();
+            // Chave pelo horário (sem o rótulo de status, que muda junto com a situação).
+            const chave='dia|'+horaTxt+'|'+nome.textContent.trim();
             if(det.transicao(chave,row.classList.contains('is-current')?'atual':'outro','atual'))pulsar(row,'ks-motion-atual');
+            if(det.transicao('espera|'+horaTxt+'|'+nome.textContent.trim(),row.classList.contains('is-waiting')?'espera':'outro','espera')){
+                pulsar(row,'ks-motion-chegou');
+                avisarChegada([{nome:nome.textContent.trim(),hora:horaTxt}]);
+            }
         });
     }
 
@@ -239,7 +319,7 @@
         const doc=root.document;
         const id=(x)=>doc.getElementById(x);
         observar(id('tela_avaliacao'),varrerExame);
-        observar(id('tela_agenda'),varrerAgenda);
+        observar(id('tela_agenda'),varrerAgenda,{childList:true,subtree:true,attributes:true,attributeFilter:['class','data-dias','data-periodo']});
         observar(id('tela_financeiro'),(t)=>{varrerFinanceiro(t);varrerBalanco(t);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
 
         // Início / Meu dia / Panorama da clínica: cascata na primeira entrada após o
