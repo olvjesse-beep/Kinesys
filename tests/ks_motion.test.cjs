@@ -349,10 +349,43 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   assert.strictEqual(e.textContent,'Evolução');
 }
 
+// 21. Falta acende o cartão; cancelamento (cartão sai da grade) marca "Horário liberado" inerte.
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const base=[['Paciente A','08:00','agendado'],['Paciente B','09:00','agendado'],['Paciente C','10:00','confirmado']];
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',base);
+  // jsdom não calcula layout: simula a posição dos cartões.
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:100,top:50+i*60,width:120,height:50});});
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[base[0],['Paciente B','09:00','falta_nao_justificada'],base[2]]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(tela.querySelectorAll('.agenda-compromisso')[1].classList.contains('ks-motion-falta'),'falta acende');
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'falta não é cancelamento');
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:100,top:50+i*60,width:120,height:50});});
+  w.KineSysMotion._varrer.agenda(tela);
+  const textoAntes=tela.textContent;
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[base[0],['Paciente B','09:00','falta_nao_justificada']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  const marca=w.document.querySelector('.ks-motion-horario-liberado');
+  assert.ok(marca,'horário liberado marcado');
+  assert.strictEqual(marca.getAttribute('aria-hidden'),'true');
+  assert.strictEqual(marca.parentElement,w.document.body,'marca fica fora da grade da agenda');
+  assert.ok(/top: ?170px/.test(marca.style.cssText),'na posição do cartão que saiu');
+  assert.ok(!tela.contains(marca));
+  assert.notStrictEqual(tela.textContent,textoAntes);
+  // Grade esvaziada (carregando) não marca todos como liberados.
+  marca.remove();
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'grade vazia (consulta) não marca');
+}
+
 // 20. CSS: "Salvo"/girando/abas/pendências somem na impressão.
 {
   assert.ok(/@media print\{[\s\S]*button\.ks-motion-salvo::after\{content:none!important\}/.test(css));
   assert.ok(/@media print\{[\s\S]*button\[aria-busy="true"\]::after\{content:none!important\}/.test(css));
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (21 cenários).');
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (22 cenários).');

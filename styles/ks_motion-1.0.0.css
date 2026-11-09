@@ -31,6 +31,15 @@
 .ks-motion-aviso small{display:block;opacity:.85;font-size:12.5px;margin-top:2px}
 .ks-motion-aviso.ks-motion-aviso-saindo{animation:ksMotionSome .35s ease forwards}
 
+/* 23. Agenda: falta marcada / cancelamento libera o horário */
+.agenda-compromisso.ks-motion-falta{animation:ksMotionFalta 1s ease-out 1}
+.ks-motion-horario-liberado{
+    position:fixed;z-index:20;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    border:1.5px dashed var(--kds-accent-tech,#2AA79D);border-radius:8px;background:rgba(234,245,242,.94);
+    color:var(--ks-motion-accent);font-weight:700;font-size:12px;white-space:nowrap;
+    animation:ksMotionLiberado 1.9s ease forwards;
+}
+
 /* 18. Agenda: troca de semana/dia */
 #agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .3s var(--ks-motion-ease) 1}
 #agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .3s var(--ks-motion-ease) 1}
@@ -143,6 +152,8 @@ button.ks-motion-salvo::after{
 @keyframes ksMotionCorFlash{0%,40%{color:var(--ks-motion-success)}}
 @keyframes ksMotionSalvoAnel{0%{box-shadow:0 0 0 0 rgba(47,115,90,.4)}60%{box-shadow:0 0 0 8px rgba(47,115,90,0)}100%{box-shadow:0 0 0 0 rgba(47,115,90,0)}}
 @keyframes ksMotionSalvoTexto{0%{opacity:0;transform:scale(.9)}12%,85%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes ksMotionFalta{0%{box-shadow:inset 4px 0 0 #A53B33,0 0 0 0 rgba(165,59,51,.35)}100%{box-shadow:inset 4px 0 0 #A53B33,0 0 0 9px rgba(165,59,51,0)}}
+@keyframes ksMotionLiberado{0%{opacity:0;transform:scale(.96);box-shadow:0 0 0 0 rgba(30,117,111,.35)}15%{opacity:1;transform:none}55%{opacity:1;box-shadow:0 0 0 9px rgba(30,117,111,0)}100%{opacity:0}}
 @keyframes ksMotionRevelar{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
 /* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
@@ -152,7 +163,7 @@ button.ks-motion-salvo::after{
     .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
     .ks-motion-contando{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
     .ks-motion-contando::after{content:none!important}
-    .ks-motion-aviso,.ks-motion-aba-indicador,.ks-motion-pendencia-saindo{display:none!important}
+    .ks-motion-aviso,.ks-motion-aba-indicador,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado{display:none!important}
     button[aria-busy="true"]::after{content:none!important}
     button.ks-motion-salvo{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
     button.ks-motion-salvo::after{content:none!important}

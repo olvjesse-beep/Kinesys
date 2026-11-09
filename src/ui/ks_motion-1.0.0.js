@@ -126,9 +126,25 @@
         pulsar(grade,'ks-motion-trocar');
     }
 
-    // ---------- Agenda: confirmado, paciente chegou e novo agendamento ----------
+    // ---------- Agenda: confirmado, paciente chegou, falta, cancelamento e novo agendamento ----------
+    const STATUS_FALTA=new Set(['falta_nao_justificada','falta_justificada','faltou']);
     const estadoAgenda=new Map();
-    let agendaAssinatura=null,agendaChaves=null;
+    let agendaAssinatura=null,agendaChaves=null,agendaPosicoes=new Map();
+
+    // 23. Cancelamento: o cartão sai da grade; "Horário liberado" (camada inerte) aparece onde ele estava.
+    function mostrarHorarioLiberado(grade,pos){
+        try{
+            const doc=root.document,g=grade.getBoundingClientRect();
+            const marca=doc.createElement('div');
+            marca.className='ks-motion-horario-liberado';marca.setAttribute('aria-hidden','true');
+            marca.textContent='Horário liberado';
+            marca.style.cssText='left:'+(g.left+pos.x-grade.scrollLeft)+'px;top:'+(g.top+pos.y-grade.scrollTop)+'px;width:'+pos.w+'px;height:'+pos.h+'px';
+            doc.body.appendChild(marca);
+            const tirar=()=>{try{marca.remove();}catch(_){}};
+            marca.addEventListener('animationend',tirar);
+            root.setTimeout(tirar,2400);
+        }catch(_){ }
+    }
     function varrerAgenda(raiz){
         const grade=raiz.querySelector('#agenda_semana_grade');
         try{animarNavegacaoAgenda(grade);}catch(_){ }
@@ -147,6 +163,7 @@
             estadoAgenda.set(chave,st);
             if(anterior===undefined||anterior===st)return;
             if(st==='confirmado')pulsar(comp,'ks-motion-confirmado');
+            else if(STATUS_FALTA.has(st))pulsar(comp,'ks-motion-falta');
             else if(st==='em_recepcao'){
                 pulsar(comp,'ks-motion-chegou');
                 const nome=((comp.querySelector('.agenda-paciente-nome')||{}).textContent||'').trim();
@@ -156,11 +173,20 @@
         });
         // Novo agendamento: mesma semana/dia, 1 ou 2 cartões que não existiam.
         // Mais que isso (ou grade antes vazia) é carga inicial: não anima.
-        if(assinatura&&assinatura===agendaAssinatura&&agendaChaves&&agendaChaves.size>0){
+        const chavesAtuais=new Set(vistos.map(([k])=>k));
+        if(assinatura&&assinatura===agendaAssinatura&&agendaChaves&&agendaChaves.size>0&&vistos.length>0){
             const novos=vistos.filter(([k])=>!agendaChaves.has(k));
             if(novos.length>=1&&novos.length<=2)novos.forEach(([,comp])=>pulsar(comp,'ks-motion-novo'));
+            const sumiram=Array.from(agendaChaves).filter(k=>!chavesAtuais.has(k));
+            if(grade&&sumiram.length>=1&&sumiram.length<=2)sumiram.forEach(k=>{const p=agendaPosicoes.get(k);if(p)mostrarHorarioLiberado(grade,p);});
         }
-        agendaAssinatura=assinatura;agendaChaves=new Set(vistos.map(([k])=>k));
+        agendaAssinatura=assinatura;agendaChaves=chavesAtuais;
+        // Posição de cada cartão relativa à grade (para marcar o horário liberado depois).
+        if(grade){
+            const g=grade.getBoundingClientRect(),pos=new Map();
+            vistos.forEach(([k,comp])=>{const r=comp.parentElement.getBoundingClientRect();if(r.width&&r.height)pos.set(k,{x:r.left-g.left+grade.scrollLeft,y:r.top-g.top+grade.scrollTop,w:r.width,h:r.height});});
+            agendaPosicoes=pos;
+        }
         if(chegadas.length)avisarChegada(chegadas);
     }
 
