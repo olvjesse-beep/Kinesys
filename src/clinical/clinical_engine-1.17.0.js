@@ -725,12 +725,11 @@
         // Se o profissional abriu a ferramenta e ela atingiu o próprio critério operacional,
         // o exame passa a alimentar a Síntese automaticamente. Isso não é uma seleção feita
         // por texto/IA: nasce de achados que o próprio fisioterapeuta registrou.
-        // Resultados divergentes (positivo e negativo no mesmo eixo) não confirmam a hipótese,
-        // e uma hipótese já aprovada, por qualquer origem, nunca é substituída silenciosamente
-        // por outra: trocar a direção clínica é decisão explícita do fisioterapeuta.
-        const respostas=typeof analisarRespostasItem==='function'?analisarRespostasItem(estado,grupo,item):null;
-        const divergente=!!respostas&&respostas.positivos>0&&respostas.negativos>0;
-        if(status==='positivo'&&!divergente){
+        // O critério operacional da ferramenta decide o "positivo" (ex.: cluster 3/5 positivo
+        // mesmo com negativos). Uma hipótese já aprovada, por qualquer origem, nunca é
+        // substituída silenciosamente por outra: trocar a direção clínica é decisão explícita
+        // do fisioterapeuta.
+        if(status==='positivo'){
             const outraAprovada=estado.modoDirecao==='hipotese' && !!estado.hipotesePrincipalAtiva && estado.hipotesePrincipalAtiva!==key;
             if(!outraAprovada){
                 estado.modoDirecao='hipotese';

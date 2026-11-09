@@ -60,18 +60,34 @@ const outraLimpa={id:'outra_hipotese',testes:['A','B']};
   registrar('diferencial',outraLimpa,['positivo','positivo'],'positivo');
   assert.strictEqual(estado.hipotesePrincipalAtiva,'cluster::radiculopatia_lombossacra');
 }
-{ // 4. Divergente isolada, sem nenhuma aprovada: não é aprovada automaticamente.
+{ // 4. Cluster que bate o critério com algum negativo (ex.: Laslett 3/5), sem outra aprovada: aprova pelo exame.
   const {estado,registrar}=cenario();
   registrar('cluster',inespecifica,['positivo','negativo','positivo'],'positivo');
-  assert.strictEqual(estado.hipotesePrincipalAtiva,null);
-  assert.notStrictEqual(estado.modoDirecao,'hipotese');
+  assert.strictEqual(estado.hipotesePrincipalAtiva,'cluster::dor_lombar_inespecifica');
+  assert.strictEqual(estado.hipoteseOrigem,'exame_positivo');
+  assert.strictEqual(estado.modoDirecao,'hipotese');
 }
-{ // 5. Aprovada pelo exame que passa a ter achado negativo perde a aprovação automática.
+{ // 5a. Aprovada pelo exame que ganha um negativo mas segue no critério: mantém a aprovação.
   const {estado,registrar}=cenario();
   registrar('cluster',radicular,['positivo','positivo','positivo','positivo'],'positivo');
   registrar('cluster',radicular,['positivo','negativo','positivo','positivo'],'positivo');
+  assert.strictEqual(estado.hipotesePrincipalAtiva,'cluster::radiculopatia_lombossacra');
+  assert.strictEqual(estado.hipoteseOrigem,'exame_positivo');
+}
+{ // 5b. Aprovada pelo exame que deixa de bater o critério: perde a aprovação automática.
+  const {estado,registrar}=cenario();
+  registrar('cluster',radicular,['positivo','positivo','positivo','positivo'],'positivo');
+  registrar('cluster',radicular,['positivo','negativo','negativo','negativo'],'negativo');
   assert.strictEqual(estado.hipotesePrincipalAtiva,null);
   assert.strictEqual(estado.hipoteseOrigem,'');
+  assert.notStrictEqual(estado.modoDirecao,'hipotese');
+}
+{ // 5c. Depois de liberada, outra hipótese positiva pode ser aprovada pelo exame.
+  const {estado,registrar}=cenario();
+  registrar('cluster',radicular,['positivo','positivo','positivo','positivo'],'positivo');
+  registrar('cluster',radicular,['negativo','negativo','negativo','negativo'],'negativo');
+  registrar('diferencial',outraLimpa,['positivo','positivo'],'positivo');
+  assert.strictEqual(estado.hipotesePrincipalAtiva,'diferencial::outra_hipotese');
 }
 { // 6. Aprovação manual do fisioterapeuta é soberana, mesmo com resultados divergentes.
   const {estado,registrar}=cenario();
@@ -82,4 +98,4 @@ const outraLimpa={id:'outra_hipotese',testes:['A','B']};
   assert.strictEqual(estado.hipoteseOrigem,'manual');
 }
 
-console.log('PASS: aprovação pelo exame não usa achados divergentes nem substitui hipótese já aprovada (6 cenários).');
+console.log('PASS: aprovação pelo exame segue o critério da ferramenta e nunca substitui hipótese já aprovada (8 cenários).');
