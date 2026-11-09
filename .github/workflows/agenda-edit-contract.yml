@@ -164,6 +164,7 @@ jobs:
           python -m pip install --disable-pip-version-check --quiet pypdf==6.21.4 pypdfium2==5.14.0 pillow==13.0.0
           JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/report_print_fidelity.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/interface_audit_regression.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/ks_motion.test.cjs
           PLAYWRIGHT_CORE_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/playwright-core" REPORT_PRINT_OUTPUT="$RUNNER_TEMP/kinesys-print-evidence" node tests/report_print_browser.test.cjs
       - name: Preserve synthetic print evidence
         if: always()
