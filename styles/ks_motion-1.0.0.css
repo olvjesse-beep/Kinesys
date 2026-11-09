@@ -2,7 +2,7 @@
    KineSys Motion 1.0.0 — microanimações de retorno visual (somente visual)
    - O estado sem animação é sempre o estado final: nada nasce escondido.
    - Classes ks-motion-* são aplicadas e removidas por src/ui/ks_motion-1.0.0.js.
-   - Desligadas em impressão/PDF e para quem prefere menos movimento.
+   - Desligadas em impressão/PDF e pelo ajuste ks_motion_off do KineSys.
    ========================================================================== */
 :root{
     --ks-motion-ease: cubic-bezier(.2,.7,.2,1);
@@ -56,10 +56,8 @@
 @keyframes ksMotionFade{from{opacity:0}to{opacity:1}}
 @keyframes ksMotionSpin{to{transform:rotate(360deg)}}
 
-@media (prefers-reduced-motion:reduce){
-    [class*="ks-motion-"],[class*="ks-motion-"] *,#btn_login_entrar:disabled::after{animation:none!important}
-    .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dashoffset:0!important}
-}
+/* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
+   operacional (efeitos curtos, sem piscar). Desligar: localStorage ks_motion_off=1. */
 @media print{
     [class*="ks-motion-"],[class*="ks-motion-"] *{animation:none!important}
     .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
