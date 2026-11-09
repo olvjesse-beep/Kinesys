@@ -12,6 +12,7 @@
     const NOTIFICACOES_RESUMO = 2;
     let notificacoesExpandidas = false;
     let contextoNotificacoes = '';
+    let aniversariosNotificacoes = [];
 
     function ehProfissional(){
         const tipo=String(typeof usuarioLogado!=='undefined'?usuarioLogado?.tipo:'').toUpperCase();
@@ -307,19 +308,32 @@
         sincronizarExpansaoNotificacoes();
     }
 
+    function identidadeNotificacoesHome(){
+        return `${profissionalAtualId()}|${String(typeof usuarioLogado!=='undefined'?usuarioLogado?.clinica_id||'':'')}`;
+    }
+
+    function contextoNotificacoesHome(hoje=agoraBrasilia()){
+        return `${identidadeNotificacoesHome()}|${hoje.iso}`;
+    }
+
     async function carregarNotificacoesHome(token){
-        const lista=document.getElementById('ks_prof_notifications_list'),count=document.getElementById('ks_prof_notification_count');if(!lista)return;
         let pacientes=[];try{pacientes=typeof obterPacientesSalvos==='function'?await obterPacientesSalvos():[];}catch(_){}
         if(token!==refreshToken)return;
         const hoje=agoraBrasilia();
-        const contexto=`${profissionalAtualId()}|${String(typeof usuarioLogado!=='undefined'?usuarioLogado?.clinica_id||'':'')}|${hoje.iso}`;
-        if(contexto!==contextoNotificacoes){contextoNotificacoes=contexto;notificacoesExpandidas=false;}
+        const contexto=contextoNotificacoesHome(hoje);
         const aniversarios=(pacientes||[]).filter(p=>nascimentoHoje(p.nascimento,hoje)).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(p=>({tipo:'aniversario',titulo:'Aniversário hoje',mensagem:String(p.nome||'Paciente')}));
         try{if(typeof carregarNotificacoesAgenda==='function')await carregarNotificacoesAgenda({avisar:false});}catch(_){}
-        if(token!==refreshToken)return;
+        if(token!==refreshToken||contexto!==contextoNotificacoesHome())return;
+        if(contexto!==contextoNotificacoes){contextoNotificacoes=contexto;notificacoesExpandidas=false;}
+        aniversariosNotificacoes=aniversarios;
+        renderizarNotificacoesHome();
+    }
+
+    function renderizarNotificacoesHome(){
+        const lista=document.getElementById('ks_prof_notifications_list'),count=document.getElementById('ks_prof_notification_count');if(!lista)return;
         let internas=[];
         try{internas=typeof window.obterNotificacoesAtuaisAgenda==='function'?window.obterNotificacoesAtuaisAgenda():Array.isArray(agendaNotificacoesCache)?agendaNotificacoesCache:[];}catch(_){}
-        const itens=[...aniversarios,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))];
+        const itens=[...aniversariosNotificacoes,...internas.map(n=>({tipo:'agenda',id:n.id,titulo:n.titulo||'Aviso da Agenda',mensagem:n.mensagem||'',lida:!!n.lida,criada_em:n.criada_em}))];
         if(count){const naoLidas=itens.filter(i=>i.tipo==='aniversario'||!i.lida).length;count.textContent=String(naoLidas);count.hidden=!naoLidas;}
         if(!itens.length){lista.innerHTML='<div class="ks-prof-empty-state compact"><strong>Nenhuma notificação agora</strong><span>Aniversários e avisos da agenda aparecerão aqui.</span></div>';sincronizarExpansaoNotificacoes();return;}
         lista.innerHTML=itens.map((i,idx)=>`<button type="button" class="ks-prof-notification-item ${i.tipo==='agenda'&&!i.lida?'is-unread':''}" data-index="${idx}" ${i.tipo==='aniversario'?'disabled':''}><span class="ks-prof-notification-dot" aria-hidden="true"></span><span><strong>${escapar(i.titulo)}</strong><small>${escapar(i.mensagem)}</small></span></button>`).join('');
@@ -349,8 +363,13 @@
     }
 
     document.addEventListener('kinesys:meu-dia-atualizado',atualizar);
+    document.addEventListener('kinesys:avisos-agenda-atualizados',()=>{
+        if(!ehProfissional()||!document.getElementById('tela_home')?.classList.contains('ativa'))return;
+        if(contextoNotificacoes===contextoNotificacoesHome())renderizarNotificacoesHome();
+        else if(contextoNotificacoes.startsWith(identidadeNotificacoesHome()+'|'))void carregarNotificacoesHome(refreshToken);
+    });
     document.addEventListener('kinesys:tela-ativada',e=>{
-        if(e.detail?.id==='tela_login'){refreshToken++;notificacoesExpandidas=false;contextoNotificacoes='';return;}
+        if(e.detail?.id==='tela_login'){refreshToken++;notificacoesExpandidas=false;contextoNotificacoes='';aniversariosNotificacoes=[];return;}
         if(e.detail?.id==='tela_home')atualizar();
     });
     const iniciar=()=>{if(document.getElementById('tela_home')?.classList.contains('ativa'))atualizar();};

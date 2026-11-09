@@ -28,6 +28,7 @@ function notificationsSetup(){
   get innerHTML(){return this.html;}querySelectorAll(){return this.rows;}
  }
  const ids=Object.fromEntries(['ks_prof_notifications_list','ks_prof_notification_count','ks_prof_notifications_toggle'].map(id=>[id,new Element()]));
+ ids.tela_home=new Element();ids.tela_home.classes.add('ativa');ids.tela_home.classList.contains=c=>ids.tela_home.classes.has(c);
  const ctx={console,Intl,Date,Map,Set,Promise,window:{},usuarioLogado:{id:'prof1',tipo:'FISIOTERAPEUTA',clinica_id:'clinica1'},agendaNotificacoesCache:[],obterPacientesSalvos:async()=>[],carregarNotificacoesAgenda:async()=>[],abrirNotificacaoAgenda:id=>opened.push(id),document:{readyState:'loading',getElementById:id=>ids[id]||null,addEventListener:(n,f)=>listeners[n]=f}};
  vm.runInNewContext(dashboard.replace('window.KineSysProfessionalHome={','window.__test={carregarNotificacoesHome,alternarNotificacoes,token:()=>refreshToken,agoraBrasilia};window.KineSysProfessionalHome={'),ctx);
  const api=ctx.window.__test;
@@ -49,6 +50,10 @@ function notificationsSetup(){
  t.ctx.agendaNotificacoesCache=avisos.slice(0,2);await t.load();assert.equal(toggle.hidden,true);assert.equal(list.rows.filter(x=>!x.hidden).length,2);
  t.ctx.agendaNotificacoesCache=[];const today=t.api.agoraBrasilia();t.ctx.obterPacientesSalvos=async()=>[{id:'sintetico',nome:'Aniversariante de exemplo',nascimento:`1990-${String(today.mes).padStart(2,'0')}-${String(today.dia).padStart(2,'0')}`}];await t.load();
  assert.equal(list.rows.length,1);assert.equal(list.rows[0].disabled,true);assert.equal(count.textContent,'1');assert.equal(toggle.hidden,true);
+ t.ctx.agendaNotificacoesCache=avisos.slice(0,1);t.listeners['kinesys:avisos-agenda-atualizados']();
+ assert.equal(list.rows.length,2,'a Home já aberta incorpora a atualização dos avisos');
+ t.ctx.agendaNotificacoesCache=[];t.listeners['kinesys:avisos-agenda-atualizados']();
+ assert.equal(list.rows.length,1,'aviso expirado sai sem reabrir a Home e aniversário permanece');
  t.ctx.obterPacientesSalvos=async()=>[];await t.load();assert.equal(count.hidden,true);assert.equal(toggle.hidden,true);assert(list.html.includes('Nenhuma notificação agora'));assert(!list.classes.has('is-expanded'));
  // Resposta anterior ao logout não pode voltar a preencher a Home.
  let finish;t.ctx.obterPacientesSalvos=()=>new Promise(resolve=>{finish=resolve;});const pending=t.load();
