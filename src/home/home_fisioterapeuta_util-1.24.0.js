@@ -383,6 +383,27 @@
         return livres.filter(x=>x.fim-x.inicio>=10);
     }
 
+    function agruparHorariosLivresComCancelamentos(itens,intervalosLivres){
+        let restantes=intervalosLivres;
+        for(const item of itens){
+            if(item.situacao.classe!=='is-cancelled')continue;
+            const fimCancelado=horaMinutos(item.agendamento.hora_fim);
+            if(!Number.isFinite(fimCancelado)||fimCancelado<=item.inicio)continue;
+            const faixas=[];
+            restantes=restantes.flatMap(intervalo=>{
+                const inicio=Math.max(intervalo.inicio,item.inicio),fim=Math.min(intervalo.fim,fimCancelado);
+                if(inicio>=fim)return [intervalo];
+                faixas.push(`${minutosHoraHome(inicio)}–${minutosHoraHome(fim)}`);
+                const sobras=[];
+                if(intervalo.inicio<inicio)sobras.push({inicio:intervalo.inicio,fim:inicio});
+                if(fim<intervalo.fim)sobras.push({inicio:fim,fim:intervalo.fim});
+                return sobras;
+            });
+            if(faixas.length)item.clinica.detalhe+=` · horário livre ${faixas.join(', ')}`;
+        }
+        return restantes;
+    }
+
     async function abrirProntuario(pacienteId,nome){
         if(!pacienteId) return;
         try {
@@ -538,7 +559,7 @@
         const content=document.createElement('div');content.className='ks-fisio-day-content';
         const patientName=document.createElement('strong');patientName.className='ks-fisio-day-patient-name';patientName.textContent=nome;
         const category=document.createElement('div');category.className='ks-fisio-day-category';category.textContent=clinica.rotuloSessao;
-        const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=paciente?clinica.detalhe:'Prontuário indisponível · atualize para verificar avaliação e cuidados';
+        const detail=document.createElement('p');detail.className='ks-fisio-day-detail';detail.textContent=paciente||situacao.classe==='is-cancelled'?clinica.detalhe:'Prontuário indisponível · atualize para verificar avaliação e cuidados';
         content.appendChild(patientName);
         const ultimaAvaliacao=paciente&&avaliacoesFinalizadas(paciente).slice().sort((a,b)=>String(b.realizadoEm||b.realizado_em||b.dataHoraISO||dataRegistro(b)).localeCompare(String(a.realizadoEm||a.realizado_em||a.dataHoraISO||dataRegistro(a)))||String(b.id||'').localeCompare(String(a.id||'')))[0];
         const diagnostico=String(ultimaAvaliacao?.mapeamento?.clinicaEstruturada?.diagnosticoProfissional||'').trim();
@@ -708,15 +729,16 @@
             const paciente=mapaPacientes.get(String(a.paciente_id||'')),seq=sequenciaDoAtendimento(a,historico,hoje);
             let clinica=contextoClinico(paciente,a,hoje,seq),situacao=situacaoTemporal(a,inicioJanela);
             if(situacao.classe==='is-current')emAtendimento++;
-            if(status==='cancelado')clinica={...clinica,detalhe:'Atendimento cancelado · horário liberado'};
+            if(status==='cancelado')clinica={...clinica,detalhe:'Atendimento cancelado'};
             else if(agendamentoEhReagendadoHome(a))clinica={...clinica,detalhe:'Atendimento remarcado para este horário'};
             else if(status==='em_recepcao')clinica={...clinica,detalhe:'Paciente em espera na recepção'};
             const registroPendente=STATUS_CONCLUIDOS.has(status)&&!clinica.registroHoje;
             if(registroPendente)registrosPendentes++;
             return {tipo:'atendimento',inicio:horaMinutos(a.hora_inicio),agendamento:a,paciente,nome:String(a.pacientes?.nome||paciente?.nome||'Paciente'),clinica,situacao,registroPendente};
         });
-        const livres=intervalosLivresHome(hoje,profissionalId,inicioJanela,fimJanela,atendimentosHoje).map(x=>({tipo:'livre',inicio:x.inicio,intervalo:x}));
-        const timeline=[...itens,...livres].sort((a,b)=>a.inicio-b.inicio||(a.tipo==='atendimento'?-1:1));
+        const livres=intervalosLivresHome(hoje,profissionalId,inicioJanela,fimJanela,atendimentosHoje);
+        const linhasLivres=agruparHorariosLivresComCancelamentos(itens,livres).map(x=>({tipo:'livre',inicio:x.inicio,intervalo:x}));
+        const timeline=[...itens,...linhasLivres].sort((a,b)=>a.inicio-b.inicio||(a.tipo==='atendimento'?-1:1));
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
         aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes});

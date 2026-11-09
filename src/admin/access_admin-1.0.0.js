@@ -12,7 +12,7 @@
     const ONLINE_PROFILE_CONFIG_SCRIPT='src/admin/configuracoes_agendamento_online_perfil_publico-1.0.0.js';
     const ONLINE_PROFILE_CONFIG_REVISION='20261029-intervalo-r4';
     const ONLINE_LAYOUT_SCRIPT='src/admin/configuracoes_agendamento_online_layout-1.0.0.js';
-    const ONLINE_LAYOUT_REVISION='20261029-intervalo-r4';
+    const ONLINE_LAYOUT_REVISION='20261109-arquivamento-r1';
     let alvoAtual=null;
     let busy=false;
 
