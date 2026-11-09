@@ -288,6 +288,149 @@
         if(visivel)varrerContadores(painel,CONTADORES_BALANCO,abriu);
     }
 
+    // ---------- 21. Abas do prontuário: indicador desliza + tela entra pelo lado ----------
+    let abaClicada=null; // {de, para, t, dir}
+    function aoClicarAbaProntuario(ev){
+        try{
+            const alvo=ev.target&&ev.target.closest?ev.target.closest('#ks_patient_context [data-patient-target]'):null;
+            if(!alvo)return;
+            const nav=alvo.closest('.ks-patient-tabs');if(!nav)return;
+            const botoes=Array.from(nav.querySelectorAll('[data-patient-target]'));
+            const de=nav.querySelector('[data-patient-target].active');
+            if(!de||de===alvo)return;
+            abaClicada={de,para:alvo,nav,t:Date.now(),dir:botoes.indexOf(alvo)>botoes.indexOf(de)?'avancar':'voltar'};
+            const r0=de.getBoundingClientRect(),n0=nav.getBoundingClientRect();
+            abaClicada.origem={x:r0.left-n0.left+nav.scrollLeft,y:r0.top-n0.top+nav.scrollTop,w:r0.width,h:r0.height};
+            esperarAbaAtiva(abaClicada,0);
+        }catch(_){ }
+    }
+    function esperarAbaAtiva(c,tentativas){
+        if(abaClicada!==c)return;
+        if(!c.para.classList.contains('active')){
+            if(tentativas<90)(root.requestAnimationFrame||root.setTimeout)(()=>esperarAbaAtiva(c,tentativas+1));
+            return;
+        }
+        deslizarIndicadorAba(c);
+    }
+    function deslizarIndicadorAba(c){
+        try{
+            const doc=root.document,nav=c.nav;
+            const r1=c.para.getBoundingClientRect(),n1=nav.getBoundingClientRect();
+            const destino={x:r1.left-n1.left+nav.scrollLeft,y:r1.top-n1.top+nav.scrollTop,w:r1.width,h:r1.height};
+            const ind=doc.createElement('span');
+            ind.className='ks-motion-aba-indicador';ind.setAttribute('aria-hidden','true');
+            const o=c.origem;
+            ind.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px`;
+            ind.style.setProperty('--ks-motion-x2',destino.x+'px');
+            ind.style.setProperty('--ks-motion-w2',destino.w+'px');
+            nav.classList.add('ks-motion-aba-nav');
+            c.para.classList.add('ks-motion-aba-chegando');
+            nav.appendChild(ind);
+            const limpar=()=>{try{ind.remove();nav.classList.remove('ks-motion-aba-nav');c.para.classList.remove('ks-motion-aba-chegando');}catch(_){}};
+            ind.addEventListener('animationend',limpar);
+            root.setTimeout(limpar,600);
+        }catch(_){ }
+    }
+    function aoAtivarTela(ev){
+        try{
+            const c=abaClicada;
+            if(!c||Date.now()-c.t>2500)return;
+            const id=ev&&ev.detail&&ev.detail.id;
+            if(!id||id!==c.para.dataset.patientTarget)return;
+            const tela=root.document.getElementById(id);
+            if(tela)pulsar(tela,c.dir==='avancar'?'ks-motion-tela-avancar':'ks-motion-tela-voltar');
+        }catch(_){ }
+    }
+
+    // ---------- 22. Evolução: nova sessão entra no topo do histórico ----------
+    let historicoEvo=null; // {paciente, total}
+    function varrerEvolucao(raiz){
+        const lista=raiz.querySelector('#linha_tempo_evolucoes');
+        if(!lista)return;
+        const sel=raiz.querySelector('#evo_paciente_select');
+        const paciente=sel?String(sel.value||''):'';
+        const itens=lista.querySelectorAll(':scope > div');
+        const total=itens.length;
+        const ant=historicoEvo;historicoEvo={paciente,total};
+        if(!ant||!paciente||ant.paciente!==paciente)return;
+        if(total===ant.total+1&&itens[0]){
+            pulsar(itens[0],'ks-motion-evolucao-nova');
+            confirmarSalvo('evolucao');
+        }
+    }
+
+    // ---------- 24. Pendências clínicas: resolvidas saem riscando ----------
+    let pendAnteriores=null; // [{chave, html}]
+    function varrerPendencias(raiz){
+        const lista=raiz.id==='lista_pendencias_clinicas'?raiz:raiz.querySelector('#lista_pendencias_clinicas');
+        if(!lista)return;
+        const itens=Array.from(lista.querySelectorAll(':scope > .ks-home-pending-item'));
+        if(lista.querySelector(':scope > .ks-motion-pendencia-saindo'))return; // animação em curso
+        const atuais=itens.map(el=>({chave:(el.dataset.homePaciente||'')+'|'+(el.textContent||'').replace(/\s+/g,' ').trim(),html:el.outerHTML}));
+        const ant=pendAnteriores;pendAnteriores=atuais;
+        if(!ant||!ant.length)return;
+        const chavesAtuais=new Set(atuais.map(x=>x.chave));
+        const saiu=ant.map((x,i)=>({...x,i})).filter(x=>!chavesAtuais.has(x.chave));
+        const novos=atuais.filter(x=>!ant.some(a=>a.chave===x.chave));
+        // Só quando itens SAÍRAM (resolvidos) e no máximo 3: recarga completa não anima.
+        if(!saiu.length||saiu.length>3||novos.length>saiu.length)return;
+        const vazio=lista.querySelector(':scope > .ks-home-empty');
+        saiu.forEach(x=>{
+            try{
+                const t=root.document.createElement('div');t.innerHTML=x.html;
+                const fantasma=t.firstElementChild;if(!fantasma)return;
+                fantasma.removeAttribute('data-home-paciente');fantasma.removeAttribute('data-home-target');
+                fantasma.classList.add('ks-motion-pendencia-saindo');
+                fantasma.setAttribute('aria-hidden','true');fantasma.setAttribute('tabindex','-1');fantasma.inert=true;
+                const ref=lista.children[x.i]||vazio||null;
+                lista.insertBefore(fantasma,ref&&ref.parentNode===lista?ref:null);
+                const tirar=()=>{try{fantasma.remove();}catch(_){}};
+                fantasma.addEventListener('animationend',ev=>{if(ev.target===fantasma)tirar();});
+                root.setTimeout(tirar,1400);
+            }catch(_){ }
+        });
+        const contador=root.document.getElementById('home_pending_total');
+        if(contador)pulsar(contador,'ks-motion-contador-baixou');
+    }
+
+    // ---------- 25. Botões Salvar: girando enquanto salva; "Salvo" só com confirmação ----------
+    let ultimoOcupado=null; // {btn, fim}
+    function aoMudarOcupado(muts){
+        muts.forEach(m=>{
+            const b=m.target;
+            if(!b||b.tagName!=='BUTTON')return;
+            if(b.getAttribute('aria-busy')==='true')ultimoOcupado={btn:b,fim:0};
+            else if(ultimoOcupado&&ultimoOcupado.btn===b&&!ultimoOcupado.fim)ultimoOcupado.fim=Date.now();
+        });
+    }
+    // Confirmação vem de sinais do próprio sistema (evolução nova no histórico,
+    // kinesys:avaliacao-salva, kinesys:equipe-salva). Sem sinal, nunca mostra "Salvo".
+    // O botão precisa ter acabado de salvar (aria-busy do próprio sistema) e ser do tipo do sinal.
+    const BOTAO_DO_SINAL={
+        evolucao:b=>b.id==='btn_salvar_evolucao',
+        avaliacao:b=>!!b.closest('#tela_avaliacao'),
+        equipe:b=>!!b.closest('#tela_equipe,.modal-overlay')
+    };
+    function confirmarSalvo(sinal){
+        try{
+            const u=ultimoOcupado;
+            if(!u||!u.btn||!u.btn.isConnected)return;
+            if(u.fim&&Date.now()-u.fim>5000)return;
+            const ok=BOTAO_DO_SINAL[sinal];
+            if(!ok||!ok(u.btn))return;
+            const btn=u.btn;
+            const aplicar=()=>{
+                if(btn.getAttribute('aria-busy')==='true'){root.setTimeout(aplicar,120);return;}
+                const cor=root.getComputedStyle?root.getComputedStyle(btn).color:'';
+                if(cor)btn.style.setProperty('--ks-motion-cor',cor);
+                pulsar(btn,'ks-motion-salvo');
+                root.setTimeout(()=>{try{if(!btn.classList.contains('ks-motion-salvo'))btn.style.removeProperty('--ks-motion-cor');}catch(_){}},2300);
+            };
+            aplicar();
+            ultimoOcupado=null;
+        }catch(_){ }
+    }
+
     function desenharGrafico(svg){
         if(!svg||svg.dataset.ksMotionDesenhado)return;
         if(svg.closest('#avaliacao_eva_previa'))return; // prévia recalcula a cada ajuste do controle
@@ -341,6 +484,20 @@
             obsTela.observe(home,{attributes:true,attributeFilter:['class']});
         }
 
+        // 21. Abas do prontuário (o contexto do paciente é criado depois do login).
+        doc.addEventListener('click',aoClicarAbaProntuario,true);
+        doc.addEventListener('kinesys:tela-ativada',aoAtivarTela);
+        // 22. Evolução.
+        observar(id('tela_evolucao'),varrerEvolucao,{childList:true,subtree:true});
+        // 24. Pendências clínicas na Home (a lista pode ser movida para o detalhe da Home).
+        observar(doc.body,()=>{const l=doc.getElementById('lista_pendencias_clinicas');if(l&&!l.dataset.ksMotionObservado){l.dataset.ksMotionObservado='1';observar(l,varrerPendencias,{childList:true});}},{childList:true,subtree:true});
+        // 25. Botões Salvar.
+        if(typeof root.MutationObserver==='function'){
+            new root.MutationObserver(aoMudarOcupado).observe(doc.body,{subtree:true,attributes:true,attributeFilter:['aria-busy']});
+        }
+        doc.addEventListener('kinesys:avaliacao-salva',()=>confirmarSalvo('avaliacao'));
+        root.addEventListener('kinesys:equipe-salva',()=>confirmarSalvo('equipe'));
+
         // Gráfico da dor: janela de análise criada sob demanda no <body>.
         observar(doc.body,(b)=>{
             const dlg=b.querySelector(':scope > #ks_fisio_evolution_dialog');
@@ -351,7 +508,7 @@
         },{childList:true});
     }
 
-    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,balanco:varrerBalanco}});
+    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,balanco:varrerBalanco,evolucao:varrerEvolucao,pendencias:varrerPendencias},_confirmarSalvo:confirmarSalvo,_aoMudarOcupado:aoMudarOcupado});
 
     try{
         if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>{try{iniciar();}catch(_){}});
