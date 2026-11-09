@@ -382,10 +382,41 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'grade vazia (consulta) não marca');
 }
 
+// 22. Troca de perfil/clínica zera a memória: nunca mostra item do contexto anterior.
+{
+  const item=(id,t)=>`<button type="button" data-home-paciente="${id}" class="ks-home-pending-item"><span><strong>${t}</strong></span></button>`;
+  const w=ambiente('<div id="lista_pendencias_clinicas"></div>');
+  w.setTimeout=()=>1;
+  w.usuarioLogado={id:'u1',clinica_id:'c1'};
+  const l=w.document.getElementById('lista_pendencias_clinicas');
+  l.innerHTML=item('x','Paciente X da clínica 1')+item('y','Paciente Y da clínica 1');
+  w.KineSysMotion._varrer.pendencias(l);
+  w.usuarioLogado={id:'u2',clinica_id:'c2'};
+  l.innerHTML=item('z','Paciente Z da clínica 2');
+  w.KineSysMotion._varrer.pendencias(l);
+  assert.ok(!l.querySelector('.ks-motion-pendencia-saindo'),'nenhum fantasma após troca de clínica');
+  assert.ok(!l.textContent.includes('clínica 1'),'nada da clínica anterior aparece');
+}
+
+// 23. Trocar o filtro de profissional não é "novo agendamento" nem "horário liberado".
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const filtro=v=>`<select id="agenda_filtro_profissional"><option value="${v}" selected>${v||'Toda a clínica'}</option></select>`;
+  tela.innerHTML=filtro('')+gradeAgenda(SEMANA,'semana',[['Paciente A · Dr. 1','08:00','agendado'],['Paciente B · Dr. 1','09:00','agendado']]);
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:10,top:10+i*40,width:80,height:30});});
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=filtro('prof1')+gradeAgenda(SEMANA,'semana',[['Paciente A','08:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'filtro trocado não brilha como novo');
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'filtro trocado não marca horário liberado');
+}
+
 // 20. CSS: "Salvo"/girando/abas/pendências somem na impressão.
 {
   assert.ok(/@media print\{[\s\S]*button\.ks-motion-salvo::after\{content:none!important\}/.test(css));
   assert.ok(/@media print\{[\s\S]*button\[aria-busy="true"\]::after\{content:none!important\}/.test(css));
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (22 cenários).');
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (24 cenários).');

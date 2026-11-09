@@ -66,9 +66,27 @@
     }
 
     // ---------- Varreduras por tela (cada uma isolada em try/catch) ----------
-    const det=criarDetector();
+    let det=criarDetector();
+
+    // Escopo (usuário|clínica): ao trocar perfil/clínica ou sair, toda a memória das
+    // animações é descartada, para nunca mostrar dados do contexto anterior.
+    let escopoMemoria=null;
+    function escopoAtual(){
+        try{
+            const u=typeof usuarioLogado!=='undefined'?usuarioLogado:root.usuarioLogado;
+            return u?String(u.id||'')+'|'+String(u.clinica_id||''):'';
+        }catch(_){return '';}
+    }
+    function garantirEscopo(){
+        const atual=escopoAtual();
+        if(escopoMemoria===null){escopoMemoria=atual;return;}
+        if(atual===escopoMemoria)return;
+        escopoMemoria=atual;
+        try{zerarMemoria();}catch(_){ }
+    }
 
     function varrerExame(raiz){
+        garantirEscopo();
         raiz.querySelectorAll('.cluster-card').forEach(card=>{
             const sel=card.querySelector('select[data-regiao][data-item]');
             if(!sel)return;
@@ -146,9 +164,11 @@
         }catch(_){ }
     }
     function varrerAgenda(raiz){
+        garantirEscopo();
         const grade=raiz.querySelector('#agenda_semana_grade');
         try{animarNavegacaoAgenda(grade);}catch(_){ }
-        const assinatura=grade?(grade.dataset.periodo||'')+'|'+(grade.dataset.dias||''):'';
+        const filtro=raiz.querySelector('#agenda_filtro_profissional');
+        const assinatura=grade?(grade.dataset.periodo||'')+'|'+(grade.dataset.dias||'')+'|'+(filtro?String(filtro.value||''):''):'';
         const vistos=[],chegadas=[];
         raiz.querySelectorAll('.agenda-compromisso').forEach(comp=>{
             const host=comp.parentElement;
@@ -191,6 +211,7 @@
     }
 
     function varrerFinanceiro(raiz){
+        garantirEscopo();
         raiz.querySelectorAll('.finance-plan-card').forEach(card=>{
             const cab=card.querySelector('.finance-plan-head');
             const linha=card.querySelector('.finance-money-line');
@@ -206,6 +227,7 @@
     }
 
     function varrerMeuDia(raiz){
+        garantirEscopo();
         raiz.querySelectorAll('.ks-fisio-day-row').forEach(row=>{
             const hora=row.querySelector('.ks-fisio-day-time');
             const nome=row.querySelector('.ks-fisio-day-patient-name');
@@ -278,6 +300,7 @@
     // Conta quando o texto passa a ser um número diferente do último visto
     // (inclui a primeira vez); "—", "••••" e zero não contam.
     function varrerContadores(raiz,ids,forcar){
+        garantirEscopo();
         let algum=false;
         ids.forEach(id=>{
             const el=raiz.querySelector('#'+id);
@@ -317,6 +340,7 @@
     // ---------- 21. Abas do prontuário: indicador desliza + tela entra pelo lado ----------
     let abaClicada=null; // {de, para, t, dir}
     function aoClicarAbaProntuario(ev){
+        garantirEscopo();
         try{
             const alvo=ev.target&&ev.target.closest?ev.target.closest('#ks_patient_context [data-patient-target]'):null;
             if(!alvo)return;
@@ -371,6 +395,7 @@
     // ---------- 22. Evolução: nova sessão entra no topo do histórico ----------
     let historicoEvo=null; // {paciente, total}
     function varrerEvolucao(raiz){
+        garantirEscopo();
         const lista=raiz.querySelector('#linha_tempo_evolucoes');
         if(!lista)return;
         const sel=raiz.querySelector('#evo_paciente_select');
@@ -388,6 +413,7 @@
     // ---------- 24. Pendências clínicas: resolvidas saem riscando ----------
     let pendAnteriores=null; // [{chave, html}]
     function varrerPendencias(raiz){
+        garantirEscopo();
         const lista=raiz.id==='lista_pendencias_clinicas'?raiz:raiz.querySelector('#lista_pendencias_clinicas');
         if(!lista)return;
         const itens=Array.from(lista.querySelectorAll(':scope > .ks-home-pending-item'));
@@ -438,6 +464,7 @@
         equipe:b=>!!b.closest('#tela_equipe,.modal-overlay')
     };
     function confirmarSalvo(sinal){
+        garantirEscopo();
         try{
             const u=ultimoOcupado;
             if(!u||!u.btn||!u.btn.isConnected)return;
@@ -449,12 +476,24 @@
                 if(btn.getAttribute('aria-busy')==='true'){root.setTimeout(aplicar,120);return;}
                 const cor=root.getComputedStyle?root.getComputedStyle(btn).color:'';
                 if(cor)btn.style.setProperty('--ks-motion-cor',cor);
+                const estatico=!root.getComputedStyle||root.getComputedStyle(btn).position==='static';
+                if(estatico)btn.classList.add('ks-motion-salvo-rel');
                 pulsar(btn,'ks-motion-salvo');
+                root.setTimeout(()=>{try{if(!btn.classList.contains('ks-motion-salvo'))btn.classList.remove('ks-motion-salvo-rel');}catch(_){}},2300);
                 root.setTimeout(()=>{try{if(!btn.classList.contains('ks-motion-salvo'))btn.style.removeProperty('--ks-motion-cor');}catch(_){}},2300);
             };
             aplicar();
             ultimoOcupado=null;
         }catch(_){ }
+    }
+
+    function zerarMemoria(){
+        det=criarDetector();
+        estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();navAnterior=null;
+        avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
+        historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
+        const doc=root.document;
+        if(doc)doc.querySelectorAll('#ks_motion_aviso_chegada,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado,.ks-motion-aba-indicador').forEach(el=>{try{el.remove();}catch(_){}});
     }
 
     function desenharGrafico(svg){

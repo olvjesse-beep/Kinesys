@@ -74,7 +74,8 @@ button[aria-busy="true"]::after{
     border:2px solid currentColor;border-top-color:transparent;border-radius:50%;
     animation:ksMotionSpin .7s linear infinite;
 }
-button.ks-motion-salvo{position:relative;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:ksMotionSalvoAnel 2s ease-out 1}
+button.ks-motion-salvo-rel{position:relative}
+button.ks-motion-salvo{color:transparent!important;-webkit-text-fill-color:transparent!important;animation:ksMotionSalvoAnel 2s ease-out 1}
 button.ks-motion-salvo::after{
     content:"\2713  Salvo";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     color:var(--ks-motion-cor);-webkit-text-fill-color:var(--ks-motion-cor);white-space:nowrap;pointer-events:none;
