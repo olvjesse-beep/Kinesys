@@ -91,12 +91,19 @@ function ambiente(html,{off=false}={}){
   assert.strictEqual(w.KineSysMotion.desligado(),true);
 }
 
-// 8. CSS: nada nasce escondido; impressão e menos movimento desligam animações.
+// 7b. "Menos movimento" do sistema operacional não desliga (decisão do produto).
+{
+  const w=ambiente('');
+  w.matchMedia=()=>({matches:true});
+  assert.strictEqual(w.KineSysMotion.desligado(),false,'menos movimento do SO não desliga');
+}
+
+// 8. CSS: nada nasce escondido; impressão desliga animações.
 {
   assert.ok(/@media print\{[\s\S]*animation:none!important/.test(css),'impressão sem animação');
-  assert.ok(/prefers-reduced-motion:reduce/.test(css),'respeita menos movimento');
+  assert.ok(!/@media\s*\(prefers-reduced-motion/.test(css),'menos movimento do SO não desliga');
   assert.ok(!/^[^@{}]*\{[^}]*opacity:0[^}]*\}/m.test(css.replace(/@keyframes[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g,'')),'nenhuma regra fixa opacity:0 fora de keyframes');
   assert.ok(/ksMotionDraw\s*1\.1s[^;]*backwards/.test(css),'linha do gráfico visível por padrão (fill backwards)');
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (8 cenários).');
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (9 cenários).');

@@ -15,8 +15,10 @@
 
     function desligado(){
         try{
+            // Decisão do produto: as animações são curtas (até ~1,6s), sem piscar e sem
+            // deslocamento grande, então seguem ativas mesmo com "menos movimento" no
+            // sistema operacional. O desligamento é somente pelo próprio KineSys.
             if(root.localStorage&&root.localStorage.getItem('ks_motion_off')==='1')return true;
-            if(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches)return true;
         }catch(_){ }
         return false;
     }
