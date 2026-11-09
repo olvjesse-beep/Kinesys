@@ -18,15 +18,51 @@ class Element {
   click(){for(const f of this.listeners.click||[])f();}
   querySelector(s){const match=e=>s.startsWith('.')?e.classList.contains(s.slice(1)):s==='[data-ks-fisio-agenda]'?'ksFisioAgenda' in e.dataset:false;for(const e of this.children){if(match(e))return e;const n=e.querySelector(s);if(n)return n;}return null;}
 }
-function fixture(){
+function fixture(agendamentos=[]){
   const ids={};for(const id of ['tela_home','card_painel_fisioterapeuta','painel_fisio_resumo','painel_fisio_lista','painel_fisio_titulo'])ids[id]=new Element();
   const card=ids.card_painel_fisioterapeuta,header=new Element();header.className='card-header';const button=new Element('button');header.appendChild(button);card.append(header,ids.painel_fisio_lista);
   const events={},windowEvents={};let active='tela_login',queries=0,rpcs=0,gate=null,fail=false;
   const doc={readyState:'loading',visibilityState:'visible',getElementById:id=>ids[id]||null,createElement:t=>new Element(t),createDocumentFragment:()=>new Element('#fragment'),addEventListener:(n,f)=>(events[n]??=[]).push(f),removeEventListener:()=>{},dispatchEvent:e=>{for(const f of events[e.type]||[])f(e);},querySelector:s=>s==='.tela.ativa'?{id:active}:null};
-  const ctx={Date:class extends Date{constructor(...a){super(...(a.length?a:['2026-09-15T11:00:00Z']));}},console,document:doc,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},usuarioLogado:{id:'test',clinica_id:'clinic',tipo:'FISIOTERAPEUTA'},obterPacientesSalvos:async()=>[],addEventListener:(n,f)=>(windowEvents[n]??=[]).push(f),removeEventListener:()=>{},setTimeout:()=>{throw Error('unexpected lifecycle timeout');},setInterval:()=>{throw Error('unexpected polling');},_supabase:{rpc:async()=>{rpcs++;if(gate)await gate;if(fail)throw Error('offline');return {data:{perfil_id:'test',clinica_id:'clinic',profissionais:[{id:'test'}],horarios:Array.from({length:7},(_,dia_semana)=>({dia_semana,hora_inicio:'00:00',hora_fim:'23:59'}))}};},from:()=>{queries++;const q={select:()=>q,eq:()=>q,order:()=>q,then:(resolve,reject)=>Promise.resolve({data:[]}).then(resolve,reject)};return q;}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
+  const ctx={Date:class extends Date{constructor(...a){super(...(a.length?a:['2026-09-15T11:00:00Z']));}},console,document:doc,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},usuarioLogado:{id:'test',clinica_id:'clinic',tipo:'FISIOTERAPEUTA'},obterPacientesSalvos:async()=>[],addEventListener:(n,f)=>(windowEvents[n]??=[]).push(f),removeEventListener:()=>{},setTimeout:()=>{throw Error('unexpected lifecycle timeout');},setInterval:()=>{throw Error('unexpected polling');},_supabase:{rpc:async()=>{rpcs++;if(gate)await gate;if(fail)throw Error('offline');return {data:{perfil_id:'test',clinica_id:'clinic',profissionais:[{id:'test'}],horarios:Array.from({length:7},(_,dia_semana)=>({dia_semana,hora_inicio:'00:00',hora_fim:'23:59'}))}};},from:()=>{
+    queries++;
+    let registros=agendamentos;
+    const q={select:()=>q,eq:(campo,valor)=>{registros=registros.filter(a=>a[campo]===valor);return q;},order:()=>q,then:(resolve,reject)=>Promise.resolve({data:registros}).then(resolve,reject)};
+    return q;
+  }}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
   return {ctx,ids,button,events,windowEvents,setGate:p=>gate=p,setFail:v=>fail=v,counts:()=>({queries,rpcs,writes:ids.painel_fisio_lista.writes}),activate:id=>{active=id;ids.tela_home.className=id==='tela_home'?'ativa':'';doc.dispatchEvent({type:'kinesys:tela-ativada',detail:{id}});},settle:async()=>{for(let i=0;i<30;i++)await Promise.resolve();}};
 }
+
+async function testarCancelamentos(){
+  const linha=(id,inicio,fim,status,extra={})=>({id,data:'2026-09-15',clinica_id:'clinic',profissional_id:'test',hora_inicio:inicio,hora_fim:fim,status,pacientes:{nome:id},...extra});
+  const agenda=[
+    linha('cancelado-substituido','08:00:00','09:00:00','cancelado'),
+    linha('confirmado','08:00','08:30:00','confirmado'),
+    linha('simultaneo','08:00:00','08:20:00','agendado'),
+    linha('cancelado-mantido','09:00:00','10:00:00','cancelado'),
+    linha('outra-hora','09:30:00','10:30:00','agendado'),
+    linha('outro-profissional','09:00:00','10:00:00','agendado',{profissional_id:'outro'}),
+    linha('outro-dia','09:00:00','10:00:00','agendado',{data:'2026-09-16'}),
+    linha('cancelado-substituido-por-realizado','10:30:00','11:30:00','cancelado'),
+    linha('realizado','10:30:00','11:30:00','atendido'),
+    linha('outro-cancelado','11:30:00','12:00:00','cancelado')
+  ];
+  const original=JSON.stringify(agenda);
+  const f=fixture(agenda);f.activate('tela_home');await f.settle();
+  const linhas=f.ids.painel_fisio_lista.children;
+  assert.deepEqual(linhas.map(row=>row.dataset.agendamentoId).filter(Boolean).sort(),['cancelado-mantido','confirmado','outra-hora','outro-cancelado','realizado','simultaneo']);
+  const cancelado=linhas.find(row=>row.dataset.agendamentoId==='cancelado-mantido');
+  assert(cancelado.classList.contains('is-cancelled'));
+  assert.equal(cancelado.querySelector('.ks-fisio-day-status').textContent,'Cancelado');
+  assert(linhas.some(row=>row.classList.contains('is-free')),'a lista ainda mostra horários livres');
+  assert.match(f.ids.painel_fisio_resumo.textContent,/6 atendimento\(s\)/,'o resumo também omite os cancelamentos substituídos');
+  assert.equal(JSON.stringify(agenda),original,'a filtragem é somente de apresentação');
+  agenda[1]={...agenda[1],status:'cancelado'};
+  agenda[2]={...agenda[2],status:'cancelado'};
+  await f.ctx.KineSysMeuDiaClinico.refresh();
+  assert(f.ids.painel_fisio_lista.children.some(row=>row.dataset.agendamentoId==='cancelado-substituido'),'se nenhum substituto permanecer, o cancelamento volta a aparecer');
+}
 (async()=>{
+  await testarCancelamentos();
   const f=fixture();f.activate('tela_home');await f.settle();
   assert.deepEqual(f.counts(),{queries:1,rpcs:1,writes:1});
   assert.equal(f.ids.painel_fisio_lista.children.length,1,'zero appointments yields exactly one free interval');
@@ -62,6 +98,7 @@ function fixture(){
   assert.match(dashboard,/home\.appendChild\(mensagens\)/,'WhatsApp messaging is positioned after the clinical Home content');
   assert.match(dashboard,/weekday:'long',day:'2-digit',month:'long',year:'numeric'/,'professional Home date matches the approved visual with year');
   const dashboardCss=read('styles/home_profissional_dashboard-1.0.0.css');
+  assert.match(dashboardCss,/\.is-cancelled :is\(\.ks-fisio-day-patient-name,\.ks-fisio-day-status\)\{color:/,'cancelamentos visíveis usam uma cor própria no painel');
   assert.match(dashboardCss,/\.ks-prof-home-focus\s*\{[\s\S]*grid-template-columns:/,'approved Home keeps support at left and clinical day at right');
   assert.match(dashboardCss,/\.ks-prof-home-support\s*\{[\s\S]*flex-direction:column/,'support modules remain in one unified white panel');
   const menu=read('src/ui/menu_dropdown-1.0.0.js');vm.runInContext(menu,f.ctx);assert.equal(typeof f.ctx.fecharMenu,'function');assert.doesNotThrow(()=>f.ctx.fecharMenu());
