@@ -165,6 +165,7 @@ jobs:
           JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/report_print_fidelity.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/interface_audit_regression.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/ks_motion.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/jsdom" node tests/agenda_atualizacao_automatica.test.cjs
           PLAYWRIGHT_CORE_MODULE="$RUNNER_TEMP/kinesys-print-regression/node_modules/playwright-core" REPORT_PRINT_OUTPUT="$RUNNER_TEMP/kinesys-print-evidence" node tests/report_print_browser.test.cjs
       - name: Preserve synthetic print evidence
         if: always()
