@@ -2375,8 +2375,25 @@ function existeContextoRealParaRascunhoKineSys() {
     const nome = String(document.getElementById('paciente_nome')?.value || '').trim();
     return !!(pacienteAtualId || pacienteSelecionado || nome);
 }
+// Rascunho local contém dados de saúde e não equivale a salvamento no prontuário.
+// Validade limitada: depois de 48h desde o último autosave ele é descartado do
+// navegador, sem alterar a recuperação dentro desse prazo (inclusive após logout).
+const KINESYS_RASCUNHO_VALIDADE_MS = 48 * 60 * 60 * 1000;
+function rascunhoKineSysExpirado(r, agora = Date.now()) {
+    const salvo = Date.parse(r?.salvoEm || '');
+    if (!Number.isFinite(salvo)) return false;
+    return agora - salvo > KINESYS_RASCUNHO_VALIDADE_MS;
+}
+function descartarRascunhoExpiradoKineSys() {
+    try {
+        const r = JSON.parse(localStorage.getItem('kinesys_rascunho_avaliacao_v11') || 'null');
+        if (r && rascunhoKineSysExpirado(r)) localStorage.removeItem('kinesys_rascunho_avaliacao_v11');
+    } catch (_) {}
+}
+descartarRascunhoExpiradoKineSys();
 function rascunhoKineSysEhValido(r) {
     if (!r || typeof r !== 'object' || !r.campos || typeof r.campos !== 'object') return false;
+    if (rascunhoKineSysExpirado(r)) return false;
     const pacienteId = String(r.pacienteAtualId || r.paciente_id || r.pacienteId || r.campos?.select_paciente_precadastro || '').trim();
     const nome = String(r.campos?.paciente_nome || '').trim();
     if (!pacienteId && !nome) return false;
