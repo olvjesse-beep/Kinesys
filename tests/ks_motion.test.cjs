@@ -163,4 +163,111 @@ function ambiente(html,{off=false}={}){
   assert.ok(/@media print\{[\s\S]*\.ks-motion-contando::after\{content:none!important\}/.test(css),'impressão mostra o valor real');
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (12 cenários).');
+// Agenda real: grade #agenda_semana_grade com data-dias/data-periodo e cartões .agenda-celula[title] > .agenda-compromisso.
+function gradeAgenda(dias,periodo,itens){
+  return `<div id="agenda_semana_grade" data-dias="${dias}" data-periodo="${periodo}">${itens.map(([nome,hora,st])=>`<div class="agenda-celula agendado" title="${nome} · Fisioterapia · ${hora}–${hora.replace(/^(\d\d)/,h=>String(+h+1).padStart(2,'0'))}"><div class="agenda-compromisso status-${st}"><div class="paciente"><span class="agenda-paciente-nome">${nome}</span></div></div></div>`).join('')}</div>`;
+}
+const SEMANA='2026-11-09,2026-11-10,2026-11-11,2026-11-12,2026-11-13';
+const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
+
+// 12. Paciente chegou: status → em_recepcao acende o cartão e mostra o aviso (uma vez).
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[['Paciente C','11:00','confirmado'],['Paciente D','12:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!w.document.getElementById('ks_motion_aviso_chegada'),'linha de base sem aviso');
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[['Paciente C','11:00','em_recepcao'],['Paciente D','12:00','agendado']]);
+  const texto=tela.textContent;
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(tela.querySelector('.agenda-compromisso.ks-motion-chegou'),'cartão acende');
+  const aviso=w.document.getElementById('ks_motion_aviso_chegada');
+  assert.ok(aviso,'aviso aparece');
+  assert.strictEqual(aviso.querySelector('strong').textContent,'Paciente C chegou');
+  assert.ok(aviso.querySelector('small').textContent.includes('11:00'),'aviso traz o horário');
+  assert.strictEqual(aviso.getAttribute('role'),'status');
+  assert.strictEqual(tela.textContent,texto,'grade da agenda intacta');
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'mudança de status não é "novo agendamento"');
+  // Re-renderização igual não repete o aviso.
+  aviso.remove();
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[['Paciente C','11:00','confirmado'],['Paciente D','12:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[['Paciente C','11:00','em_recepcao'],['Paciente D','12:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!w.document.getElementById('ks_motion_aviso_chegada'),'mesmo paciente/horário não avisa duas vezes');
+  // Nome com marcação aparece como texto, nunca como HTML.
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[['Paciente C','11:00','em_recepcao'],['Paciente D','12:00','agendado'],['Paciente E','14:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.querySelectorAll('.agenda-paciente-nome')[2].textContent='<img src=x onerror=alert(1)>';
+  tela.querySelectorAll('.agenda-compromisso')[2].className='agenda-compromisso status-em_recepcao';
+  w.KineSysMotion._varrer.agenda(tela);
+  const aviso2=w.document.getElementById('ks_motion_aviso_chegada');
+  assert.ok(aviso2&&!aviso2.querySelector('img'),'nome nunca vira HTML');
+}
+
+// 13. Novo agendamento: 1 cartão novo na mesma semana brilha; carga inicial e troca de semana não.
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const base=[['Paciente A','08:00','agendado'],['Paciente B','09:00','agendado'],['Paciente C','10:00','confirmado']];
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',base);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'grade que estava vazia (carregando) não anima');
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[...base,['Paciente E','14:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  const novos=tela.querySelectorAll('.ks-motion-novo');
+  assert.strictEqual(novos.length,1,'somente o novo brilha');
+  assert.ok(novos[0].parentElement.title.startsWith('Paciente E'));
+  tela.innerHTML=gradeAgenda(SEMANA2,'semana',[['Paciente X','08:00','agendado'],['Paciente Y','09:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'outra semana não é "novo agendamento"');
+  tela.innerHTML=gradeAgenda(SEMANA2,'semana',[['Paciente X','08:00','agendado'],['Paciente Y','09:00','agendado'],['P1','10:00','agendado'],['P2','11:00','agendado'],['P3','12:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'muitos de uma vez = recarga, não anima');
+}
+
+// 14. Navegação: próxima/anterior desliza; semana → dia abre a coluna do dia.
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const grade=()=>tela.querySelector('#agenda_semana_grade');
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!/ks-motion-/.test(grade().className),'primeira grade não anima');
+  tela.innerHTML=gradeAgenda(SEMANA2,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(grade().classList.contains('ks-motion-avancar'),'próxima semana desliza');
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(grade().classList.contains('ks-motion-voltar'),'semana anterior desliza ao contrário');
+  tela.innerHTML=gradeAgenda('2026-11-12','dia',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(grade().classList.contains('ks-motion-abrir-dia'),'semana → dia abre a coluna');
+  assert.strictEqual(grade().style.getPropertyValue('--ks-motion-l'),'60.00%','coluna de quinta (4ª de 5)');
+  assert.strictEqual(grade().style.getPropertyValue('--ks-motion-r'),'20.00%');
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(grade().classList.contains('ks-motion-abrir-dia'),'mesma grade não reanima');
+}
+
+// 15. Meu dia: rótulo de status mudando não quebra a chave; "Em recepção" acende e avisa.
+{
+  const linha=(cls,rotulo)=>`<section id="tela_home"><article class="ks-fisio-day-row ${cls}"><div class="ks-fisio-day-time"><strong>11:00</strong><span class="ks-fisio-day-status">${rotulo}</span></div><strong class="ks-fisio-day-patient-name">Paciente C</strong></article></section>`;
+  const w=ambiente('');
+  w.setTimeout=()=>1;
+  w.document.body.innerHTML=linha('is-upcoming','A ser atendido');
+  w.KineSysMotion._varrer.meuDia(w.document.body);
+  w.document.body.innerHTML=linha('is-current','Em atendimento');
+  w.KineSysMotion._varrer.meuDia(w.document.body);
+  assert.ok(w.document.querySelector('.ks-fisio-day-row.ks-motion-atual'),'atendimento atual destaca mesmo com rótulo diferente');
+  w.document.body.innerHTML=linha('is-waiting','A ser atendido');
+  w.KineSysMotion._varrer.meuDia(w.document.body);
+  assert.ok(w.document.querySelector('.ks-fisio-day-row.ks-motion-chegou'),'paciente em recepção acende no Meu dia');
+  assert.strictEqual(w.document.getElementById('ks_motion_aviso_chegada').querySelector('strong').textContent,'Paciente C chegou');
+}
+
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (16 cenários).');

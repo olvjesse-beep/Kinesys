@@ -18,6 +18,28 @@
 /* 4. Agenda: compromisso passa a "Confirmado" */
 .agenda-compromisso.ks-motion-confirmado{animation:ksMotionConfirm 1.1s ease-out 1}
 
+/* 17. Agenda / Meu dia: paciente chegou (status "Em recepção") */
+.agenda-compromisso.ks-motion-chegou,.ks-fisio-day-row.ks-motion-chegou{animation:ksMotionChegou 1s ease-out 2}
+.ks-motion-aviso{
+    position:fixed;top:18px;right:18px;z-index:10050;display:flex;align-items:center;gap:10px;max-width:min(380px,calc(100vw - 32px));
+    background:var(--kds-text-strong,#173B45);color:#fff;border-radius:12px;padding:12px 16px;
+    box-shadow:0 10px 28px rgba(23,59,69,.25);font-size:14px;line-height:1.3;
+    animation:ksMotionAvisoEntra .3s var(--ks-motion-ease) 1;
+}
+.ks-motion-aviso svg{flex:none;color:#FFD27A;animation:ksMotionSino .6s ease .3s 2}
+.ks-motion-aviso strong{display:block;font-weight:700}
+.ks-motion-aviso small{display:block;opacity:.85;font-size:12.5px;margin-top:2px}
+.ks-motion-aviso.ks-motion-aviso-saindo{animation:ksMotionSome .35s ease forwards}
+
+/* 18. Agenda: troca de semana/dia */
+#agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .3s var(--ks-motion-ease) 1}
+#agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .3s var(--ks-motion-ease) 1}
+#agenda_semana_grade.ks-motion-abrir-dia{animation:ksMotionAbrirDia .42s var(--ks-motion-ease) 1}
+#agenda_semana_grade.ks-motion-trocar{animation:ksMotionFade .25s ease 1}
+
+/* 19. Agenda: novo agendamento aparece no horário */
+.agenda-compromisso.ks-motion-novo{animation:ksMotionNovo 1s var(--ks-motion-ease) 1}
+
 /* 5 + 15. Início / Meu dia: entrada em cascata e atendimento atual */
 #tela_home.ks-motion-entrada .ks-fisio-day-row{animation:ksMotionRise .24s var(--ks-motion-ease) backwards}
 #tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(2){animation-delay:.05s}
@@ -72,7 +94,15 @@
 @keyframes ksMotionSoftFlash{0%,30%{box-shadow:inset 0 0 0 999px rgba(30,117,111,.09)}100%{box-shadow:inset 0 0 0 999px rgba(30,117,111,0)}}
 @keyframes ksMotionDraw{from{stroke-dashoffset:var(--ks-motion-len,1000)}to{stroke-dashoffset:0}}
 @keyframes ksMotionFade{from{opacity:0}to{opacity:1}}
+@keyframes ksMotionSome{to{opacity:0}}
 @keyframes ksMotionSpin{to{transform:rotate(360deg)}}
+@keyframes ksMotionChegou{0%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 0 rgba(214,150,30,.45)}100%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 10px rgba(214,150,30,0)}}
+@keyframes ksMotionAvisoEntra{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
+@keyframes ksMotionSino{25%{rotate:14deg}75%{rotate:-14deg}}
+@keyframes ksMotionDeslizaDir{from{opacity:0;translate:28px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionDeslizaEsq{from{opacity:0;translate:-28px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionAbrirDia{from{clip-path:inset(0 var(--ks-motion-r,0%) 0 var(--ks-motion-l,0%))}to{clip-path:inset(0 0 0 0)}}
+@keyframes ksMotionNovo{0%{opacity:0;translate:0 -8px;box-shadow:0 0 0 0 rgba(30,117,111,.4)}30%{opacity:1;translate:0 0;box-shadow:0 0 0 0 rgba(30,117,111,.4)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
 @keyframes ksMotionRevelar{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
 /* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
@@ -82,4 +112,5 @@
     .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
     .ks-motion-contando{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
     .ks-motion-contando::after{content:none!important}
+    .ks-motion-aviso{display:none!important}
 }
