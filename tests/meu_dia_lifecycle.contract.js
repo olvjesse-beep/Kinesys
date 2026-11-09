@@ -18,12 +18,12 @@ class Element {
   click(){for(const f of this.listeners.click||[])f();}
   querySelector(s){const match=e=>s.startsWith('.')?e.classList.contains(s.slice(1)):s==='[data-ks-fisio-agenda]'?'ksFisioAgenda' in e.dataset:false;for(const e of this.children){if(match(e))return e;const n=e.querySelector(s);if(n)return n;}return null;}
 }
-function fixture(agendamentos=[]){
+function fixture(agendamentos=[],bloqueios=[]){
   const ids={};for(const id of ['tela_home','card_painel_fisioterapeuta','painel_fisio_resumo','painel_fisio_lista','painel_fisio_titulo'])ids[id]=new Element();
   const card=ids.card_painel_fisioterapeuta,header=new Element();header.className='card-header';const button=new Element('button');header.appendChild(button);card.append(header,ids.painel_fisio_lista);
   const events={},windowEvents={};let active='tela_login',queries=0,rpcs=0,gate=null,fail=false;
   const doc={readyState:'loading',visibilityState:'visible',getElementById:id=>ids[id]||null,createElement:t=>new Element(t),createDocumentFragment:()=>new Element('#fragment'),addEventListener:(n,f)=>(events[n]??=[]).push(f),removeEventListener:()=>{},dispatchEvent:e=>{for(const f of events[e.type]||[])f(e);},querySelector:s=>s==='.tela.ativa'?{id:active}:null};
-  const ctx={Date:class extends Date{constructor(...a){super(...(a.length?a:['2026-09-15T11:00:00Z']));}},console,document:doc,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},usuarioLogado:{id:'test',clinica_id:'clinic',tipo:'FISIOTERAPEUTA'},obterPacientesSalvos:async()=>[],addEventListener:(n,f)=>(windowEvents[n]??=[]).push(f),removeEventListener:()=>{},setTimeout:()=>{throw Error('unexpected lifecycle timeout');},setInterval:()=>{throw Error('unexpected polling');},_supabase:{rpc:async()=>{rpcs++;if(gate)await gate;if(fail)throw Error('offline');return {data:{perfil_id:'test',clinica_id:'clinic',profissionais:[{id:'test'}],horarios:Array.from({length:7},(_,dia_semana)=>({dia_semana,hora_inicio:'00:00',hora_fim:'23:59'}))}};},from:()=>{
+  const ctx={Date:class extends Date{constructor(...a){super(...(a.length?a:['2026-09-15T11:00:00Z']));}},console,document:doc,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}},usuarioLogado:{id:'test',clinica_id:'clinic',tipo:'FISIOTERAPEUTA'},obterPacientesSalvos:async()=>[],addEventListener:(n,f)=>(windowEvents[n]??=[]).push(f),removeEventListener:()=>{},setTimeout:()=>{throw Error('unexpected lifecycle timeout');},setInterval:()=>{throw Error('unexpected polling');},_supabase:{rpc:async()=>{rpcs++;if(gate)await gate;if(fail)throw Error('offline');return {data:{perfil_id:'test',clinica_id:'clinic',profissionais:[{id:'test'}],bloqueios,horarios:Array.from({length:7},(_,dia_semana)=>({dia_semana,hora_inicio:'00:00',hora_fim:'23:59'}))}};},from:()=>{
     queries++;
     let registros=agendamentos;
     const q={select:()=>q,eq:(campo,valor)=>{registros=registros.filter(a=>a[campo]===valor);return q;},order:()=>q,then:(resolve,reject)=>Promise.resolve({data:registros}).then(resolve,reject)};
@@ -53,13 +53,34 @@ async function testarCancelamentos(){
   const cancelado=linhas.find(row=>row.dataset.agendamentoId==='cancelado-mantido');
   assert(cancelado.classList.contains('is-cancelled'));
   assert.equal(cancelado.querySelector('.ks-fisio-day-status').textContent,'Cancelado');
-  assert(linhas.some(row=>row.classList.contains('is-free')),'a lista ainda mostra horários livres');
+  const faixasLivres=linhas.filter(row=>row.classList.contains('is-free')).map(row=>row.querySelector('.ks-fisio-day-category').textContent);
+  assert.equal(cancelado.querySelector('.ks-fisio-day-detail').textContent,'Atendimento cancelado · horário livre 09:00–09:30');
+  assert.deepEqual(faixasLivres,['08:30–09:00','10:30–11:30'],'somente os trechos fora dos cancelamentos continuam em linhas próprias');
   assert.match(f.ids.painel_fisio_resumo.textContent,/6 atendimento\(s\)/,'o resumo também omite os cancelamentos substituídos');
   assert.equal(JSON.stringify(agenda),original,'a filtragem é somente de apresentação');
   agenda[1]={...agenda[1],status:'cancelado'};
   agenda[2]={...agenda[2],status:'cancelado'};
   await f.ctx.KineSysMeuDiaClinico.refresh();
   assert(f.ids.painel_fisio_lista.children.some(row=>row.dataset.agendamentoId==='cancelado-substituido'),'se nenhum substituto permanecer, o cancelamento volta a aparecer');
+
+  const agendaHorarioExato=[
+    linha('primeiro','08:00:00','09:00:00','agendado'),
+    linha('cancelado-09','09:00:00','10:00:00','cancelado'),
+    linha('proximo','10:00:00','11:00:00','confirmado'),
+    linha('ultimo','11:00:00','12:00:00','agendado')
+  ];
+  const horarioExato=fixture(agendaHorarioExato);
+  horarioExato.activate('tela_home');await horarioExato.settle();
+  const listaExata=horarioExato.ids.painel_fisio_lista.children;
+  assert.equal(listaExata.length,4,'o horário cancelado e livre aparece somente uma vez');
+  const canceladoExato=listaExata.find(row=>row.dataset.agendamentoId==='cancelado-09');
+  assert.equal(canceladoExato.querySelector('.ks-fisio-day-detail').textContent,'Atendimento cancelado · horário livre 09:00–10:00');
+  assert.match(horarioExato.ids.painel_fisio_resumo.textContent,/1 horário\(s\) livre\(s\)/,'o resumo preserva a disponibilidade exibida na linha do cancelamento');
+
+  const horarioBloqueado=fixture(agendaHorarioExato,[{data:'2026-09-15',hora_inicio:'09:00',hora_fim:'10:00'}]);
+  horarioBloqueado.activate('tela_home');await horarioBloqueado.settle();
+  const canceladoBloqueado=horarioBloqueado.ids.painel_fisio_lista.children.find(row=>row.dataset.agendamentoId==='cancelado-09');
+  assert.equal(canceladoBloqueado.querySelector('.ks-fisio-day-detail').textContent,'Atendimento cancelado','um cancelamento em horário bloqueado não promete disponibilidade');
 }
 (async()=>{
   await testarCancelamentos();
