@@ -230,28 +230,40 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   assert.ok(!tela.querySelector('.ks-motion-novo'),'muitos de uma vez = recarga, não anima');
 }
 
-// 14. Navegação: próxima/anterior desliza; semana → dia abre a coluna do dia.
+// 14. Encaixe: ao abrir a Agenda e ao trocar semana/dia; atualização da mesma semana não repete;
+// redesenho no meio do encaixe continua do mesmo ponto (atraso negativo).
 {
   const w=ambiente('<section id="tela_agenda"></section>');
   w.setTimeout=()=>1;
+  let relogio=1000;w.performance.now=()=>relogio;
+  const anim=[];
+  w.Element.prototype.animate=function(k,o){anim.push({el:this,delay:o.delay,k});return {};};
   const tela=w.document.getElementById('tela_agenda');
-  const grade=()=>tela.querySelector('#agenda_semana_grade');
-  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
-  w.KineSysMotion._varrer.agenda(tela);
-  assert.ok(!/ks-motion-/.test(grade().className),'primeira grade não anima');
-  tela.innerHTML=gradeAgenda(SEMANA2,'semana',[]);
-  w.KineSysMotion._varrer.agenda(tela);
-  assert.ok(grade().classList.contains('ks-motion-avancar'),'próxima semana desliza');
-  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
-  w.KineSysMotion._varrer.agenda(tela);
-  assert.ok(grade().classList.contains('ks-motion-voltar'),'semana anterior desliza ao contrário');
-  tela.innerHTML=gradeAgenda('2026-11-12','dia',[]);
-  w.KineSysMotion._varrer.agenda(tela);
-  assert.ok(grade().classList.contains('ks-motion-abrir-dia'),'semana → dia abre a coluna');
-  assert.strictEqual(grade().style.getPropertyValue('--ks-motion-l'),'60.00%','coluna de quinta (4ª de 5)');
-  assert.strictEqual(grade().style.getPropertyValue('--ks-motion-r'),'20.00%');
-  w.KineSysMotion._varrer.agenda(tela);
-  assert.ok(grade().classList.contains('ks-motion-abrir-dia'),'mesma grade não reanima');
+  const base=[['Paciente A','08:00','agendado'],['Paciente B','09:00','confirmado']];
+  const varrer=()=>w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',base);
+  varrer();
+  assert.strictEqual(anim.length,0,'Agenda oculta não anima');
+  tela.classList.add('ativa');varrer();
+  assert.strictEqual(anim.length,2,'abrir a Agenda encaixa os cartões');
+  assert.ok(anim.every(a=>a.el.classList.contains('agenda-compromisso')),'anima o cartão interno, não o contêiner');
+  assert.ok(/scaleY/.test(anim[0].k[0].transform)&&anim[0].k[0].transformOrigin==='50% 0','cresce a partir do início do horário');
+  // Dados chegam 300 ms depois e a grade é redesenhada: continua do mesmo ponto.
+  relogio+=300;tela.innerHTML=gradeAgenda(SEMANA,'semana',base);varrer();
+  assert.strictEqual(anim.length,4,'redesenho durante o encaixe continua');
+  assert.ok(anim[2].delay<=-300,'continua com atraso negativo (sem recomeçar)');
+  // Atualização automática bem depois: não repete.
+  relogio+=5000;tela.innerHTML=gradeAgenda(SEMANA,'semana',base);varrer();
+  assert.strictEqual(anim.length,4,'atualização da mesma semana não repete');
+  // Próxima semana: encaixa de novo.
+  tela.innerHTML=gradeAgenda(SEMANA2,'semana',[['Paciente X','08:00','agendado']]);varrer();
+  assert.strictEqual(anim.length,5,'trocar de semana encaixa');
+  tela.innerHTML=gradeAgenda('2026-11-19','dia',[['Paciente X','08:00','agendado']]);varrer();
+  assert.strictEqual(anim.length,6,'semana → dia encaixa');
+  // Sai e volta para a Agenda: encaixa de novo.
+  tela.classList.remove('ativa');varrer();
+  tela.classList.add('ativa');varrer();
+  assert.strictEqual(anim.length,7,'voltar à Agenda encaixa de novo');
 }
 
 // 15. Meu dia: rótulo de status mudando não quebra a chave; "Em recepção" acende e avisa.
@@ -447,6 +459,16 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   await new Promise(r=>w.setTimeout(r,0));rodarQuadros();
   {
     assert.strictEqual(chamadas.length,11,'anima ao ativar a tela');
+  }
+  // Foi para a Avaliação e voltou: anima de novo; atualização dentro da visita não repete.
+  home.classList.remove('ativa');
+  await new Promise(r=>w.setTimeout(r,0));
+  home.classList.add('ativa');
+  await new Promise(r=>w.setTimeout(r,0));
+  {
+    assert.strictEqual(chamadas.length,14,'volta ao Início anima de novo');
+    desenhar(3);
+    assert.strictEqual(chamadas.length,14,'atualização na mesma visita não repete');
     assert.ok(!/ks-motion-entrada/.test(css),'sem cascata presa a classe/tempo');
   }
 })().catch(e=>{console.error(e);process.exit(1);});

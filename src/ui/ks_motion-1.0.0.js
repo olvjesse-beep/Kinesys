@@ -123,25 +123,54 @@
         }catch(_){ }
     }
 
-    // ---------- Agenda: navegação (semana/dia deslizando) ----------
-    let navAnterior=null;
-    function animarNavegacaoAgenda(grade){
+    // ---------- Agenda: "Encaixe" — ao abrir a Agenda e ao trocar semana/dia/profissional ----------
+    // Cada cartão cresce a partir do horário de início, coluna por coluna. Anima só o
+    // cartão interno (.agenda-compromisso): o contêiner tem transform inline (simultâneos).
+    // Se a grade for redesenhada no meio do encaixe (dados chegando), os cartões novos
+    // continuam do mesmo ponto (atraso negativo), sem recomeçar nem saltar.
+    const ENCAIXE={duracao:440,porColuna:55,porAltura:120,janela:900,curva:'cubic-bezier(.22,.61,.36,1)'};
+    let encaixeT0=null,encaixeAssin=null,gradeMarco=null,agendaVisitaPendente=false,agendaAtivaAntes=false;
+    let encaixados=new WeakSet();
+    function encaixar(grade,cartoes){
+        const slots=Number(grade.style.getPropertyValue('--kds-agenda-runtime-slot-count'))||0;
+        const passado=agora()-encaixeT0;
+        cartoes.forEach(c=>{
+            if(encaixados.has(c)||typeof c.animate!=='function')return;
+            encaixados.add(c);
+            try{
+                const host=c.parentElement||c;
+                const col=Math.max(0,(parseInt(host.style.gridColumn,10)||2)-2);
+                const lin=Math.max(0,(parseInt(host.style.gridRow,10)||2)-2);
+                const atraso=Math.min(col,6)*ENCAIXE.porColuna+(slots?Math.min(1,lin/slots):0)*ENCAIXE.porAltura;
+                c.animate([{opacity:0,transform:'scaleY(.55)',transformOrigin:'50% 0'},{opacity:1,transform:'scaleY(1)',transformOrigin:'50% 0'}],
+                    {duration:ENCAIXE.duracao,delay:atraso-passado,easing:ENCAIXE.curva,fill:'backwards'});
+            }catch(_){ }
+        });
+    }
+    function encaixeAgenda(raiz,grade,assinatura){
+        const ativa=!!(raiz.classList&&raiz.classList.contains('ativa'));
+        const chegou=ativa&&!agendaAtivaAntes;agendaAtivaAntes=ativa;
         if(!grade)return;
-        const periodo=grade.dataset.periodo||'';
-        const dias=(grade.dataset.dias||'').split(',').filter(Boolean);
-        const atual={periodo,dias,assin:periodo+'|'+dias.join(',')};
-        const ant=navAnterior;navAnterior=atual;
-        if(!ant||ant.assin===atual.assin||!dias.length||!ant.dias.length)return;
-        if(ant.periodo==='semana'&&periodo==='dia'){
-            const i=ant.dias.indexOf(dias[0]),n=ant.dias.length;
-            if(i>=0){
-                grade.style.setProperty('--ks-motion-l',(i/n*100).toFixed(2)+'%');
-                grade.style.setProperty('--ks-motion-r',((n-i-1)/n*100).toFixed(2)+'%');
-                pulsar(grade,'ks-motion-abrir-dia');return;
-            }
+        const cartoes=Array.from(grade.querySelectorAll('.agenda-compromisso'));
+        const marco=grade.firstElementChild;
+        const redesenhou=!!marco&&marco!==gradeMarco;gradeMarco=marco;
+        if(chegou){
+            // Abriu a Agenda: encaixa o que já está na tela; sem cartões, espera o desenho.
+            encaixados=new WeakSet(); // nova visita: os mesmos cartões encaixam de novo
+            if(cartoes.length){encaixeT0=agora();encaixar(grade,cartoes);}
+            else agendaVisitaPendente=true;
         }
-        if(periodo===ant.periodo){pulsar(grade,dias[0]>ant.dias[0]?'ks-motion-avancar':'ks-motion-voltar');return;}
-        pulsar(grade,'ks-motion-trocar');
+        if(redesenhou){
+            const navegou=encaixeAssin!==null&&assinatura!==encaixeAssin;
+            encaixeAssin=assinatura;
+            if(!ativa)return;
+            if((agendaVisitaPendente||navegou)&&cartoes.length){
+                agendaVisitaPendente=false;encaixeT0=agora();encaixar(grade,cartoes);
+            }else if(encaixeT0!==null&&agora()-encaixeT0<ENCAIXE.janela){
+                encaixar(grade,cartoes); // redesenho durante o encaixe: continua do mesmo ponto
+            }
+            if(navegou)agendaVisitaPendente=false;
+        }
     }
 
     // ---------- Agenda: confirmado, paciente chegou, falta, cancelamento e novo agendamento ----------
@@ -166,9 +195,9 @@
     function varrerAgenda(raiz){
         garantirEscopo();
         const grade=raiz.querySelector('#agenda_semana_grade');
-        try{animarNavegacaoAgenda(grade);}catch(_){ }
         const filtro=raiz.querySelector('#agenda_filtro_profissional');
         const assinatura=grade?(grade.dataset.periodo||'')+'|'+(grade.dataset.dias||'')+'|'+(filtro?String(filtro.value||''):''):'';
+        try{encaixeAgenda(raiz,grade,assinatura);}catch(_){ }
         const vistos=[],chegadas=[];
         raiz.querySelectorAll('.agenda-compromisso').forEach(comp=>{
             const host=comp.parentElement;
@@ -244,11 +273,11 @@
     }
 
     // ---------- Entrada suave do Meu dia e do Panorama ----------
-    // Dispara quando o CONTEÚDO é desenhado (não quando a tela é ativada), uma vez por
-    // login/escopo. Só opacity/transform (compositor) via Web Animations: nada fica
-    // preso no meio, nada depende de remover classe por tempo.
+    // A cada visita ao Início: ao ativar a tela, se o conteúdo já está desenhado; senão,
+    // quando ele for desenhado nesta visita. Atualizações seguintes da mesma visita
+    // (automática de 60 s) não repetem. Só opacity/transform via Web Animations.
     const ENTRADA={duracao:520,passo:45,atrasoMax:225,distancia:4,curva:'cubic-bezier(.22,.61,.36,1)'};
-    let meuDiaEntrou=false,meuDiaPendente=false,painelEntrou=false;
+    let meuDiaEntrou=false,painelEntrou=false;
     function cascata(els){
         let i=0;
         els.forEach(el=>{
@@ -266,20 +295,27 @@
         return home&&home.classList.contains('ativa')?home:null;
     }
     function entrarMeuDia(home){
-        meuDiaEntrou=true;meuDiaPendente=false;
         const linhas=Array.from(home.querySelectorAll('#painel_fisio_lista > .ks-fisio-day-row, #painel_fisio_lista > .ks-fisio-painel-vazio'));
+        if(!linhas.length)return false; // ainda carregando: espera o desenho
+        meuDiaEntrou=true;
         const cards=Array.from(home.querySelectorAll('.ks-prof-month-card, .ks-prof-priorities-card, .ks-prof-notifications-card'));
         cascata(linhas.concat(cards));
+        return true;
+    }
+    function novaVisitaHome(home){
+        meuDiaEntrou=false;painelEntrou=false;
+        entrarMeuDia(home);
+        entradaPainelAdmin(home);
     }
     function aoMeuDiaAtualizado(){
         garantirEscopo();
-        if(meuDiaEntrou)return; // atualizações seguintes (automática, agenda) não repetem a entrada
+        if(meuDiaEntrou)return; // atualizações seguintes da mesma visita não repetem a entrada
         // Depois de todos os ouvintes do evento (cards do profissional) e antes do próximo quadro.
         (root.requestAnimationFrame||root.setTimeout)(()=>{
             try{
                 if(meuDiaEntrou)return;
                 const home=homeAtiva();
-                if(home)entrarMeuDia(home);else meuDiaPendente=true;
+                if(home)entrarMeuDia(home); // tela oculta: anima na próxima ativação
             }catch(_){ }
         });
     }
@@ -537,10 +573,11 @@
 
     function zerarMemoria(){
         det=criarDetector();
-        estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();navAnterior=null;
+        estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();
+        encaixeT0=null;encaixeAssin=null;gradeMarco=null;agendaVisitaPendente=false;encaixados=new WeakSet();
         avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
         historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
-        meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;
+        meuDiaEntrou=false;painelEntrou=false;
         const doc=root.document;
         if(doc)doc.querySelectorAll('#ks_motion_aviso_chegada,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado,.ks-motion-aba-indicador').forEach(el=>{try{el.remove();}catch(_){}});
     }
@@ -589,8 +626,7 @@
                 try{
                     const agoraAtiva=home.classList.contains('ativa');
                     if(agoraAtiva&&!ativa){
-                        if(meuDiaPendente&&!meuDiaEntrou)entrarMeuDia(home);
-                        entradaPainelAdmin(home);
+                        novaVisitaHome(home);
                         varrerPainelAdmin(home,true);
                     }
                     ativa=agoraAtiva;
@@ -600,7 +636,7 @@
         }
         doc.addEventListener('kinesys:meu-dia-atualizado',aoMeuDiaAtualizado);
         doc.addEventListener('kinesys:tela-ativada',(ev)=>{
-            try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;}}catch(_){ }
+            try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;painelEntrou=false;}}catch(_){ }
         });
 
         // 21. Abas do prontuário (o contexto do paciente é criado depois do login).
