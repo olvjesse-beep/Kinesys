@@ -447,6 +447,16 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   await new Promise(r=>w.setTimeout(r,0));rodarQuadros();
   {
     assert.strictEqual(chamadas.length,11,'anima ao ativar a tela');
+  }
+  // Foi para a Avaliação e voltou: anima de novo; atualização dentro da visita não repete.
+  home.classList.remove('ativa');
+  await new Promise(r=>w.setTimeout(r,0));
+  home.classList.add('ativa');
+  await new Promise(r=>w.setTimeout(r,0));
+  {
+    assert.strictEqual(chamadas.length,14,'volta ao Início anima de novo');
+    desenhar(3);
+    assert.strictEqual(chamadas.length,14,'atualização na mesma visita não repete');
     assert.ok(!/ks-motion-entrada/.test(css),'sem cascata presa a classe/tempo');
   }
 })().catch(e=>{console.error(e);process.exit(1);});

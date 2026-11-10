@@ -244,11 +244,11 @@
     }
 
     // ---------- Entrada suave do Meu dia e do Panorama ----------
-    // Dispara quando o CONTEÚDO é desenhado (não quando a tela é ativada), uma vez por
-    // login/escopo. Só opacity/transform (compositor) via Web Animations: nada fica
-    // preso no meio, nada depende de remover classe por tempo.
+    // A cada visita ao Início: ao ativar a tela, se o conteúdo já está desenhado; senão,
+    // quando ele for desenhado nesta visita. Atualizações seguintes da mesma visita
+    // (automática de 60 s) não repetem. Só opacity/transform via Web Animations.
     const ENTRADA={duracao:520,passo:45,atrasoMax:225,distancia:4,curva:'cubic-bezier(.22,.61,.36,1)'};
-    let meuDiaEntrou=false,meuDiaPendente=false,painelEntrou=false;
+    let meuDiaEntrou=false,painelEntrou=false;
     function cascata(els){
         let i=0;
         els.forEach(el=>{
@@ -266,20 +266,27 @@
         return home&&home.classList.contains('ativa')?home:null;
     }
     function entrarMeuDia(home){
-        meuDiaEntrou=true;meuDiaPendente=false;
         const linhas=Array.from(home.querySelectorAll('#painel_fisio_lista > .ks-fisio-day-row, #painel_fisio_lista > .ks-fisio-painel-vazio'));
+        if(!linhas.length)return false; // ainda carregando: espera o desenho
+        meuDiaEntrou=true;
         const cards=Array.from(home.querySelectorAll('.ks-prof-month-card, .ks-prof-priorities-card, .ks-prof-notifications-card'));
         cascata(linhas.concat(cards));
+        return true;
+    }
+    function novaVisitaHome(home){
+        meuDiaEntrou=false;painelEntrou=false;
+        entrarMeuDia(home);
+        entradaPainelAdmin(home);
     }
     function aoMeuDiaAtualizado(){
         garantirEscopo();
-        if(meuDiaEntrou)return; // atualizações seguintes (automática, agenda) não repetem a entrada
+        if(meuDiaEntrou)return; // atualizações seguintes da mesma visita não repetem a entrada
         // Depois de todos os ouvintes do evento (cards do profissional) e antes do próximo quadro.
         (root.requestAnimationFrame||root.setTimeout)(()=>{
             try{
                 if(meuDiaEntrou)return;
                 const home=homeAtiva();
-                if(home)entrarMeuDia(home);else meuDiaPendente=true;
+                if(home)entrarMeuDia(home); // tela oculta: anima na próxima ativação
             }catch(_){ }
         });
     }
@@ -540,7 +547,7 @@
         estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();navAnterior=null;
         avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
         historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
-        meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;
+        meuDiaEntrou=false;painelEntrou=false;
         const doc=root.document;
         if(doc)doc.querySelectorAll('#ks_motion_aviso_chegada,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado,.ks-motion-aba-indicador').forEach(el=>{try{el.remove();}catch(_){}});
     }
@@ -589,8 +596,7 @@
                 try{
                     const agoraAtiva=home.classList.contains('ativa');
                     if(agoraAtiva&&!ativa){
-                        if(meuDiaPendente&&!meuDiaEntrou)entrarMeuDia(home);
-                        entradaPainelAdmin(home);
+                        novaVisitaHome(home);
                         varrerPainelAdmin(home,true);
                     }
                     ativa=agoraAtiva;
@@ -600,7 +606,7 @@
         }
         doc.addEventListener('kinesys:meu-dia-atualizado',aoMeuDiaAtualizado);
         doc.addEventListener('kinesys:tela-ativada',(ev)=>{
-            try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;}}catch(_){ }
+            try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;painelEntrou=false;}}catch(_){ }
         });
 
         // 21. Abas do prontuário (o contexto do paciente é criado depois do login).
