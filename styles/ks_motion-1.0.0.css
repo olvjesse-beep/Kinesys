@@ -137,6 +137,9 @@ button.ks-motion-salvo::after{
 @keyframes ksMotionLiberado{0%{opacity:0;transform:scale(.96);box-shadow:0 0 0 0 rgba(30,117,111,.35)}15%{opacity:1;transform:none}55%{opacity:1;box-shadow:0 0 0 9px rgba(30,117,111,0)}100%{opacity:0}}
 @keyframes ksMotionRevelar{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
+/* Pacientes: trecho do nome que bate com a busca (pintado em JS via background-size). */
+mark.ks-motion-busca-marca{background:linear-gradient(rgba(30,117,111,.2),rgba(30,117,111,.2)) no-repeat 0 0/100% 100%;color:inherit;border-radius:3px;padding:0 1px}
+
 /* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
    operacional (efeitos curtos, sem piscar). Desligar: localStorage ks_motion_off=1. */
 @media print{

@@ -2,7 +2,8 @@
    KineSys Motion 1.0.0 — microanimações de retorno visual.
    Regras de segurança:
    - Somente adiciona/remove classes ks-motion-*. Não altera texto, valores,
-     disabled, dados nem classes lidas pelo sistema.
+     disabled, dados nem classes lidas pelo sistema (exceção: <mark> em volta
+     do trecho buscado no nome do paciente; o texto do nome fica igual).
    - Anima somente TRANSIÇÕES (estado anterior conhecido → novo estado);
      a primeira renderização de cada item só registra a linha de base.
    - Qualquer erro é engolido: o sistema segue funcionando sem animação.
@@ -571,6 +572,77 @@
         }catch(_){ }
     }
 
+    // ---------- Pacientes: entrada "Iniciais primeiro" a cada visita e marca-texto na busca ----------
+    // A lista é trocada inteira (innerHTML) a cada desenho; um desenho novo é
+    // reconhecido pela troca do primeiro filho de #ks_prontuario_cards.
+    const PAC={janela:900,passo:40,atrasoMax:280,curva:'cubic-bezier(.22,.61,.36,1)',mola:'cubic-bezier(.34,1.4,.64,1)'};
+    let pacVisitaPendente=false,pacT0=null,pacPrimeiro=null,pacConteudo=null;
+    function normalizarBusca(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+    function anima(el,quadros,opcoes){
+        if(!el||typeof el.animate!=='function')return;
+        try{el.animate(quadros,Object.assign({easing:PAC.curva,fill:'backwards'},opcoes));}catch(_){ }
+    }
+    function entradaPacientes(lista,atraso0){
+        Array.from(lista.children).forEach((card,i)=>{
+            const d=Math.min(i*PAC.passo,PAC.atrasoMax)-atraso0;
+            if(!card.classList.contains('ks-patient-card')){anima(card,[{opacity:0},{opacity:1}],{duration:360,delay:d});return;}
+            anima(card.querySelector('.ks-patient-initial'),[{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'none'}],{duration:420,delay:d,easing:PAC.mola});
+            anima(card.querySelector('.ks-patient-card-copy'),[{opacity:0,transform:'translateX(-6px)'},{opacity:1,transform:'none'}],{duration:440,delay:d+70});
+            anima(card.querySelector('.ks-patient-card-actions'),[{opacity:0},{opacity:1}],{duration:360,delay:d+150});
+        });
+    }
+    function trocaBusca(lista){
+        Array.from(lista.children).forEach((card,i)=>anima(card,[{opacity:0},{opacity:1}],{duration:200,delay:Math.min(i*18,90)}));
+    }
+    // Envolve o trecho que bate com a busca em <mark>; o texto do nome não muda.
+    function marcarBusca(lista,busca,animar){
+        if(!busca)return;
+        lista.querySelectorAll('.ks-patient-card-copy > strong').forEach((s,i)=>{
+            if(s.children.length)return;
+            const nome=s.textContent;
+            let norm='';const pos=[];
+            for(let k=0;k<nome.length;k++){const n=normalizarBusca(nome[k]);for(let j=0;j<n.length;j++)pos.push(k);norm+=n;}
+            const ini=norm.indexOf(busca);if(ini<0)return;
+            const a=pos[ini],b=pos[ini+busca.length-1]+1;
+            const m=root.document.createElement('mark');m.className='ks-motion-busca-marca';m.textContent=nome.slice(a,b);
+            s.textContent='';s.append(nome.slice(0,a),m,nome.slice(b));
+            if(animar)anima(m,[{backgroundSize:'0% 100%'},{backgroundSize:'100% 100%'}],{duration:320,delay:80+Math.min(i*30,180)});
+        });
+    }
+    function novaVisitaPacientes(tela){
+        pacVisitaPendente=true;pacT0=null;
+        varrerPacientes(tela,true);
+    }
+    function varrerPacientes(tela,ativou){
+        const lista=tela.querySelector('#ks_prontuario_cards');
+        if(!lista||!tela.classList.contains('ativa'))return;
+        const primeiro=lista.firstElementChild;
+        const redesenhou=primeiro!==pacPrimeiro;
+        if(!primeiro||(!redesenhou&&!ativou))return;
+        pacPrimeiro=primeiro;
+        const campo=root.document.getElementById('input_busca_paciente');
+        const busca=normalizarBusca(campo&&campo.value).trim().replace(/\s+/g,' ');
+        // Conteúdo da lista (nomes na ordem): muda com a busca, com a página e
+        // quando os dados chegam depois de uma lista antiga; não muda numa atualização igual.
+        const conteudo=Array.from(lista.children).map(c=>{const s=c.querySelector('.ks-patient-card-copy > strong');return (s||c).textContent;}).join('|');
+        const mudouLista=pacConteudo!==null&&conteudo!==pacConteudo;
+        pacConteudo=conteudo;
+        if(pacVisitaPendente){
+            pacVisitaPendente=false;pacT0=agora();
+            entradaPacientes(lista,0);
+        }else if(pacT0!==null&&agora()-pacT0<PAC.janela){
+            // Dados chegaram no meio da entrada: continua de onde estava.
+            entradaPacientes(lista,agora()-pacT0);
+        }else if(mudouLista){
+            pacT0=null;
+            trocaBusca(lista);
+        }else{
+            marcarBusca(lista,busca,false);
+            return;
+        }
+        marcarBusca(lista,busca,true);
+    }
+
     function zerarMemoria(){
         det=criarDetector();
         estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();
@@ -578,6 +650,7 @@
         avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
         historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
         meuDiaEntrou=false;painelEntrou=false;
+        pacVisitaPendente=false;pacT0=null;pacPrimeiro=null;pacConteudo=null;
         const doc=root.document;
         if(doc)doc.querySelectorAll('#ks_motion_aviso_chegada,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado,.ks-motion-aba-indicador').forEach(el=>{try{el.remove();}catch(_){}});
     }
@@ -634,6 +707,20 @@
             });
             obsTela.observe(home,{attributes:true,attributeFilter:['class']});
         }
+        // Pacientes (administrador e profissional usam a mesma tela).
+        const pacientes=id('tela_buscar');
+        if(pacientes){
+            if(pacientes.classList.contains('ativa'))pacVisitaPendente=true;
+            observar(pacientes,(t)=>varrerPacientes(t,false),{childList:true,subtree:true});
+            let ativaPac=pacientes.classList.contains('ativa');
+            new root.MutationObserver(()=>{
+                try{
+                    const agoraAtiva=pacientes.classList.contains('ativa');
+                    if(agoraAtiva&&!ativaPac)novaVisitaPacientes(pacientes);
+                    ativaPac=agoraAtiva;
+                }catch(_){ }
+            }).observe(pacientes,{attributes:true,attributeFilter:['class']});
+        }
         doc.addEventListener('kinesys:meu-dia-atualizado',aoMeuDiaAtualizado);
         doc.addEventListener('kinesys:tela-ativada',(ev)=>{
             try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;painelEntrou=false;}}catch(_){ }
@@ -663,7 +750,7 @@
         },{childList:true});
     }
 
-    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,entradaPainel:entradaPainelAdmin,meuDiaAtualizado:aoMeuDiaAtualizado,balanco:varrerBalanco,evolucao:varrerEvolucao,pendencias:varrerPendencias},_confirmarSalvo:confirmarSalvo,_aoMudarOcupado:aoMudarOcupado});
+    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,entradaPainel:entradaPainelAdmin,meuDiaAtualizado:aoMeuDiaAtualizado,balanco:varrerBalanco,evolucao:varrerEvolucao,pendencias:varrerPendencias,pacientes:varrerPacientes,visitaPacientes:novaVisitaPacientes},_confirmarSalvo:confirmarSalvo,_aoMudarOcupado:aoMudarOcupado});
 
     try{
         if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>{try{iniciar();}catch(_){}});
