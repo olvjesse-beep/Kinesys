@@ -41,8 +41,8 @@
 }
 
 /* 18. Agenda: troca de semana/dia */
-#agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .3s var(--ks-motion-ease) 1}
-#agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .3s var(--ks-motion-ease) 1}
+#agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .34s var(--ks-motion-ease) 1}
+#agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .34s var(--ks-motion-ease) 1}
 #agenda_semana_grade.ks-motion-abrir-dia{animation:ksMotionAbrirDia .42s var(--ks-motion-ease) 1}
 #agenda_semana_grade.ks-motion-trocar{animation:ksMotionFade .25s ease 1}
 
@@ -82,15 +82,8 @@ button.ks-motion-salvo::after{
     animation:ksMotionSalvoTexto 2s ease 1;
 }
 
-/* 5 + 15. Início / Meu dia: entrada em cascata e atendimento atual */
-#tela_home.ks-motion-entrada .ks-fisio-day-row{animation:ksMotionRise .24s var(--ks-motion-ease) backwards}
-#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(2){animation-delay:.05s}
-#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(3){animation-delay:.10s}
-#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(4){animation-delay:.15s}
-#tela_home.ks-motion-entrada .ks-fisio-day-row:nth-child(n+5){animation-delay:.20s}
-#tela_home.ks-motion-entrada .ks-prof-month-card,
-#tela_home.ks-motion-entrada .ks-prof-priorities-card,
-#tela_home.ks-motion-entrada .ks-prof-notifications-card{animation:ksMotionRise .26s var(--ks-motion-ease) backwards .08s}
+/* 5 + 15. Início / Meu dia: a entrada em cascata é feita em JS (Web Animations)
+   no momento em que as linhas são desenhadas. Aqui: atendimento atual. */
 .ks-fisio-day-row.is-current.ks-motion-atual{animation:ksMotionSoftFlash 1.6s ease-out 1}
 
 /* 8. Financeiro: plano passa a "Quitado" / valor pago muda */
@@ -114,13 +107,7 @@ button.ks-motion-salvo::after{
 }
 /* Fluxo do mês: o gráfico aparece da esquerda para a direita */
 #ks_admin_chart.ks-motion-revelar{animation:ksMotionRevelar .9s var(--ks-motion-ease) 1}
-/* Panorama: blocos entram em sequência na primeira entrada */
-#tela_home.ks-motion-entrada .ks-admin-metrics>div{animation:ksMotionRise .26s var(--ks-motion-ease) backwards}
-#tela_home.ks-motion-entrada .ks-admin-metrics>div:nth-child(2){animation-delay:.06s}
-#tela_home.ks-motion-entrada .ks-admin-metrics>div:nth-child(3){animation-delay:.12s}
-#tela_home.ks-motion-entrada .ks-admin-flow{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .16s}
-#tela_home.ks-motion-entrada .ks-admin-glass{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .2s}
-#tela_home.ks-motion-entrada .ks-admin-messages{animation:ksMotionRise .3s var(--ks-motion-ease) backwards .26s}
+/* Panorama: a entrada em sequência também é feita em JS (Web Animations). */
 
 /* 15. Login: indicador de carregamento enquanto "Verificando acesso…" */
 #btn_login_entrar:disabled{position:relative}
@@ -141,8 +128,8 @@ button.ks-motion-salvo::after{
 @keyframes ksMotionChegou{0%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 0 rgba(214,150,30,.45)}100%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 10px rgba(214,150,30,0)}}
 @keyframes ksMotionAvisoEntra{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
 @keyframes ksMotionSino{25%{rotate:14deg}75%{rotate:-14deg}}
-@keyframes ksMotionDeslizaDir{from{opacity:0;translate:28px 0}to{opacity:1;translate:0 0}}
-@keyframes ksMotionDeslizaEsq{from{opacity:0;translate:-28px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionDeslizaDir{from{opacity:.35;translate:14px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionDeslizaEsq{from{opacity:.35;translate:-14px 0}to{opacity:1;translate:0 0}}
 @keyframes ksMotionAbrirDia{from{clip-path:inset(0 var(--ks-motion-r,0%) 0 var(--ks-motion-l,0%))}to{clip-path:inset(0 0 0 0)}}
 @keyframes ksMotionNovo{0%{opacity:0;translate:0 -8px;box-shadow:0 0 0 0 rgba(30,117,111,.4)}30%{opacity:1;translate:0 0;box-shadow:0 0 0 0 rgba(30,117,111,.4)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
 @keyframes ksMotionAbaDesliza{to{left:var(--ks-motion-x2);width:var(--ks-motion-w2)}}

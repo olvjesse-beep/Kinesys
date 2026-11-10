@@ -419,4 +419,36 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   assert.ok(/@media print\{[\s\S]*button\[aria-busy="true"\]::after\{content:none!important\}/.test(css));
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (24 cenários).');
+// 25. Entrada do Meu dia: anima quando as linhas são DESENHADAS (não na ativação da tela),
+// uma vez por login; tela oculta adia para a ativação; atualizações seguintes não repetem.
+(async()=>{
+  const w=ambiente('<section id="tela_home" class="tela"><div id="painel_fisio_lista"></div></section>');
+  const chamadas=[];
+  w.Element.prototype.animate=function(k,o){chamadas.push({el:this,delay:o.delay,dur:o.duration});return {};};
+  const quadros=[];w.requestAnimationFrame=fn=>{quadros.push(fn);return quadros.length;};
+  const rodarQuadros=()=>{while(quadros.length)quadros.shift()();};
+  await new Promise(r=>w.document.readyState==='loading'?w.document.addEventListener('DOMContentLoaded',()=>w.setTimeout(r,0)):r());
+  const home=w.document.getElementById('tela_home'),lista=w.document.getElementById('painel_fisio_lista');
+  const desenhar=n=>{lista.innerHTML=Array.from({length:n},(_,i)=>'<article class="ks-fisio-day-row is-upcoming"><div class="ks-fisio-day-time"><strong>1'+i+':00</strong></div><strong class="ks-fisio-day-patient-name">P'+i+'</strong></article>').join('');w.document.dispatchEvent(new w.CustomEvent('kinesys:meu-dia-atualizado'));rodarQuadros();};
+  // Sessão restaurada: a tela já está ativa antes de os dados chegarem.
+  home.classList.add('ativa');
+  desenhar(8);
+  assert.strictEqual(chamadas.length,8,'todas as linhas entram no momento em que são desenhadas');
+  assert.ok(chamadas.every(c=>c.dur>=450),'entrada suave (não rápida)');
+  assert.ok(Math.max(...chamadas.map(c=>c.delay))<=225,'última linha começa em até 225 ms');
+  desenhar(8);
+  assert.strictEqual(chamadas.length,8,'atualização automática não repete a entrada');
+  // Novo login: entra de novo; com a tela oculta, espera a ativação.
+  w.document.dispatchEvent(new w.CustomEvent('kinesys:tela-ativada',{detail:{id:'tela_login'}}));
+  home.classList.remove('ativa');
+  desenhar(3);
+  assert.strictEqual(chamadas.length,8,'tela oculta não anima');
+  home.classList.add('ativa');
+  await new Promise(r=>w.setTimeout(r,0));rodarQuadros();
+  {
+    assert.strictEqual(chamadas.length,11,'anima ao ativar a tela');
+    assert.ok(!/ks-motion-entrada/.test(css),'sem cascata presa a classe/tempo');
+  }
+})().catch(e=>{console.error(e);process.exit(1);});
+
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (25 cenários).');
