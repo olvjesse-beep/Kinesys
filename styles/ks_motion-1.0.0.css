@@ -31,6 +31,15 @@
 .ks-motion-aviso small{display:block;opacity:.85;font-size:12.5px;margin-top:2px}
 .ks-motion-aviso.ks-motion-aviso-saindo{animation:ksMotionSome .35s ease forwards}
 
+/* 23. Agenda: falta marcada / cancelamento libera o horário */
+.agenda-compromisso.ks-motion-falta{animation:ksMotionFalta 1s ease-out 1}
+.ks-motion-horario-liberado{
+    position:fixed;z-index:20;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    border:1.5px dashed var(--kds-accent-tech,#2AA79D);border-radius:8px;background:rgba(234,245,242,.94);
+    color:var(--ks-motion-accent);font-weight:700;font-size:12px;white-space:nowrap;
+    animation:ksMotionLiberado 1.9s ease forwards;
+}
+
 /* 18. Agenda: troca de semana/dia */
 #agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .3s var(--ks-motion-ease) 1}
 #agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .3s var(--ks-motion-ease) 1}
@@ -39,6 +48,39 @@
 
 /* 19. Agenda: novo agendamento aparece no horário */
 .agenda-compromisso.ks-motion-novo{animation:ksMotionNovo 1s var(--ks-motion-ease) 1}
+
+/* 21. Abas do prontuário: indicador desliza; a tela escolhida entra pelo lado */
+.ks-patient-tabs.ks-motion-aba-nav{position:relative}
+.ks-patient-tabs.ks-motion-aba-nav>button{position:relative;z-index:1}
+.ks-patient-tabs button.ks-motion-aba-chegando{background:transparent!important}
+.ks-motion-aba-indicador{
+    position:absolute;z-index:0;pointer-events:none;border-radius:var(--kds-radius-sm,7px);
+    background:var(--ks-motion-accent-soft);
+    animation:ksMotionAbaDesliza .28s var(--ks-motion-ease) forwards;
+}
+section.tela.ks-motion-tela-avancar{animation:ksMotionTelaDir .26s var(--ks-motion-ease) 1}
+section.tela.ks-motion-tela-voltar{animation:ksMotionTelaEsq .26s var(--ks-motion-ease) 1}
+
+/* 22. Evolução: nova sessão no topo do histórico */
+#linha_tempo_evolucoes>.ks-motion-evolucao-nova{animation:ksMotionEvoNova 1.2s var(--ks-motion-ease) 1}
+
+/* 24. Pendências clínicas: a resolvida sai riscando e encolhendo */
+.ks-motion-pendencia-saindo{pointer-events:none;overflow:hidden;text-decoration:line-through;animation:ksMotionPendSai .75s ease forwards}
+.ks-motion-contador-baixou{animation:ksMotionCorFlash 1.2s ease 1}
+
+/* 25. Botões Salvar: girando enquanto o sistema salva; "Salvo" só com confirmação */
+button[aria-busy="true"]::after{
+    content:"";display:inline-block;width:.9em;height:.9em;margin-left:8px;vertical-align:-.12em;
+    border:2px solid currentColor;border-top-color:transparent;border-radius:50%;
+    animation:ksMotionSpin .7s linear infinite;
+}
+button.ks-motion-salvo-rel{position:relative}
+button.ks-motion-salvo{color:transparent!important;-webkit-text-fill-color:transparent!important;animation:ksMotionSalvoAnel 2s ease-out 1}
+button.ks-motion-salvo::after{
+    content:"\2713  Salvo";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--ks-motion-cor);-webkit-text-fill-color:var(--ks-motion-cor);white-space:nowrap;pointer-events:none;
+    animation:ksMotionSalvoTexto 2s ease 1;
+}
 
 /* 5 + 15. Início / Meu dia: entrada em cascata e atendimento atual */
 #tela_home.ks-motion-entrada .ks-fisio-day-row{animation:ksMotionRise .24s var(--ks-motion-ease) backwards}
@@ -103,6 +145,16 @@
 @keyframes ksMotionDeslizaEsq{from{opacity:0;translate:-28px 0}to{opacity:1;translate:0 0}}
 @keyframes ksMotionAbrirDia{from{clip-path:inset(0 var(--ks-motion-r,0%) 0 var(--ks-motion-l,0%))}to{clip-path:inset(0 0 0 0)}}
 @keyframes ksMotionNovo{0%{opacity:0;translate:0 -8px;box-shadow:0 0 0 0 rgba(30,117,111,.4)}30%{opacity:1;translate:0 0;box-shadow:0 0 0 0 rgba(30,117,111,.4)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
+@keyframes ksMotionAbaDesliza{to{left:var(--ks-motion-x2);width:var(--ks-motion-w2)}}
+@keyframes ksMotionTelaDir{from{opacity:0;translate:16px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionTelaEsq{from{opacity:0;translate:-16px 0}to{opacity:1;translate:0 0}}
+@keyframes ksMotionEvoNova{0%{opacity:0;translate:0 -8px;box-shadow:0 0 0 0 rgba(30,117,111,.35)}25%{opacity:1;translate:0 0;box-shadow:0 0 0 0 rgba(30,117,111,.35)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
+@keyframes ksMotionPendSai{0%{max-height:160px}35%{opacity:.55;max-height:160px}100%{opacity:0;max-height:0;padding-top:0;padding-bottom:0;margin-top:0;margin-bottom:0;border-width:0}}
+@keyframes ksMotionCorFlash{0%,40%{color:var(--ks-motion-success)}}
+@keyframes ksMotionSalvoAnel{0%{box-shadow:0 0 0 0 rgba(47,115,90,.4)}60%{box-shadow:0 0 0 8px rgba(47,115,90,0)}100%{box-shadow:0 0 0 0 rgba(47,115,90,0)}}
+@keyframes ksMotionSalvoTexto{0%{opacity:0;transform:scale(.9)}12%,85%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes ksMotionFalta{0%{box-shadow:inset 4px 0 0 #A53B33,0 0 0 0 rgba(165,59,51,.35)}100%{box-shadow:inset 4px 0 0 #A53B33,0 0 0 9px rgba(165,59,51,0)}}
+@keyframes ksMotionLiberado{0%{opacity:0;transform:scale(.96);box-shadow:0 0 0 0 rgba(30,117,111,.35)}15%{opacity:1;transform:none}55%{opacity:1;box-shadow:0 0 0 9px rgba(30,117,111,0)}100%{opacity:0}}
 @keyframes ksMotionRevelar{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
 /* Decisão do produto: seguem ativas mesmo com "menos movimento" no sistema
@@ -112,5 +164,8 @@
     .ks-fisio-evolution-chart.ks-motion-desenhar polyline{stroke-dasharray:none!important;stroke-dashoffset:0!important}
     .ks-motion-contando{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
     .ks-motion-contando::after{content:none!important}
-    .ks-motion-aviso{display:none!important}
+    .ks-motion-aviso,.ks-motion-aba-indicador,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado{display:none!important}
+    button[aria-busy="true"]::after{content:none!important}
+    button.ks-motion-salvo{color:var(--ks-motion-cor)!important;-webkit-text-fill-color:var(--ks-motion-cor)!important}
+    button.ks-motion-salvo::after{content:none!important}
 }
