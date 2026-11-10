@@ -20,6 +20,9 @@
     let cargaInicialSolicitada = false;
     let totalRenderizacoes = 0;
     let prontuarioHomeDesatualizado = false;
+    // Atualização automática leve: assinatura do que está desenhado no Meu dia.
+    let assinaturaMeuDiaRenderizada = '';
+    let referenciaMeuDia = null; // {perfil, profissionalId, data}
 
     function perfilFisioterapeuta(){
         const u=typeof usuarioLogado!=='undefined' ? usuarioLogado : null;
@@ -742,10 +745,45 @@
         if(revisao!==revisaoCargaPainelFisioterapeuta||!perfilAtualEquivale(perfilInicial))return false;
 
         aplicarSnapshotPainelFisioterapeuta({card,lista,resumo,timeline,itens,livres,emAtendimento,concluidos,registrosPendentes});
+        // Só depois de desenhar: a assinatura descreve exatamente o que está na tela.
+        assinaturaMeuDiaRenderizada=assinaturaMeuDia(atendimentosHoje,inicioJanela,hoje);
+        referenciaMeuDia={perfil:perfilInicial,profissionalId,data:hoje};
         prontuarioHomeDesatualizado=false;
         painelFisioterapeutaInicializado=true;
         document.dispatchEvent(new CustomEvent('kinesys:meu-dia-atualizado'));
         return true;
+    }
+
+    // Assinatura: dados do dia (id/status/horários) + quais atendimentos estão na janela
+    // de 4h e qual está em andamento agora (o Meu dia muda com o relógio também).
+    function assinaturaMeuDia(lista,agoraMin,data){
+        const linhas=(lista||[]).map(a=>[a.id,a.status,String(a.hora_inicio||'').slice(0,5),String(a.hora_fim||'').slice(0,5)].join('|')).sort();
+        const fimJanela=Math.min(24*60,agoraMin+JANELA_HOME_MINUTOS);
+        const naJanela=[],agora=[];
+        (lista||[]).forEach(a=>{
+            const ini=horaMinutos(a.hora_inicio),fim=horaMinutos(a.hora_fim);if(!Number.isFinite(ini))return;
+            const termino=Number.isFinite(fim)&&fim>ini?fim:ini+30;
+            if(termino>agoraMin&&ini<fimJanela)naJanela.push(String(a.id));
+            if(agoraMin>=ini&&agoraMin<termino)agora.push(String(a.id));
+        });
+        return data+'#'+linhas.join(';')+'#'+naJanela.sort().join(',')+'#'+agora.sort().join(',');
+    }
+
+    // Consulta mínima (id, status, horários) do dia do profissional já resolvido na última carga.
+    // Só recarrega o Meu dia quando algo mudou. Nunca chama a RPC de contexto.
+    async function verificarMudancaMeuDia(){
+        const ref=referenciaMeuDia;
+        if(!ref||!ref.profissionalId||!perfilFisioterapeuta()||!perfilAtualEquivale(ref.perfil))return {verificado:false,motivo:'sem-referencia'};
+        if(cargaPainelFisioterapeutaEmAndamento)return {verificado:false,motivo:'carregando'};
+        if(typeof _supabase==='undefined'||!_supabase)return {verificado:false,motivo:'sem-conexao'};
+        const agora=instanteHomeBrasilia();
+        const consulta=await _supabase.from('agendamentos').select('id,status,hora_inicio,hora_fim')
+            .eq('clinica_id',ref.perfil.clinica_id).eq('data',agora.data).eq('profissional_id',ref.profissionalId).order('hora_inicio');
+        if(referenciaMeuDia!==ref||!perfilAtualEquivale(ref.perfil))return {verificado:false,motivo:'contexto-mudou'};
+        if(consulta.error)throw consulta.error;
+        const mudou=assinaturaMeuDia(consulta.data||[],agora.minutos,agora.data)!==assinaturaMeuDiaRenderizada;
+        if(mudou)await atualizarPainelFisioterapeuta({motivo:'automatico'});
+        return {verificado:true,mudou};
     }
 
     function atualizarPainelFisioterapeuta(opcoes={}){
@@ -798,6 +836,7 @@
     window.KineSysMeuDiaClinico=Object.freeze({
         version:'1.26.0-avaliacao-cuidados',
         refresh:atualizarPainelFisioterapeuta,
+        verificarMudanca:verificarMudancaMeuDia,
         ensure:garantirPainelFisioterapeuta,
         status(){
             return Object.freeze({
