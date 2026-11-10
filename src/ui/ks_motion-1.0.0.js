@@ -123,25 +123,54 @@
         }catch(_){ }
     }
 
-    // ---------- Agenda: navegação (semana/dia deslizando) ----------
-    let navAnterior=null;
-    function animarNavegacaoAgenda(grade){
+    // ---------- Agenda: "Encaixe" — ao abrir a Agenda e ao trocar semana/dia/profissional ----------
+    // Cada cartão cresce a partir do horário de início, coluna por coluna. Anima só o
+    // cartão interno (.agenda-compromisso): o contêiner tem transform inline (simultâneos).
+    // Se a grade for redesenhada no meio do encaixe (dados chegando), os cartões novos
+    // continuam do mesmo ponto (atraso negativo), sem recomeçar nem saltar.
+    const ENCAIXE={duracao:440,porColuna:55,porAltura:120,janela:900,curva:'cubic-bezier(.22,.61,.36,1)'};
+    let encaixeT0=null,encaixeAssin=null,gradeMarco=null,agendaVisitaPendente=false,agendaAtivaAntes=false;
+    let encaixados=new WeakSet();
+    function encaixar(grade,cartoes){
+        const slots=Number(grade.style.getPropertyValue('--kds-agenda-runtime-slot-count'))||0;
+        const passado=agora()-encaixeT0;
+        cartoes.forEach(c=>{
+            if(encaixados.has(c)||typeof c.animate!=='function')return;
+            encaixados.add(c);
+            try{
+                const host=c.parentElement||c;
+                const col=Math.max(0,(parseInt(host.style.gridColumn,10)||2)-2);
+                const lin=Math.max(0,(parseInt(host.style.gridRow,10)||2)-2);
+                const atraso=Math.min(col,6)*ENCAIXE.porColuna+(slots?Math.min(1,lin/slots):0)*ENCAIXE.porAltura;
+                c.animate([{opacity:0,transform:'scaleY(.55)',transformOrigin:'50% 0'},{opacity:1,transform:'scaleY(1)',transformOrigin:'50% 0'}],
+                    {duration:ENCAIXE.duracao,delay:atraso-passado,easing:ENCAIXE.curva,fill:'backwards'});
+            }catch(_){ }
+        });
+    }
+    function encaixeAgenda(raiz,grade,assinatura){
+        const ativa=!!(raiz.classList&&raiz.classList.contains('ativa'));
+        const chegou=ativa&&!agendaAtivaAntes;agendaAtivaAntes=ativa;
         if(!grade)return;
-        const periodo=grade.dataset.periodo||'';
-        const dias=(grade.dataset.dias||'').split(',').filter(Boolean);
-        const atual={periodo,dias,assin:periodo+'|'+dias.join(',')};
-        const ant=navAnterior;navAnterior=atual;
-        if(!ant||ant.assin===atual.assin||!dias.length||!ant.dias.length)return;
-        if(ant.periodo==='semana'&&periodo==='dia'){
-            const i=ant.dias.indexOf(dias[0]),n=ant.dias.length;
-            if(i>=0){
-                grade.style.setProperty('--ks-motion-l',(i/n*100).toFixed(2)+'%');
-                grade.style.setProperty('--ks-motion-r',((n-i-1)/n*100).toFixed(2)+'%');
-                pulsar(grade,'ks-motion-abrir-dia');return;
-            }
+        const cartoes=Array.from(grade.querySelectorAll('.agenda-compromisso'));
+        const marco=grade.firstElementChild;
+        const redesenhou=!!marco&&marco!==gradeMarco;gradeMarco=marco;
+        if(chegou){
+            // Abriu a Agenda: encaixa o que já está na tela; sem cartões, espera o desenho.
+            encaixados=new WeakSet(); // nova visita: os mesmos cartões encaixam de novo
+            if(cartoes.length){encaixeT0=agora();encaixar(grade,cartoes);}
+            else agendaVisitaPendente=true;
         }
-        if(periodo===ant.periodo){pulsar(grade,dias[0]>ant.dias[0]?'ks-motion-avancar':'ks-motion-voltar');return;}
-        pulsar(grade,'ks-motion-trocar');
+        if(redesenhou){
+            const navegou=encaixeAssin!==null&&assinatura!==encaixeAssin;
+            encaixeAssin=assinatura;
+            if(!ativa)return;
+            if((agendaVisitaPendente||navegou)&&cartoes.length){
+                agendaVisitaPendente=false;encaixeT0=agora();encaixar(grade,cartoes);
+            }else if(encaixeT0!==null&&agora()-encaixeT0<ENCAIXE.janela){
+                encaixar(grade,cartoes); // redesenho durante o encaixe: continua do mesmo ponto
+            }
+            if(navegou)agendaVisitaPendente=false;
+        }
     }
 
     // ---------- Agenda: confirmado, paciente chegou, falta, cancelamento e novo agendamento ----------
@@ -166,9 +195,9 @@
     function varrerAgenda(raiz){
         garantirEscopo();
         const grade=raiz.querySelector('#agenda_semana_grade');
-        try{animarNavegacaoAgenda(grade);}catch(_){ }
         const filtro=raiz.querySelector('#agenda_filtro_profissional');
         const assinatura=grade?(grade.dataset.periodo||'')+'|'+(grade.dataset.dias||'')+'|'+(filtro?String(filtro.value||''):''):'';
+        try{encaixeAgenda(raiz,grade,assinatura);}catch(_){ }
         const vistos=[],chegadas=[];
         raiz.querySelectorAll('.agenda-compromisso').forEach(comp=>{
             const host=comp.parentElement;
@@ -544,7 +573,8 @@
 
     function zerarMemoria(){
         det=criarDetector();
-        estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();navAnterior=null;
+        estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();
+        encaixeT0=null;encaixeAssin=null;gradeMarco=null;agendaVisitaPendente=false;encaixados=new WeakSet();
         avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
         historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
         meuDiaEntrou=false;painelEntrou=false;

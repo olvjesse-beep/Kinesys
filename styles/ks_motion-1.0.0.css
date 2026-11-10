@@ -40,11 +40,7 @@
     animation:ksMotionLiberado 1.9s ease forwards;
 }
 
-/* 18. Agenda: troca de semana/dia */
-#agenda_semana_grade.ks-motion-avancar{animation:ksMotionDeslizaDir .34s var(--ks-motion-ease) 1}
-#agenda_semana_grade.ks-motion-voltar{animation:ksMotionDeslizaEsq .34s var(--ks-motion-ease) 1}
-#agenda_semana_grade.ks-motion-abrir-dia{animation:ksMotionAbrirDia .42s var(--ks-motion-ease) 1}
-#agenda_semana_grade.ks-motion-trocar{animation:ksMotionFade .25s ease 1}
+/* 18. Agenda: troca de semana/dia/profissional e abertura da Agenda = "Encaixe" (Web Animations, em JS) */
 
 /* 19. Agenda: novo agendamento aparece no horário */
 .agenda-compromisso.ks-motion-novo{animation:ksMotionNovo 1s var(--ks-motion-ease) 1}
@@ -128,9 +124,6 @@ button.ks-motion-salvo::after{
 @keyframes ksMotionChegou{0%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 0 rgba(214,150,30,.45)}100%{box-shadow:inset 4px 0 0 #D6961E,0 0 0 10px rgba(214,150,30,0)}}
 @keyframes ksMotionAvisoEntra{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
 @keyframes ksMotionSino{25%{rotate:14deg}75%{rotate:-14deg}}
-@keyframes ksMotionDeslizaDir{from{opacity:.35;translate:14px 0}to{opacity:1;translate:0 0}}
-@keyframes ksMotionDeslizaEsq{from{opacity:.35;translate:-14px 0}to{opacity:1;translate:0 0}}
-@keyframes ksMotionAbrirDia{from{clip-path:inset(0 var(--ks-motion-r,0%) 0 var(--ks-motion-l,0%))}to{clip-path:inset(0 0 0 0)}}
 @keyframes ksMotionNovo{0%{opacity:0;translate:0 -8px;box-shadow:0 0 0 0 rgba(30,117,111,.4)}30%{opacity:1;translate:0 0;box-shadow:0 0 0 0 rgba(30,117,111,.4)}100%{box-shadow:0 0 0 10px rgba(30,117,111,0)}}
 @keyframes ksMotionAbaDesliza{to{left:var(--ks-motion-x2);width:var(--ks-motion-w2)}}
 @keyframes ksMotionTelaDir{from{opacity:0;translate:16px 0}to{opacity:1;translate:0 0}}
