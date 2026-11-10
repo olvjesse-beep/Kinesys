@@ -1,5 +1,12 @@
 # KineSys — instruções permanentes de projeto e produção
 
+## Microanimações KineSys Motion — 09/11/2026
+
+- `src/ui/ks_motion-1.0.0.js` + `styles/ks_motion-1.0.0.css` são somente visuais: adicionam/removem classes `ks-motion-*`, camadas `::after` e elementos próprios inertes (aviso de chegada, indicador de aba, item de pendência saindo). Nunca alterar `textContent`, valores, `disabled`, dados, status ou classes lidas pelo sistema; o estado final de toda animação é idêntico ao da tela sem animação.
+- Animam apenas transições observadas (estado anterior conhecido → novo); primeira renderização e recargas grandes não animam. Contadores começam em 0 numa camada visual e param se o sistema reescrever o valor (inclusive “Ocultar valores”).
+- Por decisão do usuário, seguem ativas mesmo com “menos movimento” do sistema operacional; impressão/PDF e `localStorage.ks_motion_off=1` desligam. “Salvo” só aparece no botão que acabou de salvar (aria-busy do operation_guard) e somente com sinal de sucesso do sistema (evolução nova no histórico, `kinesys:avaliacao-salva`, `kinesys:equipe-salva`); sem sinal, nunca afirmar que salvou.
+- Na Agenda, nunca animar `transform` dos cartões (faixas usam transform inline); usar `translate`, `clip-path`, opacidade e sombra. Manter `tests/ks_motion.test.cjs` na barreira hospedada.
+
 ## Agenda móvel — Dia em foco, 04/11/2026
 
 - Somente até 760px, preservar o modelo escolhido com seletor de profissional, legenda recolhível, navegação/data, faixa dos sete dias, Dia/Semana e ação de agendar. Desktop mantém a composição existente; restaurar os mesmos controles ao sair do breakpoint, sem duplicar IDs/eventos.

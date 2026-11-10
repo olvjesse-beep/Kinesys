@@ -270,4 +270,153 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   assert.strictEqual(w.document.getElementById('ks_motion_aviso_chegada').querySelector('strong').textContent,'Paciente C chegou');
 }
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (16 cenários).');
+// 16. Evolução: nova sessão do MESMO paciente entra no topo; troca de paciente não anima.
+{
+  const evo=(pac,n)=>`<select id="evo_paciente_select"><option value="${pac}" selected>${pac}</option></select><div id="linha_tempo_evolucoes">${Array.from({length:n},(_,i)=>`<div>Atendimento ${n-i}</div>`).join('')}</div>`;
+  const w=ambiente('<section id="tela_evolucao"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_evolucao');
+  tela.innerHTML=evo('p1',3);w.KineSysMotion._varrer.evolucao(tela);
+  tela.innerHTML=evo('p2',4);w.KineSysMotion._varrer.evolucao(tela);
+  assert.ok(!tela.querySelector('.ks-motion-evolucao-nova'),'outro paciente não anima');
+  const texto=tela.textContent;
+  tela.innerHTML=evo('p2',5);const t2=tela.textContent;w.KineSysMotion._varrer.evolucao(tela);
+  const nova=tela.querySelector('#linha_tempo_evolucoes > div.ks-motion-evolucao-nova');
+  assert.ok(nova&&nova.textContent==='Atendimento 5','nova sessão (topo) destacada');
+  assert.strictEqual(tela.textContent,t2,'histórico clínico intacto');
+  assert.notStrictEqual(texto,t2);
+}
+
+// 17. "Salvo": só no botão que acabou de salvar e só com o sinal do sistema.
+{
+  const w=ambiente('<section id="tela_evolucao"><button id="btn_salvar_evolucao">Registrar evolução</button><button id="outro">Outro</button></section><section id="tela_avaliacao"><button id="btn_av">Salvar avaliação</button></section>');
+  w.setTimeout=()=>1;
+  const b=id=>w.document.getElementById(id);
+  const ocupar=(el,on)=>{if(on)el.setAttribute('aria-busy','true');else el.removeAttribute('aria-busy');w.KineSysMotion._aoMudarOcupado([{target:el}]);};
+  // Sem salvamento recente: sinal não faz nada.
+  w.KineSysMotion._confirmarSalvo('evolucao');
+  assert.ok(!b('btn_salvar_evolucao').classList.contains('ks-motion-salvo'),'sem salvamento, sem "Salvo"');
+  // Outro botão salvou: sinal de evolução não marca.
+  ocupar(b('outro'),true);ocupar(b('outro'),false);
+  w.KineSysMotion._confirmarSalvo('evolucao');
+  assert.ok(!b('outro').classList.contains('ks-motion-salvo')&&!b('btn_salvar_evolucao').classList.contains('ks-motion-salvo'),'sinal de outro tipo não marca');
+  // Evolução salvou de verdade.
+  ocupar(b('btn_salvar_evolucao'),true);ocupar(b('btn_salvar_evolucao'),false);
+  w.KineSysMotion._confirmarSalvo('evolucao');
+  assert.ok(b('btn_salvar_evolucao').classList.contains('ks-motion-salvo'),'evolução salva mostra "Salvo"');
+  assert.strictEqual(b('btn_salvar_evolucao').textContent,'Registrar evolução','texto do botão não é alterado');
+  // Avaliação: sinal kinesys:avaliacao-salva só vale para botão da avaliação.
+  ocupar(b('btn_av'),true);ocupar(b('btn_av'),false);
+  w.KineSysMotion._confirmarSalvo('equipe');
+  assert.ok(!b('btn_av').classList.contains('ks-motion-salvo'),'sinal de equipe não marca a avaliação');
+  ocupar(b('btn_av'),true);ocupar(b('btn_av'),false);
+  w.KineSysMotion._confirmarSalvo('avaliacao');
+  assert.ok(b('btn_av').classList.contains('ks-motion-salvo'));
+}
+
+// 18. Pendências: item resolvido sai riscando (fantasma inerte); recarga grande não anima.
+{
+  const item=(id,t)=>`<button type="button" data-home-paciente="${id}" data-home-target="tela_avaliacao" class="ks-home-pending-item"><span><strong>${t}</strong><span>PSFS não registrada</span></span></button>`;
+  const w=ambiente('<span id="home_pending_total">3 pendências</span><div id="lista_pendencias_clinicas"></div>');
+  w.setTimeout=()=>1;
+  const l=w.document.getElementById('lista_pendencias_clinicas');
+  l.innerHTML=item('a','Paciente A')+item('b','Paciente B')+item('c','Paciente C');
+  w.KineSysMotion._varrer.pendencias(l);
+  l.innerHTML=item('a','Paciente A')+item('c','Paciente C');
+  w.KineSysMotion._varrer.pendencias(l);
+  const f=l.querySelector('.ks-motion-pendencia-saindo');
+  assert.ok(f,'item resolvido aparece saindo');
+  assert.strictEqual(l.children[1],f,'na posição antiga');
+  assert.ok(f.inert===true||f.hasAttribute('inert')||f.getAttribute('aria-hidden')==='true','fantasma é inerte');
+  assert.ok(!f.hasAttribute('data-home-paciente'),'fantasma não abre paciente');
+  assert.strictEqual(l.querySelectorAll('[data-home-paciente]').length,2,'itens reais intactos');
+  f.remove();
+  w.KineSysMotion._varrer.pendencias(l);
+  l.innerHTML=item('x','X')+item('y','Y')+item('z','Z');
+  w.KineSysMotion._varrer.pendencias(l);
+  assert.ok(!l.querySelector('.ks-motion-pendencia-saindo'),'troca completa (outro perfil/recarga) não anima');
+}
+
+// 19. Abas do prontuário: clique cria indicador temporário; tela entra pelo lado certo.
+{
+  const w=ambiente('<div id="ks_patient_context"><nav class="ks-patient-tabs"><button data-patient-target="tela_buscar" class="active">Resumo</button><button data-patient-target="tela_evolucao">Evolução</button></nav></div><section id="tela_evolucao" class="tela"></section>');
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded')); // o jsdom ainda está "loading": inicia o módulo
+  const [r,e]=w.document.querySelectorAll('[data-patient-target]');
+  e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+  r.classList.remove('active');e.classList.add('active'); // o sistema troca a aba
+  w.document.dispatchEvent(new w.CustomEvent('kinesys:tela-ativada',{detail:{id:'tela_evolucao'}}));
+  assert.ok(w.document.getElementById('tela_evolucao').classList.contains('ks-motion-tela-avancar'),'tela entra pela direita (aba à direita)');
+  assert.strictEqual(e.textContent,'Evolução');
+}
+
+// 21. Falta acende o cartão; cancelamento (cartão sai da grade) marca "Horário liberado" inerte.
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const base=[['Paciente A','08:00','agendado'],['Paciente B','09:00','agendado'],['Paciente C','10:00','confirmado']];
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',base);
+  // jsdom não calcula layout: simula a posição dos cartões.
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:100,top:50+i*60,width:120,height:50});});
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[base[0],['Paciente B','09:00','falta_nao_justificada'],base[2]]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(tela.querySelectorAll('.agenda-compromisso')[1].classList.contains('ks-motion-falta'),'falta acende');
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'falta não é cancelamento');
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:100,top:50+i*60,width:120,height:50});});
+  w.KineSysMotion._varrer.agenda(tela);
+  const textoAntes=tela.textContent;
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[base[0],['Paciente B','09:00','falta_nao_justificada']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  const marca=w.document.querySelector('.ks-motion-horario-liberado');
+  assert.ok(marca,'horário liberado marcado');
+  assert.strictEqual(marca.getAttribute('aria-hidden'),'true');
+  assert.strictEqual(marca.parentElement,w.document.body,'marca fica fora da grade da agenda');
+  assert.ok(/top: ?170px/.test(marca.style.cssText),'na posição do cartão que saiu');
+  assert.ok(!tela.contains(marca));
+  assert.notStrictEqual(tela.textContent,textoAntes);
+  // Grade esvaziada (carregando) não marca todos como liberados.
+  marca.remove();
+  tela.innerHTML=gradeAgenda(SEMANA,'semana',[]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'grade vazia (consulta) não marca');
+}
+
+// 22. Troca de perfil/clínica zera a memória: nunca mostra item do contexto anterior.
+{
+  const item=(id,t)=>`<button type="button" data-home-paciente="${id}" class="ks-home-pending-item"><span><strong>${t}</strong></span></button>`;
+  const w=ambiente('<div id="lista_pendencias_clinicas"></div>');
+  w.setTimeout=()=>1;
+  w.usuarioLogado={id:'u1',clinica_id:'c1'};
+  const l=w.document.getElementById('lista_pendencias_clinicas');
+  l.innerHTML=item('x','Paciente X da clínica 1')+item('y','Paciente Y da clínica 1');
+  w.KineSysMotion._varrer.pendencias(l);
+  w.usuarioLogado={id:'u2',clinica_id:'c2'};
+  l.innerHTML=item('z','Paciente Z da clínica 2');
+  w.KineSysMotion._varrer.pendencias(l);
+  assert.ok(!l.querySelector('.ks-motion-pendencia-saindo'),'nenhum fantasma após troca de clínica');
+  assert.ok(!l.textContent.includes('clínica 1'),'nada da clínica anterior aparece');
+}
+
+// 23. Trocar o filtro de profissional não é "novo agendamento" nem "horário liberado".
+{
+  const w=ambiente('<section id="tela_agenda"></section>');
+  w.setTimeout=()=>1;
+  const tela=w.document.getElementById('tela_agenda');
+  const filtro=v=>`<select id="agenda_filtro_profissional"><option value="${v}" selected>${v||'Toda a clínica'}</option></select>`;
+  tela.innerHTML=filtro('')+gradeAgenda(SEMANA,'semana',[['Paciente A · Dr. 1','08:00','agendado'],['Paciente B · Dr. 1','09:00','agendado']]);
+  tela.querySelectorAll('.agenda-celula').forEach((c,i)=>{c.getBoundingClientRect=()=>({left:10,top:10+i*40,width:80,height:30});});
+  w.KineSysMotion._varrer.agenda(tela);
+  tela.innerHTML=filtro('prof1')+gradeAgenda(SEMANA,'semana',[['Paciente A','08:00','agendado']]);
+  w.KineSysMotion._varrer.agenda(tela);
+  assert.ok(!tela.querySelector('.ks-motion-novo'),'filtro trocado não brilha como novo');
+  assert.ok(!w.document.querySelector('.ks-motion-horario-liberado'),'filtro trocado não marca horário liberado');
+}
+
+// 20. CSS: "Salvo"/girando/abas/pendências somem na impressão.
+{
+  assert.ok(/@media print\{[\s\S]*button\.ks-motion-salvo::after\{content:none!important\}/.test(css));
+  assert.ok(/@media print\{[\s\S]*button\[aria-busy="true"\]::after\{content:none!important\}/.test(css));
+}
+
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (24 cenários).');
