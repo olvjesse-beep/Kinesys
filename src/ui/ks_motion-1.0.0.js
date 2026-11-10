@@ -27,8 +27,8 @@
     function pulsar(el,classe){
         if(!el||!el.classList)return false;
         try{
-            el.classList.remove(classe);
-            void el.offsetWidth; // reinicia a animação se já estava aplicada
+            // Reflow forçado só quando a animação já estava aplicada (para reiniciá-la).
+            if(el.classList.contains(classe)){el.classList.remove(classe);void el.offsetWidth;}
             el.classList.add(classe);
             let feito=false;
             const limpar=()=>{if(feito)return;feito=true;try{el.classList.remove(classe);el.removeEventListener('animationend',aoFim);}catch(_){}};
@@ -241,6 +241,54 @@
                 avisarChegada([{nome:nome.textContent.trim(),hora:horaTxt}]);
             }
         });
+    }
+
+    // ---------- Entrada suave do Meu dia e do Panorama ----------
+    // Dispara quando o CONTEÚDO é desenhado (não quando a tela é ativada), uma vez por
+    // login/escopo. Só opacity/transform (compositor) via Web Animations: nada fica
+    // preso no meio, nada depende de remover classe por tempo.
+    const ENTRADA={duracao:520,passo:45,atrasoMax:225,distancia:4,curva:'cubic-bezier(.22,.61,.36,1)'};
+    let meuDiaEntrou=false,meuDiaPendente=false,painelEntrou=false;
+    function cascata(els){
+        let i=0;
+        els.forEach(el=>{
+            if(!el||typeof el.animate!=='function')return;
+            try{
+                el.animate([{opacity:0,transform:'translateY('+ENTRADA.distancia+'px)'},{opacity:1,transform:'translateY(0)'}],
+                    {duration:ENTRADA.duracao,delay:Math.min(i*ENTRADA.passo,ENTRADA.atrasoMax),easing:ENTRADA.curva,fill:'backwards'});
+                i++;
+            }catch(_){ }
+        });
+        return i>0;
+    }
+    function homeAtiva(){
+        const home=root.document&&root.document.getElementById('tela_home');
+        return home&&home.classList.contains('ativa')?home:null;
+    }
+    function entrarMeuDia(home){
+        meuDiaEntrou=true;meuDiaPendente=false;
+        const linhas=Array.from(home.querySelectorAll('#painel_fisio_lista > .ks-fisio-day-row, #painel_fisio_lista > .ks-fisio-painel-vazio'));
+        const cards=Array.from(home.querySelectorAll('.ks-prof-month-card, .ks-prof-priorities-card, .ks-prof-notifications-card'));
+        cascata(linhas.concat(cards));
+    }
+    function aoMeuDiaAtualizado(){
+        garantirEscopo();
+        if(meuDiaEntrou)return; // atualizações seguintes (automática, agenda) não repetem a entrada
+        // Depois de todos os ouvintes do evento (cards do profissional) e antes do próximo quadro.
+        (root.requestAnimationFrame||root.setTimeout)(()=>{
+            try{
+                if(meuDiaEntrou)return;
+                const home=homeAtiva();
+                if(home)entrarMeuDia(home);else meuDiaPendente=true;
+            }catch(_){ }
+        });
+    }
+    function entradaPainelAdmin(home){
+        if(painelEntrou||!home||!home.classList.contains('ativa'))return;
+        const p=home.querySelector('#ks_admin_home');
+        if(!p||p.hidden)return;
+        painelEntrou=true;
+        cascata(Array.from(p.querySelectorAll('.ks-admin-metrics>div')).concat([p.querySelector('.ks-admin-flow'),p.querySelector('.ks-admin-glass'),p.querySelector('.ks-admin-messages')].filter(Boolean)));
     }
 
     // ---------- Contadores: números sobem de 0 até o valor real ----------
@@ -492,6 +540,7 @@
         estadoAgenda.clear();agendaAssinatura=null;agendaChaves=null;agendaPosicoes=new Map();navAnterior=null;
         avisados.clear();ultimoTexto.clear();contagens.forEach(fim=>{try{fim();}catch(_){}});
         historicoEvo=null;pendAnteriores=null;ultimoOcupado=null;abaClicada=null;balancoVisivel=false;
+        meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;
         const doc=root.document;
         if(doc)doc.querySelectorAll('#ks_motion_aviso_chegada,.ks-motion-pendencia-saindo,.ks-motion-horario-liberado,.ks-motion-aba-indicador').forEach(el=>{try{el.remove();}catch(_){}});
     }
@@ -530,17 +579,18 @@
         observar(id('tela_agenda'),varrerAgenda,{childList:true,subtree:true,attributes:true,attributeFilter:['class','data-dias','data-periodo']});
         observar(id('tela_financeiro'),(t)=>{varrerFinanceiro(t);varrerBalanco(t);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
 
-        // Início / Meu dia / Panorama da clínica: cascata na primeira entrada após o
-        // login, atendimento atual e contadores do administrador a cada entrada.
+        // Início / Meu dia / Panorama da clínica: entrada suave quando o conteúdo é
+        // desenhado (uma vez por login), atendimento atual e contadores do administrador.
         const home=id('tela_home');
         if(home){
-            observar(home,(h)=>{varrerMeuDia(h);varrerPainelAdmin(h,false);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
-            let entrou=false,ativa=home.classList.contains('ativa');
+            observar(home,(h)=>{varrerMeuDia(h);varrerPainelAdmin(h,false);entradaPainelAdmin(h);},{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+            let ativa=home.classList.contains('ativa');
             const obsTela=new root.MutationObserver(()=>{
                 try{
                     const agoraAtiva=home.classList.contains('ativa');
                     if(agoraAtiva&&!ativa){
-                        if(!entrou){entrou=true;pulsar(home,'ks-motion-entrada');}
+                        if(meuDiaPendente&&!meuDiaEntrou)entrarMeuDia(home);
+                        entradaPainelAdmin(home);
                         varrerPainelAdmin(home,true);
                     }
                     ativa=agoraAtiva;
@@ -548,6 +598,10 @@
             });
             obsTela.observe(home,{attributes:true,attributeFilter:['class']});
         }
+        doc.addEventListener('kinesys:meu-dia-atualizado',aoMeuDiaAtualizado);
+        doc.addEventListener('kinesys:tela-ativada',(ev)=>{
+            try{if(ev&&ev.detail&&ev.detail.id==='tela_login'){meuDiaEntrou=false;meuDiaPendente=false;painelEntrou=false;}}catch(_){ }
+        });
 
         // 21. Abas do prontuário (o contexto do paciente é criado depois do login).
         doc.addEventListener('click',aoClicarAbaProntuario,true);
@@ -573,7 +627,7 @@
         },{childList:true});
     }
 
-    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,balanco:varrerBalanco,evolucao:varrerEvolucao,pendencias:varrerPendencias},_confirmarSalvo:confirmarSalvo,_aoMudarOcupado:aoMudarOcupado});
+    root.KineSysMotion=Object.freeze({criarDetector,pulsar,desligado,contar,_varrer:{exame:varrerExame,agenda:varrerAgenda,financeiro:varrerFinanceiro,meuDia:varrerMeuDia,grafico:desenharGrafico,painelAdmin:varrerPainelAdmin,entradaPainel:entradaPainelAdmin,meuDiaAtualizado:aoMeuDiaAtualizado,balanco:varrerBalanco,evolucao:varrerEvolucao,pendencias:varrerPendencias},_confirmarSalvo:confirmarSalvo,_aoMudarOcupado:aoMudarOcupado});
 
     try{
         if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>{try{iniciar();}catch(_){}});
