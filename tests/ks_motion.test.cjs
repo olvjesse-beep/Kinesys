@@ -473,4 +473,46 @@ const SEMANA2='2026-11-16,2026-11-17,2026-11-18,2026-11-19,2026-11-20';
   }
 })().catch(e=>{console.error(e);process.exit(1);});
 
-console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (25 cenários).');
+// 26. Pacientes (administrador e profissional): entrada "Iniciais primeiro" a cada visita,
+// dados que chegam no meio continuam a entrada, busca troca rápido e marca o trecho buscado.
+(async()=>{
+  const w=ambiente('<section id="tela_buscar" class="tela"><div class="card"><input id="input_busca_paciente"><div id="ks_prontuario_cards"></div></div></section>');
+  const chamadas=[];
+  w.Element.prototype.animate=function(k,o){chamadas.push({el:this,delay:o.delay,k});return {};};
+  const quadros=[];w.requestAnimationFrame=fn=>{quadros.push(fn);return quadros.length;};
+  const rodarQuadros=()=>{while(quadros.length)quadros.shift()();};
+  await new Promise(r=>w.document.readyState==='loading'?w.document.addEventListener('DOMContentLoaded',()=>w.setTimeout(r,0)):r());
+  const tela=w.document.getElementById('tela_buscar'),lista=w.document.getElementById('ks_prontuario_cards'),campo=w.document.getElementById('input_busca_paciente');
+  const espera=ms=>new Promise(r=>w.setTimeout(r,ms));
+  const desenhar=async nomes=>{lista.innerHTML=nomes.map(n=>'<article class="ks-patient-card"><button class="ks-patient-card-main"><span class="ks-patient-initial">'+n[0]+'</span><span class="ks-patient-card-copy"><strong>'+n+'</strong><small>30 anos</small></span></button><div class="ks-patient-card-actions"><button>Evolução</button></div></article>').join('');await espera(0);rodarQuadros();};
+  await desenhar(['Ana Souza','Marina Lopes','Rosemary Tavares']);
+  assert.strictEqual(chamadas.length,0,'tela oculta não anima');
+  tela.classList.add('ativa');await espera(0);rodarQuadros();
+  assert.strictEqual(chamadas.length,9,'ao chegar: inicial, nome e botões de cada cartão');
+  assert.ok(chamadas.filter(c=>c.el.classList.contains('ks-patient-initial')).length===3,'iniciais primeiro');
+  await desenhar(['Ana Souza','Marina Lopes','Rosemary Tavares']);
+  assert.strictEqual(chamadas.length,18,'dados chegando no meio continuam a entrada');
+  assert.ok(chamadas.slice(9).every(c=>c.delay<=Math.min(2*40,280)+150),'continua de onde estava (atraso descontado)');
+  await espera(950);
+  campo.value='MAR';await desenhar(['Marina Lopes','Rosemary Tavares']);
+  const busca=chamadas.slice(18);
+  assert.strictEqual(busca.filter(c=>c.el.classList.contains('ks-patient-card')).length,2,'troca rápida da lista');
+  const marcas=lista.querySelectorAll('mark.ks-motion-busca-marca');
+  assert.strictEqual(marcas.length,2,'trecho buscado marcado em cada nome');
+  assert.strictEqual(marcas[1].textContent,'mar','marca no meio do nome (Rosemary)');
+  assert.strictEqual(lista.querySelectorAll('strong')[1].textContent,'Rosemary Tavares','texto do nome não muda');
+  assert.ok(busca.every(c=>c.delay<=260),'busca responde rápido');
+  const n=chamadas.length;
+  await desenhar(['Marina Lopes','Rosemary Tavares']);
+  assert.strictEqual(chamadas.length,n,'mesmo filtro (página/atualização) não anima');
+  assert.strictEqual(lista.querySelectorAll('mark').length,2,'mas mantém a marca');
+  tela.classList.remove('ativa');await espera(0);
+  campo.value='';tela.classList.add('ativa');await espera(0);rodarQuadros();
+  assert.strictEqual(chamadas.length,n+6,'voltar à tela de Pacientes anima de novo');
+  await espera(950);
+  await desenhar(['Ana Souza','Marina Lopes','Rosemary Tavares']);
+  assert.strictEqual(chamadas.length,n+6+3,'lista antiga trocada pelos dados chega com troca suave');
+  assert.strictEqual(lista.querySelectorAll('mark').length,0,'sem busca, sem marca');
+})().catch(e=>{console.error(e);process.exit(1);});
+
+console.log('PASS: KineSys Motion anima somente transições, sem alterar conteúdo (26 cenários).');
