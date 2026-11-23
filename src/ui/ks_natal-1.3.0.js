@@ -1,4 +1,4 @@
-/* KineSys — tema de Natal (ks_natal 1.2.0, 60 qps)
+/* KineSys — tema de Natal (ks_natal 1.3.0: pegar, arrastar e jogar o Papai Noel)
  * Tema de Natal 3.0 — KineSys / Atende CRM (23/11/2026)
  * Trenó traz o Papai Noel, que fica 1–3 min passeando pelos botões (anda, corre, pula, senta, cochila,
  * lê a lista, dança, espreguiça, olha em volta, acena) e depois vai embora no trenó; guirlanda com enfeites.
@@ -25,7 +25,7 @@
 
   /* ---------------- camadas: faixa fina da guirlanda + 2 figurinhas que a placa de vídeo move ---------------- */
   function camadaNova(z, w, h) { var c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); c.className = 'natal-camada'; c.style.cssText = 'position:fixed;left:0;top:0;width:' + w + 'px;height:' + h + 'px;pointer-events:none;z-index:' + z + ';contain:strict;will-change:transform;display:none;'; return c; }
-  var SW = 130, SH = 210, SOX = 65, SOY = 192, TW = 480, TH = 140, TOX = 175, TOY = 112;
+  var SW = 240, SH = 240, SOX = 120, SOY = 212, TW = 480, TH = 140, TOX = 175, TOY = 112;
   var cvF = camadaNova(2147482999, 10, 10), cvS = camadaNova(2147483000, SW, SH), cvT = camadaNova(2147483000, TW, TH);
   var cF = cvF.getContext('2d'), cS = cvS.getContext('2d'), cT = cvT.getContext('2d'), ctx = cF;
   var estilo = document.createElement('style'); estilo.textContent = '@media print{.natal-camada{display:none!important}}';
@@ -65,8 +65,8 @@
     if (A.olho && (t % 3.7) < .12) A.olho = 0; // pisca
     return A;
   }
-  function noelVetor(x, y, dir, est, f, saco) {
-    var A = poseDe(est, f);
+  function noelVetor(x, y, dir, est, f, saco, Apronta) {
+    var A = Apronta || poseDe(est, f);
     ctx.save(); ctx.translate(Math.round(x), Math.round(y - A.bob + A.senta * ESC)); ctx.scale(dir * ESC, ESC); ctx.lineJoin = 'round';
     perna(-4, -21, A.pt, '#a50d24');
     braco(-6, -45, A.bt, '#a50d24');
@@ -321,13 +321,96 @@
       if (cvT.style.display !== 'block') cvT.style.display = 'block'; mover(cvT, TR.x - TOX, TR.y - TOY);
     } else if (cvT.style.display !== 'none') cvT.style.display = 'none';
     // Papai Noel
-    if (P.est !== 'fora' && modo !== 'sem-personagens') {
+    if (RG) {
+      var pr = poseRagdoll(); ctx = cS; cS.clearRect(0, 0, SW, SH); cS.save(); cS.translate(SW / 2, SH / 2); cS.rotate(pr.ang); noelVetor(0, 21 * ESC, RG.dir, 'rag', 0, false, pr.A); cS.restore(); chaveS = '';
+      if (cvS.style.display !== 'block') cvS.style.display = 'block'; mover(cvS, RG.p[0].x - SW / 2, RG.p[0].y - SH / 2); posBalao(RG.p[2].x, RG.p[2].y - 18);
+    } else if (P.est !== 'fora' && modo !== 'sem-personagens') {
       var saco = P.saco && (P.est === 'andar' || P.est === 'acena' || P.est === 'olhar'), passos = modo === 'leve' ? 6 : 12;
       var fase = Math.floor(P.quadro / (6.2832 / passos)), olho = (t % 3.7) < .12 ? 0 : 1, z = P.est === 'dormir' ? Math.floor(t * 8) : 0;
       var kS = P.est + '|' + fase + '|' + (P.dir < 0 ? -1 : 1) + '|' + saco + '|' + olho + '|' + z;
       if (kS !== chaveS) { chaveS = kS; ctx = cS; cS.clearRect(0, 0, SW, SH); if (P.est === 'paraquedas') guardaChuva(SOX, SOY); noelVetor(SOX, SOY, P.dir < 0 ? -1 : 1, P.est, fase * (6.2832 / passos), saco); }
-      if (cvS.style.display !== 'block') cvS.style.display = 'block'; mover(cvS, P.x - SOX, P.y - SOY);
+      if (cvS.style.display !== 'block') cvS.style.display = 'block'; mover(cvS, P.x - SOX, P.y - SOY); posBalao(P.x, P.y - 92 * ESC);
     } else if (cvS.style.display !== 'none') cvS.style.display = 'none';
+  }
+
+  /* ---------------- pegar, arrastar e jogar (ragdoll de 7 pontos) ---------------- */
+  // 0 quadril, 1 peito, 2 cabeça, 3 mão da frente, 4 mão de trás, 5 pé da frente, 6 pé de trás
+  var RAIO = [17, 19, 15, 6, 6, 6, 6], RG = null, arrasto = null, engoleClique = false, quieto = 0, bateu = false, cursorNoel = '';
+  var PEGA = ['Ei! Me solta!', 'Ho-ho-NÃO!', 'Cuidado com o saco de presentes!', 'Isso é jeito de tratar o Papai Noel?', 'Socorro, Rudolph!', 'Tô ficando tonto!', 'Me põe no chão, rapaz!', 'Olha a minha barba!'];
+  var JOGA = ['Aiii, minhas costas!', 'Vai pra lista dos malcomportados!', 'Ho-ho-hoouch!', 'Isso vai ter volta!', 'Meu gorro!', 'Que falta de espírito natalino!', 'Ninguém merece!', 'Vou contar pra Mamãe Noel!'];
+  var LEVANTA = ['Hmpf!', 'Tá bom, tá bom...', 'Onde é que eu estava?', 'Ainda tô vendo estrelinhas...'];
+  var balao = document.createElement('div'), balaoAte = 0, ultFrase = '';
+  balao.className = 'natal-camada';
+  balao.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483001;pointer-events:none;display:none;max-width:190px;padding:7px 11px;border-radius:14px;background:#fff;color:#7a1020;font:600 13px/1.25 system-ui,Segoe UI,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.25);border:2px solid #c8102e;white-space:normal;text-align:center;';
+  function falar(lista) { var f; do { f = lista[Math.floor(rnd() * lista.length)]; } while (f === ultFrase && lista.length > 1); ultFrase = f; balao.textContent = f; balao.style.display = 'block'; balaoAte = t + 2.4; }
+  function posBalao(x, y) { if (balao.style.display === 'none') return; if (t > balaoAte) { balao.style.display = 'none'; return; } var w = balao.offsetWidth || 150; balao.style.transform = 'translate3d(' + Math.max(4, Math.min(W - w - 4, x - w / 2)).toFixed(0) + 'px,' + Math.max(4, y - 44).toFixed(0) + 'px,0)'; }
+  function criarRagdoll() {
+    var e = ESC, x = P.x, y = P.y, d = P.dir < 0 ? -1 : 1;
+    var pts = [[x, y - 21 * e], [x, y - 45 * e], [x, y - 61 * e], [x + d * 14 * e, y - 30 * e], [x - d * 10 * e, y - 30 * e], [x + d * 5 * e, y - 2], [x - d * 4 * e, y - 2]];
+    RG = { p: pts.map(function (a) { return { x: a[0], y: a[1], px: a[0], py: a[1] }; }), dir: d,
+      c: [[0, 1, 24], [1, 2, 16], [0, 2, 39], [1, 3, 19], [1, 4, 19], [0, 5, 16], [0, 6, 16], [3, 0, 30], [4, 0, 30]].map(function (k) { return [k[0], k[1], k[2] * e]; }) };
+    P.est = 'rag'; P.plat = null; quieto = 0; bateu = false; chaveS = '';
+  }
+  function passoRagdoll(dt) {
+    var n = 3, h = dt / n, G2 = 2200, pts = RG.p;
+    for (var s = 0; s < n; s++) {
+      for (var i = 0; i < pts.length; i++) {
+        var q = pts[i]; if (arrasto && i === arrasto.i) continue;
+        var vx = (q.x - q.px) * .995, vy = (q.y - q.py) * .995; q.px = q.x; q.py = q.y; q.x += vx; q.y += vy + G2 * h * h;
+      }
+      if (arrasto) { var a = pts[arrasto.i]; a.px = a.x; a.py = a.y; a.x += (arrasto.x - a.x) * .6; a.y += (arrasto.y - a.y) * .6; }
+      for (var it = 0; it < 4; it++) RG.c.forEach(function (c) {
+        var A = pts[c[0]], B = pts[c[1]], dx = B.x - A.x, dy = B.y - A.y, L = Math.sqrt(dx * dx + dy * dy) || 1e-4, dif = (L - c[2]) / L;
+        var fa = arrasto && c[0] === arrasto.i ? 0 : 1, fb = arrasto && c[1] === arrasto.i ? 0 : 1, tot = (fa + fb) || 1;
+        A.x += dx * dif * fa / tot; A.y += dy * dif * fa / tot; B.x -= dx * dif * fb / tot; B.y -= dy * dif * fb / tot;
+      });
+      var forte = 0;   // bordas da tela: quica com perda e atrito
+      pts.forEach(function (q, i) {
+        var vx = q.x - q.px, vy = q.y - q.py, r = RAIO[i] * ESC + 2;   // espessura do corpo em cada ponto
+        if (q.y > H - r) { forte = Math.max(forte, Math.abs(vy) / h); q.y = H - r; q.py = q.y + vy * .35; q.px = q.x - vx * .75; }
+        if (q.y < r) { forte = Math.max(forte, Math.abs(vy) / h); q.y = r; q.py = q.y + vy * .35; }
+        if (q.x < r) { forte = Math.max(forte, Math.abs(vx) / h); q.x = r; q.px = q.x + vx * .4; }
+        if (q.x > W - r) { forte = Math.max(forte, Math.abs(vx) / h); q.x = W - r; q.px = q.x + vx * .4; }
+      });
+      if (!arrasto && !bateu && forte > 650) { bateu = true; falar(JOGA); }
+    }
+    if (arrasto) return;
+    var vel = 0; pts.forEach(function (q) { vel = Math.max(vel, Math.hypot(q.x - q.px, q.y - q.py) / h); });
+    quieto = vel < 45 ? quieto + dt : 0;
+    if (quieto > .7) {   // levanta e volta a passear
+      falar(bateu ? LEVANTA : JOGA);
+      P.x = Math.max(40, Math.min(W - 40, pts[0].x)); P.y = H; P.plat = chao(); P.est = 'parado'; P.tempo = 1.3; P.ativ = 'levanta'; P.dir = pts[2].x < pts[0].x ? -1 : 1;
+      P.visita = Math.max(P.visita, t + 25); RG = null; chaveS = '';
+    }
+  }
+  function poseRagdoll() {   // ângulo do tronco e dos membros (no referencial do tronco) para o desenho
+    var p = RG.p, tx = p[1].x - p[0].x, ty = p[1].y - p[0].y, ang = Math.atan2(tx, -ty), c = Math.cos(-ang), s2 = Math.sin(-ang);
+    function local(a, b) { var vx = b.x - a.x, vy = b.y - a.y; return Math.atan2(vx * c - vy * s2, vx * s2 + vy * c); }
+    var d = RG.dir;
+    return { ang: ang, A: { pf: local(p[0], p[5]) * d, pt: local(p[0], p[6]) * d, bf: local(p[1], p[3]) * d, bt: local(p[1], p[4]) * d, bob: 0, olho: arrasto ? 1 : 0, senta: 0, lista: false } };
+  }
+  function dentroNoel(x, y) {
+    if (P.est === 'fora' || P.est === 'sobeTreno' || modo === 'sem-personagens') return false;
+    if (RG) return RG.p.some(function (q) { return Math.hypot(q.x - x, q.y - y) < 30; });
+    return x > P.x - 30 * ESC - 6 && x < P.x + 30 * ESC + 6 && y > P.y - 100 * ESC && y < P.y + 4;
+  }
+  function pegar(e) {
+    if (e.button > 0 || !dentroNoel(e.clientX, e.clientY)) return;
+    e.preventDefault(); e.stopPropagation(); engoleClique = true;
+    if (!RG) criarRagdoll();
+    var mi = 1, md = 1e9; RG.p.forEach(function (q, i) { var dd = Math.hypot(q.x - e.clientX, q.y - e.clientY) + (i === 1 || i === 2 ? -12 : 0); if (dd < md) { md = dd; mi = i; } });
+    arrasto = { i: mi, x: e.clientX, y: e.clientY }; falar(PEGA); document.documentElement.style.cursor = 'grabbing'; cursorNoel = 'grabbing';
+  }
+  function mexer(e) {
+    if (arrasto) { arrasto.x = e.clientX; arrasto.y = e.clientY; e.preventDefault(); return; }
+    var quer = dentroNoel(e.clientX, e.clientY) ? 'grab' : '';
+    if (quer !== cursorNoel) { document.documentElement.style.cursor = quer; cursorNoel = quer; }
+  }
+  function soltar(e) {
+    if (!arrasto) return;
+    arrasto = null; bateu = false; quieto = 0; e.preventDefault(); e.stopPropagation();
+    document.documentElement.style.cursor = ''; cursorNoel = '';
+    RG.p.forEach(function (q) { var vx = q.x - q.px, vy = q.y - q.py, L = Math.hypot(vx, vy), m = 45; if (L > m) { q.px = q.x - vx / L * m; q.py = q.y - vy / L * m; } });   // limita o arremesso
   }
 
   /* ---------------- laço a 60 qps (física + transform); freio automático ---------------- */
@@ -335,7 +418,7 @@
   function quadro(dt) {
     t += dt;
     agendarMedicao(false);
-    passoTreno(dt); if (P.est !== 'fora' && P.est !== 'paraquedas') passoVisita(dt);
+    passoTreno(dt); if (RG) passoRagdoll(dt); else if (P.est !== 'fora' && P.est !== 'paraquedas') passoVisita(dt);
     var t0 = agora();
     pintarEnfeites(); pintarPersonagens();
     var c = agora() - t0; custo = custo * .95 + c * .05;
@@ -351,14 +434,18 @@
   }
   function ligar() {
     if (!document.body) return;
-    document.head.appendChild(estilo); document.body.appendChild(cvF); document.body.appendChild(cvT); document.body.appendChild(cvS);
+    document.head.appendChild(estilo); document.body.appendChild(cvF); document.body.appendChild(cvT); document.body.appendChild(cvS); document.body.appendChild(balao);
+    window.addEventListener('pointerdown', pegar, { capture: true, passive: false });
+    window.addEventListener('pointermove', mexer, { capture: true, passive: false });
+    window.addEventListener('pointerup', soltar, { capture: true, passive: false }); window.addEventListener('pointercancel', soltar, { capture: true });
+    window.addEventListener('click', function (e) { if (engoleClique) { engoleClique = false; e.preventDefault(); e.stopPropagation(); } }, { capture: true });
     dimensionar(); proxVisita = CFG.primeira;
     var redim = 0; window.addEventListener('resize', function () { clearTimeout(redim); redim = setTimeout(function () { dimensionar(); agendarMedicao(true); }, 200); });
-    window.addEventListener('scroll', function () { if (!rolando) { rolando = true; cvS.style.display = 'none'; cvT.style.display = 'none'; } clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarMedicao(true); }, 220); }, { passive: true, capture: true });
+    window.addEventListener('scroll', function () { if (arrasto) return; if (!rolando) { rolando = true; cvS.style.display = 'none'; cvT.style.display = 'none'; } clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarMedicao(true); }, 220); }, { passive: true, capture: true });
     document.addEventListener('visibilitychange', function () { ultimoTs = 0; if (!document.hidden) agendarMedicao(true); });
     window.addEventListener('hashchange', function () { setTimeout(function () { agendarMedicao(true); }, 400); });
     agendarMedicao(true);
-    if (CFG.manual) window.NATAL = { passo: function (ms) { quadro(ms / 1000); }, estado: function () { return { est: P.est, ativ: P.ativ, t: t, modo: modo, custo: custo }; } };
+    if (CFG.manual) window.NATAL = { passo: function (ms) { quadro(ms / 1000); }, estado: function () { return { est: P.est, ativ: P.ativ, t: t, modo: modo, custo: custo, rg: !!RG, x: P.x, y: P.y, balao: balao.style.display !== 'none' ? balao.textContent : '' }; } };
     else requestAnimationFrame(laco);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
