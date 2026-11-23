@@ -1,10 +1,11 @@
-/* KineSys — tema de Natal (ks_natal 1.1.0)
+/* KineSys — tema de Natal (ks_natal 1.2.0, 60 qps)
  * Tema de Natal 3.0 — KineSys / Atende CRM (23/11/2026)
  * Trenó traz o Papai Noel, que fica 1–3 min passeando pelos botões (anda, corre, pula, senta, cochila,
  * lê a lista, dança, espreguiça, olha em volta, acena) e depois vai embora no trenó; guirlanda com enfeites.
  * FEITO PARA NÃO TRAVAR:
  *  - nenhuma leitura de layout durante a animação: medições só quando o navegador está ocioso (requestIdleCallback);
- *  - 2 canvases: enfeites (redesenhados 2x/s, só a faixa da guirlanda) e personagens (só os retângulos sujos);
+ *  - guirlanda numa faixa fina (luzes piscam 2x/s); Papai Noel e trenó são figurinhas pequenas movidas pela placa de vídeo
+ *    (transform, 60 qps) e só redesenhadas quando a pose muda;
  *  - para durante a rolagem e com a aba oculta; 0 trabalho entre as visitas;
  *  - freio automático: mede o próprio custo e o atraso dos quadros; reduz ou desliga os personagens sozinho.
  * Liga de 12/11 a 31/12. Desliga: localStorage natal_off=1. Some na impressão. Não bloqueia cliques.
@@ -22,15 +23,17 @@
   function entre(a) { return a[0] + rnd() * (a[1] - a[0]); }
   var agora = (window.performance && performance.now) ? function () { return performance.now(); } : Date.now;
 
-  /* ---------------- camadas ---------------- */
-  function camadaNova(z) { var c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); c.className = 'natal-camada'; c.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:' + z + ';contain:strict;'; return c; }
-  var cvF = camadaNova(2147482999), cvA = camadaNova(2147483000), cF = cvF.getContext('2d'), cA = cvA.getContext('2d'), ctx = cF;
+  /* ---------------- camadas: faixa fina da guirlanda + 2 figurinhas que a placa de vídeo move ---------------- */
+  function camadaNova(z, w, h) { var c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); c.className = 'natal-camada'; c.style.cssText = 'position:fixed;left:0;top:0;width:' + w + 'px;height:' + h + 'px;pointer-events:none;z-index:' + z + ';contain:strict;will-change:transform;display:none;'; return c; }
+  var SW = 130, SH = 210, SOX = 65, SOY = 192, TW = 480, TH = 140, TOX = 175, TOY = 112;
+  var cvF = camadaNova(2147482999, 10, 10), cvS = camadaNova(2147483000, SW, SH), cvT = camadaNova(2147483000, TW, TH);
+  var cF = cvF.getContext('2d'), cS = cvS.getContext('2d'), cT = cvT.getContext('2d'), ctx = cF;
   var estilo = document.createElement('style'); estilo.textContent = '@media print{.natal-camada{display:none!important}}';
   var W = 0, H = 0, DPR = 1, t = 0;
   function dimensionar() {
-    DPR = Math.min(window.devicePixelRatio || 1, 1.5); W = window.innerWidth; H = window.innerHeight;
-    [[cvF, cF], [cvA, cA]].forEach(function (p) { p[0].width = Math.round(W * DPR); p[0].height = Math.round(H * DPR); p[1].setTransform(DPR, 0, 0, DPR, 0, 0); });
-    sujos = []; decorSujo = true; baseSuja = true;
+    DPR = Math.min(window.devicePixelRatio || 1, 2); W = window.innerWidth; H = window.innerHeight;
+    [[cvS, cS, SW, SH], [cvT, cT, TW, TH]].forEach(function (p) { p[0].width = Math.round(p[2] * DPR); p[0].height = Math.round(p[3] * DPR); p[1].setTransform(DPR, 0, 0, DPR, 0, 0); });
+    chaveS = chaveT = ''; decorSujo = true; baseSuja = true;
   }
 
   var CONT = '#3a1218', ESC = CFG.escala2 || 0.8;
@@ -249,16 +252,14 @@
     if (!decorSujo && pisca === piscaAnt) return;
     if (baseSuja) pintarBase();
     piscaAnt = pisca; decorSujo = false; ctx = cF;
-    var faixa = GY + 80; cF.clearRect(0, 0, W, Math.max(faixa, faixaAnt)); faixaAnt = faixa;
+    var faixa = Math.ceil(GY + 80); if (faixa !== faixaAnt || cvF.width !== Math.round(W * DPR)) { cvF.width = Math.round(W * DPR); cvF.height = Math.round(faixa * DPR); cvF.style.width = W + 'px'; cvF.style.height = faixa + 'px'; cvF.style.display = 'block'; faixaAnt = faixa; }
+    cF.setTransform(DPR, 0, 0, DPR, 0, 0); cF.clearRect(0, 0, W, faixa);
     cF.drawImage(base, 0, 0, W, base.height / DPR);
     for (var k = 0, x2 = 14; x2 < W; x2 += 27, k++) { if (LIVRES[k] === false) continue; lampada(x2, guirlandaY(x2) + 5, LUZES[k % 5], (pisca + k) % 3 !== 0); }
   }
 
-  /* ---------------- personagens (só retângulos sujos) ---------------- */
-  var sujos = [];
-  function limparSujos() { sujos.forEach(function (r) { cA.clearRect(r[0], r[1], r[2], r[3]); }); sujos = []; }
-  function sujar(x, y, w, h) { sujos.push([Math.floor(x) - 4, Math.floor(y) - 4, Math.ceil(w) + 8, Math.ceil(h) + 8]); }
-
+  /* ---------------- personagens ---------------- */
+  var chaveS = '', chaveT = '';
   var P = { x: 0, y: 0, dir: 1, est: 'fora', plat: null, vx: 0, vy: 0, alvo: null, tempo: 0, quadro: 0, saco: true, ativ: '', ultAtiv: '', visita: 0, partindo: false };
   var G = 1100, VEL = 60;
   function chao() { return { el: null, x1: 20, x2: W - 20, y: H }; }
@@ -312,54 +313,48 @@
       var q = pousar(y0, P.y); if (q) { P.y = q.y; P.plat = q; P.est = 'acena'; P.ativ = 'acena'; P.tempo = 2; P.visita = t + entre(CFG.visita); P.saco = true; }
     }
   }
+  function mover(c, x, y) { c.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)'; }
   function pintarPersonagens() {
-    limparSujos(); ctx = cA;
-    if (TR.ativo) { desenharTreno(); sujar(TR.x - 170, TR.y - 90, 450, 125); }
-    if (P.est !== 'fora') {
-      if (P.est === 'paraquedas') { guardaChuva(P.x, P.y); sujar(P.x - 48, P.y - 118 * ESC - 50, 96, 118 * ESC + 54); }
-      noelVetor(P.x, P.y, P.dir < 0 ? -1 : 1, P.est, P.quadro, P.saco && (P.est === 'andar' || P.est === 'acena' || P.est === 'olhar'));
-      sujar(P.x - 80 * ESC - 6, P.y - 150 * ESC - 20, 160 * ESC + 12, 150 * ESC + 20 + 30 * ESC);
-    }
+    // trenó
+    if (TR.ativo) {
+      var kT = Math.floor(t * 14); if (kT !== chaveT) { chaveT = kT; ctx = cT; cT.clearRect(0, 0, TW, TH); var gx = TR.x, gy = TR.y; TR.x = TOX; TR.y = TOY; desenharTreno(); TR.x = gx; TR.y = gy; }
+      if (cvT.style.display !== 'block') cvT.style.display = 'block'; mover(cvT, TR.x - TOX, TR.y - TOY);
+    } else if (cvT.style.display !== 'none') cvT.style.display = 'none';
+    // Papai Noel
+    if (P.est !== 'fora' && modo !== 'sem-personagens') {
+      var saco = P.saco && (P.est === 'andar' || P.est === 'acena' || P.est === 'olhar'), passos = modo === 'leve' ? 6 : 12;
+      var fase = Math.floor(P.quadro / (6.2832 / passos)), olho = (t % 3.7) < .12 ? 0 : 1, z = P.est === 'dormir' ? Math.floor(t * 8) : 0;
+      var kS = P.est + '|' + fase + '|' + (P.dir < 0 ? -1 : 1) + '|' + saco + '|' + olho + '|' + z;
+      if (kS !== chaveS) { chaveS = kS; ctx = cS; cS.clearRect(0, 0, SW, SH); if (P.est === 'paraquedas') guardaChuva(SOX, SOY); noelVetor(SOX, SOY, P.dir < 0 ? -1 : 1, P.est, fase * (6.2832 / passos), saco); }
+      if (cvS.style.display !== 'block') cvS.style.display = 'block'; mover(cvS, P.x - SOX, P.y - SOY);
+    } else if (cvS.style.display !== 'none') cvS.style.display = 'none';
   }
 
-  /* ---------------- laço com freio automático ---------------- */
-  var rolando = false, fimRolagem = 0, ultimoTs = 0, acum = 0, custo = 0, lentos = 0, modo = 'normal', ultimoDesenho = 0, animsT = 0, sistemaAnimando = false;
-  function precisaDesenharAtor() { return TR.ativo || P.est !== 'fora'; }
-  function fpsAlvo() {
-    if (modo === 'leve' || sistemaAnimando) return 12;
-    if (!precisaDesenharAtor()) return 0;
-    if (TR.ativo || P.est === 'andar' || P.est === 'pulo' || P.est === 'cai' || P.est === 'paraquedas' || P.est === 'sobeTreno' || P.est === 'dancar' || P.est === 'pulinhos') return 30;
-    return 12; // poses calmas
-  }
+  /* ---------------- laço a 60 qps (física + transform); freio automático ---------------- */
+  var rolando = false, fimRolagem = 0, ultimoTs = 0, custo = 0, lentos = 0, modo = 'normal';
   function quadro(dt) {
     t += dt;
     agendarMedicao(false);
     passoTreno(dt); if (P.est !== 'fora' && P.est !== 'paraquedas') passoVisita(dt);
     var t0 = agora();
-    pintarEnfeites();
-    if (modo !== 'sem-personagens') pintarPersonagens(); else limparSujos();
-    var c = agora() - t0; custo = custo * .9 + c * .1;
-    if (custo > 6 && modo === 'normal') modo = 'leve';
-    if (custo > 10) modo = 'sem-personagens';
+    pintarEnfeites(); pintarPersonagens();
+    var c = agora() - t0; custo = custo * .95 + c * .05;
+    if (custo > 3 && modo === 'normal') modo = 'leve';
+    if (custo > 7) modo = 'sem-personagens';
   }
   function laco(ts) {
     requestAnimationFrame(laco);
-    if (document.hidden || rolando) { ultimoTs = ts; return; }
-    var dtReal = ultimoTs ? (ts - ultimoTs) : 16; ultimoTs = ts;
-    // o sistema está pesado (quadros atrasando)? cede a vez
-    if (dtReal > 80) { lentos++; if (lentos > 20 && modo === 'normal') modo = 'leve'; if (lentos > 60) modo = 'sem-personagens'; } else if (lentos > 0 && dtReal < 30) lentos -= .25;
-    if (ts - animsT > 600) { animsT = ts; try { sistemaAnimando = document.getAnimations ? document.getAnimations().some(function (a) { return a.playState === 'running'; }) : false; } catch (e) { sistemaAnimando = false; } }
-    acum += Math.min(dtReal, 100) / 1000;
-    var fps = fpsAlvo();
-    if (fps === 0) { if (acum > .5) { quadro(acum); acum = 0; } return; } // só enfeites piscando
-    if (acum >= 1 / fps) { quadro(Math.min(acum, .1)); acum = 0; }
+    if (document.hidden || rolando) { ultimoTs = 0; return; }
+    var dt = ultimoTs ? (ts - ultimoTs) / 1000 : 1 / 60; ultimoTs = ts;
+    if (dt > .08) { lentos++; if (lentos > 40 && modo === 'normal') modo = 'leve'; if (lentos > 120) modo = 'sem-personagens'; } else if (lentos > 0 && dt < .03) lentos -= .2;
+    quadro(Math.min(dt, .05));
   }
   function ligar() {
     if (!document.body) return;
-    document.head.appendChild(estilo); document.body.appendChild(cvF); document.body.appendChild(cvA);
+    document.head.appendChild(estilo); document.body.appendChild(cvF); document.body.appendChild(cvT); document.body.appendChild(cvS);
     dimensionar(); proxVisita = CFG.primeira;
     var redim = 0; window.addEventListener('resize', function () { clearTimeout(redim); redim = setTimeout(function () { dimensionar(); agendarMedicao(true); }, 200); });
-    window.addEventListener('scroll', function () { if (!rolando) { rolando = true; cA.clearRect(0, 0, W, H); sujos = []; } clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarMedicao(true); }, 220); }, { passive: true, capture: true });
+    window.addEventListener('scroll', function () { if (!rolando) { rolando = true; cvS.style.display = 'none'; cvT.style.display = 'none'; } clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarMedicao(true); }, 220); }, { passive: true, capture: true });
     document.addEventListener('visibilitychange', function () { ultimoTs = 0; if (!document.hidden) agendarMedicao(true); });
     window.addEventListener('hashchange', function () { setTimeout(function () { agendarMedicao(true); }, 400); });
     agendarMedicao(true);
