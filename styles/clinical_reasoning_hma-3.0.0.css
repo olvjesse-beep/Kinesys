@@ -212,12 +212,43 @@
     gap: .35rem;
     margin-block-end: .65rem;
 }
-.ks-queixas-toggle, .ks-queixa-acoes {
+.ks-queixas-linha {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(.55rem, 2vw, 1rem);
+}
+#tela_avaliacao .hma-principal label.ks-queixas-toggle {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex: 0 1 15rem;
+    min-width: 0;
+    gap: .5rem;
+    margin: 0;
+    padding-block: .65rem;
+    cursor: pointer;
+    line-height: 1.4;
+}
+#tela_avaliacao #ks_queixas_multiplas {
+    appearance: auto;
+    width: 1rem;
+    height: 1rem;
+    min-height: 0;
+    margin: .125rem 0 0;
+    padding: 0;
+    accent-color: #176e6a;
+    flex: none;
+}
+.ks-queixas-adicionais {
+    flex: 1 0 52%;
+    min-width: 0;
+}
+.ks-queixas-adicionais > button { margin-block-end: .25rem; }
+.ks-queixa-acoes {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: .5rem;
 }
-.ks-queixas-toggle input[type="checkbox"] { width: auto; flex: none; }
 .ks-queixas-avaliacao details > summary { cursor: pointer; }
 .ks-queixas-avaliacao ul { margin-block: .4rem; padding-inline-start: 1.25rem; }

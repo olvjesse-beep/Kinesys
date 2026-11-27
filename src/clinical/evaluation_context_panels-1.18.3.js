@@ -138,7 +138,7 @@
  const porId=id=>document.getElementById(id);
  const historiasSalvas=new WeakMap();
  let numeroQueixa=0;
- function linhasQueixas(){return Array.from(porId('ks_queixas_lista')?.children||[]);}
+ function linhasQueixas(){return Array.from(porId('ks_queixas_lista')?.querySelectorAll('[data-queixa-id]')||[]);}
  function lerQueixas(){
   if(!porId('ks_queixas_lista'))return null;
   const queixas=linhasQueixas().map(linha=>({
@@ -151,14 +151,16 @@
  function rotularQueixas(){
   const linhas=linhasQueixas();
   linhas.forEach((linha,i)=>{
-   linha.querySelector('[data-queixa-label]').textContent=i===0?'Queixa principal':`Queixa adicional ${i}`;
+   const label=linha.querySelector('[data-queixa-label]');
+   label.textContent=i===0?'Queixa principal':`Queixa adicional ${i}`;
+   label.classList.toggle('clinical-visually-hidden',i>0);
+   linha.querySelector('[data-queixa-texto]').placeholder=i===0?'Ex.: Dor no ombro direito ao levantar o braço':'Ex.: Dor no joelho esquerdo';
    linha.querySelector('[data-queixa-principal]').hidden=i===0;
    linha.querySelector('[data-queixa-remover]').hidden=linhas.length===1;
   });
-  const extras=porId('ks_queixas_multiplas'),adicionar=porId('ks_queixas_adicionar');
-  extras.checked=extras.checked||linhas.length>1;
-  extras.disabled=linhas.length>1;
-  adicionar.hidden=!extras.checked;
+  const temAdicionais=linhas.length>1;
+  porId('ks_queixas_multiplas').checked=temAdicionais;
+  porId('ks_queixas_adicionais').hidden=!temAdicionais;
   const ajuda=porId('paciente_hma_ajuda');
   if(ajuda)ajuda.hidden=linhas.length<2;
   renderizarDetalhesSalvos();
@@ -175,7 +177,7 @@
   detalhes.hidden=!itens.length;
   if(detalhes.hidden)detalhes.open=false;
  }
- function criarQueixa(queixa={}){
+ function criarQueixa(destino,queixa={}){
   const linha=porId('ks_queixas_modelo').content.firstElementChild.cloneNode(true);
   linha.dataset.queixaId=queixa.id||globalThis.crypto?.randomUUID?.()||`queixa-${Date.now()}-${++numeroQueixa}`;
   const input=linha.querySelector('[data-queixa-texto]');
@@ -183,18 +185,18 @@
   linha.querySelector('[data-queixa-label]').htmlFor=input.id;
   input.value=queixa.texto||'';
   if(typeof queixa.historia==='string')historiasSalvas.set(linha,queixa.historia);
-  porId('ks_queixas_lista').append(linha);
+  destino.append(linha);
   return linha;
  }
  function preencherQueixas(queixas){
-  const lista=porId('ks_queixas_lista');
-  if(!lista)return;
+  const lista=porId('ks_queixa_principal_linha'),adicionais=porId('ks_queixas_adicionais_lista');
+  if(!lista||!adicionais)return;
   lista.replaceChildren();
+  adicionais.replaceChildren();
   const dados=Array.isArray(queixas)?queixas.filter(q=>q&&typeof q.id==='string'):[];
-  const principal=dados.find(q=>q.principal);
-  for(const q of principal?[principal,...dados.filter(item=>item!==principal)]:dados)criarQueixa(q);
-  if(!dados.length)criarQueixa();
-  porId('ks_queixas_multiplas').checked=dados.length>1;
+  const principal=dados.find(q=>q.principal)||dados[0];
+  criarQueixa(lista,principal);
+  for(const q of dados.filter(item=>item!==principal))criarQueixa(adicionais,q);
   rotularQueixas();
   const exame=porId('ks_queixas_exame');
   if(exame){
@@ -208,6 +210,25 @@
   window.KineSysExameLivre?.atualizarOpcoes();
   window.KineSysMotorClinico3?.agendar?.();
  }
+ function mudarQueixasAdicionais(event){
+  const adicionais=porId('ks_queixas_adicionais_lista');
+  if(event.target.checked){
+   const linha=adicionais.firstElementChild||criarQueixa(adicionais);
+   rotularQueixas();
+   linha.querySelector('[data-queixa-texto]').focus();
+   return;
+  }
+  const ids=new Set(Array.from(adicionais.children,linha=>linha.dataset.queixaId));
+  const preenchidas=lerQueixas().some(q=>ids.has(q.id));
+  const vinculadas=window.KineSysExameLivre?.registros().some(r=>ids.has(r.queixaId));
+  if((preenchidas||vinculadas)&&!window.confirm('Remover as queixas adicionais e seus detalhes? Os achados vinculados ficam no exame.')){
+   event.target.checked=true;
+   return;
+  }
+  adicionais.replaceChildren();
+  rotularQueixas();
+  if(preenchidas||vinculadas)notificarQueixas();
+ }
  function iniciarQueixas(){
   const root=porId('ks_queixas_avaliacao');
   if(!root||root.dataset.bound)return;
@@ -219,19 +240,22 @@
    if(historiasSalvas.get(e.target.closest('[data-queixa-id]')))renderizarDetalhesSalvos();
    notificarQueixas();
   });
-  porId('ks_queixas_multiplas').addEventListener('change',rotularQueixas);
+  porId('ks_queixas_multiplas').addEventListener('change',mudarQueixasAdicionais);
   root.addEventListener('click',e=>{
    const button=e.target.closest('button');
    if(!button)return;
    if(button.id==='ks_queixas_adicionar'){
-    criarQueixa().querySelector('[data-queixa-texto]').focus();
+    criarQueixa(porId('ks_queixas_adicionais_lista')).querySelector('[data-queixa-texto]').focus();
    }else if(button.matches('[data-queixa-principal]')){
     const linha=button.closest('[data-queixa-id]');
     if(!linha.querySelector('[data-queixa-texto]').value.trim()){
      linha.querySelector('[data-queixa-texto]').focus();
      return;
     }
-    porId('ks_queixas_lista').prepend(linha);
+    const principal=porId('ks_queixa_principal_linha');
+    linha.replaceWith(principal.firstElementChild);
+    principal.append(linha);
+    linha.querySelector('[data-queixa-texto]').focus();
    }else if(button.matches('[data-queixa-remover]')){
     const linha=button.closest('[data-queixa-id]');
     const vinculada=window.KineSysExameLivre?.registros().some(r=>r.queixaId===linha.dataset.queixaId);
@@ -239,7 +263,15 @@
     const pergunta=temHistoria?'Remover esta queixa e os detalhes registrados nela?':'Remover esta queixa?';
     const aviso=vinculada?' Os achados serão mantidos no exame com a descrição da queixa original.':'';
     if((vinculada||temHistoria)&&!window.confirm(pergunta+aviso))return;
+    const principal=porId('ks_queixa_principal_linha');
+    const adicionais=porId('ks_queixas_adicionais_lista');
+    const eraPrincipal=linha.parentElement===principal;
+    if(eraPrincipal&&!adicionais.firstElementChild)return;
     linha.remove();
+    if(eraPrincipal)principal.append(adicionais.firstElementChild);
+    const vizinha=eraPrincipal?principal.firstElementChild:adicionais.firstElementChild;
+    if(vizinha)vizinha.querySelector('[data-queixa-texto]').focus();
+    else porId('ks_queixas_multiplas').focus();
    }else return;
    rotularQueixas();
    notificarQueixas();

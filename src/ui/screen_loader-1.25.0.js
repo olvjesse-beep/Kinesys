@@ -27,7 +27,7 @@
                 'styles/design_evaluation_workspace-1.18.0.css?v=20261024-semantica-seis-r2',
                 'styles/design_evaluation_context-1.18.3.css?v=20261025-relatorio-cirurgias-r1&anterior=20261024-medicamentos-individuais-r1&eva=20261026-lightglass-r1',
                 'styles/avaliacao_experiencia-1.22.0.css?v=20261013-evaluation-option3-r2',
-                'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1&queixas=20261127-r1',
+                'styles/clinical_reasoning_hma-3.0.0.css?v=20260910-r1&queixas=20261127-lado-r1',
                 'styles/radar_clinico_focus-3.0.0.css?v=20260910-r1',
                 'styles/dialog_rascunho_focus-1.0.0.css?v=20260910-r1',
                 'styles/evaluation_free_exam-1.0.0.css?v=20261023-exame-livre-r1'
@@ -49,7 +49,7 @@
                 'src/clinical/evaluation_free_exam-1.0.0.js?v=20261023-exame-livre-r1&eva=20261026-lightglass-r1&narrativa=20261026-assuntos-r1&queixas=20261127-r1',
                 'src/clinical/evaluation_workspace-1.17.0.js?v=20261106-diagnostico-relatorio-r1&cirurgias=20261025-relatorio-cirurgias-r1&anterior=20261024-linguagem-contextual-r2&narrativa=20261026-assuntos-r1&auditoria=20261027-relatorio-dosagens-r1&redacao=20261028-redacao-coesa-r1&queixas=20261127-r1',
                 'src/clinical/proms_escalas.js',
-                'src/clinical/evaluation_context_panels-1.18.3.js?v=20261025-relatorio-cirurgias-r1&anterior=20261020-contexto-indice-r1&eva=20261026-lightglass-r1&queixas=20261127-hma-unica-r1',
+                'src/clinical/evaluation_context_panels-1.18.3.js?v=20261025-relatorio-cirurgias-r1&anterior=20261020-contexto-indice-r1&eva=20261026-lightglass-r1&queixas=20261127-lado-r1',
                 'src/clinical/avaliacao_experiencia-1.22.0.js?v=20261012-visual-harmony-r4',
                 'src/clinical/clinical_reasoning_hma-3.0.0.js?v=20261027-radar-condicoes-r1&queixas=20261127-hma-unica-r1',
                 'src/clinical/clinical_region_loader-1.0.0.js?v=20261022-radar-evidencias-r1'
