@@ -211,7 +211,7 @@
         return {id,nome:reg?.nome||id,score,motivos:uniq(motivos)};
     }
 
-    function inferirRegioes(hmaResultado,contexto){
+    function inferirRegioes(hmaResultado,contexto,hma=hmaAtual(),relato=window.KineSysSemanticGraph?.analisar(hma)){
         const B=indiceRegioes(); const selecionadas=regioesSelecionadasAtual();
         const controles=Array.from(document.querySelectorAll('#grupo_regioes_mapeamento input[data-regiao]'));
         // Depois que a seleção aparece na interface, ela é a fonte de verdade.
@@ -221,8 +221,7 @@
         }
         const out=[]; const seen=new Set();
         selecionadas.filter(id=>{const campo=document.getElementById('chk_regiao_'+id);return campo?.dataset.tocadoManualmente==='true'||campo?.dataset.sugeridaPelaHMA!=='true';}).forEach(id=>{if(B[id]&&!seen.has(id)){seen.add(id);out.push({id,nome:B[id].nome||id,origem:'selecionada',score:99,motivos:['selecionada pelo fisioterapeuta']});}});
-        const texto=[hmaAtual(),contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
-        const relato=window.KineSysSemanticGraph?.analisar(hmaAtual());
+        const texto=[hma,contexto?.origemIrradiacao||'',contexto?.irradiacao||''].join(' ');
         const explicitas=uniq([...arr(relato?.problemas).map(p=>p.regiaoId),...arr(hmaResultado?.raciocinio?.hipoteses).filter(h=>h.estado==='compativel_com_relato').map(h=>h.regiaoId)]);
         // Queixas independentes explícitas não disputam somente duas vagas.
         // Um destino de irradiação, uma negativa ou antecedente familiar não
@@ -469,6 +468,47 @@
         return {seguranca,modificadores,clusters,testesPrioritarios:testes,analises};
     }
 
+    function queixasDaAvaliacao(){
+        return arr(window.KineSysQueixasAvaliacao?.coletar());
+    }
+
+    function combinarRelatos(trechos){
+        return trechos.map(t=>String(t||'').trim()).filter(Boolean)
+            .map(t=>/[.!?;]$/.test(t)?t:t+'.').join('\n');
+    }
+
+    function vincularQueixas(queixas,hma){
+        if(!queixas.length)return [];
+        const motor=window.KineSysSemanticGraph;
+        const resultado=queixas.map(q=>{
+            const relato=motor?.analisar(q.texto);
+            const problemas=arr(relato?.problemas);
+            const regioes=uniq(problemas.map(p=>p.regiaoId));
+            const lados=uniq(problemas.map(p=>p.lado).filter(Boolean));
+            return {...q,regiaoId:regioes.length===1?regioes[0]:'',lado:lados.length===1?lados[0]:'',trechos:[]};
+        });
+        for(const fato of arr(motor?.analisar(hma)?.fatos)){
+            if(!['queixa','associados','repercussoes','continuidade'].includes(fato.categoria))continue;
+            const props=arr(fato.proposicoes).filter(p=>p.sujeito==='paciente'&&!['destino_trajeto','movimento_modificador','procedimento_modificador'].includes(p.papel));
+            const regioes=uniq(props.map(p=>p.regiaoId).filter(Boolean));
+            const lados=uniq(props.map(p=>p.lado).filter(Boolean));
+            const trecho=fato.origens[0].trechoNormalizado;
+            if(regioes.length===0&&resultado.length===1&&resultado[0].regiaoId&&props.length&&
+                props.every(p=>p.estado!=='indeterminado')&&!fato.atributos.regioes.length){
+                resultado[0].trechos.push(trecho);
+                continue;
+            }
+            if(regioes.length!==1||lados.length>1||props.some(p=>p.estado==='indeterminado'))continue;
+            const candidatos=resultado.filter(q=>q.regiaoId===regioes[0]&&(!lados.length||!q.lado||lados.includes(q.lado)));
+            if(candidatos.length===1)candidatos[0].trechos.push(trecho);
+        }
+        return resultado;
+    }
+
+    function temHistoriaDaQueixa(q){
+        return Boolean(q.historia||q.trechos.some(t=>n(t).replace(/[^\p{L}\p{N}]/gu,'')!==n(q.texto).replace(/[^\p{L}\p{N}]/gu,'')));
+    }
+
     function gerarPlano(){
         window.KineSysEvidenceProfiles?.instalarBanco(banco());
         const pacienteId=String(document.getElementById('select_paciente_precadastro')?.value||
@@ -477,24 +517,51 @@
             hipotesesAdicionadas.clear();hipotesesDescartadas.clear();catalogoHipoteses=[];
         }
         if(pacienteId)pacienteDasHipoteses=pacienteId;
-        const contexto=contextoAtual();
-        const hmaResultado=analisarHistoria(contexto);
-        const hma=hmaAtual();
+        const contexto=contextoAtual(), historiaOriginal=hmaAtual();
+        const queixas=vincularQueixas(queixasDaAvaliacao(),historiaOriginal);
+        const hma=queixas.length?combinarRelatos([historiaOriginal,...queixas.flatMap(q=>[q.texto,q.historia])]):historiaOriginal;
+        const hmaResultado=analisarHistoria(contexto,hma);
         if(!hmaResultado||hma.length<5){
             ultimoPlano={versao:VERSION,geradoEm:new Date().toISOString(),insuficiente:true,hmaResultado,contexto,regioes:[],hipoteses:[],exame:{seguranca:[],modificadores:[],clusters:[],testesPrioritarios:[],analises:[]}};
             return ultimoPlano;
         }
-        const regioes=inferirRegioes(hmaResultado,contexto);
         const semantica=window.KineSysSemanticGraph?.analisar(hma),hmaPorRegiao={},leiturasPorRegiao={},contextoIrradiacaoPorRegiao={};
+        const regioes=inferirRegioes(hmaResultado,contexto,hma,semantica);
+        const principal=queixas.find(q=>q.principal);
+        if(principal?.regiaoId){
+            const i=regioes.findIndex(r=>r.id===principal.regiaoId);
+            if(i>0)regioes.unshift(...regioes.splice(i,1));
+        }
         const origensExplicitas=window.KineSysSemanticGraph?.entidades(String(contexto.origemIrradiacao||'').replace(/_/g,' ')).map(e=>e.regiaoId)||[];
         regioes.forEach(r=>{
             if(!semantica){hmaPorRegiao[r.id]=hma;leiturasPorRegiao[r.id]=hmaResultado;contextoIrradiacaoPorRegiao[r.id]={origemIrradiacao:contexto.origemIrradiacao||'',irradiacao:contexto.irradiacao||''};return;}
             contextoIrradiacaoPorRegiao[r.id]=origensExplicitas.includes(r.id)?{origemIrradiacao:contexto.origemIrradiacao||'',irradiacao:contexto.irradiacao||''}:{origemIrradiacao:'',irradiacao:''};
             hmaPorRegiao[r.id]=window.KineSysSemanticGraph.porRegiao(semantica,r.id).map(f=>f.compartilhado?f.proposicoes.filter(p=>p.estado!=='indeterminado').map(p=>`${p.estado==='negado'?'Nega':'Refere'} ${p.termo||p.conceito} ${p.contextoLocal||p.local||r.nome}${p.lado?' '+p.lado:''}`).join('. '):f.texto).join('. ');
+            const daRegiao=queixas.filter(q=>q.regiaoId===r.id);
+            if(daRegiao.length===1){
+                const [q]=daRegiao;
+                const complementos=[q.historia,...q.trechos].filter(t=>t&&!n(hmaPorRegiao[r.id]).includes(n(t)));
+                if(complementos.length)hmaPorRegiao[r.id]=combinarRelatos([hmaPorRegiao[r.id],...complementos]);
+            }
             leiturasPorRegiao[r.id]=analisarHistoria({...contexto,...contextoIrradiacaoPorRegiao[r.id]},hmaPorRegiao[r.id])||{sinais:[],diferenciais:[],lacunas:[]};
         });
         const contextoDaRegiao=r=>semantica?{...contexto,hmaRegional:hmaPorRegiao[r.id],...contextoIrradiacaoPorRegiao[r.id]}:contexto;
-        const hipoteses=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],false,hmaResultado.raciocinio)).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
+        const multiplasNaRegiao=new Set(regioes.filter(r=>queixas.filter(q=>q.regiaoId===r.id).length>1).map(r=>r.id));
+        const semHistoria=new Set(queixas.filter(q=>q.regiaoId&&!temHistoriaDaQueixa(q)&&!historiaOriginal).map(q=>q.regiaoId));
+        const individuais=new Map();
+        for(const q of queixas){
+            const regiao=regioes.find(r=>r.id===q.regiaoId);
+            const historia=combinarRelatos([q.historia,...q.trechos]);
+            if(!regiao||!temHistoriaDaQueixa(q))continue;
+            const texto=combinarRelatos([q.texto,historia]);
+            const local={...contexto,hmaRegional:texto,origemIrradiacao:'',irradiacao:'',mecanismo:'',fatoresPiora:[],eva:null};
+            const leitura=analisarHistoria(local,texto);
+            if(leitura)individuais.set(q.id,candidatosRegiao(regiao,local,leitura));
+        }
+        const candidatosIndividuais=regiaoId=>queixas.filter(q=>q.regiaoId===regiaoId).flatMap(q=>individuais.get(q.id)||[]);
+        const hipoteses=regioes.flatMap(r=>multiplasNaRegiao.has(r.id)
+            ? candidatosIndividuais(r.id)
+            : candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],false,hmaResultado.raciocinio)).sort((a,b)=>b.prioridadeOrdenacao-a.prioridadeOrdenacao);
         const modificadores=modificadoresContextuais(contexto);
         const exame=construirExame(hipoteses,hmaResultado,modificadores);
         let planoGerado={
@@ -525,7 +592,13 @@
         const todos=regioes.flatMap(r=>candidatosRegiao(r,contextoDaRegiao(r),leiturasPorRegiao[r.id],true,hmaResultado.raciocinio));
         catalogoHipoteses=Array.from(new Map([...todos,...arr(planoGerado.hipoteses)].map(h=>[chaveHipotese(h),h])).values())
             .filter(h=>regioesAtivas.has(h.regiaoId));
-        const porChave=new Map(arr(planoGerado.hipoteses).filter(h=>regioesAtivas.has(h.regiaoId)).map(h=>[chaveHipotese(h),h]));
+        const porChave=new Map(arr(planoGerado.hipoteses).filter(h=>regioesAtivas.has(h.regiaoId)&&!multiplasNaRegiao.has(h.regiaoId)&&!semHistoria.has(h.regiaoId)).map(h=>[chaveHipotese(h),h]));
+        for(const id of multiplasNaRegiao){
+            for(const h of candidatosIndividuais(id)){
+                const chave=chaveHipotese(h);
+                if(!porChave.has(chave)||porChave.get(chave).prioridadeOrdenacao<h.prioridadeOrdenacao)porChave.set(chave,h);
+            }
+        }
         catalogoHipoteses.filter(h=>hipotesesAdicionadas.has(chaveHipotese(h))).forEach(h=>porChave.set(chaveHipotese(h),h));
         catalogoHipoteses.filter(h=>window.obterEstadoRegiao?.(h.regiaoId)?.hipotesePrincipalAtiva===`${h.grupo}::${h.id}`)
             .forEach(h=>{if(!porChave.has(chaveHipotese(h)))porChave.set(chaveHipotese(h),h);});
@@ -573,12 +646,55 @@
         const grupos={};planoGerado.exame.testesPrioritarios.forEach(t=>{(grupos[t.tipo]||(grupos[t.tipo]=[])).push(t);});
         planoGerado.exame.analises=Object.entries(grupos).map(([tipo,itens])=>({tipo,titulo:ROTULOS_ANALISE[tipo]||tipo,itens}));
         planoGerado.exame.clusters=arr(planoGerado.exame.clusters).filter(h=>chavesAbertas.has(chaveHipotese(h)));
+        if(queixas.length){
+            planoGerado.queixas=queixas.map(q=>{
+                const unicas=queixas.filter(x=>x.regiaoId===q.regiaoId).length===1;
+                const chaves=new Set((individuais.get(q.id)||[]).map(chaveHipotese));
+                const hipoteses=planoGerado.hipoteses.filter(h=>h.regiaoId===q.regiaoId&&(unicas||chaves.has(chaveHipotese(h))));
+                return {...q,regiaoNome:indiceRegioes()[q.regiaoId]?.nome||'',hipoteses,
+                    testes:uniq(hipoteses.flatMap(h=>h.testes)),
+                    pendencia:!q.regiaoId?'Esclareça a localização da queixa.':!temHistoriaDaQueixa(q)?'Detalhe o início, o comportamento dos sintomas e as limitações desta queixa.':''};
+            });
+            planoGerado.hmaOriginal=historiaOriginal;
+        }
         ultimoPlano=planoGerado;
         return ultimoPlano;
     }
 
     function chip(texto,classe=''){ return `<span class="ks30-chip ${classe}">${esc(texto)}</span>`; }
+    function renderQueixas(plano){
+        const queixas=arr(plano?.queixas);
+        const porId=new Map(queixas.map(q=>[q.id,q]));
+        document.querySelectorAll('#ks_queixas_lista [data-queixa-id]').forEach(linha=>{
+            const campo=linha.querySelector('[data-queixa-regiao]');
+            const q=porId.get(linha.dataset.queixaId);
+            campo.hidden=!q;
+            campo.textContent=q?[q.regiaoNome,q.lado,q.pendencia].filter(Boolean).join(' · '):'';
+        });
+        const exame=document.getElementById('ks_queixas_exame');
+        if(!exame)return;
+        const abertas=new Set(Array.from(exame.querySelectorAll('details[open]'),d=>d.dataset.id));
+        exame.hidden=!queixas.length;
+        exame.innerHTML=queixas.map(q=>{
+            const textos=q.testes||[];
+            const hipoteses=q.hipoteses.map(h=>h.nome).join(' · ');
+            const motivo=q.historia||q.trechos.join(' ');
+            return `<details data-id="${esc(q.id)}"${abertas.has(q.id)?' open':''}>
+                <summary><strong>${esc(q.texto||'Queixa em esclarecimento')}</strong> ${q.principal?'· Principal':''}</summary>
+                ${q.pendencia?`<p>${esc(q.pendencia)}</p>`:''}
+                ${hipoteses?`<p>${esc(hipoteses)}</p>`:''}
+                ${motivo?`<p class="helper-text">${esc(motivo)}</p>`:''}
+                ${textos.length?`<ul>${textos.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
+                <button type="button" class="btn-link-compacto" data-registrar-queixa>Registrar achado desta queixa</button>
+            </details>`;
+        }).join('');
+        exame.querySelectorAll('[data-registrar-queixa]').forEach(botao=>botao.addEventListener('click',()=>{
+            const q=porId.get(botao.closest('details').dataset.id);
+            window.KineSysExameLivre?.selecionarQueixa(q);
+        }));
+    }
     function renderBridge(plano){
+        renderQueixas(plano);
         const host=document.getElementById('ks30_hma_bridge'); if(!host)return;
         if(!plano||plano.insuficiente){host.hidden=true;host.innerHTML='';return;}
         const top=plano.regioes.map(r=>plano.hipoteses.find(h=>h.regiaoId===r.id)).filter(Boolean);
@@ -611,7 +727,7 @@
         const c=contextoAtual();
         const cirurgias=arr(c?.cirurgias).map(x=>typeof x==='string'?x:(x?.texto||x?.nome||''));
         return JSON.stringify({
-            hma:n(hmaAtual()), origem:n(c?.origemIrradiacao||''), irradiacao:n(c?.irradiacao||''),
+            hma:n(hmaAtual()), queixas:queixasDaAvaliacao(), origem:n(c?.origemIrradiacao||''), irradiacao:n(c?.irradiacao||''),
             mecanismo:n(c?.mecanismo||''), idade:Number(c?.idade)||0,
             fatores:arr(c?.fatoresPiora).map(n).sort(),
             medicamentos:n(c?.textoMedicamentos||arr(c?.medicamentos).join(' ')),
@@ -712,7 +828,7 @@
         return{resumo,resultados};
     }
 
-    window.KineSysMotorClinico3={version:VERSION,ultimoPlano:null,gerarPlano,atualizar,auditoria,
+    window.KineSysMotorClinico3={version:VERSION,ultimoPlano:null,gerarPlano,atualizar,auditoria,agendar:agendarAtualizacao,
         listarHipotesesDisponiveis,adicionarHipotese,descartarHipotese,chaveHipotese,hipotesesManuais};
     window.gerarPlanoClinicoHMAKineSys=gerarPlano;
     window.obterPlanoExameHMAKineSys=function(idRegiao=''){

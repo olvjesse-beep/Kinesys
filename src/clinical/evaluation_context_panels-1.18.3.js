@@ -134,6 +134,101 @@
   if(alertas.length>2)root.append(el('p','context-radar-more','Mais '+(alertas.length-2)+' alerta(s). Abra Ver alertas para revisar todos.'));
  }
  window.KineSysContextoAnamnese={coletar,preencher,limpar,atualizarAlertas,atualizar:()=>paineis.forEach(atualizar)};
+
+ const porId=id=>document.getElementById(id);
+ let numeroQueixa=0;
+ function linhasQueixas(){return Array.from(porId('ks_queixas_lista')?.children||[]);}
+ function lerQueixas(){
+  if(!porId('ks_queixas_lista'))return null;
+  const queixas=linhasQueixas().map(linha=>({
+   id:linha.dataset.queixaId,
+   texto:linha.querySelector('[data-queixa-texto]').value.trim(),
+   historia:linha.querySelector('[data-queixa-hma]').value.trim()
+  })).filter(q=>q.texto||q.historia);
+  return queixas.map((q,i)=>({...q,principal:i===0}));
+ }
+ function rotularQueixas(){
+  const linhas=linhasQueixas();
+  linhas.forEach((linha,i)=>{
+   linha.querySelector('[data-queixa-label]').textContent=i===0?'Queixa principal':`Queixa adicional ${i}`;
+   linha.querySelector('[data-queixa-principal]').hidden=i===0;
+   linha.querySelector('[data-queixa-remover]').hidden=linhas.length===1;
+  });
+  const extras=porId('ks_queixas_multiplas'),adicionar=porId('ks_queixas_adicionar');
+  extras.checked=extras.checked||linhas.length>1;
+  extras.disabled=linhas.length>1;
+  adicionar.hidden=!extras.checked;
+ }
+ function criarQueixa(queixa={}){
+  const linha=porId('ks_queixas_modelo').content.firstElementChild.cloneNode(true);
+  linha.dataset.queixaId=queixa.id||globalThis.crypto?.randomUUID?.()||`queixa-${Date.now()}-${++numeroQueixa}`;
+  for(const [campo,label,valor] of [['texto','label',queixa.texto],['hma','hma-label',queixa.historia]]){
+   const input=linha.querySelector(`[data-queixa-${campo}]`);
+   input.id=`ks_queixa_${++numeroQueixa}`;
+   linha.querySelector(`[data-queixa-${label}]`).htmlFor=input.id;
+   input.value=valor||'';
+  }
+  linha.querySelector('[data-queixa-hma-label]').textContent='História desta queixa';
+  linha.querySelector('details').open=Boolean(queixa.historia);
+  porId('ks_queixas_lista').append(linha);
+  return linha;
+ }
+ function preencherQueixas(queixas){
+  const lista=porId('ks_queixas_lista');
+  if(!lista)return;
+  lista.replaceChildren();
+  const dados=Array.isArray(queixas)?queixas.filter(q=>q&&typeof q.id==='string'):[];
+  const principal=dados.find(q=>q.principal);
+  for(const q of principal?[principal,...dados.filter(item=>item!==principal)]:dados)criarQueixa(q);
+  if(!dados.length)criarQueixa();
+  porId('ks_queixas_multiplas').checked=dados.length>1;
+  rotularQueixas();
+  const exame=porId('ks_queixas_exame');
+  if(exame){
+   exame.hidden=true;
+   exame.replaceChildren();
+  }
+  window.KineSysExameLivre?.atualizarOpcoes();
+ }
+ function notificarQueixas(){
+  window.agendarAutosaveKineSys?.();
+  window.KineSysExameLivre?.atualizarOpcoes();
+  window.KineSysMotorClinico3?.agendar?.();
+ }
+ function iniciarQueixas(){
+  const root=porId('ks_queixas_avaliacao');
+  if(!root||root.dataset.bound)return;
+  root.dataset.bound='true';
+  const salvo=typeof clinicaEstruturadaPreservada!=='undefined'?clinicaEstruturadaPreservada.queixas:null;
+  preencherQueixas(salvo);
+  root.addEventListener('input',e=>{if(e.target.matches('[data-queixa-texto],[data-queixa-hma]'))notificarQueixas();});
+  porId('ks_queixas_multiplas').addEventListener('change',rotularQueixas);
+  root.addEventListener('click',e=>{
+   const button=e.target.closest('button');
+   if(!button)return;
+   if(button.id==='ks_queixas_adicionar'){
+    criarQueixa().querySelector('[data-queixa-texto]').focus();
+   }else if(button.matches('[data-queixa-principal]')){
+    const linha=button.closest('[data-queixa-id]');
+    if(!linha.querySelector('[data-queixa-texto]').value.trim()){
+     linha.querySelector('[data-queixa-texto]').focus();
+     return;
+    }
+    porId('ks_queixas_lista').prepend(linha);
+   }else if(button.matches('[data-queixa-remover]')){
+    const linha=button.closest('[data-queixa-id]');
+    const vinculada=window.KineSysExameLivre?.registros().some(r=>r.queixaId===linha.dataset.queixaId);
+    if(vinculada&&!window.confirm('Remover a queixa? Os achados serão mantidos no exame com a descrição da queixa original.'))return;
+    linha.remove();
+   }else return;
+   rotularQueixas();
+   notificarQueixas();
+  });
+ }
+ window.KineSysQueixasAvaliacao={coletar:lerQueixas,preencher:preencherQueixas};
+ document.addEventListener('kinesys:tela-dom-pronta',e=>{if(e.detail?.id==='tela_avaliacao')iniciarQueixas();});
+ document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_avaliacao')iniciarQueixas();});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarQueixas,{once:true});else iniciarQueixas();
  document.addEventListener('kinesys:tela-dom-pronta',e=>{if(e.detail?.id==='tela_avaliacao')iniciar();});
  document.addEventListener('kinesys:tela-ativada',e=>{if(e.detail?.id==='tela_avaliacao'){iniciar();iniciarSincronizacaoContexto();}});
  document.addEventListener('kinesys:tela-desativada',event=>{if(event.detail?.id==='tela_avaliacao'){pararSincronizacaoContexto();if(aberto)fechar(false);}});

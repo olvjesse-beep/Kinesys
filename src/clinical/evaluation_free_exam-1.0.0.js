@@ -18,8 +18,13 @@
         }))));
     }
     function resolver(registro){return catalogo(registro.regiaoId).find(t=>t.chave===registro.vinculo&&(!registro.criterioCatalogo||registro.criterioCatalogo===t.texto))||null;}
-    function limparCampos(){['texto','resultado','vinculo','lado'].forEach(chave=>{const el=node('ks_exame_livre_'+chave);if(el)el.value='';});}
-    function lerCampos(){return Object.fromEntries(['regiaoId','texto','resultado','vinculo','lado'].map(chave=>[chave,node('ks_exame_livre_'+chave)?.value||'']));}
+    function limparCampos(){['texto','resultado','vinculo','lado','queixaId'].forEach(chave=>{const el=node('ks_exame_livre_'+chave);if(el)el.value='';});}
+    function lerCampos(){
+        const campos=Object.fromEntries(['regiaoId','texto','resultado','vinculo','lado','queixaId'].map(chave=>[chave,node('ks_exame_livre_'+chave)?.value||'']));
+        const q=(window.KineSysQueixasAvaliacao?.coletar()||[]).find(item=>item.id===campos.queixaId);
+        campos.queixaTexto=q?.texto|| (campos.queixaId===estado.rascunho?.queixaId?estado.rascunho.queixaTexto||'':'');
+        return campos;
+    }
     function registro(r,id){return {...clone(r),id,regiao:banco()[r.regiaoId]?.nome||r.regiao||'Região não especificada',resultado:resultadoValido(r.resultado)?r.resultado:'descritivo'};}
     function coletar(){conferir();return clone(estado);}
     function registros(){
@@ -32,7 +37,7 @@
         estado.versao=1;estado.registros=Array.isArray(estado.registros)?estado.registros.filter(r=>r&&typeof r.texto==='string'):[];
         estado.rascunho=estado.rascunho&&typeof estado.rascunho==='object'?estado.rascunho:{};
         limparCampos();atualizarOpcoes();
-        ['regiaoId','texto','resultado','vinculo','lado'].forEach(chave=>{const el=node('ks_exame_livre_'+chave),valor=estado.rascunho[chave]||'';if(el)el.value=chave==='resultado'&&!resultadoValido(valor)?'':valor;if(chave==='regiaoId')atualizarVinculos();});
+        ['regiaoId','texto','resultado','vinculo','lado','queixaId'].forEach(chave=>{const el=node('ks_exame_livre_'+chave),valor=estado.rascunho[chave]||'';if(el)el.value=chave==='resultado'&&!resultadoValido(valor)?'':valor;if(chave==='regiaoId')atualizarVinculos();});
         const status=node('ks_exame_livre_status');if(status)status.textContent=estado.rascunho.id?'Registro em edição: use Adicionar ao exame para salvar este registro.':'';
         renderLista();
     }
@@ -54,12 +59,42 @@
         if(Array.from(select.options).some(o=>o.value===atual))select.value=atual;
     }
     function atualizarOpcoes(){
+        const queixa=node('ks_exame_livre_queixaId'),grupo=node('ks_exame_livre_queixa_grupo');
+        if(queixa&&grupo){
+            const atual=queixa.value||estado.rascunho.queixaId||'';
+            const disponiveis=(window.KineSysQueixasAvaliacao?.coletar()||[]).filter(q=>q.texto);
+            queixa.replaceChildren(new Option('Sem vínculo a uma queixa',''));
+            disponiveis.forEach(q=>queixa.add(new Option(q.texto,q.id)));
+            if(atual&&!disponiveis.some(q=>q.id===atual)&&estado.rascunho.queixaTexto)queixa.add(new Option(estado.rascunho.queixaTexto,atual));
+            queixa.value=Array.from(queixa.options).some(o=>o.value===atual)?atual:'';
+            grupo.hidden=queixa.options.length<2;
+        }
         const select=node('ks_exame_livre_regiaoId');if(!select)return;
         const atual=select.value||estado.rascunho.regiaoId||'';
         select.replaceChildren(new Option('Sem região definida',''));
         Object.entries(banco()).forEach(([id,r])=>select.appendChild(new Option(r.nome||id,id)));
         if(Array.from(select.options).some(o=>o.value===atual))select.value=atual;
         atualizarVinculos();
+    }
+    function selecionarQueixa(q){
+        if(!q)return;
+        const texto=node('ks_exame_livre_texto'),selecionada=node('ks_exame_livre_queixaId');
+        if(!texto||!selecionada)return;
+        if(texto.value.trim()&&selecionada.value!==q.id){
+            node('ks_exame_livre_status').textContent='Adicione o achado em preenchimento antes de trocar a queixa.';
+            texto.focus();
+            return;
+        }
+        atualizarOpcoes();
+        const mudou=selecionada.value!==q.id;
+        selecionada.value=q.id;
+        const regiao=node('ks_exame_livre_regiaoId'),lado=node('ks_exame_livre_lado');
+        if(mudou||!regiao.value)regiao.value=Array.from(regiao.options).some(o=>o.value===q.regiaoId)?q.regiaoId:'';
+        if(mudou||!lado.value)lado.value=q.lado||'';
+        atualizarVinculos();
+        estado.rascunho={...estado.rascunho,...lerCampos()};
+        notificar();
+        texto.focus();
     }
     function conflitosTexto(r,t){
         const texto=norm(r.texto),teste=norm(t.texto),semLado=!r.lado||r.lado==='nao_informado';
@@ -73,6 +108,7 @@
     function situacao(r){
         const t=resolver(r);
         if(r.rascunho)return {tipo:'rascunho',mensagem:'Texto em preenchimento: incluído como descrição, sem confirmar critérios.'};
+        if(r.queixaId)return {tipo:'descritivo',mensagem:'Achado registrado para a queixa. O resultado permanece separado do exame geral da região.'};
         const assunto=window.KineSysDocumentAnalyzer?.classificarAnotacaoLivre?.(r.texto);
         if(t&&assunto&&assunto.tipo!=='exame_livre')return {tipo:'revisar',mensagem:'O texto registra um antecedente ou contexto, não um resultado de teste. Revise o vínculo; a anotação será preservada no relatório.'};
         if(!t||!resultadoValido(r.resultado))return {tipo:'descritivo',mensagem:'Achado descritivo: preservado no relatório, sem confirmar critérios do catálogo.'};
@@ -118,7 +154,7 @@
         const lista=node('ks_exame_livre_registros');if(!lista)return;lista.replaceChildren();
         estado.registros.forEach(r=>{
             const row=document.createElement('article');row.className='ks-free-exam-record';
-            const title=document.createElement('strong');title.textContent=[r.regiao,r.lado&&r.lado!=='nao_informado'?r.lado:'',r.resultado==='descritivo'?'Descrição':r.resultado].filter(Boolean).join(' · ');
+            const title=document.createElement('strong');title.textContent=[r.queixaTexto,r.regiao,r.lado&&r.lado!=='nao_informado'?r.lado:'',r.resultado==='descritivo'?'Descrição':r.resultado].filter(Boolean).join(' · ');
             const texto=document.createElement('p');texto.textContent=r.texto;
             const status=document.createElement('small');status.textContent=situacao(r).mensagem;
             const remove=document.createElement('button');remove.type='button';remove.className='btn-secondary';remove.textContent='Editar registro';
@@ -153,7 +189,7 @@
     const coletorBase=window.coletarAchadosLaudoKineSys;
     if(typeof coletorBase==='function')window.coletarAchadosLaudoKineSys=()=>integrar(coletorBase());
     const documentar=()=>registros().map(r=>({...r,referencia:resolver(r),situacao:situacao(r)}));
-    window.KineSysExameLivre={coletar,preencher,registros,documentar,adicionar,integrar,situacao,catalogo,inicializar,atualizarOpcoes};
+    window.KineSysExameLivre={coletar,preencher,registros,documentar,adicionar,integrar,situacao,catalogo,inicializar,atualizarOpcoes,selecionarQueixa};
     window.posicionarRadarAvaliacaoKineSys=posicionarRadar;
     document.addEventListener('kinesys:motor3-plano-atualizado',()=>{atualizarOpcoes();renderLista();});
     document.addEventListener('kinesys:tela-dom-pronta',e=>{if(e.detail?.id==='tela_avaliacao')inicializar();});

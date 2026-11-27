@@ -63,5 +63,28 @@ caso('trajeto do campo estruturado não vaza de cervical para joelho',()=>{
   assert(!p.hipoteses.filter(h=>h.regiaoId==='joelho').some(h=>h.motivos?.some(m=>/dormencia|dormência/.test(m))));
  }finally{env.coletarContextoClinico=anterior;}
 });
+caso('queixa principal sem anamnese orienta região e pede história',()=>{
+ env.KineSysQueixasAvaliacao={coletar:()=>[{id:'1',texto:'Dor no ombro direito',principal:true,historia:''}]};
+ try{
+  const p=gerar('');
+  assert.equal(p.regioes[0].id,'ombro');
+  assert.equal(p.queixas[0].lado,'direito');
+  assert(p.queixas[0].pendencia);
+  assert.equal(p.queixas[0].testes.length,0);
+ }finally{delete env.KineSysQueixasAvaliacao;}
+});
+caso('queixas da mesma região mantêm história de cada lado e termo ambíguo fica sem vínculo',()=>{
+ const q=[{id:'d',texto:'Dor no joelho direito',principal:true,historia:'Dor anterior no joelho direito ao agachar e subir escadas.'},
+  {id:'e',texto:'Dor no joelho esquerdo',principal:false,historia:''}];
+ env.KineSysQueixasAvaliacao={coletar:()=>q};
+ try{
+  const p=gerar('Dor no joelho esquerdo depois de torção, com travamento. Dor no joelho pior pela manhã.');
+  assert.equal(p.queixas[0].lado,'direito');
+  assert.equal(p.queixas[1].lado,'esquerdo');
+  assert(p.queixas[0].testes.length);
+  assert(p.queixas[1].trechos.some(t=>t.includes('torção')));
+  assert(p.queixas.every(item=>item.trechos.every(t=>!t.includes('manhã'))));
+ }finally{delete env.KineSysQueixasAvaliacao;}
+});
 console.log(`${total} cenários com analisador HMA e bancos clínicos reais OK.`);
 module.exports={env,gerar,limpar(){selecionadas=[];controles=[];achados=[];}};

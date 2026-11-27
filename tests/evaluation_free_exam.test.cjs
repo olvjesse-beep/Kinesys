@@ -15,6 +15,21 @@ function setup(){
     return {t,api,add,testes,next(){contexto={pacienteId:'sintetico-b',avaliacaoId:'avaliacao-b',revisao:2};},changeHMA(){fp='historia-b';}};
 }
 {
+    const f=setup();
+    f.add(0,{queixaId:'q1',queixaTexto:'Dor cervical direita'});
+    f.add(0,{queixaId:'q2',queixaTexto:'Dormência no braço esquerdo',lado:'esquerdo',resultado:'negativo'});
+    const salvo=f.api.coletar();
+    f.api.preencher(JSON.parse(JSON.stringify(salvo)));
+    assert.deepEqual(Array.from(f.api.registros(),r=>[r.queixaId,r.lado,r.resultado]),
+        [['q1','direito','positivo'],['q2','esquerdo','negativo']]);
+    assert.equal(f.api.integrar([]).length,0);
+    const r=f.t.render();
+    assert.match(r.texto,/queixa «Dor cervical direita»/);
+    assert.match(r.texto,/queixa «Dormência no braço esquerdo»/);
+    f.next();
+    assert.equal(f.api.registros().length,0);
+}
+{
     const f=setup();f.api.adicionar({regiaoId:'cervical',lado:'direito',texto:'Rotação cervical direita: 45 graus, com dor familiar. Medida repetida duas vezes.'});
     f.api.adicionar({regiaoId:'ombro',lado:'esquerdo',texto:'No ombro esquerdo, observada limitação durante elevação ativa.'});
     const r=f.t.render();
