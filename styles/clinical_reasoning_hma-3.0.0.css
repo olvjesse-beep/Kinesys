@@ -201,3 +201,23 @@
   #tela_avaliacao .ks30-plan-overview span{padding-right:6px}
   #tela_avaliacao .ks30-hypothesis{padding:10px}
 }
+.ks-queixas-avaliacao {
+    display: grid;
+    gap: .65rem;
+    margin-block-end: 1rem;
+}
+.ks-queixas-avaliacao [hidden], .ks-queixas-avaliacao[hidden] { display: none; }
+.ks-queixa-item {
+    display: grid;
+    gap: .35rem;
+    margin-block-end: .65rem;
+}
+.ks-queixas-toggle, .ks-queixa-acoes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+.ks-queixas-toggle input[type="checkbox"] { width: auto; flex: none; }
+.ks-queixas-avaliacao details > summary { cursor: pointer; }
+.ks-queixas-avaliacao ul { margin-block: .4rem; padding-inline-start: 1.25rem; }

@@ -82,7 +82,13 @@
         const sintese=gerarSinteseMapeamento(),achados=window.coletarAchadosLaudoKineSys?.()||[],seguranca=window.validarSegurancaParaFinalizacao();
         let planoAtual=window.KineSysMotorClinico3?.ultimoPlano||window.gerarPlanoClinicoHMAKineSys?.()||null;
         const hmaFonte=document.getElementById('paciente_hma')?.value?.trim()||'';
-        if(window.KineSysEvidenceReasoning&&planoAtual?.raciocinio?.origemHMA!==hmaFonte)planoAtual=window.gerarPlanoClinicoHMAKineSys?.()||planoAtual;
+        const queixas=window.KineSysQueixasAvaliacao?.coletar()||
+            (typeof clinicaEstruturadaPreservada!=='undefined'?clinicaEstruturadaPreservada.queixas:[])||[];
+        const dadosQueixas=lista=>(lista||[]).map(q=>[q.id,q.texto,q.historia,q.principal]);
+        if(JSON.stringify(dadosQueixas(queixas))!==JSON.stringify(dadosQueixas(planoAtual?.queixas))||
+            (window.KineSysEvidenceReasoning&&(planoAtual?.hmaOriginal??planoAtual?.raciocinio?.origemHMA)!==hmaFonte)){
+            planoAtual=window.gerarPlanoClinicoHMAKineSys?.()||planoAtual;
+        }
         const plano=planoAtual?{
             versao:planoAtual.versao||'',
             insuficiente:!!planoAtual.insuficiente,
@@ -148,8 +154,8 @@
         const campoDiagnostico=document.getElementById('avaliacao_diagnostico_profissional');
         const diagnosticoProfissional=limparTextoClinico(campoDiagnostico?campoDiagnostico.value:preservado.diagnosticoProfissional);
         if(restricoes.ativo)historia.push('Restrições pós-operatórias: '+Object.entries(restricoes).filter(([k,v])=>k!=='ativo'&&v).map(([k,v])=>k+': '+v).join('; '));
-        const fonte=JSON.stringify({identificacao,historia,campos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,plano,resumo:sintese.resumoPorRegiao.map(r=>({regiao:r.regiao,texto:r.textoDocumento,hipotese:r.hipotese,nome:r.nomeHipotese,nivel:r.nivel,anamnese:r.hipotesesAnamnese||[],redFlags:r.redFlags,conduta:r.redflagConduta,justificativa:r.redflagJustificativa})),achados,seguranca:sintese.segurancaGlobal,...(diagnosticoProfissional?{diagnosticoProfissional}:{})});
-        return {identificacao,historia,campos,rotulosCampos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,diagnosticoProfissional,plano,sintese,achados,seguranca,fonte,compativeis:achados.filter(a=>a.completo&&a.status==='positivo')};
+        const fonte=JSON.stringify({identificacao,historia,campos,gruposAnamnese,complementos,contextoAnamnese,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,plano,resumo:sintese.resumoPorRegiao.map(r=>({regiao:r.regiao,texto:r.textoDocumento,hipotese:r.hipotese,nome:r.nomeHipotese,nivel:r.nivel,anamnese:r.hipotesesAnamnese||[],redFlags:r.redFlags,conduta:r.redflagConduta,justificativa:r.redflagJustificativa})),achados,seguranca:sintese.segurancaGlobal,...(queixas.length?{queixas}:{}),...(diagnosticoProfissional?{diagnosticoProfissional}:{})});
+        return {identificacao,historia,campos,rotulosCampos,gruposAnamnese,complementos,contextoAnamnese,queixas,exameLivre,regioesSelecionadas,restricoes,funcional,profissional,diagnosticoProfissional,plano,sintese,achados,seguranca,fonte,compativeis:achados.filter(a=>a.completo&&a.status==='positivo')};
     }
     function limparTextoClinico(value){return String(value||'').replace(/\s+/g,' ').replace(/\s+([,.;:])/g,'$1').trim();}
     function fraseClinica(value){const texto=limparTextoClinico(value);if(!texto)return'';return texto.charAt(0).toUpperCase()+texto.slice(1).replace(/[.;:,\s]+$/,'')+'.';}
@@ -598,6 +604,13 @@
         };
         const paragrafos=planejarRelato(relato),relacoes=[...relato.relacoes];
         adicionar('identificacao',secaoIdentificacao(d,relato),[{campo:'paciente_nome'},{campo:'paciente_idade'},{campo:'paciente_ocupacao'},{campo:'avaliacao_realizado_em'},{campo:'paciente_hma',tratamento:'motivo_documental'}]);
+        const frasesDaHma=new Set(frasesDoRelato(relato.origem).map(t=>normalizar(fraseClinica(t))));
+        for(const q of d.queixas||[]){
+            const titulo=q.texto?fraseClinica((q.principal?'A queixa principal relatada foi ':'Também refere ')+minusculaInicial(q.texto)):'';
+            const historia=frasesDoRelato(q.historia).map(fraseClinica)
+                .filter(t=>t&&normalizar(t)!==normalizar(fraseClinica(q.texto))&&!frasesDaHma.has(normalizar(t))).join(' ');
+            adicionar('queixa',[titulo,historia].filter(Boolean).join(' '),[{campo:'clinicaEstruturada.queixas',queixaId:q.id}]);
+        }
         paragrafos.forEach(p=>blocos.push(p));
         // Composição estruturada existente, mas sem copiar a HMA novamente.
         const semRelato={...d,relatoParaDedupe:relato.origem,campos:{...d.campos,paciente_hma:'',hma:''}};
@@ -639,7 +652,9 @@
         (d.exameLivre||[]).filter(r=>String(r.texto||'').trim()).forEach(r=>{
             const documental=documentarExameLivreNoLaudo(r);
             documental.blocos.forEach(b=>{
-                const id=adicionar(b.tipo,b.texto,[{campo:'clinicaEstruturada.exameLivre',registroId:r.id,trechos:b.trechos.map(t=>({inicio:t.inicio,fim:t.fim}))}]);
+                const queixa=b.tipo==='exame_livre'&&r.queixaId?r.queixaTexto:'';
+                const texto=queixa?`Para a queixa «${limparTextoClinico(queixa)}», foi registrado o seguinte achado. ${b.texto}`:b.texto;
+                const id=adicionar(b.tipo,texto,[{campo:'clinicaEstruturada.exameLivre',registroId:r.id,queixaId:r.queixaId,trechos:b.trechos.map(t=>({inicio:t.inicio,fim:t.fim}))}]);
                 const fato=fatos.find(f=>f.id===id);if(fato){fato.regiaoId=r.regiaoId||'';fato.resultado=r.resultado||'descritivo';fato.textoOriginal=r.texto;fato.lado=r.lado||'';fato.trechosDocumentais=b.trechos;fato.situacao=clone(r.situacao||{});fato.assuntoDocumental=b.tipo;}
                 if(b.tipo==='exame_livre')relato.fatos.filter(f=>b.trechos.some(t=>t.realizado&&!t.localizacaoDivergente&&t.regiaoId&&f.atributos.regioes.includes(t.regiaoId))).forEach(f=>relacoes.push({tipo:'mesma_regiao_documentada',de:f.id,para:id}));
             });
@@ -850,7 +865,7 @@
         // Reutiliza uma declaração própria explícita, não a hipótese do Radar,
         // um familiar, negativa, destino de irradiação ou prioridade presumida.
         const motivo=relato?.fatos.find(f=>['queixa','associados'].includes(f.categoria)&&f.proposicoes?.length&&f.proposicoes.every(p=>p.sujeito==='paciente'&&p.estado==='relatado')&&f.proposicoes.some(p=>p.tipo==='sintoma'&&p.papel!=='destino_trajeto'));
-        if(motivo)linhas.push(`Motivo da avaliação (conforme relato): ${fraseClinica(frasesDoRelato(motivo.redacao)[0].replace(/^(?:Refere|Relata)(?: que)?\s+/i,'').replace(/,\s.+$/,''))}`);
+        if(motivo&&!d.queixas?.some(q=>q.principal&&q.texto))linhas.push(`Motivo da avaliação (conforme relato): ${fraseClinica(frasesDoRelato(motivo.redacao)[0].replace(/^(?:Refere|Relata)(?: que)?\s+/i,'').replace(/,\s.+$/,''))}`);
         return `RELATÓRIO FISIOTERAPÊUTICO\n\n${linhas.join('\n')}`;
     }
     function valoresUnicos(valores){

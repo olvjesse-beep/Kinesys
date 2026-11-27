@@ -3,6 +3,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const {fixture}=require('./evaluation_report_integration.test.cjs');
 const source=fs.readFileSync('src/clinical/clinical_engine-1.17.0.js','utf8');
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS report/radar: '+name);};
+test('queixa principal e história adicional chegam à narrativa com origem própria',()=>{
+ const t=fixture();
+ t.c.window.KineSysQueixasAvaliacao={coletar:()=>[
+  {id:'1',texto:'Dor no ombro direito',principal:true,historia:'A dor no ombro direito começou há duas semanas.'},
+  {id:'2',texto:'Dor no joelho esquerdo',principal:false,historia:'A dor no joelho esquerdo limita a descida de escadas.'}
+ ]};
+ const r=t.render();
+ assert.match(r.texto,/queixa principal relatada foi dor no ombro direito/i);
+ assert.match(r.texto,/Também refere dor no joelho esquerdo/i);
+ assert.match(r.texto,/dor no joelho esquerdo limita a descida de escadas/i);
+});
 test('known note labels become audited structure, never extra narrative headings',()=>{
  const t=fixture(),hma='HMA:\nQueixa principal: Paciente apresenta dor no pescoço direito há 3 meses.\nSintomas associados: Dormência na mão direita.';
  t.fields[2].value=hma;const r=t.render();
