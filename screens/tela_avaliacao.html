@@ -80,9 +80,19 @@
                             </div>
                             <div class="input-group hma-principal">
                                 <section id="ks_queixas_avaliacao" class="ks-queixas-avaliacao" aria-label="Queixas da avaliação">
-                                    <div id="ks_queixas_lista"></div>
-                                    <label class="ks-queixas-toggle"><input type="checkbox" id="ks_queixas_multiplas" data-no-autosave data-context-ui="true"> Paciente apresenta outras queixas</label>
-                                    <button type="button" class="btn-secondary" id="ks_queixas_adicionar" hidden>Adicionar queixa</button>
+                                    <div id="ks_queixas_lista">
+                                        <div id="ks_queixa_principal_linha"></div>
+                                        <div class="ks-queixas-linha">
+                                            <label class="ks-queixas-toggle">
+                                                <input type="checkbox" id="ks_queixas_multiplas" aria-controls="ks_queixas_adicionais" data-no-autosave data-context-ui="true">
+                                                <span>Paciente apresenta queixas em outros segmentos</span>
+                                            </label>
+                                            <div id="ks_queixas_adicionais" class="ks-queixas-adicionais" hidden>
+                                                <div id="ks_queixas_adicionais_lista"></div>
+                                                <button type="button" class="btn-link-compacto" id="ks_queixas_adicionar">Adicionar outra queixa</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <template id="ks_queixas_modelo">
                                         <div class="ks-queixa-item">
                                             <div class="input-group"><label data-queixa-label></label><input type="text" data-queixa-texto data-no-autosave data-context-ui="true" placeholder="Ex.: Dor no ombro direito ao levantar o braço"></div>
