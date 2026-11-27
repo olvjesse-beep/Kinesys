@@ -136,6 +136,7 @@
  window.KineSysContextoAnamnese={coletar,preencher,limpar,atualizarAlertas,atualizar:()=>paineis.forEach(atualizar)};
 
  const porId=id=>document.getElementById(id);
+ const historiasSalvas=new WeakMap();
  let numeroQueixa=0;
  function linhasQueixas(){return Array.from(porId('ks_queixas_lista')?.children||[]);}
  function lerQueixas(){
@@ -143,7 +144,7 @@
   const queixas=linhasQueixas().map(linha=>({
    id:linha.dataset.queixaId,
    texto:linha.querySelector('[data-queixa-texto]').value.trim(),
-   historia:linha.querySelector('[data-queixa-hma]').value.trim()
+   historia:historiasSalvas.get(linha)||''
   })).filter(q=>q.texto||q.historia);
   return queixas.map((q,i)=>({...q,principal:i===0}));
  }
@@ -158,18 +159,30 @@
   extras.checked=extras.checked||linhas.length>1;
   extras.disabled=linhas.length>1;
   adicionar.hidden=!extras.checked;
+  const ajuda=porId('paciente_hma_ajuda');
+  if(ajuda)ajuda.hidden=linhas.length<2;
+  renderizarDetalhesSalvos();
+ }
+ function renderizarDetalhesSalvos(){
+  const detalhes=porId('ks_hma_detalhes_salvos');
+  if(!detalhes)return;
+  const itens=(lerQueixas()||[]).filter(q=>q.historia.trim()).map(q=>{
+   const item=el('li');
+   item.append(el('strong','',q.texto||'Queixa sem título'),el('p','',q.historia));
+   return item;
+  });
+  detalhes.querySelector('ul').replaceChildren(...itens);
+  detalhes.hidden=!itens.length;
+  if(detalhes.hidden)detalhes.open=false;
  }
  function criarQueixa(queixa={}){
   const linha=porId('ks_queixas_modelo').content.firstElementChild.cloneNode(true);
   linha.dataset.queixaId=queixa.id||globalThis.crypto?.randomUUID?.()||`queixa-${Date.now()}-${++numeroQueixa}`;
-  for(const [campo,label,valor] of [['texto','label',queixa.texto],['hma','hma-label',queixa.historia]]){
-   const input=linha.querySelector(`[data-queixa-${campo}]`);
-   input.id=`ks_queixa_${++numeroQueixa}`;
-   linha.querySelector(`[data-queixa-${label}]`).htmlFor=input.id;
-   input.value=valor||'';
-  }
-  linha.querySelector('[data-queixa-hma-label]').textContent='História desta queixa';
-  linha.querySelector('details').open=Boolean(queixa.historia);
+  const input=linha.querySelector('[data-queixa-texto]');
+  input.id=`ks_queixa_${++numeroQueixa}`;
+  linha.querySelector('[data-queixa-label]').htmlFor=input.id;
+  input.value=queixa.texto||'';
+  if(typeof queixa.historia==='string')historiasSalvas.set(linha,queixa.historia);
   porId('ks_queixas_lista').append(linha);
   return linha;
  }
@@ -201,7 +214,11 @@
   root.dataset.bound='true';
   const salvo=typeof clinicaEstruturadaPreservada!=='undefined'?clinicaEstruturadaPreservada.queixas:null;
   preencherQueixas(salvo);
-  root.addEventListener('input',e=>{if(e.target.matches('[data-queixa-texto],[data-queixa-hma]'))notificarQueixas();});
+  root.addEventListener('input',e=>{
+   if(!e.target.matches('[data-queixa-texto]'))return;
+   if(historiasSalvas.get(e.target.closest('[data-queixa-id]')))renderizarDetalhesSalvos();
+   notificarQueixas();
+  });
   porId('ks_queixas_multiplas').addEventListener('change',rotularQueixas);
   root.addEventListener('click',e=>{
    const button=e.target.closest('button');
@@ -218,7 +235,10 @@
    }else if(button.matches('[data-queixa-remover]')){
     const linha=button.closest('[data-queixa-id]');
     const vinculada=window.KineSysExameLivre?.registros().some(r=>r.queixaId===linha.dataset.queixaId);
-    if(vinculada&&!window.confirm('Remover a queixa? Os achados serão mantidos no exame com a descrição da queixa original.'))return;
+    const temHistoria=Boolean(historiasSalvas.get(linha)?.trim());
+    const pergunta=temHistoria?'Remover esta queixa e os detalhes registrados nela?':'Remover esta queixa?';
+    const aviso=vinculada?' Os achados serão mantidos no exame com a descrição da queixa original.':'';
+    if((vinculada||temHistoria)&&!window.confirm(pergunta+aviso))return;
     linha.remove();
    }else return;
    rotularQueixas();

@@ -160,4 +160,33 @@ function evaluationLayoutSettles(){
  mutations.disconnect();
  w.close();
 }
-(async()=>{presentation();await navigation();await team();await finance();agendaMobilePresentation();evaluationLayoutSettles();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});
+function evaluationSingleHma(){
+ if(!process.env.JSDOM_MODULE)return;
+ const {JSDOM}=require(process.env.JSDOM_MODULE);
+ const dom=new JSDOM(read('screens/tela_avaliacao.html'),{runScripts:'outside-only'});
+ const w=dom.window,d=w.document;
+ try{
+  w.eval(read('src/clinical/evaluation_context_panels-1.18.3.js'));
+  d.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const queixas=w.KineSysQueixasAvaliacao;
+  const principal={id:'ombro',texto:'Dor no ombro direito',historia:'Começou há dois dias.\nLimita elevar o braço.',principal:true};
+  const secundaria={id:'joelho',texto:'Dor no joelho esquerdo',historia:'',principal:false};
+  const hma=d.getElementById('paciente_hma');
+  hma.value='Relato original da avaliação.';
+  queixas.preencher([principal,secundaria]);
+  assert.equal(d.querySelector('.hma-entry-card').querySelectorAll('textarea').length,1);
+  assert.equal(hma.value,'Relato original da avaliação.');
+  assert.deepEqual(JSON.parse(JSON.stringify(queixas.coletar())),[principal,secundaria]);
+  const detalhes=d.getElementById('ks_hma_detalhes_salvos');
+  assert.equal(detalhes.hidden,false);
+  assert.equal(detalhes.querySelector('li p').textContent,principal.historia);
+  assert.equal(d.getElementById('paciente_hma_ajuda').hidden,false);
+  d.querySelectorAll('[data-queixa-principal]')[1].click();
+  assert.equal(queixas.coletar()[1].historia,principal.historia,'mudar a ordem mantém o relato da queixa original');
+  queixas.preencher();
+  assert.equal(queixas.coletar().length,0);
+  assert.equal(detalhes.hidden,true);
+  assert.equal(detalhes.querySelectorAll('li').length,0);
+ }finally{w.close();}
+}
+(async()=>{presentation();await navigation();await team();await finance();agendaMobilePresentation();evaluationLayoutSettles();evaluationSingleHma();console.log('interface_audit_regression: OK (rotas concorrentes, erro/vazio/carga, Unicode, datas e contratos visuais)');})().catch(error=>{console.error(error);process.exitCode=1;});

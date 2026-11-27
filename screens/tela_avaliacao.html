@@ -88,14 +88,16 @@
                                             <div class="input-group"><label data-queixa-label></label><input type="text" data-queixa-texto data-no-autosave data-context-ui="true" placeholder="Ex.: Dor no ombro direito ao levantar o braço"></div>
                                             <p data-queixa-regiao class="helper-text" hidden></p>
                                             <div class="ks-queixa-acoes"><button type="button" class="btn-link-compacto" data-queixa-principal>Definir como principal</button><button type="button" class="btn-link-compacto" data-queixa-remover>Remover queixa</button></div>
-                                            <details><summary>Detalhar esta queixa na HMA</summary>
-                                                <div class="input-group"><label data-queixa-hma-label></label><textarea data-queixa-hma data-no-autosave data-context-ui="true" rows="2" placeholder="Quando começou, como evoluiu, o que piora ou alivia e o que limita"></textarea></div>
-                                            </details>
                                         </div>
                                     </template>
                                 </section>
                                 <label for="paciente_hma"><span>Relato clínico (HMA)</span><small>Texto livre</small></label>
-                                <textarea id="paciente_hma" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
+                                <textarea id="paciente_hma" aria-describedby="paciente_hma_ajuda" placeholder="Início, localização, trajeto/irradiação, comportamento dos sintomas, limitações e fatores relevantes..."></textarea>
+                                <small id="paciente_hma_ajuda" class="helper-text" hidden>Indique a região e o lado ao descrever cada queixa.</small>
+                                <details id="ks_hma_detalhes_salvos" hidden>
+                                    <summary>Detalhes já registrados</summary>
+                                    <ul></ul>
+                                </details>
                                 <div id="sugestoes_hma_tempo_real" class="hma-live-suggestions" aria-live="polite" hidden></div>
                             </div>
 

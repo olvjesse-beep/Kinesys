@@ -653,7 +653,7 @@
                 const hipoteses=planoGerado.hipoteses.filter(h=>h.regiaoId===q.regiaoId&&(unicas||chaves.has(chaveHipotese(h))));
                 return {...q,regiaoNome:indiceRegioes()[q.regiaoId]?.nome||'',hipoteses,
                     testes:uniq(hipoteses.flatMap(h=>h.testes)),
-                    pendencia:!q.regiaoId?'Esclareça a localização da queixa.':!temHistoriaDaQueixa(q)?'Detalhe o início, o comportamento dos sintomas e as limitações desta queixa.':''};
+                    pendencia:!q.regiaoId?'Esclareça a localização da queixa.':!temHistoriaDaQueixa(q)?'Descreva na HMA o início, o comportamento dos sintomas e as limitações desta queixa.':''};
             });
             planoGerado.hmaOriginal=historiaOriginal;
         }
