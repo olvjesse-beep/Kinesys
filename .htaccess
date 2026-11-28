@@ -7,6 +7,11 @@
   SetEnvIfNoCase Host "^app\.fisiofixfisioterapia\.com(?::[0-9]+)?$" KINESYS_APP_HOST=1
 </IfModule>
 
+# Tipo do manifesto de instalação; não altera HTML, scripts ou rotas do app.
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
 # EMERGÊNCIA r52 — impedir que o login do KineSys apareça no domínio comercial.
 # Como www/root e app estão atualmente compartilhando o mesmo document root,
 # roteamos qualquer requisição que NÃO seja do host app para um HTML institucional
@@ -20,6 +25,9 @@
 
 # O site institucional emergencial não deve ficar preso em cache durante a recuperação.
 <IfModule mod_headers.c>
+  <Files "manifest.webmanifest">
+    Header set Cache-Control "no-cache, must-revalidate" env=KINESYS_APP_HOST
+  </Files>
   <Files "index.html">
     Header set Cache-Control "no-cache, no-store, must-revalidate" env=!KINESYS_APP_HOST
     Header set Pragma "no-cache" env=!KINESYS_APP_HOST
