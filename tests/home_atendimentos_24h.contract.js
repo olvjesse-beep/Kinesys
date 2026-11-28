@@ -80,6 +80,9 @@ const data={
 const result=adminAPI.summarize(data,p);
 assert.equal(result.received,150,'recebido é dinheiro do mês, líquido de estorno e sem duplicar registros');
 assert.equal(result.receivable,650,'saldo inclui pagamentos anteriores e crédito aplicado, sem contar crédito como receita');
+const withForecast=adminAPI.summarize({...data,previsoes:[{id:'book',saldo:150},{id:'book',saldo:150}]},p);
+assert.equal(withForecast.receivable,800,'agendamento do mês sem cobrança entra no total uma única vez');
+assert.equal(withForecast.confirmedReceivable,650,'a previsão não aumenta os alertas de cobranças registradas');
 assert.equal(result.expenses,50);assert.equal(result.attended,1,'faltas e reservas não são atendimentos realizados');
 assert.equal(result.absences,1);assert.equal(result.occupancy,null,'não inventar ocupação sem jornada');
 assert.equal(result.income.reduce((a,b)=>a+b,0),result.received);
@@ -107,6 +110,46 @@ console.log('Home administrador: isolamento de perfis, mês, estorno, crédito, 
  assert.deepStrictEqual(requests,[[0,999],[1000,1999]]);
  fail=true;await assert.rejects(api.rows('pagamentos','id','clinic-a'),/Não foi possível confirmar/,'falha de consulta não pode virar total zero');
  console.log('Home administrador: paginação determinística, escopo e erro de leitura OK.');
+ // Exercita a seleção de horários e a integração somente leitura com a situação financeira.
+ let forecastIds,financeOffline=false;
+ const forecastContext={...paginatedContext,window:{addEventListener(){}},_supabase:{
+   from(table){
+     assert.equal(table,'procedimentos');
+     const q={select:()=>q,eq:(key,value)=>{assert.equal(key,'clinica_id');assert.equal(value,'clinic-a');return q;},order:()=>q,
+       range:async()=>({data:[{id:'unit',sessoes_pacote:1},{id:'package',sessoes_pacote:10}]})};
+     return q;
+   },
+   async rpc(name,{p_ids}){
+     assert.equal(name,'kinesys_situacao_financeira_agendamentos');forecastIds=p_ids;
+     if(financeOffline)return {error:{message:'offline'}};
+     return {data:[
+       {agendamento_id:'today',origem:'avulso',status_financeiro:'pendente',valor_pendente:'150'},
+       {agendamento_id:'future',origem:'avulso',status_financeiro:'parcial',valor_pendente:'80'},
+       {agendamento_id:'paid',origem:'avulso',status_financeiro:'pago',valor_pendente:'0'},
+       {agendamento_id:'with-charge',origem:'unitario',cobranca_id:'charge',status_financeiro:'pendente',valor_pendente:'150'}
+     ]};
+   }
+ }};
+ adminVM.createContext(forecastContext);
+ adminVM.runInContext(('/* Home administrativa:'+adminSource).replace('refresh,allowed,period,summarize,capacity','refresh,allowed,period,summarize,capacity,loadReceivableForecast'),forecastContext);
+ const appointment={data:'2026-10-17',status:'agendado',procedimento_id:'unit'};
+ const agenda=[
+   {id:'today',...appointment},{id:'today',...appointment},
+   {id:'future',...appointment,data:'2026-10-30'},
+   {id:'paid',...appointment},{id:'with-charge',...appointment},
+   {id:'linked',...appointment,plano_id:'pl'},
+   {id:'cancelled',...appointment,status:'cancelado'},
+   {id:'prebook',...appointment,status:'pre_agendado'},
+   {id:'package',...appointment,procedimento_id:'package'},
+   {id:'next-month',...appointment,data:'2026-11-01'}
+ ];
+ const forecastAPI=forecastContext.window.KineSysAdminHome;
+ const forecast=await forecastAPI.loadReceivableForecast('clinic-a',agenda,p);
+ assert.deepEqual([...forecastIds],['today','future','paid','with-charge']);
+ assert.deepEqual(Array.from(forecast,x=>[x.id,x.saldo]),[['today',150],['future',80]]);
+ assert.equal((await forecastAPI.loadReceivableForecast('clinic-a',agenda,forecastAPI.period('2026-09','2026-10-17'))).length,0);
+ financeOffline=true;
+ assert.equal(await forecastAPI.loadReceivableForecast('clinic-a',agenda,p),null,'o saldo confirmado deve sobreviver à indisponibilidade da previsão');
  // Mantém refresh intacto; simula somente DOM e transporte para testar a corrida de sessão.
  let code='/* Home administrativa:'+adminSource;
  const replaceRange=(start,end,replacement)=>{const a=code.indexOf(start),b=code.indexOf(end,a);assert(a>=0&&b>a);code=code.slice(0,a)+replacement+'\n    '+code.slice(b);};

@@ -499,6 +499,8 @@ else iniciarHomeDetalhesVisivel();
         const paid=new Map(),credits=new Map();payments.forEach(x=>paid.set(String(x.plano_id),(paid.get(String(x.plano_id))||0)+(Number(x.valor)||0)));
         byId(data.creditos).filter(x=>String(x.data_uso).slice(0,10)<=p.cut).forEach(x=>credits.set(String(x.plano_id),(credits.get(String(x.plano_id))||0)+Math.max(0,Number(x.valor)||0)));
         const pending=byId(data.planos).filter(x=>x.status!=='cancelado').map(x=>({...x,saldo:Math.max(0,(Number(x.valor_final)||0)-(paid.get(String(x.id))||0)-(credits.get(String(x.id))||0))})).filter(x=>x.saldo>.009);
+        const confirmedReceivable=pending.reduce((s,x)=>s+x.saldo,0);
+        const scheduledReceivable=byId(data.previsoes).reduce((s,x)=>s+x.saldo,0);
         const pendingIds=new Set(pending.map(x=>String(x.id)));
         const tomorrow=dayAdd(p.now,1),future=new Set(agenda.filter(a=>a.data>=p.now&&['pre_agendado','agendado','confirmado','em_recepcao'].includes(a.status)).map(a=>String(a.paciente_id)));
         const recent=new Set(agenda.filter(a=>a.data>=dayAdd(p.now,-60)&&a.data<=p.now&&['atendido','concluido'].includes(a.status)).map(a=>String(a.paciente_id)));
@@ -506,7 +508,9 @@ else iniciarHomeDetalhesVisivel();
         const reminderIds=new Set(agenda.filter(a=>a.data===tomorrow&&['agendado','confirmado','em_recepcao'].includes(a.status)).map(a=>String(a.paciente_id)));
         const patients=byId(data.pacientes);
         const groups={aniversarios:patients.filter(x=>birth(x.nascimento)===p.now.slice(5)),lembretes:patients.filter(x=>reminderIds.has(String(x.id))),retornos:patients.filter(x=>recent.has(String(x.id))&&!future.has(String(x.id)))};
-        return {p,income,out,received:income.reduce((s,v)=>s+v,0),expenses:out.reduce((s,v)=>s+v,0),receivable:pending.reduce((s,x)=>s+x.saldo,0),pendingCount:pending.length,
+        return {p,income,out,received:income.reduce((s,v)=>s+v,0),expenses:out.reduce((s,v)=>s+v,0),
+            receivable:confirmedReceivable+scheduledReceivable,confirmedReceivable,scheduledReceivable,
+            forecastUnavailable:data.previsoes===null,pendingCount:pending.length,
             uncovered:agenda.filter(a=>['atendido','concluido'].includes(a.status)&&inPeriod(a.data)&&pendingIds.has(String(a.plano_id))).length,
             attended:agenda.filter(a=>inPeriod(a.data)&&['atendido','concluido'].includes(a.status)).length,
             absences:agenda.filter(a=>inPeriod(a.data)&&['falta_justificada','falta_nao_justificada'].includes(a.status)).length,
@@ -523,6 +527,32 @@ else iniciarHomeDetalhesVisivel();
         }
         throw new Error('Volume de dados acima do limite do panorama. Consulte o Financeiro.');
     }
+    async function loadReceivableForecast(clinic,agenda,p){
+        if(p.month!==p.now.slice(0,7))return [];
+        const eligible=byId(agenda).filter(a=>!a.plano_id&&a.procedimento_id&&a.data>=p.start&&a.data<=p.end
+            &&['agendado','confirmado','em_recepcao','atendido','concluido','falta_nao_justificada'].includes(a.status));
+        if(!eligible.length)return [];
+        try{
+            const procedures=await rows('procedimentos','id,sessoes_pacote',clinic);
+            const unitProcedures=new Set(procedures.filter(x=>Number(x.sessoes_pacote)===1).map(x=>String(x.id)));
+            const ids=eligible.filter(a=>unitProcedures.has(String(a.procedimento_id))).map(a=>String(a.id));
+            const forecast=[];
+            for(let i=0;i<ids.length;i+=200){
+                const batch=ids.slice(i,i+200);
+                const {data,error}=await _supabase.rpc('kinesys_situacao_financeira_agendamentos',{p_ids:batch});
+                const byAppointment=new Map((data||[]).map(x=>[String(x.agendamento_id),x]));
+                if(error||batch.some(id=>!byAppointment.has(id)))return null;
+                for(const id of batch){
+                    const row=byAppointment.get(id),saldo=Number(row.valor_pendente);
+                    if(!row.cobranca_id&&row.origem==='avulso'&&['pendente','parcial'].includes(row.status_financeiro)
+                        &&Number.isFinite(saldo)&&saldo>0.009)forecast.push({id,saldo});
+                }
+            }
+            return forecast;
+        }catch(err){
+            return null;
+        }
+    }
     async function load(clinic,p){
         const end=dayAdd(p.cut,1)+'T00:00:00-03:00';
         const [pagamentos,planos,despesas,creditos,agendamentos,pacientes,horarios,bloqueios,equipe]=await Promise.all([
@@ -530,13 +560,14 @@ else iniciarHomeDetalhesVisivel();
             rows('planos_atendimento','id,paciente_id,valor_final,status,criado_em',clinic,q=>q.lt('criado_em',end)),
             rows('despesas_financeiras','id,valor,data_despesa',clinic,q=>q.gte('data_despesa',p.start).lte('data_despesa',p.cut)),
             rows('creditos_paciente_usos','id,plano_id,valor,data_uso',clinic,q=>q.lte('data_uso',p.cut)),
-            rows('agendamentos','id,paciente_id,profissional_id,data,hora_inicio,hora_fim,status,plano_id',clinic,q=>q.gte('data',p.start<dayAdd(p.now,-60)?p.start:dayAdd(p.now,-60))),
+            rows('agendamentos','id,paciente_id,profissional_id,procedimento_id,data,hora_inicio,hora_fim,status,plano_id',clinic,q=>q.gte('data',p.start<dayAdd(p.now,-60)?p.start:dayAdd(p.now,-60))),
             rows('pacientes','id,nome,nascimento,telefone,dependente,responsavel_nome,responsavel_telefone',clinic),
             rows('horarios_atendimento','id,profissional_id,dia_semana,hora_inicio,hora_fim',clinic),
             rows('bloqueios_agenda','id,profissional_id,data,hora_inicio,hora_fim',clinic,q=>q.gte('data',p.start).lte('data',p.now)),
             rows('equipe','id,tipo,ativo,aparece_na_agenda',clinic,q=>q.eq('ativo',true))
         ]);
-        return {pagamentos,planos,despesas,creditos,agendamentos,pacientes,horarios,bloqueios,equipe};
+        const previsoes=await loadReceivableForecast(clinic,agendamentos,p);
+        return {pagamentos,planos,despesas,creditos,agendamentos,pacientes,horarios,bloqueios,equipe,previsoes};
     }
     function icon(selector){return document.querySelector(selector)?.outerHTML||'';}
     // Ícones Feather 4.29.2 (MIT), distribuídos como ativos SVG da biblioteca,
@@ -587,7 +618,7 @@ else iniciarHomeDetalhesVisivel();
     }
     function markup(){return `<header class="ks-admin-heading"><div><h1>Panorama da clínica</h1><p>Visão financeira e operacional da sua clínica</p></div><div class="ks-admin-head-actions"><button type="button" class="btn-secondary" data-admin-action="privacy" aria-pressed="false">Ocultar valores</button><span id="ks_admin_date"></span><button type="button" class="btn-primary" data-admin-action="finance">Abrir financeiro</button></div></header>
         <div class="ks-admin-panorama"><div class="ks-admin-main"><div class="ks-admin-period"><label for="ks_admin_month"><span class="kds-sr-only">Mês do panorama</span><input id="ks_admin_month" type="month"></label><button type="button" class="ks-admin-month-nav" data-admin-action="prev" aria-label="Mês anterior">Anterior</button><span id="ks_admin_month_label"></span><button type="button" class="ks-admin-month-nav" data-admin-action="next" aria-label="Próximo mês">Próximo</button></div>
-        <div class="ks-admin-metrics"><div><span>Recebido</span><strong id="ks_admin_received">—</strong></div><div><span>A receber</span><strong id="ks_admin_receivable" title="Saldo confirmado dos contratos existentes até a data de corte; inclui contratos de meses anteriores.">—</strong></div><div><span>Despesas pagas</span><strong id="ks_admin_expenses" title="Despesas lançadas no período, conforme a data registrada no Financeiro.">—</strong></div></div>
+        <div class="ks-admin-metrics"><div><span>Recebido</span><strong id="ks_admin_received">—</strong></div><div><span>A receber<small id="ks_admin_receivable_forecast" class="ks-admin-receivable-forecast"></small></span><strong id="ks_admin_receivable" title="Saldo das cobranças registradas até a data de corte, mais a previsão dos atendimentos unitários do mês atual.">—</strong></div><div><span>Despesas pagas</span><strong id="ks_admin_expenses" title="Despesas lançadas no período, conforme a data registrada no Financeiro.">—</strong></div></div>
         <section class="ks-admin-flow" aria-labelledby="ks_admin_flow_title"><h2 id="ks_admin_flow_title">Fluxo do mês</h2><div class="ks-admin-flow-description"><p id="ks_admin_flow_period">Recebimentos × Despesas (acumulado)</p><div class="ks-admin-legend"><span>Recebido (acumulado)</span><span>Despesas pagas (acumulado)</span></div></div><div class="ks-admin-chart"><canvas id="ks_admin_chart" role="img" aria-label="Fluxo acumulado de recebimentos e despesas"></canvas><p id="ks_admin_chart_message" hidden></p></div><details class="ks-admin-chart-details"><summary>Ver valores do gráfico</summary><div id="ks_admin_chart_table"></div></details></section></div>
         <aside class="ks-admin-glass" aria-label="Atendimentos e alertas"><div><span id="ks_admin_volume_period">Este mês até hoje</span><strong id="ks_admin_attended">—</strong><h2>atendimentos realizados</h2><p><span id="ks_admin_occupancy" title="Minutos ocupados sobre os minutos disponíveis na jornada, descontados os bloqueios. Não inclui encaixes fora da jornada.">—</span> ocupação · <span id="ks_admin_absences">—</span> faltas</p></div><section><h2>Hoje na clínica</h2><p class="ks-admin-today-number"><strong id="ks_admin_scheduled">—</strong> atendimentos previstos</p><p class="ks-admin-today-number"><strong id="ks_admin_free">—</strong> horários livres</p><small>Vagas de 60 min na jornada restante de hoje.</small><button type="button" class="btn-secondary" data-admin-action="agenda">Abrir agenda</button></section><section class="ks-admin-alerts"><h2>Alertas financeiros</h2><button type="button" data-admin-action="pending"><span class="ks-admin-alert-icon"></span><span><strong id="ks_admin_pending">Carregando pendências…</strong><span id="ks_admin_pending_value"></span></span><span class="ks-admin-chevron"></span></button><button type="button" data-admin-action="expenses"><span class="ks-admin-alert-icon"></span><span><strong id="ks_admin_expense_alert">Conferindo despesas…</strong><small>Consulte os lançamentos financeiros.</small></span><span class="ks-admin-chevron"></span></button><button type="button" class="ks-admin-review" data-admin-action="pending">Revisar pendências <span class="ks-admin-chevron"></span></button></section></aside></div>
         <div id="ks_admin_status" class="ks-admin-status" role="status" aria-live="polite"></div>
@@ -632,7 +663,7 @@ else iniciarHomeDetalhesVisivel();
         decorate();return root;
     }
     function setStatus(text,error=false){const el=$('ks_admin_status');if(el){el.textContent=text;if(error)el.insertAdjacentHTML('beforeend',' <button class="btn-secondary" type="button" data-admin-action="retry">Tentar novamente</button>');}}
-    function clear(){state.data=null;state.summary=null;['received','receivable','expenses','attended','occupancy','absences','scheduled','free','pending','pending_value','expense_alert'].forEach(id=>{if($('ks_admin_'+id))$('ks_admin_'+id).textContent='—';});if($('ks_admin_chart_table'))$('ks_admin_chart_table').replaceChildren();if($('ks_admin_message_list'))$('ks_admin_message_list').textContent='Dados não carregados.';draw();}
+    function clear(){state.data=null;state.summary=null;['received','receivable','expenses','attended','occupancy','absences','scheduled','free','pending','pending_value','expense_alert'].forEach(id=>{if($('ks_admin_'+id))$('ks_admin_'+id).textContent='—';});if($('ks_admin_receivable_forecast'))$('ks_admin_receivable_forecast').textContent='';if($('ks_admin_chart_table'))$('ks_admin_chart_table').replaceChildren();if($('ks_admin_message_list'))$('ks_admin_message_list').textContent='Dados não carregados.';draw();}
     async function refresh(force=false){
         const key=scope();if(!key){deactivate();return false;}
         if(state.scope!==key){state.token++;state.scope=key;state.month=today().slice(0,7);state.hidden=false;state.loadedAt=0;state.pending=null;state.data=null;state.summary=null;}
@@ -661,8 +692,11 @@ else iniciarHomeDetalhesVisivel();
         set('date',dateLabel[0].toUpperCase()+dateLabel.slice(1));
         set('month_label',label);set('volume_period',p.month===p.now.slice(0,7)?'Este mês até hoje':label);
         set('received',metric(r.received));set('receivable',metric(r.receivable));set('expenses',metric(r.expenses));set('attended',r.attended);set('occupancy',r.occupancy===null?'—':r.occupancy+'%');set('absences',r.absences);set('scheduled',r.scheduled);
+        const forecastLabel=r.forecastUnavailable?'Previsão da agenda indisponível'
+            :r.scheduledReceivable>0?`Inclui ${metric(r.scheduledReceivable)} previstos na agenda`:'';
+        set('receivable_forecast',forecastLabel);
         set('free',r.free===null?'—':r.free);
-        set('pending',`${r.pendingCount} contrato${r.pendingCount===1?'':'s'} a receber`);set('pending_value',metric(r.receivable));set('expense_alert',`${r.todayExpenses} despesa${r.todayExpenses===1?'':'s'} hoje`);
+        set('pending',`${r.pendingCount} contrato${r.pendingCount===1?'':'s'} a receber`);set('pending_value',metric(r.confirmedReceivable));set('expense_alert',`${r.todayExpenses} despesa${r.todayExpenses===1?'':'s'} hoje`);
         $('ks_admin_home').querySelector('[data-admin-action="expenses"] small').textContent='Lançamentos registrados';
         set('flow_period',`Recebimentos × Despesas (acumulado) · 1–${Number(p.cut.slice(-2))} de ${new Date(p.start+'T12:00:00Z').toLocaleDateString('pt-BR',{month:'long',timeZone:'America/Sao_Paulo'})}`);
         set('sync','Dados confirmados');
